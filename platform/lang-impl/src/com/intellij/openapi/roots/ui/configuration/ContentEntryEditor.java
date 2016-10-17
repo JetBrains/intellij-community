@@ -289,7 +289,10 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   public boolean isExcludedOrUnderExcludedDirectory(@NotNull VirtualFile file) {
     ModifiableRootModel model = getModel();
-    Project project = model != null ? model.getProject() : null;
+    if (model == null) {
+      throw new AssertionError(getClass() + ".getModel() returned null unexpectedly");
+    }
+    Project project = model.getProject();
     ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
