@@ -10,7 +10,8 @@ import org.jdom.Element
 
 
 private object XmlTagHelper {
-  val BLACKLIST = "blacklist"
+  val BLACKLISTS = "blacklists"
+  val LANGUAGE_LIST = "blacklist"
   val LANGUAGE = "language"
   val ADDED = "added"
   val REMOVED = "removed"
@@ -20,33 +21,42 @@ private object XmlTagHelper {
 
 @State(name = "ParameterNameHintsSettings", storages = arrayOf(Storage("parameter.hints.xml")))
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
-  private var myState: Element = Element("settings")
-  
-  override fun getState(): Element = myState
+  private val myRemovedPatterns = hashMapOf<String, List<String>>()
+  private val myAddedPatterns = hashMapOf<String, List<String>>()
+
+  override fun getState(): Element {
+    val root = Element("settings")
+    val blacklists = root.getOrCreateChild(XmlTagHelper.BLACKLISTS)
+
+    myRemovedPatterns.forEach { language, patterns ->
+      blacklists.addLanguagePatternElements(language, patterns, XmlTagHelper.REMOVED)
+    }
+
+    myAddedPatterns.forEach { language, patterns ->
+      blacklists.addLanguagePatternElements(language, patterns, XmlTagHelper.ADDED)
+    }
+
+    return root
+  }
 
   override fun loadState(state: Element) {
-    myState = state
-  }
-  
-  private fun Language.toXmlName() = displayName.split(' ')[0]
-
-  private fun getStoredLanguageBlackList(language: Language): Element {
-    val allLists = myState.getOrCreateChild(XmlTagHelper.BLACKLIST)
-    val languageTagName = language.toXmlName()
-    return allLists.getOrCreateChild(languageTagName)
+    val allBlackLists = state.getChild(XmlTagHelper.BLACKLISTS)?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
+    allBlackLists.mapNotNull {
+      val language = it.attributeValue(XmlTagHelper.LANGUAGE) ?: return@mapNotNull
+      myAddedPatterns[language] = it.extractPatterns(XmlTagHelper.ADDED)
+      myRemovedPatterns[language] = it.extractPatterns(XmlTagHelper.REMOVED)
+    }
   }
 
   fun addIgnorePattern(language: Language, pattern: String) {
-    val langBlackList = getStoredLanguageBlackList(language)
-    val addedPattern = pattern.toPatternElement(XmlTagHelper.ADDED)
-    langBlackList.addContent(addedPattern)
+    val patternsBefore = getAddedPatterns(language)
+    setAddedPatterns(language, patternsBefore + pattern)
   }
 
   fun getIgnorePatternSet(hintsProvider: InlayParameterHintsProvider): Set<String> {
-    val forLanguage = getStoredLanguageBlackList(hintsProvider.language).children
-    val added = forLanguage.filter { it.name == XmlTagHelper.ADDED }.mapNotNull { it.getAttribute(XmlTagHelper.PATTERN)?.value }
-    val removed = forLanguage.filter { it.name == XmlTagHelper.REMOVED }.mapNotNull { it.getAttribute(XmlTagHelper.PATTERN)?.value }
-
+    val added = getAddedPatterns(hintsProvider.language)
+    val removed = getRemovedPatterns(hintsProvider.language)
+    
     val updated = hintsProvider.defaultBlackList.toMutableSet()
     updated.removeAll(removed)
     updated.addAll(added)
@@ -63,25 +73,50 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     val added = updatedBlackList.toMutableSet()
     added.removeAll(defaultBlackList)
 
-    updateState(provider.language, added, removed)
+    val language = provider.language
+    setRemovedPatterns(language, removed)
+    setAddedPatterns(language, added)
   }
-
-  private fun updateState(language: Language, added: MutableSet<String>, removed: MutableSet<String>) {
-    val languageBlackList = getStoredLanguageBlackList(language)
-    
-    removed.map { it.toPatternElement(XmlTagHelper.REMOVED) }
-        .forEach { languageBlackList.addContent(it) }
-
-    added.map { it.toPatternElement(XmlTagHelper.ADDED) }
-        .forEach { languageBlackList.addContent(it) }
-  }
-
+  
   companion object {
     @JvmStatic
     fun getInstance() = service<ParameterNameHintsSettings>()
   }
 
+  private fun getAddedPatterns(language: Language): List<String> {
+    val key = language.displayName
+    return myAddedPatterns[key] ?: emptyList()
+  }
+
+  private fun getRemovedPatterns(language: Language): List<String> {
+    val key = language.displayName
+    return myRemovedPatterns[key] ?: emptyList()
+  }
+
+  private fun setRemovedPatterns(language: Language, removed: Collection<String>) {
+    val key = language.displayName
+    myRemovedPatterns[key] = removed.toList()
+  }
+
+  private fun setAddedPatterns(language: Language, added: Collection<String>) {
+    val key = language.displayName
+    myAddedPatterns[key] = added.toList()
+  }
+
 }
+
+private fun Element.addLanguagePatternElements(language: String, patterns: List<String>, tag: String) {
+  val list = getOrCreateChild(XmlTagHelper.LANGUAGE_LIST)
+  list.setAttribute(XmlTagHelper.LANGUAGE, language)
+  val elements = patterns.map { it.toPatternElement(tag) }
+  list.addContent(elements)
+}
+
+private fun Element.extractPatterns(tag: String): List<String> {
+  return getChildren(tag).mapNotNull { it.attributeValue(XmlTagHelper.PATTERN) }
+}
+
+private fun Element.attributeValue(attr: String): String? = this.getAttribute(attr)?.value
 
 private fun Element.getOrCreateChild(name: String): Element {
   var child = getChild(name)
