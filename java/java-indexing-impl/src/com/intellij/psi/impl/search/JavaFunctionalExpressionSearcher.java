@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.CompilerDirectHierarchyInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -39,6 +42,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -48,6 +52,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -62,6 +67,17 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @Override
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<PsiFunctionalExpression> consumer) {
     List<SamDescriptor> descriptors = calcDescriptors(p);
+    Project project = PsiUtilCore.getProjectInReadAction(p.getElementToSearch());
+    if (project == null) return;
+
+    SearchScope searchScope = ReadAction.compute(() -> p.getEffectiveSearchScope());
+    if (searchScope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
+                                                                                       (GlobalSearchScope)searchScope,
+                                                                                       project,
+                                                                                       consumer)) {
+      return;
+    }
+
     AtomicInteger exprCount = new AtomicInteger();
     AtomicInteger fileCount = new AtomicInteger();
 
@@ -132,7 +148,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
             ProgressManager.checkCanceled();
             result.putValues(file, infos);
             return true;
-          }, new JavaSourceFilterScope(descriptor.useScope));
+          }, new JavaSourceFilterScope(descriptor.effectiveUseScope));
         }
       });
     }
@@ -257,14 +273,14 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static class SamDescriptor {
     final PsiClass samClass;
-    final GlobalSearchScope useScope;
     final int samParamCount;
     final boolean booleanCompatible;
     final boolean isVoid;
+    GlobalSearchScope effectiveUseScope;
 
     SamDescriptor(PsiClass samClass, PsiMethod samMethod, PsiType samType, GlobalSearchScope useScope) {
       this.samClass = samClass;
-      this.useScope = useScope;
+      this.effectiveUseScope = useScope;
       this.samParamCount = samMethod.getParameterList().getParametersCount();
       this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
       this.isVoid = PsiType.VOID.equals(samType);
@@ -301,7 +317,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
         Set<String> likelyNames = ContainerUtil.newLinkedHashSet(className);
         StubIndex.getInstance().processElements(JavaMethodParameterTypesIndex.getInstance().getKey(), className,
-                                                project, useScope, PsiMethod.class, method -> {
+                                                project, effectiveUseScope, PsiMethod.class, method -> {
             ProgressManager.checkCanceled();
             likelyNames.add(method.getName());
             return true;
@@ -310,12 +326,50 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
-          helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, word, processor);
+          helper.processFilesWithText(effectiveUseScope, UsageSearchContext.IN_CODE, true, word, processor);
         }
       });
       return files;
     }
+  }
 
+  private static boolean performSearchUsingCompilerIndices(@NotNull List<SamDescriptor> descriptors,
+                                                           @NotNull GlobalSearchScope searchScope,
+                                                           @NotNull Project project,
+                                                           @NotNull Processor<PsiFunctionalExpression> consumer) {
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    for (SamDescriptor descriptor : descriptors) {
+      if (!processFunctionalExpressions(performSearchUsingCompilerIndices(descriptor,
+                                                                          searchScope,
+                                                                          compilerReferenceService), descriptor, consumer)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static CompilerDirectHierarchyInfo<PsiFunctionalExpression> performSearchUsingCompilerIndices(@NotNull SamDescriptor descriptor,
+                                                                                                        @NotNull GlobalSearchScope searchScope,
+                                                                                                        @NotNull CompilerReferenceService service) {
+    return service.getFunExpressions(descriptor.samClass, descriptor.effectiveUseScope, searchScope, JavaFileType.INSTANCE);
+  }
+
+
+  private static boolean processFunctionalExpressions(@Nullable CompilerDirectHierarchyInfo<PsiFunctionalExpression> funExprInfo,
+                                                      @NotNull SamDescriptor descriptor,
+                                                      @NotNull Processor<PsiFunctionalExpression> consumer) {
+    if (funExprInfo != null) {
+      Iterator<PsiFunctionalExpression> it = funExprInfo.getHierarchyChildren().iterator();
+      while (it.hasNext()) {
+        PsiFunctionalExpression next = it.next();
+        if (!consumer.process(next)) {
+          return false;
+        }
+      }
+      GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();
+      descriptor.effectiveUseScope = descriptor.effectiveUseScope.intersectWith(dirtyScope);
+    }
+    return true;
   }
 
 }

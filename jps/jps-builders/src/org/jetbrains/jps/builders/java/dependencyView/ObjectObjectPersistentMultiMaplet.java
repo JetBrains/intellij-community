@@ -32,7 +32,7 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  *         Date: 9/10/12
  */
-public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
+public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMaplet<K, V>{
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
