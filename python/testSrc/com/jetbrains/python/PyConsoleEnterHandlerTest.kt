@@ -50,8 +50,11 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
 
   fun testTripleQuotes() {
     assertFalse(push("'''abs"))
+  }
 
-
+  fun testSingleQuote() {
+    assertTrue(push("'a'"))
+    assertTrue(push("a = 'abc'"))
   }
 
   fun testSimpleSingleLine() {
@@ -107,6 +110,15 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
     assertFalse(push("  line2"))
     assertTrue(push(""))
 
+  }
+
+  fun testMultiLineIf() {
+    assertFalse(push("if True:"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("\ta = 1"))
+    assertTrue(push(""))
   }
 
   override fun tearDown() {
