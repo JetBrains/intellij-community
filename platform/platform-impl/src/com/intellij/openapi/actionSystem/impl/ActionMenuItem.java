@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.synth.SynthMenuItemUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -187,8 +188,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   @Override
-  public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && GtkMenuItemUI.isUiAcceptable(ui) ? new GtkMenuItemUI(ui) : ui;
+  public void setUI(MenuItemUI ui) {
+    MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && ui instanceof SynthMenuItemUI ? new GtkMenuItemUI((SynthMenuItemUI)ui) : ui;
     super.setUI(newUi);
   }
 

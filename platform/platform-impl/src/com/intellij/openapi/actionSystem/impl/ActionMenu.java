@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.synth.SynthMenuUI;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
@@ -178,8 +179,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   @Override
-  public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
+  public void setUI(MenuItemUI ui) {
+    MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && ui instanceof SynthMenuUI ? new GtkMenuUI((SynthMenuUI)ui) : ui;
     super.setUI(newUi);
   }
 
