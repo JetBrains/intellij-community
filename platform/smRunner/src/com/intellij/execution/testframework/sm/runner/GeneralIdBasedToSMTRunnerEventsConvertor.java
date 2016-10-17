@@ -261,6 +261,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
+      fireOnTestFinished(testProxy);
 
       // fire event
       fireOnTestFailed(testProxy);
