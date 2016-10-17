@@ -189,6 +189,11 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
   @Nullable
   @Override
   public IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action) {
+    if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+      final LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      if (localWrapper != null) return createFixAllIntention(localWrapper, action);
+    }
+
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       Class aClass = action.getClass();
       if (action instanceof QuickFixWrapper) {
