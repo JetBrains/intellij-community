@@ -16,7 +16,7 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import javax.tools.*;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public interface JavacFileReferencesRegistrar {
@@ -25,5 +25,5 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacRefSymbol> defs);
+  void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, List<JavacRefSymbol> defs);
 }

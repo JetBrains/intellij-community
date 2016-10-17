@@ -18,7 +18,7 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     JCTree.JCLambda lambda = (JCTree.JCLambda)node;
     final Type type = lambda.type;
     final Symbol.TypeSymbol symbol = type.asElement();
-    sink.sinkReference(new JavacRefSymbol(symbol, Tree.Kind.LAMBDA_EXPRESSION));
+    sink.sinkDeclaration(new JavacRefSymbol(symbol, Tree.Kind.LAMBDA_EXPRESSION));
     return super.visitLambdaExpression(node, sink);
   }
 
@@ -27,7 +27,7 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     JCTree.JCMemberReference memberRef = (JCTree.JCMemberReference)node;
     final Symbol methodSymbol = memberRef.sym;
     sink.sinkReference(new JavacRefSymbol(methodSymbol, Tree.Kind.IDENTIFIER));
-    sink.sinkReference(new JavacRefSymbol(memberRef.type.asElement(), Tree.Kind.MEMBER_REFERENCE));
+    sink.sinkDeclaration(new JavacRefSymbol(memberRef.type.asElement(), Tree.Kind.MEMBER_REFERENCE));
     return super.visitMemberReference(node, sink);
   }
 }

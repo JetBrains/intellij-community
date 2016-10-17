@@ -24,11 +24,14 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,37 +58,56 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
 
   public void testIsNotReady() {
     myFixture.configureByFile(getName() + "/Foo.java");
-    assertNull(getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE));
+    assertNull(getReferentFilesForElementUnderCaret());
   }
 
   public void testSimpleUsagesInFullyCompiledProject() {
     myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/FooImpl.java");
     rebuildProject();
 
-    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE);
+    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret();
     assertNotNull(referents);
     final Set<String> filesWithReferences = referents.stream().map(VirtualFile::getName).collect(Collectors.toSet());
 
     assertEquals(filesWithReferences, ContainerUtil.set("Baz.java", "Foo.java", "FooImpl.java"));
     myFixture.addFileToProject("SomeModification.java", "");
-    assertNull(getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE));
+    assertNull(getReferentFilesForElementUnderCaret());
   }
 
   public void testLambda() {
     myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/BarRef.java");
     rebuildProject();
-    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret(JavaFunctionalExpressionCompilerSearchAdapter.INSTANCE);
-    assertNotNull(referents);
-    final Set<String> filesWithReferences = referents.stream().map(VirtualFile::getName).collect(Collectors.toSet());
-    assertEquals(filesWithReferences, ContainerUtil.set("Bar.java", "BarRef.java"));
+    final CompilerDirectHierarchyInfo<PsiFunctionalExpression> funExpressions = getFunctionalExpressionsForElementUnderCaret();
+    List<PsiFunctionalExpression> funExprs = funExpressions.getHierarchyChildren().collect(Collectors.toList());
+    assertSize(2, funExprs);
+  }
+
+  public void testInnerFunExpressions() {
+    myFixture.configureByFiles(getName() + "/Foo.java");
+    rebuildProject();
+    List<PsiFunctionalExpression> funExpressions =
+      getFunExpressionsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).getHierarchyChildren().collect(Collectors.toList());
+    assertSize(6, funExpressions);
+
+    Set<String> funTypeNames = funExpressions
+      .stream()
+      .map(PsiElement::getParent)
+      .map(PsiVariable.class::cast)
+      .map(PsiVariable::getType)
+      .map(PsiUtil::resolveClassInType)
+      .filter(Objects::nonNull)
+      .map(PsiClass::getQualifiedName)
+      .collect(Collectors.toSet());
+    String funTypeName = assertOneElement(funTypeNames);
+    assertEquals(CommonClassNames.JAVA_LANG_RUNNABLE, funTypeName);
   }
 
   public void testHierarchy() {
     myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/Test.java");
     rebuildProject();
-    CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> directInheritorInfo = getHierarchyUnderForElementCaret();
+    CompilerDirectHierarchyInfo<PsiClass> directInheritorInfo = getHierarchyForElementUnderCaret();
 
-    Collection<PsiClass> inheritors = directInheritorInfo.getDirectInheritors().collect(Collectors.toList());
+    Collection<PsiClass> inheritors = directInheritorInfo.getHierarchyChildren().collect(Collectors.toList());
     assertSize(6, inheritors);
     for (PsiClass inheritor : inheritors) {
       if (inheritor instanceof PsiAnonymousClass) {
@@ -95,40 +117,54 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
       }
     }
 
-    Collection<PsiClass> candidates = directInheritorInfo.getDirectInheritorCandidates().collect(Collectors.toList());
+    Collection<PsiClass> candidates = directInheritorInfo.getHierarchyChildCandidates().collect(Collectors.toList());
     assertEmpty(candidates);
   }
 
   public void testHierarchyOfLibClass() {
     myFixture.configureByFiles(getName() + "/Foo.java");
     rebuildProject();
-    CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> directInheritorInfo = getHierarchyFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
-    PsiClass inheritor = assertOneElement(directInheritorInfo.getDirectInheritors().collect(Collectors.toList()));
+    CompilerDirectHierarchyInfo<PsiClass> directInheritorInfo = getDirectInheritorsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
+    PsiClass inheritor = assertOneElement(directInheritorInfo.getHierarchyChildren().collect(Collectors.toList()));
     assertEquals("Foo.ListImpl", inheritor.getQualifiedName());
   }
 
-  private CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> getHierarchyUnderForElementCaret() {
+  private CompilerDirectHierarchyInfo<PsiClass> getHierarchyForElementUnderCaret() {
     final PsiElement atCaret = myFixture.getElementAtCaret();
     assertNotNull(atCaret);
     final PsiClass classAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiClass.class, false);
     assertNotNull(classAtCaret);
-    return getHierarchyFor(classAtCaret);
+    return getDirectInheritorsFor(classAtCaret);
   }
 
-  private CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> getHierarchyFor(PsiClass classAtCaret) {
+  private CompilerDirectHierarchyInfo<PsiFunctionalExpression> getFunctionalExpressionsForElementUnderCaret() {
+    final PsiElement atCaret = myFixture.getElementAtCaret();
+    assertNotNull(atCaret);
+    final PsiClass classAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiClass.class, false);
+    assertNotNull(classAtCaret);
+    return getFunExpressionsFor(classAtCaret);
+  }
+
+  private CompilerDirectHierarchyInfo<PsiClass> getDirectInheritorsFor(PsiClass classAtCaret) {
     return CompilerReferenceService.getInstance(myFixture.getProject()).getDirectInheritors(classAtCaret,
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
-                                                                                            JavaBaseCompilerSearchAdapter.INSTANCE,
                                                                                             StdFileTypes.JAVA);
   }
 
-  private Set<VirtualFile> getReferentFilesForElementUnderCaret(CompilerSearchAdapter adapter) {
+  private CompilerDirectHierarchyInfo<PsiFunctionalExpression> getFunExpressionsFor(PsiClass classAtCaret) {
+    return CompilerReferenceService.getInstance(myFixture.getProject()).getFunExpressions(classAtCaret,
+                                                                                          assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
+                                                                                          assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
+                                                                                          StdFileTypes.JAVA);
+  }
+
+  private Set<VirtualFile> getReferentFilesForElementUnderCaret() {
     final PsiElement atCaret = myFixture.getElementAtCaret();
     assertNotNull(atCaret);
     final PsiMember memberAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiMember.class, false);
     assertNotNull(memberAtCaret);
-    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret, adapter);
+    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret);
   }
 
   @Override

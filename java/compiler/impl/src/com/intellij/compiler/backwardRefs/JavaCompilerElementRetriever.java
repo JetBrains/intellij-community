@@ -13,108 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.backwardRefs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
+import com.intellij.psi.tree.TokenSet;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSearchAdapter<PsiClass> {
-  public static final JavaBaseCompilerSearchAdapter INSTANCE = new JavaBaseCompilerSearchAdapter();
+public class JavaCompilerElementRetriever {
+  private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
-  @Override
-  public boolean needOverrideElement() {
-    return true;
-  }
+  @NotNull
+  static PsiFunctionalExpression[] retrieveFunExpressionsByIndices(@NotNull TIntHashSet indices,
+                                                                   @NotNull PsiFileWithStubSupport psiFile) {
+    StubTree tree = psiFile.getStubTree();
+    boolean foreign = tree == null;
+    if (foreign) {
+      tree = ((PsiFileImpl)psiFile).calcStubTree();
+    }
 
-  @Nullable
-  @Override
-  public CompilerElement asCompilerElement(@NotNull PsiElement element) {
-    if (mayBeVisibleOutsideOwnerFile(element)) {
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        final PsiClass aClass = field.getContainingClass();
-        if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
-        final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
-        final String name = field.getName();
-        if (name == null || jvmOwnerName == null) return null;
-        return new CompilerElement.CompilerField(jvmOwnerName, name);
-      }
-      else if (element instanceof PsiMethod) {
-        final PsiClass aClass = ((PsiMethod)element).getContainingClass();
-        if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
-        final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
-        if (jvmOwnerName == null) return null;
-        final PsiMethod method = (PsiMethod)element;
-        final String name = method.isConstructor() ? "<init>" : method.getName();
-        final int parametersCount = method.getParameterList().getParametersCount();
-        return new CompilerElement.CompilerMethod(jvmOwnerName, name, parametersCount);
-      }
-      else if (element instanceof PsiClass) {
-        final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
-        if (jvmClassName != null) {
-          return new CompilerElement.CompilerClass(jvmClassName);
-        }
+    PsiFunctionalExpression[] result = new PsiFunctionalExpression[indices.size()];
+    int resIdx = 0;
+    int funExprIdx = 0;
+    for (StubElement<?> element : tree.getPlainList()) {
+      if (FUN_EXPR.contains(element.getStubType()) && indices.contains(funExprIdx++)) {
+        result[resIdx++] = asPsi((FunctionalExpressionStub<?>) element, psiFile, tree, foreign);
       }
     }
-    return null;
+    return result;
   }
 
   @NotNull
-  @Override
-  public CompilerElement[] getHierarchyRestrictedToLibrariesScope(@NotNull CompilerElement baseLibraryElement, @NotNull PsiElement baseLibraryPsi) {
-    final PsiClass baseClass = ObjectUtils.notNull(baseLibraryPsi instanceof PsiClass ? (PsiClass)baseLibraryPsi : ((PsiMember)baseLibraryPsi).getContainingClass());
-    final List<CompilerElement> overridden = new ArrayList<>();
-    Processor<PsiClass> processor = c -> {
-      if (c.hasModifierProperty(PsiModifier.PRIVATE)) return true;
-      String qName = c.getQualifiedName();
-      if (qName == null) return true;
-      overridden.add(baseLibraryElement.override(qName));
-      return true;
-    };
-    ClassInheritorsSearch.search(baseClass, LibraryScopeCache.getInstance(baseClass.getProject()).getLibrariesOnlyScope(), true).forEach(processor);
-    return overridden.toArray(new CompilerElement[overridden.size()]);
+  static PsiClass[] retrieveClassesByInternalNames(@NotNull String[] internalNames,
+                                                   @NotNull PsiNamedElement baseClass,
+                                                   @NotNull PsiFileWithStubSupport psiFile) {
+    Collection<InternalClassMatcher> matchers = createClassMatcher(internalNames, baseClass);
+    return ReadAction.compute(() -> retrieveMatchedClasses(psiFile, matchers).toArray(PsiClass.EMPTY_ARRAY));
   }
 
-  @NotNull
-  @Override
-  public PsiClass[] getCandidatesFromFile(@NotNull Collection<String> classInternalNames,
-                                          @NotNull PsiNamedElement superClass,
-                                          @NotNull VirtualFile containingFile,
-                                          @NotNull Project project) {
-    Collection<InternalClassMatcher> matchers = createClassMatcher(classInternalNames, superClass);
-    return ReadAction.compute(() -> retrieveMatchedClasses(containingFile, project, matchers).toArray(PsiClass.EMPTY_ARRAY));
-  }
-
-  private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {
-    if (!(element instanceof PsiModifierListOwner)) return true;
-    if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    return true;
-  }
-
-  private static List<PsiClass> retrieveMatchedClasses(VirtualFile file, Project project, Collection<InternalClassMatcher> matchers) {
+  private static List<PsiClass> retrieveMatchedClasses(PsiFileWithStubSupport psiFile, Collection<InternalClassMatcher> matchers) {
     final List<PsiClass> result = new ArrayList<>(matchers.size());
-    PsiFileWithStubSupport psiFile = ObjectUtils.notNull((PsiFileWithStubSupport)PsiManager.getInstance(project).findFile(file));
     StubTree tree = psiFile.getStubTree();
     boolean foreign = tree == null;
     if (foreign) {
@@ -123,20 +76,21 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
 
     for (StubElement<?> element : tree.getPlainList()) {
       if (element instanceof PsiClassStub && match((PsiClassStub)element, matchers)) {
-        result.add(asPsi((PsiClassStub<?>)element, psiFile, tree, foreign));
+        result.add(asPsi((StubBase<PsiClass>)element, psiFile, tree, foreign));
       }
     }
 
     return result;
   }
 
-  private static PsiClass asPsi(PsiClassStub<?> stub, PsiFileWithStubSupport file, StubTree tree, boolean foreign) {
+
+  private static <T extends PsiElement> T asPsi(StubBase<T> stub, PsiFileWithStubSupport file, StubTree tree, boolean foreign) {
     if (foreign) {
-      final PsiClass cachedPsi = ((PsiClassStubImpl<?>)stub).getCachedPsi();
+      final T cachedPsi = (stub).getCachedPsi();
       if (cachedPsi != null) return cachedPsi;
 
       final ASTNode ast = file.findTreeForStub(tree, stub);
-      return ast != null ? (PsiClass)ast.getPsi() : null;
+      return ast != null ? (T)ast.getPsi() : null;
     }
     return stub.getPsi();
   }
@@ -154,9 +108,9 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
     return false;
   }
 
-  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull Collection<String> internalNames, @NotNull PsiNamedElement baseClass) {
+  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull String[] internalNames, @NotNull PsiNamedElement baseClass) {
     boolean matcherBySuperNameAdded = false;
-    final List<InternalClassMatcher> matchers = new ArrayList<>(internalNames.size());
+    final List<InternalClassMatcher> matchers = new ArrayList<>(internalNames.length);
     for (String internalName : internalNames) {
       int curLast = internalName.length() - 1;
       while (true) {

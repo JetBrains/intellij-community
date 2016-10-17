@@ -26,8 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.Stream;
-
 public abstract class CompilerReferenceService extends AbstractProjectComponent {
   public static final RegistryValue IS_ENABLED_KEY = Registry.get("bytecode.ref.index");
 
@@ -40,37 +38,21 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   }
 
   @Nullable
-  public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter);
+  public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
 
   @Nullable
-  public abstract <T extends PsiNamedElement> CompilerDirectInheritorInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                                                 @NotNull GlobalSearchScope useScope,
-                                                                                                 @NotNull GlobalSearchScope searchScope,
-                                                                                                 @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
-                                                                                                 @NotNull FileType searchFileType);
+  public abstract <T extends PsiElement> CompilerDirectHierarchyInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                                            @NotNull GlobalSearchScope useScope,
+                                                                                            @NotNull GlobalSearchScope searchScope,
+                                                                                            @NotNull FileType searchFileType);
 
+  @Nullable
+  public abstract <T extends PsiElement> CompilerDirectHierarchyInfo<T> getFunExpressions(@NotNull PsiNamedElement functionalInterface,
+                                                                                          @NotNull GlobalSearchScope useScope,
+                                                                                          @NotNull GlobalSearchScope searchScope,
+                                                                                          @NotNull FileType searchFileType);
 
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
-  }
-
-  public interface CompilerDirectInheritorInfo<T extends PsiNamedElement> {
-    /**
-     * Can be used as direct inheritors without explicit inheritance verification
-     */
-    @NotNull
-    Stream<T> getDirectInheritors();
-
-    /**
-     * Must be explicitly checked do they are really direct inheritors
-     */
-    @NotNull
-    Stream<T> getDirectInheritorCandidates();
-
-    /**
-     * A scope where compiler based index search was not performed
-     */
-    @NotNull
-    GlobalSearchScope getDirtyScope();
   }
 }

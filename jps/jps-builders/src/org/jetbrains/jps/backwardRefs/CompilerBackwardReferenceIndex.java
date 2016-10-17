@@ -45,14 +45,14 @@ public class CompilerBackwardReferenceIndex {
   private final static String BACK_CLASS_DEF_TAB = "back.class.def.tab";
   public static final String VERSION_FILE = ".version";
 
-  private final IntObjectPersistentMultiMaplet<LightUsage> myReferenceMap;
-  private final ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage> myHierarchyMap;
+  private final IntObjectPersistentMultiMaplet<LightRef> myReferenceMap;
+  private final ObjectObjectPersistentMultiMaplet<LightDefinition, LightRef> myHierarchyMap;
 
-  private final ObjectObjectPersistentMultiMaplet<LightUsage, Integer> myBackwardReferenceMap;
-  private final ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition> myBackwardHierarchyMap;
+  private final ObjectObjectPersistentMultiMaplet<LightRef, Integer> myBackwardReferenceMap;
+  private final ObjectObjectPersistentMultiMaplet<LightRef, LightDefinition> myBackwardHierarchyMap;
 
-  private final ObjectObjectPersistentMultiMaplet<LightUsage, Integer> myBackwardClassDefinitionMap;
-  private final IntObjectPersistentMultiMaplet<LightUsage> myClassDefinitionMap;
+  private final ObjectObjectPersistentMultiMaplet<LightRef, Integer> myBackwardClassDefinitionMap;
+  private final IntObjectPersistentMultiMaplet<LightRef> myClassDefinitionMap;
 
   private final ByteArrayEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
@@ -76,22 +76,22 @@ public class CompilerBackwardReferenceIndex {
         }
       };
 
-      final KeyDescriptor<LightUsage> lightUsageDescriptor = LightUsage.createDescriptor();
+      final KeyDescriptor<LightRef> lightUsageDescriptor = new LightRefDescriptor();
       final KeyDescriptor<LightDefinition> defDescriptor = LightDefinition.createDescriptor(lightUsageDescriptor);
 
-      myBackwardReferenceMap = new ObjectObjectPersistentMultiMaplet<LightUsage, Integer>(new File(myIndicesDir, BACK_USAGES_TAB),
-                                                                                          lightUsageDescriptor,
-                                                                                          EnumeratorIntegerDescriptor.INSTANCE,
-                                                                                          new CollectionFactory<Integer>() {
+      myBackwardReferenceMap = new ObjectObjectPersistentMultiMaplet<LightRef, Integer>(new File(myIndicesDir, BACK_USAGES_TAB),
+                                                                                        lightUsageDescriptor,
+                                                                                        EnumeratorIntegerDescriptor.INSTANCE,
+                                                                                        new CollectionFactory<Integer>() {
                                                                                         @Override
                                                                                         public Collection<Integer> create() {
                                                                                           return new THashSet<Integer>();
                                                                                         }
                                                                                       });
-      myBackwardHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition>(new File(myIndicesDir, BACK_HIERARCHY_TAB),
-                                                                                                  lightUsageDescriptor,
-                                                                                                  defDescriptor,
-                                                                                                  new CollectionFactory<LightDefinition>() {
+      myBackwardHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightRef, LightDefinition>(new File(myIndicesDir, BACK_HIERARCHY_TAB),
+                                                                                                lightUsageDescriptor,
+                                                                                                defDescriptor,
+                                                                                                new CollectionFactory<LightDefinition>() {
                                                                        @Override
                                                                        public Collection<LightDefinition> create() {
                                                                          return new THashSet<LightDefinition>();
@@ -99,38 +99,38 @@ public class CompilerBackwardReferenceIndex {
                                                                      });
 
 
-      myReferenceMap = new IntObjectPersistentMultiMaplet<LightUsage>(new File(myIndicesDir, USAGES_TAB),
-                                                                      EnumeratorIntegerDescriptor.INSTANCE,
-                                                                      lightUsageDescriptor, new CollectionFactory<LightUsage>() {
+      myReferenceMap = new IntObjectPersistentMultiMaplet<LightRef>(new File(myIndicesDir, USAGES_TAB),
+                                                                    EnumeratorIntegerDescriptor.INSTANCE,
+                                                                    lightUsageDescriptor, new CollectionFactory<LightRef>() {
         @Override
-        public Collection<LightUsage> create() {
-          return new THashSet<LightUsage>();
+        public Collection<LightRef> create() {
+          return new THashSet<LightRef>();
         }
       });
-      myHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage>(new File(myIndicesDir, HIERARCHY_TAB),
-                                                                                     defDescriptor,
-                                                                                     lightUsageDescriptor,
-                                                                                     new CollectionFactory<LightUsage>() {
+      myHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightDefinition, LightRef>(new File(myIndicesDir, HIERARCHY_TAB),
+                                                                                        defDescriptor,
+                                                                                        lightUsageDescriptor,
+                                                                                        new CollectionFactory<LightRef>() {
                                                                                        @Override
-                                                                                       public Collection<LightUsage> create() {
-                                                                                         return new THashSet<LightUsage>();
+                                                                                       public Collection<LightRef> create() {
+                                                                                         return new THashSet<LightRef>();
                                                                                        }
                                                                                      });
 
-      myClassDefinitionMap = new IntObjectPersistentMultiMaplet<LightUsage>(new File(myIndicesDir, CLASS_DEF_TAB),
-                                                                            EnumeratorIntegerDescriptor.INSTANCE,
-                                                                            lightUsageDescriptor,
-                                                                            new CollectionFactory<LightUsage>() {
+      myClassDefinitionMap = new IntObjectPersistentMultiMaplet<LightRef>(new File(myIndicesDir, CLASS_DEF_TAB),
+                                                                          EnumeratorIntegerDescriptor.INSTANCE,
+                                                                          lightUsageDescriptor,
+                                                                          new CollectionFactory<LightRef>() {
                                                                                     @Override
-                                                                                    public Collection<LightUsage> create() {
-                                                                                      return new THashSet<LightUsage>();
+                                                                                    public Collection<LightRef> create() {
+                                                                                      return new THashSet<LightRef>();
                                                                                     }
                                                                                   });
 
-      myBackwardClassDefinitionMap = new ObjectObjectPersistentMultiMaplet<LightUsage, Integer>(new File(myIndicesDir, BACK_CLASS_DEF_TAB),
-                                                                                                lightUsageDescriptor,
-                                                                                                EnumeratorIntegerDescriptor.INSTANCE,
-                                                                                                new CollectionFactory<Integer>() {
+      myBackwardClassDefinitionMap = new ObjectObjectPersistentMultiMaplet<LightRef, Integer>(new File(myIndicesDir, BACK_CLASS_DEF_TAB),
+                                                                                              lightUsageDescriptor,
+                                                                                              EnumeratorIntegerDescriptor.INSTANCE,
+                                                                                              new CollectionFactory<Integer>() {
                                                                                                         @Override
                                                                                                         public Collection<Integer> create() {
                                                                                                           return new THashSet<Integer>();
@@ -146,32 +146,32 @@ public class CompilerBackwardReferenceIndex {
   }
 
   @NotNull
-  public ObjectObjectPersistentMultiMaplet<LightUsage, Integer> getBackwardReferenceMap() {
+  public ObjectObjectPersistentMultiMaplet<LightRef, Integer> getBackwardReferenceMap() {
     return myBackwardReferenceMap;
   }
 
   @NotNull
-  public ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition> getBackwardHierarchyMap() {
+  public ObjectObjectPersistentMultiMaplet<LightRef, LightDefinition> getBackwardHierarchyMap() {
     return myBackwardHierarchyMap;
   }
 
   @NotNull
-  public IntObjectPersistentMultiMaplet<LightUsage> getReferenceMap() {
+  public IntObjectPersistentMultiMaplet<LightRef> getReferenceMap() {
     return myReferenceMap;
   }
 
   @NotNull
-  public ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage> getHierarchyMap() {
+  public ObjectObjectPersistentMultiMaplet<LightDefinition, LightRef> getHierarchyMap() {
     return myHierarchyMap;
   }
 
   @NotNull
-  public ObjectObjectPersistentMultiMaplet<LightUsage, Integer> getBackwardClassDefinitionMap() {
+  public ObjectObjectPersistentMultiMaplet<LightRef, Integer> getBackwardClassDefinitionMap() {
     return myBackwardClassDefinitionMap;
   }
 
   @NotNull
-  public IntObjectPersistentMultiMaplet<LightUsage> getClassDefinitionMap() {
+  public IntObjectPersistentMultiMaplet<LightRef> getClassDefinitionMap() {
     return myClassDefinitionMap;
   }
 
@@ -247,15 +247,15 @@ public class CompilerBackwardReferenceIndex {
   }
 
   public static class LightDefinition {
-    private final LightUsage myUsage;
+    private final LightRef myUsage;
     private final int myFileId;
 
-    LightDefinition(LightUsage usage, int id) {
+    LightDefinition(LightRef usage, int id) {
       myUsage = usage;
       myFileId = id;
     }
 
-    public LightUsage getUsage() {
+    public LightRef getRef() {
       return myUsage;
     }
 
@@ -281,7 +281,7 @@ public class CompilerBackwardReferenceIndex {
       return myUsage.hashCode();
     }
 
-    private static KeyDescriptor<LightDefinition> createDescriptor(final DataExternalizer<LightUsage> usageDataExternalizer) {
+    private static KeyDescriptor<LightDefinition> createDescriptor(final DataExternalizer<LightRef> usageDataExternalizer) {
       return new KeyDescriptor<LightDefinition>() {
         @Override
         public int getHashCode(LightDefinition value) {
@@ -295,7 +295,7 @@ public class CompilerBackwardReferenceIndex {
 
         @Override
         public void save(@NotNull DataOutput out, LightDefinition value) throws IOException {
-          usageDataExternalizer.save(out, value.getUsage());
+          usageDataExternalizer.save(out, value.getRef());
           EnumeratorIntegerDescriptor.INSTANCE.save(out, value.getFileId());
         }
 

@@ -15,7 +15,9 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.*;
+import com.sun.tools.javac.util.Convert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -64,6 +66,15 @@ public class ByteArrayEnumerator extends PersistentEnumeratorDelegate<byte[]> {
     if (myCache != null) myCache.close();
   }
 
+  @NotNull
+  public String getName(int idx) {
+    try {
+      return Convert.utf2string(ObjectUtils.notNull(valueOf(idx)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   private static class ByteSequenceDataExternalizer implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
     private static final ByteSequenceDataExternalizer INSTANCE = new ByteSequenceDataExternalizer();

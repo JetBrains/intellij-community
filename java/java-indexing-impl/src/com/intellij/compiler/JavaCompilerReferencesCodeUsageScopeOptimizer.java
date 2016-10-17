@@ -25,6 +25,6 @@ public class JavaCompilerReferencesCodeUsageScopeOptimizer implements ScopeOptim
   @Nullable
   @Override
   public GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
-    return CompilerReferenceService.getInstance(element.getProject()).getScopeWithoutCodeReferences(element, JavaBaseCompilerSearchAdapter.INSTANCE);
+    return CompilerReferenceService.getInstance(element.getProject()).getScopeWithoutCodeReferences(element);
   }
 }

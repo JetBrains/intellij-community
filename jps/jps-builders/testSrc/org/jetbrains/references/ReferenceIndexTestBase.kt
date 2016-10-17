@@ -17,14 +17,13 @@ package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.PersistentStringEnumerator
 import com.sun.tools.javac.util.Convert
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
-import org.jetbrains.jps.backwardRefs.LightUsage
+import org.jetbrains.jps.backwardRefs.LightRef
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
@@ -135,15 +134,14 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(byteArrayEnumerator.valueOf(this))
 
-  private fun CompilerBackwardReferenceIndex.LightDefinition.asText(byteArrayEnumerator: ByteArrayEnumerator) = this.usage.asText(byteArrayEnumerator)
+  private fun CompilerBackwardReferenceIndex.LightDefinition.asText(byteArrayEnumerator: ByteArrayEnumerator) = this.ref.asText(byteArrayEnumerator)
 
-  private fun LightUsage.asText(byteArrayEnumerator: ByteArrayEnumerator): String =
+  private fun LightRef.asText(byteArrayEnumerator: ByteArrayEnumerator): String =
       when (this) {
-        is LightUsage.LightMethodUsage -> this.owner.name.asName(byteArrayEnumerator) + "." + this.name.asName(
-            byteArrayEnumerator) + "(" + this.parameterCount + ")"
-        is LightUsage.LightFieldUsage -> this.owner.name.asName(byteArrayEnumerator) + "." + this.name.asName(byteArrayEnumerator)
-        is LightUsage.LightClassUsage -> this.name.asName(byteArrayEnumerator)
-        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.name.asName(byteArrayEnumerator) + ")"
+        is LightRef.JavaLightMethodRef -> "${this.owner.name.asName(byteArrayEnumerator)}.${this.name.asName(byteArrayEnumerator)}(${this.parameterCount})"
+        is LightRef.JavaLightFieldRef -> "${this.owner.name.asName(byteArrayEnumerator)}.${this.name.asName(byteArrayEnumerator)}"
+        is LightRef.JavaLightClassRef -> this.name.asName(byteArrayEnumerator)
+        is LightRef.JavaLightFunExprDef -> "fun_expr(id=${this.id})"
         else -> throw UnsupportedOperationException()
       }
 

@@ -16,16 +16,30 @@
 package com.intellij.compiler;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public interface CompilerSearchAdapter {
+import java.util.stream.Stream;
 
-  boolean needOverrideElement();
-
-  @Nullable
-  CompilerElement asCompilerElement(@NotNull PsiElement psi);
-
+/**
+ * represents search result for functional expressions or inheritance hierarchy of given interface/class
+ */
+public interface CompilerDirectHierarchyInfo<T extends PsiElement> {
+  /**
+   * Can be used as direct hierarchy children without explicit inheritance verification
+   */
   @NotNull
-  CompilerElement[] getHierarchyRestrictedToLibrariesScope(@NotNull CompilerElement baseLibraryElement, @NotNull PsiElement baseLibraryPsi);
+  Stream<T> getHierarchyChildren();
+
+  /**
+   * Must be explicitly checked do they are really direct children in hierarchy of classes or functional expressions
+   */
+  @NotNull
+  Stream<T> getHierarchyChildCandidates();
+
+  /**
+   * A scope where compiler based index search was not performed
+   */
+  @NotNull
+  GlobalSearchScope getDirtyScope();
 }

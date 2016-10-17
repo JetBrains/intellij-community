@@ -15,30 +15,28 @@
  */
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.ClassResolvingCompilerSearchAdapter;
-import com.intellij.compiler.CompilerElement;
-import com.intellij.compiler.CompilerSearchAdapter;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
-import com.sun.tools.javac.util.Convert;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
-import org.jetbrains.jps.backwardRefs.LightUsage;
+import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +45,6 @@ import java.util.*;
 import static java.util.stream.Collectors.*;
 
 class CompilerReferenceReader {
-  private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
-
   private final CompilerBackwardReferenceIndex myIndex;
 
   private CompilerReferenceReader(File buildDir) throws IOException {
@@ -56,21 +52,16 @@ class CompilerReferenceReader {
   }
 
   @Nullable
-  TIntHashSet findReferentFileIds(@NotNull CompilerElement element,
-                                         @NotNull CompilerSearchAdapter adapter,
-                                         boolean checkBaseClassAmbiguity) {
-    LightUsage usage = asLightUsage(element);
-
+  TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) {
+    LightRef.LightClassHierarchyElementDef hierarchyElement = ref instanceof LightRef.LightClassHierarchyElementDef ?
+                                                              (LightRef.LightClassHierarchyElementDef)ref :
+                                                              ((LightRef.LightMember)ref).getOwner();
     TIntHashSet set = new TIntHashSet();
-    if (adapter.needOverrideElement()) {
-      final LightUsage[] hierarchy = getWholeHierarchy(usage.getOwner(), checkBaseClassAmbiguity);
-      if (hierarchy == null) return null;
-      for (LightUsage aClass : hierarchy) {
-        final LightUsage overriderUsage = usage.override(aClass);
-        addUsages(overriderUsage, set);
-      }
-    } else {
-      addUsages(usage, set);
+    final LightRef.NamedLightRef[] hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    if (hierarchy == null) return null;
+    for (LightRef.NamedLightRef aClass : hierarchy) {
+      final LightRef overriderUsage = aClass.override(aClass.getName());
+      addUsages(overriderUsage, set);
     }
     return set;
   }
@@ -82,54 +73,61 @@ class CompilerReferenceReader {
    * 2nd map: candidates. One need to check that these classes are really direct inheritors
    */
   @Nullable
-  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement baseClass,
-                                                                                @Nullable CompilerReferenceServiceImpl.CompilerElementInfo classSearchElementInfo,
-                                                                                @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
-                                                                                @NotNull GlobalSearchScope searchScope,
-                                                                                @NotNull GlobalSearchScope dirtyScope,
-                                                                                @NotNull Project project,
-                                                                                @NotNull FileType fileType) {
-    if (classSearchElementInfo == null) return null;
-    LOG.assertTrue(classSearchElementInfo.searchElements.length == 1);
-
-    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates = myIndex.getBackwardHierarchyMap().get(asLightUsage(classSearchElementInfo.searchElements[0]));
+  <T extends PsiElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement baseClass,
+                                                                           @NotNull LightRef searchElement,
+                                                                           @NotNull GlobalSearchScope searchScope,
+                                                                           @NotNull GlobalSearchScope dirtyScope,
+                                                                           @NotNull Project project,
+                                                                           @NotNull FileType fileType,
+                                                                           @NotNull CompilerHierarchySearchType searchType) {
+    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates = myIndex.getBackwardHierarchyMap().get(searchElement);
     if (candidates == null) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
-    Set<Class<? extends LightUsage>> suitableClasses = new THashSet<>();
-    for (LanguageLightUsageConverter converter : LanguageLightUsageConverter.INSTANCES) {
-      if (fileType == converter.getFileSourceType()) {
-        suitableClasses.addAll(converter.getLanguageLightUsageClasses());
-        break;
-      }
-    }
-
-    final GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
-
-    Map<VirtualFile, SmartList<String>> candidatesPerFile = candidates
+    GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
+    LanguageLightRefAdapter adapter = CompilerReferenceServiceImpl.findAdapterForFileType(fileType);
+    Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
+    Map<VirtualFile, List<LightRef>> candidatesPerFile = candidates
       .stream()
-      .filter(def -> suitableClasses.contains(def.getUsage().getClass()))
+      .filter(def -> requiredLightRefClass.isInstance(def.getRef()))
       .map(definition -> {
         final VirtualFile file = findFile(definition.getFileId());
-        return file != null && effectiveSearchScope.contains(file) ? new DecodedInheritorCandidate(getName(definition), file) : null;
+        if (file != null && effectiveSearchScope.contains(file)) {
+          return new Object() {
+            final VirtualFile containingFile = file;
+            final LightRef def = definition.getRef();
+          };
+        }
+        else {
+          return null;
+        }
       })
       .filter(Objects::nonNull)
-      .collect(groupingBy(DecodedInheritorCandidate::getDeclarationFile, mapping(DecodedInheritorCandidate::getQName, toCollection(SmartList::new))));
+      .collect(groupingBy(x -> x.containingFile, mapping(x -> x.def, toList())));
 
     if (candidatesPerFile.isEmpty()) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
     Map<VirtualFile, T[]> inheritors = new THashMap<>(candidatesPerFile.size());
     Map<VirtualFile, T[]> inheritorCandidates = new THashMap<>();
 
-    candidatesPerFile.forEach((file, directInheritors) -> {
-      final T[] currInheritors = inheritorSearchAdapter.getCandidatesFromFile(directInheritors, baseClass, file, project);
+    final PsiManager psiManager = ReadAction.compute(() -> PsiManager.getInstance(project));
+
+    candidatesPerFile.forEach((file, directInheritors) -> ReadAction.run(() -> {
+      final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)ReadAction.compute(() -> psiManager.findFile(file));
+      final T[] currInheritors = searchType.performSearchInFile(directInheritors, baseClass, myIndex.getByteSeqEum(), psiFile, adapter);
       if (currInheritors.length == directInheritors.size()) {
         inheritors.put(file, currInheritors);
-      } else {
+      }
+      else {
         inheritorCandidates.put(file, currInheritors);
       }
-    });
+    }));
 
     return Couple.of(inheritors, inheritorCandidates);
+  }
+
+  @NotNull
+  ByteArrayEnumerator getNameEnumerator() {
+    return myIndex.getByteSeqEum();
   }
 
   void close() {
@@ -149,7 +147,7 @@ class CompilerReferenceReader {
     }
   }
 
-  private void addUsages(LightUsage usage, TIntHashSet sink) {
+  private void addUsages(LightRef usage, TIntHashSet sink) {
     final Collection<Integer> usageFiles = myIndex.getBackwardReferenceMap().get(usage);
     if (usageFiles != null) {
       for (int fileId : usageFiles) {
@@ -159,19 +157,6 @@ class CompilerReferenceReader {
         }
       }
     }
-  }
-
-  @NotNull
-  private LightUsage asLightUsage(@NotNull CompilerElement element) {
-    LightUsage usage = null;
-    for (LanguageLightUsageConverter converter : LanguageLightUsageConverter.INSTANCES) {
-      usage = converter.asLightUsage(element, myIndex.getByteSeqEum());
-      if (usage != null) {
-        break;
-      }
-    }
-    LOG.assertTrue(usage != null);
-    return usage;
   }
 
   private VirtualFile findFile(int id) {
@@ -186,14 +171,14 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  private LightUsage[] getWholeHierarchy(LightUsage aClass, boolean checkBaseClassAmbiguity) {
-    Set<LightUsage> result = new THashSet<>();
-    Queue<LightUsage> q = new Queue<>(10);
-    q.addLast(aClass);
+  private LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity) {
+    Set<LightRef.NamedLightRef> result = new THashSet<>();
+    Queue<LightRef.NamedLightRef> q = new Queue<>(10);
+    q.addLast(hierarchyElement);
     while (!q.isEmpty()) {
-      LightUsage curClass = q.pullFirst();
+      LightRef.NamedLightRef curClass = q.pullFirst();
       if (result.add(curClass)) {
-        if (checkBaseClassAmbiguity || curClass != aClass) {
+        if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
           final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
           if (definitionFiles.size() != 1) {
             return null;
@@ -202,39 +187,14 @@ class CompilerReferenceReader {
         final Collection<CompilerBackwardReferenceIndex.LightDefinition> subClassDefs = myIndex.getBackwardHierarchyMap().get(curClass);
         if (subClassDefs != null) {
           for (CompilerBackwardReferenceIndex.LightDefinition subclass : subClassDefs) {
-            q.addLast(subclass.getUsage());
+            final LightRef ref = subclass.getRef();
+            if (ref instanceof LightRef.LightClassHierarchyElementDef) {
+              q.addLast((LightRef.LightClassHierarchyElementDef) ref);
+            }
           }
         }
       }
     }
-    return result.toArray(new LightUsage[result.size()]);
-  }
-
-  @NotNull
-  private String getName(CompilerBackwardReferenceIndex.LightDefinition def) {
-    try {
-      return Convert.utf2string(ObjectUtils.notNull(myIndex.getByteSeqEum().valueOf(def.getUsage().getName())));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static class DecodedInheritorCandidate {
-    private final String qName;
-    private final VirtualFile declarationFile;
-
-    private DecodedInheritorCandidate(String name, VirtualFile file) {
-      qName = name;
-      declarationFile = file;
-    }
-
-    public VirtualFile getDeclarationFile() {
-      return declarationFile;
-    }
-
-    public String getQName() {
-      return qName;
-    }
+    return result.toArray(new LightRef.NamedLightRef[result.size()]);
   }
 }

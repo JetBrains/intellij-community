@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.JavaBaseCompilerSearchAdapter;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -76,10 +76,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     SearchScope scope = parameters.getScope();
 
-    CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> info = performSearchUsingCompilerIndices(parameters, scope, project);
+    CompilerDirectHierarchyInfo<PsiClass> info = performSearchUsingCompilerIndices(parameters, scope, project);
     if (info != null) {
-      if (!processInheritorCandidates(info.getDirectInheritors(), consumer, parameters.includeAnonymous(), false, baseClass)) return false;
-      if (!processInheritorCandidates(info.getDirectInheritorCandidates(), consumer, parameters.includeAnonymous(), true, baseClass)) return false;
+      if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous(), false, baseClass)) return false;
+      if (!processInheritorCandidates(info.getHierarchyChildCandidates(), consumer, parameters.includeAnonymous(), true, baseClass)) return false;
       scope = scope.intersectWith(info.getDirtyScope());
       useScope = useScope.intersectWith(info.getDirtyScope());
     }
@@ -274,9 +274,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
   }
 
-  private static CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                                                                  @NotNull SearchScope useScope,
-                                                                                                                  @NotNull Project project) {
+  private static CompilerDirectHierarchyInfo<PsiClass> performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                                                         @NotNull SearchScope useScope,
+                                                                                         @NotNull Project project) {
     if (!(useScope instanceof GlobalSearchScope)) return null;
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
@@ -286,7 +286,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return compilerReferenceService.getDirectInheritors(searchClass,
                                                         (GlobalSearchScope)useScope,
                                                         (GlobalSearchScope)scope,
-                                                        JavaBaseCompilerSearchAdapter.INSTANCE,
                                                         JavaFileType.INSTANCE);
   }
 
