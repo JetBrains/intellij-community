@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotati
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrNameValuePairStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
+import java.lang.ref.Reference;
 import java.util.List;
 
 public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValuePairStub>
@@ -95,6 +97,34 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
+  }
+
+  private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
+
+  @Override
+  @Nullable
+  public PsiAnnotationMemberValue getDetachedValue() {
+    GrNameValuePairStub stub = getGreenStub();
+    if (stub != null) {
+      String text = stub.getValue();
+      PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
+      if (result == null) {
+        GrAnnotation annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(
+          "@F(" + text + ")", this
+        );
+        PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
+        myDetachedValue = new SoftReference<>(result = value);
+      }
+      return result;
+    }
+
+    return getValue();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myDetachedValue = null;
   }
 
   @Override
