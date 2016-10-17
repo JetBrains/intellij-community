@@ -46,6 +46,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
 
   @Override
   public void cleanAll() {
+    myVcsIgnoredHolderMap.values().forEach(IgnoredFilesHolder::cleanAll);
     myVcsIgnoredHolderMap.clear();
     myIdeIgnoredFilesHolder.cleanAll();
   }
@@ -97,7 +98,8 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   public Collection<VirtualFile> values() {
     final HashSet<VirtualFile> result = ContainerUtil.newHashSet();
     result.addAll(myIdeIgnoredFilesHolder.values());
-    result.addAll(myVcsIgnoredHolderMap.values().stream().map(IgnoredFilesHolder::values).flatMap(set -> set.stream()).collect(Collectors.toSet()));
+    result.addAll(
+      myVcsIgnoredHolderMap.values().stream().map(IgnoredFilesHolder::values).flatMap(set -> set.stream()).collect(Collectors.toSet()));
     return result;
   }
 

@@ -16,6 +16,7 @@
 
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.ChangesViewI;
+import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +68,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myConfig = HgConfig.getInstance(getProject(), rootDir);
     myLocalIgnoredHolder = new HgLocalIgnoredHolder(this);
     Disposer.register(this, myLocalIgnoredHolder);
+    myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
     update();
   }
 
@@ -264,5 +268,23 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Override
   public HgLocalIgnoredHolder getLocalIgnoredHolder() {
     return myLocalIgnoredHolder;
+  }
+
+  private static class MyIgnoredHolderAsyncListener implements AsyncFilesManagerListener {
+    @NotNull private final ChangesViewI myChangesViewI;
+
+    public MyIgnoredHolderAsyncListener(@NotNull Project project) {
+      myChangesViewI = ChangesViewManager.getInstance(project);
+    }
+
+    @Override
+    public void updateStarted() {
+      myChangesViewI.scheduleRefresh();
+    }
+
+    @Override
+    public void updateFinished() {
+      myChangesViewI.scheduleRefresh();
+    }
   }
 }

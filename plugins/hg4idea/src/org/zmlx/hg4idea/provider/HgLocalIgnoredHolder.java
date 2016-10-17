@@ -15,12 +15,14 @@
  */
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -43,13 +45,17 @@ public class HgLocalIgnoredHolder implements Disposable {
   @NotNull private final HgRepository myRepository;
   @NotNull private final Set<VirtualFile> myIgnoredSet;
   @NotNull private final ReentrantReadWriteLock SET_LOCK = new ReentrantReadWriteLock();
-
+  private final EventDispatcher<AsyncFilesManagerListener> myListeners = EventDispatcher.create(AsyncFilesManagerListener.class);
 
   public HgLocalIgnoredHolder(@NotNull HgRepository repository) {
     myRepository = repository;
     myIgnoredSet = ContainerUtil.newHashSet();
     myInUpdateMode = new AtomicBoolean(false);
     myUpdateQueue = new MergingUpdateQueue("HgIgnoreUpdate", 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+  }
+
+  public void addUpdateStateListener(@NotNull AsyncFilesManagerListener listener) {
+    myListeners.addListener(listener, this);
   }
 
   public void startRescan() {
@@ -62,11 +68,21 @@ public class HgLocalIgnoredHolder implements Disposable {
       @Override
       public void run() {
         if (myInUpdateMode.compareAndSet(false, true)) {
+          fireUpdateStarted();
           rescanAllIgnored();
           myInUpdateMode.set(false);
+          fireUpdateFinished();
         }
       }
     });
+  }
+
+  private void fireUpdateStarted() {
+    myListeners.getMulticaster().updateStarted();
+  }
+
+  private void fireUpdateFinished() {
+    myListeners.getMulticaster().updateFinished();
   }
 
   private void rescanAllIgnored() {
