@@ -205,6 +205,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
   }
 
+  public void testBrokenFormattingWithInValidation() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("bool");
+      }
+    });
+  }
+
   public void testStopEditing() {
     doTestStopEditing(new Pass<AbstractInplaceIntroducer>() {
       @Override
