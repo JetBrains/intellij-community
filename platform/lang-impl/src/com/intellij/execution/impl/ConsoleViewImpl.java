@@ -1133,7 +1133,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         toAdd.add(region);
         return;
       }
-      current = foldingForLine(EditorHyperlinkSupport.getLineText(document, line, false));
+      String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
+      current = foldingForLine(lineText);
       if (current != null) {
         myFolding.put(line, current);
       }
@@ -1167,7 +1168,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Nullable
-  private static ConsoleFolding foldingForLine(String lineText) {
+  private static ConsoleFolding foldingForLine(@NotNull String lineText) {
     for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
       if (folding.shouldFoldLine(lineText)) {
         return folding;
@@ -1832,12 +1833,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Override
-    public boolean shouldFoldLine(String line) {
+    public boolean shouldFoldLine(@NotNull String line) {
       return false;
     }
 
     @Override
-    public String getPlaceholderText(List<String> lines) {
+    public String getPlaceholderText(@NotNull List<String> lines) {
       // Is not expected to be called.
       return "<...>";
     }
