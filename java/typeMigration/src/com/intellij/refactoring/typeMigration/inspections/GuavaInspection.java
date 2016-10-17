@@ -60,7 +60,6 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   public boolean checkReturnTypes = true;
   public boolean ignoreJavaxNullable = true;
 
-  @SuppressWarnings("Duplicates")
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
