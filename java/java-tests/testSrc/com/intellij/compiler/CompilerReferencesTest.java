@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;

@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
+import com.intellij.compiler.ClassResolvingCompilerSearchAdapter;
+import com.intellij.compiler.CompilerElement;
+import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.CompilerSearchAdapter;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -243,7 +246,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    return isServiceEnabled() && InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
+    return isServiceEnabled() && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
   }
 
   private boolean isServiceEnabled() {

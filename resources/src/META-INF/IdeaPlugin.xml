@@ -77,7 +77,7 @@
 
     <component>
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
-      <implementation-class>com.intellij.compiler.CompilerReferenceServiceImpl</implementation-class>
+      <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
   </project-components>
 

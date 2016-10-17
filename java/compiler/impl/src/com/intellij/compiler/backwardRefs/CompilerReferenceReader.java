@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
+import com.intellij.compiler.ClassResolvingCompilerSearchAdapter;
+import com.intellij.compiler.CompilerElement;
+import com.intellij.compiler.CompilerSearchAdapter;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,7 +30,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.sun.tools.javac.util.Convert;
 import gnu.trove.THashMap;
@@ -42,7 +43,6 @@ import org.jetbrains.jps.backwardRefs.LightUsage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
