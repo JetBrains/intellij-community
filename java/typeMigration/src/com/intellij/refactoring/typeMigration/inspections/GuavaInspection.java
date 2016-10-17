@@ -33,7 +33,6 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.*;
-import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,18 +49,11 @@ import java.util.*;
  */
 @SuppressWarnings("DialogTitleCapitalization")
 public class GuavaInspection extends BaseJavaLocalInspectionTool {
-  //public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
+  private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
 
   public final static String PROBLEM_DESCRIPTION = "Guava's functional primitives can be replaced by Java API";
 
-  private final static SoftLazyValue<Set<String>> FLUENT_ITERABLE_STOP_METHODS = new SoftLazyValue<Set<String>>() {
-    @NotNull
-    @Override
-    protected Set<String> compute() {
-      return ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
-    }
-  };
 
   public boolean checkVariables = true;
   public boolean checkChains = true;
@@ -203,8 +195,6 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         return null;
       }
 
-      ;
-
       private PsiType wrapAsArray(PsiArrayType initial, PsiType created) {
         PsiArrayType result = new PsiArrayType(created);
         while (initial.getComponentType() instanceof PsiArrayType) {
@@ -233,7 +223,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
             if (method == null) {
               return chain;
             }
-            if (FLUENT_ITERABLE_STOP_METHODS.getValue().contains(method.getName())) {
+            if (FLUENT_ITERABLE_STOP_METHODS.contains(method.getName())) {
               return null;
             }
             final PsiClass containingClass = method.getContainingClass();
