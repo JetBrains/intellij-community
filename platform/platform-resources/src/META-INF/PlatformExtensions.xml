@@ -305,7 +305,6 @@
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
-    <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
@@ -334,8 +333,6 @@
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
-
-    <projectService serviceImplementation="com.intellij.ui.switcher.SwitchManager"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
