@@ -119,8 +119,8 @@ public class GitTask {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
-        @Override public void onError(@NotNull Exception error) {
-          super.onError(error);
+        @Override public void onThrowable(@NotNull Throwable error) {
+          super.onThrowable(error);
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }

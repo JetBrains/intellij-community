@@ -89,7 +89,7 @@ public class JavadocQuarantineStatusCleaner {
       }
 
       @Override
-      public void onError(@NotNull Exception error) {
+      public void onThrowable(@NotNull Throwable error) {
         LOG.warn(error);
         new Notification(ApplicationBundle.message("quarantine.error.group"),
                          ApplicationBundle.message("quarantine.error.title"),

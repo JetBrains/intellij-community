@@ -1736,8 +1736,8 @@ public abstract class ChooseByNameBase {
           }
 
           @Override
-          public void onError(@NotNull Exception error) {
-            super.onError(error);
+          public void onThrowable(@NotNull Throwable error) {
+            super.onThrowable(error);
             myCalcUsagesThread.cancel();
           }
         });
