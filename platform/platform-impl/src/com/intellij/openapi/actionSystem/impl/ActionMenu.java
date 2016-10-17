@@ -33,6 +33,7 @@ import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -165,12 +166,12 @@ public final class ActionMenu extends JBMenu {
 
     if (myTopLevel && UIUtil.isUnderGTKLookAndFeel()) {
       Insets insets = getInsets();
-      Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
-      if (insets.top + insets.bottom < 6) {
-        newInsets.top = newInsets.bottom = 3;
+      @SuppressWarnings("UseDPIAwareInsets") Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top + insets.bottom < JBUI.scale(6)) {
+        newInsets.top = newInsets.bottom = JBUI.scale(3);
       }
-      if (insets.left + insets.right < 12) {
-        newInsets.left = newInsets.right = 6;
+      if (insets.left + insets.right < JBUI.scale(12)) {
+        newInsets.left = newInsets.right = JBUI.scale(6);
       }
       if (!newInsets.equals(insets)) {
         setBorder(BorderFactory.createEmptyBorder(newInsets.top, newInsets.left, newInsets.bottom, newInsets.right));
