@@ -32,14 +32,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Batkovich
  */
-public class ReplaceWithMapPutIfAbsentFix implements LocalQuickFix {
+public class ReplaceConditionalMapPutFix implements LocalQuickFix {
+  private static final String COMPUTE_IF_ABSENT_METHOD = "computeIfAbsent";
+  private static final String PUT_IF_ABSENT_METHOD = "putIfAbsent";
+
   private final SmartPsiElementPointer<PsiMethodCallExpression> myPutExpressionPointer;
   private final String myMethodName;
 
-  public ReplaceWithMapPutIfAbsentFix(PsiMethodCallExpression putExpression, String methodName) {
+  public ReplaceConditionalMapPutFix(PsiMethodCallExpression putExpression, boolean useComputeIfAbsent) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(putExpression.getProject());
     myPutExpressionPointer = smartPointerManager.createSmartPsiElementPointer(putExpression);
-    myMethodName = methodName; // either "putIfAbsent" or "computeIfAbsent"
+    myMethodName = useComputeIfAbsent ? COMPUTE_IF_ABSENT_METHOD : PUT_IF_ABSENT_METHOD;
   }
 
   @Override
@@ -74,7 +77,7 @@ public class ReplaceWithMapPutIfAbsentFix implements LocalQuickFix {
     final Couple<String> boundText = getBoundText(putContainingElement, putExpression);
 
     String valueArgument = putExpression.getArgumentList().getExpressions()[1].getText();
-    if(myMethodName.equals("computeIfAbsent")) {
+    if(myMethodName.equals(COMPUTE_IF_ABSENT_METHOD)) {
       String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", putExpression, true);
       valueArgument = varName + " -> " + valueArgument;
     }

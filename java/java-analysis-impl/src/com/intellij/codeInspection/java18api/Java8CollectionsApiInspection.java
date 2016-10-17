@@ -239,14 +239,14 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
             (getArgument == null || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(getArgument, putKeyArgument))) {
           LocalQuickFix fix = null;
           if (ExpressionUtils.isSimpleExpression(putValueArgument)) {
-            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "putIfAbsent");
+            fix = new ReplaceConditionalMapPutFix(putMethodCall, false);
           }
           else if ((maybePutMethodCall.getParent() instanceof PsiExpressionStatement) && // only if result of put is not used
                    LambdaGenerationUtil.canBeUncheckedLambda(putValueArgument)) {
-            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "computeIfAbsent");
+            fix = new ReplaceConditionalMapPutFix(putMethodCall, true);
           }
           else if (mySuggestPutIfAbsentForComplexExpression) {
-            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "putIfAbsent");
+            fix = new ReplaceConditionalMapPutFix(putMethodCall, false);
           }
           if(fix != null) {
             holder.registerProblem(context, QuickFixBundle.message("java.8.collections.api.inspection.description"), fix);
