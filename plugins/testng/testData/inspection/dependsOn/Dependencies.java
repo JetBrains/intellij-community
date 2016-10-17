@@ -1,5 +1,5 @@
 import org.testng.annotations.*;
- class MyTest {
+public class Dependencies {
   @Test(dependsOnMethods = <warning descr="Method 'beforeMethod' is not a test or configuration method.">"beforeMethod"</warning>)
   public void testFoo() throws Exception {
   }
