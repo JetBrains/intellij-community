@@ -28,7 +28,8 @@ public class SimpleModificationTracker implements ModificationTracker {
   private static final AtomicIntegerFieldUpdater<SimpleModificationTracker> UPDATER =
     AtomicIntegerFieldUpdater.newUpdater(SimpleModificationTracker.class, "myCounter");
 
-  @SuppressWarnings("unused") private volatile int myCounter;
+  @SuppressWarnings("unused")
+  private volatile int myCounter;
 
   @Override
   public long getModificationCount() {
@@ -36,7 +37,7 @@ public class SimpleModificationTracker implements ModificationTracker {
   }
 
   public void incModificationCount() {
-    UPDATER.incrementAndGet(this);
+    incAndGetModificationCount();
   }
 
   public long incAndGetModificationCount() {
