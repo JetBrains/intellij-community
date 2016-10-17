@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CompilerReferenceService extends AbstractProjectComponent {
-  public static final RegistryValue IS_ENABLED_KEY = Registry.get("bytecode.ref.index");
+  public static final RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
 
   protected CompilerReferenceService(Project project) {
     super(project);
