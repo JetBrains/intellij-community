@@ -71,7 +71,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -81,8 +80,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
@@ -1096,6 +1093,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public boolean isModified() {
+    if (myTreeTable == null) return false;
     if (myModified) return true;
     if (myProfile.isChanged()) return true;
     if (myProfile.getParentProfile().isProjectLevel() != myProfile.isProjectLevel()) return true;
