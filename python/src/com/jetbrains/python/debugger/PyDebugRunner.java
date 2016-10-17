@@ -127,7 +127,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     Sdk sdk = pyState.getSdk();
     if (sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData) {
       RemoteSdkAdditionalData remoteSdkAdditionalData = (RemoteSdkAdditionalData)sdk.getSdkAdditionalData();
-      PyRemoteDebugSessionCreator sessionCreator = PyRemoteDebugSessionCreator.findExtension(remoteSdkAdditionalData);
+      PyDebugSessionFactory sessionCreator = PyDebugSessionFactory.findExtension(remoteSdkAdditionalData);
       if (sessionCreator != null) {
         return sessionCreator.createSession(this, pyState, environment);
       }
