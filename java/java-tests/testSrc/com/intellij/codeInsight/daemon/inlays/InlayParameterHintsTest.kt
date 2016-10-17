@@ -657,6 +657,8 @@ class Test {
   void test() {
     String name = getTestName(true);
     System.out.println("");
+    "xxx".equals(name);
+    Math.min(10, 20);
   }
   
   String getTestName(boolean lowerCase) {}
@@ -664,6 +666,8 @@ class Test {
 """)
     
     onLineStartingWith("String name").assertInlays("lowerCase->true")
+    onLineStartingWith("\"xxx\"").assertNoInlays()
+    onLineStartingWith("Math").assertNoInlays()
   }
   
   private fun getInlays(): List<Inlay> {
