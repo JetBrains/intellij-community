@@ -91,12 +91,6 @@ class BuildTasksImpl extends BuildTasks {
     }
   }
 
-  @Override
-  void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(targetModuleName))), modulesToIndex, pathsToLicenses)
-  }
-
-//todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
@@ -187,7 +181,6 @@ idea.fatal.error.notification=disabled
     return propertiesFile
   }
 
-  @Override
   File patchApplicationInfo() {
     def sourceFile = buildContext.findApplicationInfoInSources()
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
@@ -229,38 +222,6 @@ idea.fatal.error.notification=disabled
     src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
   }
 
-  @Override
-  void buildDistributions() {
-    layoutShared()
-
-    def propertiesFile = patchIdeaPropertiesFile()
-    List<BuildTaskRunnable<String>> tasks = [
-      createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with {new WindowsDistributionBuilder(context, it, propertiesFile)}
-      }),
-      createDistributionForOsTask("linux", { BuildContext context ->
-        context.linuxDistributionCustomizer?.with {new LinuxDistributionBuilder(context, it, propertiesFile)}
-      }),
-      createDistributionForOsTask("mac", { BuildContext context ->
-        context.macDistributionCustomizer?.with {new MacDistributionBuilder(context, it, propertiesFile)}
-      })
-    ]
-
-    List<String> paths = runInParallel(tasks).findAll {it != null}
-
-    if (buildContext.productProperties.buildCrossPlatformDistribution) {
-      if (paths.size() == 3) {
-        buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-          def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-          crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
-        }
-      }
-      else {
-        buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
-      }
-    }
-  }
-
   private static BuildTaskRunnable<String> createDistributionForOsTask(String taskName, Function<BuildContext, OsSpecificDistributionBuilder> factory) {
     new BuildTaskRunnable<String>(taskName) {
       @Override
@@ -279,8 +240,9 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModulesAndBuildDistributions() {
+  void buildDistributions() {
     checkProductProperties()
+
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
                    buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
@@ -289,24 +251,56 @@ idea.fatal.error.notification=disabled
       distributionJARsBuilder.buildAdditionalArtifacts()
     }
     if (buildContext.productProperties.scrambleMainJar) {
-      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-        buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+      scramble()
+    }
+
+    layoutShared()
+
+    def propertiesFile = patchIdeaPropertiesFile()
+    List<BuildTaskRunnable<String>> tasks = [
+      createDistributionForOsTask("win", { BuildContext context ->
+        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile) }
+      }),
+      createDistributionForOsTask("linux", { BuildContext context ->
+        context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
+      }),
+      createDistributionForOsTask("mac", { BuildContext context ->
+        context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
+      })
+    ]
+
+    List<String> paths = runInParallel(tasks).findAll { it != null }
+
+    if (buildContext.productProperties.buildCrossPlatformDistribution) {
+      if (paths.size() == 3) {
+        buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+          def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
+          crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
+        }
       }
       else {
-        buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
-      }
-      buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
-        fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
-        fileset(dir: "$buildContext.paths.communityHome/lib") {
-          include(name: "junit-4*.jar")
-          include(name: "hamcrest-core-*.jar")
-        }
-        zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
-          include(name: "*.xml")
-        }
+        buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
       }
     }
-    buildDistributions()
+  }
+
+  private void scramble() {
+    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+      buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+    }
+    else {
+      buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
+    }
+    buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
+      fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
+      fileset(dir: "$buildContext.paths.communityHome/lib") {
+        include(name: "junit-4*.jar")
+        include(name: "hamcrest-core-*.jar")
+      }
+      zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
+        include(name: "*.xml")
+      }
+    }
   }
 
   private void checkProductProperties() {
