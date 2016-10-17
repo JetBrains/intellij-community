@@ -16,13 +16,29 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.Side.LEFT
 import com.intellij.diff.util.Side.RIGHT
+import com.intellij.diff.util.TextDiffType
+import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.util.text.MergingCharSequence
 
 object MergeResolveUtil {
+  @JvmStatic
+  fun tryResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
+    try {
+      val resolved = tryResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
+      if (resolved != null) return resolved
+
+      return tryResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
+    }
+    catch (e: DiffTooBigException) {
+      return null
+    }
+  }
+
   /*
    * Here we assume, that resolve results are explicitly verified by user and can be safely undone.
    * Thus we trade higher chances of incorrect resolve for higher chances of correct resolve.
@@ -36,17 +52,57 @@ object MergeResolveUtil {
    * modifications can be considered as "insertion + deletion" and resolved accordingly.
    */
   @JvmStatic
-  fun tryResolveConflict(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
+  fun tryGreedyResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
     try {
-      val resolved = Helper(leftText, baseText, rightText).execute(ComparisonPolicy.DEFAULT)
+      val resolved = tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
       if (resolved != null) return resolved
 
-      return Helper(leftText, baseText, rightText).execute(ComparisonPolicy.IGNORE_WHITESPACES)
+      return tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
     }
     catch (e: DiffTooBigException) {
       return null
     }
   }
+}
+
+private fun tryResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
+                       policy: ComparisonPolicy): CharSequence? {
+  val texts = listOf(leftText, baseText, rightText)
+
+  val changes = ByWord.compare(leftText, baseText, rightText, policy, DumbProgressIndicator.INSTANCE)
+
+  val newContent = StringBuilder()
+
+  var last = 0
+  for (fragment in changes) {
+    val type = DiffUtil.getWordMergeType(fragment, texts, policy)
+    if (type.diffType == TextDiffType.CONFLICT) return null;
+
+    val baseStart = fragment.getStartOffset(ThreeSide.BASE)
+    val baseEnd = fragment.getEndOffset(ThreeSide.BASE)
+
+    newContent.append(baseText, last, baseStart)
+
+    if (type.isChange(Side.LEFT)) {
+      val leftStart = fragment.getStartOffset(ThreeSide.LEFT)
+      val leftEnd = fragment.getEndOffset(ThreeSide.LEFT)
+      newContent.append(leftText, leftStart, leftEnd)
+    }
+    else {
+      val rightStart = fragment.getStartOffset(ThreeSide.RIGHT)
+      val rightEnd = fragment.getEndOffset(ThreeSide.RIGHT)
+      newContent.append(rightText, rightStart, rightEnd)
+    }
+    last = baseEnd
+  }
+
+  newContent.append(baseText, last, baseText.length)
+  return newContent.toString()
+}
+
+private fun tryGreedyResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
+                             policy: ComparisonPolicy): CharSequence? {
+  return Helper(leftText, baseText, rightText).execute(policy)
 }
 
 private class Helper(val leftText: CharSequence, val baseText: CharSequence, val rightText: CharSequence) {
