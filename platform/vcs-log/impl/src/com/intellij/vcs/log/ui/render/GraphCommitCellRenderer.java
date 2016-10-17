@@ -22,7 +22,6 @@ import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
 import com.intellij.vcs.log.ui.frame.ReferencesPanel;
@@ -125,7 +124,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     }
 
     GraphCommitCell cell = getAssertCommitCell(value);
-    myGraphImage = getGraphImage(row);
+    myGraphImage = getGraphImage(cell.getPrintElements());
 
     int graphPadding;
     if (myGraphImage != null) {
@@ -165,9 +164,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   @Nullable
-  private PaintInfo getGraphImage(int row) {
-    VisibleGraph<Integer> graph = myGraphTable.getVisibleGraph();
-    Collection<? extends PrintElement> printElements = graph.getRowInfo(row).getPrintElements();
+  private PaintInfo getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
     double maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
@@ -178,7 +175,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     }
     maxIndex++;
 
-    maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, graph.getRecommendedWidth()));
+    maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, myGraphTable.getVisibleGraph().getRecommendedWidth()));
     BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
                                              myGraphTable.getRowHeight(),
                                              BufferedImage.TYPE_INT_ARGB);

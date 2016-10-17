@@ -110,7 +110,7 @@ public class GraphTableModel extends AbstractTableModel {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
       case COMMIT_COLUMN:
-        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex));
+        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex), myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
       case AUTHOR_COLUMN:
         String authorString = VcsUserUtil.getShortPresentation(data.getAuthor());
         return authorString + (VcsUserUtil.isSamePerson(data.getAuthor(), data.getCommitter()) ? "" : "*");
