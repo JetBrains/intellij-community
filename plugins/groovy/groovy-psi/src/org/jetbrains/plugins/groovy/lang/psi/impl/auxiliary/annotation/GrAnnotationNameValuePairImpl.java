@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -34,19 +35,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrNameValuePairStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
 
-/**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
- */
-public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePair, PsiPolyVariantReference {
+public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValuePairStub>
+  implements GrAnnotationNameValuePair, PsiPolyVariantReference, StubBasedPsiElement<GrNameValuePairStub> {
+
+  public GrAnnotationNameValuePairImpl(@NotNull GrNameValuePairStub stub) {
+    super(stub, GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR);
+  }
+
   public GrAnnotationNameValuePairImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -63,6 +67,10 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
   @Override
   @Nullable
   public String getName() {
+    GrNameValuePairStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
     final PsiElement nameId = getNameIdentifierGroovy();
     return nameId != null ? nameId.getText() : null;
   }
