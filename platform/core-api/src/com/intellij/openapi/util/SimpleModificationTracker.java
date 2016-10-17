@@ -44,4 +44,8 @@ public class SimpleModificationTracker implements ModificationTracker {
   public void incModificationCount() {
     UPDATER.incrementAndGet(this);
   }
+
+  public long incAndGetModificationCount() {
+    return UPDATER.incrementAndGet(this);
+  }
 }

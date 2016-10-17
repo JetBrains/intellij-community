@@ -173,8 +173,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     ColorBlindnessSupport support = ColorBlindnessSupport.get(COLOR_BLINDNESS);
     IconLoader.setFilter(support == null ? null : support.getFilter());
 
-    incModificationCount();
-    if (myCounter == 1) {
+    if (incAndGetModificationCount() == 1) {
       return;
     }
 
