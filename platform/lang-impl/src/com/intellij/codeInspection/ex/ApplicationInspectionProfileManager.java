@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -61,8 +60,6 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultProfile;
-
 @State(
   name = "InspectionProfileManager",
   storages = {
@@ -93,8 +90,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new InspectionProfileProcessor() {
       @NotNull
       @Override
-      public String getName(@NotNull Function<String, String> attributeProvider) {
-        return "unnamed";
+      public String getName(@NotNull Function<String, String> attributeProvider, @NotNull String fileNameWithoutExtension) {
+        return fileNameWithoutExtension;
       }
 
       @NotNull
@@ -102,11 +99,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean isBundled) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
-        if (isBundled) {
-          profile.lockProfile(true);
-        }
-        return profile;
+        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
       }
 
       @Override
@@ -169,21 +162,15 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   public void initProfiles() {
-    if (!myProfilesAreInitialized.compareAndSet(false, true)) {
+    if (!myProfilesAreInitialized.compareAndSet(false, true) || !LOAD_PROFILES) {
       return;
     }
 
-    if (!LOAD_PROFILES) return;
-
     loadBundledSchemes();
     mySchemeManager.loadSchemes();
-    createDefaultProfile();
-  }
 
-  private void createDefaultProfile() {
-    final InspectionProfileImpl oldDefault = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
-    if (oldDefault == null || !oldDefault.isProfileLocked()) {
-      getSchemeManager().addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
+    if (mySchemeManager.isEmpty()) {
+      mySchemeManager.addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getBaseProfile()));
     }
   }
 
@@ -246,12 +233,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return new InspectionProfileConvertor(this);
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  public InspectionProfileImpl createProfile() {
-    return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
-  }
-
   @Override
   public void setRootProfile(@Nullable String profileName) {
     mySchemeManager.setCurrentSchemeName(profileName);
@@ -270,12 +251,12 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   @NotNull
   @Override
-  public InspectionProfile getCurrentProfile() {
+  public InspectionProfileImpl getCurrentProfile() {
     initProfiles();
 
-    Profile current = mySchemeManager.getCurrentScheme();
+    InspectionProfileImpl current = mySchemeManager.getCurrentScheme();
     if (current != null) {
-      return (InspectionProfile)current;
+      return current;
     }
 
     // use default as base, not random custom profile

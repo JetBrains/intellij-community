@@ -62,7 +62,7 @@ fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAtt
 fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
-fun Credentials?.isEmpty() = this == null || (userName == null && password == null)
+fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
 
 // input will be cleared
 @JvmOverloads

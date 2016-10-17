@@ -16,6 +16,11 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -44,5 +49,35 @@ public enum ShortNameType {
 
   void set() {
     PropertiesComponent.getInstance().setValue(KEY, myId);
+  }
+
+  @Nullable
+  public static String shorten(@Nullable String name, @NotNull ShortNameType type) {
+    if (name == null) return null;
+    if (type == NONE) return name;
+
+    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
+    final int[] ind = {name.indexOf('<'), name.indexOf('@'), name.indexOf('>')};
+    if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
+      name = name.substring(0, ind[0]).trim();
+    }
+
+    // vasya.pupkin@email.com --> vasya pupkin
+    if (!name.contains(" ") && name.contains("@")) { //simple e-mail check. john@localhost
+      name = name.substring(0, name.indexOf('@'));
+    }
+    name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ');
+
+    final List<String> strings = StringUtil.split(name, " ");
+    if (strings.size() < 2) return name;
+
+    String shortName;
+    if (type == FIRSTNAME) {
+      shortName = strings.get(0);
+    }
+    else {
+      shortName = strings.get(strings.size() - 1);
+    }
+    return StringUtil.capitalize(shortName);
   }
 }

@@ -47,7 +47,7 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
   }
 
   private static boolean isTestNGClass(PsiClass psiClass) {
-    return psiClass != null && PsiClassUtil.isRunnableClass(psiClass, true, false) && TestNGUtil.hasTest(psiClass);
+    return psiClass != null && TestNGUtil.hasTest(psiClass);
   }
 
   @Override

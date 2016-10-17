@@ -291,7 +291,7 @@ public class CompressedAppendableFile {
 
   private synchronized void loadAppendBuffer() throws IOException {
     if (myNextChunkBuffer != null) return;
-    myNextChunkBuffer = new byte[myAppendBufferLength];
+
     File tempAppendFile = getIncompleteChunkFile();
     if (tempAppendFile.exists()) {
       myBufferPosition = (int)tempAppendFile.length();

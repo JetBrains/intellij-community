@@ -64,7 +64,8 @@ public class ShowGraphHistoryAction extends DumbAwareAction {
           presentation.setEnabledAndVisible(false);
         }
         else {
-          presentation.setEnabledAndVisible(dataManager.getIndex().isIndexed(root));
+          presentation.setVisible(dataManager.getRoots().contains(root));
+          presentation.setEnabled(dataManager.getIndex().isIndexed(root));
         }
       }
     }

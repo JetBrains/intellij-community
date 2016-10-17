@@ -699,8 +699,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               final PsiElement chosenAnchor =
                 chooseAnchor(settings.isReplaceAllOccurrences(), hasWriteAccess, nonWrite, anchorStatementIfAll, anchorStatement);
 
-              variable = ApplicationManager.getApplication().runWriteAction(
-                introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings));
+              variable = introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings);
             }
             finally {
               final RefactoringEventData afterData = new RefactoringEventData();
@@ -794,12 +793,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return parent3 instanceof JspHolderMethod;
   }
 
-  public static Computable<PsiVariable> introduce(final Project project,
-                                                  final PsiExpression expr,
-                                                  final Editor editor,
-                                                  final PsiElement anchorStatement,
-                                                  final PsiExpression[] occurrences,
-                                                  final IntroduceVariableSettings settings) {
+  public static PsiVariable introduce(final Project project,
+                                      final PsiExpression expr,
+                                      final Editor editor,
+                                      final PsiElement anchorStatement,
+                                      final PsiExpression[] occurrences,
+                                      final IntroduceVariableSettings settings) {
     final PsiElement container = anchorStatement.getParent();
     PsiElement child = anchorStatement;
     final boolean isInsideLoop = RefactoringUtil.isLoopOrIf(container);
@@ -841,9 +840,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(container, PsiCodeBlock.class, false);
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
-    return new Computable<PsiVariable>() {
+    SmartPsiElementPointer<PsiVariable> pointer = ApplicationManager.getApplication().runWriteAction(new Computable<SmartPsiElementPointer<PsiVariable>> () {
       @Override
-      public PsiVariable compute() {
+      public SmartPsiElementPointer<PsiVariable> compute() {
         try {
           PsiStatement statement = null;
           if (!isInsideLoop && deleteSelf) {
@@ -913,7 +912,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());
           fieldConflictsResolver.fix();
-          return var;
+          return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(var);
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
@@ -945,7 +944,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
         return  (PsiDeclarationStatement) container.addBefore(declaration, anchor);
       }
-    };
+    });
+    return pointer != null ? pointer.getElement() : null;
   }
 
   private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final Project project) {

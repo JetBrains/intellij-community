@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.InlayModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -116,7 +117,7 @@ class ToggleInlineHintsAction : AnAction() {
 
 private fun hasParameterHintAtOffset(editor: Editor): Boolean {
   val offset = editor.caretModel.offset
-  return editor.inlayModel
+  return editor.inlayModel is InlayModelImpl && editor.inlayModel
       .getInlineElementsInRange(offset, offset)
       .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }

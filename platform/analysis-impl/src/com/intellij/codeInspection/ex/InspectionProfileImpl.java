@@ -33,10 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerKt;
 import com.intellij.profile.codeInspection.SeverityProvider;
-import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
@@ -104,7 +101,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager) {
-    this(profileName, registrar, profileManager, getDefaultProfile(), null);
+    this(profileName, registrar, profileManager, getBaseProfile(), null);
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
@@ -128,7 +125,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
-    this(profileName, registrar, profileManager, getDefaultProfile(), dataHolder);
+    this(profileName, registrar, profileManager, getBaseProfile(), dataHolder);
   }
 
   @NotNull
@@ -166,7 +163,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
-  public static InspectionProfileImpl getDefaultProfile() {
+  public static InspectionProfileImpl getBaseProfile() {
     return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
 
@@ -281,26 +278,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @NotNull
   public Element writeScheme() {
-    if (myDataHolder != null) {
-      return myDataHolder.read();
-    }
-
-    Element element = new Element("profile");
-    Element result = isProjectLevel() ? element.setAttribute("version", "1.0") : element.setAttribute("profile_name", getName());
-    serializeInto(result, false);
-
-    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
-      return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(result);
-    }
-    return result;
+    return myDataHolder == null ? super.writeScheme() : myDataHolder.read();
   }
 
   @Override
-  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
+  public void writeExternal(@NotNull Element element) {
     // must be first - compatibility
     element.setAttribute(VERSION_TAG, VALID_VERSION);
 
-    super.serializeInto(element, preserveCompatibility);
+    super.writeExternal(element);
 
     synchronized (myLock) {
       if (!myInitialized) {
@@ -857,24 +843,23 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     initInspectionTools(project);
 
     for (Element scopeElement : scopes.getChildren(SCOPE)) {
-      final String profile = scopeElement.getAttributeValue(ProjectInspectionProfileManagerKt.PROFILE);
-      if (profile != null) {
-        final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)getProfileManager().getProfile(profile);
-        if (inspectionProfile != null) {
-          final NamedScope scope = getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
-          if (scope != null) {
-            for (InspectionToolWrapper toolWrapper : inspectionProfile.getInspectionTools(null)) {
-              final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
-              try {
-                InspectionToolWrapper toolWrapperCopy = copyToolSettings(toolWrapper);
-                HighlightDisplayLevel errorLevel = inspectionProfile.getErrorLevel(key, null, project);
-                getTools(toolWrapper.getShortName(), project).addTool(scope, toolWrapperCopy, inspectionProfile.isToolEnabled(key), errorLevel);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-          }
+      final String profile = scopeElement.getAttributeValue(PROFILE);
+      InspectionProfileImpl inspectionProfile = profile == null ? null : (InspectionProfileImpl)getProfileManager().getProfile(profile);
+      NamedScope scope = inspectionProfile == null ? null : getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
+      if (scope == null) {
+        continue;
+      }
+
+      for (InspectionToolWrapper toolWrapper : inspectionProfile.getInspectionTools(null)) {
+        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+        try {
+          InspectionToolWrapper toolWrapperCopy = copyToolSettings(toolWrapper);
+          HighlightDisplayLevel errorLevel = inspectionProfile.getErrorLevel(key, null, project);
+          getTools(toolWrapper.getShortName(), project)
+            .addTool(scope, toolWrapperCopy, inspectionProfile.isToolEnabled(key), errorLevel);
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }

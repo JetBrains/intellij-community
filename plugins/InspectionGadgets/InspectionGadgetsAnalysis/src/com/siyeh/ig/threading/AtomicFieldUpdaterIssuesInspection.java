@@ -129,7 +129,8 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         }
         final PsiClassObjectAccessExpression objectAccessExpression = (PsiClassObjectAccessExpression)argument2;
         final PsiType type = objectAccessExpression.getOperand().getType();
-        if (!TypeUtils.areConvertible(type, field.getType())) {
+        final PsiType substFieldType = classType.resolveGenerics().getSubstitutor().substitute(field.getType());
+        if (!substFieldType.isAssignableFrom(type)) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor",
                                                                       fieldName, type.getPresentableText()));
           return;

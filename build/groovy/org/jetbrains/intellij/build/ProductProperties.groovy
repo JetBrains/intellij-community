@@ -164,8 +164,6 @@ abstract class ProductProperties {
    */
   boolean enableYourkitAgentInEAP = false
 
-  List<String> excludedPlugins = []
-
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
    * todo[nik] get rid of this

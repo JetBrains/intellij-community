@@ -110,7 +110,7 @@ public class StringExpressionHelper {
 
     Collection<? extends PsiElement> elements = DfaUtil.getPossibleInitializationElements(expression);
     for (PsiElement element : elements) {
-      Pair<PsiElement, String> expr = evaluateExpression(element);
+      Pair<PsiElement, String> expr = evaluateExpression(element, visited);
       if (expr != null) return expr;
     }
 

@@ -395,9 +395,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
-    final PsiVariable variable = ApplicationManager.getApplication().runWriteAction(
-      IntroduceVariableBase.introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings));
+    PsiVariable variable = IntroduceVariableBase.introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
+    final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
+    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
+    setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
+
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+
+    final PsiVariable restoredVar = getVariable();
+    if (restoredVar != null) {
+      variable = restoredVar;
+    }
 
     if (isReplaceAllOccurrences()) {
       List<RangeMarker> occurrences = new ArrayList<>();
@@ -407,10 +416,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       setOccurrenceMarkers(occurrences);
     }
 
-    final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
-    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
-    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
-    setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
     final PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier != null) {
       myEditor.getCaretModel().moveToOffset(identifier.getTextOffset());

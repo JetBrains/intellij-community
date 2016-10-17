@@ -451,13 +451,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.setSplitMode(true, null);
     }
 
-    final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
-
+    // ToolWindow activation is not needed anymore and should be removed in 2017
+    toolWindow.setActivation(new ActionCallback()).setDone();
     final DumbAwareRunnable runnable = () -> {
       if (toolWindow.isDisposed()) return;
 
       toolWindow.ensureContentInitialized();
-      activation.setDone();
     };
     if (visible || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();

@@ -32,7 +32,7 @@ import java.util.Map;
  * @see ColorIcon
  */
 public class EmptyIcon implements Icon, ScalableIcon {
-  private static final Map<Integer, Icon> cache = new HashMap<Integer, Icon>();
+  private static final Map<Integer, EmptyIcon> cache = new HashMap<Integer, EmptyIcon>();
 
   public static final Icon ICON_16 = create(16);
   public static final Icon ICON_18 = create(18);
@@ -45,19 +45,25 @@ public class EmptyIcon implements Icon, ScalableIcon {
   private EmptyIcon myScaledCache;
 
   public static Icon create(int size) {
-    Icon icon = cache.get(size);
-    if (icon == null && size < 129) {
-      cache.put(size, icon = new EmptyIcon(size, size));
+    return create(size, size, true);
+  }
+
+  private static Icon create(int width, int height, boolean autoScale) {
+    int size = (width == height) ? width : -1;
+    EmptyIcon icon = cache.get(size);
+    if (icon == null) {
+      icon = new EmptyIcon(width, height);
+      if (size < JBUI.scale(129) && size > 0) cache.put(size, icon);
     }
-    return icon == null ? new EmptyIcon(size, size) : icon;
+    return autoScale ? icon.scale(JBUI.scale(1f)) : icon;
   }
 
   public static Icon create(int width, int height) {
-    return width == height ? create(width) : new EmptyIcon(width, height);
+    return create(width, height, true);
   }
 
   public static Icon create(@NotNull Icon base) {
-    return create(base.getIconWidth(), base.getIconHeight());
+    return create(base.getIconWidth(), base.getIconHeight(), false);
   }
 
   /**

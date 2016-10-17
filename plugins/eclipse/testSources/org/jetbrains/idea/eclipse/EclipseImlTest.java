@@ -40,12 +40,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+
+import static com.intellij.testFramework.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";
@@ -78,14 +79,9 @@ public class EclipseImlTest extends IdeaTestCase {
     String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project)
-          .newModule(new File(path) + File.separator + EclipseProjectFinder
-            .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
-      }
-    });
+    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
+      .newModule(new File(path) + File.separator + EclipseProjectFinder
+        .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId()));
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
@@ -100,10 +96,8 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    Element expectedIml = JDOMUtil.load(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
-    PlatformTestUtil.assertElementsEqual(expectedIml, actualImlElement);
+    assertThat(actualImlElement).isEqualTo(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
   }
-
 
   public void testWorkspaceOnly() throws Exception {
     doTest();

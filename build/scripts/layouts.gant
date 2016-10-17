@@ -16,6 +16,7 @@
 
 
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -41,7 +42,7 @@ boolean setPluginAndIDEVersionInPluginXml() {
 }
 
 List<String> getExcludedPlugins() {
-  return isDefined("productProperties") ? productProperties.excludedPlugins : []
+  return []
 }
 
 /**
@@ -51,7 +52,7 @@ def layoutFull(BuildContext context) {
   binding.setVariable("productProperties", context.productProperties)
   String home = context.paths.communityHome
   String targetDirectory = context.paths.distAll
-  File patchedApplicationInfo = BuildTasks.create(context).patchApplicationInfo()
+  File patchedApplicationInfo = ((BuildTasksImpl)BuildTasks.create(context)).patchApplicationInfo()
   projectBuilder.stage("layout to $targetDirectory")
 
   List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]

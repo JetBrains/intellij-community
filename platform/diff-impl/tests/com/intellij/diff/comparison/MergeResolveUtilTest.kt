@@ -118,35 +118,35 @@ class MergeResolveUtilTest : DiffTestCase() {
   }
 
   fun testNonFailureConflicts() {
-    test(
+    testGreedy(
         "x X x",
         "x x",
         "x X Y x",
         "x Y x"
     )
 
-    test(
+    testGreedy(
         "x X x",
         "x x",
         "x Y X x",
         "x Y x"
     )
 
-    test(
+    testGreedy(
         "x X Y x",
         "x X x",
         "x Y x",
         "x x"
     )
 
-    test(
+    testGreedy(
         "x X Y Z x",
         "x X x",
         "x Z x",
         "x x"
     )
 
-    test(
+    testGreedy(
         "x A B C D E F G H K x",
         "x C F K x",
         "x A D H x",
@@ -157,21 +157,21 @@ class MergeResolveUtilTest : DiffTestCase() {
   fun testConfusingConflicts() {
     // these cases might be a failure as well
 
-    test(
+    testGreedy(
         "x X x",
         "x x",
         "x Z x",
         "xZ x"
     )
 
-    test(
+    testGreedy(
         "x X X x",
         "x X Y X x",
         "x x",
         "x Y x"
     )
 
-    test(
+    testGreedy(
         "x X x",
         "x x",
         "x Y x",
@@ -179,7 +179,7 @@ class MergeResolveUtilTest : DiffTestCase() {
     )
 
 
-    test(
+    testGreedy(
         "x X X x",
         "x Y x",
         "x X Y x",
@@ -187,8 +187,25 @@ class MergeResolveUtilTest : DiffTestCase() {
     )
   }
 
-  private fun test(base: String, left: String, right: String, expected: String?) {
-    val actual = MergeResolveUtil.tryResolveConflict(left, base, right)
-    assertEquals(expected, actual?.toString())
+  private fun testGreedy(base: String, left: String, right: String, expected: String?) {
+    test(base, left, right, expected, true);
+  }
+
+  private fun test(base: String, left: String, right: String, expected: String?, isGreedy: Boolean = false) {
+    val simpleResult = MergeResolveUtil.tryResolve(left, base, right)
+    val magicResult = MergeResolveUtil.tryGreedyResolve(left, base, right);
+
+    if (expected == null) {
+      assertNull(simpleResult)
+      assertNull(magicResult)
+    }
+    else if (isGreedy) {
+      assertNull(simpleResult)
+      assertEquals(expected, magicResult)
+    }
+    else {
+      assertEquals(expected, simpleResult)
+      assertEquals(expected, magicResult)
+    }
   }
 }

@@ -62,9 +62,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @NotNull
   private static TextRange getKeywordRange(@NotNull final PyStringLiteralExpression element,
                                            @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
-    final TextRange textRange = chunk.getTextRange();
+    final TextRange textRange = chunk.getTextRange().shiftRight(element.getStringValueTextRange().getStartOffset());
     if (chunk.getMappingKey() != null) {
-      final int start = textRange.getStartOffset() + chunk.getTextRange().substring(element.getText()).indexOf(chunk.getMappingKey());
+      final int start = textRange.getStartOffset() + textRange.substring(element.getText()).indexOf(chunk.getMappingKey());
       return new TextRange(start, start + chunk.getMappingKey().length());
     }
     return textRange;

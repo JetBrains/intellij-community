@@ -27,7 +27,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.psi.PsiModifier;
@@ -43,8 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.profile.ProfileEx.serializeProfile;
-import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
+import static com.intellij.testFramework.Assertions.assertThat;
 
 /**
  * @author Anna.Kozlova
@@ -80,11 +78,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, serializeProfile(profile));
+    assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
   private static InspectionProfileImpl createProfile() {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
   }
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base, null);
@@ -100,7 +98,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       //normally on open project profile wrappers are init for both managers
       profileManager.updateProfile(localProfile);
       InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager,
-                                                                InspectionProfileImpl.getDefaultProfile(), null);
+                                                                InspectionProfileImpl.getBaseProfile(), null);
       projectProfileManager.updateProfile(profile);
       projectProfileManager.setRootProfile(profile.getName());
 
@@ -150,7 +148,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
 
-    assertElementsEqual(loadProfile(), serializeProfile(profile));
+    assertThat(profile.writeScheme()).isEqualTo(loadProfile());
   }
 
   private static Element loadProfile() throws IOException, JDOMException {
@@ -206,7 +204,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, serializeProfile(profile));
+    assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
   public void testMergeUnusedDeclarationAndUnusedSymbol() throws Exception {
@@ -218,7 +216,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, serializeProfile(profile));
+    assertThat(profile.writeScheme()).isEqualTo(element);
 
 
     //settings to merge
@@ -290,7 +288,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                         "</profile>";
     assertEquals(mergedText, serialize(profile));
 
-    Element toImportElement = serializeProfile(profile);
+    Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
       InspectionToolsConfigurable.importInspectionProfile(toImportElement, InspectionProfileManager.getInstance(), getProject(), null);
 
@@ -300,9 +298,9 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(mergedElement);
     model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(mergedElement, serializeProfile(profile));
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
 
-    assertElementsEqual(mergedElement, serializeProfile(importedProfile));
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
   }
 
   public void testStoredMemberVisibility() throws Exception {
@@ -510,7 +508,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                  "</profile>",
                  serialize(profile));
 
-    Element element = serializeProfile(profile);
+    Element element = profile.writeScheme();
 
     list.add(createTool("bar", true));
     list.add(createTool("disabled", false));
@@ -537,7 +535,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static String serialize(InspectionProfileImpl profile) throws WriteExternalException {
-    return JDOMUtil.writeElement(serializeProfile(profile));
+    return JDOMUtil.writeElement(profile.writeScheme());
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
@@ -581,7 +579,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() throws Exception {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.length > 0);
@@ -596,7 +594,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       profile.enableTool(id, getProject());
     }
     assertEquals(0, countInitializedTools(profile));
-    serializeProfile(profile);
+    profile.writeScheme();
     List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
     if (initializedTools.size() > 0) {
       for (InspectionToolWrapper initializedTool : initializedTools) {
@@ -617,20 +615,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                            "</profile>").getRootElement());
     foo.initInspectionTools(getProject());
     assertEquals(1, countInitializedTools(foo));
-  }
-
-  public void testPreserveCompatibility() throws Exception {
-    InspectionProfileImpl foo = new InspectionProfileImpl("foo", InspectionToolRegistrar.getInstance(), InspectionProjectProfileManager.getInstance(getProject()));
-    String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
-                 "  <option name=\"myName\" value=\"idea.default\" />\n" +
-                 "  <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-                 "  <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-                 "    <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
-                 "  </inspection_tool>\n" +
-                 "</profile>";
-    foo.readExternal(JDOMUtil.loadDocument(test).getRootElement());
-    foo.initInspectionTools(getProject());
-    assertEquals(test, JDOMUtil.writeElement(serializeProfile(foo)));
   }
 
   public static int countInitializedTools(@NotNull Profile foo) {

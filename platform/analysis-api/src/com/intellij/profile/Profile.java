@@ -17,7 +17,6 @@ package com.intellij.profile;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: 20-Nov-2005
  */
 public interface Profile extends Comparable, Scheme {
-  void copyFrom(@NotNull Profile profile);
-
   @Transient
   boolean isProjectLevel();
 
@@ -42,8 +39,4 @@ public interface Profile extends Comparable, Scheme {
 
   @NotNull
   ProfileManager getProfileManager();
-
-  void readExternal(Element element);
-
-  void writeExternal(Element element);
 }

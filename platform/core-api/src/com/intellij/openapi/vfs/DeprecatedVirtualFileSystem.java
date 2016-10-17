@@ -49,7 +49,6 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.removeListener(listener);
   }
 
-  @SuppressWarnings("unused")
   protected void firePropertyChanged(Object requestor,
                                      @NotNull VirtualFile file,
                                      @NotNull String propertyName,
@@ -60,42 +59,36 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.getMulticaster().propertyChanged(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireContentsChanged(Object requestor, @NotNull VirtualFile file, long oldModificationStamp) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), oldModificationStamp, file.getModificationStamp());
     myEventDispatcher.getMulticaster().contentsChanged(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireFileCreated(@Nullable Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().fileCreated(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
     myEventDispatcher.getMulticaster().fileDeleted(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireFileMoved(Object requestor, @NotNull VirtualFile file, VirtualFile oldParent) {
     assertWriteAccessAllowed();
     VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, oldParent, file.getParent());
     myEventDispatcher.getMulticaster().fileMoved(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireFileCopied(@Nullable Object requestor, @NotNull VirtualFile originalFile, @NotNull VirtualFile createdFile) {
     assertWriteAccessAllowed();
     VirtualFileCopyEvent event = new VirtualFileCopyEvent(requestor, originalFile, createdFile);
     myEventDispatcher.getMulticaster().fileCopied(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireBeforePropertyChange(Object requestor,
                                           @NotNull VirtualFile file,
                                           @NotNull String propertyName,
@@ -106,21 +99,18 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.getMulticaster().beforePropertyChange(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().beforeContentsChange(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().beforeFileDeletion(event);
   }
 
-  @SuppressWarnings("unused")
   protected void fireBeforeFileMovement(Object requestor, @NotNull VirtualFile file, VirtualFile newParent) {
     assertWriteAccessAllowed();
     VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, file.getParent(), newParent);
@@ -166,7 +156,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
-    throw unsupported("copyFile() not supported", vFile);
+    throw unsupported("copyFile", vFile);
   }
 
   private UnsupportedOperationException unsupported(String op, VirtualFile vFile) {
