@@ -194,7 +194,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     return myIsAnyHeavy;
   }
 
-  public void addFilter(final Filter filter) {
+  public void addFilter(@NotNull Filter filter) {
     myFilters.add(filter);
     myIsAnyHeavy |= filter instanceof FilterMixin;
   }

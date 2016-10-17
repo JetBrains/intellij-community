@@ -307,7 +307,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void performWhenNoDeferredOutput(Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
 
   }
 
@@ -317,12 +317,12 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void addMessageFilter(Filter filter) {
+  public void addMessageFilter(@NotNull Filter filter) {
 
   }
 
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
 
   }
 
