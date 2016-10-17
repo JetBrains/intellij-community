@@ -53,31 +53,31 @@ public enum ShortNameType {
 
   @Nullable
   public static String shorten(@Nullable String name, @NotNull ShortNameType type) {
+    if (name == null) return null;
     if (type == NONE) return name;
-    if (name != null) {
-      // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
-      final int[] ind = {name.indexOf('<'), name.indexOf('@'), name.indexOf('>')};
-      if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
-        return shorten(name.substring(0, ind[0]).trim(), type);
-      }
 
-      // vasya.pupkin@email.com --> vasya pupkin
-      if (!name.contains(" ") && name.contains("@")) { //simple e-mail check. john@localhost
-        final String firstPart = name.substring(0, name.indexOf('@')).replace('.', ' ').replace('_', ' ').replace('-', ' ');
-        if (firstPart.length() < name.length()) {
-          return shorten(firstPart, type);
-        }
-        else {
-          return firstPart;
-        }
-      }
-
-      final List<String> strings = StringUtil.split(name.replace('.', ' ').replace('_', ' ').replace('-', ' '), " ");
-      if (strings.size() > 1) {
-        //Middle name check: Vasya S. Pupkin
-        return StringUtil.capitalize(type == ShortNameType.FIRSTNAME ? strings.get(0) : strings.get(strings.size() - 1));
-      }
+    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
+    final int[] ind = {name.indexOf('<'), name.indexOf('@'), name.indexOf('>')};
+    if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
+      name = name.substring(0, ind[0]).trim();
     }
-    return name;
+
+    // vasya.pupkin@email.com --> vasya pupkin
+    if (!name.contains(" ") && name.contains("@")) { //simple e-mail check. john@localhost
+      name = name.substring(0, name.indexOf('@'));
+    }
+    name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ');
+
+    final List<String> strings = StringUtil.split(name, " ");
+    if (strings.size() < 2) return name;
+
+    String shortName;
+    if (type == FIRSTNAME) {
+      shortName = strings.get(0);
+    }
+    else {
+      shortName = strings.get(strings.size() - 1);
+    }
+    return StringUtil.capitalize(shortName);
   }
 }
