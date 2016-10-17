@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.EditorTestUtil
 import com.jetbrains.python.console.PyConsoleEnterHandler
+import com.jetbrains.python.console.PyConsoleUtil
 import com.jetbrains.python.console.PythonConsoleView
 import com.jetbrains.python.fixtures.PyTestCase
 
@@ -40,13 +41,17 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
   }
 
   private fun resetEditor() {
-    myEditor = disposeOnTearDown(PythonConsoleView(myFixture.project, "Console", projectDescriptor?.sdk)).consoleEditor
+    val consoleView = PythonConsoleView(myFixture.project, "Console", projectDescriptor?.sdk)
+    myEditor = disposeOnTearDown(consoleView).consoleEditor
+    val virtFile = consoleView.virtualFile
+    PyConsoleUtil.getOrCreateIPythonData(virtFile).isIPythonEnabled = true
   }
 
   fun push(text: String): Boolean {
     text.forEach { EditorTestUtil.performTypingAction(myEditor, it) }
     return myEnterHandler.handleEnterPressed(myEditor as EditorEx)
   }
+
 
   fun testTripleQuotes() {
     assertFalse(push("'''abs"))
@@ -108,6 +113,25 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
     assertTrue(push(""))
 
   }
+
+  //PY-20616
+  fun testEmptyBlock1() {
+    assertFalse(push("def foo():"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("print()"))
+    assertTrue(push(""))
+  }
+
+  //PY-20616
+  fun testEmptyBlock2() {
+    assertFalse(push("if True:"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("print()"))
+    assertTrue(push(""))
+  }
+
 
   override fun tearDown() {
     Disposer.dispose(testRootDisposable)
