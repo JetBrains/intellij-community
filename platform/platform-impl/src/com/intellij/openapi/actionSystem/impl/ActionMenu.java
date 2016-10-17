@@ -224,7 +224,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   private void updateIcon() {
-    if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+    UISettings settings = UISettings.getInstance();
+    if (settings != null && settings.SHOW_ICONS_IN_MENUS) {
       final Presentation presentation = myPresentation;
       final Icon icon = presentation.getIcon();
       setIcon(icon);
@@ -244,9 +245,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
-    IdeFrame frame = component instanceof IdeFrame
-                     ? (IdeFrame)component
-                     : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
+    IdeFrame frame = (IdeFrame)(component instanceof IdeFrame ? component : SwingUtilities.getAncestorOfClass(IdeFrame.class, component));
     StatusBar statusBar;
     if (frame != null && (statusBar = frame.getStatusBar()) != null) {
       statusBar.setInfo(isIncluded ? description : null);
