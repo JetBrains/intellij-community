@@ -21,45 +21,58 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
+import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 public class MergeCalculatorTask extends BaseMergeTask {
 
   @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
   @NotNull private final MergeChecker myMergeChecker;
+  @NotNull private final List<CommittedChangeList> myNotMergedChangeLists;
+  @NotNull private final Consumer<MergeCalculatorTask> myCallback;
 
-  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess, @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
+  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
+                             @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                             @NotNull Consumer<MergeCalculatorTask> callback) {
     super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
     myCopyPoint = copyPoint;
+    myCallback = callback;
+    myNotMergedChangeLists = newArrayList();
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
   }
 
+  @NotNull
+  public MergeChecker getMergeChecker() {
+    return myMergeChecker;
+  }
+
+  @NotNull
+  public List<CommittedChangeList> getChangeLists() {
+    return myNotMergedChangeLists;
+  }
+
   @Override
   public void run() throws VcsException {
     myMergeChecker.prepare();
+    myNotMergedChangeLists.addAll(getNotMergedChangeLists(getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision())));
 
-    List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists = getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision());
-    List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
-
-    if (!notMergedChangeLists.isEmpty()) {
-      next(new ShowRevisionSelector(myMergeProcess, notMergedChangeLists, myMergeChecker));
+    if (!myNotMergedChangeLists.isEmpty()) {
+      myCallback.consume(this);
     }
     else {
       end("Everything is up-to-date", false);
@@ -94,29 +107,15 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @NotNull
   private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
-    ProgressManager.getInstance().getProgressIndicator().setText("Checking merge information...");
-
-    String repositoryRelativeWorkingCopyRoot =
-      ensureStartSlash(getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl()));
-    String repositoryRelativeSourceBranch =
-      ensureStartSlash(getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl()));
-
-    return getNotMergedChangeLists(changeLists, repositoryRelativeWorkingCopyRoot, repositoryRelativeSourceBranch);
-  }
-
-  @NotNull
-  private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
-                                                            @NotNull String workingCopyRoot,
-                                                            @NotNull String sourceBranch) {
     List<CommittedChangeList> result = newArrayList();
+    ProgressManager.getInstance().getProgressIndicator().setText("Checking merge information...");
 
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       SvnChangeList changeList = pair.getFirst();
 
       ProgressManager.getInstance().getProgressIndicator().setText2("Processing revision " + changeList.getNumber());
 
-      if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(myMergeChecker.checkList(changeList)) &&
-          !checkListForPaths(workingCopyRoot, sourceBranch, pair.getSecond())) {
+      if (MergeCheckResult.NOT_MERGED.equals(myMergeChecker.checkList(changeList)) && !checkListForPaths(pair.getSecond())) {
         result.add(changeList);
       }
     }
@@ -125,7 +124,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
   }
 
   // true if errors found
-  static boolean checkListForPaths(@NotNull String workingCopyRoot, @NotNull String sourceBranch, @NotNull LogHierarchyNode node) {
+  boolean checkListForPaths(@NotNull LogHierarchyNode node) {
     // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
     // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
     // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
@@ -133,18 +132,18 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
     // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
     // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
-    boolean isLocalChange = ContainerUtil.or(node.getChildren(), child -> checkForSubtree(child, workingCopyRoot, sourceBranch));
+    boolean isLocalChange = ContainerUtil.or(node.getChildren(), this::checkForSubtree);
 
-    return isLocalChange || checkForEntry(node.getMe(), workingCopyRoot, sourceBranch);
+    return isLocalChange ||
+           checkForEntry(node.getMe(), myMergeContext.getRepositoryRelativeWorkingCopyPath(),
+                         myMergeContext.getRepositoryRelativeSourcePath());
   }
 
   /**
-   * TODO: Why parameters here are in [relativeBranch/sourceBranch, localURL/workingCopyRoot] order? - not as in other similar checkXxx()
-   * TODO: methods? Check if this is correct, because currently it results that checkForEntry() from checkListForPaths() and
-   * TODO: checkForSubtree() are called with swapped parameters.
+   * TODO: Why checkForEntry() from checkListForPaths() and checkForSubtree() are called with swapped parameters.
    */
   // true if errors found
-  private static boolean checkForSubtree(@NotNull LogHierarchyNode tree, @NotNull String relativeBranch, @NotNull String localURL) {
+  private boolean checkForSubtree(@NotNull LogHierarchyNode tree) {
     LinkedList<LogHierarchyNode> queue = new LinkedList<>();
     queue.addLast(tree);
 
@@ -152,7 +151,10 @@ public class MergeCalculatorTask extends BaseMergeTask {
       LogHierarchyNode element = queue.removeFirst();
       ProgressManager.checkCanceled();
 
-      if (checkForEntry(element.getMe(), localURL, relativeBranch)) return true;
+      if (checkForEntry(element.getMe(), myMergeContext.getRepositoryRelativeSourcePath(),
+                        myMergeContext.getRepositoryRelativeWorkingCopyPath())) {
+        return true;
+      }
       queue.addAll(element.getChildren());
     }
     return false;

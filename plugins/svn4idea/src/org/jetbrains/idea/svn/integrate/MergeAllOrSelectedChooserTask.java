@@ -39,7 +39,8 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         break;
       case select:
         next(new LookForBranchOriginTask(myMergeProcess, false, copyPoint ->
-          next(new MergeCalculatorTask(myMergeProcess, copyPoint))));
+          next(new MergeCalculatorTask(myMergeProcess, copyPoint, task ->
+            next(new ShowRevisionSelector(myMergeProcess, task.getChangeLists(), task.getMergeChecker()))))));
         break;
     }
   }
