@@ -142,7 +142,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" group="plugins/JavaFX" />
-      <module fileurl="file://$PROJECT_DIR$/jps/javac-ref-scanner-8/javac-ref-scanner-8.iml" filepath="$PROJECT_DIR$/jps/javac-ref-scanner-8/javac-ref-scanner-8.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/javac-ref-scanner-8/javac-ref-scanner-8.iml" filepath="$PROJECT_DIR$/jps/javac-ref-scanner-8/javac-ref-scanner-8.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
