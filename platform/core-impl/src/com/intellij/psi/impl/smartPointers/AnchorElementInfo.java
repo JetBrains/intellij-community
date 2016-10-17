@@ -81,7 +81,7 @@ class AnchorElementInfo extends SelfElementInfo {
 
     PsiFile file = restoreFile();
     if (file == null) return null;
-    PsiElement anchor = findElementInside(file, psiRange.getStartOffset(), psiRange.getEndOffset(), myType);
+    PsiElement anchor = findElementInside(file, psiRange, myType);
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
