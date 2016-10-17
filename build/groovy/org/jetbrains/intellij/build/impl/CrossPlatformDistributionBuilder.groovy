@@ -59,7 +59,6 @@ class CrossPlatformDistributionBuilder {
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
-          exclude(name: "lib/libpty/**") //todo[nik] this is temporary workaround until IDEA fully migrates to the new scheme
         }
         fileset(dir: zipDir)
 
