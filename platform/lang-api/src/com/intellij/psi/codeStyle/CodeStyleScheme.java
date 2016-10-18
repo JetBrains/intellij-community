@@ -27,5 +27,7 @@ public interface CodeStyleScheme extends Scheme {
   @NotNull
   String getName();
   boolean isDefault();
+  
+  @NotNull
   CodeStyleSettings getCodeStyleSettings();
 }

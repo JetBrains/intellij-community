@@ -71,6 +71,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
+  @NotNull
   public CodeStyleSettings getCodeStyleSettings() {
     SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
