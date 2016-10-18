@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRepository;
@@ -136,7 +135,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       List<VcsException> exceptions = new ArrayList<>();
       GitMergeUtil.showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
       repositoryManager.updateRepository(root);
-      runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
+      showErrors(project, getActionName(), exceptions);
     }
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, repository.getRoot(), getActionName(),
