@@ -721,7 +721,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       return false;
     }
     final String qualifiedName = targetClass.getQualifiedName();
-    return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName) ||
+    return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE
+      .equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName);
   }
 }

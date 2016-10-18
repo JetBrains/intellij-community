@@ -15,19 +15,12 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
@@ -47,39 +40,7 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new AssertEqualsCalledOnArrayFix((String)infos[0]);
-  }
-
-  private static class AssertEqualsCalledOnArrayFix extends InspectionGadgetsFix {
-
-    private final String myAssertClassName;
-
-    public AssertEqualsCalledOnArrayFix(String assertClassName) {
-      myAssertClassName = assertClassName;
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiElement parent = methodNameIdentifier.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null && ImportUtils.addStaticImport(myAssertClassName, "assertArrayEquals", methodExpression)) {
-        PsiReplacementUtil.replaceExpression(methodExpression, "assertArrayEquals");
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(methodExpression, myAssertClassName + ".assertArrayEquals");
-      }
-    }
+    return new ReplaceAssertEqualsFix("assertArrayEquals");
   }
 
   @Override
@@ -104,7 +65,7 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       if (!(type1 instanceof PsiArrayType) || !(type2 instanceof PsiArrayType)) {
         return;
       }
-      registerMethodCallError(expression, assertEqualsHint.getAssertClassName());
+      registerMethodCallError(expression);
     }
   }
 }

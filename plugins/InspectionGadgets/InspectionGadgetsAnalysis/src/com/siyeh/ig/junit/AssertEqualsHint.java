@@ -25,16 +25,10 @@ import org.jetbrains.annotations.NonNls;
 public class AssertEqualsHint {
   private final int myArgIndex;
   private final PsiMethod myMethod;
-  private final String myClassName;
 
-  private AssertEqualsHint(int index, PsiMethod method, String className) {
+  private AssertEqualsHint(int index, PsiMethod method) {
     myArgIndex = index;
     myMethod = method;
-    myClassName = className;
-  }
-
-  public String getAssertClassName() {
-    return myClassName;
   }
 
   public int getArgIndex() {
@@ -60,6 +54,7 @@ public class AssertEqualsHint {
                                           InheritanceUtil.isInheritor(containingClass, "org.testng.Assert");
     if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
         !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) &&
+        !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE) &&
         !InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") &&
         !messageOnLastPosition) {
       return null;
@@ -85,7 +80,7 @@ public class AssertEqualsHint {
       }
       argumentIndex = 0;
     }
-    return new AssertEqualsHint(argumentIndex, method, messageOnLastPosition ? JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS : JUnitCommonClassNames.ORG_JUNIT_ASSERT);
+    return new AssertEqualsHint(argumentIndex, method);
   }
 
   public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression) {

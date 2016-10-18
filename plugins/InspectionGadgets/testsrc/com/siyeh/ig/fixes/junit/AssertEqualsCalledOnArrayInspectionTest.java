@@ -43,7 +43,7 @@ public class AssertEqualsCalledOnArrayInspectionTest extends IGQuickFixesTestCas
   }
 
   private void doFixTest() {
-    doTest(getTestName(true), InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix"));
+    doTest(getTestName(true), InspectionGadgetsBundle.message("replace.assertequals.quickfix", "assertArrayEquals"));
   }
 
   @Override

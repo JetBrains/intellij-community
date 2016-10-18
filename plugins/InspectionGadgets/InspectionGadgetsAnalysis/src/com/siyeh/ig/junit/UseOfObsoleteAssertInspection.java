@@ -80,7 +80,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final String name = containingClass.getQualifiedName();
-      if (JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(name) || "junit.framework.TestCase".equals(name)) {
+      if (JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(name) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(name)) {
         registerMethodCallError(expression, name);
       }
     }
