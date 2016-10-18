@@ -93,7 +93,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 
-  public boolean isUsePredefinedMessageFilter() {
+  protected boolean isUsePredefinedMessageFilter() {
     return myUsePredefinedMessageFilter;
   }
 }

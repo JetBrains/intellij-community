@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
@@ -205,8 +206,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     ClassPrepareRequest classPrepareRequest = myEventRequestManager.createClassPrepareRequest();
     classPrepareRequest.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
-    classPrepareRequest.addClassFilter(pattern);
-    classPrepareRequest.putProperty(CLASS_NAME, pattern);
+    if (!StringUtil.isEmpty(pattern)) {
+      classPrepareRequest.addClassFilter(pattern);
+      classPrepareRequest.putProperty(CLASS_NAME, pattern);
+    }
 
     registerRequestInternal(requestor, classPrepareRequest);
     return classPrepareRequest;

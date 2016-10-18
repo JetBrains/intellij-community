@@ -117,7 +117,7 @@ public class ExternalDiffToolUtil {
     Charset charset = content.getCharset();
     if (charset == null) charset = Charset.defaultCharset();
 
-    Boolean hasBom = content.getBOM();
+    Boolean hasBom = content.hasBom();
     if (hasBom == null) hasBom = CharsetToolkit.getMandatoryBom(charset) != null;
 
     String contentData = ReadAction.compute(() -> {

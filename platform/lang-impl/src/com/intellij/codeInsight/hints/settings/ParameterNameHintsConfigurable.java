@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints.settings;
 
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -37,10 +38,12 @@ import java.util.stream.Collectors;
 public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private final Project myProject;
-
-  public ParameterNameHintsConfigurable(@NotNull Project project) {
+  private final InlayParameterHintsProvider myHintsProvider;
+  
+  public ParameterNameHintsConfigurable(@NotNull Project project, @NotNull InlayParameterHintsProvider provider) {
     super(project);
     myProject = project;
+    myHintsProvider = provider;
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
   }
@@ -67,7 +70,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .filter((e) -> !e.trim().isEmpty())
       .collect(Collectors.toSet());
     
-    ParameterNameHintsSettings.getInstance().setIgnorePatternSet(updatedBlackList);
+    ParameterNameHintsSettings.getInstance().setIgnorePatternSet(myHintsProvider, updatedBlackList);
   }
 
   @Nullable
@@ -83,7 +86,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     EditorTextFieldProvider service = ServiceManager.getService(myProject, EditorTextFieldProvider.class);
     myEditorTextField = service.getEditorField(PlainTextLanguage.INSTANCE, myProject, ContainerUtil.emptyIterable());
     
-    Set<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternSet();
+    Set<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternSet(myHintsProvider);
     String text = StringUtil.join(blacklist, "\n");
     
     myEditorTextField.setText(text);
