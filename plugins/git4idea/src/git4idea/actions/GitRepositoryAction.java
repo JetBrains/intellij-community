@@ -15,7 +15,6 @@
  */
 package git4idea.actions;
 
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -31,7 +30,6 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,26 +92,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   @Deprecated
   protected boolean executeFinalTasksSynchronously() {
     return true;
-  }
-
-  @CalledInAwt
-  protected static boolean isRebasing(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project != null) {
-      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null) {
-        for (VirtualFile file : files) {
-          GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-          if (isRebasing(manager.getRepositoryForFile(file))) return true;
-        }
-      }
-      if (isRebasing(GitBranchUtil.getCurrentRepository(project))) return true;
-    }
-    return false;
-  }
-
-  private static boolean isRebasing(@Nullable GitRepository repository) {
-    return repository != null && repository.getState() == Repository.State.REBASING;
   }
 
   /**
