@@ -144,7 +144,12 @@ public class Task implements StudyItem {
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
       if (lessonDir != null) {
-        return lessonDir.findChild(taskDirName);
+        VirtualFile taskDir = lessonDir.findChild(taskDirName);
+        if (taskDir == null) {
+          return null;
+        }
+        VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+        return srcDir != null ? srcDir : taskDir;
       }
     }
     return null;
