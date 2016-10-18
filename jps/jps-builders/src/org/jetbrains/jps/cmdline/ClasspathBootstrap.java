@@ -312,14 +312,14 @@ public class ClasspathBootstrap {
   }
 
   private static List<String> getJavac8RefScannerClasspath() {
-    String jpsBuildersPath = getResourcePath(ClasspathBootstrap.class);
-    File jpsBuilders = new File(jpsBuildersPath);
-    if (jpsBuilders.isDirectory()) {
+    String instrumentationPath = getResourcePath(NotNullVerifyingInstrumenter.class);
+    File instrumentationUtil = new File(instrumentationPath);
+    if (instrumentationUtil.isDirectory()) {
       //running from sources: load classes from .../out/production/javac-ref-scanner-8
-      return Collections.singletonList(new File(jpsBuilders.getParentFile(), "javac-ref-scanner-8").getAbsolutePath());
+      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "javac-ref-scanner-8").getAbsolutePath());
     }
     else {
-      return Collections.emptyList();
+      return Collections.singletonList(instrumentationPath);
     }
   }
 }
