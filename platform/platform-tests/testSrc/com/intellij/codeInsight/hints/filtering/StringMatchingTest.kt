@@ -29,24 +29,31 @@ class StringMatchingTest : TestCase() {
   }
   
   fun `test simple`() {
-    val matcher = com.intellij.codeInsight.hints.filtering.StringMatcherBuilder.create("aaa")!!
+    val matcher = StringMatcherBuilder.create("aaa")!!
     
     matcher.assertMatches("aaa")
     matcher.assertNotMatches("aaaa", "aab", "", "*", "a", "baaa")
   }
   
   fun `test asterisks before`() {
-    val matcher = com.intellij.codeInsight.hints.filtering.StringMatcherBuilder.create("aaa*")!!
+    val matcher = StringMatcherBuilder.create("aaa*")!!
     
     matcher.assertMatches("aaa", "aaaa", "aaaaaa", "aaaqwe")
     matcher.assertNotMatches("baaa", "nnaaa", "qweaaa")
   }
 
   fun `test asterisks after`() {
-    val matcher = com.intellij.codeInsight.hints.filtering.StringMatcherBuilder.create("*aaa")!!
+    val matcher = StringMatcherBuilder.create("*aaa")!!
     
     matcher.assertMatches("aaa", "aaaa", "baaa", "aawweraaa")
     matcher.assertNotMatches("aaab", "aaabaa")
   }
+  
+  fun `test multiple asterisks`() {
+    val matcher = StringMatcherBuilder.create("*aax*")!!
+    matcher.assertMatches("qaaxq", "qqaaxqqq")
+    matcher.assertNotMatches("ax", "axx")
+  }
+  
   
 }
