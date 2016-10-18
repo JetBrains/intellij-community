@@ -46,6 +46,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     if (writer != null) {
       writer.close();
     }
+    BackwardReferenceIndexWriter.clearInstance();
   }
 
   @Override

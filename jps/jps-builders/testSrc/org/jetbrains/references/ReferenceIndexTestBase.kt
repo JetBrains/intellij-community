@@ -31,11 +31,13 @@ import java.io.File
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   public override fun setUp() {
+    BackwardReferenceIndexWriter.forceEnabled = true
     super.setUp()
-    System.setProperty(BackwardReferenceIndexWriter.PROP_KEY, true.toString())
+//    System.setProperty(BackwardReferenceIndexWriter.PROP_KEY, true.toString())
   }
 
   public override fun tearDown() {
+    BackwardReferenceIndexWriter.forceEnabled = false
     super.tearDown()
     System.clearProperty(BackwardReferenceIndexWriter.PROP_KEY)
   }
