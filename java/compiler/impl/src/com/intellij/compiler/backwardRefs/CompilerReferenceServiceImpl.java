@@ -278,7 +278,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
-      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(psiElement));
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
       if (place == null || (place == ElementPlace.SRC && myDirtyModulesHolder.contains(file))) {
         return null;
