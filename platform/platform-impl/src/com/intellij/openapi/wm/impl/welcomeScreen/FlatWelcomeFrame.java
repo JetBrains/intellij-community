@@ -39,7 +39,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -86,7 +89,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
 
   public FlatWelcomeFrame() {
     final JRootPane rootPane = getRootPane();
-    FlatWelcomeScreen screen = createScreen(rootPane);
+    FlatWelcomeScreen screen = new FlatWelcomeScreen();
+    Disposer.register(this, screen);
 
     final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -153,27 +157,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
   private static void saveLocation(Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
-  }
-
-  private FlatWelcomeScreen createScreen(JRootPane rootPane) {
-    FlatWelcomeScreen screen = null;
-    for (WelcomeScreenProvider provider : WelcomeScreenProvider.EP_NAME.getExtensions()) {
-      if (!provider.isAvailable()) continue;
-      WelcomeScreen s = provider.createWelcomeScreen(rootPane);
-      if (screen instanceof FlatWelcomeScreen) {
-        screen = (FlatWelcomeScreen)s;
-        break;
-      }
-    }
-    if (screen == null) {
-      screen = new FlatWelcomeScreen();
-    }
-    Disposer.register(this, screen);
-    return screen;
-  }
-
-  public FlatWelcomeScreen createWelcomeScreen() {
-    return new FlatWelcomeScreen();
   }
 
   @Override
