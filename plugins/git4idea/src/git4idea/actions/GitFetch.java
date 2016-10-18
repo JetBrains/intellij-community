@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -38,8 +37,7 @@ public class GitFetch extends GitRepositoryAction {
 
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final List<VcsException> exceptions) throws VcsException {
+                         @NotNull final VirtualFile defaultRoot) {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

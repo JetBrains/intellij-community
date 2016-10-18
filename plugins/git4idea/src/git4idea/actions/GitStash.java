@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,8 +39,7 @@ public class GitStash extends GitRepositoryAction {
    */
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final List<VcsException> exceptions) throws VcsException {
+                         @NotNull final VirtualFile defaultRoot) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not stash changes now")) return;
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
@@ -58,7 +56,9 @@ public class GitStash extends GitRepositoryAction {
       DvcsUtil.workingTreeChangeFinished(project, token);
     }
     VfsUtil.markDirtyAndRefresh(false, true, false, root);
-    showErrors(project, getActionName(), exceptions);
+    if(!h.errors().isEmpty()) {
+      showErrors(project, getActionName(), h.errors());
+    }
   }
 
   /**

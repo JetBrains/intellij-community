@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -156,10 +155,8 @@ public class GitTagDialog extends DialogWrapper {
 
   /**
    * Perform tagging according to selected options
-   *
-   * @param exceptions the list where exceptions are collected
    */
-  public void runAction(final List<VcsException> exceptions) {
+  public void runAction() {
     final String message = myMessageTextArea.getText();
     final boolean hasMessage = message.trim().length() != 0;
     final File messageFile;
@@ -200,20 +197,18 @@ public class GitTagDialog extends DialogWrapper {
       if (object.length() != 0) {
         h.addParameters(object);
       }
-      try {
-        GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
-        VcsNotifier.getInstance(myProject).notifySuccess(myTagNameTextField.getText(),
-                                                         "Created tag " + myTagNameTextField.getText() + " successfully.");
-        GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
-        if (repository != null) {
-          repository.getRepositoryFiles().refresh(true);
-        }
-        else {
-          LOG.error("No repository registered for root: " + getGitRoot());
-        }
+      GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
+      VcsNotifier.getInstance(myProject).notifySuccess(myTagNameTextField.getText(),
+                                                       "Created tag " + myTagNameTextField.getText() + " successfully.");
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
+      if (repository != null) {
+        repository.getRepositoryFiles().refresh(true);
       }
-      finally {
-        exceptions.addAll(h.errors());
+      else {
+        LOG.error("No repository registered for root: " + getGitRoot());
+      }
+      if(!h.errors().isEmpty()) {
+        GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
       }
     }
     finally {
