@@ -89,7 +89,7 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
 
   @Override
   @Nullable
-  public Boolean getBOM() {
+  public Boolean hasBom() {
     return myBOM;
   }
 
