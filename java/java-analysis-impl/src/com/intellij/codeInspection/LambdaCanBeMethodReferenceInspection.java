@@ -297,8 +297,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           return null;
         }
         PsiType type = typeElement.getType();
-        if (type instanceof PsiPrimitiveType)
-          return null;
+        if (type instanceof PsiPrimitiveType) return null;
+        type = type.getDeepComponentType();
+        if (type instanceof PsiClassType && (((PsiClassType)type).resolve() instanceof PsiTypeParameter)) return null;
         return expression;
       }
     }
