@@ -169,6 +169,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-tests.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib/layoutlib.iml" filepath="$PROJECT_DIR$/android/layoutlib/layoutlib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-api/layoutlib-api.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-api/layoutlib-api.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-resources.iml" group="android/sdktools"/>
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
