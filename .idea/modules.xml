@@ -21,7 +21,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/../base/annotations/android-annotations.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" group="plugins/Android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/common/android-common.iml" filepath="$PROJECT_DIR$/../adt/idea/android/common/android-common.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/common/android-common.iml" filepath="$PROJECT_DIR$/../adt/idea/common/android-common.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" group="plugins/Android" />
