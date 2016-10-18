@@ -151,7 +151,7 @@ public class GitFileAnnotation extends FileAnnotation {
       fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
     }
 
-    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject();
+    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject() + "\n...";
     return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
                              DateFormatUtil.formatDateTime(lineInfo.getDate()), commitMessage);
   }

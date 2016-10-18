@@ -143,12 +143,17 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
+      "import java.util.function.Consumer;" +
       "public final class Optional<T> {" +
+      "  private final T value;" +
       "  public T get() {" +
-      "    return null;" +
+      "    if (value == null) {" +
+      "      throw new NoSuchElementException(\"No value present\");" +
+      "    }" +
+      "    return value;" +
       "  }" +
       "  public boolean isPresent() {" +
-      "    return true;" +
+      "    return value != null;" +
       "  }" +
       "  public static<T> Optional<T> empty() {" +
       "    return new Optional<>();" +

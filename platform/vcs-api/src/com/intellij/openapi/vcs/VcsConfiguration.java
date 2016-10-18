@@ -74,7 +74,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
   public String UPDATE_FILTER_SCOPE_NAME = null;
-  public boolean USE_COMMIT_MESSAGE_MARGIN = false;
+  public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;

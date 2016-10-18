@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -54,58 +56,60 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
   private static class OptionalGetWithoutIsPresentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
-      check(method.getBody());
-    }
-
-    @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
-      check(initializer.getBody());
-    }
-
-    @Override
-    public void visitField(PsiField field) {
-      check(field.getInitializer());
-    }
-
-    private void check(PsiElement element) {
-      if (!containsOptionalGetCall(element)) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final String name = methodExpression.getReferenceName();
+      if (!isOptionalGetMethodName(name)) {
+        return;
+      }
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      if (qualifier == null) {
+        return;
+      }
+      final PsiType type = qualifier.getType();
+      if (!TypeUtils.isOptional(type)) {
+        return;
+      }
+      PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
+      if (context instanceof PsiMethod) {
+        context = ((PsiMethod)context).getBody();
+      }
+      else if (context instanceof PsiClassInitializer) {
+        context = ((PsiClassInitializer)context).getBody();
+      }
+      else if (context instanceof PsiField) {
+        context = ((PsiField)context).getInitializer();
+      }
+      if (context == null) {
         return;
       }
       final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, true, isOnTheFly());
-      dfaRunner.analyzeMethod(element, new InstructionVisitor() {
-        @Override
-        public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-          DfaValue dfaSource = memState.pop();
-          DfaValue dfaDest = memState.pop();
-          if (dfaDest instanceof DfaVariableValue) {
-            DfaVariableValue var = (DfaVariableValue)dfaDest;
-            final PsiModifierListOwner psi = var.getPsiVariable();
-            if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
-              memState.setVarValue(var, dfaSource);
-            }
-          }
-          memState.push(dfaDest);
-          return nextInstruction(instruction, runner, memState);
-        }
+      dfaRunner.analyzeMethod(context, new StandardInstructionVisitor() {
 
         @Override
         public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+          final int length = instruction.getArgs().length;
+          if (length != 0) {
+            return super.visitMethodCall(instruction, runner, memState);
+          }
+          final DfaValue qualifierValue = memState.peek();
           final DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
 
-          final PsiMethod targetMethod = instruction.getTargetMethod();
-          if (targetMethod != null) {
-            final PsiClass aClass = targetMethod.getContainingClass();
-            if (TypeUtils.isOptional(aClass)) {
-              final String name = targetMethod.getName();
-              if (name.equals("isPresent")) {
-                memState.pop();
-                memState.push(runner.getFactory().getConstFactory().getFalse());
-              }
-              else if (name.equals("get") || name.equals("getAsDouble") || name.equals("getAsInt") || name.equals("getAsLong")) {
-                final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)instruction.getCallExpression();
-                if (methodCallExpression != null) {
-                  registerMethodCallError(methodCallExpression, aClass);
+          final PsiCall callExpression = instruction.getCallExpression();
+          if ((callExpression instanceof PsiMethodCallExpression) &&
+              isCallOnSameQualifier((PsiMethodCallExpression)callExpression, qualifierValue, qualifier)) {
+            final PsiMethod targetMethod = instruction.getTargetMethod();
+            if (targetMethod != null) {
+              final PsiClass aClass = targetMethod.getContainingClass();
+              if (TypeUtils.isOptional(aClass)) {
+                final String methodName = targetMethod.getName();
+                if ("isPresent".equals(methodName)) {
+                  memState.pop();
+                  memState.push(runner.getFactory().getConstFactory().getFalse());
+                }
+                else if (isOptionalGetMethodName(methodName)) {
+                  registerMethodCallError((PsiMethodCallExpression)instruction.getCallExpression(), aClass);
                 }
               }
             }
@@ -115,41 +119,19 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       });
     }
 
-    private static boolean containsOptionalGetCall(PsiElement element) {
-      if (element == null) return false;
-      final OptionalGetCallChecker checker = new OptionalGetCallChecker();
-      element.acceptChildren(checker);
-      return checker.containsOptionalGetCall();
+    private static boolean isCallOnSameQualifier(PsiMethodCallExpression methodCallExpression,
+                                                 DfaValue qualifierValue, PsiExpression qualifier) {
+      if ((qualifier instanceof PsiReferenceExpression) && qualifierValue instanceof DfaVariableValue &&
+          ((DfaVariableValue)qualifierValue).getPsiVariable().equals(((PsiReferenceExpression)qualifier).resolve())) {
+        return true;
+      }
+      final PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+      return qualifierExpression != null && PsiEquivalenceUtil.areElementsEquivalent(qualifier, qualifierExpression);
     }
 
-    private static class OptionalGetCallChecker extends JavaRecursiveElementWalkingVisitor {
-      private boolean result = false;
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        if (result) {
-          return;
-        }
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        final String name = methodExpression.getReferenceName();
-        if (!"get".equals(name) && !"getAsDouble".equals(name) && !"getAsInt".equals(name) && !"getAsLong".equals(name)) {
-          return;
-        }
-        final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-        if (qualifier == null) {
-          return;
-        }
-        final PsiType type = qualifier.getType();
-        if (!TypeUtils.isOptional(type)) {
-          return;
-        }
-        result = true;
-      }
-
-      public boolean containsOptionalGetCall() {
-        return result;
-      }
+    private static boolean isOptionalGetMethodName(String name) {
+      return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
     }
   }
 }

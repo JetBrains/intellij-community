@@ -202,7 +202,8 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Returns an environment that will be passed to a child process.
+   * Returns an environment that will be inherited by a child process.
+   * @see #getEffectiveEnvironment()
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
@@ -214,6 +215,17 @@ public class GeneralCommandLine implements UserDataHolder {
       default:
         return Collections.emptyMap();
     }
+  }
+
+  /**
+   * Returns an environment as seen by a child process,
+   * that is the {@link #getEnvironment() environment} merged with the {@link #getParentEnvironment() parent} one.
+   */
+  @NotNull
+  public Map<String, String> getEffectiveEnvironment() {
+    MyTHashMap env = new MyTHashMap();
+    setupEnvironment(env);
+    return env;
   }
 
   public void addParameters(@NotNull String... parameters) {

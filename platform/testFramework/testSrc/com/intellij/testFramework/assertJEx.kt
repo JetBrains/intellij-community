@@ -24,6 +24,7 @@ import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.Objects
 import org.jdom.Element
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -39,10 +40,23 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
     return this
   }
 
+  fun isEqualTo(file: File): JdomAssert {
+    return isEqualTo(file.readText())
+  }
+
+  fun isEqualTo(element: Element): JdomAssert {
+    isNotNull
+
+    if (!JDOMUtil.areElementsEqual(actual, element)) {
+      isEqualTo(JDOMUtil.writeElement(element))
+    }
+    return this
+  }
+
   fun isEqualTo(expected: String): JdomAssert {
     isNotNull
 
-    Objects.instance().assertEqual(info, JDOMUtil.writeElement(actual!!), expected.trimIndent())
+    Objects.instance().assertEqual(info, JDOMUtil.writeElement(actual!!), expected.trimIndent().removePrefix("""<?xml version="1.0" encoding="UTF-8"?>""").trimStart())
     return this
   }
 }

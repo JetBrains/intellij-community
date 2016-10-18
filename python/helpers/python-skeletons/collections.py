@@ -44,13 +44,13 @@ class defaultdict(dict):
     def __init__(self, default_factory=None, **kwargs):
         """
         :type default_factory: () -> V
-        :rtype: defaultdict[T, V]
+        :rtype: defaultdict[Any, V]
         """
         pass
 
     def __missing__(self, key):
         """
-        :type key: T
+        :type key: Any
         :rtype: V
         """
         pass

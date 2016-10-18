@@ -23,8 +23,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -42,7 +42,7 @@ import kotlin.properties.Delegates
 
 internal const val PLUGIN_NAME = "Settings Repository"
 
-internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
+internal val LOG = logger<IcsManager>()
 
 val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager

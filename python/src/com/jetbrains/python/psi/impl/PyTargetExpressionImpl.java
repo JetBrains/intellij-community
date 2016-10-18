@@ -346,11 +346,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                         @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
-      final List<PyType> memberTypes = new ArrayList<>();
-      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
-        memberTypes.add(tupleType.getElementType(i));
-      }
-      return PyUnionType.union(memberTypes);
+      return tupleType.getIteratedItemType();
     }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
@@ -364,7 +360,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-        return getCollectionElementType(iterateReturnType, context);
+        return getCollectionElementType(iterateReturnType);
       }
       final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
                                     PyNames.DUNDER_NEXT : PyNames.NEXT;
@@ -381,18 +377,16 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-        return getCollectionElementType(iterateReturnType, context);
+        return getCollectionElementType(iterateReturnType);
       }
     }
     return null;
   }
 
   @Nullable
-  private static PyType getCollectionElementType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  private static PyType getCollectionElementType(@Nullable PyType type) {
     if (type instanceof PyCollectionType) {
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
-      // TODO: Select the parameter type that matches T in Iterable[T]
-      return elementTypes.isEmpty() ? null : elementTypes.get(0);
+      return ((PyCollectionType)type).getIteratedItemType();
     }
     return null;
   }

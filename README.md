@@ -10,6 +10,14 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * Configure a JSDK named "**1.8**", pointing to an installation of JDK 1.8.
 * Add <JDK_18_HOME>/lib/tools.jar to the set of "**1.8**" jars.
 * Use Build | Build Project to build the code.
-* To run the code, use the provided shared run configuration "**IDEA**".
+
+To run the IDE from the built code
+* use the provided shared run configuration "**IDEA**".
+
+To run tests apply these setting to the **default** JUnit run configuration type:
+* Working dir: 
+  `<IDEA_HOME>\bin`
+* VM parameters: 
+  `-ea -Xbootclasspath/p:../out/classes/production/boot -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
 
 You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.

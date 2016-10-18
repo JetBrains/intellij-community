@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -102,7 +103,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             final PsiExpression candidate =
               canBeMethodReferenceProblem(body, expression.getParameterList().getParameters(), functionalInterfaceType, null);
             if (candidate != null) {
-              holder.registerProblem(candidate,
+              holder.registerProblem(InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate,
                                      "Can be replaced with method reference",
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithMethodRefFix());
             }
@@ -297,8 +298,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           return null;
         }
         PsiType type = typeElement.getType();
-        if (type instanceof PsiPrimitiveType)
-          return null;
+        if (type instanceof PsiPrimitiveType) return null;
+        type = type.getDeepComponentType();
+        if (type instanceof PsiClassType && (((PsiClassType)type).resolve() instanceof PsiTypeParameter)) return null;
         return expression;
       }
     }
@@ -586,8 +588,11 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      if (element instanceof PsiLambdaExpression) {
+        element = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)element).getBody());
+      }
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
       tryConvertToMethodReference(lambdaExpression, element);

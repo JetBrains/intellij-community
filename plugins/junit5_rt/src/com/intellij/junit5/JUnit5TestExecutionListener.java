@@ -41,10 +41,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  private int myFinishCount = 0;
+  private int myFinishCount;
   private String myRootName;
   private Set<TestIdentifier> myRoots;
-  private boolean mySuccessful = true;
+  private boolean mySuccessful;
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -57,6 +57,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   public boolean wasSuccessful() {
     return mySuccessful;
+  }
+
+  public void initialize() {
+    mySuccessful = true;
+    myFinishCount = 0;
   }
 
   @Override

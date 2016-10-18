@@ -839,47 +839,33 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   @Nullable
-  public VirtualFileSystemEntry findRoot(@NotNull final String basePath, @NotNull NewVirtualFileSystem fs) {
-    if (basePath.isEmpty()) {
+  public VirtualFileSystemEntry findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    if (path.isEmpty()) {
       LOG.error("Invalid root, fs=" + fs);
       return null;
     }
 
-    String rootUrl = normalizeRootUrl(basePath, fs);
+    String rootUrl = normalizeRootUrl(path, fs);
 
     VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
 
-    String rootName;
-    String canonicalBasePath;
+    String rootName, rootPath;
     if (fs instanceof ArchiveFileSystem) {
-      final ArchiveFileSystem afs = (ArchiveFileSystem)fs;
-      VirtualFile localFile = afs.findLocalByRootPath(basePath);
+      ArchiveFileSystem afs = (ArchiveFileSystem)fs;
+      VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
       rootName = localFile.getName();
-      canonicalBasePath = afs.getRootPathByLocal(localFile); // make sure to not create FsRoot with ".." garbage in path
+      rootPath = afs.getRootPathByLocal(localFile); // make sure to not create FsRoot with ".." garbage in path
     }
     else {
-      rootName = basePath;
-      canonicalBasePath = basePath;
+      rootName = rootPath = path;
     }
 
-    FileAttributes attributes;
-    try {
-      attributes = fs.getAttributes(new StubVirtualFile() {
-        @NotNull
-        @Override
-        public String getPath() { return canonicalBasePath; }
-
-        @Nullable
-        @Override
-        public VirtualFile getParent() { return null; }
-      });
-    }
-    catch (RuntimeException | AssertionError e) {
-      LOG.error(e);
-      return null;
-    }
+    FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
+      @NotNull @Override public String getPath() { return rootPath; }
+      @Nullable @Override public VirtualFile getParent() { return null; }
+    });
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
@@ -888,7 +874,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     VfsData.Segment segment = VfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(canonicalBasePath, '/'));
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(rootPath, '/'));
 
     boolean mark;
     synchronized (myRoots) {
@@ -1234,9 +1220,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @TestOnly
   public void cleanPersistedContents() {
-    final int[] roots = FSRecords.listRoots();
-    for (int root : roots) {
-      markForContentReloadRecursively(root);
+    int[] roots = FSRecords.listRoots();
+    if (roots != null) {
+      for (int root : roots) {
+        markForContentReloadRecursively(root);
+      }
     }
   }
 

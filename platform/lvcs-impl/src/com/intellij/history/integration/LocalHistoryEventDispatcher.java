@@ -23,10 +23,16 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
+import java.util.List;
+
+public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener,
+                                                                               BulkFileListener {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
@@ -192,5 +198,23 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
 
   private boolean areContentChangesVersioned(VirtualFileEvent e) {
     return myGateway.areContentChangesVersioned(e.getFile());
+  }
+
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    myGateway.runWithVfsEventsDispatchContext(events, true, () -> {
+      for (VFileEvent event : events) {
+        BulkVirtualFileListenerAdapter.fireBefore(this, event);
+      }
+    });
+  }
+
+  @Override
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    myGateway.runWithVfsEventsDispatchContext(events, false, () -> {
+      for (VFileEvent event : events) {
+        BulkVirtualFileListenerAdapter.fireAfter(this, event);
+      }
+    });
   }
 }

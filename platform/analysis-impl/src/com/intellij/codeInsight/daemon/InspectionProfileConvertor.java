@@ -26,13 +26,13 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,6 @@ public class InspectionProfileConvertor {
 
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String VERSION_ATT = "version";
-  @NonNls private static final String PROFILE_NAME_ATT = "profile_name";
   @NonNls private static final String OPTION_TAG = "option";
   @NonNls private static final String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
   @NonNls protected static final String VALUE_ATT = "value";
@@ -110,11 +109,9 @@ public class InspectionProfileConvertor {
       return;
     }
     try {
-      Document doc = JDOMUtil.loadDocument(files[0]);
-      Element root = doc.getRootElement();
+      Element root = JDOMUtil.load(files[0]);
       if (root.getAttributeValue(VERSION_ATT) == null){
-        root.setAttribute(PROFILE_NAME_ATT, OLD_DEFAUL_PROFILE);
-        JDOMUtil.writeDocument(doc, new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION), "\n");
+        JDOMUtil.writeParent(root, new FileOutputStream(new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION)), "\n");
         FileUtil.delete(files[0]);
       }
     }

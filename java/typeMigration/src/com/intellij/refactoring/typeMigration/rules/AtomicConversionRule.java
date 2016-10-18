@@ -120,7 +120,7 @@ public class AtomicConversionRule extends TypeConversionRule {
             return new TypeConversionDescriptor("$qualifier$ " + sign + " $val$",
                                                 "$qualifier$.addAndGet(" + (operationSign == JavaTokenType.MINUSEQ ? "-($val$))" : "$val$)")) {
               @Override
-              public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+              public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
                 final PsiMethodCallExpression result = (PsiMethodCallExpression)super.replace(expression, evaluator);
                 final PsiExpression argument = result.getArgumentList().getExpressions()[0];
                 if (argument instanceof PsiPrefixExpression) {

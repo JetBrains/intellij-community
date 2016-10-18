@@ -1290,4 +1290,10 @@ public final class PsiUtil extends PsiUtilCore {
 
     return true;
   }
+
+  @NotNull
+  public static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
+    PsiElement original = element.getOriginalElement();
+    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
+  }
 }

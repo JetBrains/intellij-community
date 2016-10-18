@@ -42,8 +42,8 @@ if not manage_file:
 
 try:
   __import__(manage_file)
-except ImportError:
-  print ("There is no such manage file " + str(manage_file) + "\n")
+except ImportError as e:
+  print ("Failed to import" + str(manage_file) + " in ["+ ",".join(sys.path) +"] " + str(e))
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:

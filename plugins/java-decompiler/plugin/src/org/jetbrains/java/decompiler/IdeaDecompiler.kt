@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler
 
 import com.intellij.execution.filters.LineNumbersMapping
+import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -40,17 +42,26 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.ui.Gray
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
+import java.awt.BorderLayout
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.jar.Manifest
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JEditorPane
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   companion object {
@@ -238,5 +249,45 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       }
       return -1
     }
+  }
+
+  private class LegalNoticeDialog(project: Project, file: VirtualFile) : DialogWrapper(project) {
+    companion object {
+      val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
+      val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
+    }
+
+    private var myMessage: JEditorPane? = null
+
+    init {
+      title = IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.path, 40, true))
+      setOKButtonText(IdeaDecompilerBundle.message("legal.notice.action.accept"))
+      setCancelButtonText(IdeaDecompilerBundle.message("legal.notice.action.postpone"))
+      init()
+      pack()
+    }
+
+    override fun createCenterPanel(): JComponent? {
+      val iconPanel = JBPanel<JBPanel<*>>(BorderLayout())
+      iconPanel.add(JBLabel(AllIcons.General.WarningDialog), BorderLayout.NORTH)
+
+      val message = JEditorPane()
+      myMessage = message
+      message.editorKit = UIUtil.getHTMLEditorKit()
+      message.isEditable = false
+      message.preferredSize = JBUI.size(500, 100)
+      message.border = BorderFactory.createLineBorder(Gray._200)
+      message.text = "<div style='margin:5px;'>${IdeaDecompilerBundle.message("legal.notice.text")}</div>"
+
+      val panel = JBPanel<JBPanel<*>>(BorderLayout(JBUI.scale(10), 0))
+      panel.add(iconPanel, BorderLayout.WEST)
+      panel.add(message, BorderLayout.CENTER)
+      return panel
+    }
+
+    override fun createActions() =
+        arrayOf(okAction, DialogWrapperExitAction(IdeaDecompilerBundle.message("legal.notice.action.reject"), DECLINE_EXIT_CODE), cancelAction)
+
+    override fun getPreferredFocusedComponent() = myMessage
   }
 }

@@ -62,6 +62,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<ProgressIndicator, Set<Thread>>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
+  // top-level indicators for the thread id
+  private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   static final Set<Thread> threadsUnderCanceledIndicator = new THashSet<Thread>(); // guarded by threadsUnderIndicator
   private static volatile boolean shouldCheckCanceled;
@@ -661,12 +663,24 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return nonCancelor;
   }
 
+  @NotNull
+  public static ModalityState getCurrentThreadProgressModality() {
+    ProgressIndicator indicator = threadTopLevelIndicators.get(Thread.currentThread().getId());
+    ModalityState modality = indicator == null ? null : indicator.getModalityState();
+    return modality != null ? modality : ModalityState.NON_MODAL;
+  }
+
   private static void setCurrentIndicator(@NotNull Thread currentThread, ProgressIndicator indicator) {
+    long id = currentThread.getId();
     if (indicator == null) {
-      currentIndicators.remove(currentThread.getId());
+      currentIndicators.remove(id);
+      threadTopLevelIndicators.remove(id);
     }
     else {
-      currentIndicators.put(currentThread.getId(), indicator);
+      currentIndicators.put(id, indicator);
+      if (!threadTopLevelIndicators.containsKey(id)) {
+        threadTopLevelIndicators.put(id, indicator);
+      }
     }
   }
   private static ProgressIndicator getCurrentIndicator(@NotNull Thread thread) {

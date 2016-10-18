@@ -224,6 +224,11 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
+
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return true;
+      }
     };
   }
 

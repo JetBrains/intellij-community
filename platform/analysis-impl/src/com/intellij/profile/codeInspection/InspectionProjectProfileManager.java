@@ -15,6 +15,8 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -36,9 +38,17 @@ public abstract class InspectionProjectProfileManager implements InspectionProfi
   /**
    * @deprecated  use {@link #getCurrentProfile()} instead
    */
-  @SuppressWarnings({"UnusedDeclaration"})
   @NotNull
   public InspectionProfile getInspectionProfile(PsiElement element){
     return getCurrentProfile();
+  }
+
+  public static boolean isInformationLevel(String shortName, @NotNull PsiElement element) {
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key != null) {
+      final HighlightDisplayLevel errorLevel = getInstance(element.getProject()).getCurrentProfile().getErrorLevel(key, element);
+      return HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
+    }
+    return false;
   }
 }

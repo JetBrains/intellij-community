@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -47,6 +46,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +61,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Dmitry Batkovich
@@ -295,20 +296,11 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     @Nullable
     private Boolean isEnabled(final List<HighlightDisplayKey> selectedInspectionsNodes) {
-      Boolean isPreviousEnabled = null;
-      for (final HighlightDisplayKey key : selectedInspectionsNodes) {
-        final ToolsImpl tools = mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject());
-        for (final ScopeToolState state : tools.getTools()) {
-          final boolean enabled = state.isEnabled();
-          if (isPreviousEnabled == null) {
-            isPreviousEnabled = enabled;
-          }
-          else if (!isPreviousEnabled.equals(enabled)) {
-            return null;
-          }
-        }
-      }
-      return isPreviousEnabled;
+      return selectedInspectionsNodes
+        .stream()
+        .map(key -> mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject()))
+        .flatMap(tools -> tools.isEnabled() ? tools.getTools().stream().map(ScopeToolState::isEnabled) : Stream.of(false))
+        .collect(MoreCollectors.onlyOne()).orElse(null);
     }
 
     @Override

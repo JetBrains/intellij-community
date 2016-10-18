@@ -1,4 +1,4 @@
-<scheme name="Blackboard" parent_scheme="Default" version="1">
+<scheme name="Blackboard" parent_scheme="Darcula" version="1">
   <option name="LINE_SPACING" value="1.0" />
   <option name="EDITOR_FONT_SIZE" value="12" />
   <option name="EDITOR_FONT_NAME" value="Menlo" />

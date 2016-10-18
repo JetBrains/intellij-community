@@ -18,7 +18,6 @@ package com.intellij.structuralsearch;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
@@ -33,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
@@ -523,25 +523,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void provideAdditionalReplaceOptions(@NotNull PsiElement node, final ReplaceOptions options, final ReplacementBuilder builder) {
-    final String templateText = TemplateManager.getInstance(node.getProject()).createTemplate("", "", options.getReplacement()).getTemplateText();
     node.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
-      }
-
-      @Override
-      public void visitClass(PsiClass aClass) {
-        super.visitClass(aClass);
-
-        MatchVariableConstraint constraint =
-          options.getMatchOptions().getVariableConstraint(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
-        if (constraint != null) {
-          ParameterInfo e = new ParameterInfo();
-          e.setName(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
-          e.setStartIndex(templateText.lastIndexOf('}'));
-          builder.addParametrization(e);
-        }
       }
 
       @Override
@@ -603,7 +588,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
             final PsiElement parent = currentElement.getParent();
             if (parent instanceof PsiVariable) {
               final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class);
-              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+              if (PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
                 buf.append(',');
               }
             }
@@ -635,7 +620,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
             }
             else if (parent instanceof PsiClass) {
               final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(currentElement, PsiWhiteSpace.class);
-              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+              if (PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
                 buf.append(',');
               }
               else {

@@ -142,7 +142,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     } else if (methodName.equals("from")) {
       descriptorBase = new TypeConversionDescriptor("'FluentIterable*.from($it$)", null) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
           PsiExpression argument =
             PseudoLambdaReplaceTemplate.replaceTypeParameters(methodCall.getArgumentList().getExpressions()[0]);
@@ -162,7 +162,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     } else if (methodName.equals("isEmpty")) {
       descriptorBase = new TypeConversionDescriptor("$q$.isEmpty()", null) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiElement parent = expression.getParent();
           boolean isDoubleNegation = false;
           if (parent instanceof PsiExpression && DoubleNegationInspection.isNegation((PsiExpression)parent)) {
@@ -191,7 +191,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     else if (methodName.equals("get")) {
       descriptorBase = new TypeConversionDescriptor("$it$.get($p$)", null) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
           final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
           setReplaceByString("$it$.skip($p$).findFirst().get()");
@@ -209,7 +209,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     else if (methodName.equals("contains")) {
       descriptorBase = new TypeConversionDescriptor("$it$.contains($o$)", null) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
           final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
           LOG.assertTrue(qualifier != null);
@@ -232,7 +232,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     else if (methodName.equals("last")) {
       descriptorBase = new TypeConversionDescriptor("$it$.last()", null) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
           String varA = suggestName("a", codeStyleManager, expression);
           String varB = suggestName("b", codeStyleManager, expression);
@@ -373,7 +373,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   private static void addToMigrateChainQualifier(TypeMigrationLabeler labeler, PsiExpression qualifier) {
     final PsiClass qClass = PsiTypesUtil.getPsiClass(qualifier.getType());
     final boolean isFluentIterable;
-    if (qClass != null && ((isFluentIterable = GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(qClass.getQualifiedName())) ||
+    if (qClass != null && ((isFluentIterable = FLUENT_ITERABLE.equals(qClass.getQualifiedName())) ||
                            GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
       labeler.migrateExpressionType(qualifier,
                                     GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
@@ -395,7 +395,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     @Override
-    public PsiExpression replace(@NotNull PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
       Stack<PsiMethodCallExpression> methodChainStack = new Stack<>();
       PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
       while (current != null) {

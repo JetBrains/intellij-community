@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
+import com.intellij.profile.ProfileEx
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
@@ -49,8 +50,6 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.concurrency.runAsync
 import java.util.*
 import java.util.function.Function
-
-const val PROFILE = "profile"
 
 private const val VERSION = "1.0"
 private const val SCOPE = "scope"
@@ -99,7 +98,7 @@ class ProjectInspectionProfileManager(val project: Project,
                               attributeProvider: Function<String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager,
-                                          InspectionProfileImpl.getDefaultProfile(), dataHolder)
+                                          InspectionProfileImpl.getBaseProfile(), dataHolder)
       profile.isProjectLevel = true
       return profile
     }
@@ -307,8 +306,8 @@ class ProjectInspectionProfileManager(val project: Project,
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
         currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
-                                              InspectionProfileImpl.getDefaultProfile(), null)
-        currentScheme.copyFrom(applicationProfileManager.currentProfile)
+                                              InspectionProfileImpl.getBaseProfile(), null)
+        currentScheme.copyFrom(applicationProfileManager.currentProfile as ProfileEx)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
         schemeManager.addScheme(currentScheme)

@@ -118,6 +118,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
+  public void setConsoleEnabled(boolean flag) {
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.setEnabled(flag);
+    }
+  }
+
   public void showStartMessageForFirstExecution(String startCommand) {
     if (myFirstRun && myExecuteActionHandler != null) {
       setPrompt("");
@@ -133,6 +139,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       if (consoleCommunication instanceof PythonDebugConsoleCommunication) {
         consoleCommunication.notifyInputRequested();
       }
+    }
+  }
+
+  public void inputReceived() {
+    // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.inputReceived();
     }
   }
 

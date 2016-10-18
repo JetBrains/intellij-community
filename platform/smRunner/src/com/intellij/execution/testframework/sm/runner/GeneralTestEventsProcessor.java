@@ -244,7 +244,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public void stopEventProcessing() {
-    UIUtil.invokeLaterIfNeeded(() -> myTransferToEDTQueue.drain());
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      myTransferToEDTQueue.drain();
+    });
   }
 
 

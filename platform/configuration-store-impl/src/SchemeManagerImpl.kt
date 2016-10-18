@@ -233,11 +233,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       val bytes = URLUtil.openStream(url).readBytes()
       lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val schemeName = name ?: (processor as LazySchemeProcessor).getName(attributeProvider)
-
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
         val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
+
+        val schemeName = name ?: (processor as LazySchemeProcessor).getName(attributeProvider, externalInfo.fileNameWithoutExtension)
         externalInfo.schemeName = schemeName
 
         val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider, true)
@@ -316,7 +316,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         processPendingCurrentSchemeName(scheme)
       }
 
-      messageBus?.let { it.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker()) }
+      messageBus?.connect()?.subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker())
 
       return schemes.subList(newSchemesOffset, schemes.size)
     }
@@ -438,7 +438,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       val bytes = input.readBytes()
       lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val schemeName = name ?: processor.getName(attributeProvider)
+        val schemeName = name ?: processor.getName(attributeProvider, fileNameWithoutExtension)
         if (!checkExisting(schemeName)) {
           return null
         }
@@ -573,7 +573,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val parent = processor.writeScheme(scheme)
-    val element = if (parent is Element) parent else (parent as Document).detachRootElement()
+    val element = parent as? Element ?: (parent as Document).detachRootElement()
     if (element.isEmpty()) {
       externalInfo?.scheduleDelete()
       return
@@ -685,7 +685,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
     if (bundledScheme == null) {
-      if ((processor as? LazySchemeProcessor)?.let { it.isSchemeEqualToBundled(scheme) } ?: false) {
+      if ((processor as? LazySchemeProcessor)?.isSchemeEqualToBundled(scheme) ?: false) {
         externalInfo?.scheduleDelete()
         return true
       }
@@ -875,9 +875,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
     val result = THashSet<String>(schemes.size)
-    for (scheme in schemes) {
-      result.add(scheme.name)
-    }
+    schemes.mapTo(result) { it.name }
     return result
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
 
   @Nullable
-  public abstract NewVirtualFile findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs);
+  public abstract NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs);
 
   @NotNull
   public abstract VirtualFile[] getRoots();

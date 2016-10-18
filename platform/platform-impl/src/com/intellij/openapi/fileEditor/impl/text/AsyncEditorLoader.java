@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -172,6 +173,7 @@ public class AsyncEditorLoader {
     if (FileEditorManager.getInstance(myProject).getSelectedTextEditor() == myEditor) {
       IdeFocusManager.getInstance(myProject).requestFocus(myTextEditor.getPreferredFocusedComponent(), true);
     }
+    EditorNotifications.getInstance(myProject).updateNotifications(myTextEditor.myFile);
   }
 
   public static void performWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {

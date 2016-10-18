@@ -205,7 +205,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public final ModalityState getModalityState() {
+  public ModalityState getModalityState() {
     return myModalityState;
   }
 

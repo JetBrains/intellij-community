@@ -850,7 +850,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put(fontResource, uiFont);
     }
 
-    defaults.put("PasswordField.font", monoFont);
+    if (!SystemInfo.isMac) {
+      defaults.put("PasswordField.font", monoFont);
+    }
     defaults.put("TextArea.font", monoFont);
     defaults.put("TextPane.font", textFont);
     defaults.put("EditorPane.font", textFont);

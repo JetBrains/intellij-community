@@ -47,10 +47,6 @@ public class ShowShortenNames extends ActionGroup {
     return myChildren;
   }
 
-  public static boolean isSet() {
-    return getType() != ShortNameType.NONE;
-  }
-
   public static ShortNameType getType() {
     for (ShortNameType type : ShortNameType.values()) {
       if (type.isSet()) {

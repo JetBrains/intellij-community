@@ -54,7 +54,7 @@ interface SchemeExtensionProvider {
 }
 
 abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  open fun getName(attributeProvider: Function<String, String?>): String {
+  open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
     return attributeProvider.apply(nameAttribute) ?: throw IllegalStateException("name is missed in the scheme data")
   }
 

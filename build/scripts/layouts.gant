@@ -16,6 +16,7 @@
 
 
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -41,7 +42,7 @@ boolean setPluginAndIDEVersionInPluginXml() {
 }
 
 List<String> getExcludedPlugins() {
-  return isDefined("productProperties") ? productProperties.excludedPlugins : []
+  return []
 }
 
 /**
@@ -51,7 +52,7 @@ def layoutFull(BuildContext context) {
   binding.setVariable("productProperties", context.productProperties)
   String home = context.paths.communityHome
   String targetDirectory = context.paths.distAll
-  File patchedApplicationInfo = BuildTasks.create(context).patchApplicationInfo()
+  File patchedApplicationInfo = ((BuildTasksImpl)BuildTasks.create(context)).patchApplicationInfo()
   projectBuilder.stage("layout to $targetDirectory")
 
   List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
@@ -208,6 +209,7 @@ def layoutFull(BuildContext context) {
         module("forms_rt")
         module("instrumentation-util")
         module("instrumentation-util-8")
+        module("javac-ref-scanner-8")
       }
 
       jar("jps-model.jar") {
@@ -886,6 +888,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("forms-compiler")
         module("instrumentation-util")
         module("instrumentation-util-8")
+        module("javac-ref-scanner-8")
         module("jps-builders")
         module("jps-standalone-builder")
         module("java-runtime")

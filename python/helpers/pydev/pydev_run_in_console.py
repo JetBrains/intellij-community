@@ -9,6 +9,7 @@ from _pydev_imps._pydev_saved_modules import threading
 
 from _pydev_bundle import pydev_imports
 from _pydevd_bundle.pydevd_utils import save_main_module
+from _pydev_bundle.pydev_console_utils import StdIn
 
 
 def run_file(file, globals=None, locals=None):
@@ -40,7 +41,6 @@ def run_file(file, globals=None, locals=None):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    sys.stdin = BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
 
     del sys.argv[1]
@@ -71,6 +71,8 @@ if __name__ == '__main__':
                                      args=(host, int(port), interpreter))
     server_thread.setDaemon(True)
     server_thread.start()
+
+    sys.stdin = StdIn(interpreter, host, client_port, sys.stdin)
 
     globals = run_file(file, None, None)
 

@@ -30,24 +30,26 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private TestPlan myTestPlan;
   private JUnit5TestExecutionListener myListener;
   private ArrayList myListeners;
+  private Launcher myLauncher;
 
   @Override
   public void createListeners(ArrayList listeners) {
     myListeners = listeners;
     myListener = new JUnit5TestExecutionListener();
+    myLauncher = LauncherFactory.create();
+    myLauncher.registerTestExecutionListeners(myListener);
   }
 
   @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
-      Launcher launcher = LauncherFactory.create();
-      launcher.registerTestExecutionListeners(myListener);
+      myListener.initialize();
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
-      myTestPlan = launcher.discover(discoveryRequest);
+      myTestPlan = myLauncher.discover(discoveryRequest);
       for (Object listenerClassName : myListeners) {
         final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
-        launcher.registerTestExecutionListeners(new MyCustomListenerWrapper(junitListener));
+        myLauncher.registerTestExecutionListeners(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {
         do {
@@ -56,7 +58,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
         while (--count > 0);
       }
 
-      launcher.execute(discoveryRequest);
+      myLauncher.execute(discoveryRequest);
 
       return myListener.wasSuccessful() ? 0 : -1;
     }

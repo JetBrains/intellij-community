@@ -20,8 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -278,8 +276,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myModality2Transaction.get(indicator.getModalityState()) : null;
+      return myModality2Transaction.get(ModalityState.defaultModalityState());
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;

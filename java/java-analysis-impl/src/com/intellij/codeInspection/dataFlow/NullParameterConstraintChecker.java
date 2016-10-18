@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -47,10 +48,12 @@ import java.util.Set;
  */
 class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myPossiblyViolatedParameters;
+  private final Set<PsiParameter> myUsedParameters;
 
   private NullParameterConstraintChecker(Collection<PsiParameter> parameters, boolean isOnTheFly) {
     super(false, true, isOnTheFly);
     myPossiblyViolatedParameters = new THashSet<>(parameters);
+    myUsedParameters = new THashSet<>();
   }
 
   @NotNull
@@ -73,13 +76,23 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, true);
     checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
 
-    return checker.myPossiblyViolatedParameters.toArray(new PsiParameter[checker.myPossiblyViolatedParameters.size()]);
+    return checker.myPossiblyViolatedParameters.stream().filter(checker.myUsedParameters::contains).toArray(PsiParameter[]::new);
   }
 
   @NotNull
   @Override
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
+
+    if (instruction instanceof PushInstruction) {
+      final DfaValue var = ((PushInstruction)instruction).getValue();
+      if (var instanceof DfaVariableValue) {
+        final PsiModifierListOwner psiVar = ((DfaVariableValue)var).getPsiVariable();
+        if (psiVar instanceof PsiParameter) {
+          myUsedParameters.add((PsiParameter)psiVar);
+        }
+      }
+    }
 
     if (instruction instanceof AssignInstruction) {
       final DfaValue value = ((AssignInstruction)instruction).getAssignedValue();

@@ -1,0 +1,1 @@
+"format: %(complet<caret>)s" % {"completion": "smth"}

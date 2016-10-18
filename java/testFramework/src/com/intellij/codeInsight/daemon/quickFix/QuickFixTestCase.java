@@ -31,24 +31,25 @@ import java.util.List;
 public interface QuickFixTestCase {
   String getBasePath();
 
+  @NotNull
   String getTestDataPath();
 
   @NotNull
   ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents);
 
-  void beforeActionStarted(String testName, String contents);
+  void beforeActionStarted(@NotNull String testName, @NotNull String contents);
 
-  void afterActionCompleted(String testName, String contents);
+  void afterActionCompleted(@NotNull String testName, @NotNull String contents);
 
-  void doAction(ActionHint actionHint, String testFullPath, String testName) throws Exception;
+  void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) throws Exception;
 
-  void checkResultByFile(String s, @NotNull String expectedFilePath, boolean b) throws Exception;
+  void checkResultByFile(@NotNull String message, @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) throws Exception;
 
-  IntentionAction findActionWithText(String text);
+  IntentionAction findActionWithText(@NotNull String text);
 
   boolean shouldBeAvailableAfterExecution();
 
-  void invoke(IntentionAction action);
+  void invoke(@NotNull IntentionAction action);
 
   @NotNull
   List<HighlightInfo> doHighlighting();
@@ -58,7 +59,7 @@ public interface QuickFixTestCase {
 
   void bringRealEditorBack();
 
-  void configureFromFileText(String name, String contents) throws Throwable;
+  void configureFromFileText(@NotNull String name, @NotNull String contents) throws Throwable;
 
   PsiFile getFile();
 

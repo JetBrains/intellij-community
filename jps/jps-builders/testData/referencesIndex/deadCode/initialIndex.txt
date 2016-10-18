@@ -1,0 +1,16 @@
+Backward Hierarchy:
+java.lang.Object -> Bar
+
+Backward References:
+Bar in Bar
+Bar.<init>(0) in Bar
+Bar.DEBUG in Bar
+Bar.m(0) in Bar
+java.io.PrintStream.println(1) in Bar
+java.lang.Object.<init>(0) in Bar
+java.lang.System in Bar
+java.lang.System.out in Bar
+java.util.ArrayList in Bar
+
+Class Definitions:
+Bar in Bar

@@ -15,9 +15,7 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -56,15 +54,10 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
       // file) and there is no benefit to accumulate values for particular key because only one value exists
       if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
-        final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        final DataOutputStream _out = new DataOutputStream(bytes);
-        valueContainer.saveTo(_out, myValueExternalizer);
-
         appendData(key, new PersistentHashMap.ValueDataAppender() {
           @Override
           public void append(@NotNull final DataOutput out) throws IOException {
-            out.write(bytes.getInternalBuffer(), 0, bytes.size());
+            valueContainer.saveTo(out, myValueExternalizer);
           }
         });
       }

@@ -74,6 +74,16 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     return null;
   }
 
+  public static boolean isWithSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    if (qualifierExpression != null) {
+      final List<PsiElement> sideEffects = new ArrayList<>();
+      SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+      return !sideEffects.isEmpty();
+    }
+    return false;
+  }
+
   private static class MethodRefToLambdaVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
@@ -90,16 +100,6 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
       if (!withSideEffects) return MethodRefToLambdaFix::new;
       if (onTheFly || ApplicationManager.getApplication().isUnitTestMode()) return SideEffectsMethodRefToLambdaFix::new;
       return null;
-    }
-
-    private static boolean isWithSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
-      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-      if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<>();
-        SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-        return !sideEffects.isEmpty();
-      }
-      return false;
     }
   }
 

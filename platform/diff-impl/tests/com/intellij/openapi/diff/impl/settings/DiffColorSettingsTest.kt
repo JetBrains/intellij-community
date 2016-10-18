@@ -18,10 +18,8 @@ package com.intellij.openapi.diff.impl.settings
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer
 import com.intellij.diff.util.TextDiffType
-import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 
@@ -40,7 +38,7 @@ class DiffColorSettingsTest : DiffTestCase() {
   }
 
   fun testChanges() {
-    var panel : DiffPreviewPanel? = null;
+    var panel : DiffPreviewPanel? = null
     try {
       panel = DiffPreviewPanel()
       val viewer = panel.testGetViewer()

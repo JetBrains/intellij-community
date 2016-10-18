@@ -768,10 +768,10 @@ new Base() {
     testHighlighting('''\
 @interface A {
   int a() default 2
-  String b() default <error descr="Cannot assign 'ArrayList<String>' to 'String'">['a']</error>
+  String b() default <error descr="Cannot assign 'List<String>' to 'String'">['a']</error>
   String[][] c() default <error descr="Cannot assign 'String' to 'String[][]'">'f'</error>
   String[][] d() default [['f']]
-  String[][] e() default [[<error descr="Cannot assign 'ArrayList<String>' to 'String'">['f']</error>]]
+  String[][] e() default [[<error descr="Cannot assign 'List<String>' to 'String'">['f']</error>]]
 }
 ''')
   }

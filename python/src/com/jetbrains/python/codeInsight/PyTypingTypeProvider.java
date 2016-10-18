@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -383,7 +384,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (elementTypes.size() > 1 && elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
         return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
       }
-      return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
+      return PyTupleType.create(resolved, elementTypes);
     }
     final PyType builtinCollection = getBuiltinCollection(resolved);
     if (builtinCollection instanceof PyClassType) {
@@ -467,11 +468,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression expr = ((PyExpressionStatement)element).getExpression();
       if (expr instanceof PyTupleExpression) {
         final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
-        final List<PyType> elementTypes = new ArrayList<>();
-        for (PyExpression elementExpr : tupleExpr.getElements()) {
-          elementTypes.add(getType(elementExpr, context));
-        }
-        return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
+        final List<PyType> elementTypes = ContainerUtil.map(tupleExpr.getElements(), elementExpr -> getType(elementExpr, context));
+        return PyTupleType.create(anchor, elementTypes);
       }
       return getType(expr, context);
     }
@@ -594,7 +592,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
               return PyTupleType.createHomogeneous(element, indexTypes.get(0));
             }
           }
-          return PyTupleType.create(element, indexTypes.toArray(new PyType[indexTypes.size()]));
+          return PyTupleType.create(element, indexTypes);
         }
         else if (indexExpr != null) {
           return new PyCollectionTypeImpl(cls, false, indexTypes);
@@ -644,7 +642,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    return !elements.isEmpty() ? elements : Collections.<PsiElement>singletonList(expression);
+    return !elements.isEmpty() ? elements : Collections.singletonList(expression);
   }
 
   @NotNull

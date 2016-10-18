@@ -58,6 +58,7 @@ public class Key<T> {
     return myName;
   }
 
+  @NotNull
   public static <T> Key<T> create(@NotNull @NonNls String name) {
     return new Key<T>(name);
   }

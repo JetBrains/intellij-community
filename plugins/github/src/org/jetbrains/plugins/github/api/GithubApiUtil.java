@@ -244,8 +244,14 @@ public class GithubApiUtil {
 
   @NotNull
   public static List<GithubRepo> getUserRepos(@NotNull GithubConnection connection) throws IOException {
+    return getUserRepos(connection, false);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getUserRepos(@NotNull GithubConnection connection, boolean allAssociated) throws IOException {
     try {
-      String path = "/user/repos?" + PER_PAGE;
+      String type = allAssociated ? "" : "type=owner&";
+      String path = "/user/repos?" + type + PER_PAGE;
       return loadAll(connection, path, GithubRepo[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
@@ -257,7 +263,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubRepo> getUserRepos(@NotNull GithubConnection connection, @NotNull String user) throws IOException {
     try {
-      String path = "/users/" + user + "/repos?" + PER_PAGE;
+      String path = "/users/" + user + "/repos?type=owner&" + PER_PAGE;
       return loadAll(connection, path, GithubRepo[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
@@ -271,15 +277,10 @@ public class GithubApiUtil {
     try {
       List<GithubRepo> repos = new ArrayList<>();
 
-      repos.addAll(getUserRepos(connection));
+      repos.addAll(getUserRepos(connection, true));
 
       // We already can return something useful from getUserRepos, so let's ignore errors.
       // One of this may not exist in GitHub enterprise
-      try {
-        repos.addAll(getMembershipRepos(connection));
-      }
-      catch (GithubAuthenticationException | GithubStatusCodeException ignore) {
-      }
       try {
         repos.addAll(getWatchedRepos(connection));
       }
@@ -295,21 +296,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubRepoOrg> getMembershipRepos(@NotNull GithubConnection connection) throws IOException {
-    String orgsPath = "/user/orgs?" + PER_PAGE;
-    List<GithubOrg> orgs = loadAll(connection, orgsPath, GithubOrg[].class);
-
-    List<GithubRepoOrg> repos = new ArrayList<>();
-    for (GithubOrg org : orgs) {
-      String path = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
-      repos.addAll(loadAll(connection, path, GithubRepoOrg[].class, ACCEPT_V3_JSON));
-    }
-
-    return repos;
-  }
-
-  @NotNull
-  public static List<GithubRepo> getWatchedRepos(@NotNull GithubConnection connection) throws IOException {
+  private static List<GithubRepo> getWatchedRepos(@NotNull GithubConnection connection) throws IOException {
     String pathWatched = "/user/subscriptions?" + PER_PAGE;
     return loadAll(connection, pathWatched, GithubRepo[].class, ACCEPT_V3_JSON);
   }

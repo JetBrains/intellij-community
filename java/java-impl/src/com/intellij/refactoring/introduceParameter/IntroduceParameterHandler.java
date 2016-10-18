@@ -333,7 +333,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     /* do nothing */
   }
 
-  public static List<PsiMethod> getEnclosingMethods(PsiMethod nearest) {
+  public static List<PsiMethod> getEnclosingMethods(@NotNull PsiMethod nearest) {
     List<PsiMethod> enclosingMethods = new ArrayList<>();
     enclosingMethods.add(nearest);
     PsiMethod method = nearest;
@@ -531,7 +531,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
         return false;
       }
-      final List<PsiMethod> enclosingMethods = getEnclosingMethods(Util.getContainingMethod(elements[0]));
+      final PsiMethod containingMethod = Util.getContainingMethod(elements[0]);
+      if (containingMethod == null) {
+        return false;
+      }
+      final List<PsiMethod> enclosingMethods = getEnclosingMethods(containingMethod);
       if (enclosingMethods.isEmpty()) {
         return false;
       }
@@ -550,7 +554,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                        ? new PsiElement[]{exprInRange}
                        : CodeInsightUtil.findStatementsInRange(copy, range.getStartOffset(), range.getEndOffset());
       }
-      final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(Util.getContainingMethod(elementsCopy[0]));
+      final PsiMethod containingMethodCopy = Util.getContainingMethod(elementsCopy[0]);
+      LOG.assertTrue(containingMethodCopy != null);
+      final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(containingMethodCopy);
       final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy, 
                                                                               enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
       try {
@@ -702,7 +708,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static class MyExtractMethodProcessor extends ExtractMethodProcessor {
     private final PsiMethod myTopEnclosingMethod;
 
-    public MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, PsiMethod topEnclosing) {
+    public MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
       super(project, editor, elements, null, REFACTORING_NAME, null, null);
       myTopEnclosingMethod = topEnclosing;
     }

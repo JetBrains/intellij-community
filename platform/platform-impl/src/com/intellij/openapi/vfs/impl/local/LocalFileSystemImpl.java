@@ -59,7 +59,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
@@ -125,7 +125,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         String rootPath = request.getRootPath();
 
         TreeNode currentNode = rootNode;
-        MainLoop:
         for (String subPath : splitPath(rootPath)) {
           TreeNode nextNode = currentNode.nodes.get(subPath);
           if (nextNode != null) {
@@ -133,7 +132,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
             if (currentNode.watchRequest != null && currentNode.watchRequest.isToWatchRecursively()) {
               // a parent path of this request is already being watched recursively - do not need to add this one
               request.myDominated = true;
-              break MainLoop;
+              break;
             }
           }
           else {

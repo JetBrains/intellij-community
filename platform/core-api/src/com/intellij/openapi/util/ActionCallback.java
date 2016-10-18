@@ -280,7 +280,6 @@ public class ActionCallback implements Disposable {
   /**
    * @deprecated use {@link #notifyWhenRejected(ActionCallback)}
    */
-  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   @Deprecated
   public Runnable createSetRejectedRunnable() {

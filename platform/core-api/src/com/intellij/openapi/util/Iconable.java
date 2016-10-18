@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.util;
 
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,24 +29,24 @@ public interface Iconable {
   @Deprecated int ICON_FLAG_OPEN = 0x0004;
   @Deprecated int ICON_FLAG_CLOSED = 0x0008;
 
-  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_OPEN, ICON_FLAG_CLOSED, ICON_FLAG_READ_STATUS})
+  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS})
   @interface IconFlags {}
 
   Icon getIcon(@IconFlags int flags);
 
   class LastComputedIcon {
-    private static final Key<TIntObjectHashMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+    private static final Key<ConcurrentIntObjectMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable
     public static Icon get(@NotNull UserDataHolder holder, int flags) {
-      TIntObjectHashMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      ConcurrentIntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       return map == null ? null : map.get(flags);
     }
 
     public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
-      TIntObjectHashMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      ConcurrentIntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       if (map == null) {
-        map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, new TIntObjectHashMap<Icon>());
+        map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.<Icon>createConcurrentIntObjectMap());
       }
       map.put(flags, icon);
     }

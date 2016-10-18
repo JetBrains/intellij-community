@@ -141,9 +141,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
-    final String compilerId = config == null? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
+    final String compilerId = getUsedCompilerId(context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
@@ -746,6 +744,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return true;
   }
 
+  @NotNull
+  public static String getUsedCompilerId(CompileContext context) {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+    return config == null ? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
+  }
 
   private static void addCrossCompilationOptions(final int compilerSdkVersion, final List<String> options, final CompileContext context, final ModuleChunk chunk) {
     final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(

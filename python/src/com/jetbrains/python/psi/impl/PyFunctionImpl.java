@@ -124,21 +124,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public Icon getIcon(int flags) {
     PyPsiUtils.assertValid(this);
     final Property property = getProperty();
-      if (property != null) {
-        if (property.getGetter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertyGetter;
-        }
-        if (property.getSetter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertySetter;
-        }
-        if (property.getDeleter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertyDeleter;
-        }
-        return PlatformIcons.PROPERTY_ICON;
+    if (property != null) {
+      if (property.getGetter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertyGetter;
       }
-      if (getContainingClass() != null) {
-        return PlatformIcons.METHOD_ICON;
+      if (property.getSetter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertySetter;
       }
+      if (property.getDeleter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertyDeleter;
+      }
+      return PlatformIcons.PROPERTY_ICON;
+    }
+    if (getContainingClass() != null) {
+      return PlatformIcons.METHOD_ICON;
+    }
     return PythonIcons.Python.Function;
   }
 
@@ -187,7 +187,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = getReturnType(context);
-    return isAsync() && isAsyncAllowed() ? createCoroutineType(type, context) : type;
+    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
   }
 
   @Nullable
@@ -324,11 +324,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       public void visitPyYieldExpression(PyYieldExpression node) {
         final PyExpression expr = node.getExpression();
         final PyType type = expr != null ? context.getType(expr) : null;
-        if (node.isDelegating() && type instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)type;
-          // TODO: Select the parameter types that matches T in Iterable[T]
-          final List<PyType> elementTypes = collectionType.getElementTypes(context);
-          types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
+
+        if (node.isDelegating()) {
+          if (type instanceof PyCollectionType) {
+            types.add(((PyCollectionType)type).getIteratedItemType());
+          }
+          else if (ArrayUtil.contains(type, cache.getListType(), cache.getDictType(), cache.getSetType(), cache.getTupleType())) {
+            types.add(null);
+          }
+          else {
+            types.add(type);
+          }
         }
         else {
           types.add(type);
@@ -375,18 +381,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private PyType createCoroutineType(@Nullable PyType returnType, @NotNull TypeEvalContext context) {
+  private PyType createCoroutineType(@Nullable PyType returnType) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
 
     if (returnType instanceof PyCollectionType && PyNames.FAKE_GENERATOR.equals(returnType.getName())) {
       final PyClass asyncGenerator = cache.getClass(PyNames.FAKE_ASYNC_GENERATOR);
-      final List<PyType> generatorElementTypes = ((PyCollectionType)returnType).getElementTypes(context);
 
-      if (asyncGenerator == null || generatorElementTypes.isEmpty()) {
+      if (asyncGenerator == null) {
         return null;
       }
 
-      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(generatorElementTypes.get(0), null));
+      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
     }
 
     final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);
@@ -597,7 +602,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
       return inlineComment;
     }
-    
+
     final PyStatementList statements = getStatementList();
     if (statements.getStatements().length != 0) {
       final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
@@ -613,7 +618,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public String getTypeCommentAnnotation() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
-      return stub.getTypeComment(); 
+      return stub.getTypeComment();
     }
     final PsiComment comment = getTypeComment();
     if (comment != null) {

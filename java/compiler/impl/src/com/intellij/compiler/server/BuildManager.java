@@ -1153,6 +1153,17 @@ public class BuildManager implements Disposable {
       cmdLine.addParameters(args);
     }
 
+    //TODO[Dmitry Batkovich] should be replaced with the proper solution
+    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
+      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED");
+    }
+
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 

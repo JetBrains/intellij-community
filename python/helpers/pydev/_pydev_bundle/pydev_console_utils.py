@@ -145,16 +145,21 @@ class DebugConsoleStdIn(BaseStdIn):
         BaseStdIn.__init__(self, original_stdin)
         self.debugger = dbg
 
-    def readline(self, *args, **kwargs):
-        # Notify Java side about input and call original function
+    def __pydev_run_command(self, is_started):
         try:
-            cmd = self.debugger.cmd_factory.make_input_requested_message()
+            cmd = self.debugger.cmd_factory.make_input_requested_message(is_started)
             self.debugger.writer.add_command(cmd)
         except Exception:
             import traceback
             traceback.print_exc()
             return '\n'
-        return self.original_stdin.readline(*args, **kwargs)
+
+    def readline(self, *args, **kwargs):
+        # Notify Java side about input and call original function
+        self.__pydev_run_command(True)
+        result = self.original_stdin.readline(*args, **kwargs)
+        self.__pydev_run_command(False)
+        return result
 
 
 class CodeFragment:

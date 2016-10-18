@@ -58,19 +58,6 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
-
-      <option name="BREADCRUMBS_BACKGROUND" value="f5f5f5"/>
-      <option name="BREADCRUMBS_BACKGROUND_HOVERED" value="dcdcdc"/>
-      <option name="BREADCRUMBS_BACKGROUND_CURRENT" value="fafadc"/>
-      <option name="BREADCRUMBS_BACKGROUND_INACTIVE" value="fdfdfd"/>
-      <option name="BREADCRUMBS_TEXT_COLOR" value="323232"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_HOVERED" value="323232"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_CURRENT" value="323232"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_INACTIVE" value="aaaaaa"/>
-      <option name="BREADCRUMBS_BORDER_COLOR" value="aaaaaa"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_HOVERED" value="aaaaaa"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_CURRENT" value="aaaaaa"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_INACTIVE" value="c8c8c8"/>
     </colors>
 
     <attributes>
@@ -377,7 +364,7 @@
       <option name="DIFF_CONFLICT">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ffded8" deuteranopia="ffec8c" protanopia="ffec8c"/>
+          <option name="BACKGROUND" value="ffd5cc" deuteranopia="ffec8c" protanopia="ffec8c"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="ffc8bd" deuteranopia="fad932" protanopia="fad932"/>
         </value>
@@ -1049,6 +1036,39 @@
             <option name="FOREGROUND" value="bc5150" />
           </value>
         </option>
+      
+        <option name="BREADCRUMBS_DEFAULT">
+           <value>
+             <option name="FOREGROUND" value="323232"/>
+             <option name="BACKGROUND" value="f5f5f5"/>
+             <option name="EFFECT_COLOR" value="aaaaaa"/>
+             <option name="EFFECT_TYPE" value="0"/>
+           </value>
+        </option>
+        <option name="BREADCRUMBS_HOVERED">
+           <value>
+             <option name="FOREGROUND" value="323232"/>
+             <option name="BACKGROUND" value="dcdcdc"/>
+             <option name="EFFECT_COLOR" value="aaaaaa"/>
+             <option name="EFFECT_TYPE" value="0"/>
+           </value>
+        </option>
+        <option name="BREADCRUMBS_CURRENT">
+           <value>
+             <option name="FOREGROUND" value="323232"/>
+             <option name="BACKGROUND" value="fafadc"/>
+             <option name="EFFECT_COLOR" value="aaaaaa"/>
+             <option name="EFFECT_TYPE" value="0"/>
+           </value>
+        </option>
+        <option name="BREADCRUMBS_INACTIVE">
+           <value>
+             <option name="FOREGROUND" value="aaaaaa"/>
+             <option name="BACKGROUND" value="fdfdfd"/>
+             <option name="EFFECT_COLOR" value="c8c8c8"/>
+             <option name="EFFECT_TYPE" value="0"/>
+           </value>
+        </option>
     </attributes>
 
   </scheme>
@@ -1105,19 +1125,6 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
-
-      <option name="BREADCRUMBS_BACKGROUND" value="65686a"/>
-      <option name="BREADCRUMBS_BACKGROUND_HOVERED" value="797d7f"/>
-      <option name="BREADCRUMBS_BACKGROUND_CURRENT" value="61614b"/>
-      <option name="BREADCRUMBS_BACKGROUND_INACTIVE" value="828282"/>
-      <option name="BREADCRUMBS_TEXT_COLOR" value="bbbbbb"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_HOVERED" value="bbbbbb"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_CURRENT" value="bbbbbb"/>
-      <option name="BREADCRUMBS_TEXT_COLOR_INACTIVE" value="bbbbbb"/>
-      <option name="BREADCRUMBS_BORDER_COLOR" value="323232"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_HOVERED" value="323232"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_CURRENT" value="323232"/>
-      <option name="BREADCRUMBS_BORDER_COLOR_INACTIVE" value="464646"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
@@ -2140,6 +2147,39 @@
         <value>
           <option name="FOREGROUND" value="9d527c" />
         </value>
+      </option>
+      
+      <option name="BREADCRUMBS_DEFAULT">
+         <value>
+           <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="65686a"/>
+           <option name="EFFECT_COLOR" value="323232"/>
+           <option name="EFFECT_TYPE" value="0"/>
+         </value>
+      </option>
+      <option name="BREADCRUMBS_HOVERED">
+         <value>
+           <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="797d7f"/>
+           <option name="EFFECT_COLOR" value="323232"/>
+           <option name="EFFECT_TYPE" value="0"/>
+         </value>
+      </option>
+      <option name="BREADCRUMBS_CURRENT">
+         <value>
+           <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="61614b"/>
+           <option name="EFFECT_COLOR" value="323232"/>
+           <option name="EFFECT_TYPE" value="0"/>
+         </value>
+      </option>
+      <option name="BREADCRUMBS_INACTIVE">
+         <value>
+           <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="828282"/>
+           <option name="EFFECT_COLOR" value="464646"/>
+           <option name="EFFECT_TYPE" value="0"/>
+         </value>
       </option>
     </attributes>
   </scheme>
