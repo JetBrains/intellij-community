@@ -66,15 +66,12 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     assertNotNull(destination);
     final String finalDestination = destination;
     try {
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          if (function.getContainingClass() != null) {
-            new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
-          }
-          else {
-            new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
-          }
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        if (function.getContainingClass() != null) {
+          new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
+        }
+        else {
+          new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
         }
       });
     }
@@ -156,7 +153,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   // PY-6637
   public void testLocalFunctionNonlocalReferencesInInnerFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestSuccess());
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestSuccess);
   }
 
   // PY-6637

@@ -19,13 +19,13 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
@@ -44,7 +44,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -174,14 +173,14 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   @NotNull
   public List<PyElement> getSelectedTopLevelSymbols() {
     final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
-    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, info -> info.getMember());
+    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, MemberInfoBase::getMember);
     return ContainerUtil.sorted(selectedElements, (e1, e2) -> PyPsiUtils.isBefore(e1, e2) ? -1 : 1);
   }
 
   @NotNull
   private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
     final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
-    return ContainerUtil.mapNotNull(moduleMembers, element -> new PyModuleMemberInfo(element));
+    return ContainerUtil.mapNotNull(moduleMembers, PyModuleMemberInfo::new);
   }
 
   static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, PyModuleMemberInfo> {

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -89,7 +88,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           PyExpression instanceExpr = qualifier;
           final PyArgumentList argumentList = callExpr.getArgumentList();
           
-          // Class.method(instance) -> method(instance)
+          // Class.method(instance) -> method(instance.attr)
           if (resolvesToClass(qualifier)) {
             final PyExpression[] arguments = argumentList.getArguments();
             if (arguments.length > 0) {
