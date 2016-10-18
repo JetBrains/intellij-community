@@ -15,8 +15,12 @@
  */
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +31,6 @@ import java.util.Collection;
 public interface ReferencePainter {
   void customizePainter(@NotNull JComponent component,
                         @NotNull Collection<VcsRef> references,
-                        @Nullable VcsLogRefManager manager,
                         @NotNull Color background,
                         @NotNull Color foreground);
 
@@ -39,5 +42,16 @@ public interface ReferencePainter {
 
   default Font getReferenceFont() {
     return RectanglePainter.getFont();
+  }
+
+  @Nullable
+  static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<VcsRef> references) {
+    if (!references.isEmpty()) {
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
+      return logData.getLogProvider(root).getReferenceManager();
+    }
+    else {
+      return null;
+    }
   }
 }

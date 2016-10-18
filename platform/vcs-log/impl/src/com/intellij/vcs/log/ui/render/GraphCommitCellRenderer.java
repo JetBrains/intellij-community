@@ -3,13 +3,11 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableCell;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,8 +35,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
-  @Nullable private final FadeOutPainter myFadeOutPainter = isRedesignedLabels() ? new FadeOutPainter() : null;
-  @Nullable private final ReferencePainter myTooltipPainter = isRedesignedLabels() ? new LabelPainter() : null;
+  @Nullable private final FadeOutPainter myFadeOutPainter;
+  @Nullable private final ReferencePainter myTooltipPainter;
 
   @NotNull private final MyComponent myComponent;
 
@@ -49,6 +47,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                                  @NotNull VcsLogGraphTable table) {
     myLogData = logData;
     myGraphTable = table;
+
+    myFadeOutPainter = isRedesignedLabels() ? new FadeOutPainter() : null;
+    myTooltipPainter = isRedesignedLabels() ? new LabelPainter(myLogData) : null;
 
     myComponent = new MyComponent(logData, painter, table) {
       @Override
@@ -76,7 +77,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     myExpanded = myGraphTable.getExpandableItemsHandler().getExpandedItems().contains(new TableCell(row, column));
     if (myFadeOutPainter != null) {
-      myFadeOutPainter.customize(value.getRefsToThisCommit(), row, column, table, JBColor.black /*any color fits here*/);
+      myFadeOutPainter.customize(value.getRefsToThisCommit(), row, column, table  /*any color fits here*/);
     }
     return myComponent;
   }
@@ -92,27 +93,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      customizeRefsPainter(myTooltipPainter, refs, myComponent.getForeground(), myLogData, myComponent);
+      myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground());
       if (myTooltipPainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
         return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
       }
     }
     return null;
-  }
-
-  private static void customizeRefsPainter(@NotNull ReferencePainter painter,
-                                           @NotNull Collection<VcsRef> refs,
-                                           @NotNull Color foreground,
-                                           @NotNull VcsLogData logData,
-                                           @NotNull JComponent component) {
-    if (!refs.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
-      painter.customizePainter(component, refs, logData.getLogProvider(root).getReferenceManager(),
-                               component.getBackground(), foreground);
-    }
-    else {
-      painter.customizePainter(component, refs, null, component.getBackground(), foreground);
-    }
   }
 
   public int getPreferredHeight() {
@@ -128,8 +114,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final ReferencePainter myReferencePainter =
-      isRedesignedLabels() ? new LabelPainter() : new RectangleReferencePainter();
+    @NotNull private final ReferencePainter myReferencePainter;
 
     @NotNull protected PaintInfo myGraphImage = new PaintInfo(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
@@ -139,6 +124,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
+
+      myReferencePainter = isRedesignedLabels() ? new LabelPainter(myLogData) : new RectangleReferencePainter(myLogData);
 
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
       myFont = RectanglePainter.getFont();
@@ -182,8 +169,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
-      customizeRefsPainter(myReferencePainter, refs, foreground, myLogData, this);
+      Color baseForeground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
+      myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground);
 
       setBorder(null);
       append("");
@@ -230,7 +217,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public int getTooltipXCoordinate(@NotNull GraphCommitCell cell) {
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
       if (!refs.isEmpty()) {
-        customizeRefsPainter(myReferencePainter, refs, getForeground(), myLogData, this);
+        myReferencePainter.customizePainter(this, refs, getBackground(), getForeground());
         TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
         return commitColumn.getWidth() - (myReferencePainter.getSize().width - LabelPainter.GRADIENT_WIDTH) / 2;
       }
@@ -263,24 +250,24 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private class FadeOutPainter {
-    @NotNull private final LabelPainter myEmptyPainter = new LabelPainter();
+    @NotNull private final LabelPainter myEmptyPainter = new LabelPainter(myLogData);
     private int myWidth = LabelPainter.GRADIENT_WIDTH;
 
-    public void customize(@NotNull Collection<VcsRef> currentRefs, int row, int column, @NotNull JTable table, @NotNull Color foreground) {
+    public void customize(@NotNull Collection<VcsRef> currentRefs, int row, int column, @NotNull JTable table) {
       myWidth = 0;
 
       if (currentRefs.isEmpty()) {
         int prevWidth = 0;
         if (row > 0) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row - 1, column));
-          customizeRefsPainter(myEmptyPainter, commitCell.getRefsToThisCommit(), foreground, myLogData, myComponent);
+          myEmptyPainter.customizePainter(myComponent, commitCell.getRefsToThisCommit(), myComponent.getBackground(), JBColor.black);
           prevWidth = myEmptyPainter.getSize().width;
         }
 
         int nextWidth = 0;
         if (row < table.getRowCount() - 1) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row + 1, column));
-          customizeRefsPainter(myEmptyPainter, commitCell.getRefsToThisCommit(), foreground, myLogData, myComponent);
+          myEmptyPainter.customizePainter(myComponent, commitCell.getRefsToThisCommit(), myComponent.getBackground(), JBColor.black);
           nextWidth = myEmptyPainter.getSize().width;
         }
 
