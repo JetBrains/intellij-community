@@ -51,9 +51,4 @@ public class GitUnstash extends GitRepositoryAction {
     if (changeListManager.isFreezedWithNotification("Can not unstash changes now")) return;
     GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);
   }
-
-  @Override
-  protected boolean executeFinalTasksSynchronously() {
-    return false;
-  }
 }

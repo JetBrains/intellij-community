@@ -150,10 +150,4 @@ abstract class GitMergeAction extends GitRepositoryAction {
       repositoryManager.updateRepository(root);
     }
   }
-
-  @Override
-  protected boolean executeFinalTasksSynchronously() {
-    return false;
-  }
-
 }
