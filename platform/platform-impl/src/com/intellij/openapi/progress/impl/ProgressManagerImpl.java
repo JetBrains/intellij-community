@@ -121,7 +121,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       @Override
       public void run() {
         boolean processCanceled = false;
-        Exception exception = null;
+        Throwable exception = null;
 
         final long start = System.currentTimeMillis();
         try {
@@ -130,14 +130,14 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
         catch (ProcessCanceledException e) {
           processCanceled = true;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           exception = e;
         }
         final long end = System.currentTimeMillis();
         final long time = end - start;
 
         final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-        final Exception finalException = exception;
+        final Throwable finalException = exception;
 
         if (!finalCanceled) {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();

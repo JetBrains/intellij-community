@@ -251,7 +251,7 @@ public class TestIntegrationUtils {
       }
     }
 
-    templateText = StringUtil.replace(templateText, "${BODY}", "");
+    templateText = StringUtil.replace(templateText, "${BODY}\n", "");
 
     int from = 0;
     while (true) {

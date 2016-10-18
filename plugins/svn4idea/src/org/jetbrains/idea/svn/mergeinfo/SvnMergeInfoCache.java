@@ -149,11 +149,11 @@ public class SvnMergeInfoCache {
         }
 
         @Override
-        public void onError(@NotNull Exception error) {
+        public void onThrowable(@NotNull Throwable error) {
           logAndShow(error);
         }
 
-        private void logAndShow(@NotNull Exception error) {
+        private void logAndShow(@NotNull Throwable error) {
           LOG.info(error);
           VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), error.getMessage(), MessageType.ERROR);
         }

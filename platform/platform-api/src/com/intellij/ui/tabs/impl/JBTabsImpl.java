@@ -28,10 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
@@ -43,7 +39,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +60,7 @@ import java.util.List;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             UISettingsListener, QuickActionProvider, Accessible {
+             UISettingsListener, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
@@ -171,8 +166,6 @@ public class JBTabsImpl extends JComponent
   private boolean myNavigationActionsEnabled = true;
   private boolean myUseBufferedPaint = true;
 
-  private boolean myOwnSwitchProvider = true;
-  private SwitchProvider mySwitchDelegate;
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
   protected boolean myShowDropLocation = true;
@@ -390,12 +383,6 @@ public class JBTabsImpl extends JComponent
   @Override
   public final boolean isDisposed() {
     return myDisposed;
-  }
-
-  @Override
-  public JBTabs setAdditionalSwitchProviderWhenOriginal(SwitchProvider delegate) {
-    mySwitchDelegate = delegate;
-    return this;
   }
 
   public static Image getComponentImage(TabInfo info) {
@@ -2700,11 +2687,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
   private void addListeners() {
     for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
@@ -3134,31 +3116,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (SwitchProvider.KEY.getName().equals(dataId) && myOwnSwitchProvider) {
-      return this;
-    }
-
-    if (QuickActionProvider.KEY.getName().equals(dataId)) {
-      return this;
-    }
-
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-
-    TabInfo selection = getSelectedInfo();
-    if (selection != null) {
-      ActionGroup group = selection.getGroup();
-      if (group != null) {
-        AnAction[] children = group.getChildren(null);
-        Collections.addAll(result, children);
-      }
-    }
-
-    return result;
   }
 
   @Override
@@ -3270,12 +3228,6 @@ public class JBTabsImpl extends JComponent
     return myTabDraggingEnabled && !mySplitter.isDragging();
   }
 
-  @Override
-  public JBTabsPresentation setProvideSwitchTargets(boolean provide) {
-    myOwnSwitchProvider = provide;
-    return this;
-  }
-
   void reallocate(TabInfo source, TabInfo target) {
     if (source == target || source == null || target == null) return;
 
@@ -3304,82 +3256,6 @@ public class JBTabsImpl extends JComponent
     myUseBufferedPaint = useBufferedPaint;
     revalidate();
     repaint();
-  }
-
-  @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    ArrayList<SwitchTarget> result = new ArrayList<>();
-    for (TabInfo each : myVisibleInfos) {
-      result.add(new TabTarget(each));
-    }
-
-    if (originalProvider && mySwitchDelegate != null) {
-      List<SwitchTarget> additional = mySwitchDelegate.getTargets(onlyVisible, false);
-      if (additional != null) {
-        result.addAll(additional);
-      }
-    }
-
-    return result;
-  }
-
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    if (mySwitchDelegate != null) {
-      SwitchTarget selection = mySwitchDelegate.getCurrentTarget();
-      if (selection != null) return selection;
-    }
-
-    return new TabTarget(getSelectedInfo());
-  }
-
-  private class TabTarget extends ComparableObject.Impl implements SwitchTarget {
-
-    private final TabInfo myInfo;
-
-    private TabTarget(TabInfo info) {
-      myInfo = info;
-    }
-
-    @Override
-    public ActionCallback switchTo(boolean requestFocus) {
-      return select(myInfo, requestFocus);
-    }
-
-    @Override
-    public boolean isVisible() {
-      return getRectangle() != null;
-    }
-
-    @Override
-    public RelativeRectangle getRectangle() {
-      TabLabel label = myInfo2Label.get(myInfo);
-      if (label == null || label.getRootPane() == null) return null;
-
-      Rectangle b = label.getBounds();
-      b.x += 2;
-      b.width -= 4;
-      b.y += 2;
-      b.height -= 4;
-      return new RelativeRectangle(label.getParent(), b);
-    }
-
-    @Override
-    public Component getComponent() {
-      return myInfo2Label.get(myInfo);
-    }
-
-    @Override
-    public String toString() {
-      return myInfo.getText();
-    }
-
-    @NotNull
-    @Override
-    public Object[] getEqualityObjects() {
-      return new Object[]{myInfo};
-    }
   }
 
   @Override

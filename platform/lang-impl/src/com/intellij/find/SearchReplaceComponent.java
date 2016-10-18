@@ -556,7 +556,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {
-    updateBindings(toolbar.getActions(true), shortcutHolder);
+    updateBindings(toolbar.getActions(), shortcutHolder);
   }
 
   private void updateBindings(@NotNull List<? extends AnAction> actions, @NotNull JComponent shortcutHolder) {

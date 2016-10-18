@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,6 +65,11 @@ public class InspectionDescriptionNotFoundInspectionTest extends JavaCodeInsight
   public void testWithDescription() {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     myFixture.testHighlighting("MyWithDescriptionInspection.java");
+  }
+
+  public void testWithDescriptionAndShortNameInBase() {
+    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+    myFixture.testHighlighting("MyWithDescriptionAndShortNameInBaseInspection.java");
   }
 
   public void testWithDescriptionCustomShortName() {

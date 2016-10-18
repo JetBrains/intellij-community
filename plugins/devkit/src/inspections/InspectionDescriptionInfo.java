@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -47,7 +48,7 @@ import java.util.List;
 import java.util.Set;
 
 public class InspectionDescriptionInfo {
-
+  private static final Logger LOG = Logger.getInstance(InspectionDescriptionInfo.class);
   private final String myFilename;
   private final PsiMethod myMethod;
   private final PsiFile myDescriptionFile;
@@ -60,8 +61,7 @@ public class InspectionDescriptionInfo {
 
   public static InspectionDescriptionInfo create(Module module, PsiClass psiClass) {
     PsiMethod method = PsiUtil.findNearestMethod("getShortName", psiClass);
-    if (method != null &&
-        DescriptionType.INSPECTION.getClassName().equals(method.getContainingClass().getQualifiedName())) {
+    if (method != null && method.getContainingClass().hasModifierProperty(PsiModifier.ABSTRACT)) {
       method = null;
     }
     String filename = null;
@@ -73,12 +73,15 @@ public class InspectionDescriptionInfo {
           filename = extension.getXmlTag().getAttributeValue("shortName");
         }
       }
-      if(filename == null) {
-        filename = InspectionProfileEntry.getShortName(psiClass.getName());
-      }
     }
     else {
       filename = PsiUtil.getReturnedLiteral(method, psiClass);
+    }
+
+    if(filename == null) {
+      final String className = psiClass.getName();
+      LOG.assertTrue(className != null, psiClass);
+      filename = InspectionProfileEntry.getShortName(className);
     }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);
