@@ -13,6 +13,7 @@
 
 androidStudio
 /build/TEST*
+/reports
 *.classpath
 *~
 
