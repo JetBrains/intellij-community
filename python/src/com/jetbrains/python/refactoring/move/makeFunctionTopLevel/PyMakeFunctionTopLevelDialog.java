@@ -42,9 +42,6 @@ public class PyMakeFunctionTopLevelDialog extends PyBaseMoveDialog {
       setTitle(PyBundle.message("refactoring.make.local.function.top.level.dialog.title"));
       myDescription.setText(PyBundle.message("refactoring.make.local.function.top.level.dialog.description", functionName));
     }
-    if (function.getContainingClass() != null) {
-      myDescription.setText("Make top-level function from method ");
-    }
     myExtraPanel.setVisible(false);
     init();
   }
