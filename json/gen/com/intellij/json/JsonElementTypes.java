@@ -44,9 +44,6 @@ public interface JsonElementTypes {
       else if (type == BOOLEAN_LITERAL) {
         return new JsonBooleanLiteralImpl(node);
       }
-      else if (type == LITERAL) {
-        return new JsonLiteralImpl(node);
-      }
       else if (type == NULL_LITERAL) {
         return new JsonNullLiteralImpl(node);
       }
@@ -64,9 +61,6 @@ public interface JsonElementTypes {
       }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);
-      }
-      else if (type == VALUE) {
-        return new JsonValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }
