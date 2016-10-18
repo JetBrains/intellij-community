@@ -672,23 +672,19 @@ public class TabLabel extends JPanel implements Accessible {
     @Override
     public String getAccessibleName() {
       String name = super.getAccessibleName();
-      if (name == null) {
-        if (myLabel instanceof Accessible){
+      if (name == null && myLabel != null) {
           name = myLabel.getAccessibleContext().getAccessibleName();
-        }
       }
       return name;
     }
 
     @Override
     public String getAccessibleDescription() {
-      String name = super.getAccessibleDescription();
-      if (name == null) {
-        if (myLabel instanceof Accessible){
-          name = myLabel.getAccessibleContext().getAccessibleDescription();
-        }
+      String description = super.getAccessibleDescription();
+      if (description == null && myLabel != null) {
+          description = myLabel.getAccessibleContext().getAccessibleDescription();
       }
-      return name;
+      return description;
     }
 
     @Override
