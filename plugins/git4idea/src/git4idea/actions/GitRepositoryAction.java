@@ -45,6 +45,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * Base class for actions that affect the entire git repository.
  * The action is available if there is at least one git root.
@@ -70,7 +72,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       exceptions.add(ex);
     }
     if (executeFinalTasksSynchronously()) {
-      runFinalTasks(project, vcs, affectedRoots, actionName, exceptions);
+      runFinalTasks(project, affectedRoots, actionName, exceptions);
     }
   }
 
@@ -90,7 +92,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   protected final void runFinalTasks(@NotNull final Project project,
-                                     @NotNull final GitVcs vcs,
                                      @NotNull final Set<VirtualFile> affectedRoots,
                                      @NotNull final String actionName,
                                      @NotNull final List<VcsException> exceptions) {
@@ -99,14 +100,18 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       @Override
       public void run() {
         VcsFileUtil.markFilesDirty(project, affectedRoots);
-        vcs.showErrors(exceptions, actionName);
+        showErrors(project, actionName, exceptions);
       }
     });
   }
 
+  protected static void showErrors(@NotNull Project project, @NotNull String actionName, @NotNull List<VcsException> exceptions) {
+    notNull(GitVcs.getInstance(project)).showErrors(exceptions, actionName);
+  }
+
   /**
    * Return true to indicate that the final tasks should be executed after the action invocation,
-   * false if the task is responsible to call the final tasks manually via {@link #runFinalTasks(Project, GitVcs, Set, String, List)}.
+   * false if the task is responsible to call the final tasks manually via {@link #runFinalTasks(Project, Set}.
    */
   protected boolean executeFinalTasksSynchronously() {
     return true;
