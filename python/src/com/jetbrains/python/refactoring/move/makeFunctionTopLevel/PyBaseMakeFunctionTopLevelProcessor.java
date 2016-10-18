@@ -18,7 +18,6 @@ package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,7 +63,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   protected final PyResolveContext myResolveContext;
   protected final PyElementGenerator myGenerator;
   protected final String myDestinationPath;
-  protected final List<PsiElement> myExternalReads = new ArrayList<PsiElement>();
+  protected final List<PsiElement> myExternalReads = new ArrayList<>();
 
   public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destinationPath) {
     super(targetFunction.getProject());
@@ -130,15 +129,12 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   private boolean importsRequired(@NotNull UsageInfo[] usages, final PyFile targetFile) {
-    return ContainerUtil.exists(usages, new Condition<UsageInfo>() {
-      @Override
-      public boolean value(UsageInfo info) {
-        final PsiElement element = info.getElement();
-        if (element == null) {
-          return false;
-        }
-        return !belongsToFunction(element) && info.getFile() != targetFile;
+    return ContainerUtil.exists(usages, info -> {
+      final PsiElement element = info.getElement();
+      if (element == null) {
+        return false;
       }
+      return !belongsToFunction(element) && info.getFile() != targetFile;
     });
   }
 
@@ -148,7 +144,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
 
   private void updateImports(@NotNull PyFunction newFunction, @NotNull UsageInfo[] usages) {
-    final Set<PsiFile> usageFiles = new HashSet<PsiFile>();
+    final Set<PsiFile> usageFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       usageFiles.add(usage.getFile());
     }

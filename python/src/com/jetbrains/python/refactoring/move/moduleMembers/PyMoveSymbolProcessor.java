@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -116,7 +115,7 @@ public class PyMoveSymbolProcessor {
     if (topLevelAtDestination.isEmpty()) {
       return null;
     }
-    return Collections.min(topLevelAtDestination, (e1, e2) -> PsiUtilCore.compareElementsByPosition(e1, e2));
+    return Collections.min(topLevelAtDestination, PsiUtilCore::compareElementsByPosition);
   }
 
   @Nullable
