@@ -137,12 +137,14 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
             fireProfilesInitialized();
           }
         };
-        if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+        if (app.isUnitTestMode() || app.isHeadlessEnvironment() && !app.isOnAir()) {
           initInspectionProfilesRunnable.run();
-          UIUtil.dispatchAllInvocationEvents(); //do not restart daemon in the middle of the test
         }
         else {
           app.executeOnPooledThread(initInspectionProfilesRunnable);
+        }
+        if (app.isUnitTestMode()) {
+          UIUtil.dispatchAllInvocationEvents(); //do not restart daemon in the middle of the test
         }
         myScopeListener = new NamedScopesHolder.ScopeListener() {
           @Override
