@@ -209,6 +209,7 @@ def layoutFull(BuildContext context) {
         module("forms_rt")
         module("instrumentation-util")
         module("instrumentation-util-8")
+        module("javac-ref-scanner-8")
       }
 
       jar("jps-model.jar") {
@@ -887,6 +888,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("forms-compiler")
         module("instrumentation-util")
         module("instrumentation-util-8")
+        module("javac-ref-scanner-8")
         module("jps-builders")
         module("jps-standalone-builder")
         module("java-runtime")

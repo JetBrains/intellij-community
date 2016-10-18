@@ -369,6 +369,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
 
+  @NotNull
   @Override
   protected JComponent createCenterComponent() {
     //workaround for extra lines appearing in the console

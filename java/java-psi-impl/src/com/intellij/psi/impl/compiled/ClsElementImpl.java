@@ -21,11 +21,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.smartPointers.AnchorTypeInfo;
+import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -44,7 +47,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
-  private volatile PsiElement myMirror;
+  private volatile Pair<TextRange, AnchorTypeInfo> myMirror;
 
   @Override
   @NotNull
@@ -154,12 +157,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @Override
   public PsiElement getMirror() {
-    PsiElement mirror = myMirror;
-    if (mirror == null) {
-      ((ClsFileImpl)getContainingFile()).getMirror();
-      mirror = myMirror;
-    }
-    return mirror;
+    PsiFile mirrorFile = ((ClsFileImpl)getContainingFile()).getMirror().getContainingFile();
+    Pair<TextRange, AnchorTypeInfo> mirror = myMirror;
+    return mirror == null ? null : SelfElementInfo.findElementInside(mirrorFile, mirror.first, mirror.second);
   }
 
   @Override
@@ -268,7 +268,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     PsiElement psi = element.getPsi();
     psi.putUserData(COMPILED_ELEMENT, this);
-    myMirror = psi;
+    myMirror = Pair.create(element.getTextRange(), AnchorTypeInfo.obtainInfo(psi, JavaLanguage.INSTANCE));
   }
 
   protected static <T extends  PsiElement> void setMirror(@Nullable T stub, @Nullable T mirror) throws InvalidMirrorException {

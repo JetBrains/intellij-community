@@ -44,6 +44,7 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -76,6 +77,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteProcess;
 import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
@@ -950,9 +952,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           myProcessHandler.waitFor();
         }
 
-        UIUtil.invokeLaterIfNeeded(() -> {
-          myRerunAction.consume(myConsoleTitle);
-        });
+        GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(myConsoleTitle), ModalityState.defaultModalityState());
       }
     }.queue();
   }

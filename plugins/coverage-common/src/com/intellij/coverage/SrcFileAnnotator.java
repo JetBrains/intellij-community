@@ -510,7 +510,7 @@ public class SrcFileAnnotator implements Disposable {
       final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date, editorBean);
       return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : newLine.intValue();
     };
-    final CoverageLineMarkerRenderer markerRenderer = coverageSuite.getCoverageEngine()
+    final LineMarkerRendererWithErrorStripe markerRenderer = coverageSuite
       .getLineMarkerRenderer(line, className, executableLines, coverageByTestApplicable, coverageSuite, newToOldConverter,
                              oldToNewConverter, CoverageDataManager.getInstance(myProject).isSubCoverageActive());
     highlighter.setLineMarkerRenderer(markerRenderer);

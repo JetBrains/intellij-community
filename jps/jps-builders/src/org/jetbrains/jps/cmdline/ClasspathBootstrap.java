@@ -144,7 +144,7 @@ public class ClasspathBootstrap {
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getJpsPluginSystemClassesPath().getAbsolutePath().replace('\\', '/'));
-    
+    cp.addAll(getJavac8RefeScannerClasspath());
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
     if (!isLauncherUsed) {
@@ -310,5 +310,16 @@ public class ClasspathBootstrap {
       return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar");
     }
   }
-  
+
+  private static List<String> getJavac8RefeScannerClasspath() {
+    String jpsBuildersPath = getResourcePath(ClasspathBootstrap.class);
+    File jpsBuilders = new File(jpsBuildersPath);
+    if (jpsBuilders.isDirectory()) {
+      //running from sources: load classes from .../out/production/javac-ref-scanner-8
+      return Collections.singletonList(new File(jpsBuilders.getParentFile(), "javac-ref-scanner-8").getAbsolutePath());
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
 }

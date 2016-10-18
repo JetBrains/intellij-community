@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -64,6 +65,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
+  private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
   private final PsiManagerEx myManager;
   
@@ -81,7 +84,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         scope = scope.union(additionalScope);
       }
     }
-    for (UseScopeOptimizer optimizer : UseScopeOptimizer.EP_NAME.getExtensions()) {
+    for (ScopeOptimizer optimizer : USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
       final GlobalSearchScope scopeToExclude = optimizer.getScopeToExclude(element);
       if (scopeToExclude != null) {
         scope = scope.intersectWith(GlobalSearchScope.notScope(scopeToExclude));
@@ -191,8 +194,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
         if (!scopeElement.isValid()) return true;
-        if (!scopeElement.isPhysical()) {
+        if (!scopeElement.isPhysical() || scopeElement instanceof PsiCompiledElement) {
           scopeElement = scopeElement.getNavigationElement();
+        }
+        if (scopeElement instanceof PsiCompiledElement) {
+          // can't scan text of the element
+          return true;
         }
         if (scopeElement.getTextRange() == null) {
           // clients can put whatever they want to the LocalSearchScope. Skip what we can't process.

@@ -114,7 +114,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi, myAffixOffsets);
     if (rangeInInjected == null) return null;
 
-    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset(), myType);
+    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected, myType);
   }
 
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,

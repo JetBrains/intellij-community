@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.transformations.impl.autoClone
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiEnumConstant
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
+import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -49,12 +47,12 @@ class AutoCloneTransformationSupport : AstTransformationSupport {
       originInfo = ORIGIN_INFO
     }
 
-    val value = annotation.findDeclaredAttributeValue("style") as? GrReferenceExpression ?: return
+    val value = annotation.findDeclaredDetachedValue("style") as? GrReferenceExpression ?: return
     val constant = value.resolve() as? PsiEnumConstant ?: return
     if (constant.containingClass?.qualifiedName != "groovy.transform.AutoCloneStyle") return
     when (constant.name) {
       "COPY_CONSTRUCTOR" -> {
-        if (context.codeClass.codeConstructors.size == 0) {
+        if (context.codeClass.codeConstructors.isEmpty()) {
           context += LightMethodBuilder(context.codeClass, GroovyLanguage).apply {
             isConstructor = true
             addModifier(PsiModifier.PUBLIC)
@@ -82,6 +80,15 @@ class AutoCloneTransformationSupport : AstTransformationSupport {
           originInfo = ORIGIN_INFO
         }
       }
+    }
+  }
+
+  private fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotationMemberValue? {
+    val styleAttribute = AnnotationUtil.findDeclaredAttribute(this, attributeName)
+    return when (styleAttribute) {
+      null -> null
+      is PsiNameValuePair.Detachable -> styleAttribute.detachedValue
+      else -> styleAttribute.value
     }
   }
 }

@@ -74,6 +74,11 @@
       <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
+
+    <component>
+      <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
+      <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -1822,6 +1827,8 @@
     <library.javaSourceRootDetector implementation="com.intellij.openapi.roots.ui.configuration.LibraryJavaSourceRootDetector"/>
 
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
+
+    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
   </extensions>
 
   <actions>

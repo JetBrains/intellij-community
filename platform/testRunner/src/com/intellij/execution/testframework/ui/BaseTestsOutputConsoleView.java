@@ -107,7 +107,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void performWhenNoDeferredOutput(final Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull final Runnable runnable) {
     myConsole.performWhenNoDeferredOutput(runnable);
   }
 
@@ -117,12 +117,12 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void addMessageFilter(final Filter filter) {
+  public void addMessageFilter(@NotNull final Filter filter) {
     myConsole.addMessageFilter(filter);
   }
 
   @Override
-  public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
+  public void printHyperlink(@NotNull final String hyperlinkText, final HyperlinkInfo info) {
     printNew(new HyperLink(hyperlinkText, info));
   }
 

@@ -182,7 +182,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void performWhenNoDeferredOutput(Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
   }
 
   @Override
@@ -192,13 +192,13 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void addMessageFilter(Filter filter) {
+  public void addMessageFilter(@NotNull Filter filter) {
     myPrimaryConsoleView.addMessageFilter(filter);
     mySecondaryConsoleView.addMessageFilter(filter);
   }
 
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
     myPrimaryConsoleView.printHyperlink(hyperlinkText, info);
     mySecondaryConsoleView.printHyperlink(hyperlinkText, info);
   }

@@ -32,6 +32,7 @@ import com.intellij.util.DocumentUtil
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyStatementListContainer
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTryPart
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 
@@ -82,11 +83,11 @@ class PyConsoleEnterHandler {
   }
 
   private fun checkComplete(el: PsiElement): Boolean {
+    if (!el.isValid) return false
     val compoundStatement = PsiTreeUtil.getParentOfType(el, PyStatementListContainer::class.java)
-    if (compoundStatement != null) {
+    if (compoundStatement != null && compoundStatement !is PyTryPart) {
       return compoundStatement.statementList.statements.size != 0
     }
-    if (el.parent == null) return false
     val topLevel = PyPsiUtils.getParentRightBefore(el, el.containingFile)
     return topLevel != null && !PsiTreeUtil.hasErrorElements(topLevel)
   }
