@@ -472,7 +472,7 @@ public class DiffUtil {
     DocumentContent documentContent = (DocumentContent)content;
 
     Charset charset = equalCharsets ? null : documentContent.getCharset();
-    Boolean bom = equalCharsets ? null : documentContent.getBOM();
+    Boolean bom = equalCharsets ? null : documentContent.hasBom();
     LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
