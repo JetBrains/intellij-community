@@ -25,9 +25,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -133,24 +130,20 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       myDirtyModulesHolder.installVFSListener();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CompilerBundle.message("compiler.ref.service.validation.task.name")) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setText(CompilerBundle.message("compiler.ref.service.validation.progress.text"));
-            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-            boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
-            executeOnBuildThread(() -> {
-              if (isUpToDate) {
-                myDirtyModulesHolder.compilerActivityFinished(projectCompileScope.getAffectedModules(), Module.EMPTY_ARRAY);
-                myCompilationCount.increment();
-                openReaderIfNeed();
-              }
-              else {
-                myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, projectCompileScope.getAffectedModules());
-              }
-            });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+        boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+        executeOnBuildThread(() -> {
+          if (isUpToDate) {
+            myDirtyModulesHolder.compilerActivityFinished(projectCompileScope.getAffectedModules(), Module.EMPTY_ARRAY);
+            myCompilationCount.increment();
+            openReaderIfNeed();
+          }
+          else {
+            myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, projectCompileScope.getAffectedModules());
           }
         });
+      });
     }
   }
 
