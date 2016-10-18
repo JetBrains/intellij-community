@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyLanguageManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -35,7 +36,8 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
     }
     Object value = childNode.getValue();
     if (value instanceof PsiElement) {
-      PsiFile psiFile = ((PsiElement)value).getContainingFile();
+      PsiElement psiElement = (PsiElement) value;
+      PsiFile psiFile = psiElement.getContainingFile();
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) {
         return null;
@@ -43,10 +45,6 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
       if (StudyUtils.isTaskDescriptionFile(virtualFile.getName())) {
         return null;
       }
-      if (!CCUtils.isTestsFile(myProject, virtualFile) || !myTask.hasSubtasks()) {
-        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
-      }
-
       Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course == null) {
         return null;
@@ -55,10 +53,29 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
       if (manager == null) {
         return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
       }
-      String testFileName = manager.getTestFileName();
+      if (!CCUtils.isTestsFile(myProject, virtualFile)) {
+        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
+      }
+      if (!myTask.hasSubtasks()) {
+        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, getTestNodeName(manager, psiElement));
+      }
+      String testFileName = getTestNodeName(manager, psiElement);
       return isActiveSubtaskTest(virtualFile) ? new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, testFileName) : null;
     }
     return null;
+  }
+
+  @NotNull
+  private static String getTestNodeName(StudyLanguageManager manager, PsiElement psiElement) {
+    String defaultTestName = manager.getTestFileName();
+    if (psiElement instanceof PsiFile) {
+      return defaultTestName;
+    }
+    if (psiElement instanceof PsiNamedElement) {
+      String name = ((PsiNamedElement)psiElement).getName();
+      return name != null ? name : defaultTestName;
+    }
+    return defaultTestName;
   }
 
   private boolean isActiveSubtaskTest(VirtualFile virtualFile) {
