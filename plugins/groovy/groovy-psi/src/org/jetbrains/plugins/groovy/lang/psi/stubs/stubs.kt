@@ -17,13 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs
 
 import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubElement
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ANNOTATION_ARGUMENTS
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 
 class GrNameValuePairStub(parent: StubElement<*>?, val name: String?, val value: String?)
 : StubBase<GrAnnotationNameValuePair>(parent, ANNOTATION_MEMBER_VALUE_PAIR)
-
-class GrAnnotationArgumentListStub(parent: StubElement<*>?)
-: StubBase<GrAnnotationArgumentList>(parent, ANNOTATION_ARGUMENTS)
