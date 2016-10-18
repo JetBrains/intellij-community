@@ -40,24 +40,14 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
   private final static int BUNCH_SIZE = 100;
 
-  private final int myBunchSize;
-  private final long myFirst;
   private boolean myLastLoaded;
   @NotNull private final OneShotMergeInfoHelper myMergeChecker;
   @NotNull private final List<CommittedChangeList> myCommittedChangeLists;
 
   public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess) {
-    this(mergeProcess, -1, -1);
-  }
-
-  public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess, long first, int bunchSize) {
     super(mergeProcess, "Loading recent " + mergeProcess.getMergeContext().getBranchName() + " revisions", Where.POOLED);
-    myFirst = first;
     myCommittedChangeLists = newArrayList();
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
-
-    Integer testBunchSize = Integer.getInteger(PROP_BUNCH_SIZE);
-    myBunchSize = testBunchSize != null ? testBunchSize.intValue() : (bunchSize > 0 ? bunchSize : BUNCH_SIZE);
   }
 
   public boolean isLastLoaded() {
@@ -72,27 +62,46 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
     ProgressManager.progress2("Calculating not merged revisions");
     myMergeChecker.prepare();
 
-    List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(getChangeListsBefore(myFirst));
-    myLastLoaded = notMergedChangeLists.size() < myBunchSize + 1;
-    myCommittedChangeLists.addAll(notMergedChangeLists.subList(0, min(myBunchSize, notMergedChangeLists.size())));
+    Pair<List<CommittedChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));
+    myCommittedChangeLists.addAll(loadResult.first);
+    myLastLoaded = loadResult.second;
   }
 
   @NotNull
-  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsBefore(long revision) throws VcsException {
+  public static Pair<List<CommittedChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
+    throws VcsException {
+    List<CommittedChangeList> changeLists =
+      getNotMergedChangeLists(getChangeListsBefore(mergeContext, beforeRevision, size), beforeRevision);
+
+    return Pair.create(
+      changeLists.subList(0, min(size, changeLists.size())),
+      changeLists.size() < size + 1);
+  }
+
+  public static int getBunchSize(int size) {
+    Integer configuredSize = Integer.getInteger(PROP_BUNCH_SIZE);
+
+    return configuredSize != null ? configuredSize : size > 0 ? size : BUNCH_SIZE;
+  }
+
+  @NotNull
+  private static List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsBefore(@NotNull MergeContext mergeContext,
+                                                                                  long beforeRevision,
+                                                                                  int size) throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
-    if (revision > 0) {
-      settings.CHANGE_BEFORE = String.valueOf(revision);
+    if (beforeRevision > 0) {
+      settings.CHANGE_BEFORE = String.valueOf(beforeRevision);
       settings.USE_CHANGE_BEFORE_FILTER = true;
     }
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    ProgressManager
-      .progress2(message("progress.text2.collecting.history", myMergeContext.getSourceUrl() + (revision > 0 ? ("@" + revision) : "")));
+    ProgressManager.progress2(
+      message("progress.text2.collecting.history", mergeContext.getSourceUrl() + (beforeRevision > 0 ? ("@" + beforeRevision) : "")));
     List<Pair<SvnChangeList, LogHierarchyNode>> result = newArrayList();
 
-    ((SvnCommittedChangesProvider)myMergeContext.getVcs().getCommittedChangesProvider())
-      .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()),
-                                             myBunchSize + (revision > 0 ? 2 : 1),
+    ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
+      .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),
+                                             size + (beforeRevision > 0 ? 2 : 1),
                                              (list, tree) -> {
                                                indicator.setText2(message("progress.text2.processing.revision", list.getNumber()));
                                                result.add(Pair.create(list, tree));
@@ -101,12 +110,13 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   }
 
   @NotNull
-  private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+  private static List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
+                                                                   long revision) {
     List<CommittedChangeList> result = newArrayList();
 
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       // do not take first since it's equal
-      if (myFirst <= 0 || myFirst != pair.getFirst().getNumber()) {
+      if (revision <= 0 || revision != pair.getFirst().getNumber()) {
         // TODO: Currently path filtering from MergeCalculatorTask.checkListForPaths is not applied as it removes some necessary revisions
         // TODO: (i.e. merge revisions) from list. Check if that filtering is really necessary for "Quick Manual Select" option.
         result.add(pair.getFirst());

@@ -76,6 +76,8 @@ import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
+import static org.jetbrains.idea.svn.integrate.LoadRecentBranchRevisions.getBunchSize;
+import static org.jetbrains.idea.svn.integrate.LoadRecentBranchRevisions.loadChangeLists;
 
 public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
@@ -490,15 +492,11 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      // TODO: Update this not to create new "QuickMerge" instance
-      QuickMerge mergeProcess = new QuickMerge(myMergeContext, new QuickMergeInteractionImpl(myMergeContext));
-      LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(mergeProcess, myStartNumber, myQuantity);
-
       try {
-        loader.run();
+        Pair<List<CommittedChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, myStartNumber, getBunchSize(myQuantity));
 
-        myLists = loader.getChangeLists();
-        myIsLastListLoaded = loader.isLastLoaded();
+        myLists = loadResult.first;
+        myIsLastListLoaded = loadResult.second;
       }
       catch (VcsException e) {
         setEmptyData();
