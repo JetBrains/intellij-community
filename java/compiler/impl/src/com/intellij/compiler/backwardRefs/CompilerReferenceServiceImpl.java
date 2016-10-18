@@ -25,9 +25,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -133,24 +130,20 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       myDirtyModulesHolder.installVFSListener();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CompilerBundle.message("compiler.ref.service.validation.task.name")) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setText(CompilerBundle.message("compiler.ref.service.validation.progress.text"));
-            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-            boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
-            executeOnBuildThread(() -> {
-              if (isUpToDate) {
-                myDirtyModulesHolder.compilerActivityFinished(projectCompileScope.getAffectedModules(), Module.EMPTY_ARRAY);
-                myCompilationCount.increment();
-                openReaderIfNeed();
-              }
-              else {
-                myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, projectCompileScope.getAffectedModules());
-              }
-            });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+        boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+        executeOnBuildThread(() -> {
+          if (isUpToDate) {
+            myDirtyModulesHolder.compilerActivityFinished(projectCompileScope.getAffectedModules(), Module.EMPTY_ARRAY);
+            myCompilationCount.increment();
+            openReaderIfNeed();
+          }
+          else {
+            myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, projectCompileScope.getAffectedModules());
           }
         });
+      });
     }
   }
 
@@ -194,7 +187,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                  @NotNull GlobalSearchScope searchScope,
                                                                                  @NotNull FileType searchFileType,
                                                                                  @NotNull CompilerHierarchySearchType searchType) {
-      if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
+    if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
       CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
@@ -211,7 +204,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
     if (directInheritorsAndCandidates == null) return null;
     GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
-    if (ElementPlace.LIB == ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex)) {
+    if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
       dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
     }
     return new CompilerHierarchyInfoImpl<>(directInheritorsAndCandidates, dirtyScope, searchScope);
@@ -278,12 +271,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
-      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(psiElement));
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
       if (place == null || (place == ElementPlace.SRC && myDirtyModulesHolder.contains(file))) {
         return null;
       }
       final LanguageLightRefAdapter<?, ?> adapter = findAdapterForFileType(file.getFileType());
+      if (adapter == null) return null;
       final LightRef ref = ReadAction.compute(() -> adapter.asLightUsage(psiElement, myReader.getNameEnumerator()));
       if (ref == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
@@ -360,13 +354,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myProject;
   }
 
+  @Nullable
   static LanguageLightRefAdapter findAdapterForFileType(@NotNull FileType fileType) {
     for (LanguageLightRefAdapter adapter : LanguageLightRefAdapter.INSTANCES) {
       if (adapter.getFileTypes().contains(fileType)) {
         return adapter;
       }
     }
-    throw new AssertionError("adapter is not found for: " + fileType);
+    return null;
   }
 
   private static void executeOnBuildThread(Runnable compilationFinished) {

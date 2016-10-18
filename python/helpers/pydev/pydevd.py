@@ -682,6 +682,13 @@ class PyDB:
         self.process_internal_commands()
 
 
+    def send_process_created_message(self):
+        """Sends a message that a new process has been created.
+        """
+        cmd = self.cmd_factory.make_process_created_message()
+        self.writer.add_command(cmd)
+
+
     def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
@@ -1004,7 +1011,7 @@ def process_command_line(argv):
     """ parses the arguments.
         removes our arguments from the command line """
     setup = {}
-    setup['client'] = ''
+    setup['client'] = None
     setup['server'] = False
     setup['port'] = 0
     setup['file'] = ''
@@ -1179,10 +1186,6 @@ def _locked_settrace(
             pass
         else:
             pydev_monkey.patch_new_process_functions()
-
-    if host is None:
-        from _pydev_bundle import pydev_localhost
-        host = pydev_localhost.get_localhost()
 
     global connected
     global bufferStdOutToServer

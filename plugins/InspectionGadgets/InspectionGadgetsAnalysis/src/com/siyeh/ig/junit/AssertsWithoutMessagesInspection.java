@@ -82,8 +82,8 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
+      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
+          !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

@@ -105,6 +105,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private PrefixChangeListener myPrefixChangeListener = new PrefixChangeListener.Adapter() {};
+  private final LookupPreview myPreview = new LookupPreview(this);
 
   private long myStampShown = 0;
   private boolean myShown = false;
@@ -853,6 +854,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         listener.currentItemChanged(event);
       }
     }
+    myPreview.updatePreview(currentItem);
   }
 
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {

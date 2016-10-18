@@ -16,17 +16,21 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -47,15 +51,22 @@ public class FileStorageCoreUtil {
     List<Element> children = rootElement.getChildren(COMPONENT);
     if (children.isEmpty() && rootElement.getName().equals(COMPONENT) && rootElement.getAttributeValue(NAME) != null) {
       // exclusive component data
-      children = Collections.singletonList(rootElement);
+      // singleton must be not used here - later we modify list
+      children = new SmartList<>(rootElement);
     }
 
+    CompositePathMacroFilter filter = null;
+
     TreeMap<String, Element> map = new TreeMap<>();
-    for (Element element : children) {
+    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
       String name = getComponentNameIfValid(element);
       if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
         continue;
       }
+
+      // so, PathMacroFilter can easily find component name (null parent)
+      iterator.remove();
 
       if (interner != null) {
         JDOMUtil.internElement(element, interner);
@@ -64,7 +75,12 @@ public class FileStorageCoreUtil {
       map.put(name, element);
 
       if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
-        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
+        if (filter == null) {
+          filter = new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensions());
+        }
+
+        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor)
+          .addUnknownMacros(name, PathMacrosCollector.getMacroNames(element, filter, PathMacros.getInstance()));
       }
 
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
@@ -81,5 +97,20 @@ public class FileStorageCoreUtil {
       return null;
     }
     return name;
+  }
+
+  @Nullable
+  public static String findComponentName(@NotNull Element element) {
+    Element componentElement = element;
+    while (true) {
+      Parent parent = componentElement.getParent();
+      if (parent == null || !(parent instanceof Element)) {
+        break;
+      }
+
+      componentElement = (Element)parent;
+    }
+
+    return StringUtil.nullize(componentElement.getAttributeValue(NAME));
   }
 }

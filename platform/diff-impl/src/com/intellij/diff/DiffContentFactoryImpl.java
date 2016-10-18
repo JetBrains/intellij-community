@@ -153,7 +153,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return new FileAwareDocumentContent(project, document, fileType, null, null, null, null);
+    if (file == null) return new DocumentContentImpl(project, document, fileType, null, null, null, null);
     return create(project, document, file);
   }
 
@@ -168,7 +168,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent) {
     if (referent == null) return new DocumentContentImpl(document);
-    return new FileAwareDocumentContent(project, document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
+    return new DocumentContentImpl(project, document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
   }
 
 
@@ -333,7 +333,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     String correctedContent = StringUtil.convertLineSeparators(text);
 
     Document document = createDocument(project, correctedContent, fileType, fileName, readOnly);
-    FileAwareDocumentContent content = new FileAwareDocumentContent(project, document, fileType, highlightFile, separator, charset, bom);
+    DocumentContent content = new DocumentContentImpl(project, document, fileType, highlightFile, separator, charset, bom);
 
     if (fileName != null) content.putUserData(DiffUserDataKeysEx.FILE_NAME, fileName);
 

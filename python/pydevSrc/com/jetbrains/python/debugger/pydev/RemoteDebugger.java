@@ -7,32 +7,27 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.BaseOutputReader;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport;
+import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
+import com.jetbrains.python.debugger.pydev.transport.ServerModeDebuggerTransport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
+
+import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
 
 public class RemoteDebugger implements ProcessDebugger {
@@ -47,13 +42,6 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private final IPyDebugProcess myDebugProcess;
 
-  @NotNull
-  private final ServerSocket myServerSocket;
-
-  private final int myConnectionTimeout;
-  private final Object mySocketObject = new Object(); // for synchronization on socket
-  private Socket mySocket;
-  private volatile boolean myConnected = false;
   private int mySequence = -1;
   private final Object mySequenceObject = new Object(); // for synchronization on mySequence
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<>();
@@ -64,12 +52,22 @@ public class RemoteDebugger implements ProcessDebugger {
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private DebuggerReader myDebuggerReader;
 
-  public RemoteDebugger(final IPyDebugProcess debugProcess, @NotNull final ServerSocket serverSocket, final int timeout) {
+  @NotNull private final DebuggerTransport myDebuggerTransport;
+
+  public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;
-    myServerSocket = serverSocket;
-    myConnectionTimeout = timeout;
+    myDebuggerTransport = new ClientModeDebuggerTransport(debugProcess, this, host, port);
+  }
+
+  public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
+    myDebugProcess = debugProcess;
+    myDebuggerTransport = new ServerModeDebuggerTransport(this, socket, timeout);
+  }
+
+  protected RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull DebuggerTransport debuggerTransport) {
+    myDebugProcess = debugProcess;
+    myDebuggerTransport = debuggerTransport;
   }
 
   public IPyDebugProcess getDebugProcess() {
@@ -78,35 +76,23 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public boolean isConnected() {
-    return myConnected;
+    return myDebuggerTransport.isConnected();
   }
-
 
   @Override
   public void waitForConnect() throws Exception {
-    try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      myServerSocket.setSoTimeout(myConnectionTimeout);
-      synchronized (mySocketObject) {
-        mySocket = myServerSocket.accept();
-        myConnected = true;
-      }
-    }
-    finally {
-      //it is closed in close() method on process termination
-    }
+    myDebuggerTransport.waitForConnect();
+  }
 
-    if (myConnected) {
-      try {
-        myDebuggerReader = createReader();
-      }
-      catch (Exception e) {
-        synchronized (mySocketObject) {
-          mySocket.close();
-        }
-        throw e;
-      }
+  private void writeToConsole(PyIo io) {
+    ConsoleViewContentType contentType;
+    if (io.getCtx() == 2) {
+      contentType = ConsoleViewContentType.ERROR_OUTPUT;
     }
+    else {
+      contentType = ConsoleViewContentType.NORMAL_OUTPUT;
+    }
+    myDebugProcess.printToConsole(io.getText(), contentType);
   }
 
   @Override
@@ -348,31 +334,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   boolean sendFrame(final ProtocolFrame frame) {
-    logFrame(frame, true);
-
-    try {
-      final byte[] packed = frame.pack();
-      synchronized (mySocketObject) {
-        final OutputStream os = mySocket.getOutputStream();
-        os.write(packed);
-        os.flush();
-        return true;
-      }
-    }
-    catch (SocketException se) {
-      disconnect();
-      fireCommunicationError();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return false;
-  }
-
-  private static void logFrame(ProtocolFrame frame, boolean out) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("%1$tH:%1$tM:%1$tS.%1$tL %2$s %3$s\n", new Date(), (out ? "<<<" : ">>>"), frame));
-    }
+    return myDebuggerTransport.sendFrame(frame);
   }
 
   @Override
@@ -391,33 +353,13 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void close() {
-    if (!myServerSocket.isClosed()) {
-      try {
-        myServerSocket.close();
-      }
-      catch (IOException e) {
-        LOG.warn("Error closing socket", e);
-      }
-    }
-    if (myDebuggerReader != null) {
-      myDebuggerReader.stop();
-    }
+    myDebuggerTransport.close();
     fireCloseEvent();
   }
 
   @Override
   public void disconnect() {
-    synchronized (mySocketObject) {
-      myConnected = false;
-
-      if (mySocket != null && !mySocket.isClosed()) {
-        try {
-          mySocket.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
+    myDebuggerTransport.disconnect();
 
     cleanUp();
   }
@@ -490,222 +432,134 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
-  private DebuggerReader createReader() throws IOException {
-    synchronized (mySocketObject) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      return new DebuggerReader(mySocket.getInputStream());
-    }
-  }
+  // for DebuggerReader only
+  public void processResponse(@NotNull final String line) {
+    try {
+      final ProtocolFrame frame = new ProtocolFrame(line);
+      logFrame(frame, false);
 
-  private class DebuggerReader extends BaseOutputReader {
-    private StringBuilder myTextBuilder = new StringBuilder();
+      myDebuggerTransport.messageReceived(frame);
 
-    private DebuggerReader(final InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET); //TODO: correct encoding?
-      start(getClass().getName());
-    }
-
-    protected void doRun() {
-      try {
-        while (true) {
-          boolean read = readAvailableBlocking();
-
-          if (!read) {
-            break;
-          }
-          else {
-            if (isStopped) {
-              break;
-            }
-
-            TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
-          }
-        }
+      if (AbstractThreadCommand.isThreadCommand(frame.getCommand())) {
+        processThreadEvent(frame);
       }
-      catch (Exception e) {
+      else if (AbstractCommand.isWriteToConsole(frame.getCommand())) {
+        writeToConsole(ProtocolParser.parseIo(frame.getPayload()));
+      }
+      else if (AbstractCommand.isExitEvent(frame.getCommand())) {
         fireCommunicationError();
       }
-      finally {
-        close();
-        fireExitEvent();
+      else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
+        recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
+      }
+      else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
+        recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
+      }
+      else if (AbstractCommand.isInputRequested(frame.getCommand())) {
+        myDebugProcess.consoleInputRequested(ProtocolParser.parseInputCommand(frame.getPayload()));
+      }
+      else if (ProcessCreatedCommand.isProcessCreatedCommand(frame.getCommand())) {
+        onProcessCreatedEvent();
+      }
+      else {
+        placeResponse(frame.getSequence(), frame);
       }
     }
+    catch (Throwable t) {
+      // shouldn't interrupt reader thread
+      LOG.error(t);
+    }
+  }
 
-    private void processResponse(final String line) {
-      try {
-        final ProtocolFrame frame = new ProtocolFrame(line);
-        logFrame(frame, false);
+  private void recordCallSignature(PySignature signature) {
+    myDebugProcess.recordSignature(signature);
+  }
 
-        if (AbstractThreadCommand.isThreadCommand(frame.getCommand())) {
-          processThreadEvent(frame);
+  private void recordConcurrencyEvent(PyConcurrencyEvent event) {
+    myDebugProcess.recordLogEvent(event);
+  }
+
+  // todo: extract response processing
+  private void processThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
+    switch (frame.getCommand()) {
+      case AbstractCommand.CREATE_THREAD: {
+        final PyThreadInfo thread = parseThreadEvent(frame);
+        if (!thread.isPydevThread()) {  // ignore pydevd threads
+          myThreads.put(thread.getId(), thread);
+          if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
+            // Sometimes the notification about new threads may come slow from the Python side. We should check if
+            // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
+            suspendThread(thread.getId());
+          }
         }
-        else if (AbstractCommand.isWriteToConsole(frame.getCommand())) {
-          writeToConsole(ProtocolParser.parseIo(frame.getPayload()));
-        }
-        else if (AbstractCommand.isExitEvent(frame.getCommand())) {
-          fireCommunicationError();
-        }
-        else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
-          recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
-        }
-        else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
-          recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
-        }
-        else if (AbstractCommand.isInputRequested(frame.getCommand())) {
-          myDebugProcess.consoleInputRequested(ProtocolParser.parseInputCommand(frame.getPayload()));
-        }
-        else {
-          placeResponse(frame.getSequence(), frame);
-        }
+        break;
       }
-      catch (Throwable t) {
-        // shouldn't interrupt reader thread
-        LOG.error(t);
+      case AbstractCommand.SUSPEND_THREAD: {
+        final PyThreadInfo event = parseThreadEvent(frame);
+        PyThreadInfo thread = myThreads.get(event.getId());
+        if (thread == null) {
+          LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
+          myThreads.put(event.getId(), event);
+          thread = event;
+        }
+        thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+        thread.setStopReason(event.getStopReason());
+        thread.setMessage(event.getMessage());
+        boolean updateSourcePosition = true;
+        if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD) {
+          // That means that the thread was stopped manually from the Java side either while suspending all threads
+          // or after the "Pause" command. In both cases we shouldn't change debugger focus if session is already suspended.
+          updateSourcePosition = !myDebugProcess.getSession().isSuspended();
+        }
+        myDebugProcess.threadSuspended(thread, updateSourcePosition);
+        break;
       }
-    }
-
-    private void recordCallSignature(PySignature signature) {
-      myDebugProcess.recordSignature(signature);
-    }
-
-    private void recordConcurrencyEvent(PyConcurrencyEvent event) {
-      myDebugProcess.recordLogEvent(event);
-    }
-
-    // todo: extract response processing
-    private void processThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
-      switch (frame.getCommand()) {
-        case AbstractCommand.CREATE_THREAD: {
-          final PyThreadInfo thread = parseThreadEvent(frame);
-          if (!thread.isPydevThread()) {  // ignore pydevd threads
-            myThreads.put(thread.getId(), thread);
-            if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
-              // Sometimes the notification about new threads may come slow from the Python side. We should check if
-              // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
-              suspendThread(thread.getId());
+      case AbstractCommand.RESUME_THREAD: {
+        final String id = ProtocolParser.getThreadId(frame.getPayload());
+        final PyThreadInfo thread = myThreads.get(id);
+        if (thread != null) {
+          thread.updateState(PyThreadInfo.State.RUNNING, null);
+          myDebugProcess.threadResumed(thread);
+        }
+        break;
+      }
+      case AbstractCommand.KILL_THREAD: {
+        final String id = frame.getPayload();
+        final PyThreadInfo thread = myThreads.get(id);
+        if (thread != null) {
+          thread.updateState(PyThreadInfo.State.KILLED, null);
+          myThreads.remove(id);
+        }
+        if (myDebugProcess.getSession().getCurrentPosition() == null) {
+          for (PyThreadInfo threadInfo : myThreads.values()) {
+            // notify UI of suspended threads left in debugger if one thread finished its work
+            if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
+              myDebugProcess.threadResumed(threadInfo);
+              myDebugProcess.threadSuspended(threadInfo, true);
             }
           }
-          break;
         }
-        case AbstractCommand.SUSPEND_THREAD: {
-          final PyThreadInfo event = parseThreadEvent(frame);
-          PyThreadInfo thread = myThreads.get(event.getId());
-          if (thread == null) {
-            LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
-            myThreads.put(event.getId(), event);
-            thread = event;
-          }
-          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-          thread.setStopReason(event.getStopReason());
-          thread.setMessage(event.getMessage());
-          boolean updateSourcePosition = true;
-          if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD) {
-            // That means that the thread was stopped manually from the Java side either while suspending all threads
-            // or after the "Pause" command. In both cases we shouldn't change debugger focus if session is already suspended.
-            updateSourcePosition = !myDebugProcess.getSession().isSuspended();
-          }
-          myDebugProcess.threadSuspended(thread, updateSourcePosition);
-          break;
-        }
-        case AbstractCommand.RESUME_THREAD: {
-          final String id = ProtocolParser.getThreadId(frame.getPayload());
-          final PyThreadInfo thread = myThreads.get(id);
-          if (thread != null) {
-            thread.updateState(PyThreadInfo.State.RUNNING, null);
-            myDebugProcess.threadResumed(thread);
-          }
-          break;
-        }
-        case AbstractCommand.KILL_THREAD: {
-          final String id = frame.getPayload();
-          final PyThreadInfo thread = myThreads.get(id);
-          if (thread != null) {
-            thread.updateState(PyThreadInfo.State.KILLED, null);
-            myThreads.remove(id);
-          }
-          if (myDebugProcess.getSession().getCurrentPosition() == null) {
-            for (PyThreadInfo threadInfo : myThreads.values()) {
-              // notify UI of suspended threads left in debugger if one thread finished its work
-              if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
-                myDebugProcess.threadResumed(threadInfo);
-                myDebugProcess.threadSuspended(threadInfo, true);
-              }
-            }
-          }
-          break;
-        }
-        case AbstractCommand.SHOW_CONSOLE: {
-          final PyThreadInfo event = parseThreadEvent(frame);
-          PyThreadInfo thread = myThreads.get(event.getId());
-          if (thread == null) {
-            myThreads.put(event.getId(), event);
-            thread = event;
-          }
-          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-          thread.setStopReason(event.getStopReason());
-          thread.setMessage(event.getMessage());
-          myDebugProcess.showConsole(thread);
-          break;
-        }
+        break;
       }
-    }
-
-    private PyThreadInfo parseThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
-      return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
-    }
-
-    @NotNull
-    @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    }
-
-    @Override
-    protected void close() {
-      try {
-        super.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
-    @Override
-    public void stop() {
-      super.stop();
-      close();
-    }
-
-    @Override
-    protected void onTextAvailable(@NotNull String text) {
-      myTextBuilder.append(text);
-      if (text.contains("\n")) {
-        String[] lines = myTextBuilder.toString().split("\n");
-        myTextBuilder = new StringBuilder();
-
-        if (!text.endsWith("\n")) {
-          myTextBuilder.append(lines[lines.length - 1]);
-          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+      case AbstractCommand.SHOW_CONSOLE: {
+        final PyThreadInfo event = parseThreadEvent(frame);
+        PyThreadInfo thread = myThreads.get(event.getId());
+        if (thread == null) {
+          myThreads.put(event.getId(), event);
+          thread = event;
         }
-
-        for (String line : lines) {
-          processResponse(line + "\n");
-        }
+        thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+        thread.setStopReason(event.getStopReason());
+        thread.setMessage(event.getMessage());
+        myDebugProcess.showConsole(thread);
+        break;
       }
     }
   }
 
-  private void writeToConsole(PyIo io) {
-    ConsoleViewContentType contentType;
-    if (io.getCtx() == 2) {
-      contentType = ConsoleViewContentType.ERROR_OUTPUT;
-    }
-    else {
-      contentType = ConsoleViewContentType.NORMAL_OUTPUT;
-    }
-    myDebugProcess.printToConsole(io.getText(), contentType);
+  private PyThreadInfo parseThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
+    return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
   }
-
 
   private static class TempVarsHolder {
     private final Map<String, Map<String, Set<String>>> myData = new HashMap<>();
@@ -720,7 +574,7 @@ public class RemoteDebugger implements ProcessDebugger {
       return frameVars.contains(name);
     }
 
-    private void put(final String threadId, final String frameId, final String name) {
+    protected void put(final String threadId, final String frameId, final String name) {
       Map<String, Set<String>> threadVars = myData.get(threadId);
       if (threadVars == null) myData.put(threadId, (threadVars = new HashMap<>()));
 
@@ -730,15 +584,15 @@ public class RemoteDebugger implements ProcessDebugger {
       frameVars.add(name);
     }
 
-    private Map<String, Set<String>> get(final String threadId) {
+    protected Map<String, Set<String>> get(final String threadId) {
       return myData.get(threadId);
     }
 
-    private void clear() {
+    protected void clear() {
       myData.clear();
     }
 
-    private void clear(final String threadId) {
+    protected void clear(final String threadId) {
       final Map<String, Set<String>> threadVars = myData.get(threadId);
       if (threadVars != null) {
         threadVars.clear();
@@ -791,19 +645,23 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  private void fireCloseEvent() {
+  protected void onProcessCreatedEvent() throws PyDebuggerException {
+  }
+
+  protected void fireCloseEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.closed();
     }
   }
 
-  private void fireCommunicationError() {
+  public void fireCommunicationError() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.communicationError();
     }
   }
 
-  private void fireExitEvent() {
+  // for DebuggerReader only
+  public void fireExitEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.detached();
     }

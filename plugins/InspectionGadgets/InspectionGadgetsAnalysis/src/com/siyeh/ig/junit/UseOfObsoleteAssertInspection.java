@@ -67,7 +67,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass newAssertClass = JavaPsiFacade.getInstance(project)
-        .findClass("org.junit.Assert", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+        .findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
       if (newAssertClass == null) {
         return;
       }
@@ -80,7 +80,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final String name = containingClass.getQualifiedName();
-      if ("junit.framework.Assert".equals(name) || "junit.framework.TestCase".equals(name)) {
+      if (JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(name) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(name)) {
         registerMethodCallError(expression, name);
       }
     }
@@ -94,9 +94,9 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass newAssertClass =
-        JavaPsiFacade.getInstance(project).findClass("org.junit.Assert", GlobalSearchScope.allScope(project));
+        JavaPsiFacade.getInstance(project).findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, GlobalSearchScope.allScope(project));
       final PsiClass oldAssertClass =
-        JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", GlobalSearchScope.allScope(project));
+        JavaPsiFacade.getInstance(project).findClass(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, GlobalSearchScope.allScope(project));
 
       if (newAssertClass == null) {
         return;

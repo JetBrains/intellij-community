@@ -83,7 +83,7 @@ public class JUnitAbstractTestClassNamingConventionInspectionBase extends Conven
         return;
       }
       if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
         return;
       }
       final String name = aClass.getName();

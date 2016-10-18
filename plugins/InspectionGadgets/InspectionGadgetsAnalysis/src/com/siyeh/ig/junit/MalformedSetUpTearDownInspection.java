@@ -56,7 +56,7 @@ public class MalformedSetUpTearDownInspection extends BaseInspection {
         return;
       }
       final PsiClass targetClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(targetClass, "junit.framework.TestCase")) {
+      if (!InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
         return;
       }
       if (method.getParameterList().getParametersCount() != 0 ||

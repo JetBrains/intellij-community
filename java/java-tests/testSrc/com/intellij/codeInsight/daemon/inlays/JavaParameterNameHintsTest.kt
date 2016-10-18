@@ -662,5 +662,20 @@ class Key {
     onLineStartingWith("System.set").assertNoInlays()
     onLineStartingWith("new").assertNoInlays()
   }
+  
+  fun `test poly and binary expressions`() {
+    setup("""
+class Test {
+  void test() {
+    check(1 + 1);
+    int i=1; check(1 + 1 + 1);
+  }
+  void check(int isShow) {}
+}
+""")
+    
+    onLineStartingWith("check").assertInlays("isShow->1")
+    onLineStartingWith("int").assertInlays("isShow->1")
+  }
 
 }

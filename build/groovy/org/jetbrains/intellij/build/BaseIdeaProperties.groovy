@@ -93,7 +93,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.
-      putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8"])
+      putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
     productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->

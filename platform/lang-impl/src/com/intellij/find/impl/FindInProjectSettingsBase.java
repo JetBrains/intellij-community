@@ -15,12 +15,15 @@
  */
 package com.intellij.find.impl;
 
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,17 +36,17 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
   @Tag("findStrings")
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "find", elementValueAttribute = "")
-  public List<String> findStrings = new ArrayList<String>();
+  public List<String> findStrings = new ArrayList<>();
 
   @Tag("replaceStrings")
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "replace", elementValueAttribute = "")
-  public List<String> replaceStrings = new ArrayList<String>();
+  public List<String> replaceStrings = new ArrayList<>();
 
   @Tag("dirStrings")
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "dir", elementValueAttribute = "")
-  public List<String> dirStrings = new ArrayList<String>();
+  public List<String> dirStrings = new ArrayList<>();
 
   @Override
   public void loadState(FindInProjectSettingsBase state) {
@@ -78,7 +81,7 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
 
   @NotNull
   public List<String> getRecentDirectories() {
-    return new ArrayList<String>(dirStrings);
+    return new ArrayList<>(dirStrings);
   }
 
   public void addStringToFind(@NotNull String s){
@@ -113,6 +116,19 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     list.add(str);
     while (list.size() > MAX_RECENT_SIZE) {
       list.remove(0);
+    }
+  }
+
+  static class FindInProjectPathMacroFilter extends PathMacroFilter {
+    @Override
+    public boolean skipPathMacros(@NotNull Element element) {
+      String tag = element.getName();
+      // dirStrings must be replaced, so, we must not skip it
+      if (tag.equals("findStrings") || tag.equals("replaceStrings")) {
+        String component = FileStorageCoreUtil.findComponentName(element);
+        return component != null && (component.equals("FindSettings") || component.equals("FindInProjectRecents"));
+      }
+      return false;
     }
   }
 }

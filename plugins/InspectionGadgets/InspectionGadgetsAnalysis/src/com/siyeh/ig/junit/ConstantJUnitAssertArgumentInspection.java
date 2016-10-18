@@ -79,9 +79,9 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
       }
       final PsiClass containingClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(containingClass,
-                                       "junit.framework.Assert") &&
+                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
           !InheritanceUtil.isInheritor(containingClass,
-                                       "org.junit.Assert")) {
+                                       JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

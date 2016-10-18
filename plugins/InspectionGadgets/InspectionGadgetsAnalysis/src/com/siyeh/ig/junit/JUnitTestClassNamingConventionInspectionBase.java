@@ -83,7 +83,7 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
         return;
       }
       if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
         if (!hasJUnit4TestMethods(aClass)) {
           return;
         }

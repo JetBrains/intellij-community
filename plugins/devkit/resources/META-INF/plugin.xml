@@ -184,6 +184,9 @@
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
+
+    <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
+    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
   </extensions>
 
   <project-components>

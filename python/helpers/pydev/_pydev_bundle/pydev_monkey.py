@@ -458,6 +458,12 @@ def create_fork(original_name):
         if not child_process:
             if is_new_python_process:
                 _on_forked_process()
+        else:
+            if is_new_python_process:
+                from _pydevd_bundle.pydevd_comm import get_global_debugger
+                debugger = get_global_debugger()
+                if debugger is not None:
+                    debugger.send_process_created_message()
         return child_process
     return new_fork
 

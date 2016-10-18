@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -112,6 +113,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
         GrAnnotation annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(
           "@F(" + text + ")", this
         );
+        ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
         PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
         myDetachedValue = new SoftReference<>(result = value);
       }

@@ -17,6 +17,7 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.psi.*;
@@ -82,12 +83,12 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter<PsiClass, 
   public List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
                                                              @NotNull PsiElement basePsi,
                                                              @NotNull ByteArrayEnumerator names, @NotNull GlobalSearchScope libraryScope) {
-    final PsiClass baseClass = ObjectUtils.notNull(basePsi instanceof PsiClass ? (PsiClass)basePsi : ((PsiMember)basePsi).getContainingClass());
+    final PsiClass baseClass = ObjectUtils.notNull(basePsi instanceof PsiClass ? (PsiClass)basePsi : ReadAction.compute(() -> (PsiMember)basePsi).getContainingClass());
 
     final List<LightRef> overridden = new ArrayList<>();
     Processor<PsiClass> processor = c -> {
       if (c.hasModifierProperty(PsiModifier.PRIVATE)) return true;
-      String qName = c.getQualifiedName();
+      String qName = ReadAction.compute(() -> c.getQualifiedName());
       if (qName == null) return true;
       overridden.add(baseRef.override(id(qName, names)));
       return true;
