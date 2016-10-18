@@ -463,6 +463,10 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public void apply(UiDecorator.UiDecoration decoration) {
+    if (decoration == null) {
+      return;
+    }
+
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
       getLabelComponent().setFont(decoration.getLabelFont());
