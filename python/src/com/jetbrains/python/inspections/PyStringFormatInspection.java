@@ -491,7 +491,9 @@ public class PyStringFormatInspection extends PyInspection {
             as(chunks.get(i), PyStringFormatParser.NewStyleSubstitutionChunk.class);
 
           if (chunk != null) {
-            chunk.setPosition(i);
+            if (chunk.getPosition() == null) {
+              chunk.setPosition(i);
+            }
             String mappingKey = inspectNewStyleChunkAndGetMappingKey(chunk);
             if (!isProblem()) {
               inspectArguments(chunk, mappingKey);
