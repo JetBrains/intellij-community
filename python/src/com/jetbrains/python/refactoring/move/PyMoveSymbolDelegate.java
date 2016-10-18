@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.move;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,7 +64,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
       return false;
     }
     // Local function or method
-    if (findTargetFunction(elements[0]) != null) {
+    if (findMovableLocalFunctionOrMethod(elements[0]) != null) {
       return true;
     }
     
@@ -87,7 +88,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     }
     
     final BaseRefactoringProcessor processor;
-    final PyFunction function = findTargetFunction(elements[0]);
+    final PyFunction function = findMovableLocalFunctionOrMethod(elements[0]);
     if (function != null) {
       final PyMakeFunctionTopLevelDialog dialog = new PyMakeFunctionTopLevelDialog(project, function, initialPath, initialPath);
       if (!dialog.showAndGet()) {
@@ -155,7 +156,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     // Fallback to the old way to select single element to move
     final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
     if (e != null && PyMoveModuleMembersHelper.hasMovableElementType(e)) {
-      if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || findTargetFunction(e) != null) {
+      if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || findMovableLocalFunctionOrMethod(e) != null) {
         doMove(project, new PsiElement[]{e}, targetContainer, null);
       }
       else {
@@ -189,8 +190,9 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     });
   }
 
+  @VisibleForTesting
   @Nullable
-  public static PyFunction findTargetFunction(@NotNull PsiElement element) {
+  public static PyFunction findMovableLocalFunctionOrMethod(@NotNull PsiElement element) {
     if (isLocalFunction(element) || isSuitableInstanceMethod(element)) {
       return (PyFunction)element;
     }
