@@ -211,7 +211,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
     if (directInheritorsAndCandidates == null) return null;
     GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
-    if (ElementPlace.LIB == ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex)) {
+    if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
       dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
     }
     return new CompilerHierarchyInfoImpl<>(directInheritorsAndCandidates, dirtyScope, searchScope);
