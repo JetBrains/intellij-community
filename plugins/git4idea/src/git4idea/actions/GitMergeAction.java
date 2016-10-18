@@ -89,15 +89,12 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
-          GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
-            @Override
-            public GitLineHandler compute() {
-              GitLineHandler handler = handlerProvider.compute();
-              handler.addLineListener(localChangesDetector);
-              handler.addLineListener(untrackedFilesDetector);
-              handler.addLineListener(mergeConflict);
-              return handler;
-            }
+          GitCommandResult result = git.runCommand(() -> {
+            GitLineHandler handler = handlerProvider.compute();
+            handler.addLineListener(localChangesDetector);
+            handler.addLineListener(untrackedFilesDetector);
+            handler.addLineListener(mergeConflict);
+            return handler;
           });
 
           GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
