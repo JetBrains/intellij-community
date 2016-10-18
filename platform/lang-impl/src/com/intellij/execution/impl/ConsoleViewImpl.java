@@ -261,8 +261,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                          boolean usePredefinedMessageFilter) {
     this(project, searchScope, viewer,
          new ConsoleState.NotStartedStated() {
+           @NotNull
            @Override
-           public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
+           public ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler) {
              return new ConsoleViewRunningState(console, processHandler, this, true, true);
            }
          },
@@ -521,19 +522,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myEditor.getScrollPane().getVerticalScrollBar().addMouseListener(mouseListener);
     myEditor.getScrollPane().getVerticalScrollBar().addMouseMotionListener(mouseListener);
     myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
-    myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
-        // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
-        // are soft wrapped. We want to update viewport position then when the console becomes visible.
-        Rectangle oldR = e.getOldRectangle();
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+      // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
+      // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
+      // are soft wrapped. We want to update viewport position then when the console becomes visible.
+      Rectangle oldR = e.getOldRectangle();
 
-        if (oldR != null && oldR.height <= 0 &&
-            e.getNewRectangle().height > 0 &&
-            isStickingToEnd()) {
-          scrollToEnd();
-        }
+      if (oldR != null && oldR.height <= 0 &&
+          e.getNewRectangle().height > 0 &&
+          isStickingToEnd()) {
+        scrollToEnd();
       }
     });
   }
@@ -593,15 +591,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
+  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     if (myInputMessageFilter == null) {
-      printHyperlink(s, contentType, null);
+      printHyperlink(text, contentType, null);
       return;
     }
 
-    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(s, contentType);
+    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, contentType);
     if (result == null) {
-      printHyperlink(s, contentType, null);
+      printHyperlink(text, contentType, null);
     }
     else {
       for (Pair<String, ConsoleViewContentType> pair : result) {
@@ -1148,7 +1146,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return null;
   }
 
-
   public static class ClearAllAction extends DumbAwareAction {
     private final ConsoleView myConsoleView;
 
@@ -1268,13 +1265,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
       }
       else {
-        final String s = String.valueOf(charTyped);
+        final String text = String.valueOf(charTyped);
         SelectionModel selectionModel = editor.getSelectionModel();
         if (selectionModel.hasSelection()) {
-          consoleView.replaceUserText(s, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+          consoleView.replaceUserText(text, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
         }
         else {
-          consoleView.insertUserText(s, editor.getCaretModel().getOffset());
+          consoleView.insertUserText(text, editor.getCaretModel().getOffset());
         }
       }
     }
@@ -1323,17 +1320,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static class PasteHandler extends ConsoleAction {
     @Override
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
-      String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-      if (s == null) return;
-      s = StringUtil.convertLineSeparators(s);
+      String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      if (text == null) return;
+      text = StringUtil.convertLineSeparators(text);
       ApplicationManager.getApplication().assertIsDispatchThread();
       Editor editor = consoleView.myEditor;
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
-        consoleView.replaceUserText(s, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        consoleView.replaceUserText(text, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       }
       else {
-        consoleView.insertUserText(s, editor.getCaretModel().getOffset());
+        consoleView.insertUserText(text, editor.getCaretModel().getOffset());
       }
     }
   }
@@ -1540,12 +1537,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     myListeners.add(listener);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myListeners.remove(listener);
-      }
-    });
+    Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
   /**
@@ -1583,12 +1575,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
-      if (offset > info.endOffset) {
-        startOffset = info.endOffset;
-      }
-      else {
-        startOffset = Math.max(deferredOffset, Math.max(info.startOffset, offset));
-      }
+      startOffset = offset > info.endOffset ? info.endOffset : Math.max(deferredOffset, Math.max(info.startOffset, offset));
 
       buffer.addUserText(startOffset - deferredOffset, textToUse);
 
@@ -1612,13 +1599,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * replace text
    *
-   * @param s     text for replace
+   * @param text     text for replace
    * @param start relatively to all document text
    * @param end   relatively to all document text
    */
-  private void replaceUserText(final String s, int start, int end) {
+  private void replaceUserText(@NotNull String text, int start, int end) {
     if (start == end) {
-      insertUserText(s, start);
+      insertUserText(text, start);
       return;
     }
     final ConsoleViewImpl consoleView = this;
@@ -1632,7 +1619,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myTokens.isEmpty()) return;
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
       if (info.contentType != ConsoleViewContentType.USER_INPUT) {
-        consoleView.print(s, ConsoleViewContentType.USER_INPUT);
+        consoleView.print(text, ConsoleViewContentType.USER_INPUT);
         consoleView.flushDeferredText();
         editor.getCaretModel().moveToOffset(document.getTextLength());
         editor.getSelectionModel().removeSelection();
@@ -1652,10 +1639,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         editor.getCaretModel().moveToOffset(start);
         return;
       }
-      int charCountToReplace = s.length() - endOffset + startOffset;
 
-      buffer.replaceUserText(startOffset - deferredOffset, endOffset - deferredOffset, s);
+      buffer.replaceUserText(startOffset - deferredOffset, endOffset - deferredOffset, text);
 
+      int charCountToReplace = text.length() - endOffset + startOffset;
       info.endOffset += charCountToReplace;
       if (info.startOffset == info.endOffset) {
         consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
@@ -1665,12 +1652,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     try {
       myInDocumentUpdate = true;
-      document.replaceString(startOffset, endOffset, s);
+      document.replaceString(startOffset, endOffset, text);
     }
     finally {
       myInDocumentUpdate = false;
     }
-    editor.getCaretModel().moveToOffset(startOffset + s.length());
+    editor.getCaretModel().moveToOffset(startOffset + text.length());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
   }
@@ -1768,7 +1755,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
      * Checks if target line should be folded and returns its placeholder if the examination succeeds.
      *
      * @param line index of line to check
-     * @return placeholder text if given line should be folded; <code>null</code> otherwise
+     * @return placeholder text if given line should be folded; {@code null} otherwise
      */
     @Nullable
     private String getPlaceholder(int line) {
@@ -1786,8 +1773,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         index = text.indexOf('"', 1) + 1;
       }
       if (index == 0) {
-        boolean nonWhiteSpaceFound = false;
-        for (; index < text.length(); index++) {
+        for (boolean nonWhiteSpaceFound = false; index < text.length(); index++) {
           char c = text.charAt(index);
           if (c != ' ' && c != '\t') {
             nonWhiteSpaceFound = true;
