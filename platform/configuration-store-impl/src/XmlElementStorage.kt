@@ -19,9 +19,11 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.jdom.Attribute
@@ -66,7 +68,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = provider!!.read(fileSpec, roamingType)?.let { loadElement(it) }
+  private fun loadDataFromProvider() = provider!!.read(fileSpec, roamingType)?.let(::loadElement)
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -151,12 +153,12 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   protected open fun beforeElementSaved(element: Element) {
-    if (pathMacroSubstitutor != null) {
+    pathMacroSubstitutor?.let {
       try {
-        pathMacroSubstitutor.collapsePaths(element)
+        it.collapsePaths(element)
       }
       finally {
-        pathMacroSubstitutor.reset()
+        it.reset()
       }
     }
   }
@@ -171,7 +173,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       return
     }
 
-    try {
+    LOG.catchAndLog {
       val newElement = if (deleted) null else if (streamProvider) loadDataFromProvider() else loadLocalData()
       val states = storageDataRef.get()
       if (newElement == null) {
@@ -186,9 +188,6 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         changedComponentNames.addAll(states.getChangedComponentNames(newStates))
         setStates(states, newStates)
       }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
     }
   }
 }
@@ -235,7 +234,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 
     rootElement.addContent(element)
   }
-  return if (JDOMUtil.isEmpty(rootElement)) null else rootElement
+  return if (rootElement.isEmpty()) null else rootElement
 }
 
 internal fun Element.normalizeRootName(): Element {
