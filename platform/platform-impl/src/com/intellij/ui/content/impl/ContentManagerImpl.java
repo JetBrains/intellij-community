@@ -30,8 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
+import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -43,8 +42,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -140,28 +141,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
-  private class MyContentComponent extends NonOpaquePanel implements SwitchProvider {
-    @Override
-    public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-      if (myUI instanceof SwitchProvider) {
-        return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
-      }
-      return Collections.emptyList();
-    }
-
-    @Override
-    public SwitchTarget getCurrentTarget() {
-      return myUI instanceof SwitchProvider ? ((SwitchProvider)myUI).getCurrentTarget() : null;
-    }
-
+  private class MyContentComponent extends NonOpaquePanel implements QuickAccessProvider {
     @Override
     public JComponent getComponent() {
-      return myUI instanceof SwitchProvider ? myUI.getComponent() : this;
+      return myUI instanceof QuickAccessProvider ? myUI.getComponent() : this;
     }
 
     @Override
     public boolean isCycleRoot() {
-      return myUI instanceof SwitchProvider && ((SwitchProvider)myUI).isCycleRoot();
+      return myUI instanceof QuickAccessProvider && ((QuickAccessProvider)myUI).isCycleRoot();
     }
   }
 

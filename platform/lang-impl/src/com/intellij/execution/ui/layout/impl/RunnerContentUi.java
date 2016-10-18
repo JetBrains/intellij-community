@@ -47,9 +47,8 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -78,8 +77,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
-                                        QuickActionProvider, DockContainer.Dialog {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
+                                        QuickAccessProvider, QuickActionProvider, DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
@@ -215,7 +214,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
         return null;
       }
-    }).setTabLabelActionsAutoHide(false).setProvideSwitchTargets(false).setInnerInsets(JBUI.emptyInsets())
+    }).setTabLabelActionsAutoHide(false).setInnerInsets(JBUI.emptyInsets())
       .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null).getJBTabs();
     rebuildTabPopup();
 
@@ -1718,46 +1717,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
     return result;
   }
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return myTabs.getCurrentTarget();
-
-    GridImpl grid = getSelectedGrid();
-    if (grid != null && grid.getContents().size() <= 1) return myTabs.getCurrentTarget();
-
-    if (grid != null) {
-      SwitchTarget cell = grid.getCellFor(owner);
-      return cell != null ? cell : myTabs.getCurrentTarget();
-    }
-    else {
-      return myTabs.getCurrentTarget();
-    }
-  }
-
-  @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<>();
-
-    result.addAll(myTabs.getTargets(true, false));
-    GridImpl grid = getSelectedGrid();
-    if (grid != null) {
-      result.addAll(grid.getTargets(onlyVisible));
-    }
-
-    for (Wrapper wrapper : myMinimizedButtonsPlaceholder.values()) {
-      if (!wrapper.isShowing()) continue;
-      JComponent target = wrapper.getTargetComponent();
-      if (target instanceof ActionToolbar) {
-        ActionToolbar tb = (ActionToolbar)target;
-        result.addAll(tb.getTargets(onlyVisible, false));
-      }
-    }
-
-    return result;
-  }
-
 
   private int findFreeWindow() {
     int i;

@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.awt.*;
  *
  * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */
-public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
+public interface ActionToolbar extends QuickAccessProvider, QuickActionProvider {
   String ACTION_TOOLBAR_PROPERTY_KEY = "ACTION_TOOLBAR";
 
   /**
