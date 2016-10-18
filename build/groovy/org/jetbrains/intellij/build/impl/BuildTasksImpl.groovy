@@ -438,26 +438,31 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    List<V> results = buildContext.messages.block("Run parallel tasks") {
-      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
-      def executorService = Executors.newCachedThreadPool()
-      List<Future<V>> futures = tasks.collect { task ->
-        def childContext = buildContext.forkForParallelTask(task.taskName)
-        executorService.submit({
-          def start = System.currentTimeMillis()
-          childContext.messages.onForkStarted()
-          try {
-            return task.run(childContext)
-          }
-          finally {
-            buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
-            childContext.messages.onForkFinished()
-          }
-        } as Callable<V>)
+    List<V> results = []
+    try {
+      results = buildContext.messages.block("Run parallel tasks") {
+        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+        def executorService = Executors.newCachedThreadPool()
+        List<Future<V>> futures = tasks.collect { task ->
+          def childContext = buildContext.forkForParallelTask(task.taskName)
+          executorService.submit({
+            def start = System.currentTimeMillis()
+            childContext.messages.onForkStarted()
+            try {
+              return task.run(childContext)
+            }
+            finally {
+              buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+              childContext.messages.onForkFinished()
+            }
+          } as Callable<V>)
+        }
+        futures.collect { it.get() }
       }
-      futures.collect { it.get() }
     }
-    buildContext.messages.onAllForksFinished()
+    finally {
+      buildContext.messages.onAllForksFinished()
+    }
     results
   }
 
