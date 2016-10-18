@@ -59,7 +59,7 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
         if (!passwordSafe.isNativeCredentialStoreUsed) {
           button("Set Master Password") { event ->
             Messages.showInputDialog(event.source as Component, "Master Password:", "Set Master Password", null)?.trim().nullize()?.let {
-              passwordSafe.setMasterPassword(it)
+              passwordSafe.setFileDatabaseMasterPassword(it)
             }
           }
         }
