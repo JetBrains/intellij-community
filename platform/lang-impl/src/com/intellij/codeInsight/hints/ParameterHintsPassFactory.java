@@ -92,9 +92,11 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     }
 
     private void process(PsiElement element, InlayParameterHintsProvider provider, List<Matcher> blackListMatchers) {
+      List<InlayInfo> hints = provider.getParameterHints(element);
+      if (hints.isEmpty()) return;
       MethodInfo info = provider.getMethodInfo(element);
       if (info != null && !isMatchedByAny(info, blackListMatchers)) {
-        provider.getParameterHints(element).forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
+        hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
       }
     }
 
