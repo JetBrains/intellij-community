@@ -88,25 +88,6 @@ public class PyStringFormatInspection extends PyInspection {
         .put('b', "bytes")
         .build();
 
-
-      private static final ImmutableMap<Character, String> NEW_STYLE_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
-        .put('s', "str or None")
-        .put('b', "int")
-        .put('c', "int")
-        .put('d', "int")
-        .put('o', "int")
-        .put('x', "int")
-        .put('X', "int")
-        .put('n', "int or long or float or complex")
-        .put('e', "long or float or complex")
-        .put('E', "long or float or complex")
-        .put('f', "long or float or complex")
-        .put('F', "long or float or complex")
-        .put('g', "long or float or complex")
-        .put('G', "long or float or complex")
-        .put('%', "long or float")
-        .build();
-
       private final Map<String, Boolean> myUsedMappingKeys = new HashMap<>();
       private int myExpectedArguments = 0;
       private boolean myProblemRegister = false;
@@ -239,7 +220,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
-        Map<PyExpression, PyExpression> additionalExpressions = new HashMap<PyExpression, PyExpression>();
+        Map<PyExpression, PyExpression> additionalExpressions = new HashMap<>();
         PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
         for (PySubscriptionExpression expr : subscriptionExpressions) {
           if (expr.getOperand().getText().equals(operand)) {
@@ -268,7 +249,7 @@ public class PyStringFormatInspection extends PyInspection {
             PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)).getElement();
         }
         else {
-          additionalExpressions = new HashMap<PyExpression, PyExpression>();
+          additionalExpressions = new HashMap<>();
           pyElement = rightExpression;
         }
         if (pyElement == null) return 0;
@@ -493,7 +474,7 @@ public class PyStringFormatInspection extends PyInspection {
       private final Visitor myVisitor;
       private final TypeEvalContext myTypeEvalContext;
 
-      private final Map<String, String> myFormatSpec = new HashMap<String, String>();
+      private final Map<String, String> myFormatSpec = new HashMap<>();
 
       public NewStyleInspection(PyStringLiteralExpression formatExpression, Visitor visitor, TypeEvalContext context) {
         myFormatExpression = formatExpression;
