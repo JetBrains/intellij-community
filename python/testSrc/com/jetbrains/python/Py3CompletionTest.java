@@ -184,6 +184,21 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  // PY-11208
+  public void testMockPatchObject1() {
+    doMultiFileTest();
+  }
+
+  // PY-11208
+  public void testMockPatchObject2() {
+    doMultiFileTest();
+  }
+
+  // PY-11208
+  public void testMockPatchObject3() {
+    doMultiFileTest();
+  }
+
   // PY-21060
   public void testGenericTypeInheritor() {
     myFixture.copyDirectoryToProject("../typing", "");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,18 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -52,13 +50,80 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
       }
       return socketMembers;
     }
+
+    if (location instanceof PyReferenceExpression) {
+      final PyCallable mockPatchCallable = mockPatchCallable(classType, ((PyReferenceExpression)location).getQualifier(), typeEvalContext);
+      if (mockPatchCallable != null) {
+        return calcMockPatchMembers(mockPatchCallable, typeEvalContext);
+      }
+    }
+
     return Collections.emptyList();
+  }
+
+  @Override
+  public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location, TypeEvalContext context) {
+    final PyCallable mockPatchCallable = mockPatchCallable(clazz, location, context);
+    if (mockPatchCallable != null) {
+      for (PyCustomMember member : calcMockPatchMembers(mockPatchCallable, context)) {
+        if (name.equals(member.getName())) {
+          return member.resolve(location);
+        }
+      }
+    }
+
+    return super.resolveMember(clazz, name, location, context);
   }
 
   private static List<PyCustomMember> calcSocketMembers(PyFile socketFile) {
     List<PyCustomMember> result = new ArrayList<>();
     addMethodsFromAttr(socketFile, result, "_socketmethods");
     addMethodsFromAttr(socketFile, result, "_delegate_methods");
+    return result;
+  }
+
+  @Nullable
+  private static PyCallable mockPatchCallable(@NotNull PyClassType classType, @Nullable PsiElement location, @NotNull TypeEvalContext context) {
+    if (!PyNames.FAKE_FUNCTION.equals(classType.getClassQName())) {
+      return null;
+    }
+
+    return Optional
+      .ofNullable(PyUtil.as(location, PyReferenceExpression.class))
+      .map(context::getType)
+      .map(qualifierType -> PyUtil.as(qualifierType, PyFunctionType.class))
+      .map(PyFunctionType::getCallable)
+      .filter(callable -> "unittest.mock.patch".equals(QualifiedNameFinder.getQualifiedName(callable)))
+      .orElse(null);
+  }
+
+  @NotNull
+  private static List<PyCustomMember> calcMockPatchMembers(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (!context.maySwitchToAST(callable)) {
+      return Collections.emptyList();
+    }
+
+    final List<PyCustomMember> result = new ArrayList<>();
+
+    callable.getContainingFile().acceptChildren(
+      new PyElementVisitor() {
+        @Override
+        public void visitPyElement(PyElement node) {
+        }
+
+        @Override
+        public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+          final PyTargetExpression lhs = PyUtil.as(node.getLeftHandSideExpression(), PyTargetExpression.class);
+          final PyExpression qualifier = lhs == null ? null : lhs.getQualifier();
+          final String name = lhs == null ? null : lhs.getName();
+
+          if (lhs != null && qualifier != null && name != null && "patch".equals(qualifier.getName())) {
+            result.add(new PyCustomMember(name, lhs));
+          }
+        }
+      }
+    );
+
     return result;
   }
 
