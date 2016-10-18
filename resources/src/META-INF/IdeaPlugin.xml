@@ -1257,7 +1257,6 @@
     <stacktrace.fold substring="at sun.rmi."/>
     <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
-    <console.folding implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 
