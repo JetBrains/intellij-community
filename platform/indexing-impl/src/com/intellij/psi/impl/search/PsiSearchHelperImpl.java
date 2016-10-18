@@ -194,8 +194,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
         if (!scopeElement.isValid()) return true;
-        if (!scopeElement.isPhysical()) {
+        if (!scopeElement.isPhysical() || scopeElement instanceof PsiCompiledElement) {
           scopeElement = scopeElement.getNavigationElement();
+        }
+        if (scopeElement instanceof PsiCompiledElement) {
+          // can't scan text of the element
+          return true;
         }
         if (scopeElement.getTextRange() == null) {
           // clients can put whatever they want to the LocalSearchScope. Skip what we can't process.
