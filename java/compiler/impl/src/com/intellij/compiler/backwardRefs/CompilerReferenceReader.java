@@ -17,6 +17,7 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -45,6 +46,8 @@ import java.util.*;
 import static java.util.stream.Collectors.*;
 
 class CompilerReferenceReader {
+  private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
+
   private final CompilerBackwardReferenceIndex myIndex;
 
   private CompilerReferenceReader(File buildDir) throws IOException {
@@ -85,6 +88,7 @@ class CompilerReferenceReader {
 
     GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
     LanguageLightRefAdapter adapter = CompilerReferenceServiceImpl.findAdapterForFileType(fileType);
+    LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
     Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
     Map<VirtualFile, List<LightRef>> candidatesPerFile = candidates
       .stream()

@@ -194,7 +194,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                  @NotNull GlobalSearchScope searchScope,
                                                                                  @NotNull FileType searchFileType,
                                                                                  @NotNull CompilerHierarchySearchType searchType) {
-      if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
+    if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
       CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
@@ -284,6 +284,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         return null;
       }
       final LanguageLightRefAdapter<?, ?> adapter = findAdapterForFileType(file.getFileType());
+      if (adapter == null) return null;
       final LightRef ref = ReadAction.compute(() -> adapter.asLightUsage(psiElement, myReader.getNameEnumerator()));
       if (ref == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
@@ -360,13 +361,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myProject;
   }
 
+  @Nullable
   static LanguageLightRefAdapter findAdapterForFileType(@NotNull FileType fileType) {
     for (LanguageLightRefAdapter adapter : LanguageLightRefAdapter.INSTANCES) {
       if (adapter.getFileTypes().contains(fileType)) {
         return adapter;
       }
     }
-    throw new AssertionError("adapter is not found for: " + fileType);
+    return null;
   }
 
   private static void executeOnBuildThread(Runnable compilationFinished) {
