@@ -210,6 +210,10 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doMultiFileTest("util.py", null);
   }
 
+  public void testLocalFunctionMoveToOtherFile() throws IOException {
+    doMultiFileTest("util.py", null);
+  }
+
   public void testMethodCalledViaClass() {
     doTestSuccess();
   }
