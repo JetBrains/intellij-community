@@ -47,10 +47,16 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new AssertEqualsCalledOnArrayFix();
+    return new AssertEqualsCalledOnArrayFix((String)infos[0]);
   }
 
   private static class AssertEqualsCalledOnArrayFix extends InspectionGadgetsFix {
+
+    private final String myAssertClassName;
+
+    public AssertEqualsCalledOnArrayFix(String assertClassName) {
+      myAssertClassName = assertClassName;
+    }
 
     @Override
     @NotNull
@@ -67,11 +73,11 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null && ImportUtils.addStaticImport(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assertArrayEquals", methodExpression)) {
+      if (qualifier == null && ImportUtils.addStaticImport(myAssertClassName, "assertArrayEquals", methodExpression)) {
         PsiReplacementUtil.replaceExpression(methodExpression, "assertArrayEquals");
       }
       else {
-        PsiReplacementUtil.replaceExpression(methodExpression, "org.junit.Assert.assertArrayEquals");
+        PsiReplacementUtil.replaceExpression(methodExpression, myAssertClassName + ".assertArrayEquals");
       }
     }
   }
@@ -86,44 +92,19 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"assertEquals".equals(methodName)) {
+      final AssertEqualsHint assertEqualsHint = AssertEqualsHint.create(expression);
+      if (assertEqualsHint == null) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiType type1;
-      final PsiType type2;
-      if (arguments.length == 2) {
-        final PsiExpression argument0 = arguments[0];
-        type1 = argument0.getType();
-        final PsiExpression argument1 = arguments[1];
-        type2 = argument1.getType();
-      }
-      else if (arguments.length == 3) {
-        final PsiExpression argument0 = arguments[1];
-        type1 = argument0.getType();
-        final PsiExpression argument1 = arguments[2];
-        type2 = argument1.getType();
-      }
-      else {
-        return;
-      }
+      final int argIndex = assertEqualsHint.getArgIndex();
+      final PsiType type1 = arguments[argIndex].getType();
+      final PsiType type2 = arguments[argIndex + 1].getType();
       if (!(type1 instanceof PsiArrayType) || !(type2 instanceof PsiArrayType)) {
         return;
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
-          !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) &&
-          !InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit")) {
-        return;
-      }
-      registerMethodCallError(expression);
+      registerMethodCallError(expression, assertEqualsHint.getAssertClassName());
     }
   }
 }
