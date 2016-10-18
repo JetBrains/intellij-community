@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -48,8 +47,7 @@ public class GitResetHead extends GitRepositoryAction {
    */
   protected void perform(@NotNull Project project,
                          @NotNull List<VirtualFile> gitRoots,
-                         @NotNull VirtualFile defaultRoot,
-                         List<VcsException> exceptions) throws VcsException {
+                         @NotNull VirtualFile defaultRoot) {
     GitResetDialog d = new GitResetDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
       return;
@@ -65,6 +63,8 @@ public class GitResetHead extends GitRepositoryAction {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());
     VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
-    showErrors(project, getActionName(), exceptions);
+    if(!h.errors().isEmpty()) {
+      showErrors(project, getActionName(), h.errors());
+    }
   }
 }
