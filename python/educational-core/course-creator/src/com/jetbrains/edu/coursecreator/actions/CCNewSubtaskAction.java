@@ -54,11 +54,11 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     if (taskFile == null) {
       return;
     }
-    VirtualFile taskDir = StudyUtils.getTaskDir(virtualFile);
+    Task task = taskFile.getTask();
+    VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
     }
-    Task task = taskFile.getTask();
     createTestsForNewSubtask(project, task);
     int num = task.getSubtaskNum();
     createTaskDescriptionFile(project, taskDir, num);
