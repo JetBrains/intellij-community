@@ -70,9 +70,9 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      final boolean junit5Assertions = InheritanceUtil.isInheritor(containingClass, "org.junit.jupiter.api.Assertions");
-      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert") &&
+      final boolean junit5Assertions = InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS);
+      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
+          !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) &&
           !junit5Assertions) {
         return;
       }

@@ -119,7 +119,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = aClass.getQualifiedName();
-      if (!"org.junit.Assert".equals(qualifiedName) && !"junit.framework.Assert".equals(qualifiedName) &&
+      if (!JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) && !JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT
+        .equals(qualifiedName) &&
           !"junit.framework.TestCase".equals(qualifiedName)) {
         return;
       }

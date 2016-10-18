@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
+
   @Nls
   @NotNull
   @Override
@@ -66,7 +67,7 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null && ImportUtils.addStaticImport("org.junit.Assert", "assertArrayEquals", methodExpression)) {
+      if (qualifier == null && ImportUtils.addStaticImport(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assertArrayEquals", methodExpression)) {
         PsiReplacementUtil.replaceExpression(methodExpression, "assertArrayEquals");
       }
       else {
@@ -117,8 +118,8 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert") &&
+      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
+          !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) &&
           !InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit")) {
         return;
       }

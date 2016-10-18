@@ -90,8 +90,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
           return;
         }
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && "org.junit.Assert".equals(containingClass.getQualifiedName()) &&
-            !ImportUtils.addStaticImport("org.junit.Assert", methodName, originalMethodCall)) {
+        if (containingClass != null && JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(containingClass.getQualifiedName()) &&
+            !ImportUtils.addStaticImport(JUnitCommonClassNames.ORG_JUNIT_ASSERT, methodName, originalMethodCall)) {
           // add qualifier if old call was to JUnit4 method and adding static import failed
           out.append("org.junit.Assert.");
         }
@@ -721,7 +721,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       return false;
     }
     final String qualifiedName = targetClass.getQualifiedName();
-    return "junit.framework.Assert".equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName) ||
-           "org.junit.Assert".equals(qualifiedName);
+    return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName) ||
+           JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName);
   }
 }

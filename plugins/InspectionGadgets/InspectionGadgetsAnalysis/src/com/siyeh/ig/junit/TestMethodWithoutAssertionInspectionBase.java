@@ -35,8 +35,8 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
   public TestMethodWithoutAssertionInspectionBase() {
     methodMatcher = new MethodMatcher(true, "assertionMethods")
-      .add("org.junit.Assert", "assert.*|fail.*")
-      .add("junit.framework.Assert", "assert.*|fail.*")
+      .add(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assert.*|fail.*")
+      .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
       .add("org.mockito.Mockito", "verify.*")
       .add("org.mockito.InOrder", "verify")
       .add("org.junit.rules.ExpectedException", "expect.*")
