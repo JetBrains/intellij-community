@@ -26,12 +26,15 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -67,7 +70,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   private boolean myDocumentChangeProcessed = true;
   private final AtomicLong myExpansionCounter = new AtomicLong();
 
-  public FoldingModelImpl(EditorImpl editor) {
+  public FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
@@ -82,6 +85,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     refreshSettings();
   }
 
+  @Override
   @NotNull
   public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
     return (List<FoldRegion>)myGroups.get(group);
@@ -100,7 +104,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   @NotNull
-  public FoldRegion getFirstRegion(@NotNull FoldingGroup group, FoldRegion child) {
+  FoldRegion getFirstRegion(@NotNull FoldingGroup group, @NotNull FoldRegion child) {
     final List<FoldRegion> regions = getGroupedRegions(group);
     if (regions.isEmpty()) {
       final boolean inAll = Arrays.asList(getAllFoldRegions()).contains(child);
@@ -128,7 +132,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return endOffset;
   }
 
-  public void refreshSettings() {
+  void refreshSettings() {
     myFoldTextAttributes = myEditor.getColorsScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
   }
 
@@ -150,10 +154,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   private static void assertIsDispatchThreadForEditor() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
   private static void assertReadAccess() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
   @Override
@@ -210,7 +214,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     runBatchFoldingOperation(operation, false, moveCaret);
   }
 
-  private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
+  private void runBatchFoldingOperation(@NotNull Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
@@ -223,7 +227,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsBatchFoldingProcessing = true;
     try {
       operation.run();
-    } finally {
+    }
+    finally {
       if (!oldBatchFlag) {
         if (myFoldRegionsProcessed) {
           notifyBatchFoldingProcessingDone(moveCaret);
@@ -244,7 +249,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
    * Disables caret position adjustment after batch folding operation is finished.
    * Should be called from inside batch operation runnable.
    */
-  public void flushCaretShift() {
+  void flushCaretShift() {
     mySavedCaretShift = -1;
   }
 
@@ -270,7 +275,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   @Override
   @Nullable
-  public FoldRegion getFoldingPlaceholderAt(Point p) {
+  public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
     assertReadAccess();
     LogicalPosition pos = myEditor.xyToLogicalPosition(p);
     int line = pos.line;
@@ -323,12 +328,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     doClearFoldRegions();
   }
 
-  public void doClearFoldRegions() {
+  private void doClearFoldRegions() {
     myGroups.clear();
     myFoldTree.clear();
   }
 
-  public void expandFoldRegion(FoldRegion region) {
+  void expandFoldRegion(@NotNull FoldRegion region) {
     assertIsDispatchThreadForEditor();
     if (region.isExpanded() || region.shouldNeverExpand()) return;
 
@@ -354,7 +359,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     notifyListenersOnFoldRegionStateChange(region);
   }
 
-  public void collapseFoldRegion(FoldRegion region) {
+  void collapseFoldRegion(@NotNull FoldRegion region) {
     assertIsDispatchThreadForEditor();
     if (!region.isExpanded()) return;
 
@@ -485,7 +490,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
-  public int getTotalNumberOfFoldedLines() {
+  int getTotalNumberOfFoldedLines() {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
       // We return zero in such situations then.
@@ -500,6 +505,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return myFoldTree.fetchTopLevel();
   }
 
+  @NotNull
   public FoldRegion[] fetchCollapsedAt(int offset) {
     return myFoldTree.fetchCollapsedAt(offset);
   }
@@ -578,12 +584,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myListeners.remove(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
