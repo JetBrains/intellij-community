@@ -37,9 +37,10 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   public override fun tearDown() {
-    BackwardReferenceIndexWriter.forceEnabled = false
     super.tearDown()
-    System.clearProperty(BackwardReferenceIndexWriter.PROP_KEY)
+    BackwardReferenceIndexWriter.forceEnabled = false
+    BackwardReferenceIndexWriter.clearInstance()
+//    System.clearProperty(BackwardReferenceIndexWriter.PROP_KEY)
   }
 
   protected fun assertIndexOnRebuild(vararg files: String) {
