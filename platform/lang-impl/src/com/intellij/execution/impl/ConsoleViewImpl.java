@@ -161,9 +161,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       new MyFlushRunnable().run();
     }
 
-    myFoldingAlarm.cancelAllRequests();
-
-    myPendingFoldRegions.clear();
     final FoldingModel model = myEditor.getFoldingModel();
     model.runBatchFoldingOperation(() -> {
       for (FoldRegion region : model.getAllFoldRegions()) {
@@ -253,9 +250,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   protected final CompositeFilter myFilters;
 
   @Nullable private final InputFilter myInputMessageFilter;
-
-  private final Alarm myFoldingAlarm = new Alarm(this);
-  private final List<FoldRegion> myPendingFoldRegions = new ArrayList<>();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -426,10 +420,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
       }
     }
-  }
-
-  private static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   @Override
@@ -788,9 +778,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void clearHyperlinkAndFoldings() {
     myEditor.getMarkupModel().removeAllHighlighters();
 
-    myPendingFoldRegions.clear();
     myFolding.clear();
-    myFoldingAlarm.cancelAllRequests();
     myEditor.getFoldingModel().runBatchFoldingOperation(() -> myEditor.getFoldingModel().clearFoldRegions());
 
     cancelHeavyAlarm();
@@ -1092,25 +1080,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void doUpdateFolding(@NotNull List<FoldRegion> toAdd) {
-    assertIsDispatchThread();
-    myPendingFoldRegions.addAll(toAdd);
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myFoldingAlarm.cancelAllRequests();
     if (myEditor == null || myEditor.isDisposed()) {
       return;
     }
 
-    assertIsDispatchThread();
-    final FoldingModel model = myEditor.getFoldingModel();
-    final Runnable operation = () -> {
-      assertIsDispatchThread();
-      for (FoldRegion region : myPendingFoldRegions) {
+    FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : toAdd) {
         region.setExpanded(false);
         model.addFoldRegion(region);
       }
-      myPendingFoldRegions.clear();
-    };
-    model.runBatchFoldingOperation(operation);
+    });
   }
 
   private void addFolding(@NotNull Document document, @NotNull CharSequence chars, int line, @NotNull List<FoldRegion> toAdd, boolean flushOnly) {
