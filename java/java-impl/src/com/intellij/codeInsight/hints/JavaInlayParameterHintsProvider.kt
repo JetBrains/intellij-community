@@ -64,6 +64,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
       "*.set(*,*)",
       "*.get(*)",
+      "*.create(*)",
       "*.getProperty(*)",
       "*.setProperty(*,*)",
       "*.print(*)",

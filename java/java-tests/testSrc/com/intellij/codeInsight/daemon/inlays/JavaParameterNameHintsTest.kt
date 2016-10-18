@@ -648,13 +648,19 @@ class Test {
   void test() {
     System.getProperty("aaa");
     System.setProperty("aaa", "bbb");
+    new Key().create(10);
   }
   
+}
+
+class Key {
+  void create(int a) {}
 }
 """)
 
     onLineStartingWith("System.get").assertNoInlays()
     onLineStartingWith("System.set").assertNoInlays()
+    onLineStartingWith("new").assertNoInlays()
   }
 
 }
