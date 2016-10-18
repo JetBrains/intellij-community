@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.ui.render;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -32,9 +31,7 @@ import java.awt.image.BufferedImage;
 import java.util.Collection;
 
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell> {
-  private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
   private static final int MAX_GRAPH_WIDTH = 6;
-
   private static final int VERTICAL_PADDING = JBUI.scale(7);
 
   @NotNull private final VcsLogData myLogData;
@@ -60,7 +57,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
         if (myFadeOutPainter != null) {
           if (!myExpanded) {
-            int start = Math.max((myGraphImage != null) ? myGraphImage.getWidth() : 0, getWidth() - myFadeOutPainter.getWidth());
+            int start = Math.max(myGraphImage.getWidth(), getWidth() - myFadeOutPainter.getWidth());
             myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
           }
         }
@@ -133,9 +130,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
     @NotNull private final ReferencePainter myReferencePainter =
       isRedesignedLabels() ? new LabelPainter() : new RectangleReferencePainter();
-    @Nullable protected PaintInfo myGraphImage;
-    @NotNull private Font myFont;
 
+    @NotNull protected PaintInfo myGraphImage = new PaintInfo(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    @NotNull private Font myFont;
     private int myHeight;
 
     public MyComponent(@NotNull VcsLogData data, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table) {
@@ -161,7 +158,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public void paintComponent(Graphics g) {
       super.paintComponent(g);
 
-      int graphImageWidth = (myGraphImage != null) ? myGraphImage.getWidth() : 0;
+      int graphImageWidth = myGraphImage.getWidth();
 
       if (!myReferencePainter.isLeftAligned()) {
         int start = Math.max(graphImageWidth, getWidth() - myReferencePainter.getSize().width);
@@ -171,12 +168,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.paint((Graphics2D)g, graphImageWidth, 0, getHeight());
       }
 
-      if (myGraphImage != null) {
-        UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
-      }
-      else { // TODO temporary diagnostics: why does graph sometimes disappear
-        LOG.error("Image is null");
-      }
+      UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
     }
 
     public void customize(@NotNull GraphCommitCell cell, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -187,17 +179,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       myGraphImage = getGraphImage(cell.getPrintElements());
 
-      int graphPadding;
-      if (myGraphImage != null) {
-        graphPadding = myGraphImage.getWidth();
-        if (graphPadding < 2) {  // TODO temporary diagnostics: why does graph sometimes disappear
-          LOG.error("Too small image width: " + graphPadding);
-        }
-      }
-      else {
-        graphPadding = 0;
-      }
-
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
@@ -206,7 +187,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       setBorder(null);
       append("");
-      appendTextPadding(graphPadding + (myReferencePainter.isLeftAligned() ? myReferencePainter.getSize().width : 0));
+      appendTextPadding(myGraphImage.getWidth() + (myReferencePainter.isLeftAligned() ? myReferencePainter.getSize().width : 0));
       myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
     }
 
@@ -223,7 +204,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       return myHeight;
     }
 
-    @Nullable
+    @NotNull
     private PaintInfo getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = 0;
       for (PrintElement printElement : printElements) {
@@ -258,8 +239,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private static class PaintInfo {
-    private int myWidth;
-    @NotNull private Image myImage;
+    private final int myWidth;
+    @NotNull private final Image myImage;
 
     PaintInfo(@NotNull Image image, int width) {
       myImage = image;
