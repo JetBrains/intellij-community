@@ -95,7 +95,10 @@ public class JavaParameterHintManager {
               || JavaTokenType.PLUS.equals(tokenType)) && expr.getOperand() instanceof PsiLiteralExpression;
     }
 
-    if (callArgument instanceof PsiThisExpression) {
+    if (callArgument instanceof PsiThisExpression 
+        || callArgument instanceof PsiBinaryExpression 
+        || callArgument instanceof PsiPolyadicExpression) 
+    {
       return true;
     }
 
