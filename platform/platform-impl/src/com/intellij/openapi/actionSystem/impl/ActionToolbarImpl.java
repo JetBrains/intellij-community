@@ -1227,8 +1227,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
   }
 
+  @NotNull
   @Override
-  public List<AnAction> getActions(boolean originalProvider) {
+  public List<AnAction> getActions() {
     ArrayList<AnAction> result = new ArrayList<>();
 
     ArrayList<AnAction> secondary = new ArrayList<>();

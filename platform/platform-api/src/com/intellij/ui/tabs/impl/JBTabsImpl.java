@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
@@ -61,7 +60,7 @@ import java.util.List;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             UISettingsListener, QuickActionProvider, Accessible {
+             UISettingsListener, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
@@ -3117,27 +3116,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (QuickActionProvider.KEY.getName().equals(dataId)) {
-      return this;
-    }
-
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-
-    TabInfo selection = getSelectedInfo();
-    if (selection != null) {
-      ActionGroup group = selection.getGroup();
-      if (group != null) {
-        AnAction[] children = group.getChildren(null);
-        Collections.addAll(result, children);
-      }
-    }
-
-    return result;
   }
 
   @Override
