@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableCell;
@@ -106,7 +105,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   public int getTooltipXCoordinate(int row) {
-    return myComponent.getTooltipXCoordinate(getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN)));
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
+    if (!refs.isEmpty()) {
+      int labelWidth = LabelPainter.calculateWidth(myLogData, refs, myComponent, getPreferredHeight());
+      TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
+      return commitColumn.getWidth() - (labelWidth - LabelPainter.GRADIENT_WIDTH) / 2;
+    }
+    return -1;
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -213,16 +219,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
       return new PaintInfo(image, width);
     }
-
-    public int getTooltipXCoordinate(@NotNull GraphCommitCell cell) {
-      Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      if (!refs.isEmpty()) {
-        myReferencePainter.customizePainter(this, refs, getBackground(), getForeground());
-        TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
-        return commitColumn.getWidth() - (myReferencePainter.getSize().width - LabelPainter.GRADIENT_WIDTH) / 2;
-      }
-      return -1;
-    }
   }
 
   private static class PaintInfo {
@@ -250,7 +246,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private class FadeOutPainter {
-    @NotNull private final LabelPainter myEmptyPainter = new LabelPainter(myLogData);
     private int myWidth = LabelPainter.GRADIENT_WIDTH;
 
     public void customize(@NotNull Collection<VcsRef> currentRefs, int row, int column, @NotNull JTable table) {
@@ -260,15 +255,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         int prevWidth = 0;
         if (row > 0) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row - 1, column));
-          myEmptyPainter.customizePainter(myComponent, commitCell.getRefsToThisCommit(), myComponent.getBackground(), JBColor.black);
-          prevWidth = myEmptyPainter.getSize().width;
+          prevWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight());
         }
 
         int nextWidth = 0;
         if (row < table.getRowCount() - 1) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row + 1, column));
-          myEmptyPainter.customizePainter(myComponent, commitCell.getRefsToThisCommit(), myComponent.getBackground(), JBColor.black);
-          nextWidth = myEmptyPainter.getSize().width;
+          nextWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight());
         }
 
         myWidth = Math.max(Math.max(prevWidth, nextWidth), LabelPainter.GRADIENT_WIDTH);

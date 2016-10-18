@@ -33,6 +33,7 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,10 +98,10 @@ public class LabelPainter implements ReferencePainter {
   }
 
   @NotNull
-  public static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
-                                                                                   @NotNull FontMetrics fontMetrics,
-                                                                                   int height,
-                                                                                   @NotNull Color background) {
+  private static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
+                                                                                    @NotNull FontMetrics fontMetrics,
+                                                                                    int height,
+                                                                                    @NotNull Color background) {
     int width = GRADIENT_WIDTH + RIGHT_PADDING;
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
@@ -126,6 +127,15 @@ public class LabelPainter implements ReferencePainter {
     }
 
     return Pair.create(labels, width);
+  }
+
+  public static int calculateWidth(@NotNull VcsLogData logData,
+                                   @NotNull Collection<VcsRef> references,
+                                   @NotNull JComponent component,
+                                   int height) {
+    VcsLogRefManager manager = ReferencePainter.getRefManager(logData, references);
+    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
+    return calculatePresentation(refGroups, component.getFontMetrics(RectanglePainter.getFont()), height, JBColor.white/*bg color does not affect width*/).second;
   }
 
   @NotNull
