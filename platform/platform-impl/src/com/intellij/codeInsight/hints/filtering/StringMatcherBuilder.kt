@@ -27,27 +27,34 @@ object StringMatcherBuilder {
 
   fun create(matcher: String): StringMatcher? {
     if (matcher.isEmpty()) return StringMatcherImpl { true }
-
-    val asterisksCount = matcher.count { it == '*' }
-    if (asterisksCount > 1) return null
-    if (asterisksCount == 1) return createAsterisksMatcher(matcher)
-
-    return StringMatcherImpl { it == matcher }
+    return createAsterisksMatcher(matcher)
   }
 
   private fun createAsterisksMatcher(matcher: String): StringMatcher? {
+    val asterisksCount = matcher.count { it == '*' }
+    if (asterisksCount > 2) return null
+    
+    if (asterisksCount == 0) {
+      return StringMatcherImpl { it == matcher }
+    }
+    
     if (matcher == "*") {
       return StringMatcherImpl { true }
     }
 
-    if (matcher.startsWith('*')) {
+    if (matcher.startsWith('*') && asterisksCount == 1) {
       val target = matcher.substring(1)
       return StringMatcherImpl { it.endsWith(target) }
     }
 
-    if (matcher.endsWith('*')) {
+    if (matcher.endsWith('*') && asterisksCount == 1) {
       val target = matcher.substring(0, matcher.length - 1)
       return StringMatcherImpl { it.startsWith(target) }
+    }
+
+    if (matcher.startsWith('*') && matcher.endsWith('*')) {
+      val target = matcher.substring(1, matcher.length - 1)
+      return StringMatcherImpl { it.contains(target) }
     }
 
     return null
