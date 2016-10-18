@@ -3,11 +3,14 @@
 # Waits for the parent process to terminate, then executes specified commands.
 
 import os
+import signal
 import sys
 import time
 
 if len(sys.argv) < 3:
     raise Exception('usage: restart.py <pid> <path> [optional command]')
+
+signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
 pid = int(sys.argv[1])
 while os.getppid() == pid:
