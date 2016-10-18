@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
@@ -41,11 +42,13 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   private final static int BUNCH_SIZE = 100;
 
   private boolean myLastLoaded;
+  @NotNull private final Consumer<LoadRecentBranchRevisions> myCallback;
   @NotNull private final OneShotMergeInfoHelper myMergeChecker;
   @NotNull private final List<CommittedChangeList> myCommittedChangeLists;
 
-  public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess) {
+  public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess, @NotNull Consumer<LoadRecentBranchRevisions> callback) {
     super(mergeProcess, "Loading recent " + mergeProcess.getMergeContext().getBranchName() + " revisions", Where.POOLED);
+    myCallback = callback;
     myCommittedChangeLists = newArrayList();
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
   }
@@ -65,6 +68,8 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
     Pair<List<CommittedChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));
     myCommittedChangeLists.addAll(loadResult.first);
     myLastLoaded = loadResult.second;
+
+    myCallback.consume(this);
   }
 
   @NotNull

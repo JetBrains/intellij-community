@@ -26,19 +26,26 @@ public class ShowRevisionSelector extends BaseMergeTask {
 
   @NotNull private final List<CommittedChangeList> myChangeLists;
   @NotNull private final MergeChecker myMergeChecker;
+  private final boolean myAllStatusesCalculated;
+  private final boolean myAllListsLoaded;
 
   public ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
                               @NotNull List<CommittedChangeList> changeLists,
-                              @NotNull MergeChecker mergeChecker) {
+                              @NotNull MergeChecker mergeChecker,
+                              boolean allStatusesCalculated,
+                              boolean allListsLoaded) {
     super(mergeProcess, "show revisions to merge", Where.AWT);
 
     myChangeLists = changeLists;
     myMergeChecker = mergeChecker;
+    myAllStatusesCalculated = allStatusesCalculated;
+    myAllListsLoaded = allListsLoaded;
   }
 
   @Override
   public void run() {
-    SelectMergeItemsResult result = myInteraction.selectMergeItems(myChangeLists, myMergeChecker, true, true);
+    SelectMergeItemsResult result =
+      myInteraction.selectMergeItems(myChangeLists, myMergeChecker, myAllStatusesCalculated, myAllListsLoaded);
 
     switch (result.getResultCode()) {
       case cancel:
