@@ -35,6 +35,9 @@ class X {
   void b() {
     <error descr="Ambiguous method call: both 'X.a(IntPredicate)' and 'X.a(Function<String, String>)' match">a</error>(z -> true);
   }
+
+  void assertEquals(double expected, Runnable messageSupplier) {}
+  void assertEquals(Object expected, Runnable messageSupplier) {}
 }
 interface Function<T, R> {
   R apply(T t);
