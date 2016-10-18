@@ -26,13 +26,19 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
+import com.intellij.openapi.externalSystem.service.notification.NotificationData;
+import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
@@ -61,6 +67,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -454,7 +461,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
           @Override
           public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-            buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
+            buildDependencies(resolverCtx, sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
           }
         });
 
@@ -466,6 +473,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (dependencies == null) return;
 
+    List<String> orphanModules = ContainerUtil.newArrayList();
     for (IdeaDependency dependency : dependencies) {
       if (dependency == null) {
         continue;
@@ -473,12 +481,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DependencyScope scope = parseScope(dependency.getScope());
 
       if (dependency instanceof IdeaModuleDependency) {
-        ModuleDependencyData d = buildDependency(ideModule, (IdeaModuleDependency)dependency, ideProject);
+        ModuleDependencyData d = buildDependency(resolverCtx.getSettings(), ideModule, (IdeaModuleDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
         if (scope != null) {
           d.setScope(scope);
         }
         ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, d);
+        ModuleData targetModule = d.getTarget();
+        if (targetModule.getId().isEmpty() && targetModule.getLinkedExternalProjectPath().isEmpty()) {
+          orphanModules.add(targetModule.getExternalName());
+        }
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
         LibraryDependencyData d = buildDependency(gradleModule, ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
@@ -487,6 +499,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           d.setScope(scope);
         }
         ideModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, d);
+      }
+    }
+
+    if (!orphanModules.isEmpty()) {
+      ExternalSystemTaskId taskId = resolverCtx.getExternalSystemTaskId();
+      Project project = taskId.findProject();
+      if (project != null) {
+        String msg =
+          "Can't find the following module" + (orphanModules.size() > 1 ? "s" : "") + ": " + StringUtil.join(orphanModules, ", ")
+          + "\nIt can be caused by composite build configuration inside your *.gradle scripts with Gradle version older than 3.3." +
+          "\nTry Gradle 3.3 or better or enable 'Create separate module per source set' option";
+        NotificationData notification = new NotificationData(
+          "Gradle project structure problems", msg, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+        ExternalSystemNotificationManager.getInstance(project).showNotification(taskId.getProjectSystemId(), notification);
       }
     }
   }
@@ -780,12 +806,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @NotNull
-  private static ModuleDependencyData buildDependency(@NotNull DataNode<ModuleData> ownerModule,
+  private static ModuleDependencyData buildDependency(@Nullable GradleExecutionSettings executionSettings,
+                                                      @NotNull DataNode<ModuleData> ownerModule,
                                                       @NotNull IdeaModuleDependency dependency,
                                                       @NotNull DataNode<ProjectData> ideProject)
     throws IllegalStateException {
     IdeaModule module = dependency.getDependencyModule();
     if (module == null) {
+      if (executionSettings != null) {
+        String moduleName = dependency.getTargetModuleName();
+        ModuleData moduleData = executionSettings.getExecutionWorkspace().findModuleDataByName(moduleName);
+        if (moduleData != null) {
+          return new ModuleDependencyData(ownerModule.getData(), moduleData);
+        }
+        else if (StringUtil.isNotEmpty(moduleName)) {
+          return new ModuleDependencyData(
+            ownerModule.getData(), new ModuleData("", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, "", ""));
+        }
+      }
       throw new IllegalStateException(
         String.format("Can't parse gradle module dependency '%s'. Reason: referenced module is null", dependency)
       );

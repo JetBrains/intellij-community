@@ -108,7 +108,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @NotNull
-  private InspectionProfileImpl copyToNewProfile(ModifiableModel selectedProfile,
+  private InspectionProfileImpl copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
                                                  @NotNull Project project,
                                                  boolean modifyName,
                                                  boolean modifyLevel) {

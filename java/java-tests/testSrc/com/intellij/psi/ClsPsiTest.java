@@ -22,12 +22,17 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
+import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.util.GCUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 
@@ -435,5 +440,16 @@ public class ClsPsiTest extends LightIdeaTestCase {
     PsiFile clsFile = PsiManager.getInstance(getProject()).findFile(file);
     assertTrue(String.valueOf(clsFile), clsFile instanceof ClsFileImpl);
     return (PsiJavaFile)clsFile;
+  }
+
+  public void testClsPsiDoesNotHoldStrongReferencesToMirrorAST() {
+    PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
+    assertNotNull(dbl);
+    int hash1 = ((ClsClassImpl)dbl).getMirror().hashCode();
+    assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
+    assertFalse(hash1 == ((ClsClassImpl)dbl).getMirror().hashCode());
   }
 }

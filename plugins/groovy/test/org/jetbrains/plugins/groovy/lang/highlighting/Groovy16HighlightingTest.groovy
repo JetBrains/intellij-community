@@ -62,4 +62,14 @@ class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   void testSlashyStrings() { doTest() }
 
   void testDiamonds() { doTest() }
+
+  void 'test static modifier on toplevel definition is allowed'() {
+    myFixture.with {
+      configureByText '_.groovy', '''\
+static class A {}
+static interface I {} 
+'''
+      checkHighlighting()
+    }
+  }
 }

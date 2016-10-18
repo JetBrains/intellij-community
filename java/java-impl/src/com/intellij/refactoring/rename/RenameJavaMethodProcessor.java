@@ -28,10 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -42,7 +39,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -128,7 +124,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
     
-    if (method.findDeepestSuperMethods().length == 0) {
+    if (!method.isConstructor() && method.findDeepestSuperMethods().length == 0) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
       if (annotation != null && annotation.isPhysical()) {
         annotation.delete();
@@ -158,7 +154,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       if (!methodAndOverriders.contains(actualMethod)) {
         PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
         while (outerClass != null) {
-          if (containingClasses.contains(outerClass)) {
+          PsiClass finalOuterClass = outerClass;
+          if (containingClasses.stream().anyMatch(psiClass -> InheritanceUtil.isInheritorOrSelf(finalOuterClass, psiClass, true))) {
             qualifyMember(element, newName, outerClass, isStatic);
             break;
           }

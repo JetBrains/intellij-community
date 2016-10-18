@@ -60,7 +60,7 @@ import java.util.List;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
-public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
+public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
@@ -70,19 +70,19 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
 
   private final MessageBus myBus;
+  private final Project myProject;
 
   private boolean mySortedState;
 
   public static BookmarkManager getInstance(Project project) {
-    return project.getComponent(BookmarkManager.class);
+    return ServiceManager.getService(project, BookmarkManager.class);
   }
 
   public BookmarkManager(Project project,
                          PsiDocumentManager documentManager,
                          EditorColorsManager colorsManager,
                          EditorFactory editorFactory) {
-    super(project);
-
+    myProject = project;
     myBus = project.getMessageBus();
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
@@ -164,12 +164,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     if (description != null) {
       setDescription(bookmark, description);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "BookmarkManager";
   }
 
   public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {

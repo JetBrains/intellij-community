@@ -56,14 +56,14 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.switcher.QuickAccessSettings;
-import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import gnu.trove.THashSet;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +264,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
       if ((e.getModifiersEx() & mouseMask) == 0) {
-        if (SwitchManager.areAllModifiersPressed(modifiers, vks) || !pressed) {
+        if (areAllModifiersPressed(modifiers, vks) || !pressed) {
           processState(pressed);
         }
         else {
@@ -275,6 +275,29 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
     return false;
+  }
+
+  private static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, Set<Integer> modifierCodes) {
+    int mask = 0;
+    for (Integer each : modifierCodes) {
+      if (each == KeyEvent.VK_SHIFT) {
+        mask |= InputEvent.SHIFT_MASK;
+      }
+
+      if (each == KeyEvent.VK_CONTROL) {
+        mask |= InputEvent.CTRL_MASK;
+      }
+
+      if (each == KeyEvent.VK_META) {
+        mask |= InputEvent.META_MASK;
+      }
+
+      if (each == KeyEvent.VK_ALT) {
+        mask |= InputEvent.ALT_MASK;
+      }
+    }
+
+    return (modifiers ^ mask) == 0;
   }
 
   @NotNull
@@ -293,7 +316,28 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
     }
-    return QuickAccessSettings.getModifiersVKs(baseModifiers);
+    return getModifiersVKs(baseModifiers);
+  }
+
+  @NotNull
+  private static Set<Integer> getModifiersVKs(int mask) {
+    Set<Integer> codes = new THashSet<>();
+    if ((mask & InputEvent.SHIFT_MASK) > 0) {
+      codes.add(KeyEvent.VK_SHIFT);
+    }
+    if ((mask & InputEvent.CTRL_MASK) > 0) {
+      codes.add(KeyEvent.VK_CONTROL);
+    }
+
+    if ((mask & InputEvent.META_MASK) > 0) {
+      codes.add(KeyEvent.VK_META);
+    }
+
+    if ((mask & InputEvent.ALT_MASK) > 0) {
+      codes.add(KeyEvent.VK_ALT);
+    }
+
+    return codes;
   }
 
   private void resetHoldState() {
@@ -451,13 +495,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.setSplitMode(true, null);
     }
 
-    final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
-
+    // ToolWindow activation is not needed anymore and should be removed in 2017
+    toolWindow.setActivation(new ActionCallback()).setDone();
     final DumbAwareRunnable runnable = () -> {
       if (toolWindow.isDisposed()) return;
 
       toolWindow.ensureContentInitialized();
-      activation.setDone();
     };
     if (visible || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();

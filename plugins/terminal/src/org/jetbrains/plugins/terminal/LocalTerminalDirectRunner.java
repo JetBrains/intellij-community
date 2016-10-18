@@ -76,7 +76,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
       try {
 
-        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource("jediterm-" + shellName + ".in");
+        String rcfile = "jediterm-" + shellName + ".in";
+        if ("zsh".equals(shellName)) {
+          rcfile = ".zshrc";
+        }
+        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
         if (resource != null) {
           URI uri = resource.toURI();
           return uri.getPath();
@@ -102,13 +106,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
-    String[] command = getCommand();
+    String[] command = getCommand(envs);
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
-      command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
+      try {
+        command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
 
-      if (directory == null) {
-        directory = customizer.getDefaultFolder();
+        if (directory == null) {
+          directory = customizer.getDefaultFolder();
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Exception during customization of the terminal session", e);
       }
     }
 
@@ -133,7 +142,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getCommand()[0]);
+    return new PtyProcessHandler(process, getShellPath());
   }
 
   @Override
@@ -152,15 +161,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
 
-  public String[] getCommand() {
+  public String[] getCommand(Map<String, String> envs) {
 
-    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
+    String shellPath = getShellPath();
 
-    return getCommand(shellPath);
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
+  }
+
+  private String getShellPath() {
+    return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
   @NotNull
-  public static String[] getCommand(String shellPath) {
+  public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
@@ -177,10 +190,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
         if (rcFilePath != null &&
-            TerminalOptionsProvider.getInstance().shellIntegration() &&
-            (shellName.equals("bash") || shellName.equals("sh"))) {
-          result.add("--rcfile");
-          result.add(rcFilePath);
+            shellIntegration) {
+          if (shellName.equals("bash") || shellName.equals("sh")) {
+            addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+          }
+          else if (shellName.equals("zsh")) {
+            envs.put("ZDOTDIR", new File(rcFilePath).getParent());
+          }
         }
 
         if (!loginOrInteractive(command)) {
@@ -199,6 +215,22 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     else {
       return new String[]{shellPath};
+    }
+  }
+
+  private static void addRcFileArgument(Map<String, String> envs,
+                                        List<String> command,
+                                        List<String> result,
+                                        String rcFilePath, String rcfileOption) {
+    result.add(rcfileOption);
+    result.add(rcFilePath);
+    int idx = command.indexOf(rcfileOption);
+    if (idx >= 0) {
+      command.remove(idx);
+      if (idx < command.size()) {
+        envs.put("JEDITERM_SOURCE", command.get(idx));
+        command.remove(idx);
+      }
     }
   }
 

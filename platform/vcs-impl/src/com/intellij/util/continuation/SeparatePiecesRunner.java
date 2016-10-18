@@ -15,25 +15,20 @@
  */
 package com.intellij.util.continuation;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author irengrig
- *         Date: 4/7/11
- *         Time: 2:46 PM
- */
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+
 public class SeparatePiecesRunner extends GeneralRunner {
   private final AtomicReference<TaskWrapper> myCurrentWrapper;
 
@@ -45,17 +40,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
   @CalledInAwt
   public void ping() {
     clearSuspend();
-    final Application application = ApplicationManager.getApplication();
-    if (! application.isDispatchThread()) {
-      Runnable command = new Runnable() {
-        public void run() {
-          pingImpl();
-        }
-      };
-      SwingUtilities.invokeLater(command);
-    } else {
-      pingImpl();
-    }
+    UIUtil.invokeLaterIfNeeded(this::pingImpl);
   }
 
   @CalledInAwt
@@ -82,12 +67,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
       else {
         final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current);
         myCurrentWrapper.set(task);
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          setIndicator(new EmptyProgressIndicator());
-        }
-        else {
-          setIndicator(new BackgroundableProcessIndicator(task));
-        }
+        setIndicator(getApplication().isUnitTestMode() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task));
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, getIndicator());
         return;
       }

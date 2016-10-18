@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
@@ -301,7 +302,7 @@ class CommitPanel extends JBPanel {
     @NotNull
     private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
       String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
-      String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
+      String gray = ColorUtil.toHex(JBColor.GRAY);
 
       String graySpan = "<span style='color:#" + gray + "'>";
 

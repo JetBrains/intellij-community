@@ -15,15 +15,6 @@
   -->
 <idea-plugin>
   <actions>
-
-    <group id="SwitchViewActions">
-      <action id="SwitchUp" text="Switching Up" class="com.intellij.ui.switcher.SwitchAction$Up"/>
-      <action id="SwitchDown" text="Switching Down" class="com.intellij.ui.switcher.SwitchAction$Down"/>
-      <action id="SwitchLeft" text="Switching Left" class="com.intellij.ui.switcher.SwitchAction$Left"/>
-      <action id="SwitchRight" text="Switching Right" class="com.intellij.ui.switcher.SwitchAction$Right"/>
-      <action id="SwitchApply" text="Switching Apply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
-    </group>
-
     <group id="ScrollPaneActions">
       <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
       <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
@@ -736,6 +727,7 @@
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
         </action>
+        <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />

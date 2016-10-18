@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.lang.properties.BundleNameEvaluator;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -136,12 +138,17 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       }
 
       final Project project = element.getProject();
+      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
 
       final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
       for (String name : allBundleNames) {
         final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, name);
         allPropertiesFiles.addAll(propertiesFiles);
+
+        if (propertiesFiles.isEmpty()) {
+          allPropertiesFiles.addAll(propertiesReferenceManager.findPropertiesFiles(projectScope, name, BundleNameEvaluator.DEFAULT));
+        }
       }
       return allPropertiesFiles;
     }

@@ -53,6 +53,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,10 +122,10 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
         highlighter.setGutterIconRenderer(new MyGutterIconRenderer(this));
 
         TextAttributes textAttributes =
-          EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES);
-
-        Color stripeColor = textAttributes.getErrorStripeColor();
-        highlighter.setErrorStripeMarkColor(stripeColor != null ? stripeColor : Color.black);
+          ObjectUtils.notNull(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES),
+                              new TextAttributes());
+        Color stripeColor = ObjectUtils.notNull(textAttributes.getErrorStripeColor(), new JBColor(0x000000, 0xdbdbdb));
+        highlighter.setErrorStripeMarkColor(stripeColor);
         highlighter.setErrorStripeTooltip(getBookmarkTooltip());
 
         TextAttributes attributes = highlighter.getTextAttributes();

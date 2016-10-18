@@ -154,7 +154,10 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     PsiElement element = null; //controlFlow.getEndOffset(codeBlock) == offset ? getEnclosingStatement(controlFlow.getElement(offset)) : null;
     while (offset < controlFlow.getSize()) {
       element = controlFlow.getElement(offset);
-      if (element != null) element = PsiUtil.getEnclosingStatement(element);
+      while (element != null) {
+        if (element.getParent() == codeBlock) break;
+        element = element.getParent();
+      }
       int startOffset = controlFlow.getStartOffset(element);
       if (startOffset != -1 && startOffset >= minOffset && element instanceof PsiStatement) break;
       offset++;

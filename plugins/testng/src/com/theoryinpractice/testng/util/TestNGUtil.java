@@ -192,6 +192,20 @@ public class TestNGUtil {
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkHierarchy, boolean checkDisabled, boolean checkJavadoc) {
+    final PsiClass aClass;
+    if (element instanceof PsiClass) {
+      aClass = ((PsiClass)element);
+    }
+    else if (element instanceof PsiMethod) {
+      aClass = ((PsiMethod)element).getContainingClass();
+    }
+    else {
+      aClass = null;
+    }
+
+    if (aClass == null || !PsiClassUtil.isRunnableClass(aClass, true, false)) {
+      return false;
+    }
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
     boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, checkHierarchy, true);
@@ -474,7 +488,7 @@ public class TestNGUtil {
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
-    return hasTest(psiClass, true, false, false);
+    return hasTest(psiClass);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {

@@ -30,8 +30,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -43,8 +41,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -94,7 +94,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
 
-      MyContentComponent contentComponent = new MyContentComponent();
+      NonOpaquePanel contentComponent = new NonOpaquePanel();
       contentComponent.setContent(myUI.getComponent());
       contentComponent.setFocusCycleRoot(true);
 
@@ -137,31 +137,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       DataProvider provider = DataManager.getDataProvider(this);
       return provider == null ? null : provider.getData(dataId);
-    }
-  }
-
-  private class MyContentComponent extends NonOpaquePanel implements SwitchProvider {
-    @Override
-    public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-      if (myUI instanceof SwitchProvider) {
-        return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
-      }
-      return Collections.emptyList();
-    }
-
-    @Override
-    public SwitchTarget getCurrentTarget() {
-      return myUI instanceof SwitchProvider ? ((SwitchProvider)myUI).getCurrentTarget() : null;
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return myUI instanceof SwitchProvider ? myUI.getComponent() : this;
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return myUI instanceof SwitchProvider && ((SwitchProvider)myUI).isCycleRoot();
     }
   }
 

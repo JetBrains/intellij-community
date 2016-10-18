@@ -41,7 +41,7 @@ class InspectionSchemeTest {
   @Test fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
     val schemeData = """
-    <inspections profile_name="Bar" version="1.0">
+    <inspections version="1.0">
       <option name="myName" value="Bar" />
       <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true" />
     "</inspections>""".trimIndent()
@@ -51,7 +51,7 @@ class InspectionSchemeTest {
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 
-    assertThat(profileManager.profiles).hasSize(2)
+    assertThat(profileManager.profiles).hasSize(1)
     val scheme = profileManager.profiles.first() as InspectionProfileImpl
     assertThat(scheme.name).isEqualTo("Bar")
 
@@ -61,5 +61,11 @@ class InspectionSchemeTest {
 
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
     profileManager.profiles
+
+    schemeManagerFactory.process {
+      it.reload()
+    }
+
+    assertThat(profileManager.profiles).hasSize(1)
   }
 }

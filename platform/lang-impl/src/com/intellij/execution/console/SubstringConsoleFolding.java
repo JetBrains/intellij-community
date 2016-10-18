@@ -1,6 +1,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.execution.ConsoleFolding;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -15,12 +16,12 @@ public class SubstringConsoleFolding extends ConsoleFolding {
   }
 
   @Override
-  public boolean shouldFoldLine(String line) {
+  public boolean shouldFoldLine(@NotNull String line) {
     return mySettings.shouldFoldLine(line);
   }
 
   @Override
-  public String getPlaceholderText(List<String> lines) {
+  public String getPlaceholderText(@NotNull List<String> lines) {
     return " <" + lines.size() + " internal calls>";
   }
 }

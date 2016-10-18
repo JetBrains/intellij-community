@@ -37,8 +37,9 @@ import static java.awt.GridBagConstraints.CENTER;
 
 public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel implements ComboBoxEditor {
 
-  public static <ItemType, FocusableComponentType extends JComponent> ComboBoxCompositeEditor<ItemType, FocusableComponentType> withComponents (final JComponent ... components) {
-    return new ComboBoxCompositeEditor<>(components);
+  public static <ItemType, EditableComponentType extends JComponent> ComboBoxCompositeEditor<ItemType, EditableComponentType> withComponents (final EditableComponentType editableComponent, final JComponent ... components)
+  {
+    return new ComboBoxCompositeEditor<>(editableComponent, components);
   }
 
   private BiConsumer<I, F>  myOnSetItemHandler = null;
@@ -152,15 +153,12 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     }
   };
 
-  private final EditorComponent<F, I>[] myComponents;
-  private int focusableComponentIndex;
+  private final EditorComponent<F,I> myComponent;
 
-  public ComboBoxCompositeEditor(final JComponent ... components) {
+  public ComboBoxCompositeEditor(final F editableComponent, final JComponent ... components) {
     assert components.length > 0;
-    //setLayout(new GridLayout(1, 0));
     setLayout(new GridBagLayout());
     setFocusable(false);
-    myComponents = new EditorComponent[components.length];
 
     GridBagConstraints c = new GridBagConstraints();
 
@@ -170,55 +168,57 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     c.anchor = CENTER;
     c.ipadx = 0;
     c.ipady = 0;
+    c.gridx = 0;
+
+    add(editableComponent, c);
+    c.weightx = 0;
 
     for (int i = 0; i < components.length; i ++) {
-      c.gridx = i;
+      c.gridx = i + 1;
+      components[i].setBackground(getBackground());
       add(components[i], c);
-      c.weightx = 0;
     }
 
-    final ComboBoxCompositeEditorStrategy strategy = getStrategy((F)components[focusableComponentIndex]);
+    final ComboBoxCompositeEditorStrategy strategy = getStrategy(editableComponent);
 
-    myComponents[focusableComponentIndex] = new ComboBoxCompositeEditor.EditorComponent<F, I>() {
+    myComponent = new ComboBoxCompositeEditor.EditorComponent<F, I>() {
 
       I myItem;
 
       public void setItem(I anObject) {
         myItem = anObject;
-        strategy.setItem((F)components[focusableComponentIndex], anObject);
+        strategy.setItem(editableComponent, anObject);
       }
 
       public I getItem() {
-        return strategy.getItem((F)components[focusableComponentIndex], myItem);
+        return strategy.getItem(editableComponent, myItem);
       }
 
       @Override
       public void selectAll() {
-        strategy.selectAll((F)components[focusableComponentIndex]);
+        strategy.selectAll(editableComponent);
       }
 
       @Override
       public void addActionListener(ActionListener l) {
-        strategy.addActionListener((F)components[focusableComponentIndex], l);
+        strategy.addActionListener(editableComponent, l);
       }
 
       @Override
       public void removeActionListener(ActionListener l) {
-        strategy.removeActionListener((F)components[focusableComponentIndex], l);
+        strategy.removeActionListener(editableComponent, l);
       }
 
       @Override
       public JComponent getDelegate() {
-        return components[focusableComponentIndex];
+        return editableComponent;
       }
     };
 
     invalidate();
 
-    focusableComponentIndex = 0;
-    final JComponent component = myComponents[focusableComponentIndex].getDelegate();
-    component.setBorder(null);
-    component.addFocusListener(new FocusListener() {
+    editableComponent.setBorder(null);
+    editableComponent.addFocusListener(new FocusListener() {
 
       Component parent = null;
 
@@ -242,27 +242,27 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
   @Override
   public void setItem(Object anObject) {
-    myComponents[focusableComponentIndex].setItem((I)anObject);
+    myComponent.setItem((I)anObject);
   }
 
   @Override
   public Object getItem() {
-    return myComponents[focusableComponentIndex].getItem();
+    return myComponent.getItem();
   }
 
   @Override
   public void selectAll() {
-    myComponents[focusableComponentIndex].selectAll();
+    myComponent.selectAll();
   }
 
   @Override
   public void addActionListener(ActionListener l) {
-    myComponents[focusableComponentIndex].addActionListener(l);
+    myComponent.addActionListener(l);
   }
 
   @Override
   public void removeActionListener(ActionListener l) {
-    myComponents[focusableComponentIndex].removeActionListener(l);
+    myComponent.removeActionListener(l);
   }
 
   @Override

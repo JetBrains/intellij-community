@@ -31,12 +31,12 @@ public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemon
     doTest();
   }
 
-  private void doTest() {
-    doTest(true);
+  public void testDeepLambdaReturnExpressionsWithProperTargetType() throws Exception {
+    doTest();
   }
 
-  private void doTest(boolean warnings) {
+  private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

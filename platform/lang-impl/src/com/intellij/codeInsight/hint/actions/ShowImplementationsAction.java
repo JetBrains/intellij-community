@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -353,19 +354,22 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) {
-      // Magically, it's null for ant property declarations.
-      element = element.getNavigationElement();
-      psiFile = element.getContainingFile();
+    return ReadAction.compute(() -> {
+      PsiElement psiElement = element;
+      PsiFile psiFile = psiElement.getContainingFile();
       if (psiFile == null) {
-        return PsiElement.EMPTY_ARRAY;
+        // Magically, it's null for ant property declarations.
+        psiElement = psiElement.getNavigationElement();
+        psiFile = psiElement.getContainingFile();
+        if (psiFile == null) {
+          return PsiElement.EMPTY_ARRAY;
+        }
       }
-    }
-    if (psiFile.getVirtualFile() != null && (element.getTextRange() != null || element instanceof PsiFile)) {
-      return new PsiElement[]{element};
-    }
-    return PsiElement.EMPTY_ARRAY;
+      if (psiFile.getVirtualFile() != null && (psiElement.getTextRange() != null || psiElement instanceof PsiFile)) {
+        return new PsiElement[]{psiElement};
+      }
+      return PsiElement.EMPTY_ARRAY;
+    });
   }
 
   @NotNull

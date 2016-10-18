@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
@@ -101,6 +100,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     myDecodedFragments = null;
   }
 
+  @NotNull
   public List<TextRange> getStringValueTextRanges() {
     if (valueTextRanges == null) {
       int elStart = getTextRange().getStartOffset();
@@ -132,7 +132,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public static int getPrefixLength(String text) {
-    return PythonStringUtil.getPrefixEndOffset(text, 0);
+    return PyStringLiteralUtil.getPrefixEndOffset(text, 0);
   }
 
   private boolean isUnicodeByDefault() {
@@ -159,8 +159,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         final TextRange textRange = getNodeTextRange(text);
         final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
         final String encoded = textRange.substring(text);
-        final boolean hasRawPrefix = PythonStringUtil.isRawPrefix(PythonStringUtil.getPrefix(text));
-        final boolean hasUnicodePrefix = PythonStringUtil.isUnicodePrefix(PythonStringUtil.getPrefix(text));
+        final boolean hasRawPrefix = PyStringLiteralUtil.isRawPrefix(PyStringLiteralUtil.getPrefix(text));
+        final boolean hasUnicodePrefix = PyStringLiteralUtil.isUnicodePrefix(PyStringLiteralUtil.getPrefix(text));
         result.addAll(getDecodedFragments(encoded, offset, hasRawPrefix, unicodeByDefault || hasUnicodePrefix));
       }
       myDecodedFragments = result;
@@ -242,6 +242,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return matcher.group(group.ordinal());
   }
 
+  @NotNull
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
   }

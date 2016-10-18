@@ -303,6 +303,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void dispose() {
+    super.dispose();
     mySettingsProvider.removeListener(this);
   }
 }

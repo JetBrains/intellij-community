@@ -76,7 +76,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
       return
     }
 
-    val passwordPointer = stringPointer(credentials!!.serialize(), true)
+    val passwordPointer = stringPointer(credentials!!.serialize(!attributes.isPasswordMemoryOnly), true)
     checkError("secret_password_store_sync") { errorRef ->
       try {
         if (accountName == null) {

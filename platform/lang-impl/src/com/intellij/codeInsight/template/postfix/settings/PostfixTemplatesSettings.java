@@ -48,14 +48,12 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   @NotNull
   private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @NotNull
   public Map<String, Boolean> getTemplatesState() {
     return myTemplatesState;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public void setTemplatesState(@NotNull Map<String, Boolean> templatesState) {
     myTemplatesState = templatesState;

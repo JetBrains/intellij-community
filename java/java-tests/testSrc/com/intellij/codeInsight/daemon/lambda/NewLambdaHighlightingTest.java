@@ -187,7 +187,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
-    doTest(false);
+    doTest();
   }
 
   public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() throws Exception {
@@ -335,13 +335,13 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  private void doTest() {
-    doTest(false);
+  public void testInferTypeParametersFromFunctionalInterfaceInputs() throws Exception {
+    doTest();
   }
 
-  private void doTest(boolean warnings) {
+  private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 
   /*

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
@@ -64,6 +65,11 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Executes given runnable after all focus activities are finished
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
+
+  /**
+   * Executes given runnable after all focus activities are finished, immediately or later with the given modaliy state
+   */
+  public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
   /**
    * Executes given runnable after all focus activities are finished

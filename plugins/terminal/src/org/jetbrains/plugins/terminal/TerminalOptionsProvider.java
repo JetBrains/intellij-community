@@ -111,7 +111,11 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     }
 
     if (SystemInfo.isUnix) {
-      return "/bin/bash";
+      if (new File("/bin/bash").exists()) {
+        return "/bin/bash";
+      } else {
+        return "/bin/sh";
+      }
     }
     else {
       return "cmd.exe";

@@ -36,8 +36,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -378,7 +376,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (SwitchProvider.KEY.is(dataId) || QuickActionProvider.KEY.is(dataId) || RunnerContentUi.KEY.is(dataId)) {
+    if (RunnerContentUi.KEY.is(dataId)) {
       return myContentUI;
     }
     return null;

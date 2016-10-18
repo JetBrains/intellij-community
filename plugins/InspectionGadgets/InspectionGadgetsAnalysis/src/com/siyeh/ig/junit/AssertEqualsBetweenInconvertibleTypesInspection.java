@@ -70,8 +70,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
+      final boolean junit5Assertions = InheritanceUtil.isInheritor(containingClass, "org.junit.jupiter.api.Assertions");
       if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
+          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert") &&
+          !junit5Assertions) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -83,7 +85,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final int argumentIndex;
-      if (firstParameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (!junit5Assertions && firstParameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (arguments.length < 3) {
           return;
         }

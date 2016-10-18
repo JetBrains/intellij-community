@@ -208,6 +208,11 @@ public class UrlClassLoader extends ClassLoader {
     return Collections.unmodifiableList(myURLs);
   }
 
+  public boolean hasLoadedClass(String name) {
+    Class<?> aClass = findLoadedClass(name);
+    return aClass != null && aClass.getClassLoader() == this;
+  }
+
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
     Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);

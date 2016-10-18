@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -63,8 +62,12 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    removeLibs();
-    super.tearDown();
+    try {
+      removeLibs();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void doTest(String fileName) throws Exception {
@@ -73,28 +76,16 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
     VirtualFile virtualFile = root.findFileByRelativePath(fileName);
     configureByExistingFile(virtualFile);
-    Pair<String, Boolean> pair = LightQuickFixTestCase.parseActionHint(getFile(), getFile().getText());
-    final String text = pair.getFirst();
-    final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+    ActionHint actionHint = ActionHint.parse(getFile(), getFile().getText());
     Collection<HighlightInfo> infosBefore = highlightErrors();
-    final IntentionAction action = findActionWithText(text, infosBefore);
+    final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
 
-    if (action == null) {
-      if (actionShouldBeAvailable) {
-        fail("Action with text '" + text + "' is not available in test " + testFullPath + "." +
-             "\nAvailable actions are: " + LightQuickFixTestCase.getAvailableActions(getEditor(), getFile())
-             + "\nInfos are: " + infosBefore
-        );
-      }
-    }
-    else {
-      if (!actionShouldBeAvailable) {
-        fail("Action '" + text + "' is available in test " + testFullPath);
-      }
+    if(action != null) {
+      String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
-      final IntentionAction afterAction = findActionWithText(text, infosAfter);
+      final IntentionAction afterAction = findActionWithText(text);
       if (afterAction != null) {
         fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
       }
@@ -102,9 +93,14 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private IntentionAction findActionWithText(final String actionText, final Collection<HighlightInfo> infos) {
+  private IntentionAction findActionWithText(final String actionText) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(getEditor(), getFile());
     return LightQuickFixTestCase.findActionWithText(actions, actionText);
+  }
+
+  private IntentionAction findActionAndCheck(final ActionHint actionHint, Collection<HighlightInfo> infosBefore) {
+    List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(getEditor(), getFile());
+    return actionHint.findAndCheck(actions, () -> "Infos: " + infosBefore);
   }
 
   public void testAddDependency() throws Exception {

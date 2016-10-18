@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -29,7 +30,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private static ProgressManager ourInstance;
+  private static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
 
   @NotNull
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")

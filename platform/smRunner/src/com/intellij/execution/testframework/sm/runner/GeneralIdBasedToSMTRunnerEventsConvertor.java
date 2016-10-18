@@ -261,6 +261,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
+      fireOnTestFinished(testProxy);
 
       // fire event
       fireOnTestFailed(testProxy);
@@ -372,6 +373,18 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myTestsRootNode;
     }
     return myRunningTestNodes.iterator().next();
+  }
+
+  @Override
+  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
+    addToInvokeLater(() -> {
+      myTestsRootProxy.setPresentation(rootName);
+      myTestsRootProxy.setComment(comment);
+      myTestsRootProxy.setRootLocationUrl(rootLocation);
+      if (myLocator != null) {
+        myTestsRootProxy.setLocator(myLocator);
+      }
+    });
   }
 
   private enum State {

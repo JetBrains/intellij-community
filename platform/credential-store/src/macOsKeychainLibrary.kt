@@ -57,12 +57,13 @@ internal class KeyChainCredentialStore() : CredentialStore {
       return
     }
 
-    val password = credentials!!.password?.toByteArray(false)
-    val userName = (attributes.userName ?: credentials.userName)?.toByteArray()
+    val userName = (attributes.userName ?: credentials!!.userName)?.toByteArray()
     val searchUserName = if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null
     val itemRef = PointerByReference()
     val library = LIBRARY
     checkForError("find (for save)", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, searchUserName?.size ?: 0, searchUserName, null, null, itemRef))
+
+    val password = if (attributes.isPasswordMemoryOnly || credentials!!.password == null) null else credentials.password!!.toByteArray(false)
     val pointer = itemRef.value
     if (pointer == null) {
       checkForError("save (new)", library.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, password?.size ?: 0, password))

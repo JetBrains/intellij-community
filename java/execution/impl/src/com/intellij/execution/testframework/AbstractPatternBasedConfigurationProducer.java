@@ -56,6 +56,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   }
 
   public boolean isMultipleElementsSelected(ConfigurationContext context) {
+    if (!context.containsMultipleSelection()) return false;
     final DataContext dataContext = context.getDataContext();
     if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) return false;
     final LinkedHashSet<String> classes = new LinkedHashSet<>();

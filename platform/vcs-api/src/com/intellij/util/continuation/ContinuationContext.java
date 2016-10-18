@@ -15,9 +15,8 @@
  */
 package com.intellij.util.continuation;
 
-import org.jetbrains.annotations.CalledInAny;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.CalledInAny;
 
 import java.util.List;
 
@@ -28,26 +27,14 @@ public interface ContinuationContext {
 
   @CalledInAny
   void next(TaskDescriptor... next);
+
   @CalledInAny
   void next(List<TaskDescriptor> next);
-  @CalledInAny
-  void last(TaskDescriptor... next);
-  @CalledInAny
-  void last(List<TaskDescriptor> next);
-  @CalledInAny
-  void after(@NotNull TaskDescriptor inQueue, TaskDescriptor... next);
 
   @CalledInAny
   void cancelEverything();
-  @CalledInAny
-  void cancelCurrent();
 
   <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer);
+
   boolean handleException(final Exception e, boolean cancelEveryThing);
-
-  void keepExisting(final Object disaster, final Object cure);
-  void throwDisaster(final Object disaster, final Object cure);
-
-  void removeNewTasksPatcher(@NotNull final Consumer<TaskDescriptor> consumer);
-  void addNewTasksPatcher(@NotNull final Consumer<TaskDescriptor> consumer);
 }

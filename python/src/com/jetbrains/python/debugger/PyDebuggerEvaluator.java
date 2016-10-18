@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
-  private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", null, "None", false, false, false, null, null);
+  private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", null, "None", false, false, false, false, null, null);
 
   private Project myProject;
   private final PyFrameAccessor myDebugProcess;

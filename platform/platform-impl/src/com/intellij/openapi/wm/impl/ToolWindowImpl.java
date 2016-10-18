@@ -399,6 +399,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   @Override
   public ContentManager getContentManager() {
+    ensureContentInitialized();
     return myContentManager;
   }
 
@@ -560,9 +561,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void ensureContentInitialized() {
     if (myContentFactory != null) {
-      getContentManager().removeAllContents(false);
-      myContentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
+      ToolWindowFactory contentFactory = myContentFactory;
+      // clear it first to avoid SOE
       myContentFactory = null;
+      myContentManager.removeAllContents(false);
+      contentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
     }
   }
 

@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -38,7 +40,13 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
   private val componentConstraints: MutableMap<Component, CC> = SmartHashMap()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?): Row {
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
+    if (separated) {
+      val row = MigLayoutRow(componentConstraints, noGrid = true, separated = true)
+      rows.add(row)
+      row.apply { SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)() }
+    }
+
     val row = MigLayoutRow(componentConstraints, label != null, buttonGroup = buttonGroup)
     rows.add(row)
 
@@ -48,7 +56,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   }
 
   override fun noteRow(text: String) {
-    // add empty row
+    // add empty row as top gap
     newRow()
 
     val row = MigLayoutRow(componentConstraints, noGrid = true)
@@ -86,6 +94,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
         gapTop = VERTICAL_GAP * 3
       }
 
+      var isSplitRequired = true
       for ((index, component) in row.components.withIndex()) {
         // MigLayout in any case always creates CC, so, create instance even if it is not required
         val cc = componentConstraints.get(component) ?: CC()
@@ -99,6 +108,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         if (!noGrid) {
           if (component === lastComponent) {
+            isSplitRequired = false
             cc.wrap()
           }
 
@@ -106,17 +116,29 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
             if (component === row.components.first()) {
               // rowConstraints.noGrid() doesn't work correctly
               cc.spanX()
+              if (row.separated) {
+                cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP * 3, false)
+                cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
+              }
             }
           }
           else {
-            if (component === row.components.first()) {
-              if (labeled && !row.labeled) {
+            var isSkippableComponent = true
+            if (component === row.components.first() && labeled) {
+              if (row.labeled) {
+                isSkippableComponent = false
+              }
+              else {
                 cc.skip()
               }
             }
-            if (component === lastComponent) {
-              // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
-              cc.spanX()
+
+            if (isSkippableComponent) {
+              if (isSplitRequired) {
+                isSplitRequired = false
+                cc.split()
+              }
+              cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
             }
           }
 
@@ -135,7 +157,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 }
 
 private fun addGrowIfNeed(cc: CC, component: Component) {
-  if (component is JTextComponent) {
+  if (component is JTextComponent || component is SeparatorComponent) {
     cc.growX()
   }
   else if (component is JPanel && component.componentCount == 1 &&
@@ -144,7 +166,7 @@ private fun addGrowIfNeed(cc: CC, component: Component) {
   }
 }
 
-private class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>, val labeled: Boolean = false, val noGrid: Boolean = false, private val buttonGroup: ButtonGroup? = null) : Row() {
+private class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>, val labeled: Boolean = false, val noGrid: Boolean = false, private val buttonGroup: ButtonGroup? = null, val separated: Boolean = false) : Row() {
   val components = SmartList<Component>()
   var rightIndex = Int.MAX_VALUE
 

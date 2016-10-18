@@ -18,6 +18,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -612,6 +614,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
+        VirtualFile file = FileDocumentManager.getInstance().getFile(this);
+        if (file != null && file.isInLocalFileSystem()) {
+          ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+        }
       }
     }
   }

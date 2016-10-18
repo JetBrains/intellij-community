@@ -61,6 +61,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -81,7 +82,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
@@ -106,7 +106,7 @@ import java.util.*;
 import java.util.List;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
+public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
@@ -254,92 +254,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void constructUi() {
     myViewContentPanel = new JPanel();
-    myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
+    myPanel = new SimpleToolWindowPanel(true);
     myPanel.setContent(myViewContentPanel);
   }
 
-  @Override
-  public String getName() {
-    return "Project";
-  }
-
-  @Override
   @NotNull
+  @Deprecated
   public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-
-    DefaultActionGroup views = new DefaultActionGroup("Change View", true);
-    boolean lastHeaderHadKids = false;
-    for (int i = 0; i < myContentManager.getContentCount(); i++) {
-      Content each = myContentManager.getContent(i);
-      if (each != null) {
-        if (each.getUserData(SUB_ID_KEY) == null) {
-          if (lastHeaderHadKids) {
-            views.add(new Separator());
-          } else {
-            if (i + 1 < myContentManager.getContentCount()) {
-              Content next = myContentManager.getContent(i + 1);
-              if (next != null) {
-                if (next.getUserData(SUB_ID_KEY) != null) {
-                  views.add(new Separator());
-                }
-              }
-            }
-          }
-        }
-        else {
-          lastHeaderHadKids = true;
-        }
-
-        views.add(new ChangeViewAction(each.getUserData(ID_KEY), each.getUserData(SUB_ID_KEY)));
-      }
-    }
-    result.add(views);
-    result.add(new Separator());
-
-
-    List<AnAction> secondary = new ArrayList<>();
-    if (myActionGroup != null) {
-      AnAction[] kids = myActionGroup.getChildren(null);
-      for (AnAction each : kids) {
-        if (myActionGroup.isPrimary(each)) {
-          result.add(each);
-        }
-        else {
-          secondary.add(each);
-        }
-      }
-    }
-    result.add(new Separator());
-    result.addAll(secondary);
-
-    return result;
-  }
-
-  private class ChangeViewAction extends AnAction {
-    private final String myId;
-    private final String mySubId;
-
-    private ChangeViewAction(@NotNull String id, String subId) {
-      myId = id;
-      mySubId = subId;
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      AbstractProjectViewPane pane = getProjectViewPaneById(myId);
-      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      changeView(myId, mySubId);
-    }
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
+    return Collections.emptyList();
   }
 
   @Override
@@ -770,7 +692,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myConnection.disconnect();
   }
 
-  @Override
   public JComponent getComponent() {
     return myDataProvider;
   }
@@ -1095,10 +1016,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
       }
 
-      if (QuickActionProvider.KEY.is(dataId)) {
-        return ProjectViewImpl.this;
-      }
-
       return null;
     }
 
@@ -1407,38 +1324,75 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
+  boolean isGlobalOptions() {
+    return Registry.is("ide.projectView.globalOptions");
+  }
+
+  ProjectViewSharedSettings getGlobalOptions() {
+    return ProjectViewSharedSettings.Companion.getInstance();
+  }
+
   @Override
   public boolean isAutoscrollToSource(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getAutoscrollToSource();
+    }
+
     return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().DEFAULT_AUTOSCROLL_TO_SOURCE);
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setAutoscrollToSource(autoscrollMode);
+    }
     myAutoscrollToSource.put(paneId, autoscrollMode);
   }
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getAutoscrollFromSource();
+    }
+
     return getPaneOptionValue(myAutoscrollFromSource, paneId, ourAutoscrollFromSourceDefaults);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setAutoscrollFromSource(autoscrollMode);
+    }
     setPaneOption(myAutoscrollFromSource, autoscrollMode, paneId, false);
   }
 
   @Override
   public boolean isFlattenPackages(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getFlattenPackages();
+    }
+
     return getPaneOptionValue(myFlattenPackages, paneId, ourFlattenPackagesDefaults);
   }
 
   public void setFlattenPackages(boolean flattenPackages, String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setFlattenPackages(flattenPackages);
+    }
     setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
   }
 
   public boolean isFoldersAlwaysOnTop() {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getFoldersAlwaysOnTop();
+    }
+
     return myFoldersAlwaysOnTop;
   }
 
   public void setFoldersAlwaysOnTop(boolean foldersAlwaysOnTop) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setFoldersAlwaysOnTop(foldersAlwaysOnTop);
+    }
+
     if (myFoldersAlwaysOnTop != foldersAlwaysOnTop) {
       myFoldersAlwaysOnTop = foldersAlwaysOnTop;
       for (AbstractProjectViewPane pane : myId2Pane.values()) {
@@ -1451,6 +1405,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isShowMembers(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getShowMembers();
+    }
+
     return getPaneOptionValue(myShowMembers, paneId, ourShowMembersDefaults);
   }
 
@@ -1460,21 +1418,36 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isHideEmptyMiddlePackages(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getHideEmptyPackages();
+    }
+
     return getPaneOptionValue(myHideEmptyPackages, paneId, ourHideEmptyPackagesDefaults);
   }
 
   @Override
   public boolean isAbbreviatePackageNames(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getAbbreviatePackages();
+    }
+
     return getPaneOptionValue(myAbbreviatePackageNames, paneId, ourAbbreviatePackagesDefaults);
   }
 
   @Override
   public boolean isShowLibraryContents(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getShowLibraryContents();
+    }
+
     return getPaneOptionValue(myShowLibraryContents, paneId, ourShowLibraryContentsDefaults);
   }
 
   @Override
   public void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setShowLibraryContents(showLibraryContents);
+    }
     setPaneOption(myShowLibraryContents, showLibraryContents, paneId, true);
   }
 
@@ -1485,21 +1458,34 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isShowModules(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getShowModules();
+    }
+
     return getPaneOptionValue(myShowModules, paneId, ourShowModulesDefaults);
   }
 
   @Override
   public void setShowModules(boolean showModules, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setShowModules(showModules);
+    }
     setPaneOption(myShowModules, showModules, paneId, true);
   }
 
   @Override
   public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
+    }
     setPaneOption(myHideEmptyPackages, hideEmptyPackages, paneId, true);
   }
 
   @Override
   public void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setAbbreviatePackages(abbreviatePackageNames);
+    }
     setPaneOption(myAbbreviatePackageNames, abbreviatePackageNames, paneId, true);
   }
 

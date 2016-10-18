@@ -13,18 +13,22 @@ else:
     from coverage.cmdline import main
 
 coverage_file = os.getenv('PYCHARM_COVERAGE_FILE')
+
+coverage_file = coverage_file[0:-len(".coverage")]
+
 run_cov = os.getenv('PYCHARM_RUN_COVERAGE')
 if os.getenv('CREATE_TEMP_COVERAGE_FILE'):
     line = 'LOG: PyCharm: File mapping:%s\t%s\n'
     import tempfile
     (h, new_cov_file) = tempfile.mkstemp(prefix='pycharm-coverage')
-    print(line%(coverage_file, new_cov_file))
+    print(line%(coverage_file + ".coverage", new_cov_file + ".coverage"))
     print(line%(coverage_file + '.syspath.txt', new_cov_file + '.syspath.txt'))
     print(line%(coverage_file + '.xml', new_cov_file + '.xml'))
     coverage_file = new_cov_file
 
 if coverage_file:
-    os.environ['COVERAGE_FILE'] = coverage_file
+    os.environ['COVERAGE_FILE'] = coverage_file + ".coverage"
+
 if run_cov:
     a_file = open(coverage_file + '.syspath.txt', mode='w')
     a_file.write(os.getcwd()+"\n")
@@ -41,7 +45,10 @@ for arg in sys.argv:
 sys.argv = argv
 
 cwd = os.getcwd()
-main()
-if run_cov:
-    os.chdir(cwd)
-    main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
+
+try:
+    main()
+finally:
+    if run_cov:
+        os.chdir(cwd)
+        main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])

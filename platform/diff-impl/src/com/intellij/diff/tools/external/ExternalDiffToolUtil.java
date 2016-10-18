@@ -129,7 +129,7 @@ public class ExternalDiffToolUtil {
 
     byte[] bytes = contentData.getBytes(charset);
 
-    byte[] bom = hasBom ? CharsetToolkit.getBom(charset) : null;
+    byte[] bom = hasBom ? CharsetToolkit.getPossibleBom(charset) : null;
     if (bom != null) {
       bytes = ArrayUtil.mergeArrays(bom, bytes);
     }

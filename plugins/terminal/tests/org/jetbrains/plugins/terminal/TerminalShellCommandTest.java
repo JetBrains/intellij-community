@@ -15,51 +15,56 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author traff
  */
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
-    doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i");
-    doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login");
+    doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
+    doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
   }
 
   public void testAddInteractiveOrLogin() {
     if (SystemInfo.isLinux) {
-      contains("bash someargs", "-i", "someargs", "bash");
+      contains("bash someargs", Maps.newHashMap(), "-i", "someargs", "bash");
     }
     else if (SystemInfo.isMac) {
-      contains("bash someargs", "--login", "someargs", "bash");
+      contains("bash someargs", Maps.newHashMap(), "--login", "someargs", "bash");
     }
   }
 
   public void testAddRcConfig() {
-    hasRcConfig("bash -i", "jediterm-sh.in");
-    hasRcConfig("sh --login", "jediterm-sh.in");
+    hasRcConfig("bash -i", "jediterm-sh.in", Maps.newHashMap());
+    hasRcConfig("sh --login", "jediterm-sh.in", Maps.newHashMap());
+    Map<String, String> envs = Maps.newHashMap();
+    hasRcConfig("sh --rcfile ~/.bashrc", "jediterm-sh.in", envs);
+    assertEquals("~/.bashrc", envs.get("JEDITERM_SOURCE"));
   }
 
-  private static void hasRcConfig(String path, String configName) {
+  private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
     List<String> res = Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path));
+      LocalTerminalDirectRunner.getCommand(path, envs, true));
     assertEquals("--rcfile", res.get(1));
     assertTrue(res.get(2).contains(configName));
   }
 
-  private static void doTest(String[] expected, String path) {
+  private static void doTest(String[] expected, String path, Map<String, String> envs) {
     assertEquals(Arrays.asList(expected), Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path)));
+      LocalTerminalDirectRunner.getCommand(path, envs, true)));
   }
 
-  private static void contains(String path, String... item) {
+  private static void contains(String path, Map<String, String> envs, String... item) {
     List<String> result = Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path));
+      LocalTerminalDirectRunner.getCommand(path, envs, true));
 
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));

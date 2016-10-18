@@ -184,6 +184,8 @@
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             text="Toggle Offline Mode" description="Toggle offline mode for Gradle builds"
             icon="GradleIcons.OfflineMode"/>
+    <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"
+            text="Composite Build Configuration"/>
     
     <group id="Gradle.GenerateGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
@@ -199,6 +201,11 @@
     <group>
       <reference id="Gradle.ToggleOfflineAction"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
+    </group>
+
+    <group>
+      <reference id="Gradle.OpenProjectCompositeConfiguration"/>
+      <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
     </group>
 
   </actions>

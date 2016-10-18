@@ -37,11 +37,12 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
   private static final Rectangle ourIconRect=new Rectangle();
   private static final Rectangle ourTextRect=new Rectangle();
   private static final Rectangle ourViewRect=new Rectangle();
-  private static Insets ourViewInsets=new Insets(0,0,0,0);
+  private static Insets ourViewInsets = JBUI.emptyInsets();
 
   private StripeButtonUI(){}
 
   /** Invoked by reflection */
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c){
     return ourInstance;
   }
@@ -55,6 +56,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ToolWindowAnchor anchor=button.getAnchor();
     if(ToolWindowAnchor.LEFT==anchor||ToolWindowAnchor.RIGHT==anchor){
+      //noinspection SuspiciousNameCombination
       return new Dimension(dim.height,dim.width);
     } else{
       return dim;
@@ -127,12 +129,14 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       tr=g2.getTransform();
       if(ToolWindowAnchor.RIGHT==anchor){
         if(icon != null){ // do not rotate icon
+          //noinspection SuspiciousNameCombination
           icon.paintIcon(c, g2, ourIconRect.y, ourIconRect.x);
         }
         g2.rotate(Math.PI/2);
         g2.translate(0,-c.getWidth());
       } else {
         if(icon != null){ // do not rotate icon
+          //noinspection SuspiciousNameCombination
           icon.paintIcon(c, g2, ourIconRect.y, c.getHeight() - ourIconRect.x - icon.getIconHeight());
         }
         g2.rotate(-Math.PI/2);

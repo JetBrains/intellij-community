@@ -26,7 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ import java.util.function.BiPredicate;
  *   doSomething(foo)
  *
  */
-public class ConvertVariadicParamIntention extends BaseIntentionAction {
+public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull
@@ -75,7 +74,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     if (function != null) {
       for (PyCallExpression call : findKeywordContainerCalls(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
-        final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
+        final String firstArgumentValue = PyStringLiteralUtil.getStringValue(firstArgument);
         if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
           return false;
         }
@@ -83,7 +82,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
 
       for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
         final PyExpression indexExpression = subscription.getIndexExpression();
-        final String indexValue = PythonStringUtil.getStringValue(indexExpression);
+        final String indexValue = PyStringLiteralUtil.getStringValue(indexExpression);
         if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
           return false;
         }
@@ -107,7 +106,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 

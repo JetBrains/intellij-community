@@ -135,7 +135,7 @@ public class VcsInitialization implements Disposable {
       TimeoutUtil.sleep(10);
     }
     if (myIndicator.isRunning()) {
-      LOG.error("Failed to wait for completion if VCS initialization for project "+myProject, new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
+      LOG.error("Failed to wait for completion of VCS initialization for project "+myProject, new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
     }
   }
 }

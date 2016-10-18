@@ -34,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -56,26 +55,16 @@ public class MetaAnnotationUtil {
   public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull final Module module,
                                                                     final String annotationName,
                                                                     final boolean includeTests) {
-    Map<Pair<String, Boolean>, Collection<PsiClass>> map =
-      CachedValuesManager.getManager(module.getProject())
-        .getCachedValue(module, () -> {
+    Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createConcurrentMap(key -> {
+        GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
 
-          GlobalSearchScope allAnnotationFilesScope = getAllAnnotationFilesScope(module);
-
-          Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap =
-            new ConcurrentFactoryMap<Pair<String, Boolean>, Collection<PsiClass>>() {
-              @Nullable
-              @Override
-              protected Collection<PsiClass> create(Pair<String, Boolean> key) {
-                final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
-
-                // limit search to files containing annotations
-                final GlobalSearchScope effectiveSearchScope = allAnnotationFilesScope.intersectWith(scope);
-                return getAnnotationTypesWithChildren(key.getFirst(), module.getProject(), effectiveSearchScope);
-              }
-            };
-          return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        });
+        // limit search to files containing annotations
+        GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(module.getProject()).intersectWith(scope);
+        return getAnnotationTypesWithChildren(key.getFirst(), module.getProject(), effectiveSearchScope);
+      });
+      return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
 
     return map.get(Pair.create(annotationName, includeTests));
   }
@@ -134,23 +123,18 @@ public class MetaAnnotationUtil {
     return classes;
   }
 
-  private static GlobalSearchScope getAllAnnotationFilesScope(Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
-      PsiClass javaLangAnnotation =
-        JavaPsiFacade.getInstance(scope.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
-      if (javaLangAnnotation == null) {
-        return CachedValueProvider.Result.createSingleDependency(GlobalSearchScope.EMPTY_SCOPE, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-
+  private static GlobalSearchScope getAllAnnotationFilesScope(Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       Set<VirtualFile> allAnnotationFiles = new HashSet<>();
-      DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
-        ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
-        return true;
-      });
-
+      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
+        DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
+          ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
+          return true;
+        });
+      }
       return CachedValueProvider.Result
-        .createSingleDependency(GlobalSearchScope.filesWithLibrariesScope(module.getProject(), allAnnotationFiles),
+        .createSingleDependency(GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles),
                                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }

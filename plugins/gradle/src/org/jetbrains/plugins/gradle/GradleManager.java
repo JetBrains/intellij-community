@@ -22,13 +22,18 @@ import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -53,6 +58,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -162,18 +168,58 @@ public class GradleManager
         result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
       }
 
-      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, pair.second);
+      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : pair.second;
+      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
       final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
       if (!StringUtil.isEmpty(javaHome)) {
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
-      result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
+      result.setIdeProjectPath(project.getBasePath() == null ? rootProjectPath : project.getBasePath());
       if (projectLevelSettings != null) {
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
       }
+
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project);
       return result;
     };
+  }
+
+  /**
+   * Add composite participants
+   */
+  private static void configureExecutionWorkspace(@Nullable GradleProjectSettings compositeRootSettings,
+                                                  GradleSettings settings,
+                                                  GradleExecutionSettings result,
+                                                  Project project) {
+    if(compositeRootSettings == null) return;
+
+    for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
+      if (projectSettings == compositeRootSettings) continue;
+      if (!compositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath())) continue;
+
+      GradleBuildParticipant buildParticipant = new GradleBuildParticipant(projectSettings.getExternalProjectPath());
+      ExternalProjectInfo projectData = ProjectDataManager.getInstance()
+        .getExternalProjectData(project, GradleConstants.SYSTEM_ID, projectSettings.getExternalProjectPath());
+
+      if (projectData == null || projectData.getExternalProjectStructure() == null) continue;
+
+      Collection<DataNode<ModuleData>> moduleNodes =
+        ExternalSystemApiUtil.findAll(projectData.getExternalProjectStructure(), ProjectKeys.MODULE);
+      for (DataNode<ModuleData> moduleNode : moduleNodes) {
+        ModuleData moduleData = moduleNode.getData();
+        if (moduleData.getArtifacts().isEmpty()) {
+          Collection<DataNode<GradleSourceSetData>> sourceSetNodes = ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY);
+          for (DataNode<GradleSourceSetData> sourceSetNode : sourceSetNodes) {
+            buildParticipant.addModule(sourceSetNode.getData());
+          }
+        }
+        else {
+          buildParticipant.addModule(moduleData);
+        }
+      }
+      result.getExecutionWorkspace().addBuildParticipant(buildParticipant);
+    }
   }
 
   @Override

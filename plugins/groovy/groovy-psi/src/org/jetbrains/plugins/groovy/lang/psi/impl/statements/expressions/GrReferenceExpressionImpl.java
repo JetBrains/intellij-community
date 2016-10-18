@@ -85,7 +85,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           final String name = containingClass.getQualifiedName();
           if (name != null && name.startsWith("java.")) continue;
           if (containingClass.getLanguage() != GroovyLanguage.INSTANCE &&
-              !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)) {
+              !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.GROOVY_OBJECT)) {
             continue;
           }
         }
@@ -515,7 +515,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       .setAllVariants(allVariants)
       .setUpToArgument(upToArgument)
       .build(this);
-    GrReferenceResolveRunnerKt.resolveReferenceExpression(this, processor);
+    new GrReferenceResolveRunner(this, processor).resolveReferenceExpression();
     return processor.getCandidatesArray();
   }
 

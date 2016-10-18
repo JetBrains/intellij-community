@@ -225,10 +225,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return getDefaultRenderer(type);
     }
 
-    return myNodeRenderersMap.computeIfAbsent(type, t ->
-      myRenderers.stream().
-        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false)).
-        findFirst().orElseGet(() -> getDefaultRenderer(type)));
+    try {
+      return myNodeRenderersMap.computeIfAbsent(type, t ->
+        myRenderers.stream().
+          filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
+          findFirst().orElseGet(() -> getDefaultRenderer(type)));
+    }
+    catch (ClassNotPreparedException e) {
+      LOG.info(e);
+      // use default, but do not cache
+      return getDefaultRenderer(type);
+    }
   }
 
   @NotNull

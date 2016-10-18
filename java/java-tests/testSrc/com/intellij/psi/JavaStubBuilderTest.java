@@ -491,10 +491,13 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void testModuleInfo() {
     doTest("module M. /*ignore me*/ N {\n" +
            "  requires A.B;\n" +
+           "  exports m.n;\n" +
            "}",
 
            "PsiJavaFileStub []\n" +
-           "  MODULE:PsiJavaModuleStub:M.N\n");
+           "  MODULE:PsiJavaModuleStub:M.N\n" +
+           "    REQUIRES_STATEMENT:PsiRequiresStatementStub:0:A.B\n" +
+           "    EXPORTS_STATEMENT:PsiExportsStatementStub:m.n\n");
   }
 
   public void testSOEProof() {

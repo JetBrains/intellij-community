@@ -1,0 +1,34 @@
+package pkg;
+
+public class TestAsserts {
+   public static int foo() {
+      byte var0 = 1;// 21
+
+      assert var0 > 1;// 22
+
+      assert var0 > 1 && var0 < 5;// 23
+
+      return 1;// 24
+   }
+}
+
+class 'pkg/TestAsserts' {
+   method 'foo ()I' {
+      0      4
+      1      4
+      9      6
+      a      6
+      1c      8
+      1d      8
+      21      8
+      22      8
+      2d      10
+      2e      10
+   }
+}
+
+Lines mapping:
+21 <-> 5
+22 <-> 7
+23 <-> 9
+24 <-> 11

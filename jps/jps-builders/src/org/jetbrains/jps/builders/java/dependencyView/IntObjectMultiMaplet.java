@@ -28,7 +28,7 @@ import java.util.List;
  * @author: db
  * Date: 03.11.11
  */
-abstract class IntObjectMultiMaplet<V> implements Streamable {
+abstract class IntObjectMultiMaplet<V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final int key);
 
   abstract Collection<V> get(final int key);
@@ -48,8 +48,6 @@ abstract class IntObjectMultiMaplet<V> implements Streamable {
   abstract void removeFrom(final int key, final V value);
 
   abstract void removeAll(final int key, final Collection<V> value);
-
-  abstract void close();
 
   abstract void forEachEntry(TIntObjectProcedure<Collection<V>> procedure);
 

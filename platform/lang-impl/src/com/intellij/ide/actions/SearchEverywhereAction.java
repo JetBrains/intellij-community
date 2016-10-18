@@ -2003,6 +2003,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 return size;
               }
             };
+            content.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(content, null);

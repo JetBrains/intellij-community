@@ -56,6 +56,10 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    rebuildProject();
+  }
+
+  protected void rebuildProject() {
     for (final CompilerMessage compilerMessage : myCompilerTester.rebuild()) {
       assertNotSame(compilerMessage.getMessage(), CompilerMessageCategory.ERROR, compilerMessage.getCategory());
     }

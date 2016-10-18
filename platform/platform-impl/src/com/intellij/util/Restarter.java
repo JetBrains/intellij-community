@@ -171,6 +171,7 @@ public class Restarter {
     return copy;
   }
 
+  @SuppressWarnings("SameParameterValue")
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
     WString GetCommandLineW();

@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -52,8 +53,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.openapi.util.Pair.pair;
-
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
   private static final Key<Boolean> EXTERNAL_ANNO_MARKER = Key.create("EXTERNAL_ANNO_MARKER");
@@ -61,9 +60,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   protected final PsiManager myPsiManager;
 
-  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotations = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<AnnotationData, AnnotationData>();
-  private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStamp = ContainerUtil.createConcurrentSoftMap();
+  private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
@@ -78,12 +77,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner, boolean showParamName) {
     return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
-  }
-
-  @NotNull
-  static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
-    PsiElement original = element.getOriginalElement();
-    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
@@ -166,7 +159,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
-    Pair<MostlySingularMultiMap<String, AnnotationData>, Long> cached = myAnnotationFileToDataAndModStamp.get(file);
+    Pair<MostlySingularMultiMap<String, AnnotationData>, Long> cached = myAnnotationFileToDataAndModStampCache.get(file);
     long fileModificationStamp = file.getModificationStamp();
     if (cached != null && cached.getSecond() == fileModificationStamp) {
       return cached.getFirst();
@@ -188,7 +181,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     MostlySingularMultiMap<String, AnnotationData> result = handler.getResult();
-    myAnnotationFileToDataAndModStamp.put(file, pair(result, fileModificationStamp));
+    myAnnotationFileToDataAndModStampCache.put(file, Pair.create(result, fileModificationStamp));
     return result;
   }
 
@@ -228,13 +221,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   @Nullable
   public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
-    final PsiFile containingFile = preferCompiledElement(listOwner).getContainingFile();
+    final PsiFile containingFile = PsiUtil.preferCompiledElement(listOwner).getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
     
-    final List<PsiFile> files = myExternalAnnotations.get(virtualFile);
+    final List<PsiFile> files = myExternalAnnotationsCache.get(virtualFile);
     if (files == NULL_LIST) return null;
 
     if (files != null) {
@@ -263,7 +256,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     if (possibleAnnotations.isEmpty()) {
-      myExternalAnnotations.put(virtualFile, NULL_LIST);
+      myExternalAnnotationsCache.put(virtualFile, NULL_LIST);
       return null;
     }
 
@@ -277,7 +270,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         return w1 == w2 ? 0 : w1 ? -1 : 1;
       }
     });
-    myExternalAnnotations.put(virtualFile, result);
+    myExternalAnnotationsCache.put(virtualFile, result);
     return result;
   }
 
@@ -285,8 +278,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected abstract List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile);
 
   protected void dropCache() {
-    myExternalAnnotations.clear();
-    myAnnotationFileToDataAndModStamp.clear();
+    myExternalAnnotationsCache.clear();
+    myAnnotationFileToDataAndModStampCache.clear();
     cache.clear();
   }
 
@@ -348,7 +341,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
                                           @NotNull List<PsiFile> annotationFiles) {
     VirtualFile virtualFile = fromFile.getVirtualFile();
     if (virtualFile != null) {
-      myExternalAnnotations.put(virtualFile, annotationFiles);
+      myExternalAnnotationsCache.put(virtualFile, annotationFiles);
     }
   }
 

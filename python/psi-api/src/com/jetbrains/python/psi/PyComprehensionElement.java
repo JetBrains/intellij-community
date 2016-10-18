@@ -22,7 +22,7 @@ import java.util.List;
  */
 public interface PyComprehensionElement extends PyExpression, PyNamedElementContainer {
   PyExpression getResultExpression();
-  List<ComprehensionComponent> getComponents();
-  List<ComprhForComponent> getForComponents();
-  List<ComprhIfComponent> getIfComponents();
+  List<PyComprehensionComponent> getComponents();
+  List<PyComprehensionForComponent> getForComponents();
+  List<PyComprehensionIfComponent> getIfComponents();
 }

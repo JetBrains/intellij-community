@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.LanguageLevel;
  * @author yole
  */
 public class PythonInspectionsTest extends PyTestCase {
+
   public void testReturnValueFromInit() {
     LocalInspectionTool inspection = new PyReturnFromInitInspection();
     doTest(getTestName(true), inspection);

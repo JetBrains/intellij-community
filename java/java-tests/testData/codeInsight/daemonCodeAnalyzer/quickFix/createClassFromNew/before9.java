@@ -1,4 +1,4 @@
-// "Do not create anything" "false"
+// "Create class 'boolean'" "false"
 import javax.swing.*;
 
 public class Test {

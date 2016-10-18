@@ -77,6 +77,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
+  private boolean isAddClasspathToTheRunner;
   @Nullable private String scriptParams;
   @Nullable private String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
@@ -149,6 +150,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       workDir = ExternalizablePath.localPathValue(wrk);
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
+    isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
   }
@@ -162,6 +164,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", ExternalizablePath.urlValue(workDir));
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
+    if (isAddClasspathToTheRunner) JDOMExternalizer.write(element, "addClasspath", true);
     JDOMExternalizer.writeMap(element, envs, null, "env");
   }
 
@@ -415,6 +418,14 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   public void setDebugEnabled(boolean debugEnabled) {
     isDebugEnabled = debugEnabled;
+  }
+
+  public boolean isAddClasspathToTheRunner() {
+    return isAddClasspathToTheRunner;
+  }
+
+  public void setAddClasspathToTheRunner(boolean addClasspathToTheRunner) {
+    isAddClasspathToTheRunner = addClasspathToTheRunner;
   }
 
   @Nullable

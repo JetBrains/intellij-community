@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.base.Function;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * Common part for type specifying intentions
  */
-public abstract class TypeIntention implements IntentionAction {
+public abstract class TypeIntention extends PyBaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
@@ -195,9 +194,5 @@ public abstract class TypeIntention implements IntentionAction {
 
   protected static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
     return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile()));
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

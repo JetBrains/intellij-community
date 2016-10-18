@@ -36,7 +36,7 @@ public class ConsoleUtil {
   private ConsoleUtil() {
   }
 
-  public static void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType, @NotNull List<TokenInfo> tokens) {
+  public static void addToken(int length, @Nullable HyperlinkInfo info, @NotNull ConsoleViewContentType contentType, @NotNull List<TokenInfo> tokens) {
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);

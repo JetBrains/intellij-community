@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
@@ -67,7 +68,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       } else {
         typeCodes(context, context.getRobot(), codes).notify(result);
       }
-    });
+    }, ModalityState.current());
 
     return result;
   }
@@ -82,6 +83,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
           String[] splits = eachPair.split(MODIFIER_DELIMITER);
           Integer code = Integer.valueOf(splits[0]);
           Integer modifier = Integer.valueOf(splits[1]);
+          //noinspection MagicConstant
           type(robot, code.intValue(), modifier.intValue());
         }
         catch (NumberFormatException e) {

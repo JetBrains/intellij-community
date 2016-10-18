@@ -39,8 +39,10 @@ class DistributionJARsBuilder {
   private final BuildContext buildContext
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
+  private final File patchedApplicationInfo
 
-  DistributionJARsBuilder(BuildContext buildContext) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo) {
+    this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
@@ -131,7 +133,7 @@ class DistributionJARsBuilder {
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
     ["java-runtime", "platform-main", /*required to build searchable options index*/
-     "updater", buildContext.productProperties.productLayout.mainModule]
+     "updater"] + buildContext.productProperties.productLayout.mainModules
 
   }
 
@@ -179,7 +181,7 @@ class DistributionJARsBuilder {
     }
 
     if (productProperties.scrambleMainJar) {
-      createLayoutBuilder().layout(buildContext.paths.artifacts) {
+      createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
           module("internalUtilities")
         }
@@ -200,12 +202,12 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptions(searchableOptionsDir, [productLayout.mainModule], productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptions(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
 
-    def applicationInfoFile = FileUtil.toSystemIndependentName(buildTasks.patchApplicationInfo().absolutePath)
+    def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
     ant.copy(file: applicationInfoFile, todir: "$applicationInfoDir/idea")
     layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
@@ -295,8 +297,12 @@ class DistributionJARsBuilder {
           def modules = it.value
           def jarPath = it.key
           jar(jarPath, true) {
-            modulePatches(modules)
             modules.each { moduleName ->
+              modulePatches([moduleName]) {
+                if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                  ant.patternset(refid: resourceExcluded)
+                }
+              }
               module(moduleName) {
                 if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
                   ant.patternset(refid: resourceExcluded)

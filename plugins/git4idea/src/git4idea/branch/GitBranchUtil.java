@@ -265,7 +265,7 @@ public class GitBranchUtil {
    */
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String dialogTitle) {
-    return Messages.showInputDialog(project, "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
+    return Messages.showInputDialog(project, "New branch name:", dialogTitle, null, "",
                                     GitNewBranchNameValidator.newInstance(repositories));
   }
 

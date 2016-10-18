@@ -265,7 +265,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyListCompExpression(final PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
-    final List<PyExpression> nodes = node.getForComponents().stream().map(ComprhForComponent::getIteratedList).collect(Collectors.toList());
+    final List<PyExpression> nodes = node.getForComponents().stream().map(PyComprehensionForComponent::getIteratedList).collect(Collectors.toList());
     registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.visitPyListCompExpression(node, level),
                                    " not support this syntax in list comprehensions.",
                                    nodes,

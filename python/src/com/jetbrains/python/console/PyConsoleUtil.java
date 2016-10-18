@@ -30,10 +30,12 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PyConsoleUtil {
-  public static final String ORDINARY_PROMPT = ">>> ";
-  public static final String INPUT_PROMPT = ">? ";
-  public static final String INDENT_PROMPT = "... ";
-  static final String HELP_PROMPT = "help> ";
+  public static final String ORDINARY_PROMPT = ">>>";
+  public static final String INPUT_PROMPT = ">?";
+  public static final String INDENT_PROMPT = "...";
+  public static final String IPYTHON_INDENT_PROMPT = "...:";
+
+  static final String HELP_PROMPT = "help>";
   public static final String EXECUTING_PROMPT = "";
 
   private static final String IPYTHON_PAGING_PROMPT = "---Return to continue, q to quit---";
@@ -44,8 +46,7 @@ public class PyConsoleUtil {
     HELP_PROMPT,
     IPYTHON_PAGING_PROMPT
   };
-  public static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
-  public static final String SINGLE_QUOTE_MULTILINE = "'''";
+
 
   static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
 
@@ -90,22 +91,12 @@ public class PyConsoleUtil {
     return string;
   }
 
-  public static boolean isMultilineStarts(String line, String substring) {
-    return StringUtil.getOccurrenceCount(line, substring) % 2 == 1;
-  }
 
   public static void scrollDown(final Editor currentEditor) {
     ApplicationManager.getApplication().invokeLater(
       () -> currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength()));
   }
 
-  public static boolean isSingleQuoteMultilineStarts(String line) {
-    return isMultilineStarts(line, SINGLE_QUOTE_MULTILINE);
-  }
-
-  public static boolean isDoubleQuoteMultilineStarts(String line) {
-    return isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE);
-  }
 
   public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
     return text.contains("PyDev console: using IPython ") && outputType == ConsoleViewContentType.ERROR_OUTPUT;

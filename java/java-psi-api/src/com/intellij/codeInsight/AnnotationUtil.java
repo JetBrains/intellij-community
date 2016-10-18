@@ -565,7 +565,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiNameValuePair findDeclaredAttribute(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiNameValuePair findDeclaredAttribute(@NotNull PsiAnnotation annotation, @NonNls @Nullable("null means 'value'") String attributeName) {
     if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attributeName)) attributeName = null;
     for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
       @NonNls final String name = attribute.getName();

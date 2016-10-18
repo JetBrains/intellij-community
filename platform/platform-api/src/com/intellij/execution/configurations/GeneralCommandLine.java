@@ -180,12 +180,12 @@ public class GeneralCommandLine implements UserDataHolder {
     return myParentEnvironmentType != ParentEnvironmentType.NONE;
   }
 
-  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2017.*) */
   public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
     return withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
 
-  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2017.*) */
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
@@ -202,7 +202,8 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Returns an environment that will be passed to a child process.
+   * Returns an environment that will be inherited by a child process.
+   * @see #getEffectiveEnvironment()
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
@@ -214,6 +215,17 @@ public class GeneralCommandLine implements UserDataHolder {
       default:
         return Collections.emptyMap();
     }
+  }
+
+  /**
+   * Returns an environment as seen by a child process,
+   * that is the {@link #getEnvironment() environment} merged with the {@link #getParentEnvironment() parent} one.
+   */
+  @NotNull
+  public Map<String, String> getEffectiveEnvironment() {
+    MyTHashMap env = new MyTHashMap();
+    setupEnvironment(env);
+    return env;
   }
 
   public void addParameters(@NotNull String... parameters) {
@@ -386,6 +398,13 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
+    if (SystemInfo.isUnix) {
+      File workDirectory = getWorkDirectory();
+      if (workDirectory != null) {
+        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+      }
+    }
+
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
@@ -396,13 +415,6 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       else {
         environment.putAll(myEnvParams);
-      }
-    }
-
-    if (SystemInfo.isUnix) {
-      File workDirectory = getWorkDirectory();
-      if (workDirectory != null) {
-        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
       }
     }
   }
@@ -424,6 +436,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath + " " + myProgramParams;
   }
 
+  @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData != null) {
@@ -436,6 +449,7 @@ public class GeneralCommandLine implements UserDataHolder {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) {
+      if (value == null) return;
       myUserData = ContainerUtil.newHashMap();
     }
     myUserData.put(key, value);

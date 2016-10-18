@@ -34,87 +34,43 @@ import java.util.List;
 /** @noinspection UnusedDeclaration*/
 public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private JUnit4TestListener myTestsListener;
+  private ArrayList myListeners;
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
+  public void createListeners(ArrayList listeners) {
+    myListeners = listeners;
     myTestsListener = new JUnit4TestListener();
-    try {
-      Result result;
-      if (count == 1) {
-        result = startRunnerWithArgs(args, listeners, name, sendTree, count);
-        if (result == null) {
-          return -1;
-        }
-      }
-      else {
-        if (count > 0) {
-          boolean success = true;
-          int i = 0;
-          while (i++ < count) {
-            result = startRunnerWithArgs(args, listeners, name, sendTree, count);
-            if (result == null) {
-              return -1;
-            }
-            success &= result.wasSuccessful();
-            sendTree = false;
-          }
-
-          return success ? 0 : -1;
-        }
-        else {
-          boolean success = true;
-          while (true) {
-            result = startRunnerWithArgs(args, listeners, name, sendTree, count);
-            if (result == null) {
-              return -1;
-            }
-            success &= result.wasSuccessful();
-            if (count == -2 && !success) {
-              return -1;
-            }
-          }
-        }
-      }
-      if (!result.wasSuccessful()) {
-        return -1;
-      }
-      return 0;
-    }
-    catch (Exception e) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("Internal Error occured.");
-      e.printStackTrace(System.err);
-      return -2;
-    }
   }
 
-  private Result startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree, int count) throws
-                                                                                                        InstantiationException,
-                                                                                                        IllegalAccessException,
-                                                                                                        ClassNotFoundException,
-                                                                                                        NoSuchFieldException {
-    final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
-    if (request == null) return null;
+  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+    try {
+      final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
+      if (request == null) return -2;
 
-    final Runner testRunner = request.getRunner();
-    Description description = getDescription(request, testRunner);
-    if (description == null) {
-      return null;
-    }
-
-    if (sendTree) {
-      do {
-        ((JUnit4TestListener)myTestsListener).sendTree(description);
+      final Runner testRunner = request.getRunner();
+      Description description = getDescription(request, testRunner);
+      if (description == null) {
+        return -2;
       }
-      while (--count > 0);
-    }
 
-    final JUnitCore runner = new JUnitCore();
-    runner.addListener(myTestsListener);
-    for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-      final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
-      runner.addListener(new MyCustomRunListenerWrapper(junitListener, description.getDisplayName()));
+      if (sendTree) {
+        do {
+          ((JUnit4TestListener)myTestsListener).sendTree(description);
+        }
+        while (--count > 0);
+      }
+
+      final JUnitCore runner = new JUnitCore();
+      runner.addListener(myTestsListener);
+      for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
+        runner.addListener(new MyCustomRunListenerWrapper(junitListener, description.getDisplayName()));
+      }
+      final Result result = runner.run(testRunner);
+      return result.wasSuccessful() ? 0 : -1;
     }
-    return runner.run(testRunner);
+    catch (Exception e) {
+      return -2;
+    }
   }
 
   private static Description getDescription(Request request, Runner testRunner) throws NoSuchFieldException, IllegalAccessException {
@@ -198,7 +154,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     }
     catch (Exception e) {
       //noinspection HardCodedStringLiteral
-      System.err.println("Internal Error occured.");
+      System.err.println("Internal Error occurred.");
       e.printStackTrace(System.err);
       return null;
     }

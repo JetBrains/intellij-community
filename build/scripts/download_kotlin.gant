@@ -27,7 +27,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_104_Idea145branch160versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_105_CompilerAndPlugin_NoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
@@ -321,6 +321,6 @@ class TeamCityBuildLocator {
 
   String getDownloadUrl(String buildNumber) {
     String encodedBuildNumber = URLEncoder.encode(buildNumber, "UTF-8")
-    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-${encodedBuildNumber}.zip"
+    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-${encodedBuildNumber}-IJ2016.3-1.zip"
   }
 }

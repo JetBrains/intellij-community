@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.paint.GraphCellPainter;
@@ -135,10 +136,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       graphPadding = 0;
     }
 
-    SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected);
+    SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, "", hasFocus, isSelected).getForeground());
+    Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
     myExpanded = myGraphTable.getExpandableItemsHandler().getExpandedItems().contains(new TableCell(row, column));
     if (myFadeOutPainter != null) {
       myFadeOutPainter.customize(refs, row, column, table, foreground);
@@ -165,19 +166,24 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private PaintInfo getGraphImage(int row) {
     VisibleGraph<Integer> graph = myGraphTable.getVisibleGraph();
     Collection<? extends PrintElement> printElements = graph.getRowInfo(row).getPrintElements();
-    int maxIndex = 0;
+    double maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
+      if (printElement instanceof EdgePrintElement) {
+        maxIndex = Math.max(maxIndex,
+                            (printElement.getPositionInCurrentRow() + ((EdgePrintElement)printElement).getPositionInOtherRow()) / 2.0);
+      }
     }
     maxIndex++;
+
     maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, graph.getRecommendedWidth()));
-    final BufferedImage image = UIUtil
-      .createImage(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(),
-                   BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
+                                             myGraphTable.getRowHeight(),
+                                             BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
     myPainter.draw(g2, printElements);
 
-    int width = maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight());
+    int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
     return new PaintInfo(image, width);
   }
 

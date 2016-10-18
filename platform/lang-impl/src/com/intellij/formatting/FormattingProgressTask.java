@@ -113,8 +113,8 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   }
 
   @Override
-  public void onError(@NotNull Exception error) {
-    super.onError(error);
+  public void onThrowable(@NotNull Throwable error) {
+    super.onThrowable(error);
     for (Runnable callback : getCallbacks(EventType.CANCEL)) {
       callback.run();
     }

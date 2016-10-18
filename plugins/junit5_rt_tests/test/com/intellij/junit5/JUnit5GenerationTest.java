@@ -43,7 +43,6 @@ class JUnit5GenerationTest extends JUnit5CodeInsightTest {
            "    @Test\n" +
            "    void name() {\n" +
            "        \n" +
-           "\n" +
            "    }\n" +
            "}}");
   }

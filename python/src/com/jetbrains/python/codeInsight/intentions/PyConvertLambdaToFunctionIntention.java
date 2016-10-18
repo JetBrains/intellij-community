@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +41,7 @@ import java.util.List;
  * User: catherine
  * Intention to convert lambda to function
  */
-public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
+public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @NotNull
   public String getFamilyName() {
@@ -72,7 +71,7 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";

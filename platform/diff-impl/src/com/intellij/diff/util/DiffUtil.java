@@ -23,6 +23,7 @@ import com.intellij.diff.SuppressiveDiffTool;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
@@ -30,6 +31,7 @@ import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -1069,6 +1071,36 @@ public class DiffUtil {
     return fragment.getStartLine(side) == fragment.getEndLine(side);
   }
 
+  @NotNull
+  public static MergeConflictType getWordMergeType(@NotNull MergeWordFragment fragment,
+                                                   @NotNull List<? extends CharSequence> texts,
+                                                   @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2));
+  }
+
+  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                  @NotNull List<? extends CharSequence> texts,
+                                                  @NotNull ComparisonPolicy policy,
+                                                  @NotNull ThreeSide side1,
+                                                  @NotNull ThreeSide side2) {
+    int start1 = fragment.getStartOffset(side1);
+    int end1 = fragment.getEndOffset(side1);
+    int start2 = fragment.getStartOffset(side2);
+    int end2 = fragment.getEndOffset(side2);
+
+    CharSequence document1 = side1.select(texts);
+    CharSequence document2 = side2.select(texts);
+
+    CharSequence content1 = document1.subSequence(start1, end1);
+    CharSequence content2 = document2.subSequence(start2, end2);
+    return ComparisonUtil.isEquals(content1, content2, policy);
+  }
+
+  private static boolean isWordMergeIntervalEmpty(@NotNull MergeWordFragment fragment, @NotNull ThreeSide side) {
+    return fragment.getStartOffset(side) == fragment.getEndOffset(side);
+  }
+
   //
   // Writable
   //
@@ -1185,23 +1217,30 @@ public class DiffUtil {
 
     Component component = window;
     while (component != null) {
-      if (component instanceof Window) closeWindow((Window)component, modalOnly);
+      if (component instanceof Window) {
+        boolean isClosed = closeWindow((Window)component, modalOnly);
+        if (!isClosed) break;
+      }
 
       component = recursive ? component.getParent() : null;
     }
   }
 
-  public static void closeWindow(@NotNull Window window, boolean modalOnly) {
-    if (window instanceof IdeFrameImpl) return;
-    if (modalOnly && window instanceof Frame) return;
+  /**
+   * @return whether window was closed
+   */
+  private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
+    if (window instanceof IdeFrameImpl) return false;
+    if (modalOnly && window instanceof Frame) return false;
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
-      return;
+      return !window.isVisible();
     }
 
     window.setVisible(false);
     window.dispose();
+    return true;
   }
 
   //

@@ -96,9 +96,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 
-    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
-      final boolean leftIsNone = PyNames.NONE.equals(lhs.getName());
-      final boolean rightIsNone = PyNames.NONE.equals(rhs.getName());
+    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
+        lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
+        lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
+      final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
+      final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
 
       if (leftIsNone && rightIsNone) {
         return;
@@ -136,19 +138,18 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static PyType createAssertionType(PyType initial, List<PyType> types, boolean positive, TypeEvalContext context) {
-    final List<PyType> members = new ArrayList<>();
-    for (PyType t : types) {
-      members.add(transformTypeFromAssertion(t));
-    }
-    final PyType union = PyUnionType.union(members);
+  private static PyType createAssertionType(@Nullable PyType initial,
+                                            @Nullable PyType suggested,
+                                            boolean positive,
+                                            @NotNull TypeEvalContext context) {
+    final PyType transformedType = transformTypeFromAssertion(suggested);
     if (positive) {
-      return union;
+      return transformedType;
     }
     else if (initial instanceof PyUnionType) {
-      return ((PyUnionType)initial).exclude(union, context);
+      return ((PyUnionType)initial).exclude(transformedType, context);
     }
-    else if (PyTypeChecker.match(union, initial, context)) {
+    else if (PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return initial;
@@ -177,9 +178,17 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
       public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-        final List<PyType> types = new ArrayList<>();
-        types.add(suggestedType.apply(context));
-        return createAssertionType(context.getType(target), types, positive, context);
+        final PyType initial = context.getType(target);
+        final PyType suggested = suggestedType.apply(context);
+
+        if (!PyUnionType.class.isInstance(initial) &&
+            !PyTypeChecker.isUnknown(initial) &&
+            PyTypeChecker.match(suggested, initial, context)) {
+          return initial;
+        }
+        else {
+          return createAssertionType(initial, suggested, positive, context);
+        }
       }
     };
 

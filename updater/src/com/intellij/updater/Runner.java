@@ -275,7 +275,10 @@ public class Runner {
 
   private static void apply(String jarFile, String destFolder) throws Exception {
      logger().info("Applying patch to the " + destFolder);
-     doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+    final boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+    if (!success) {
+      System.exit(1);
+    }
   }
 
   private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {

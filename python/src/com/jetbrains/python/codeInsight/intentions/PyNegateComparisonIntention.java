@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -36,7 +35,7 @@ import java.util.Map;
  * Date:   12.03.2010
  * Time:   17:58:56
  */
-public class PyNegateComparisonIntention extends BaseIntentionAction {
+public class PyNegateComparisonIntention extends PyBaseIntentionAction {
   private static final Map<PyElementType, String> comparisonStrings = new HashMap<>(7);
   private static final Map<PyElementType, PyElementType> invertedComparasions = new HashMap<>(7);
 
@@ -82,7 +81,7 @@ public class PyNegateComparisonIntention extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
 
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);

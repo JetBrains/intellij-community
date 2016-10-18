@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 import org.jetbrains.concurrency.runAsync
+import java.nio.file.Path
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
   private @Volatile var currentProvider: PasswordStorage
@@ -67,27 +68,35 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
-    if (value == null && memoryHelperProvider.isInitialized()) {
+    if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(attributes)
+      memoryHelperProvider.value.get(attributes)?.let {
+        if (!it.isEmpty()) {
+          return it
+        }
+      }
     }
     return value
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     currentProvider.set(attributes, credentials)
-    if (memoryHelperProvider.isInitialized()) {
+    if (!credentials.isEmpty() && attributes.isPasswordMemoryOnly) {
+      // we must store because otherwise on get will be no password
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
+    }
+    else if (memoryHelperProvider.isInitialized()) {
       val memoryHelper = memoryHelperProvider.value
       // update password in the memory helper, but only if it was previously set
       if (credentials == null || memoryHelper.get(attributes) != null) {
-        memoryHelper.set(attributes, credentials)
+        memoryHelper.set(attributes.toPasswordStoreable(), credentials)
       }
     }
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
-      memoryHelperProvider.value.set(attributes, credentials)
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
       // remove to ensure that on getPassword we will not return some value from default provider
       currentProvider.set(attributes, null)
     }
@@ -100,7 +109,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
 
   override fun save() {
-    (currentProvider as? KeePassCredentialStore)?.let { it.save() }
+    (currentProvider as? KeePassCredentialStore)?.save()
   }
 
   fun clearPasswords() {
@@ -111,10 +120,18 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       }
     }
     finally {
-      (currentProvider as? KeePassCredentialStore)?.let { it.clear() }
+      (currentProvider as? KeePassCredentialStore)?.clear()
     }
 
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
+  }
+
+  fun setFileDatabaseMasterPassword(password: String) {
+    (currentProvider as KeePassCredentialStore).setMasterPassword(password)
+  }
+
+  fun importFileDatabase(path: Path, masterPassword: String) {
+    currentProvider = copyFileDatabase(path, masterPassword)
   }
 
   // public - backward compatibility

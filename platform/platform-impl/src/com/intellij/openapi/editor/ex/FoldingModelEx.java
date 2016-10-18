@@ -33,7 +33,7 @@ public interface FoldingModelEx extends FoldingModel {
   void setFoldingEnabled(boolean isEnabled);
   boolean isFoldingEnabled();
 
-  FoldRegion getFoldingPlaceholderAt(Point p);
+  FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
 
   boolean intersectsRegion(int startOffset, int endOffset);
 

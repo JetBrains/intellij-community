@@ -27,7 +27,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
@@ -213,6 +212,11 @@ public class PyIndentUtil {
       return ContainerUtil.prepend(result, Iterables.get(lines, 0));
     }
     return result;
+  }
+
+  @NotNull
+  public static String findCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
+    return findCommonIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine);
   }
 
   /**

@@ -33,7 +33,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       "python-ide-community", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
     ]
     productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
-    productLayout.mainModule = "main_pycharm_ce"
+    productLayout.mainModules = ["main_pycharm_ce"]
   }
 
   @Override

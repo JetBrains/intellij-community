@@ -149,6 +149,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
   }
 
+  @NotNull
   @Override
   protected final EditorEx doCreateConsoleEditor() {
     return myHistoryViewer;
@@ -158,8 +159,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   protected final void disposeEditor() {
   }
 
+  @NotNull
   @Override
-  protected final JComponent createCenterComponent() {
+  protected JComponent createCenterComponent() {
     initComponents();
     return myPanel;
   }

@@ -27,15 +27,14 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -66,7 +65,7 @@ public class PyCompatibilityInspection extends PyInspection {
     .add("typing")
     .build();
 
-  public static final int LATEST_INSPECTION_VERSION = 1;
+  public static final int LATEST_INSPECTION_VERSION = 2;
 
   @NotNull
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
@@ -323,6 +322,36 @@ public class PyCompatibilityInspection extends PyInspection {
             }
           }
         }
+      }
+    }
+
+    @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      super.visitPyTargetExpression(node);
+      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+    }
+
+    @Override
+    public void visitPyClass(PyClass node) {
+      super.visitPyClass(node);
+      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      super.visitPyFunction(node);
+      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+    }
+
+    private void warnAboutAsyncAndAwaitInPy35AndPy36(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
+      final PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
+
+      if (nameIdentifier != null && ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC)) {
+        registerOnFirstMatchingVersion(level -> LanguageLevel.PYTHON35.equals(level) || LanguageLevel.PYTHON36.equals(level),
+                                       "'async' and 'await' are not recommended to be used as variable, class, function or module names. " +
+                                       "They will become proper keywords in Python 3.7.",
+                                       nameIdentifier,
+                                       new PyRenameElementQuickFix());
       }
     }
   }

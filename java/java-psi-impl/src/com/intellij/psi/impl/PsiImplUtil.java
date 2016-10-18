@@ -59,8 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.psi.PsiAnnotation.TargetType;
-
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
 
@@ -79,7 +77,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotationMemberValue findDeclaredAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiAnnotationMemberValue findDeclaredAttributeValue(@NotNull PsiAnnotation annotation, @NonNls @Nullable String attributeName) {
     PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, attributeName);
     return attribute == null ? null : attribute.getValue();
   }
@@ -314,39 +312,34 @@ public class PsiImplUtil {
     return null;
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, TargetType...)} (to be removed ion IDEA 17) */
-  public static TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull TargetType... types) {
+  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, TargetType...)} (to be removed ion IDEA 17) */
-  public static TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
+  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#getAnnotationTargets(PsiClass)} (to be removed ion IDEA 17) */
-  public static Set<TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
+  public static Set<PsiAnnotation.TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
     return AnnotationTargetUtil.getAnnotationTargets(annotationType);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
-  public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
+  public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);
   }
 
   @Nullable
   public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
-    while (node != null && (isWhitespaceOrComment(node) && !(node.getPsi() instanceof PsiDocComment))) {
+    while (node != null && isWhitespaceOrComment(node) && !(node.getPsi() instanceof PsiDocComment)) {
       node = node.getTreeNext();
     }
 
-    if (node != null && node.getElementType() == JavaDocElementType.DOC_COMMENT) {
-      return node;
-    }
-    else {
-      return null;
-    }
+    return node == null || node.getElementType() != JavaDocElementType.DOC_COMMENT ? null : node;
   }
 
   /**
@@ -376,8 +369,7 @@ public class PsiImplUtil {
     return normalized;
   }
 
-  private static PsiType doNormalizeWildcardByPosition(PsiType type, @NotNull PsiExpression expression, PsiExpression topLevel) {
-
+  private static PsiType doNormalizeWildcardByPosition(PsiType type, @NotNull PsiExpression expression, @NotNull PsiExpression topLevel) {
     if (type instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
 
@@ -388,12 +380,10 @@ public class PsiImplUtil {
         if (wildcardType.isExtends()) {
           return wildcardType.getBound();
         }
-        else {
-          return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
-        }
+        return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
     }
-    else if (type instanceof PsiArrayType) {
+    if (type instanceof PsiArrayType) {
       final PsiType componentType = ((PsiArrayType)type).getComponentType();
       final PsiType normalizedComponentType = doNormalizeWildcardByPosition(componentType, expression, topLevel);
       if (normalizedComponentType != componentType) {
@@ -446,7 +436,8 @@ public class PsiImplUtil {
     return getServerPageFile(element) != null;
   }
 
-  @Nullable public static ServerPageFile getServerPageFile(final PsiElement element) {
+  @Nullable
+  private static ServerPageFile getServerPageFile(final PsiElement element) {
     final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(element);
     return psiFile instanceof ServerPageFile ? (ServerPageFile)psiFile : null;
   }
@@ -507,13 +498,7 @@ public class PsiImplUtil {
         }
 
         boolean allowNoName = attributes.length == 0 && ("value".equals(attributeName) || null == attributeName);
-        final String namePrefix;
-        if (allowNoName) {
-          namePrefix = "";
-        }
-        else {
-          namePrefix = attributeName + "=";
-        }
+        final String namePrefix = allowNoName ? "" : attributeName + "=";
         psiAnnotation.getParameterList().addBefore(createNameValuePair(value, namePrefix, annotationCreator), null);
       }
     }
@@ -532,7 +517,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, TokenSet alsoSkip) {
+  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, @NotNull TokenSet alsoSkip) {
     return TreeUtil.skipWhitespaceCommentsAndTokens(node, alsoSkip, true);
   }
 
@@ -562,7 +547,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static ASTNode findStatementChild(CompositePsiElement statement) {
+  public static ASTNode findStatementChild(@NotNull CompositePsiElement statement) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
@@ -572,7 +557,7 @@ public class PsiImplUtil {
     return null;
   }
 
-  public static PsiStatement[] getChildStatements(CompositeElement psiCodeBlock) {
+  public static PsiStatement[] getChildStatements(@NotNull CompositeElement psiCodeBlock) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     // no lock is needed because all chameleons are expanded already
     int count = 0;
@@ -666,16 +651,15 @@ public class PsiImplUtil {
     }
   }
 
-  public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, @NotNull IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
   }
 
-  public static boolean isLeafElementOfType(PsiElement element, TokenSet tokenSet) {
+  public static boolean isLeafElementOfType(PsiElement element, @NotNull TokenSet tokenSet) {
     return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
   public static PsiType buildTypeFromTypeString(@NotNull final String typeName, @NotNull final PsiElement context, @NotNull final PsiFile psiFile) {
-    PsiType resultType;
     final PsiManager psiManager = psiFile.getManager();
 
     if (typeName.indexOf('<') != -1 || typeName.indexOf('[') != -1 || typeName.indexOf('.') == -1) {
@@ -687,6 +671,7 @@ public class PsiImplUtil {
 
     PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(typeName, context.getResolveScope());
 
+    PsiType resultType;
     if (aClass == null) {
       final LightClassReference ref = new LightClassReference(
         psiManager,
@@ -706,10 +691,9 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(
-    @NotNull T element,
-    boolean incompleteCode,
-    @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
+  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(@NotNull T element,
+                                                                                             boolean incompleteCode,
+                                                                                             @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
 
     FileASTNode fileElement = SharedImplUtil.findFileElement(element.getNode());
     if (fileElement == null) {
@@ -741,12 +725,11 @@ public class PsiImplUtil {
     return multiResolveImpl(manager.getProject(), psiFile, element, incompleteCode, resolver);
   }
 
-  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(
-    Project project,
-    PsiFile psiFile,
-    T element,
-    boolean incompleteCode,
-    ResolveCache.PolyVariantContextResolver<? super T> resolver) {
+  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(@NotNull Project project,
+                                                                                             @NotNull PsiFile psiFile,
+                                                                                             @NotNull T element,
+                                                                                             boolean incompleteCode,
+                                                                                             @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
 
     ResolveResult[] results =
       ResolveCache.getInstance(project).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);

@@ -846,7 +846,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(printElement(expected), printElement(actual));
+      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -857,12 +857,6 @@ public class PlatformTestUtil {
     catch (IOException | JDOMException e) {
       throw new AssertionError(e);
     }
-  }
-
-  public static String printElement(final Element element) throws IOException {
-    final StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(element, writer, "\n");
-    return writer.getBuffer().toString();
   }
 
   public static String getCommunityPath() {
@@ -876,7 +870,6 @@ public class PlatformTestUtil {
   public static String getPlatformTestDataPath() {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
-
 
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {

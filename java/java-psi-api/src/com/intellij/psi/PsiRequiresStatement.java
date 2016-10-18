@@ -23,5 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * @since 2016.3
  */
 public interface PsiRequiresStatement extends PsiElement {
+  PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];
+
   @Nullable PsiJavaModuleReferenceElement getReferenceElement();
+  @Nullable String getModuleName();
+
+  boolean isPublic();
 }

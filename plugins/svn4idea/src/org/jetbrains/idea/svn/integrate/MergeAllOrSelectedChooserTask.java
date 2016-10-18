@@ -15,63 +15,32 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
 
-  public MergeAllOrSelectedChooserTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext, interaction, "merge source selector", Where.AWT);
+  public MergeAllOrSelectedChooserTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "merge source selector", Where.AWT);
   }
 
   @Override
-  public void run(ContinuationContext context) {
+  public void run() {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (myInteraction.selectMergeVariant()) {
       case all:
-        context.next(getMergeAllTasks());
+        next(getMergeAllTasks(true));
         break;
       case showLatest:
-        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
-        ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeContext, myInteraction, loader);
+        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeProcess, -1);
+        ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeProcess, loader);
 
-        context.next(loader, dialog);
+        next(loader, dialog);
         break;
       case select:
-        MergeCalculatorTask calculator = getMergeCalculatorTask(context);
-
-        if (calculator != null) {
-          context.next(getCalculateFirstCopyPointTask(calculator), calculator);
-        }
+        next(new LookForBranchOriginTask(myMergeProcess, false, copyPoint ->
+          next(new MergeCalculatorTask(myMergeProcess, copyPoint))));
         break;
     }
-  }
-
-  @NotNull
-  private TaskDescriptor getCalculateFirstCopyPointTask(@NotNull MergeCalculatorTask mergeCalculator) {
-    return myMergeContext.getVcs().getSvnBranchPointsCalculator()
-      .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
-                             myMergeContext.getSourceUrl(), mergeCalculator);
-  }
-
-  @Nullable
-  private MergeCalculatorTask getMergeCalculatorTask(@NotNull ContinuationContext context) {
-    MergeCalculatorTask result = null;
-
-    try {
-      result = new MergeCalculatorTask(myMergeContext, myInteraction);
-    }
-    catch (VcsException e) {
-      finishWithError(context, e.getMessage(), true);
-    }
-
-    return result;
   }
 }

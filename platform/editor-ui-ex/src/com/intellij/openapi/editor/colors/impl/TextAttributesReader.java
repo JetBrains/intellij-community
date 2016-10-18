@@ -53,25 +53,22 @@ class TextAttributesReader extends ValueElementReader {
    */
   @Override
   public <T> T read(Class<T> type, Element element) {
-    if (TextAttributes.class.equals(type)) {
-      TextAttributes attributes = new TextAttributes();
-      if (element != null) {
-        attributes.setAttributes(
-          readChild(Color.class, element, FOREGROUND),
-          readChild(Color.class, element, BACKGROUND),
-          readChild(Color.class, element, EFFECT_COLOR),
-          readChild(Color.class, element, ERROR_STRIPE),
-          Effect.read(this, element),
-          FontStyle.read(this, element));
-        // needed for compatibility with TextAttributes(Element)
-        if (attributes.isEmpty()) {
-          attributes.setEnforceEmpty(true);
-        }
-      }
-      //noinspection unchecked
-      return (T)attributes;
+    if (!TextAttributes.class.equals(type)) {
+      return super.read(type, element);
     }
-    return super.read(type, element);
+
+    TextAttributes attributes = new TextAttributes();
+    if (element != null) {
+      attributes.setAttributes(
+        readChild(Color.class, element, FOREGROUND),
+        readChild(Color.class, element, BACKGROUND),
+        readChild(Color.class, element, EFFECT_COLOR),
+        readChild(Color.class, element, ERROR_STRIPE),
+        Effect.read(this, element),
+        FontStyle.read(this, element));
+    }
+    //noinspection unchecked
+    return (T)attributes;
   }
 
   /**

@@ -551,7 +551,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(PyShadowingBuiltinsInspection.class);
     myFixture.checkHighlighting(true, false, true);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
@@ -563,7 +563,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(PyShadowingBuiltinsInspection.class);
     myFixture.checkHighlighting(true, false, true);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));

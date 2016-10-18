@@ -16,6 +16,8 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -40,8 +43,9 @@ import java.util.Map;
  */
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @Override
-  public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                @Nullable Module contextModule) {
+  @NotNull
+  public PydevConsoleRunnerImpl createConsoleRunner(@NotNull Project project,
+                                                    @Nullable Module contextModule) {
     Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
 
     Module module = sdkAndModule.second;
@@ -108,8 +112,14 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
     putIPythonEnvFlag(project, envs);
-    
-    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment);
+
+    Consumer<String> rerunAction = title -> {
+      PydevConsoleRunnerImpl runner = createConsoleRunner(project, module);
+      runner.setConsoleTitle(title);
+      runner.run();
+    };
+
+    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, rerunAction, setupFragment);
   }
 
   public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
@@ -117,13 +127,14 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
-  protected PydevConsoleRunner createConsoleRunner(Project project,
-                                                   Sdk sdk,
-                                                   String workingDir,
-                                                   Map<String, String> envs,
-                                                   PyConsoleType consoleType,
-                                                   PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                   String... setupFragment) {
-    return new PydevConsoleRunner(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
+  @NotNull
+  protected PydevConsoleRunnerImpl createConsoleRunner(Project project,
+                                                       Sdk sdk,
+                                                       String workingDir,
+                                                       Map<String, String> envs,
+                                                       PyConsoleType consoleType,
+                                                       PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                                       Consumer<String> rerunAction, String... setupFragment) {
+    return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 }

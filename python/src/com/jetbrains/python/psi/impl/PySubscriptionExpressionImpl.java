@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yole
@@ -84,13 +85,17 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
           if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING, context)) {
             return res;
           }
-          if (type instanceof PySubscriptableType) {
-            res = ((PySubscriptableType)type).getElementType(indexExpression, context);
+          if (type instanceof PyTupleType) {
+            final PyTupleType tupleType = (PyTupleType)type;
+
+            res = Optional
+              .ofNullable(PyConstantExpressionEvaluator.evaluate(indexExpression))
+              .map(value -> PyUtil.as(value, Integer.class))
+              .map(tupleType::getElementType)
+              .orElse(null);
           }
           else if (type instanceof PyCollectionType) {
-            // TODO: Select the parameter type that matches T in Iterable[T]
-            final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
-            res = elementTypes.isEmpty() ? null : elementTypes.get(0);
+            res = ((PyCollectionType)type).getIteratedItemType();
           }
         }
       }

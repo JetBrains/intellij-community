@@ -21,15 +21,12 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
-import com.intellij.util.io.delete
-import com.intellij.util.io.readBytes
-import com.intellij.util.io.writeSafe
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.intellij.util.io.*
+import java.nio.file.*
 import java.security.Key
 import java.security.SecureRandom
 import java.util.*
@@ -38,10 +35,15 @@ import javax.crypto.spec.SecretKeySpec
 
 private const val GROUP_NAME = "IntelliJ Platform"
 
-internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+private val DB_FILE_NAME = "c.kdbx"
+
+internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
+                                      baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
+                                      var memoryOnly: Boolean = false,
+                                      private val dbFile: Path = baseDirectory.resolve(DB_FILE_NAME),
+                                      existingMasterPassword: String? = null) : PasswordStorage, CredentialStore {
   private val db: KeePassDatabase
 
-  private val dbFile = baseDirectory.resolve("c.kdbx")
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
 
   private val needToSave: AtomicBoolean
@@ -49,7 +51,24 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
   init {
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
-      db = masterKeyStorage.get()?.let { loadKdbx(dbFile, KdbxPassword(it)) } ?: KeePassDatabase()
+
+      val masterPassword = existingMasterPassword?.toByteArray() ?: masterKeyStorage.get()
+      if (masterPassword == null) {
+        LOG.catchAndLog {
+          if (dbFile.exists()) {
+            val renameTo = baseDirectory.resolve("old.c.kdbx")
+            LOG.warn("Credentials database file exists ($dbFile), but no master password file. Moved to $renameTo")
+            dbFile.move(renameTo)
+          }
+        }
+        db = KeePassDatabase()
+      }
+      else {
+        db = loadKdbx(dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+        if (existingMasterPassword != null) {
+          masterKeyStorage.set(existingMasterPassword.toByteArray())
+        }
+      }
     }
     else {
       needToSave = AtomicBoolean(!memoryOnly)
@@ -141,7 +160,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
         entry = group.getOrCreateEntry(attributes.serviceName, userName)
       }
       entry.userName = userName
-      entry.password = credentials.password?.let(::SecureString)
+      entry.password = if (attributes.isPasswordMemoryOnly || credentials.password == null) null else SecureString(credentials.password!!)
     }
 
     if (db.isDirty) {
@@ -158,6 +177,22 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       }
     }
   }
+
+  fun setMasterPassword(password: String) {
+    LOG.assertTrue(!memoryOnly)
+
+    val masterKey = password.toByteArray()
+    masterKeyStorage.set(masterKey)
+    dbFile.writeSafe { db.save(KdbxPassword(masterKey), it) }
+    dbFile.setOwnerPermissions()
+  }
+}
+
+internal fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory: Path = Paths.get(PathManager.getConfigPath())): KeePassCredentialStore {
+  val dbFile = baseDirectory.resolve(DB_FILE_NAME)
+  Files.copy(path, dbFile, StandardCopyOption.REPLACE_EXISTING)
+  dbFile.setOwnerPermissions()
+  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword)
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {

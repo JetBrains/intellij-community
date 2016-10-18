@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayDeque;
-
-import static com.intellij.Patches.USE_REFLECTION_TO_ACCESS_JDK7;
 
 /**
  * @author Sergey Malenkov
@@ -166,7 +164,7 @@ public class MovablePopup {
           Window view = pop(owner);
           if (view == null) {
             view = new JWindow(owner);
-            setPopupType(view);
+            view.setType(Window.Type.POPUP);
           }
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
@@ -262,21 +260,6 @@ public class MovablePopup {
         myView.validate();
         myView.repaint();
       }
-    }
-  }
-
-  // TODO: HACK because of Java7 required:
-  // replace later with window.setType(Window.Type.POPUP)
-  private static void setPopupType(@NotNull Window window) {
-    //noinspection ConstantConditions,ConstantAssertCondition
-    assert USE_REFLECTION_TO_ACCESS_JDK7;
-    try {
-      @SuppressWarnings("unchecked")
-      Class<? extends Enum> type = (Class<? extends Enum>)Class.forName("java.awt.Window$Type");
-      Object value = Enum.valueOf(type, "POPUP");
-      Window.class.getMethod("setType", type).invoke(window, value);
-    }
-    catch (Exception ignored) {
     }
   }
 

@@ -263,7 +263,7 @@ public class ConsoleBuffer {
   /**
    * Asks current buffer to store given text of the given type.
    *
-   * @param s           text to store
+   * @param text           text to store
    * @param contentType type of the given text
    * @param info        hyperlink info for the given text (if any)
    * @return text that is actually stored (there is a possible case that the buffer is full and given text's type
@@ -271,11 +271,11 @@ public class ConsoleBuffer {
    *         or partially) and number of existed symbols removed during storing the given data
    */
   @NotNull
-  public Pair<String, Integer> print(@NotNull String s, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    int numberOfSymbolsToProceed = s.length();
+  public Pair<String, Integer> print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+    int numberOfSymbolsToProceed = text.length();
     int trimmedSymbolsNumber = myDeferredOutputLength;
     if (contentType != ConsoleViewContentType.USER_INPUT) {
-      numberOfSymbolsToProceed = trimDeferredOutputIfNecessary(s.length());
+      numberOfSymbolsToProceed = trimDeferredOutputIfNecessary(text.length());
       trimmedSymbolsNumber -= myDeferredOutputLength;
     }
     else {
@@ -286,15 +286,15 @@ public class ConsoleBuffer {
       return new Pair<>("", 0);
     }
 
-    if (numberOfSymbolsToProceed < s.length()) {
-      s = s.substring(s.length() - numberOfSymbolsToProceed);
+    if (numberOfSymbolsToProceed < text.length()) {
+      text = text.substring(text.length() - numberOfSymbolsToProceed);
     }
 
     myDeferredTypes.add(contentType);
 
-    s = StringUtil.convertLineSeparators(s, myKeepSlashR);
+    text = StringUtil.convertLineSeparators(text, myKeepSlashR);
 
-    myDeferredOutputLength += s.length();
+    myDeferredOutputLength += text.length();
     StringBuilder bufferToUse;
     if (myDeferredOutput.isEmpty()) {
       myDeferredOutput.add(bufferToUse = new StringBuilder(myCyclicBufferUnitSize));
@@ -303,24 +303,24 @@ public class ConsoleBuffer {
       bufferToUse = myDeferredOutput.getLast();
     }
     int offset = 0;
-    while (offset < s.length()) {
+    while (offset < text.length()) {
       if (bufferToUse.length() >= myCyclicBufferUnitSize) {
         myDeferredOutput.add(bufferToUse = new StringBuilder(myCyclicBufferUnitSize));
       }
 
       if (bufferToUse.length() < myCyclicBufferUnitSize) {
-        int numberOfSymbolsToAdd = Math.min(myCyclicBufferUnitSize - bufferToUse.length(), s.length() - offset);
-        bufferToUse.append(s.substring(offset, offset + numberOfSymbolsToAdd));
+        int numberOfSymbolsToAdd = Math.min(myCyclicBufferUnitSize - bufferToUse.length(), text.length() - offset);
+        bufferToUse.append(text.substring(offset, offset + numberOfSymbolsToAdd));
         offset += numberOfSymbolsToAdd;
       }
     }
 
     if (contentType == ConsoleViewContentType.USER_INPUT) {
-      myDeferredUserInput.append(s);
+      myDeferredUserInput.append(text);
     }
 
-    ConsoleUtil.addToken(s.length(), info, contentType, myDeferredTokens);
-    return new Pair<>(s, trimmedSymbolsNumber);
+    ConsoleUtil.addToken(text.length(), info, contentType, myDeferredTokens);
+    return new Pair<>(text, trimmedSymbolsNumber);
   }
 
   //private void checkState() {

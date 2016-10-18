@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PythonConsoleRunnerFactory {
   @NotNull
   public static PythonConsoleRunnerFactory getInstance() {
-    return ServiceManager.getService(PythonConsoleRunnerFactory.class);
+    return ApplicationManager.getApplication().getComponent(PythonConsoleRunnerFactory.class);
   }
+
+  @NotNull
   public abstract PydevConsoleRunner createConsoleRunner(@NotNull final Project project,
-                                         @Nullable Module contextModule);
+                                                         @Nullable Module contextModule);
 }

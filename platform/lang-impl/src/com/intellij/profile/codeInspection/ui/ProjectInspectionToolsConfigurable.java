@@ -33,7 +33,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
 
   @Override
   protected InspectionProfileImpl getCurrentProfile() {
-    return (InspectionProfileImpl)myProjectProfileManager.getCurrentProfile();
+    return myProjectProfileManager.getCurrentProfile();
   }
 
   @Override
@@ -43,7 +43,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
     }
     else {
       myApplicationProfileManager.setRootProfile(name);
-      myProjectProfileManager.setRootProfile(null);
+      myProjectProfileManager.useApplicationProfile(name);
     }
     ApplicationInspectionProfileManager.onProfilesChanged();
   }

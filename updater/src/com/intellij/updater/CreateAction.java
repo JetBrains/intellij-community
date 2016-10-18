@@ -73,28 +73,32 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    prepareToWriteFile(toFile);
+    if (toFile.getParentFile().exists()) {
+      prepareToWriteFile(toFile);
 
-    ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
-    if (entry.isDirectory()) {
-      if (!toFile.mkdir()) {
-        throw new IOException("Unable to create directory " + myPath);
+      ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
+      if (entry.isDirectory()) {
+        if (!toFile.mkdir()) {
+          throw new IOException("Unable to create directory " + myPath);
+        }
+      } else {
+        InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
+        try {
+          int filePermissions = in.read();
+          if (filePermissions > 1) {
+            Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+          }
+          else {
+            Utils.copyStreamToFile(in, toFile);
+            Utils.setExecutable(toFile, filePermissions == 1);
+          }
+        }
+        finally {
+          in.close();
+        }
       }
     } else {
-      InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
-      try {
-        int filePermissions = in.read();
-        if (filePermissions > 1 ) {
-          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
-        }
-        else {
-          Utils.copyStreamToFile(in, toFile);
-          Utils.setExecutable(toFile, filePermissions == 1 );
-        }
-      }
-      finally {
-        in.close();
-      }
+      Runner.logger().info("Create action skipped. The parent is absent: " + toFile.getParentFile());
     }
   }
 

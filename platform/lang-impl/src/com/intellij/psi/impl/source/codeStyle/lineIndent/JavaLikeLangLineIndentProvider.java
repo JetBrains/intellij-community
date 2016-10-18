@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition.SyntaxElement;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.IndentCalculator.BaseLineOffsetCalculator;
@@ -36,7 +37,7 @@ import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLine
  * A base class Java-like language line indent provider. If JavaLikeLangLineIndentProvider is unable to calculate
  * the indentation, it forwards the request to FormatterBasedLineIndentProvider.
  */
-public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
+public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvider{
   
   public enum JavaLikeElement implements SyntaxElement {
     Whitespace,
@@ -73,7 +74,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     else {
       return "";
     }
-    return super.getLineIndent(project, editor, language, offset);
+    return null;
   }
   
   @Nullable

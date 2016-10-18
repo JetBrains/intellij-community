@@ -27,9 +27,9 @@ public abstract class TypeCommand extends AbstractCommand {
 
   private static final KeyStrokeMap ourMap = new KeyStrokeMap();
 
-  public TypeCommand(String text, int line) {
-    super(text, line);
-    }
+  public TypeCommand(String text, int line, boolean executeInAwt) {
+    super(text, line, executeInAwt);
+  }
 
   protected void type(Robot robot, int code, @JdkConstants.InputEventMask int modifiers) {
     type(robot, KeyStroke.getKeyStroke(code, modifiers));

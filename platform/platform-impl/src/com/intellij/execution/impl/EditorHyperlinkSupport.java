@@ -364,7 +364,8 @@ public class EditorHyperlinkSupport {
   }
 
 
-  public static String getLineText(Document document, int lineNumber, boolean includeEol) {
+  @NotNull
+  public static String getLineText(@NotNull Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;

@@ -115,7 +115,7 @@ public class PythonSdkUpdater implements StartupActivity {
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
-    if (!updateLocalSdkPaths(sdk, sdkModificator)) {
+    if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
 
@@ -153,7 +153,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
                 indicator.setText("Updating skeletons...");
                 PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
-                updateRemoteSdkPaths(sdkInsideTask);
+                updateRemoteSdkPaths(sdkInsideTask, getProject());
                 indicator.setIndeterminate(true);
                 indicator.setText("Scanning installed packages...");
                 indicator.setText2("");
@@ -226,12 +226,12 @@ public class PythonSdkUpdater implements StartupActivity {
    *
    * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
    */
-  private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
+  private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project) {
     if (!PythonSdkType.isRemote(sdk)) {
       final List<VirtualFile> localSdkPaths;
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       try {
-        localSdkPaths = getLocalSdkPaths(sdk);
+        localSdkPaths = getLocalSdkPaths(sdk, project);
       }
       catch (InvalidSdkException e) {
         if (!PythonSdkType.isInvalid(sdk)) {
@@ -251,10 +251,10 @@ public class PythonSdkUpdater implements StartupActivity {
    *
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
-  private static void updateRemoteSdkPaths(Sdk sdk) {
+  private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
     if (PythonSdkType.isRemote(sdk)) {
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk);
+      final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk, project);
       commitSdkPathsIfChanged(sdk, null, remoteSdkPaths, forceCommit);
     }
   }
@@ -273,9 +273,9 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the paths for a local SDK.
    */
   @NotNull
-  private static List<VirtualFile> getLocalSdkPaths(@NotNull Sdk sdk) throws InvalidSdkException {
+  private static List<VirtualFile> getLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project) throws InvalidSdkException {
     return ImmutableList.<VirtualFile>builder()
-      .addAll(evaluateSysPath(sdk))
+      .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
       .build();
@@ -287,9 +287,9 @@ public class PythonSdkUpdater implements StartupActivity {
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
    */
   @NotNull
-  private static List<VirtualFile> getRemoteSdkPaths(@NotNull Sdk sdk) {
+  private static List<VirtualFile> getRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
     return ImmutableList.<VirtualFile>builder()
-      .addAll(getRemoteSdkMappedPaths(sdk))
+      .addAll(getRemoteSdkMappedPaths(sdk, project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
       .build();
@@ -312,7 +312,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<VirtualFile> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
+  private static List<VirtualFile> getRemoteSdkMappedPaths(@NotNull Sdk sdk, @Nullable Project project) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     if (additionalData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)additionalData;
@@ -320,7 +320,7 @@ public class PythonSdkUpdater implements StartupActivity {
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());
       }
-      return filterRootPaths(sdk, paths);
+      return filterRootPaths(sdk, paths, project);
     }
     return Collections.emptyList();
   }
@@ -329,18 +329,25 @@ public class PythonSdkUpdater implements StartupActivity {
    * Filters valid paths from an initial set of Python paths and returns them as virtual files.
    */
   @NotNull
-  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths) {
+  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
                                                   Collections.emptyList();
+    final Set<VirtualFile> moduleRoots = new HashSet<>();
+    if (project != null) {
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (Module module : modules) {
+        moduleRoots.addAll(PyUtil.getSourceRoots(module));
+      }
+    }
     final List<VirtualFile> results = Lists.newArrayList();
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
         final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
         if (virtualFile != null) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-          if (!excludedPaths.contains(rootFile)) {
-            results.add(virtualFile);
+          if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
+            results.add(rootFile);
             continue;
           }
         }
@@ -390,14 +397,14 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<VirtualFile> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
+  private static List<String> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
     if (PythonSdkType.isRemote(sdk)) {
       throw new IllegalArgumentException("Cannot evaluate sys.path for remote Python interpreter " + sdk);
     }
     final long startTime = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
-    return filterRootPaths(sdk, sysPath);
+    return sysPath;
   }
 
   /**

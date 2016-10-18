@@ -17,9 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.impl.PlatformLayout
-
-import java.util.function.Consumer
 
 /**
  * @author nik
@@ -41,7 +38,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
                                                   ["jps-model-impl", "jps-model-serialization"]
     productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModule = "community-main"
+    productLayout.mainModules = ["community-main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])

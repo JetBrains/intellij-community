@@ -37,20 +37,19 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -62,8 +61,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 public class ShowFilePathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
@@ -77,22 +77,13 @@ public class ShowFilePathAction extends AnAction {
     }
   };
 
-  private static NotNullLazyValue<Boolean> canUseNautilus = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
+  private static NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
     @Override
-    protected Boolean compute() {
-      if (!SystemInfo.isUnix || !SystemInfo.hasXdgMime() || !new File("/usr/bin/nautilus").canExecute()) {
-        return false;
-      }
-
-      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName == null || !appName.matches(".*(?i:nautilus).*\\.desktop")) return false;
-
-      String version = ExecUtil.execAndReadLine(new GeneralCommandLine("nautilus", "--version"));
-      if (version == null) return false;
-
-      Matcher m = Pattern.compile("GNOME nautilus ([0-9.]+)").matcher(version);
-      return m.find() && StringUtil.compareVersionNumbers(m.group(1), "3") >= 0;
+    protected String compute() {
+      return readDesktopEntryKey("Exec")
+        .map(line -> line.split(" ")[0])
+        .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files"))
+        .orElse(null);
     }
   };
 
@@ -102,41 +93,42 @@ public class ShowFilePathAction extends AnAction {
     protected String compute() {
       if (SystemInfo.isMac) return "Finder";
       if (SystemInfo.isWindows) return "Explorer";
-      if (SystemInfo.isUnix && SystemInfo.hasXdgMime()) {
-        String name = getUnixFileManagerName();
-        if (name != null) return name;
-      }
-      return "File Manager";
+      return readDesktopEntryKey("Name").orElse("File Manager");
     }
   };
 
-  @Nullable
-  private static String getUnixFileManagerName() {
-    String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-    if (appName == null || !appName.matches(".+\\.desktop")) return null;
-
-    String dirs = System.getenv("XDG_DATA_DIRS");
-    if (dirs == null) return null;
-
-    try {
-      for (String dir : dirs.split(File.pathSeparator)) {
-        File appFile = new File(dir, "applications/" + appName);
-        if (appFile.exists()) {
-          try (BufferedReader reader = new BufferedReader(new FileReader(appFile))) {
-            Optional<String> name = reader.lines().filter(l -> l.startsWith("Name=")).map(l -> l.substring(5)).findFirst();
-            if (name.isPresent()) return name.get();
-          }
-        }
+  private static Optional<String> readDesktopEntryKey(String key) {
+    if (SystemInfo.hasXdgMime()) {
+      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+      if (appName != null && appName.endsWith(".desktop")) {
+        return Stream.of(getXdgDataDirectories().split(":"))
+          .map(dir -> new File(dir, "applications/" + appName))
+          .filter(File::exists)
+          .findFirst()
+          .map(file -> readDesktopEntryKey(file, key + '='));
       }
     }
-    catch (IOException | UncheckedIOException e) {
-      LOG.info("Cannot read desktop file", e);
-    }
 
-    return null;
+    return Optional.empty();
   }
 
-  @Override
+  private static String getXdgDataDirectories() {
+    String dataHome = System.getenv("XDG_DATA_HOME");
+    String dataDirs = System.getenv("XDG_DATA_DIRS");
+    return defaultIfEmpty(dataHome, SystemProperties.getUserHome() + "/.local/share") + ':' + defaultIfEmpty(dataDirs, "/usr/local/share:/usr/share");
+  }
+
+  private static String readDesktopEntryKey(File file, String key) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      return reader.lines().filter(l -> l.startsWith(key)).map(l -> l.substring(key.length())).findFirst().orElse(null);
+    }
+    catch (IOException | UncheckedIOException e) {
+      LOG.info("Cannot read: " + file, e);
+      return null;
+    }
+  }
+
+@Override
   public void update(@NotNull AnActionEvent e) {
     boolean visible = !SystemInfo.isMac && isSupported();
     e.getPresentation().setVisible(visible);
@@ -223,8 +215,7 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac ||
-           SystemInfo.hasXdgOpen() || canUseNautilus.getValue() ||
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen() ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
@@ -292,9 +283,16 @@ public class ShowFilePathAction extends AnAction {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
       ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
-    else if (canUseNautilus.getValue()) {
-      GeneralCommandLine cmd = new GeneralCommandLine("nautilus", toSelect != null ? toSelect : dir);
-      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+    else if (fileManagerApp.getValue() != null) {
+      PooledThreadExecutor.INSTANCE.submit(() -> {
+        try {
+          GeneralCommandLine cmd = new GeneralCommandLine(fileManagerApp.getValue(), toSelect != null ? toSelect : dir);
+          ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      });
     }
     else if (SystemInfo.hasXdgOpen()) {
       GeneralCommandLine cmd = new GeneralCommandLine("/usr/bin/xdg-open", dir);

@@ -864,29 +864,105 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatString() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatFuncArgument() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromStarArg() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringOutsideBraces() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromRef() {
     doTest();
+  }
+
+  // PY-3077
+  public void testFormatStringWithFormatModifier() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringWithDictLiteralArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithDictCallArg() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringWithParenDictCallArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithModifiers() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringDictLiteralStringKey() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringDictCallStringKey() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringDictLiteralArgument() {
+    doTest();
+  }
+  
+  // PY-19839
+  public void testPercentStringDictRefKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictFuncKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithZipCall() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithListArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithPackedDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
   }
 
   // PY-17437

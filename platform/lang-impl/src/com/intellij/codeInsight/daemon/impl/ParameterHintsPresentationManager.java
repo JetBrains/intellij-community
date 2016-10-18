@@ -45,6 +45,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
+  private static final float BACKGROUND_ALPHA = 0.55f;
 
   private final Alarm myAlarm = new Alarm(this);
 
@@ -198,6 +199,7 @@ public class ParameterHintsPresentationManager implements Disposable {
           Color backgroundColor = attributes.getBackgroundColor();
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+            GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
             g.setColor(backgroundColor);
             int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);

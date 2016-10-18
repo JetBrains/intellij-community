@@ -41,13 +41,13 @@ class IdeaCommunityBuilder {
   }
 
   void buildDistJars() {
-    BuildTasks.create(buildContext).compileModulesAndBuildDistributions()
+    BuildTasks.create(buildContext).buildDistributions()
     layoutAdditionalArtifacts()
   }
 
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.compileModulesAndBuildDistributions()
+    tasks.buildDistributions()
     layoutAdditionalArtifacts(true)
     tasks.buildUpdaterJar()
   }

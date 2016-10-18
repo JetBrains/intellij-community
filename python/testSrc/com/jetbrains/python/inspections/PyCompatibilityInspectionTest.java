@@ -209,6 +209,16 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-16098
+  public void testWarningAboutAsyncAndAwaitInPy35() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  // PY-16098
+  public void testWarningAboutAsyncAndAwaitInPy36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

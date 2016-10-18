@@ -73,14 +73,8 @@ public class GenericsHighlightUtil {
   private static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
                                                           PsiElement call,
                                                           PsiSubstitutor substitutor) {
-    return checkInferredTypeArguments(typeParameters, call, substitutor, false);
-  }
-
-  @Nullable
-  private static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
-                                                          PsiElement call,
-                                                          PsiSubstitutor substitutor, boolean allowUncheckedConversion) {
-    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor, call, allowUncheckedConversion);
+    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor,
+                                                                                                              call, false);
     if (inferredTypeArgument != null) {
       final PsiType extendsType = inferredTypeArgument.second;
       final PsiTypeParameter typeParameter = inferredTypeArgument.first;
@@ -513,7 +507,7 @@ public class GenericsHighlightUtil {
   }
 
   private static boolean hasNotOverriddenAbstract(List<PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
-    return !defaultContainingClasses.stream().anyMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
+    return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
   private static String hasUnrelatedDefaults(List<PsiClass> defaults) {
@@ -1367,12 +1361,12 @@ public class GenericsHighlightUtil {
     return false;
   }
 
-  private static void registerVariableParameterizedTypeFixes(HighlightInfo highlightInfo,
+  private static void registerVariableParameterizedTypeFixes(@Nullable HighlightInfo highlightInfo,
                                                              @NotNull PsiVariable variable,
                                                              @NotNull PsiReferenceParameterList parameterList,
                                                              @NotNull JavaSdkVersion version) {
     PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) return;
+    if (!(type instanceof PsiClassType) || highlightInfo == null) return;
 
     if (DumbService.getInstance(variable.getProject()).isDumb()) return;
 
@@ -1532,7 +1526,7 @@ public class GenericsHighlightUtil {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList != null && extendsList.getReferenceElements().length > 1) {
         //todo suppress erased methods which come from the same class
-        final Collection<HighlightInfo> result = GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass);
+        final Collection<HighlightInfo> result = checkOverrideEquivalentMethods(aClass);
         if (result != null && !result.isEmpty()) {
           return result.iterator().next();
         }

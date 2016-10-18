@@ -49,12 +49,14 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
+import java.awt.Dimension
+import java.awt.Font
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -66,6 +68,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   private val LOG = logger<GitConfigureRemotesDialog>()
 
   private val NAME_COLUMN = 0
+  private val URL_COLUMN = 1
   private val REMOTE_PADDING = 30
   private val table = JBTable(RemotesTableModel())
 
@@ -74,7 +77,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   init {
     init()
     title = "Git Remotes"
-    updateColumnSize()
+    updateTableWidth()
   }
 
   override fun createActions() = arrayOf(okAction)
@@ -149,18 +152,24 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     return result!! // at least one of two has changed
   }
 
-  private fun updateColumnSize() {
-    var maxWidth = 0
+  private fun updateTableWidth() {
+    var maxNameWidth = 0
+    var maxUrlWidth = 0
     for (node in nodes) {
-      val tableFont = UIManager.getFont("Table.font")
-      val width = table.getFontMetrics(tableFont).stringWidth(node.getPresentableString())
-      if (maxWidth < width) maxWidth = width
+      val fontMetrics = table.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD))
+      val nameWidth = fontMetrics.stringWidth(node.getPresentableString())
+      val remote = (node as? RemoteNode)?.remote
+      val urlWidth = if (remote == null) 0 else fontMetrics.stringWidth(getUrl(remote))
+      if (maxNameWidth < nameWidth) maxNameWidth = nameWidth
+      if (maxUrlWidth < urlWidth) maxUrlWidth = urlWidth
     }
-    maxWidth += REMOTE_PADDING + UIUtil.DEFAULT_HGAP
+    maxNameWidth += REMOTE_PADDING + DEFAULT_HGAP
 
-    val column = table.columnModel.getColumn(NAME_COLUMN)
-    column.preferredWidth = maxWidth
-    column.maxWidth = maxWidth
+    table.columnModel.getColumn(NAME_COLUMN).preferredWidth = maxNameWidth
+    table.columnModel.getColumn(URL_COLUMN).preferredWidth = maxUrlWidth
+
+    val defaultPreferredHeight = table.preferredScrollableViewportSize.height
+    table.preferredScrollableViewportSize = Dimension(maxNameWidth + maxUrlWidth + DEFAULT_HGAP, defaultPreferredHeight)
   }
 
   private fun buildNodes(repositories: Collection<GitRepository>): List<Node> {

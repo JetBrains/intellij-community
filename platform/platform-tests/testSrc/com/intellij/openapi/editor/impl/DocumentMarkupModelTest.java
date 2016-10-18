@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Dmitry Avdeev
  */
 public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTestCase {
-
   public void testInfoTestAttributes() throws Exception {
     LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
     extension.language="TEXT";
@@ -58,11 +59,11 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     myFixture.doHighlighting();
     MarkupModel model = DocumentMarkupModel.forDocument(myFixture.getEditor().getDocument(), getProject(), false);
     RangeHighlighter[] highlighters = model.getAllHighlighters();
-    assertEquals(1, highlighters.length);
+    assertThat(highlighters).hasSize(1);
     TextAttributes attributes = highlighters[0].getTextAttributes();
-    assertNotNull(attributes);
-    assertNull(attributes.getBackgroundColor());
-    assertNull(attributes.getForegroundColor());
+    assertThat(attributes).isNotNull();
+    assertThat(attributes.getBackgroundColor()).isNull();
+    assertThat(attributes.getForegroundColor()).isNull();
   }
 
   public void testPersistentHighlighterUpdateOnPartialDocumentUpdate() {
@@ -79,7 +80,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     assertEquals(6, highlighter.getStartOffset());
   }
 
-    public static class TestAnnotator implements Annotator {
+  public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       holder.createInfoAnnotation(element, null);

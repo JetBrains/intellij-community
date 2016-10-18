@@ -15,25 +15,56 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
-import com.intellij.psi.PsiRequiresStatement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiRequiresStatementImpl extends CompositePsiElement implements PsiRequiresStatement {
-  public PsiRequiresStatementImpl() {
-    super(JavaElementType.REQUIRES_STATEMENT);
+public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
+  public PsiRequiresStatementImpl(@NotNull PsiRequiresStatementStub stub) {
+    super(stub, JavaStubElementTypes.REQUIRES_STATEMENT);
+  }
+
+  public PsiRequiresStatementImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @Nullable
   @Override
   public PsiJavaModuleReferenceElement getReferenceElement() {
     return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
+  }
+
+  @Nullable
+  @Override
+  public String getModuleName() {
+    PsiRequiresStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getModuleName();
+    }
+    else {
+      PsiJavaModuleReferenceElement refElement = getReferenceElement();
+      return refElement != null ? refElement.getReferenceText() : null;
+    }
+  }
+
+  @Override
+  public boolean isPublic() {
+    PsiRequiresStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.isPublic();
+    }
+    else {
+      for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (PsiUtil.isJavaToken(child, JavaTokenType.PUBLIC_KEYWORD)) return true;
+        if (child instanceof PsiJavaModuleReferenceElement) break;
+      }
+      return false;
+    }
   }
 
   @Override

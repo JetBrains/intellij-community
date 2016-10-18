@@ -1807,7 +1807,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
         if (!arrayTypeFixChecked) {
           final PsiType checkResult = JavaHighlightUtil.sameType(initializers);
-          fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
+          fix = checkResult != null ? VariableArrayTypeFix.createFix(arrayInitializer, checkResult) : null;
           arrayTypeFixChecked = true;
         }
         if (fix != null) {

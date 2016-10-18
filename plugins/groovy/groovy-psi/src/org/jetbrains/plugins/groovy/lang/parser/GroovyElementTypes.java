@@ -323,8 +323,8 @@ public interface GroovyElementTypes {
   };
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
-  GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments", true);
-  GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
+  GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = new GrAnnotationArgumentListElementType();
+  GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = new GrNameValuePairElementType();
 
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrAnnotationElementType("annotation");
   //parameters

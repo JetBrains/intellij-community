@@ -32,22 +32,31 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
+  override fun getShell(): String? {
+    if (File("/bin/bash").exists()) {
+      return "/bin/bash";
+    }
+    else
+      if (File("/bin/sh").exists()) {
+        return "/bin/sh";
+      }
+      else {
+        return super.getShell();
+      }
+  }
+
   override fun readShellEnv(): MutableMap<String, String> {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isUnix) {
       return super.readShellEnv()
     }
-    else if (SystemInfo.isWindows) {
+    else {
       if (activate != null) {
-        return readVirtualEnvOnWindows(activate)
+        return readVirtualEnvOnWindows(activate);
       }
       else {
         LOG.error("Can't find activate script for $virtualEnvSdkPath")
-        return mutableMapOf()
+        return mutableMapOf();
       }
-    }
-    else {
-      // TODO: Support shell env loading on Linux
-      return mutableMapOf()
     }
   }
 
@@ -75,7 +84,13 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
       throw Exception("shell:" + shellPath)
     }
 
-    return if (activate != null) mutableListOf(shellPath, "--rcfile", activate, "-i")
+    return if (activate != null)
+      if (File(shellPath).name == "bash") {
+        mutableListOf(shellPath, "--rcfile", activate)
+      }
+      else {
+        mutableListOf(shellPath, "-c", "source '$activate'")
+      }
     else super.getShellProcessCommand()
   }
 

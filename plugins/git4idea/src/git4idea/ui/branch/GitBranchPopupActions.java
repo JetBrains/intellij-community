@@ -115,7 +115,7 @@ class GitBranchPopupActions {
       // TODO autocomplete branches, tags.
       // on type check ref validity, on OK check ref existence.
       String reference = Messages
-        .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
+        .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash:", "Checkout", null);
       if (reference != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkout(reference, true, myRepositories, null);
@@ -229,8 +229,8 @@ class GitBranchPopupActions {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final String name = Messages
-          .showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch From " + myBranchName,
-                           Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
+          .showInputDialog(myProject, "New branch name:", "Checkout New Branch From " + myBranchName,
+                           null, "", GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
@@ -253,8 +253,8 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        String newName = Messages.showInputDialog(myProject, "Enter new name for the branch " + myCurrentBranchName,
-                                                  "Rename Branch " + myCurrentBranchName, Messages.getQuestionIcon(),
+        String newName = Messages.showInputDialog(myProject, "New name for the branch '" + myCurrentBranchName + "':",
+                                                  "Rename Branch " + myCurrentBranchName, null,
                                                   myCurrentBranchName, GitNewBranchNameValidator.newInstance(myRepositories));
         if (newName != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
@@ -332,7 +332,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
+        final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);

@@ -47,15 +47,11 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -78,8 +74,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
-                                        QuickActionProvider, DockContainer.Dialog {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
+                                        DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
@@ -215,7 +211,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
         return null;
       }
-    }).setTabLabelActionsAutoHide(false).setProvideSwitchTargets(false).setInnerInsets(JBUI.emptyInsets())
+    }).setTabLabelActionsAutoHide(false).setInnerInsets(JBUI.emptyInsets())
       .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null).getJBTabs();
     rebuildTabPopup();
 
@@ -620,11 +616,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public boolean isDisposeWhenEmpty() {
     return myOriginal != null;
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
   }
 
   @Override
@@ -1360,7 +1351,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
+  private class MyComponent extends NonOpaquePanel implements DataProvider {
     private boolean myWasEverAdded;
 
     public MyComponent(LayoutManager layout) {
@@ -1373,10 +1364,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (KEY.is(dataId)) {
-        return RunnerContentUi.this;
-      }
-      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+      if (CloseAction.CloseTarget.KEY.is(dataId)) {
         Content content = getContentManager().getSelectedContent();
         if (content != null && content.getManager().canCloseContents() && content.isCloseable()) {
           return new CloseAction.CloseTarget() {
@@ -1394,27 +1382,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         return ((DataProvider)originalContentComponent).getData(dataId);
       }
       return null;
-    }
-
-    @SuppressWarnings("NullableProblems")
-    @Override
-    public String getName() {
-      return RunnerContentUi.this.getName();
-    }
-
-    @Override
-    public List<AnAction> getActions(boolean originalProvider) {
-      return RunnerContentUi.this.getActions(originalProvider);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return RunnerContentUi.this.getComponent();
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return RunnerContentUi.this.isCycleRoot();
     }
 
     @Override
@@ -1703,61 +1670,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerUi;
   }
-
-  @Override
-  public String getName() {
-    return mySessionName;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-    if (myLeftToolbarActions != null) {
-      AnAction[] kids = myLeftToolbarActions.getChildren(null);
-      ContainerUtil.addAll(result, kids);
-    }
-    return result;
-  }
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return myTabs.getCurrentTarget();
-
-    GridImpl grid = getSelectedGrid();
-    if (grid != null && grid.getContents().size() <= 1) return myTabs.getCurrentTarget();
-
-    if (grid != null) {
-      SwitchTarget cell = grid.getCellFor(owner);
-      return cell != null ? cell : myTabs.getCurrentTarget();
-    }
-    else {
-      return myTabs.getCurrentTarget();
-    }
-  }
-
-  @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<>();
-
-    result.addAll(myTabs.getTargets(true, false));
-    GridImpl grid = getSelectedGrid();
-    if (grid != null) {
-      result.addAll(grid.getTargets(onlyVisible));
-    }
-
-    for (Wrapper wrapper : myMinimizedButtonsPlaceholder.values()) {
-      if (!wrapper.isShowing()) continue;
-      JComponent target = wrapper.getTargetComponent();
-      if (target instanceof ActionToolbar) {
-        ActionToolbar tb = (ActionToolbar)target;
-        result.addAll(tb.getTargets(onlyVisible, false));
-      }
-    }
-
-    return result;
-  }
-
 
   private int findFreeWindow() {
     int i;

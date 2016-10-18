@@ -41,9 +41,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  private int myFinishCount = 0;
+  private int myFinishCount;
   private String myRootName;
   private Set<TestIdentifier> myRoots;
+  private boolean mySuccessful;
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -52,6 +53,15 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public JUnit5TestExecutionListener(PrintStream printStream) {
     myPrintStream = printStream;
     myPrintStream.println("##teamcity[enteredTheMatrix]");
+  }
+
+  public boolean wasSuccessful() {
+    return mySuccessful;
+  }
+
+  public void initialize() {
+    mySuccessful = true;
+    myFinishCount = 0;
   }
 
   @Override
@@ -121,6 +131,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     final TestExecutionResult.Status status = testExecutionResult.getStatus();
     final Throwable throwableOptional = testExecutionResult.getThrowable().orElse(null);
     executionFinished(testIdentifier, status, throwableOptional, null);
+    mySuccessful &= TestExecutionResult.Status.SUCCESSFUL == testExecutionResult.getStatus();
   }
 
   private void executionFinished(TestIdentifier testIdentifier,
@@ -172,7 +183,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private void testStarted(TestIdentifier testIdentifier) {
-    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + "\']");
+    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "\']");
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
@@ -252,15 +263,21 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private void sendTreeUnderRoot(TestPlan testPlan, TestIdentifier root) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
-      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + "\' locationHint=\'java:suite://" + escapeName(getClassName(root)) + "\']");
+      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + getLocationHint(root) + "\']");
       for (TestIdentifier childIdentifier : testPlan.getChildren(root)) {
         sendTreeUnderRoot(testPlan, childIdentifier);
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "\']");
     }
     else if (root.isTest()) {
-      myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + "\' locationHint=\'java:test://" + escapeName(getClassName(root) + "." + getMethodName(root)) + "\']");
+      myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + getLocationHint(root) + "\']");
     }
+  }
+
+  private String getLocationHint(TestIdentifier root) {
+    final String className = getClassName(root);
+    final String methodName = getMethodName(root);
+    return "\' locationHint=\'java:" + (root.isTest() ? "test" : "suite") + "://" + escapeName(className + (methodName != null ? "." + methodName : ""));
   }
 
 

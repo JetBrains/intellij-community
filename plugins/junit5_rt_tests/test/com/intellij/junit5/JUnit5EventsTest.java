@@ -80,7 +80,7 @@ class JUnit5EventsTest {
 
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "\n" +
-                            "##teamcity[testStarted id='[engine:engine]' name='test1()']\n" +
+                            "##teamcity[testStarted id='[engine:engine]' name='test1()' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1']\n" +
                             "\n" +
                             "##teamcity[testFailed actual='actual1' expected='expected1' name='test1()' details='' id='|[engine:engine|]' message='']\n" +
                             "\n" +
@@ -106,7 +106,7 @@ class JUnit5EventsTest {
                             "##teamcity[treeEnded]\n" +
                             "##teamcity[testSuiteStarted id='[engine:engine1]' name='brokenStream()']\n" +
                             "\n" +
-                            "##teamcity[testStarted id='[engine:engine1]' name='brokenStream()']\n" +
+                            "##teamcity[testStarted id='[engine:engine1]' name='brokenStream()' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
                             "\n" +
                             "##teamcity[testFailed name='brokenStream()' details='TRACE' id='|[engine:engine1|]' error='true' message='']\n" +
                             "\n" +

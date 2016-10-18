@@ -25,13 +25,13 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
-import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
-
 /**
  * @author nik
  */
@@ -91,12 +91,6 @@ class BuildTasksImpl extends BuildTasks {
     }
   }
 
-  @Override
-  void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(targetModuleName))), modulesToIndex, pathsToLicenses)
-  }
-
-//todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
@@ -187,11 +181,10 @@ idea.fatal.error.notification=disabled
     return propertiesFile
   }
 
-  @Override
   File patchApplicationInfo() {
     def sourceFile = buildContext.findApplicationInfoInSources()
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
-    def date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
+    def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber])
     return targetFile
@@ -229,24 +222,55 @@ idea.fatal.error.notification=disabled
     src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
   }
 
+  private static BuildTaskRunnable<String> createDistributionForOsTask(String taskName, Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+    new BuildTaskRunnable<String>(taskName) {
+      @Override
+      String run(BuildContext context) {
+        def builder = factory.apply(context)
+        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
+          return context.messages.block("Build $builder.osName Distribution") {
+            def distDirectory = builder.copyFilesForOsDistribution()
+            builder.buildArtifacts(distDirectory)
+            distDirectory
+          }
+        }
+        return null
+      }
+    }
+  }
+
   @Override
   void buildDistributions() {
+    checkProductProperties()
+
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+    buildContext.messages.block("Build platform and plugin JARs") {
+      distributionJARsBuilder.buildJARs()
+      distributionJARsBuilder.buildAdditionalArtifacts()
+    }
+    if (buildContext.productProperties.scrambleMainJar) {
+      scramble()
+    }
+
     layoutShared()
 
     def propertiesFile = patchIdeaPropertiesFile()
     List<BuildTaskRunnable<String>> tasks = [
       createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with {new WindowsDistributionBuilder(context, it, propertiesFile)}
+        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
       }),
       createDistributionForOsTask("linux", { BuildContext context ->
-        context.linuxDistributionCustomizer?.with {new LinuxDistributionBuilder(context, it, propertiesFile)}
+        context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
       }),
       createDistributionForOsTask("mac", { BuildContext context ->
-        context.macDistributionCustomizer?.with {new MacDistributionBuilder(context, it, propertiesFile)}
+        context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
       })
     ]
 
-    List<String> paths = runInParallel(tasks).findAll {it != null}
+    List<String> paths = runInParallel(tasks).findAll { it != null }
 
     if (buildContext.productProperties.buildCrossPlatformDistribution) {
       if (paths.size() == 3) {
@@ -261,42 +285,23 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private static BuildTaskRunnable<String> createDistributionForOsTask(String taskName, Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    new BuildTaskRunnable<String>(taskName) {
-      @Override
-      String run(BuildContext context) {
-        def builder = factory.apply(context)
-        if (context.shouldBuildDistributionForOS(builder.osTargetId)) {
-          return context.messages.block("Build $builder.osName Distribution") {
-            def distDirectory = builder.copyFilesForOsDistribution()
-            builder.buildArtifacts(distDirectory)
-            distDirectory
-          }
-        }
-        return null
+  private void scramble() {
+    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+      buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+    }
+    else {
+      buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
+    }
+    buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
+      fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
+      fileset(dir: "$buildContext.paths.communityHome/lib") {
+        include(name: "junit-4*.jar")
+        include(name: "hamcrest-core-*.jar")
+      }
+      zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
+        include(name: "*.xml")
       }
     }
-  }
-
-  @Override
-  void compileModulesAndBuildDistributions() {
-    checkProductProperties()
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
-                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
-    buildContext.messages.block("Build platform and plugin JARs") {
-      distributionJARsBuilder.buildJARs()
-      distributionJARsBuilder.buildAdditionalArtifacts()
-    }
-    if (buildContext.productProperties.scrambleMainJar) {
-      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-        buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
-      }
-      else {
-        buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
-      }
-    }
-    buildDistributions()
   }
 
   private void checkProductProperties() {
@@ -315,6 +320,7 @@ idea.fatal.error.notification=disabled
 
     def macCustomizer = buildContext.macDistributionCustomizer
     checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
+    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
     checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
   }
@@ -330,7 +336,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
-    checkModules([layout.mainModule], "productProperties.productLayout.mainModule")
+    checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
@@ -433,26 +439,31 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    List<V> results = buildContext.messages.block("Run parallel tasks") {
-      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
-      def executorService = Executors.newCachedThreadPool()
-      List<Future<V>> futures = tasks.collect { task ->
-        def childContext = buildContext.forkForParallelTask(task.taskName)
-        executorService.submit({
-          def start = System.currentTimeMillis()
-          childContext.messages.onForkStarted()
-          try {
-            return task.run(childContext)
-          }
-          finally {
-            buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
-            childContext.messages.onForkFinished()
-          }
-        } as Callable<V>)
+    List<V> results = []
+    try {
+      results = buildContext.messages.block("Run parallel tasks") {
+        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+        def executorService = Executors.newCachedThreadPool()
+        List<Future<V>> futures = tasks.collect { task ->
+          def childContext = buildContext.forkForParallelTask(task.taskName)
+          executorService.submit({
+            def start = System.currentTimeMillis()
+            childContext.messages.onForkStarted()
+            try {
+              return task.run(childContext)
+            }
+            finally {
+              buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+              childContext.messages.onForkFinished()
+            }
+          } as Callable<V>)
+        }
+        futures.collect { it.get() }
       }
-      futures.collect { it.get() }
     }
-    buildContext.messages.onAllForksFinished()
+    finally {
+      buildContext.messages.onAllForksFinished()
+    }
     results
   }
 
@@ -467,7 +478,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext)
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     jarsBuilder.buildJARs()
     layoutShared()
 

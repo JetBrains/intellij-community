@@ -194,9 +194,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
+  public static GlobalSearchScope everythingScope(@NotNull Project project) {
+    return ProjectScope.getEverythingScope(project);
+  }
+
+  @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
     return new NotScope(scope);
   }
+
   private static class NotScope extends DelegatingGlobalSearchScope {
     private NotScope(@NotNull GlobalSearchScope scope) {
       super(scope);
@@ -322,8 +328,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   /**
    * Optimization. By default FilesScope makes a decision about searching in libraries by checking that
-   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether 
-   * it should include libraries or not in order to avoid checking each file. 
+   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether
+   * it should include libraries or not in order to avoid checking each file.
    * Also, if you have a lot of files it might be faster to always search in libraries.
    */
   @NotNull
@@ -331,7 +337,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, false);
   }
-  
+
   @NotNull
   public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
@@ -805,7 +811,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public int hashCode() {
       return myFiles.hashCode();
     }
-    
+
     private boolean hasFilesOutOfProjectRoots() {
       if (myHasFilesOutOfProjectRoots == null) {
         myHasFilesOutOfProjectRoots = false;

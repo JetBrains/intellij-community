@@ -767,12 +767,13 @@ public class SvnUtil {
     }
   }
 
-  public static SVNURL append(@NotNull SVNURL parent, String child) {
+  @NotNull
+  public static SVNURL append(@NotNull SVNURL parent, @NotNull String child) throws SvnBindException {
     try {
       return parent.appendPath(child, false);
     }
     catch (SVNException e) {
-      throw createIllegalArgument(e);
+      throw new SvnBindException(e);
     }
   }
 

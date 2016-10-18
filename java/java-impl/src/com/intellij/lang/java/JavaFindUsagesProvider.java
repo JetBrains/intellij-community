@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiVariable ||
            element instanceof PsiMethod ||
            element instanceof PsiPackage ||
+           element instanceof PsiJavaModule ||
            element instanceof PsiLabeledStatement ||
            ThrowSearchUtil.isSearchable(element) ||
            element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null;
@@ -124,6 +125,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiExpression) {
       return LangBundle.message("java.terms.expression");
     }
+    if (element instanceof PsiJavaModule) {
+      return LangBundle.message("java.terms.module");
+    }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
     if (name != null) {
@@ -156,9 +160,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         return "anonymous " + StringUtil.notNullize(name, "class");
       }
       else {
-        final PsiClass aClass = (PsiClass)element;
-        String qName =  aClass.getQualifiedName();
-        return qName == null ? aClass.getName() : qName;
+        PsiClass aClass = (PsiClass)element;
+        String qName = aClass.getQualifiedName();
+        return qName != null ? qName : aClass.getName() != null ? aClass.getName() : "<unknown>";
       }
     }
     if (element instanceof PsiMethod) {
@@ -188,6 +192,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (element instanceof PsiLiteralExpression) {
       return element.getText();
+    }
+    if (element instanceof PsiJavaModule) {
+      return ((PsiJavaModule)element).getModuleName();
     }
 
     return "";
@@ -219,15 +226,19 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiDirectory) {
       return getPackageName((PsiDirectory)element, false);
     }
+
     if (element instanceof PsiPackage) {
       return getPackageName((PsiPackage)element);
     }
+
     if (element instanceof PsiFile) {
       return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
     }
+
     if (element instanceof PsiLabeledStatement) {
       return ((PsiLabeledStatement)element).getLabelIdentifier().getText();
     }
+
     if (ThrowSearchUtil.isSearchable(element)) {
       return ThrowSearchUtil.getSearchableTypeName(element);
     }
@@ -239,85 +250,53 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       }
       if (name != null) return name;
     }
+
     if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
       if (useFullName) {
-        String s = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                              PsiSubstitutor.EMPTY, PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE |
-                                                                    PsiFormatUtilBase.SHOW_NAME |
-                                                                    PsiFormatUtilBase.SHOW_PARAMETERS,
-                                              PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-        final PsiClass psiClass = psiMethod.getContainingClass();
-        if (psiClass != null) {
-          final String qName = psiClass.getQualifiedName();
-          if (qName != null) {
-            if (psiClass.isInterface()) {
-              s = LangBundle.message("java.terms.of.interface", s, qName);
-            }
-            else {
-              s = LangBundle.message("java.terms.of.class", s, qName);
-            }
-          }
-        }
-        return s;
+        int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
+        String s = PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
+        return appendClassName(s, psiMethod.getContainingClass());
       }
       else {
-        return PsiFormatUtil.formatMethod(psiMethod,
-                                          PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE);
+        int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
+        return PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
       }
     }
+
     if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
+      int varOptions = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
+      int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
       String s = LangBundle.message("java.terms.variable.of.method",
-                                    PsiFormatUtil.formatVariable((PsiVariable)element,
-                                                                 PsiFormatUtilBase.TYPE_AFTER |
-                                                                 PsiFormatUtilBase.SHOW_TYPE |
-                                                                 PsiFormatUtilBase.SHOW_NAME,
-                                                                 PsiSubstitutor.EMPTY),
-                                    PsiFormatUtil.formatMethod(method,
-                                                               PsiSubstitutor.EMPTY,
-                                                               PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                               PsiFormatUtilBase.SHOW_TYPE));
-
-      final PsiClass psiClass = method.getContainingClass();
-      if (psiClass != null && psiClass.getQualifiedName() != null) {
-        if (psiClass.isInterface()) {
-          s = LangBundle.message("java.terms.of.interface", s, psiClass.getQualifiedName());
-        }
-        else {
-          s = LangBundle.message("java.terms.of.class", s, psiClass.getQualifiedName());
-        }
-      }
-      return s;
+                                    PsiFormatUtil.formatVariable((PsiVariable)element, varOptions, PsiSubstitutor.EMPTY),
+                                    PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, methodOptions, PsiFormatUtilBase.SHOW_TYPE));
+      return appendClassName(s, method.getContainingClass());
     }
+
     if (element instanceof PsiField) {
       PsiField psiField = (PsiField)element;
-      String s = PsiFormatUtil.formatVariable(psiField,
-                                              PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME,
-                                              PsiSubstitutor.EMPTY);
-      PsiClass psiClass = psiField.getContainingClass();
-      if (psiClass != null) {
-        String qName = psiClass.getQualifiedName();
-        if (qName != null) {
-          if (psiClass.isInterface()) {
-            s = LangBundle.message("java.terms.of.interface", s, qName);
-          }
-          else {
-            s = LangBundle.message("java.terms.of.class", s, qName);
-          }
-        }
-      }
-      return s;
+      int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
+      String s = PsiFormatUtil.formatVariable(psiField, options, PsiSubstitutor.EMPTY);
+      return appendClassName(s, psiField.getContainingClass());
     }
+
     if (element instanceof PsiVariable) {
-      return PsiFormatUtil.formatVariable((PsiVariable)element,
-                                          PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME,
-                                          PsiSubstitutor.EMPTY);
+      int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
+      return PsiFormatUtil.formatVariable((PsiVariable)element, options, PsiSubstitutor.EMPTY);
     }
 
     return "";
+  }
+
+  private static String appendClassName(String s, PsiClass psiClass) {
+    if (psiClass != null) {
+      String qName = psiClass.getQualifiedName();
+      if (qName != null) {
+        s = LangBundle.message(psiClass.isInterface() ? "java.terms.of.interface" : "java.terms.of.class", s, qName);
+      }
+    }
+    return s;
   }
 
   public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {

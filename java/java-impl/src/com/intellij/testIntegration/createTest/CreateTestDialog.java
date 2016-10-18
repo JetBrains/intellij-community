@@ -345,6 +345,7 @@ public class CreateTestDialog extends DialogWrapper {
       public void customize(JList list, TestFramework value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
           setText(value.getName());
+          setIcon(value.getIcon());
         }
       }
     });
@@ -352,8 +353,14 @@ public class CreateTestDialog extends DialogWrapper {
     final List<TestFramework> attachedLibraries = new ArrayList<>();
     final String defaultLibrary = getDefaultLibraryName();
     TestFramework defaultDescriptor = null;
+
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
-    for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+
+    final List<TestFramework> descriptors = new ArrayList<>();
+    descriptors.addAll(Arrays.asList(Extensions.getExtensions(TestFramework.EXTENSION_NAME)));
+    descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
+
+    for (final TestFramework descriptor : descriptors) {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);

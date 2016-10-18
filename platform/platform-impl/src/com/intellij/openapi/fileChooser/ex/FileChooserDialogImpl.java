@@ -172,17 +172,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
 
     if (file != null && file.isValid()) {
-      myFileSystemTree.select(file, () -> {
-        if (!file.equals(myFileSystemTree.getSelectedFile())) {
-          VirtualFile parent = file.getParent();
-          if (parent != null) {
-            myFileSystemTree.select(parent, null);
-          }
-        }
-        else if (file.isDirectory()) {
-          myFileSystemTree.expand(file, null);
-        }
-      });
+      selectInTree(file, null);
     }
   }
 
@@ -699,13 +689,22 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
       myFileSystemTree.select(array, () -> {
         if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+          // try to select files in hidden folders
           myFileSystemTree.showHiddens(true);
           selectInTree(array, requestFocus);
           return;
         }
+        if (array.length == 1 && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+          // try to select a parent of a missed file
+          VirtualFile parent = array[0].getParent();
+          if (parent != null && parent.isValid()) {
+            selectInTree(new VirtualFile[]{parent}, requestFocus);
+            return;
+          }
+        }
 
-        myTreeIsUpdating = false;
-        setErrorText(null);
+        reportFileNotFound();
+        updatePathFromTree(fileList, true);
         if (requestFocus) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> myFileSystemTree.getTree().requestFocus());
@@ -713,8 +712,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       });
     }
     else {
-      myTreeIsUpdating = false;
-      setErrorText(null);
+      reportFileNotFound();
+      updatePathFromTree(fileList, true);
     }
   }
 

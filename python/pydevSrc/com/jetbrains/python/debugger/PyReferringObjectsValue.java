@@ -31,7 +31,7 @@ public class PyReferringObjectsValue extends PyDebugValue {
                                  String typeQualifier,
                                  String value,
                                  boolean container, boolean isReturnedVal, boolean errorOnEval, @NotNull PyFrameAccessor frameAccessor) {
-    super(name, type, typeQualifier, value, container, isReturnedVal, errorOnEval, frameAccessor);
+    super(name, type, typeQualifier, value, container, isReturnedVal, false, errorOnEval, frameAccessor);
     myReferrersLoader = frameAccessor.getReferrersLoader();
   }
 

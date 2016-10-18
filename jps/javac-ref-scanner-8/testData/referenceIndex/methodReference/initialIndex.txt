@@ -1,0 +1,17 @@
+Backward Hierarchy:
+java.lang.Object -> MethodReference
+java.lang.Runnable -> fun_expr(id=0)
+
+Backward References:
+MethodReference in MethodReference
+MethodReference.<init>(0) in MethodReference
+MethodReference.main(1) in MethodReference
+java.lang.Object.<init>(0) in MethodReference
+java.lang.String in MethodReference
+java.lang.Thread in MethodReference
+java.util.Collections in MethodReference
+java.util.Collections.emptyList(0) in MethodReference
+
+Class Definitions:
+MethodReference in MethodReference
+fun_expr(id=0) in MethodReference

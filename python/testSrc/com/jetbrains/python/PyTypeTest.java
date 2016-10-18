@@ -886,6 +886,80 @@ public class PyTypeTest extends PyTestCase {
            "  expr, foo = xs\n");
   }
 
+  // PY-19826
+  public void testListFromTuple() {
+    doTest("List[Union[str, int]]",
+           "expr = list(('1', 2, 3))");
+  }
+
+  public void testDictFromTuple() {
+    doTest("Dict[Union[str, int], Union[str, int]]",
+           "expr = dict((('1', 1), (2, 2), (3, '3')))");
+  }
+
+  public void testSetFromTuple() {
+    doTest("Set[Union[str, int]]",
+           "expr = set(('1', 2, 3))");
+  }
+
+  public void testTupleFromTuple() {
+    doTest("Tuple[str, int, int]",
+           "expr = tuple(('1', 2, 3))");
+  }
+
+  public void testTupleFromList() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple(['1', 2, 3])");
+  }
+
+  public void testTupleFromDict() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple({'1': 'a', 2: 'b', 3: 4})");
+  }
+
+  public void testTupleFromSet() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple({'1', 2, 3})");
+  }
+
+  public void testHomogeneousTupleSubstitution() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        myFixture.copyDirectoryToProject("typing", "");
+
+        doTest("Tuple[int, ...]",
+               "from typing import TypeVar, Tuple\n" +
+               "T = TypeVar('T')\n" +
+               "def foo(i: T) -> Tuple[T, ...]:\n" +
+               "    pass\n" +
+               "expr = foo(5)");
+      }
+    );
+  }
+
+  public void testHeterogeneousTupleSubstitution() {
+    doTest("tuple[int, int]",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple[T, T]\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
+  public void testUnknownTupleSubstitution() {
+    doTest("tuple",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
   public void testTupleIterationType() {
     doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
@@ -1219,6 +1293,86 @@ public class PyTypeTest extends PyTestCase {
            "    x = 1 if c else None\n" +
            "    if None is x:\n" +
            "        expr = x\n");
+  }
+
+  public void testHeterogeneousListLiteral() {
+    doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
+
+    doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
+  }
+
+  public void testHeterogeneousSetLiteral() {
+    doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
+
+    doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
+  }
+
+  public void testHeterogeneousDictLiteral() {
+    doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
+
+    doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
+           "expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}");
+  }
+
+  public void testHeterogeneousTupleLiteral() {
+    doTest("Tuple[str, int, int]", "expr = ('1', 1, 1)");
+
+    doTest("Tuple[str, int, int, int, int, int, int, int, int, int, int]", "expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)");
+  }
+
+  // PY-20818
+  public void testIsInstanceForSuperclass() {
+    doTest("B",
+           "class A:\n" +
+           "    pass\n" +
+           "class B(A):\n" +
+           "    def foo(self):\n" +
+           "        pass\n" +
+           "def test():\n" +
+           "    b = B()\n" +
+           "    assert(isinstance(b, A))\n" +
+           "    expr = b\n");
+  }
+
+  // PY-20794
+  public void testIterateOverPureList() {
+    doTest("Any",
+           "l = None  # type: list\n" +
+           "for expr in l:\n" +
+           "    print(expr)\n");
+  }
+
+  // PY-20794
+  public void testIterateOverDictValueWithDefaultValue() {
+    doTest("Any",
+           "d = None  # type: dict\n" +
+           "for expr in d.get('field', []):\n" +
+           "    print(expr['id'])\n");
+  }
+
+  // PY-20797
+  public void testValueOfEmptyDefaultDict() {
+    doTest("list",
+           "from collections import defaultdict\n" +
+           "expr = defaultdict(lambda: [])['x']\n");
+  }
+
+  // PY-8473
+  public void testCopyDotCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.copy(A())\n");
+  }
+
+  // PY-8473
+  public void testCopyDotDeepCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.deepcopy(A())\n");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

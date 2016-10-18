@@ -450,6 +450,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
+    return union((Collection<T>)set, set2);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> union(@NotNull Collection<T> set, @NotNull Collection<T> set2) {
     Set<T> result = new THashSet<T>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);

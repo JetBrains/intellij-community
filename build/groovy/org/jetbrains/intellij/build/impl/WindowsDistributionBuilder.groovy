@@ -28,9 +28,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties
+  private final File patchedApplicationInfo
 
-  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties) {
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
     super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
+    this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
   }
@@ -64,9 +66,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.includeBatchLaunchers) {
       generateScripts(winDistPath)
     }
-    generateVMOptions(winDistPath)
-    buildWinLauncher(JvmArchitecture.x32, winDistPath)
-    buildWinLauncher(JvmArchitecture.x64, winDistPath)
+    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? JvmArchitecture.values() : [JvmArchitecture.x64]
+    generateVMOptions(winDistPath, architectures)
+    architectures.each {
+      buildWinLauncher(it, winDistPath)
+    }
     customizer.copyAdditionalFiles(buildContext, winDistPath)
     new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
       buildContext.signExeFile(it.absolutePath)
@@ -99,7 +103,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateScripts(String winDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    //todo[nik] looks like names without .exe were also supported, do we need this?
     String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
@@ -139,11 +142,12 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
   }
 
-  private void generateVMOptions(String winDistPath) {
-    JvmArchitecture.values().each {
+  private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
+    architectures.each {
       def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
-      new File(winDistPath, "bin/$fileName").text = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, yourkitSessionName).replace(' ', '\n') + "\n"
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName)
+      new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
@@ -158,7 +162,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.shortProductName
 
-      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
+      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : "";
+      String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
@@ -169,7 +174,7 @@ IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCase
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
 IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
-IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${arch.fileSuffix}_VM_OPTIONS
+IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
 IDS_ERROR_LAUNCHING_APP=Error launching $productName
 IDS_VM_OPTIONS=$vmOptions
 """.trim()
@@ -181,7 +186,7 @@ IDS_VM_OPTIONS=$vmOptions
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
-        arg(value: buildContext.findApplicationInfoInSources().absolutePath)
+        arg(value: patchedApplicationInfo.absolutePath)
         arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath)
         arg(value: outputPath)

@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -92,16 +91,6 @@ public class JavaParameters extends SimpleJavaParameters {
         vmParameters.addProperty(JAVA_LIBRARY_PATH_PROPERTY, pathsList.getPathsString());
       }
     }
-  }
-
-  @Nullable
-  private static NotNullFunction<OrderEntry, VirtualFile[]> computeRootProvider(@MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, final Sdk jdk) {
-    return (classPathType & JDK_ONLY) == 0 ? null : (NotNullFunction<OrderEntry, VirtualFile[]>)orderEntry -> {
-        if (orderEntry instanceof JdkOrderEntry) {
-          return jdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-        }
-        return orderEntry.getFiles(OrderRootType.CLASSES);
-      };
   }
 
   public void setDefaultCharset(final Project project) {
@@ -189,9 +178,9 @@ public class JavaParameters extends SimpleJavaParameters {
       enumerator = enumerator.productionOnly();
     }
     OrderRootsEnumerator rootsEnumerator = enumerator.classes();
-    final NotNullFunction<OrderEntry, VirtualFile[]> provider = computeRootProvider(classPathType, jdk);
-    if (provider != null) {
-      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(provider);
+    if ((classPathType & JDK_ONLY) != 0) {
+      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(
+        e -> e instanceof JdkOrderEntry ? jdk.getRootProvider().getFiles(OrderRootType.CLASSES) : e.getFiles(OrderRootType.CLASSES));
     }
     return rootsEnumerator;
   }

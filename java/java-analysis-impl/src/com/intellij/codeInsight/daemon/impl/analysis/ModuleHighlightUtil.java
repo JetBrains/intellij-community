@@ -28,8 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,10 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,21 +54,28 @@ import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class ModuleHighlightUtil {
   @Nullable
-  static PsiJavaModule getModuleDescriptor(@NotNull PsiElement element) {
-    VirtualFile file = Optional.of(element)
-      .map(e -> e instanceof PsiFileSystemItem ? (PsiFileSystemItem)e : e.getContainingFile())
-      .map(PsiFileSystemItem::getVirtualFile)
-      .orElse(null);
+  static PsiJavaModule getModuleDescriptor(@NotNull PsiFileSystemItem fsItem) {
+    VirtualFile file = fsItem.getVirtualFile();
     if (file == null) return null;
 
-    Project project = element.getProject();
+    Project project = fsItem.getProject();
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    if (element instanceof PsiCompiledElement) {
-      return Optional.ofNullable(index.getClassRootForFile(file))
-        .map(r -> r.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE))
-        .map(PsiManager.getInstance(project)::findFile)
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .orElse(null);
+    if (index.isInLibraryClasses(file)) {
+      VirtualFile classRoot = index.getClassRootForFile(file);
+      if (classRoot != null) {
+        VirtualFile descriptorFile = findModuleDescriptor(classRoot);
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+        else if (classRoot.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(classRoot.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), classRoot);
+        }
+      }
+
+      return null;
     }
     else {
       Module module = index.getModuleForFile(file);
@@ -80,6 +86,14 @@ public class ModuleHighlightUtil {
         .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
         .orElse(null);
     }
+  }
+
+  private static VirtualFile findModuleDescriptor(VirtualFile classRoot) {
+    VirtualFile result = classRoot.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+    if (result == null) {
+      result = classRoot.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+    }
+    return result;
   }
 
   @Nullable
@@ -96,7 +110,7 @@ public class ModuleHighlightUtil {
 
   @Nullable
   static HighlightInfo checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    Module module = findModule(file);
     if (module != null) {
       Project project = file.getProject();
       Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
@@ -118,12 +132,12 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiRequiresStatement.class),
+      module.getRequires(),
       st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText),
       "module.duplicate.requires", results);
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiExportsStatement.class),
+      module.getExports(),
       st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
       "module.duplicate.export", results);
 
@@ -173,12 +187,12 @@ public class ModuleHighlightUtil {
       }
     }
 
-    Module host = ModuleUtilCore.findModuleForPsiElement(module);
+    Module host = findModule(module);
     for (PsiProvidesStatement statement : psiTraverser().children(module).filter(PsiProvidesStatement.class)) {
       PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
       if (ref != null) {
         PsiElement target = ref.resolve();
-        if (target instanceof PsiClass && ModuleUtilCore.findModuleForPsiElement(target) == host) {
+        if (target instanceof PsiClass && findModule(target) == host) {
           String className = refText(ref), packageName = StringUtil.getPackageName(className);
           if (!exports.contains(packageName) && !uses.contains(className)) {
             String message = JavaErrorMessages.message("module.service.unused");
@@ -243,7 +257,7 @@ public class ModuleHighlightUtil {
     if (refElement != null) {
       PsiElement target = refElement.resolve();
       if (target instanceof PsiPackage) {
-        Module module = ModuleUtilCore.findModuleForPsiElement(refElement);
+        Module module = findModule(refElement);
         if (module != null) {
           String packageName = ((PsiPackage)target).getQualifiedName();
           PsiDirectory[] directories = ((PsiPackage)target).getDirectories(module.getModuleScope(false));
@@ -267,7 +281,7 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> targets = ContainerUtil.newTroveSet();
-    for (PsiJavaModuleReferenceElement refElement : psiTraverser().children(statement).filter(PsiJavaModuleReferenceElement.class)) {
+    for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
       PsiPolyVariantReference ref = refElement.getReference();
       assert ref != null : statement;
@@ -339,12 +353,12 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkPackageAccessibility(@NotNull PsiJavaCodeReferenceElement ref,
                                                  @NotNull PsiElement target,
                                                  @NotNull PsiJavaModule refModule) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(ref);
+    Module module = findModule(refModule);
     if (module != null) {
-      if (target instanceof PsiClass && !(target instanceof PsiCompiledElement) && module != ModuleUtilCore.findModuleForPsiElement(target)) {
+      if (target instanceof PsiClass) {
         PsiElement targetFile = target.getParent();
         if (targetFile instanceof PsiClassOwner) {
-          PsiJavaModule targetModule = getModuleDescriptor(target);
+          PsiJavaModule targetModule = getModuleDescriptor((PsiFileSystemItem)targetFile);
           String packageName = ((PsiClassOwner)targetFile).getPackageName();
           return checkPackageAccessibility(ref, refModule, targetModule, packageName);
         }
@@ -353,7 +367,7 @@ public class ModuleHighlightUtil {
         PsiElement refImport = ref.getParent();
         if (refImport instanceof PsiImportStatementBase && ((PsiImportStatementBase)refImport).isOnDemand()) {
           PsiDirectory[] dirs = ((PsiPackage)target).getDirectories(module.getModuleWithDependenciesAndLibrariesScope(false));
-          if (dirs.length == 1 && ModuleUtilCore.findModuleForPsiElement(dirs[0]) != module) {
+          if (dirs.length == 1) {
             PsiJavaModule targetModule = getModuleDescriptor(dirs[0]);
             String packageName = ((PsiPackage)target).getQualifiedName();
             return checkPackageAccessibility(ref, refModule, targetModule, packageName);
@@ -369,34 +383,33 @@ public class ModuleHighlightUtil {
                                                          PsiJavaModule refModule,
                                                          PsiJavaModule targetModule,
                                                          String packageName) {
-    if (targetModule == null) {
-      String message = JavaErrorMessages.message("module.package.on.classpath");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
-    }
+    if (!refModule.equals(targetModule)) {
+      if (targetModule == null) {
+        String message = JavaErrorMessages.message("module.package.on.classpath");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+      }
 
-    String refModuleName = refModule.getModuleName();
-    String requiredName = targetModule.getModuleName();
-    if (!(targetModule instanceof PsiCompiledElement) && !isExported(targetModule, packageName)) {
-      String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
-    }
+      String refModuleName = refModule.getModuleName();
+      String requiredName = targetModule.getModuleName();
+      if (!(targetModule instanceof LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, refModule))) {
+        String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+      }
 
-    if (!(PsiJavaModule.JAVA_BASE.equals(requiredName) || JavaModuleGraphUtil.reads(refModule, targetModule))) {
-      String message = JavaErrorMessages.message("module.not.in.requirements", refModuleName, requiredName);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+      if (!(PsiJavaModule.JAVA_BASE.equals(requiredName) || JavaModuleGraphUtil.reads(refModule, targetModule))) {
+        String message = JavaErrorMessages.message("module.not.in.requirements", refModuleName, requiredName);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+      }
     }
 
     return null;
   }
 
-  private static boolean isExported(PsiJavaModule module, String packageName) {
-    for (PsiExportsStatement statement : psiTraverser().children(module).filter(PsiExportsStatement.class)) {
-      String exportedName = Optional.ofNullable(statement.getPackageReference()).map(ModuleHighlightUtil::refText).orElse("");
-      if (packageName.equals(exportedName)) {
-        return true;
-      }
-    }
-    return false;
+  private static Module findModule(PsiElement element) {
+    return Optional.ofNullable(element.getContainingFile())
+      .map(PsiFile::getVirtualFile)
+      .map(f -> ModuleUtilCore.findModuleForFile(f, element.getProject()))
+      .orElse(null);
   }
 
   private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {

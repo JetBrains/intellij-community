@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.ProductProperties
 
 /**
  * @author nik
@@ -27,8 +28,8 @@ class VmOptionsGenerator {
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                           "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
 
-  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, String yourkitSessionName = null) {
-    String options = vmOptionsForArch(arch) + " " + computeCommonVmOptions(isEAP)
+  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {
+    String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
     if (yourkitSessionName != null) {
       options += " " + yourkitOptions(yourkitSessionName, arch.fileSuffix)
     }
@@ -43,10 +44,10 @@ class VmOptionsGenerator {
     return options
   }
 
-  static String vmOptionsForArch(JvmArchitecture arch) {
+  static String vmOptionsForArch(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
       case JvmArchitecture.x32: return "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m"
-      case JvmArchitecture.x64: return "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
+      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
   }

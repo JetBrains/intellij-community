@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -521,7 +522,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }
   }
 
-  private VirtualFilePointer createPointerByFile(final File file, final VirtualFilePointerListener fileListener) throws IOException {
+  private VirtualFilePointer createPointerByFile(@NotNull File file, @Nullable VirtualFilePointerListener fileListener) throws IOException {
     final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getCanonicalPath().replace(File.separatorChar, '/'));
     final VirtualFile vFile = refreshAndFind(url);
     return vFile == null
@@ -721,7 +722,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }).useLegacyScaling().assertTiming();
   }
 
-  public void testCidrConfusions() throws IOException {
+  public void testCidrCrazyAddCreateRenames() throws IOException {
     File tempDirectory = createTempDirectory();
     final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory);
 
@@ -737,8 +738,9 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     delete(dir1);
     assertSourceIs(null); // srcDir deleted, no more sources
     assertLibIs(dir2);    // libDir stays the same
-
+    myVirtualFilePointerManager.assertConsistency();
     rename(dir2, "dir1");
+    myVirtualFilePointerManager.assertConsistency();
     assertSourceIs(dir2); // srcDir re-appeared, sources are "dir1"
     assertLibIs(dir2);    // libDir renamed, libs are "dir1" now
 
@@ -836,5 +838,17 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
       PsiTestUtil.removeAllRoots(getModule(), null);
     }
+  }
+
+  public void testDotDot() throws IOException {
+    File tempDirectory = createTempDirectory();
+    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory);
+
+    VirtualFile dir1 = createChildDirectory(root, "dir1");
+    VirtualFile dir2 = createChildDirectory(root, "dir2");
+    VirtualFile file = createChildData(dir1, "x.txt");
+
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
+    assertEquals(file, pointer.getFile());
   }
 }
