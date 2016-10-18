@@ -99,7 +99,6 @@ abstract class GitMergeAction extends GitRepositoryAction {
               return handler;
             }
           });
-          affectedRoots.add(selectedRoot);
 
           GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
           assert repository != null : "Repository can't be null for root " + selectedRoot;
@@ -109,7 +108,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           }
           final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
           handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector,
-                       repository, currentRev, affectedRoots, beforeLabel);
+                       repository, currentRev, beforeLabel);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(project, token);
@@ -126,7 +125,6 @@ abstract class GitMergeAction extends GitRepositoryAction {
                             GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector,
                             GitRepository repository,
                             GitRevisionNumber currentRev,
-                            Set<VirtualFile> affectedRoots,
                             Label beforeLabel) {
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile root = repository.getRoot();
