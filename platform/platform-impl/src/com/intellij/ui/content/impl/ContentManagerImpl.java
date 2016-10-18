@@ -30,7 +30,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -95,7 +94,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
 
-      MyContentComponent contentComponent = new MyContentComponent();
+      NonOpaquePanel contentComponent = new NonOpaquePanel();
       contentComponent.setContent(myUI.getComponent());
       contentComponent.setFocusCycleRoot(true);
 
@@ -138,18 +137,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       DataProvider provider = DataManager.getDataProvider(this);
       return provider == null ? null : provider.getData(dataId);
-    }
-  }
-
-  private class MyContentComponent extends NonOpaquePanel implements QuickAccessProvider {
-    @Override
-    public JComponent getComponent() {
-      return myUI instanceof QuickAccessProvider ? myUI.getComponent() : this;
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return myUI instanceof QuickAccessProvider && ((QuickAccessProvider)myUI).isCycleRoot();
     }
   }
 

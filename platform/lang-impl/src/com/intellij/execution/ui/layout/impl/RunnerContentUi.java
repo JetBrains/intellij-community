@@ -47,7 +47,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -78,7 +77,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
-                                        QuickAccessProvider, QuickActionProvider, DockContainer.Dialog {
+                                        QuickActionProvider, DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
@@ -619,11 +618,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public boolean isDisposeWhenEmpty() {
     return myOriginal != null;
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
   }
 
   @Override
@@ -1404,16 +1398,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     public List<AnAction> getActions(boolean originalProvider) {
       return RunnerContentUi.this.getActions(originalProvider);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return RunnerContentUi.this.getComponent();
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return RunnerContentUi.this.isCycleRoot();
     }
 
     @Override

@@ -17,6 +17,7 @@ package com.intellij.ui.switcher;
 
 import javax.swing.*;
 
+@Deprecated
 public interface QuickAccessProvider {
 
   JComponent getComponent();

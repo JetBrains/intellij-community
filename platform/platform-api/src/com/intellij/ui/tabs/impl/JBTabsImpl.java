@@ -2688,11 +2688,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
   private void addListeners() {
     for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);

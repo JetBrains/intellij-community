@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 
 import java.util.List;
 
-public interface QuickActionProvider extends QuickAccessProvider {
+public interface QuickActionProvider {
 
   DataKey<QuickActionProvider> KEY = DataKey.create("QuickActionProvider");
 

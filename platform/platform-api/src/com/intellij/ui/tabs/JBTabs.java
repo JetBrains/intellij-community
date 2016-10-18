@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public interface JBTabs extends QuickAccessProvider {
+public interface JBTabs {
 
   @NotNull
   TabInfo addTab(TabInfo info, int index);
@@ -72,7 +71,6 @@ public interface JBTabs extends QuickAccessProvider {
 
   JBTabs setSelectionChangeHandler(SelectionChangeHandler handler);
 
-  @Override
   @NotNull
   JComponent getComponent();
 

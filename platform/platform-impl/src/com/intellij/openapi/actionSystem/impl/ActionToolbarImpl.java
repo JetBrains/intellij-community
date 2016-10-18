@@ -1228,11 +1228,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
   public List<AnAction> getActions(boolean originalProvider) {
     ArrayList<AnAction> result = new ArrayList<>();
 

@@ -36,7 +36,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, QuickAccessProvider {
+public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
@@ -111,10 +110,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   public JComponent getComponent() {
     return myContent;
-  }
-
-  public boolean isCycleRoot() {
-    return true;
   }
 
   public JComponent getTabComponent() {
