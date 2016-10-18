@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -81,6 +83,15 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
           if (element != null) {
             JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage())
               .createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
+          }
+          return true;
+        });
+
+        ReferencesSearch.search(parameter).forEach(reference -> {
+          PsiElement element = reference.getElement();
+          final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
+          if (docTag != null) {
+            foreignMethodUsages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(docTag, parameter, true));
           }
           return true;
         });
