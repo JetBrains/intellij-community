@@ -61,6 +61,7 @@ public class GitStash extends GitRepositoryAction {
       DvcsUtil.workingTreeChangeFinished(project, token);
     }
     VfsUtil.markDirtyAndRefresh(false, true, false, root);
+    showErrors(project, getActionName(), exceptions);
   }
 
   /**

@@ -25,9 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
@@ -60,7 +58,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
 
     final VirtualFile defaultRoot = getDefaultRoot(project, roots, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     final Set<VirtualFile> affectedRoots = new HashSet<>();
-    String actionName = getActionName();
 
     List<VcsException> exceptions = new ArrayList<>();
     try {
@@ -68,9 +65,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     }
     catch (VcsException ex) {
       exceptions.add(ex);
-    }
-    if (executeFinalTasksSynchronously()) {
-      runFinalTasks(project, affectedRoots, actionName, exceptions);
     }
   }
 
@@ -89,22 +83,15 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
   }
 
-  protected final void runFinalTasks(@NotNull final Project project,
-                                     @NotNull final Set<VirtualFile> affectedRoots,
-                                     @NotNull final String actionName,
-                                     @NotNull final List<VcsException> exceptions) {
-    VfsUtil.markDirtyAndRefresh(true, true, false, ArrayUtil.toObjectArray(affectedRoots, VirtualFile.class));
-    showErrors(project, actionName, exceptions);
-  }
-
   protected static void showErrors(@NotNull Project project, @NotNull String actionName, @NotNull List<VcsException> exceptions) {
     notNull(GitVcs.getInstance(project)).showErrors(exceptions, actionName);
   }
 
   /**
-   * Return true to indicate that the final tasks should be executed after the action invocation,
-   * false if the task is responsible to call the final tasks manually via {@link #runFinalTasks(Project, Set}.
+   * @deprecated "final tasks" are not called for all actions anymore.
+   * They should be called by certain actions manually if and when needed.
    */
+  @Deprecated
   protected boolean executeFinalTasksSynchronously() {
     return true;
   }

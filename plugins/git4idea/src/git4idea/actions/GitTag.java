@@ -51,6 +51,6 @@ public class GitTag extends GitRepositoryAction {
       return;
     }
     d.runAction(exceptions);
+    showErrors(project, getActionName(), exceptions);
   }
-
 }

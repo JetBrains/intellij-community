@@ -19,7 +19,9 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
@@ -66,5 +68,7 @@ public class GitResetHead extends GitRepositoryAction {
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());
+    VfsUtil.markDirtyAndRefresh(true, true, false, ArrayUtil.toObjectArray(affectedRoots, VirtualFile.class));
+    showErrors(project, getActionName(), exceptions);
   }
 }
