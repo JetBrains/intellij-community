@@ -19,13 +19,17 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate;
 import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
 import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -94,12 +98,10 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     }
   }
 
-  //private static boolean isActionEnabled() {
-  //  final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
-  //  final TestActionEvent event = new TestActionEvent(action);
-  //  action.beforeActionPerformedUpdate(event);
-  //  return event.getPresentation().isEnabled();
-  //}
+  private boolean isActionEnabled() {
+    final PsiElement elementUnderCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    return PyMoveSymbolDelegate.findMovableLocalFunctionOrMethod(elementUnderCaret) != null; 
+  }
 
   // PY-6637
   public void testLocalFunctionSimple() {
@@ -107,43 +109,43 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   // PY-6637
-  //public void testRefactoringAvailability() {
-  //  myFixture.configureByFile(getTestName(true) + ".py");
-  //
-  //  final PsiFile file = myFixture.getFile();
-  //  moveByText("func");
-  //  assertFalse(isActionEnabled());
-  //  moveByText("local");
-  //  assertTrue(isActionEnabled());
-  //
-  //  // move to "def" keyword
-  //  myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
-  //  final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
-  //  assertNotNull(tokenAtCaret);
-  //  assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
-  //  assertTrue(isActionEnabled());
-  //
-  //  moveByText("method");
-  //  assertTrue(isActionEnabled());
-  //
-  //  moveByText("static_method");
-  //  assertFalse(isActionEnabled());
-  //  moveByText("class_method");
-  //  assertFalse(isActionEnabled());
-  //
-  //  // Overridden method
-  //  moveByText("overridden_method");
-  //  assertFalse(isActionEnabled());
-  //
-  //  // Overriding method
-  //  moveByText("upper");
-  //  assertFalse(isActionEnabled());
-  //
-  //  moveByText("property");
-  //  assertFalse(isActionEnabled());
-  //  moveByText("__magic__");
-  //  assertFalse(isActionEnabled());
-  //}
+  public void testRefactoringAvailability() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+
+    final PsiFile file = myFixture.getFile();
+    moveByText("func");
+    assertFalse(isActionEnabled());
+    moveByText("local");
+    assertTrue(isActionEnabled());
+
+    // move to "def" keyword
+    myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
+    final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
+    assertNotNull(tokenAtCaret);
+    assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
+    assertTrue(isActionEnabled());
+
+    moveByText("method");
+    assertTrue(isActionEnabled());
+
+    moveByText("static_method");
+    assertFalse(isActionEnabled());
+    moveByText("class_method");
+    assertFalse(isActionEnabled());
+
+    // Overridden method
+    moveByText("overridden_method");
+    assertFalse(isActionEnabled());
+
+    // Overriding method
+    moveByText("upper");
+    assertFalse(isActionEnabled());
+
+    moveByText("property");
+    assertFalse(isActionEnabled());
+    moveByText("__magic__");
+    assertFalse(isActionEnabled());
+  }
 
   // PY-6637
   public void testLocalFunctionNonlocalReferenceToOuterScope() {
