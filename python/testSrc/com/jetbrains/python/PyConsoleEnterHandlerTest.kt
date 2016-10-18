@@ -121,6 +121,57 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
     assertTrue(push(""))
   }
 
+  fun testTryExcept() {
+    assertFalse(push("try:"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("\ta = 1"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("except:"))
+    assertFalse(push(""))
+    assertFalse(push(""))
+    assertFalse(push("\tprint('hi!')"))
+    assertTrue(push(""))
+  }
+
+  fun testBackSlash() {
+    assertFalse(push("if True and \\"))
+    assertFalse(push("\tTrue:"))
+    assertFalse(push("\ta = 1"))
+    assertTrue(push(""))
+  }
+
+  fun testMultipleBackSlash() {
+    assertFalse(push("if\\"))
+    assertFalse(push("\tTrue\\"))
+    assertFalse(push("\t:\\"))
+    assertFalse(push(""))
+    assertFalse(push("\ta = \\"))
+    assertFalse(push("\t1"))
+    assertTrue(push(""))
+  }
+
+  fun testDocstringDouble() {
+    assertFalse(push("a = \"\"\"test"))
+    assertFalse(push("second"))
+    assertTrue(push("third\"\"\""))
+  }
+
+  fun testDocstring() {
+    assertFalse(push("a = '''test"))
+    assertFalse(push("second"))
+    assertTrue(push("third'''"))
+  }
+
+  fun testFunction() {
+    assertFalse(push("def foo():"))
+    assertFalse(push(""))
+    assertFalse(push("\ta = 1"))
+    assertFalse(push("\treturn 'hi!'"))
+    assertTrue(push(""))
+  }
+
   override fun tearDown() {
     Disposer.dispose(testRootDisposable)
     super.tearDown()
