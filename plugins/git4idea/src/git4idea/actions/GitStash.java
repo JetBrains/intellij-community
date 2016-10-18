@@ -29,7 +29,6 @@ import git4idea.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Git stash action
@@ -42,7 +41,6 @@ public class GitStash extends GitRepositoryAction {
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not stash changes now")) return;
@@ -51,7 +49,6 @@ public class GitStash extends GitRepositoryAction {
       return;
     }
     VirtualFile root = d.getGitRoot();
-    affectedRoots.add(root);
     final GitLineHandler h = d.handler();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {

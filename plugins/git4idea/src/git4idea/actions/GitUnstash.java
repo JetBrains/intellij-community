@@ -24,7 +24,6 @@ import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Git unstash action
@@ -45,7 +44,6 @@ public class GitUnstash extends GitRepositoryAction {
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not unstash changes now")) return;

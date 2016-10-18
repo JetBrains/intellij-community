@@ -28,7 +28,6 @@ import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 public class GitFetch extends GitRepositoryAction {
   @Override
@@ -40,7 +39,6 @@ public class GitFetch extends GitRepositoryAction {
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
       @Override

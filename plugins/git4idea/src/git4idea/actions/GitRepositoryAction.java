@@ -35,9 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -55,11 +53,10 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     if (roots == null) return;
 
     final VirtualFile defaultRoot = getDefaultRoot(project, roots, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    final Set<VirtualFile> affectedRoots = new HashSet<>();
 
     List<VcsException> exceptions = new ArrayList<>();
     try {
-      perform(project, roots, defaultRoot, affectedRoots, exceptions);
+      perform(project, roots, defaultRoot, exceptions);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -131,14 +128,12 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    * @param project       a context project
    * @param gitRoots      a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
    * @param defaultRoot   a guessed default root (based on the currently selected file list)
-   * @param affectedRoots a set of roots affected by the action
    * @param exceptions    a list of exceptions from running git
    * @throws VcsException if there is a problem with running git (this exception is considered to be added to the end of the exception list)
    */
   protected abstract void perform(@NotNull Project project,
                                   @NotNull List<VirtualFile> gitRoots,
                                   @NotNull VirtualFile defaultRoot,
-                                  final Set<VirtualFile> affectedRoots,
                                   List<VcsException> exceptions) throws VcsException;
 
   @Override

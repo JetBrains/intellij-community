@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
@@ -66,7 +65,6 @@ abstract class GitMergeAction extends GitRepositoryAction {
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     final DialogState dialogState = displayDialog(project, gitRoots, defaultRoot);
     if (dialogState == null) {

@@ -23,7 +23,6 @@ import git4idea.ui.GitTagDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Git "tag" action
@@ -44,7 +43,6 @@ public class GitTag extends GitRepositoryAction {
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     GitTagDialog d = new GitTagDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
