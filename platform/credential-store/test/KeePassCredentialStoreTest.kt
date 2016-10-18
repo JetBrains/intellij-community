@@ -17,10 +17,11 @@ package com.intellij.credentialStore
 
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.util.io.delete
+import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
-import java.math.BigInteger
 import java.util.*
 
 // part of specific tests in the IcsCredentialTest
@@ -37,13 +38,10 @@ class FileCredentialStoreTest {
     val baseDir = tempDirManager.newPath()
     var provider = KeePassCredentialStore(baseDirectory = baseDir)
 
-    val serviceName = UUID.randomUUID().toString()
-
     assertThat(baseDir).doesNotExist()
-    val random = Random()
     for (i in 0..9) {
-      val accountName = BigInteger(8 * 16, random).toString()
-      provider.set(CredentialAttributes(serviceName, accountName), Credentials(accountName, BigInteger(8 * 16, random).toString()))
+      val accountName = randomString()
+      provider.set(CredentialAttributes(randomString(), accountName), Credentials(accountName, randomString()))
     }
 
     provider.save()
@@ -59,8 +57,64 @@ class FileCredentialStoreTest {
   }
 
   @Test
+  fun `custom db password`() {
+    val baseDir = tempDirManager.newPath()
+    var provider = KeePassCredentialStore(baseDirectory = baseDir)
+
+    assertThat(baseDir).doesNotExist()
+    val credentialMap = THashMap<CredentialAttributes, Credentials>()
+    for (i in 0..9) {
+      val accountName = randomString()
+      val attributes = CredentialAttributes(randomString(), accountName)
+      val credentials = Credentials(accountName, randomString())
+      provider.set(attributes, credentials)
+      credentialMap.put(attributes, credentials)
+    }
+
+    provider.setMasterPassword("foo")
+
+    val pdbFile = baseDir.resolve("c.kdbx")
+    val pdbPwdFile = baseDir.resolve("pdb.pwd")
+
+    assertThat(pdbFile).exists()
+    assertThat(pdbPwdFile).exists()
+
+    provider = KeePassCredentialStore(baseDirectory = baseDir)
+
+    fun check() {
+      for ((attributes, credentials) in credentialMap) {
+        assertThat(provider.get(attributes)).isEqualTo(credentials)
+      }
+    }
+
+    check()
+
+    // test if no pdb.pwd
+    pdbPwdFile.delete()
+
+    provider = KeePassCredentialStore(baseDirectory = baseDir)
+
+    val oldDbFile = baseDir.resolve("old.c.kdbx")
+    assertThat(oldDbFile).exists()
+    assertThat(pdbFile).doesNotExist()
+    assertThat(pdbPwdFile).doesNotExist()
+
+    for ((attributes) in credentialMap) {
+      assertThat(provider.get(attributes)).isNull()
+    }
+
+    provider = copyFileDatabase(oldDbFile, "foo", baseDir)
+
+    assertThat(oldDbFile).exists()
+    assertThat(pdbFile).exists()
+    assertThat(pdbPwdFile).exists()
+
+    check()
+  }
+
+  @Test
   fun test() {
-    val serviceName = UUID.randomUUID().toString()
+    val serviceName = randomString()
 
     val baseDir = tempDirManager.newPath()
     var provider = KeePassCredentialStore(baseDirectory = baseDir)
@@ -110,4 +164,6 @@ class FileCredentialStoreTest {
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
   }
+
+  private fun randomString() = UUID.randomUUID().toString()
 }

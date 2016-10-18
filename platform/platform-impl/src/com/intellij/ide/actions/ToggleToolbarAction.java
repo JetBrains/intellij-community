@@ -145,7 +145,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
           result.add(Separator.getInstance());
         }
 
-        List<AnAction> actions = toolbar.getActions(false);
+        List<AnAction> actions = toolbar.getActions();
         for (AnAction action : actions) {
           if (action instanceof ToggleAction && !result.contains(action)) {
             result.add(action);

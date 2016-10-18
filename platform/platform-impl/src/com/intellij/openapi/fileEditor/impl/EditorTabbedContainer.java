@@ -51,8 +51,6 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -73,7 +71,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -126,7 +123,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
             VfsUtil.markDirtyAndRefresh(true, false, false, newFile);
           }
         }
-      }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
+      })
     .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {
       @NotNull
       @Override
@@ -567,42 +564,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           }
         }
       }
-    }
-  }
-
-  private class MySwitchProvider implements SwitchProvider {
-    @Override
-    public List<SwitchTarget> getTargets(final boolean onlyVisible, boolean originalProvider) {
-      TabInfo selected = myTabs.getSelectedInfo();
-      if (selected == null) return Collections.emptyList();
-      return UIUtil.uiTraverser(selected.getComponent())
-        .traverse()
-        .filter(JBTabs.class)
-        .filter(Conditions.notEqualTo(myTabs))
-        .flatten(o -> o.getTargets(onlyVisible, false))
-        .toList();
-    }
-
-    @Override
-    public SwitchTarget getCurrentTarget() {
-      TabInfo selected = myTabs.getSelectedInfo();
-      if (selected == null) return null;
-      JBTabs tabs = UIUtil.uiTraverser(selected.getComponent())
-        .traverse()
-        .filter(JBTabs.class)
-        .filter(Conditions.notEqualTo(myTabs))
-        .first();
-      return tabs == null ? null : tabs.getCurrentTarget();
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return null;
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return false;
     }
   }
 

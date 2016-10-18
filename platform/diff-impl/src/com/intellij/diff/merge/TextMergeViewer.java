@@ -357,7 +357,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
 
           @Override
-          public void onError(@NotNull Exception error) {
+          public void onThrowable(@NotNull Throwable error) {
             LOG.error(error);
             myMergeContext.finishMerge(MergeResult.CANCEL);
           }

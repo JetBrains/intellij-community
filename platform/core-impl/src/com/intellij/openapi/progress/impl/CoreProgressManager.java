@@ -390,19 +390,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       @Override
       public void run() {
         boolean processCanceled = false;
-        Exception exception = null;
+        Throwable exception = null;
         try {
           runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
           processCanceled = true;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           exception = e;
         }
 
         final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-        final Exception finalException = exception;
+        final Throwable finalException = exception;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -417,7 +417,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
-    final Ref<Exception> exceptionRef = new Ref<Exception>();
+    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
     TaskContainer taskContainer = new TaskContainer(task) {
       @Override
       public void run() {
@@ -427,7 +427,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         catch (ProcessCanceledException e) {
           throw e;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           exceptionRef.set(e);
         }
       }
@@ -451,19 +451,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     final Runnable process = new TaskRunnable(task, progressIndicator);
 
     boolean processCanceled = false;
-    Exception exception = null;
+    Throwable exception = null;
     try {
       runProcess(process, progressIndicator);
     }
     catch (ProcessCanceledException e) {
       processCanceled = true;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       exception = e;
     }
 
     final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-    final Exception finalException = exception;
+    final Throwable finalException = exception;
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       finishTask(task, finalCanceled, finalException);
@@ -478,10 +478,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {
+  static void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
     try {
-      if (exception != null) {
-        task.onError(exception);
+      if (error != null) {
+        task.onThrowable(error);
       }
       else if (canceled) {
         task.onCancel();

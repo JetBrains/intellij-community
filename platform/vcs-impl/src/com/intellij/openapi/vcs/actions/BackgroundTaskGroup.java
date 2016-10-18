@@ -79,7 +79,7 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
       }
 
       @Override
-      public void onError(@NotNull Exception e) {
+      public void onThrowable(@NotNull Throwable e) {
         LOG.error(e);
         end();
       }

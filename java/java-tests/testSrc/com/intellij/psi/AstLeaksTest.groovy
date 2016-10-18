@@ -17,6 +17,7 @@ package com.intellij.psi
 
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
@@ -84,6 +85,17 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     def mainClass = ((PsiJavaFile)file).classes[0]
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       !node.psi.physical
+    } as Processor<MethodElement>)
+  }
+
+  void "test no hard refs to AST via class reference type"() {
+    def cls = myFixture.addClass("class Foo { Object bar() {} }")
+    cls.node
+    def type = cls.methods[0].returnType
+    assert type instanceof PsiClassReferenceType
+
+    LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
+      node.psi == cls.methods[0]
     } as Processor<MethodElement>)
   }
 

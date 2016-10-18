@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 import org.jetbrains.concurrency.runAsync
+import java.nio.file.Path
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
   private @Volatile var currentProvider: PasswordStorage
@@ -125,8 +126,12 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
-  fun setMasterPassword(password: String) {
+  fun setFileDatabaseMasterPassword(password: String) {
     (currentProvider as KeePassCredentialStore).setMasterPassword(password)
+  }
+
+  fun importFileDatabase(path: Path, masterPassword: String) {
+    currentProvider = copyFileDatabase(path, masterPassword)
   }
 
   // public - backward compatibility
