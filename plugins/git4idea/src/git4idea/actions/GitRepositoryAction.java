@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -51,13 +50,8 @@ import java.util.Set;
  * The action is available if there is at least one git root.
  */
 public abstract class GitRepositoryAction extends DumbAwareAction {
-  /**
-   * The task delayed until end of the primary action. These tasks happen after repository refresh.
-   */
-  final List<TransactionRunnable> myDelayedTasks = new ArrayList<>();
 
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    myDelayedTasks.clear();
     FileDocumentManager.getInstance().saveAllDocuments();
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     GitVcs vcs = GitVcs.getInstance(project);
@@ -105,10 +99,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       @Override
       public void run() {
         VcsFileUtil.markFilesDirty(project, affectedRoots);
-        for (TransactionRunnable task : myDelayedTasks) {
-          task.run(exceptions);
-        }
-        myDelayedTasks.clear();
         vcs.showErrors(exceptions, actionName);
       }
     });
@@ -162,15 +152,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       return null;
     }
     return roots;
-  }
-
-  /**
-   * Delay task to be executed after refresh
-   *
-   * @param task the task to run
-   */
-  public final void delayTask(@NotNull TransactionRunnable task) {
-    myDelayedTasks.add(task);
   }
 
   /**

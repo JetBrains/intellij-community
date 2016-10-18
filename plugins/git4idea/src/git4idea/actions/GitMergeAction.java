@@ -134,7 +134,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       List<VcsException> exceptions = new ArrayList<>();
-      GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+      GitMergeUtil.showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
       repositoryManager.updateRepository(root);
       runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
     }
