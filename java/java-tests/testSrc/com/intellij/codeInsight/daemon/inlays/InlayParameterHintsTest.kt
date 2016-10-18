@@ -670,6 +670,22 @@ class Test {
     onLineStartingWith("Math").assertNoInlays()
   }
   
+  fun `test more blacklisted items`() {
+    setup("""
+class Test {
+  
+  void test() {
+    System.getProperty("aaa");
+    System.setProperty("aaa", "bbb");
+  }
+  
+}
+""")
+    
+    onLineStartingWith("System.get").assertNoInlays()
+    onLineStartingWith("System.set").assertNoInlays()
+  }
+  
   private fun getInlays(): List<Inlay> {
     val editor = myFixture.editor
     return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)

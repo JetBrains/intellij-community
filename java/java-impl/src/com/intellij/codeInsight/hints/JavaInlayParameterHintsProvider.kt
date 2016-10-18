@@ -63,18 +63,21 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "(message, error)",
 
       "*.set(*,*)",
+      "*.get(*)",
+      "*.getProperty(*)",
+      "*.setProperty(*,*)",
       "*.print(*)",
       "*.println(*)",
-      "*.get(*)",
       "*.append(*)",
       "*.charAt(*)",
       "*.indexOf(*)",
       "*.contains(*)",
       "*.startsWith(*)",
       "*.endsWith(*)",
-      "java.lang.Math.*",
       "*.equals(*)",
-      "*.equal(*)"
+      "*.equal(*)",
+
+      "java.lang.Math.*"
   )
   
 }
