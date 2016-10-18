@@ -32,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -467,13 +464,36 @@ public class KeymapUtil {
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
                                        @Nullable KeyStroke newKeyStroke,
-                                       int condition) {
+                                       int condition, boolean muteOldKeystroke) {
     ActionListener action = component.getActionForKeyStroke(oldKeyStroke);
     if (action == null) return false;
     if (newKeyStroke != null) {
       component.registerKeyboardAction(action, newKeyStroke, condition);
     }
-    component.unregisterKeyboardAction(oldKeyStroke);
+    if (muteOldKeystroke) {
+      component.registerKeyboardAction(new RedispatchEventAction(component), oldKeyStroke, condition);
+    }
     return true;
   }
+
+  private static final class RedispatchEventAction extends AbstractAction {
+    private final Component myComponent;
+
+    public RedispatchEventAction(Component component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      AWTEvent event = EventQueue.getCurrentEvent();
+      if (event instanceof KeyEvent && event.getSource() == myComponent) {
+        Container parent = myComponent.getParent();
+        if (parent != null) {
+          KeyEvent keyEvent = (KeyEvent)event;
+          parent.dispatchEvent(new KeyEvent(parent, event.getID(), ((KeyEvent)event).getWhen(), keyEvent.getModifiers(), keyEvent.getKeyCode(), keyEvent.getKeyChar(), keyEvent
+            .getKeyLocation()));
+        }
+      }
+    }
+  };
 }
