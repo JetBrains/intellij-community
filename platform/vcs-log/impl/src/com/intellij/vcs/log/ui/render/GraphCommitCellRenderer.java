@@ -284,18 +284,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
           nextWidth = myEmptyPainter.getSize().width;
         }
 
-        if (row == 0 && table.getRowCount() == 1) {
-          customizeRefsPainter(myEmptyPainter, ContainerUtil.emptyList(), foreground, myLogData, myComponent);
-        }
         myWidth = Math.max(Math.max(prevWidth, nextWidth), LabelPainter.GRADIENT_WIDTH);
       }
     }
 
     public void paint(@NotNull Graphics2D g2, int x, int y, int height) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
-
-      myEmptyPainter.paintFadeOut(g2, x, y, myWidth, height);
-
+      LabelPainter.paintFadeOut(g2, x, y, myWidth, height, myComponent.getBackground());
       config.restore();
     }
 

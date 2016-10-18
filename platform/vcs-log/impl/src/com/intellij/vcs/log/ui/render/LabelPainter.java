@@ -153,7 +153,7 @@ public class LabelPainter implements ReferencePainter {
     g2.setFont(getReferenceFont());
     g2.setStroke(new BasicStroke(1.5f));
 
-    x = paintFadeOut(g2, x, y, myWidth, height);
+    x = paintFadeOut(g2, x, y, myWidth, height, myBackground);
 
     FontMetrics fontMetrics = g2.getFontMetrics();
     for (Pair<String, LabelIcon> label : myLabels) {
@@ -171,14 +171,16 @@ public class LabelPainter implements ReferencePainter {
     config.restore();
   }
 
-  public int paintFadeOut(@NotNull Graphics2D g2, int x, int y, int width, int height) {
-    g2.setPaint(
-      new GradientPaint(x, y, new Color(myBackground.getRed(), myBackground.getGreen(), myBackground.getBlue(), 0), x + GRADIENT_WIDTH, y,
-                        myBackground));
+  public static int paintFadeOut(@NotNull Graphics2D g2, int x, int y, int width, int height, @NotNull Color background) {
+    //noinspection UseJBColor
+    g2.setPaint(new GradientPaint(x, y,
+                                  new Color(background.getRed(), background.getGreen(), background.getBlue(), 0),
+                                  x + GRADIENT_WIDTH, y,
+                                  background));
     g2.fill(new Rectangle(x, y, GRADIENT_WIDTH, height));
     x += GRADIENT_WIDTH;
 
-    g2.setColor(myBackground);
+    g2.setColor(background);
     g2.fillRect(x, y, width - GRADIENT_WIDTH, height);
     return x;
   }
