@@ -28,12 +28,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaDirectoryService;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Optional;
 import java.util.Properties;
@@ -41,6 +44,7 @@ import java.util.Properties;
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
+import static java.util.Collections.singleton;
 
 public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public CreateModuleInfoAction() {
@@ -64,10 +68,12 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 1) {
-      PsiDirectory directory = directories[0];
-      JavaDirectoryService service = JavaDirectoryService.getInstance();
-      if (service.isSourceRoot(directory) && service.getPackage(directory) != null) {
-        return directory;
+      PsiDirectory psiDir = directories[0];
+      VirtualFile vDir = psiDir.getVirtualFile();
+      ProjectFileIndex index = ProjectRootManager.getInstance(psiDir.getProject()).getFileIndex();
+      if (vDir.equals(index.getSourceRootForFile(vDir)) &&
+          index.isUnderSourceRootOfType(vDir, singleton(JavaSourceRootType.SOURCE))) {
+        return psiDir;
       }
     }
 
