@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
@@ -204,9 +205,9 @@ public class TabLabel extends JPanel implements Accessible {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
-    label.setIpad(new Insets(0, 0, 0, 0));
+    label.setIpad(JBUI.emptyInsets());
 
     return label;
   }
@@ -214,7 +215,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().SHOW_CLOSE_BUTTON) {
         insets.right = 3;
     }
     return insets;
