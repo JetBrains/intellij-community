@@ -464,6 +464,26 @@ public class KeymapUtil {
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
                                        @Nullable KeyStroke newKeyStroke,
+                                       int condition) {
+    return reassignAction(component, oldKeyStroke, newKeyStroke, condition, true);
+  }
+  /**
+   * @param component    target component to reassign previously mapped action (if any)
+   * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
+   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param condition    one of
+   *                     <ul>
+   *                     <li>JComponent.WHEN_FOCUSED,</li>
+   *                     <li>JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT</li>
+   *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
+   *                     <li>JComponent.UNDEFINED_CONDITION</li>
+   *                     </ul>
+   * @param muteOldKeystroke if <code>true</code> old keystroke wouldn't work anymore
+   * @return <code>true</code> if the action is reassigned successfully
+   */
+  public static boolean reassignAction(@NotNull JComponent component,
+                                       @NotNull KeyStroke oldKeyStroke,
+                                       @Nullable KeyStroke newKeyStroke,
                                        int condition, boolean muteOldKeystroke) {
     ActionListener action = component.getActionForKeyStroke(oldKeyStroke);
     if (action == null) return false;
