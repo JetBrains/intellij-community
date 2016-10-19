@@ -121,31 +121,31 @@ public final class IpnbConnectionManager implements ProjectComponent {
   public static String showDialogUrl(@NotNull final String initialUrl) {
     final String url = UIUtil.invokeAndWaitIfNeeded(
       () -> Messages.showInputDialog("Jupyter Notebook URL:", "Start Jupyter Notebook", null, initialUrl,
-                                   new InputValidator() {
-                                 @Override
-                                 public boolean checkInput(String inputString) {
-                                   try {
-                                     final URI uri = new URI(inputString);
-                                     if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
+                                 new InputValidator() {
+                                   @Override
+                                   public boolean checkInput(String inputString) {
+                                     try {
+                                       final URI uri = new URI(inputString);
+                                       if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
+                                         return false;
+                                       }
+                                     }
+                                     catch (URISyntaxException e) {
                                        return false;
                                      }
+                                     return !inputString.isEmpty();
                                    }
-                                   catch (URISyntaxException e) {
-                                     return false;
-                                   }
-                                   return !inputString.isEmpty();
-                                 }
 
-                                 @Override
-                                 public boolean canClose(String inputString) {
-                                   return true;
-                                 }
-                               }));
+                                        @Override
+                                        public boolean canClose(String inputString) {
+                                          return true;
+                                        }
+                                      }));
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
   public boolean startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
-                                  final boolean showNotification) {
+                                 final boolean showNotification) {
     try {
       final boolean[] connectionOpened = {false};
       final IpnbConnectionListenerBase listener = new IpnbConnectionListenerBase() {

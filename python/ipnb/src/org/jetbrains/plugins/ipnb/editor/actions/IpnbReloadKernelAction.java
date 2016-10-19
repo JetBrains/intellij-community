@@ -24,6 +24,7 @@ public class IpnbReloadKernelAction extends AnAction {
       reloadKernel(((IpnbFileEditor)editor));
     }
   }
+
   public static void reloadKernel(@NotNull final IpnbFileEditor editor) {
     final Project project = editor.getIpnbFilePanel().getProject();
     @SuppressWarnings("DialogTitleCapitalization")

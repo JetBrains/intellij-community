@@ -32,8 +32,6 @@ public class IpnbPyTargetExpression extends PyTargetExpressionImpl {
     filePanel.setSelectedCellPanel(codePanel);
     super.navigate(false);
     UIUtil.requestFocus(editor.getContentComponent());
-
   }
-
 }
 

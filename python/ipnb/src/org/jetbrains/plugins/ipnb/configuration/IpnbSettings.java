@@ -46,5 +46,4 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public void loadState(IpnbSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
-
 }

@@ -26,5 +26,4 @@ public class IpnbPyParserDefinition extends PythonParserDefinition {
   public IFileElementType getFileNodeType() {
     return IPNB_PYTHON_FILE;
   }
-
 }

@@ -106,11 +106,11 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @NotNull
   private JPanel createCodeComponent() {
     myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
-    
+
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
-    
+
     final JPanel topComponent = new JPanel(new BorderLayout());
     topComponent.add(panel, BorderLayout.PAGE_START);
     return topComponent;
@@ -120,7 +120,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final OnePixelSplitter splitter = new OnePixelSplitter(true);
     final JPanel toggleBar = createToggleBar(splitter);
     final JPanel outputComponent = createOutputPanel(createHideOutputListener(splitter, toggleBar));
-    
+
     final Map<String, Object> metadata = myCell.getMetadata();
     if (metadata.containsKey(COLLAPSED_METADATA)) {
       final boolean isCollapsed = (Boolean)metadata.get(COLLAPSED_METADATA);
@@ -138,7 +138,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private JPanel createOutputPanel(MouseAdapter hideOutputListener) {
     final JPanel outputPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
-    
+
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
       addOutputPanel(outputPanel, outputCell, hideOutputListener, true);
     }
@@ -146,7 +146,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     if (!myCell.getCellOutputs().isEmpty()) {
       outputPanel.addMouseListener(hideOutputListener);
     }
-    
+
     return outputPanel;
   }
 
@@ -166,7 +166,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
           final JPopupMenu menu = new JPopupMenu("");
-          
+
           final JMenuItem item = new JMenuItem(TOGGLE_OUTPUT_TEXT);
           item.addActionListener(new ActionListener() {
             @Override
@@ -174,7 +174,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
               hideOutputPanel();
             }
           });
-          
+
           menu.add(item);
           menu.show(e.getComponent(), e.getX(), e.getY());
         }

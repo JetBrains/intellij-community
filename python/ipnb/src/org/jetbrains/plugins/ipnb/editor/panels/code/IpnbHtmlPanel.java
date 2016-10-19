@@ -12,7 +12,7 @@ import java.awt.event.MouseAdapter;
 
 public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
 
-  public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell, @NotNull final IpnbFilePanel parent, 
+  public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell, @NotNull final IpnbFilePanel parent,
                        @Nullable MouseAdapter hideOutputListener) {
     super(cell, parent, hideOutputListener);
   }
