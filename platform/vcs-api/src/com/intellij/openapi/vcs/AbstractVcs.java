@@ -569,6 +569,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     setRollbackEnvironment(createRollbackEnvironment());
   }
 
+  /**
+   * @Deprecated to delete in 2017.3
+   */
+  @Deprecated
   public boolean reportsIgnoredDirectories() {
     return true;
   }
