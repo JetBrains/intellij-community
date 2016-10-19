@@ -33,7 +33,7 @@ public class PyMakeFunctionTopLevelDialog extends PyBaseMoveDialog {
                                       @NotNull String sourcePath,
                                       @NotNull String destinationPath) {
     super(project, sourcePath, destinationPath);
-    final String functionName = PyMoveRefactoringUtil.getCompactPresentableName(function);
+    final String functionName = PyMoveRefactoringUtil.getPresentableName(function);
     if (function.getContainingClass() != null) {
       setTitle(PyBundle.message("refactoring.make.method.top.level.dialog.title"));
       myDescription.setText(PyBundle.message("refactoring.make.method.top.level.dialog.description", functionName));

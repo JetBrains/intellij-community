@@ -93,7 +93,7 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE);
     final String description;
     if (!tableIsVisible && elements.size() == 1) {
-      final String name = PyMoveRefactoringUtil.getCompactPresentableName(firstElement);
+      final String name = PyMoveRefactoringUtil.getPresentableName(firstElement);
       if (firstElement instanceof PyFunction) {
         description =  PyBundle.message("refactoring.move.module.members.dialog.description.function.$0", name);
       }
