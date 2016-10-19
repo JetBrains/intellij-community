@@ -80,7 +80,9 @@ public class IpnbParser {
 
   private static boolean validateSource(IpnbCellRaw cell) {
     if (cell.source == null) {
-      myErrors.add(VALIDATION_ERROR_TEXT + "\n" + "\"source\" is required property:\n" + cell);
+      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" is required property:\n" + cell;
+      myErrors.add(error);
+      LOG.warn(error);
       return false;
     }
     return true;
