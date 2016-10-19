@@ -95,13 +95,13 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     if (!tableIsVisible && elements.size() == 1) {
       final String name = PyMoveRefactoringUtil.getPresentableName(firstElement);
       if (firstElement instanceof PyFunction) {
-        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function.$0", name);
+        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function", name);
       }
       else if (firstElement instanceof PyClass) {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.class.$0", name);
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.class", name);
       }
       else {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable.$0", name);
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable", name);
       }
     }
     else {
