@@ -33,7 +33,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
     textArea.setBackground(IpnbEditorUtil.getBackground());
     return textArea;
   }
-  
+
   public void addHideOutputListener(@Nullable final MouseListener mouseAdapter) {
     myViewPanel.addMouseListener(mouseAdapter);
   }

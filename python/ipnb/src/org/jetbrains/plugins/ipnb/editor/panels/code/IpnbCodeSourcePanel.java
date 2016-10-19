@@ -57,7 +57,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     final JComponent panel = createViewPanel();
     add(panel);
   }
-  
+
   public void addMouseListener(@NotNull final EditorMouseListener listener) {
     myEditor.addEditorMouseListener(listener);
   }
@@ -149,7 +149,6 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             updateVisibleArea(keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP);
           }
         }
-
       }
     });
 

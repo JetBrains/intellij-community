@@ -14,7 +14,7 @@ import java.awt.event.MouseAdapter;
 
 public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
 
-  public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell, @NotNull final IpnbFilePanel parent, 
+  public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell, @NotNull final IpnbFilePanel parent,
                         @Nullable MouseAdapter hideOutputListener) {
     super(cell, parent, hideOutputListener);
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP));

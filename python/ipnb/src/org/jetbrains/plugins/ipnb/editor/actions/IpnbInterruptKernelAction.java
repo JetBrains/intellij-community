@@ -23,6 +23,7 @@ public class IpnbInterruptKernelAction extends AnAction {
       interruptKernel(((IpnbFileEditor)editor));
     }
   }
+
   public static void interruptKernel(@NotNull final IpnbFileEditor editor) {
     final Project project = editor.getIpnbFilePanel().getProject();
     IpnbConnectionManager.getInstance(project).interruptKernel(editor.getVirtualFile().getPath());

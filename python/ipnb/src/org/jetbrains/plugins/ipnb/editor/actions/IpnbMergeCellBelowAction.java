@@ -30,7 +30,7 @@ public class IpnbMergeCellBelowAction extends AnAction {
     CommandProcessor.getInstance().executeCommand(filePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
       () -> filePanel.mergeCell(true)), "Ipnb.mergeCell", new Object());
   }
-  
+
   @Override
   public void update(AnActionEvent e) {
     final DataContext context = e.getDataContext();

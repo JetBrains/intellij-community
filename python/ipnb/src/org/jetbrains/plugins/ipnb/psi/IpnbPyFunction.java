@@ -37,8 +37,6 @@ public class IpnbPyFunction extends PyFunctionImpl {
     filePanel.setSelectedCellPanel(codePanel);
     super.navigate(false);
     UIUtil.requestFocus(editor.getContentComponent());
-
   }
-
 }
 

@@ -190,7 +190,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public boolean contains(int y) {
-    return y>= getTop() && y<=getBottom();
+    return y >= getTop() && y <= getBottom();
   }
 
   public int getTop() {
@@ -209,7 +209,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     myEditing = editing;
   }
 
-  public void updateCellView() { // TODO: make abstract
+  public void updateCellView() {
   }
 
   public int getCaretPosition() {
@@ -242,7 +242,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected ListPopup createClickMenu(@NotNull DefaultActionGroup group) {
     final DataContext context = DataManager.getInstance().getDataContext(this);
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
-                                                                                false);
+                                                               false);
   }
 
   @Nullable
@@ -287,8 +287,8 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   public K getCell() {
     return myCell;
   }
-  
+
   public JTextArea getEditablePanel() {
     return myEditablePanel;
-  }  
+  }
 }

@@ -52,7 +52,7 @@ public class IpnbParser {
   @NotNull
   public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) throws IOException {
     myErrors.clear();
-    
+
     final String path = virtualFile.getPath();
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
@@ -87,7 +87,7 @@ public class IpnbParser {
     }
     return true;
   }
-  
+
   private static void showValidationMessage() {
     if (!myErrors.isEmpty()) {
       Messages.showWarningDialog(myErrors.get(0), VALIDATION_ERROR_TITLE);
@@ -138,7 +138,7 @@ public class IpnbParser {
     final IpnbFileRaw fileRaw = new IpnbFileRaw();
     fileRaw.metadata = ipnbFile.getMetadata();
     if (ipnbFile.getNbformat() == 4) {
-      for (IpnbCell cell: ipnbFile.getCells()) {
+      for (IpnbCell cell : ipnbFile.getCells()) {
         fileRaw.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
     }
@@ -164,14 +164,16 @@ public class IpnbParser {
       final OutputStreamWriter writer = new OutputStreamWriter(fileOutputStream, Charset.forName("UTF-8").newEncoder());
       try {
         writer.write(json);
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         LOG.error(e);
       }
       finally {
         try {
           writer.close();
           fileOutputStream.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           LOG.error(e);
         }
       }
@@ -262,8 +264,8 @@ public class IpnbParser {
           outputCells.add(outputRaw.createOutput());
         }
         final Integer prompt = prompt_number != null ? prompt_number : execution_count;
-        cell = new IpnbCodeCell(language == null ? "python" : language, 
-                                input == null ?  (isValidSource ? source : Collections.emptyList()) : input, 
+        cell = new IpnbCodeCell(language == null ? "python" : language,
+                                input == null ? (isValidSource ? source : Collections.emptyList()) : input,
                                 prompt, outputCells, metadata);
         ;
       }
@@ -440,7 +442,7 @@ public class IpnbParser {
       else if ("execute_result".equals(output_type) && data != null) {
         outputCell = new IpnbOutOutputCell(data.text, prompt, metadata);
       }
-      else if ("display_data".equals(output_type)){
+      else if ("display_data".equals(output_type)) {
         outputCell = new IpnbPngOutputCell(null, text, prompt, metadata);
       }
       else {
@@ -503,6 +505,7 @@ public class IpnbParser {
       return jsonObject;
     }
   }
+
   static class FileAdapter implements JsonSerializer<IpnbFileRaw> {
     @Override
     public JsonElement serialize(IpnbFileRaw fileRaw, Type typeOfSrc, JsonSerializationContext context) {
@@ -590,6 +593,7 @@ public class IpnbParser {
       return dataRaw;
     }
   }
+
   static class CellOutputDeserializer implements JsonDeserializer<CellOutputRaw> {
 
     @Override

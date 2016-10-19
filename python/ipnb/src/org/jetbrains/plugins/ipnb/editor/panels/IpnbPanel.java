@@ -15,7 +15,7 @@ public abstract class IpnbPanel<T extends JComponent, K extends IpnbCell> extend
     myCell = cell;
   }
 
- public IpnbPanel(@NotNull final K cell, @NotNull final LayoutManager layoutManager) {
+  public IpnbPanel(@NotNull final K cell, @NotNull final LayoutManager layoutManager) {
     super(layoutManager);
     myCell = cell;
   }
