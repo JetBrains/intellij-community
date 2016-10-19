@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -72,19 +71,19 @@ public class ActionHint {
    * if this ActionHint asserts that no action should be present.
    *
    * @param actions actions collection to search inside
-   * @param infoSupplier a supplier which provides additional info which will be appended to exception message if check fails
+   * @param errorMessage an additional error message which will be appended to exception message if check fails
    * @return the action or null
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
   @Nullable
-  public IntentionAction findAndCheck(Collection<IntentionAction> actions, Supplier<String> infoSupplier) {
+  public IntentionAction findAndCheck(@NotNull Collection<IntentionAction> actions, @NotNull String errorMessage) {
     IntentionAction result = actions.stream().filter(t -> t.getText().equals(myExpectedText)).findFirst().orElse(null);
     if(result == null && myShouldPresent) {
       fail("Action with text '" + myExpectedText + "' not found\nAvailable actions: " +
            actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
-           infoSupplier.get());
+           errorMessage);
     } else if(result != null && !myShouldPresent) {
-      fail("Action with text '" + myExpectedText + "' is present, but should not\n" + infoSupplier.get());
+      fail("Action with text '" + myExpectedText + "' is present, but should not\n" + errorMessage);
     }
     return result;
   }

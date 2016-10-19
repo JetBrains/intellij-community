@@ -312,12 +312,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  protected boolean isLeftLooseMatching() {
+  public boolean isLeftLooseMatching() {
     return matchContext.getOptions().isLooseMatching();
   }
 
   @Override
-  protected boolean isRightLooseMatching() {
+  public boolean isRightLooseMatching() {
     return false;
   }
 

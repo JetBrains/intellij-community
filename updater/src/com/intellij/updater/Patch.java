@@ -319,8 +319,13 @@ public class Patch {
     boolean cancelled = false;
     try {
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
-        appliedActions.add(action);
-        action.apply(patchFile, backupDir, toDir);
+        if ((action instanceof CreateAction) &&
+            !new File(toDir, action.getPath()).getParentFile().exists()) {
+          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+        } else {
+          appliedActions.add(action);
+          action.apply(patchFile, backupDir, toDir);
+        }
       });
     }
     catch (OperationCancelledException e) {

@@ -31,8 +31,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.style.MethodRefCanBeReplacedWithLambdaInspection;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,8 +87,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       return lambdaExpression.getParameterList().getParametersCount() == 1 &&
              (!requireExpressionLambda || LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) != null);
     } else if(expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodReference = (PsiMethodReferenceExpression)expression;
-      return !MethodRefCanBeReplacedWithLambdaInspection.isWithSideEffects(methodReference);
+      return LambdaRefactoringUtil.canConvertToLambda((PsiMethodReferenceExpression)expression);
     }
     return false;
   }
@@ -161,12 +160,29 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       }
     }
     if(nextName.equals("flatMap") && prevClassName.equals(CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
-      String mapMethod = translateMap(prevName);
-      return "flatM"+mapMethod.substring(1);
+      return mapToFlatMap(prevName);
     }
     return null;
   }
 
+  @Contract(pure = true)
+  @Nullable
+  private static String mapToFlatMap(String mapMethod) {
+    switch (mapMethod) {
+      case "map":
+        return "flatMap";
+      case "mapToInt":
+        return "flatMapToInt";
+      case "mapToLong":
+        return "flatMapToLong";
+      case "mapToDouble":
+        return "flatMapToDouble";
+    }
+    // Something unsupported passed: ignore
+    return null;
+  }
+
+  @Contract(pure = true)
   @NotNull
   private static String translateMap(String nextMethod) {
     switch (nextMethod) {
