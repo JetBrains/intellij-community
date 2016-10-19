@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiMethod
-
 /**
  * @author peter
  */
@@ -59,7 +58,13 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNonDefaultConstructor() { doFirstItemTest() }
 
-  void testAnonymousNonDefaultConstructor() { doFirstItemTest() }
+  void testAnonymousNonDefaultConstructor() {
+    configureByTestName()
+    myFixture.type('\n')
+    checkResult()
+    myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_afterTemplate.java")
+  }
 
   void testSeveralConstructors() {
     myFixture.configureByFile(getTestName(false) + ".java")
