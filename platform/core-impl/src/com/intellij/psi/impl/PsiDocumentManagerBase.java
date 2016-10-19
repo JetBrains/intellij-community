@@ -292,14 +292,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
 
-    VirtualFile vFile = getVirtualFile(document);
-    if (vFile != null && !isFreeThreaded(vFile)) {
+    if (isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
 
     if (!isCommitted(document)) {
       doCommit(document);
     }
+  }
+
+  private boolean isEventSystemEnabled(Document document) {
+    VirtualFile vFile = getVirtualFile(document);
+    if (vFile == null || isFreeThreaded(vFile)) return false;
+
+    FileViewProvider viewProvider = getCachedViewProvider(document);
+    return viewProvider != null && viewProvider.isEventSystemEnabled();
   }
 
   // public for Upsource
