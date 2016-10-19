@@ -24,7 +24,6 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathsList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,44 +34,33 @@ import java.nio.charset.Charset;
  */
 public class SimpleJavaParameters extends SimpleProgramParameters {
   private static final Logger LOG = Logger.getInstance(SimpleJavaParameters.class);
+
   private Sdk myJdk;
   private String myMainClass;
   private final PathsList myClassPath = new PathsList();
   private final ParametersList myVmParameters = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myUseDynamicClasspath;
-  private boolean myUseClasspathJar = false;
   private boolean myUseDynamicVMOptions;
+  private boolean myUseClasspathJar = false;
   private boolean myPassProgramParametersViaClasspathJar;
   private String myJarPath;
 
-  public String getMainClass() {
-    return myMainClass;
-  }
-
-  public String getJarPath() {
-    return myJarPath;
-  }
-
-  /**
-   * @return jdk used to launch the application.
-   * If the instance of the JavaParameters is used to configure app server startup script,
-   * then null is returned.
-   */
   @Nullable
   public Sdk getJdk() {
     return myJdk;
   }
 
-  public void setJdk(final Sdk jdk) {
+  public void setJdk(Sdk jdk) {
     myJdk = jdk;
   }
 
-  public void setMainClass(@NonNls final String mainClass) {
-    myMainClass = mainClass;
+  public String getMainClass() {
+    return myMainClass;
   }
-  public void setJarPath(@NonNls final String jarPath) {
-    myJarPath = jarPath;
+
+  public void setMainClass(String mainClass) {
+    myMainClass = mainClass;
   }
 
   public PathsList getClassPath() {
@@ -88,20 +76,20 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myCharset;
   }
 
-  public void setCharset(@Nullable final Charset charset) {
+  public void setCharset(@Nullable Charset charset) {
     myCharset = charset;
   }
 
-  public void setUseDynamicClasspath(final boolean useDynamicClasspath) {
+  public void setUseDynamicClasspath(boolean useDynamicClasspath) {
     myUseDynamicClasspath = useDynamicClasspath;
-  }
-
-  public void setUseDynamicVMOptions(boolean useDynamicVMOptions) {
-    myUseDynamicVMOptions = useDynamicVMOptions;
   }
 
   public boolean isDynamicVMOptions() {
     return myUseDynamicVMOptions;
+  }
+
+  public void setUseDynamicVMOptions(boolean useDynamicVMOptions) {
+    myUseDynamicVMOptions = useDynamicVMOptions;
   }
 
   public boolean isUseClasspathJar() {
@@ -124,9 +112,17 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * Call this method and pass {@code true} to pass program parameters via attribute in MANIFEST.MF of the classpath jar instead of passing
    * them via command line. This may be needed to avoid problems with too long command line on Windows.
    */
-  public void setPassProgramParametersViaClasspathJar(boolean passProgramParametersViaClasspathJar) {
+  public void setPassProgramParametersViaClasspathJar(@SuppressWarnings("SameParameterValue") boolean passProgramParametersViaClasspathJar) {
     LOG.assertTrue(myUseClasspathJar);
     myPassProgramParametersViaClasspathJar = passProgramParametersViaClasspathJar;
+  }
+
+  public String getJarPath() {
+    return myJarPath;
+  }
+
+  public void setJarPath(String jarPath) {
+    myJarPath = jarPath;
   }
 
   @NotNull
