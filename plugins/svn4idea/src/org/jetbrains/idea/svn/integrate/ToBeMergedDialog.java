@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.QuantitySelection;
 import com.intellij.openapi.vcs.VcsException;
@@ -36,20 +37,16 @@ import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableViewSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcsUtil.MoreAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.BasePageEngine;
-import org.jetbrains.idea.svn.dialogs.PageEngine;
-import org.jetbrains.idea.svn.dialogs.PagedListWithActions;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
@@ -66,13 +63,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
@@ -83,7 +77,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
   @NotNull private final MergeContext myMergeContext;
-  private final PageEngine<List<CommittedChangeList>> myListsEngine;
+  @NotNull private final ListTableModel<CommittedChangeList> myRevisionsModel;
   private TableView<CommittedChangeList> myRevisionsList;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
@@ -100,7 +94,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ToBeMergedDialog.MoreXAction myMore500Action;
 
   public ToBeMergedDialog(@NotNull MergeContext mergeContext,
-                          @NotNull List<CommittedChangeList> lists,
+                          @NotNull List<CommittedChangeList> changeLists,
                           final String title,
                           @NotNull MergeChecker mergeChecker,
                           boolean allStatusesCalculated,
@@ -113,10 +107,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myAllStatusesCalculated = allStatusesCalculated;
     setTitle(title);
 
-    // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
-    // always used.
-    myListsEngine = new BasePageEngine<>(lists, lists.size());
-
+    myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
     myAlreadyMerged = newHashSet();
@@ -126,7 +117,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     enableLoadButtons();
 
     if (!myAllStatusesCalculated) {
-      refreshListStatus(lists);
+      refreshListStatus(changeLists);
     }
   }
 
@@ -143,21 +134,20 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   public long getLastNumber() {
-    // in current implementation we just have one page with all loaded change lists - myListsEngine.getCurrent()
-    CommittedChangeList lastLoadedList = getLastItem(myListsEngine.getCurrent());
+    int totalRows = myRevisionsModel.getRowCount();
 
-    return lastLoadedList != null ? lastLoadedList.getNumber() : 0;
+    return totalRows > 0 ? myRevisionsModel.getItem(totalRows - 1).getNumber() : 0;
   }
 
-  public void addMoreLists(final List<CommittedChangeList> list) {
-    myListsEngine.getCurrent().addAll(list);
+  public void addMoreLists(@NotNull List<CommittedChangeList> changeLists) {
+    myRevisionsModel.addRows(changeLists);
     myRevisionsList.revalidate();
     myRevisionsList.repaint();
     myMore100Action.setEnabled(true);
     myMore500Action.setEnabled(true);
     // TODO: This is necessary because myMore500Action was hidden in MoreXAction.actionPerformed()
     myMore500Action.setVisible(true);
-    refreshListStatus(list);
+    refreshListStatus(changeLists);
   }
 
   private boolean myDisposed;
@@ -227,19 +217,13 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   @NotNull
   public List<CommittedChangeList> getSelected() {
-    List<CommittedChangeList> result = newArrayList();
-    result.addAll(myListsEngine.getCurrent());
-    while (myListsEngine.hasNext()) {
-      result.addAll(myListsEngine.next());
-    }
-
     Set<Long> selected = myWiseSelection.getSelected();
     Set<Long> unselected = myWiseSelection.getUnselected();
     // todo: can be made faster
-    Predicate<CommittedChangeList> removeCondition =
-      myWiseSelection.areAllSelected() ? list -> unselected.contains(list.getNumber()) : list -> !selected.contains(list.getNumber());
-    result.removeIf(removeCondition);
-    return result;
+    Condition<CommittedChangeList> filter =
+      myWiseSelection.areAllSelected() ? list -> !unselected.contains(list.getNumber()) : list -> selected.contains(list.getNumber());
+
+    return filter(myRevisionsModel.getItems(), filter);
   }
 
   @Override
@@ -290,8 +274,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         return element.getComment();
       }
     };
-    final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<>(FAKE_COLUMN);
-    myRevisionsList.setModelAndUpdateColumns(flatModel);
+    myRevisionsList.setModelAndUpdateColumns(myRevisionsModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);
     final AbstractBaseTagMouseListener mouseListener = new AbstractBaseTagMouseListener() {
@@ -307,36 +290,15 @@ public class ToBeMergedDialog extends DialogWrapper {
     };
     mouseListener.installOn(myRevisionsList);
 
-    final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
-      new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {
-        @Override
-        public Component getComponent() {
-          return myRevisionsList;
-        }
-
-        @Override
-        public void setData(List<CommittedChangeList> committedChangeLists) {
-          flatModel.setItems(committedChangeLists);
-          flatModel.fireTableDataChanged();
-        }
-
-        @Override
-        public void refresh() {
-          myRevisionsList.revalidate();
-          myRevisionsList.repaint();
-        }
-      };
     myMore100Action = new MoreXAction(100);
     myMore500Action = new MoreXAction(500);
-    final PagedListWithActions<CommittedChangeList> byRevisions =
-      new PagedListWithActions<>(myListsEngine, listsManager, new MySelectAll(), new MyUnselectAll(),
-                                 myMore100Action, myMore500Action);
+
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel()
+      .addToCenter(ScrollPaneFactory.createScrollPane(myRevisionsList))
+      .addToTop(createToolbar().getComponent());
 
     mySplitter = new Splitter(false, 0.7f);
-    mySplitter.setFirstComponent(byRevisions.getComponent());
-
-    flatModel.setItems(myListsEngine.getCurrent());
-    flatModel.fireTableDataChanged();
+    mySplitter.setFirstComponent(panel);
 
     myRepositoryChangesBrowser =
       new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<CommittedChangeList>emptyList(), emptyList(), null);
@@ -349,6 +311,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     addRevisionListListeners();
 
     myPanel.add(mySplitter, BorderLayout.CENTER);
+  }
+
+  @NotNull
+  private ActionToolbar createToolbar() {
+    DefaultActionGroup actions = new DefaultActionGroup(new MySelectAll(), new MyUnselectAll(), myMore100Action, myMore500Action);
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
   }
 
   @NotNull
