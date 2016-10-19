@@ -2,13 +2,14 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 
 public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
-  public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell, MouseAdapter hideOutputListener) {
+  public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell, @Nullable MouseAdapter hideOutputListener) {
     super(cell, null, hideOutputListener);
   }
 

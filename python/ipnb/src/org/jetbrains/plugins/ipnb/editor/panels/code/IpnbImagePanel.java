@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbImageOutputCell;
 import sun.misc.BASE64Decoder;
@@ -17,7 +18,7 @@ import java.io.ByteArrayInputStream;
 public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
   private static final Logger LOG = Logger.getInstance(IpnbImagePanel.class);
 
-  public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell, MouseAdapter hideOutputListener) {
+  public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell, @Nullable MouseAdapter hideOutputListener) {
     super(cell, null, hideOutputListener);
   }
 
