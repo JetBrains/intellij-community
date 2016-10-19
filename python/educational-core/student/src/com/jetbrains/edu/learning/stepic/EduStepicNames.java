@@ -1,7 +1,7 @@
 package com.jetbrains.edu.learning.stepic;
 
 public class EduStepicNames {
-  public static final String STEPIC_URL = "https://stepic.org";
+  public static final String STEPIC_URL = "https://stepik.org";
   public static final String TOKEN_URL = STEPIC_URL + "/oauth2/token/";
   public static final String STEPIC_API_URL = STEPIC_URL + "/api";
 
