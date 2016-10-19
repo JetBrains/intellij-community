@@ -7,6 +7,6 @@ class Foo{
     }
 
     {
-        Foo f = new F<caret>
+        Foo f = new Foo();<caret>
     }
 }

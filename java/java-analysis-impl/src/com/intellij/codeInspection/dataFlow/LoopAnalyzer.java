@@ -18,7 +18,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.graph.DFSTBuilder;
@@ -41,7 +40,7 @@ class LoopAnalyzer {
       myInstructions = flow.getInstructions();
       for (Instruction instruction : myInstructions) {
         int fromIndex = instruction.getIndex();
-        int[] to = next(fromIndex, myInstructions);
+        int[] to = getSuccessorIndices(fromIndex, myInstructions);
         for (int toIndex : to) {
           int[] froms = myIns.get(toIndex);
           if (froms == null) {
@@ -70,7 +69,7 @@ class LoopAnalyzer {
     @Override
     public Iterator<Instruction> getOut(Instruction instruction) {
       int fromIndex = instruction.getIndex();
-      int[] next = next(fromIndex, myInstructions);
+      int[] next = getSuccessorIndices(fromIndex, myInstructions);
       return indicesToInstructions(next);
     }
 
@@ -113,13 +112,13 @@ class LoopAnalyzer {
   }
 
   @NotNull
-  private static int[] next(int i, Instruction[] myInstructions) {
+  static int[] getSuccessorIndices(int i, Instruction[] myInstructions) {
     Instruction instruction = myInstructions[i];
     if (instruction instanceof GotoInstruction) {
       return new int[]{((GotoInstruction)instruction).getOffset()};
     }
-    if (instruction instanceof ReturnInstruction) {
-      return ArrayUtil.EMPTY_INT_ARRAY;
+    if (instruction instanceof ControlTransferInstruction) {
+      return ArrayUtil.toIntArray(((ControlTransferInstruction)instruction).getPossibleTargetIndices());
     }
     if (instruction instanceof ConditionalGotoInstruction) {
       int offset = ((ConditionalGotoInstruction)instruction).getOffset();

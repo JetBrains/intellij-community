@@ -12,6 +12,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -124,7 +126,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       reformatEnclosingExpressionListAtOffset(file, offset);
 
-      if (promptTypeOrConstructorArgs(context, delegate, context.getOffset(insideRef))) return;
+      if (promptTypeOrConstructorArgs(context, delegate, insideRef, insideBraces)) return;
 
       editor.getCaretModel().moveToOffset(context.getOffset(insideBraces));
       context.setLaterRunnable(generateAnonymousBody(editor, file));
@@ -142,17 +144,36 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       if (mySmart) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
-      promptTypeOrConstructorArgs(context, delegate, context.getOffset(insideRef));
+      promptTypeOrConstructorArgs(context, delegate, insideRef, null);
     }
   }
 
-  private static boolean promptTypeOrConstructorArgs(InsertionContext context, LookupElement delegate, int refOffset) {
-    if (shouldFillTypeArgs(context, delegate) && JavaCompletionUtil.promptTypeArgs(context, refOffset)) {
+  private static boolean promptTypeOrConstructorArgs(InsertionContext context, LookupElement delegate, OffsetKey refOffset, @Nullable OffsetKey insideBraces) {
+    if (shouldFillTypeArgs(context, delegate) && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refOffset))) {
       return true;
     }
 
     PsiMethod constructor = JavaConstructorCallElement.extractCalledConstructor(delegate);
-    return constructor != null && JavaMethodCallElement.startArgumentLiveTemplate(context, constructor);
+    if (constructor != null && JavaMethodCallElement.startArgumentLiveTemplate(context, constructor)) {
+      implementMethodsWhenTemplateIsFinished(context, insideBraces);
+      return true;
+    }
+    return false;
+  }
+
+  private static void implementMethodsWhenTemplateIsFinished(InsertionContext context, @Nullable final OffsetKey insideBraces) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(context.getEditor());
+    if (state != null && insideBraces != null) {
+      state.addTemplateStateListener(new TemplateEditingAdapter() {
+        @Override
+        public void templateFinished(Template template, boolean brokenOff) {
+          if (!brokenOff) {
+            context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
+            createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()).run();
+          }
+        }
+      });
+    }
   }
 
   private static boolean shouldFillTypeArgs(InsertionContext context, LookupElement delegate) {
@@ -214,9 +235,11 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       return false;
     }
 
+    PsiMethod constructor = JavaConstructorCallElement.extractCalledConstructor(delegate);
+
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = hasConstructorParameters(psiClass, place);
+    boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
 
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
 

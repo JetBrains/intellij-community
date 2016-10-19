@@ -34,6 +34,7 @@ import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import com.pty4j.util.PtyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static String findRCFile(String shellName) {
     if (shellName != null) {
-      if ("bash".equals(shellName)) {
-        shellName = "sh";
+      if ("sh".equals(shellName)) {
+        shellName = "bash";
       }
       try {
 
@@ -81,6 +82,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           rcfile = ".zshrc";
         }
         URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
+        if (resource != null && "jar".equals(resource.getProtocol())) {
+          File file = new File(new File(PtyUtil.getJarContainingFolderPath(LocalTerminalDirectRunner.class)).getParent(), rcfile);
+          if (file.exists()) {
+            return file.getAbsolutePath();
+          }
+        }
         if (resource != null) {
           URI uri = resource.toURI();
           return uri.getPath();
@@ -188,10 +195,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
         String rcFilePath = findRCFile(shellName);
 
-
         if (rcFilePath != null &&
             shellIntegration) {
-          if (shellName.equals("bash") || shellName.equals("sh")) {
+          if (shellName.equals("bash") || (SystemInfo.isMac && shellName.equals("sh"))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
           }
           else if (shellName.equals("zsh")) {
