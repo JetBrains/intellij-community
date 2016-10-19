@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -85,13 +84,11 @@ public class MergeCalculatorTask extends BaseMergeTask {
     settings.USE_CHANGE_AFTER_FILTER = true;
 
     List<Pair<SvnChangeList, LogHierarchyNode>> result = newArrayList();
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     try {
       ((SvnCommittedChangesProvider)myMergeContext.getVcs().getCommittedChangesProvider())
         .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()), 0,
                                                (changeList, tree) -> {
-                                                 indicator.checkCanceled();
                                                  if (revision < changeList.getNumber()) {
                                                    result.add(Pair.create(changeList, tree));
                                                  }

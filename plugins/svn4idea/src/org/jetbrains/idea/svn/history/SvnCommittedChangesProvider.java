@@ -19,7 +19,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,7 +39,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -64,9 +62,12 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
 
@@ -208,7 +209,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                        @NotNull Consumer<LogEntry> resultConsumer,
                                        boolean includeMergedRevisions,
                                        boolean filterOutByDate) throws VcsException {
-    setCollectingChangesProgress(target.getPathOrUrlString());
+    progress(message("progress.text.changes.collecting.changes"),
+             message("progress.text2.changes.establishing.connection", target.getPathOrUrlString()));
 
     String author = settings.getUserFilter();
     SVNRevision revisionBefore = createBeforeRevision(settings);
@@ -251,7 +253,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return logEntry -> {
       if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
 
-      ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
+      if (logEntry != LogEntry.EMPTY) {
+        progress2(message("progress.text2.processing.revision", logEntry.getRevision()));
+      }
       if (filterOutByDate && logEntry.getDate() == null) {
         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
         return;
@@ -262,16 +266,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     };
   }
 
-  private static void setCollectingChangesProgress(@Nullable Object location) {
-    ProgressManager.progress(SvnBundle.message("progress.text.changes.collecting.changes"),
-                             SvnBundle.message("progress.text2.changes.establishing.connection", location));
-  }
-
   @Override
   @NotNull
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[]{
-      new ChangeListColumn.ChangeListNumberColumn(SvnBundle.message("revision.title")),
+      new ChangeListColumn.ChangeListNumberColumn(message("revision.title")),
       ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION
     };
   }
@@ -404,7 +403,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   public String getChangelistTitle() {
-    return SvnBundle.message("changes.browser.revision.term");
+    return message("changes.browser.revision.term");
   }
 
   @Override

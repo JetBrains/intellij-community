@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,7 +33,6 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.lang.Math.min;
-import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class LoadRecentBranchRevisions extends BaseMergeTask {
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
@@ -97,18 +95,12 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
       settings.USE_CHANGE_BEFORE_FILTER = true;
     }
 
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    ProgressManager.progress2(
-      message("progress.text2.collecting.history", mergeContext.getSourceUrl() + (beforeRevision > 0 ? ("@" + beforeRevision) : "")));
     List<Pair<SvnChangeList, LogHierarchyNode>> result = newArrayList();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
       .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),
                                              size + (beforeRevision > 0 ? 2 : 1),
-                                             (list, tree) -> {
-                                               indicator.setText2(message("progress.text2.processing.revision", list.getNumber()));
-                                               result.add(Pair.create(list, tree));
-                                             });
+                                             (list, tree) -> result.add(Pair.create(list, tree)));
     return result;
   }
 
