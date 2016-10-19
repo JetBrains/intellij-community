@@ -64,7 +64,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
       return false;
     }
     // Local function or method
-    if (findMovableLocalFunctionOrMethod(elements[0]) != null) {
+    if (isMovableLocalFunctionOrMethod(elements[0])) {
       return true;
     }
     
@@ -88,8 +88,8 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     }
     
     final BaseRefactoringProcessor processor;
-    final PyFunction function = findMovableLocalFunctionOrMethod(elements[0]);
-    if (function != null) {
+    if (isMovableLocalFunctionOrMethod(elements[0])) {
+      final PyFunction function = (PyFunction)elements[0];
       final PyMakeFunctionTopLevelDialog dialog = new PyMakeFunctionTopLevelDialog(project, function, initialPath, initialPath);
       if (!dialog.showAndGet()) {
         return;
@@ -156,7 +156,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     // Fallback to the old way to select single element to move
     final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
     if (e != null && PyMoveModuleMembersHelper.hasMovableElementType(e)) {
-      if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || findMovableLocalFunctionOrMethod(e) != null) {
+      if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || isMovableLocalFunctionOrMethod(e)) {
         doMove(project, new PsiElement[]{e}, targetContainer, null);
       }
       else {
@@ -191,27 +191,11 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
   }
 
   @VisibleForTesting
-  @Nullable
-  public static PyFunction findMovableLocalFunctionOrMethod(@NotNull PsiElement element) {
-    if (isLocalFunction(element) || isSuitableInstanceMethod(element)) {
-      return (PyFunction)element;
-    }
-    // e.g. caret is on "def" keyword
-    if (isLocalFunction(element.getParent()) || isSuitableInstanceMethod(element.getParent())) {
-      return (PyFunction)element.getParent();
-    }
-    final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
-    if (refExpr == null) {
-      return null;
-    }
-    final PsiElement resolved = refExpr.getReference().resolve();
-    if (isLocalFunction(resolved) || isSuitableInstanceMethod(resolved)) {
-      return (PyFunction)resolved;
-    }
-    return null;
+  public static boolean isMovableLocalFunctionOrMethod(@NotNull PsiElement element) {
+    return isLocalFunction(element) || isSuitableInstanceMethod(element);
   }
 
-  public static boolean isSuitableInstanceMethod(@Nullable PsiElement element) {
+  private static boolean isSuitableInstanceMethod(@Nullable PsiElement element) {
     final PyFunction function = as(element, PyFunction.class);
     if (function == null || function.getContainingClass() == null) {
       return false;

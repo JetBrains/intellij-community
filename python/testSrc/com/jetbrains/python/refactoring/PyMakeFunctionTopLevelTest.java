@@ -17,11 +17,17 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.MoveAction;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -99,8 +105,30 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   private boolean isActionEnabled() {
-    final PsiElement elementUnderCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
-    return PyMoveSymbolDelegate.findMovableLocalFunctionOrMethod(elementUnderCaret) != null; 
+    final int offset = myFixture.getCaretOffset();
+    PsiElement element = myFixture.getFile().findElementAt(offset);
+
+    // Duplicates the logic of MoveHandler#invoke(), since it doesn't allow to check
+    // whether MoveHandlerDelegate#tryMove() returns true or false without actually
+    // invoking it.
+    while (element != null) {
+      if (PyMoveSymbolDelegate.isMovableLocalFunctionOrMethod(element)) {
+        return true;
+      }
+      final TextRange range = element.getTextRange();
+      if (range != null) {
+        final int relative = offset - range.getStartOffset();
+        final PsiReference reference = element.findReferenceAt(relative);
+        if (reference != null) {
+          final PsiElement refElement = reference.resolve();
+          if (refElement != null && PyMoveSymbolDelegate.isMovableLocalFunctionOrMethod(myFixture.getElementAtCaret())) {
+            return true;
+          }
+        }
+      }
+      element = element.getParent();
+    }
+    return false;
   }
 
   // PY-6637
@@ -122,7 +150,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
     final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
     assertNotNull(tokenAtCaret);
-    assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
+    assertEquals(PyTokenTypes.DEF_KEYWORD, tokenAtCaret.getNode().getElementType());
     assertTrue(isActionEnabled());
 
     moveByText("method");
