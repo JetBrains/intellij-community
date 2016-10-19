@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -31,6 +30,7 @@ import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
 import java.util.List;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.lang.Math.min;
 
@@ -59,7 +59,7 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
    */
   @Override
   public void run() throws VcsException {
-    ProgressManager.progress2("Calculating not merged revisions");
+    progress("Collecting merge information");
     myMergeChecker.prepare();
 
     Pair<List<SvnChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));

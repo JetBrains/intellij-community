@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -31,7 +30,10 @@ import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
 import java.util.List;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
 public class MergeCalculatorTask extends BaseMergeTask {
@@ -44,7 +46,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
                              @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
                              @NotNull Consumer<MergeCalculatorTask> callback) {
-    super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
+    super(mergeProcess, "Filtering " + mergeProcess.getMergeContext().getBranchName() + " revisions", Where.POOLED);
     myCopyPoint = copyPoint;
     myCallback = callback;
     myNotMergedChangeLists = newArrayList();
@@ -66,9 +68,10 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @Override
   public void run() throws VcsException {
+    progress("Collecting merge information");
     myMergeChecker.prepare();
-    myNotMergedChangeLists.addAll(getNotMergedChangeLists(getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision())));
 
+    myNotMergedChangeLists.addAll(getNotMergedChangeLists(getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision())));
     if (!myNotMergedChangeLists.isEmpty()) {
       myCallback.consume(this);
     }
@@ -104,13 +107,12 @@ public class MergeCalculatorTask extends BaseMergeTask {
   @NotNull
   private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
     List<SvnChangeList> result = newArrayList();
-    ProgressManager.getInstance().getProgressIndicator().setText("Checking merge information...");
 
+    progress("Collecting not merged revisions");
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       SvnChangeList changeList = pair.getFirst();
 
-      ProgressManager.getInstance().getProgressIndicator().setText2("Processing revision " + changeList.getNumber());
-
+      progress2(message("progress.text2.processing.revision", changeList.getNumber()));
       if (MergeCheckResult.NOT_MERGED.equals(myMergeChecker.checkList(changeList)) && !myMergeChecker.checkListForPaths(pair.getSecond())) {
         result.add(changeList);
       }
