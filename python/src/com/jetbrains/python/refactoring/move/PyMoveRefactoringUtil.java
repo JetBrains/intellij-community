@@ -23,6 +23,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,21 +50,31 @@ public class PyMoveRefactoringUtil {
   }
 
   /**
-   * Returns short name of the element suitable for displaying inside dialogs. Function have parentheses after their name,
-   * names of another named elements are returned as is. If {@link PsiNamedElement#getName()} returns {@code null} or emtpy string,
+   * Returns name of the symbol suitable for displaying inside dialogs.
+   * Functions will have parentheses after their name, names of another named
+   * elements are returned as is.
+   * <p>
+   * If it's not possible to get the qualified name of the element, plain 
+   * {@link PsiNamedElement#getName()} will be called instead.
+   * <p>
+   * If {@link PsiNamedElement#getName()} returns {@code null} or emtpy string,
    * empty string is returned.
    *
    * @param element named PSI element
    * @return element name as described
    */
   @NotNull
-  public static String getCompactPresentableName(@NotNull PsiNamedElement element) {
-    final String name = element.getName();
+  public static String getPresentableName(@NotNull PsiNamedElement element) {
+    String name = null;
+    if (element instanceof PyQualifiedNameOwner) {
+      // Will return null for a local function
+      name = ((PyQualifiedNameOwner)element).getQualifiedName();
+    }
+    if (StringUtil.isEmpty(name)) {
+      name = element.getName();
+    }
     if (StringUtil.isNotEmpty(name)) {
-      if (element instanceof PyFunction) {
-        return name + "()";
-      }
-      return name;
+      return element instanceof PyFunction ? name + "()" : name;
     }
     return "";
   }
