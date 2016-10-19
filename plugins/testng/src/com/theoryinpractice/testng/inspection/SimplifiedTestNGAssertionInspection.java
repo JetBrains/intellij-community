@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.junit;
+package com.theoryinpractice.testng.inspection;
 
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.junit.SimplifiableAssertionInspection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableJUnitAssertionInspection extends SimplifiableAssertionInspection {
-
-  @Override
+public class SimplifiedTestNGAssertionInspection extends SimplifiableAssertionInspection {
+  @Nls
   @NotNull
+  @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.junit.assertion.display.name");
+    return InspectionGadgetsBundle.message("simplifiable.testng.assertion.display.name");
   }
 }
