@@ -435,9 +435,9 @@ public abstract class ChooseByNameBase {
     group.add(new ShowFindUsagesAction() {
       @Override
       public PsiElement[][] getElements() {
-        final Object[] objects = myListModel.toArray();
-        final List<PsiElement> prefixMatchElements = new ArrayList<>(objects.length);
-        final List<PsiElement> nonPrefixMatchElements = new ArrayList<>(objects.length);
+        final List<Object> objects = myListModel.getItems();
+        final List<PsiElement> prefixMatchElements = new ArrayList<>(objects.size());
+        final List<PsiElement> nonPrefixMatchElements = new ArrayList<>(objects.size());
         List<PsiElement> curElements = prefixMatchElements;
         for (Object object : objects) {
           if (object instanceof PsiElement) {
@@ -782,7 +782,7 @@ public abstract class ChooseByNameBase {
     close(ok);
 
     clearPostponedOkAction(ok);
-    myListModel.clear();
+    myListModel.removeAll();
   }
 
   protected boolean closeForbidden(boolean ok) {
@@ -973,7 +973,7 @@ public abstract class ChooseByNameBase {
 
     final String text = getTrimmedText();
     if (!canShowListForEmptyPattern() && text.isEmpty()) {
-      myListModel.clear();
+      myListModel.removeAll();
       hideList();
       myTextFieldPanel.hideHint();
       myCard.show(myCardContainer, CHECK_BOX_CARD);
@@ -1033,7 +1033,7 @@ public abstract class ChooseByNameBase {
       }
     }
     if (elements.isEmpty()) {
-      myListModel.clear();
+      myListModel.removeAll();
       myTextField.setForeground(JBColor.red);
       myListUpdater.cancelAll();
       hideList();
@@ -1041,7 +1041,7 @@ public abstract class ChooseByNameBase {
       return;
     }
 
-    Object[] oldElements = myListModel.toArray();
+    Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
     if (commands == null) {
@@ -1055,7 +1055,7 @@ public abstract class ChooseByNameBase {
         pos = calcSelectedIndex(newElements, getTrimmedText());
       }
 
-      ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
+      ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.getSize() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
       myTextFieldPanel.repositionHint();
@@ -1113,21 +1113,21 @@ public abstract class ChooseByNameBase {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
-  private static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
+  private static class MyListModel<T> extends CollectionListModel<T> implements ModelDiff.Model<T> {
     @Override
     public void addToModel(int idx, T element) {
-      if (idx < size()) {
-        add(idx, element);
-      }
-      else {
-        addElement(element);
-      }
+      add(Math.min(idx, getSize()), element);
+    }
+
+    @Override
+    public void addAllToModel(int index, List<T> elements) {
+      addAll(Math.min(index, getSize()), elements);
     }
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      if (start < size() && size() != 0) {
-        removeRange(start, Math.min(end, size()-1));
+      if (start < getSize() && !isEmpty()) {
+        removeRange(start, Math.min(end, getSize() - 1));
       }
     }
   }
@@ -1175,8 +1175,8 @@ public abstract class ChooseByNameBase {
             myTextFieldPanel.repositionHint();
 
             if (!myListModel.isEmpty()) {
-              int pos = selectionPos <= 0 ? calcSelectedIndex(myListModel.toArray(), ChooseByNameBase.this.getTrimmedText()) : selectionPos;
-              ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
+              int pos = selectionPos <= 0 ? calcSelectedIndex(myListModel.getItems().toArray(), ChooseByNameBase.this.getTrimmedText()) : selectionPos;
+              ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.getSize() - 1));
             }
           }
         }
