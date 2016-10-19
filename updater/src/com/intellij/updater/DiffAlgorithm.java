@@ -30,11 +30,16 @@ public abstract class DiffAlgorithm {
   }
 
   public static DiffAlgorithm determineDiffAlgorithm(File olderFile, boolean isCritical, long largeFileCutoff) {
-    if (!isCritical && olderFile != null && olderFile.length() > largeFileCutoff) {
-      return new DiffAlgorithm.XDeltaAlgorithm();
-    }
-    else if (isCritical) {
+      return determineDiffAlgorithm(olderFile, null, isCritical, largeFileCutoff);
+  }
+
+  public static DiffAlgorithm determineDiffAlgorithm(File olderFile, File newerFile, boolean isCritical, long largeFileCutoff) {
+    if (isCritical) {
       return new DiffAlgorithm.NullDiffAlgorithm();
+    }
+    else if ((olderFile != null && olderFile.length() > largeFileCutoff) ||
+             (newerFile != null && newerFile.length() > largeFileCutoff)) {
+      return new DiffAlgorithm.XDeltaAlgorithm();
     }
     else {
       return new DiffAlgorithm.JBDiffAlgorithm();

@@ -78,7 +78,7 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
     Runner.logger.info("writing diff");
-    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(olderFile, isCritical(), myPatch.getLargeFileCutoff());
+    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(olderFile, newerFile, isCritical(), myPatch.getLargeFileCutoff());
     patchOutput.write(algorithm.getId());
     algorithm.writeDiff(olderFile, newerFile, patchOutput);
   }
@@ -86,7 +86,7 @@ public abstract class BaseUpdateAction extends PatchAction {
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput)
     throws IOException {
     Runner.logger.info("writing diff");
-    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(null, isCritical(), myPatch.getLargeFileCutoff());
+    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(null, null, isCritical(), myPatch.getLargeFileCutoff());
     patchOutput.write(algorithm.getId());
     algorithm.writeDiff(olderFileIn, newerFileIn, patchOutput);
   }
