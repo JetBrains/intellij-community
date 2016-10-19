@@ -86,9 +86,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     final PsiClass testCase = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       @Override
       public PsiClass compute() {
-        if (JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                              : sourceScope.getLibrariesScope(),
-                               sourceScope.getProject())) {
+        if (TestObject.isJUnit5(module, sourceScope, sourceScope.getProject())) {
           return null;
         }
         try {
