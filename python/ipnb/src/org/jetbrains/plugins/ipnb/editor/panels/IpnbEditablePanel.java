@@ -242,7 +242,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected ListPopup createClickMenu(@NotNull DefaultActionGroup group) {
     final DataContext context = DataManager.getInstance().getDataContext(this);
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
-                                                                                true);
+                                                                                false);
   }
 
   @Nullable
