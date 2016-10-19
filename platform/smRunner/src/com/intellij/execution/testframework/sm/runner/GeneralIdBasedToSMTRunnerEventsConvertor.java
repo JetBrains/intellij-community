@@ -178,7 +178,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         testProxy.setDuration(testFinishedEvent.getDuration());
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
-        fireOnTestFinished(testProxy);
+        if (node.getState() != State.FAILED) {
+          // Don't count the same test twice if 'testFailed' message is followed by 'testFinished' message
+          // which may happen if generated TeamCity messages adhere rules from
+          //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
+          // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
+          // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
+          fireOnTestFinished(testProxy);
+        }
         terminateNode(node, State.FINISHED);
       }
     });
