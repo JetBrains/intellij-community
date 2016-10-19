@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,6 +49,7 @@ import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersPr
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -77,12 +77,13 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     return true;
   }
 
-  @Override
-  public void doMove(Project project, PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable MoveCallback callback) {
-    final String initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(elements[0]));
+  public void doMove(@NotNull Project project, @NotNull List<PyElement> elements) {
+    final PsiElement firstElement = elements.get(0);
+    final String initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(firstElement));
+
     final BaseRefactoringProcessor processor;
-    if (isMovableLocalFunctionOrMethod(elements[0])) {
-      final PyFunction function = (PyFunction)elements[0];
+    if (isMovableLocalFunctionOrMethod(firstElement)) {
+      final PyFunction function = (PyFunction)firstElement;
       final PyMakeFunctionTopLevelDialog dialog = new PyMakeFunctionTopLevelDialog(project, function, initialPath, initialPath);
       if (!dialog.showAndGet()) {
         return;
@@ -137,7 +138,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
         showBadSelectionErrorHint(project, editor);
       }
       else {
-        doMove(project, ContainerUtil.findAllAsArray(moduleMembers, PsiNamedElement.class), null, null);
+        doMove(project, moduleMembers);
       }
       return true;
     }
@@ -146,7 +147,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
     if (e != null && PyMoveModuleMembersHelper.hasMovableElementType(e)) {
       if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || isMovableLocalFunctionOrMethod(e)) {
-        doMove(project, new PsiElement[]{e}, null, null);
+        doMove(project, Collections.singletonList((PyElement)e));
       }
       else {
         showBadSelectionErrorHint(project, editor);
@@ -174,7 +175,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
     return ContainerUtil.filter(members, member -> {
-      final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody(((PsiNamedElement)member));
+      final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)member);
       return body != null && selectionRange.contains(body.getTextRange());
     });
   }
