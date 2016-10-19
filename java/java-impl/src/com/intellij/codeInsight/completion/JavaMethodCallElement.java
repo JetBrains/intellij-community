@@ -180,10 +180,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
-    context.commitDocument();
-    if (hasParams && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR && Registry.is("java.completion.argument.live.template")) {
-      startArgumentLiveTemplate(context, method);
-    }
+    startArgumentLiveTemplate(context, method);
   }
 
   private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {
@@ -198,7 +195,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     qualifyMethodCall(file, startOffset, document);
   }
 
-  public static final Key<JavaMethodCallElement> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
+  public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
   @NotNull
   private static Template createArgTemplate(PsiMethod method,
                                             int caretOffset,
@@ -226,19 +223,25 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return template;
   }
 
-  private void startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
-    Editor editor = context.getEditor();
+  public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
+    if (method.getParameterList().getParametersCount() == 0 ||
+        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
+        !Registry.is("java.completion.argument.live.template")) {
+      return false;
+    }
 
-    PsiCallExpression call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCallExpression.class, false);
+    Editor editor = context.getEditor();
+    context.commitDocument();
+    PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
     if (argList == null || argList.getExpressions().length > 0) {
-      return;
+      return false;
     }
 
     TextRange argRange = argList.getTextRange();
     int caretOffset = editor.getCaretModel().getOffset();
     if (!argRange.contains(caretOffset)) {
-      return;
+      return false;
     }
 
     Template template = createArgTemplate(method, caretOffset, argList, argRange);
@@ -247,16 +250,17 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     TemplateManager.getInstance(method.getProject()).startTemplate(editor, template);
 
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState == null) return;
+    if (templateState == null) return false;
 
     setupNonFilledArgumentRemoving(editor, templateState);
 
-    editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, this);
+    editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, method);
     Disposer.register(templateState, () -> {
-      if (editor.getUserData(ARGUMENT_TEMPLATE_ACTIVE) == this) {
+      if (editor.getUserData(ARGUMENT_TEMPLATE_ACTIVE) == method) {
         editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, null);
       }
     });
+    return true;
   }
 
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {

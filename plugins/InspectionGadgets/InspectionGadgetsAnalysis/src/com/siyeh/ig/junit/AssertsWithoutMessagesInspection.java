@@ -82,8 +82,9 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
-          !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
+      final boolean messageOnFirstPosition = AssertEqualsHint.isMessageOnFirstPosition(containingClass);
+      final boolean messageOnLastPosition = AssertEqualsHint.isMessageOnLastPosition(containingClass);
+      if (!messageOnFirstPosition && !messageOnLastPosition) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -98,7 +99,7 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
       }
       final PsiType stringType = TypeUtils.getStringType(expression);
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiType parameterType1 = parameters[0].getType();
+      final PsiType parameterType1 = parameters[messageOnFirstPosition ? 0 : parameters.length - 1].getType();
       if (!parameterType1.equals(stringType)) {
         registerMethodCallError(expression);
         return;
@@ -106,7 +107,7 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
       if (parameters.length != 2) {
         return;
       }
-      final PsiType parameterType2 = parameters[1].getType();
+      final PsiType parameterType2 = parameters[messageOnFirstPosition ? parameterCount - 1 : 0].getType();
       if (!parameterType2.equals(stringType)) {
         return;
       }

@@ -15,8 +15,11 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.naming.ConventionInspection;
@@ -68,7 +71,7 @@ public class JUnit4MethodNamingConventionInspectionBase extends ConventionInspec
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (!TestUtils.isJUnit4TestMethod(method) || !TestUtils.isRunnable(method)) {
+      if (!TestUtils.isAnnotatedTestMethod(method)) {
         return;
       }
       final PsiIdentifier nameIdentifier = method.getNameIdentifier();

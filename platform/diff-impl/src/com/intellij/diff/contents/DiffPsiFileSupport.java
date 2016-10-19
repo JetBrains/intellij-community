@@ -58,11 +58,11 @@ public class DiffPsiFileSupport {
   }
 
 
-  private static boolean isDiffFile(@Nullable PsiFile file) {
+  public static boolean isDiffFile(@Nullable PsiFile file) {
     return file != null && isDiffFile(file.getVirtualFile());
   }
 
-  private static boolean isDiffFile(@Nullable VirtualFile file) {
+  public static boolean isDiffFile(@Nullable VirtualFile file) {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 }

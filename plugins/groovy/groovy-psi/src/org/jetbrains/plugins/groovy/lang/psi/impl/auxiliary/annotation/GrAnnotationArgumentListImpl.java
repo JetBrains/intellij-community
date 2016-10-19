@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -30,14 +31,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationArgumentListStub;
 
-public class GrAnnotationArgumentListImpl extends GrStubElementBase<GrAnnotationArgumentListStub>
-  implements GrAnnotationArgumentList, StubBasedPsiElement<GrAnnotationArgumentListStub> {
+public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
+  implements GrAnnotationArgumentList, StubBasedPsiElement<EmptyStub> {
 
   private static final Logger LOG = Logger.getInstance(GrAnnotationArgumentListImpl.class);
 
-  public GrAnnotationArgumentListImpl(@NotNull GrAnnotationArgumentListStub stub) {
+  public GrAnnotationArgumentListImpl(@NotNull EmptyStub stub) {
     super(stub, GroovyElementTypes.ANNOTATION_ARGUMENTS);
   }
 

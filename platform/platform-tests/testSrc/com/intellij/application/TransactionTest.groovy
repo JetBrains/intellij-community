@@ -377,4 +377,14 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2']
   }
 
+  void "test submitTransactionLater vs app invokeLater ordering in the same modality state"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      guard.submitTransactionLater testRootDisposable, { log << '2' }
+      app.invokeLater { log << '3' }
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
+  }
+
 }

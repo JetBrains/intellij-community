@@ -31,7 +31,7 @@ import java.util.Set;
 public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> ASSERT_METHODS = new HashSet();
+  private static final Set<String> ASSERT_METHODS = new HashSet<>();
 
   static {
     ASSERT_METHODS.add("assertTrue");
@@ -60,28 +60,24 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
     return new ConstantJUnitAssertArgumentVisitor();
   }
 
-  private static class ConstantJUnitAssertArgumentVisitor
-    extends BaseInspectionVisitor {
+  private static class ConstantJUnitAssertArgumentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!ASSERT_METHODS.contains(methodName)) {
         return;
       }
+
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass,
-                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
-          !InheritanceUtil.isInheritor(containingClass,
-                                       JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
+      final boolean messageOnFirstPosition = AssertEqualsHint.isMessageOnFirstPosition(containingClass);
+      final boolean messageOnLastPosition = AssertEqualsHint.isMessageOnLastPosition(containingClass);
+      if (!messageOnFirstPosition && !messageOnLastPosition) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -89,11 +85,11 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
       if (arguments.length == 0) {
         return;
       }
-      final PsiExpression lastArgument = arguments[arguments.length - 1];
-      if (!PsiUtil.isConstantExpression(lastArgument)) {
+      final PsiExpression argument = arguments[messageOnFirstPosition ? arguments.length - 1 : 0];
+      if (!PsiUtil.isConstantExpression(argument)) {
         return;
       }
-      registerError(lastArgument);
+      registerError(argument);
     }
   }
 }

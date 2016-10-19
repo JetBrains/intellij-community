@@ -136,7 +136,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       restoreSelection(null); // select last opened file
     }
     else {
-      selectInTree(toSelect, true);
+      selectInTree(toSelect, true, true);
     }
 
     show();
@@ -454,10 +454,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
       public void dropFiles(final List<VirtualFile> files) {
         if (!myChooserDescriptor.isChooseMultiple() && files.size() > 0) {
-          selectInTree(new VirtualFile[]{files.get(0)}, true);
+          selectInTree(new VirtualFile[]{files.get(0)}, true, true);
         }
         else {
-          selectInTree(VfsUtilCore.toVirtualFileArray(files), true);
+          selectInTree(VfsUtilCore.toVirtualFileArray(files), true, true);
         }
       }
     });
@@ -675,7 +675,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private void selectInTree(final VirtualFile vFile, String fromText) {
     if (vFile != null && vFile.isValid()) {
       if (fromText == null || fromText.equalsIgnoreCase(myPathTextField.getTextFieldText())) {
-        selectInTree(new VirtualFile[]{vFile}, false);
+        selectInTree(new VirtualFile[]{vFile}, false, fromText == null);
       }
     }
     else {
@@ -683,7 +683,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  private void selectInTree(final VirtualFile[] array, final boolean requestFocus) {
+  private void selectInTree(VirtualFile[] array, boolean requestFocus, boolean updatePathNeeded) {
     myTreeIsUpdating = true;
     final List<VirtualFile> fileList = Arrays.asList(array);
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
@@ -691,20 +691,22 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
           // try to select files in hidden folders
           myFileSystemTree.showHiddens(true);
-          selectInTree(array, requestFocus);
+          selectInTree(array, requestFocus, updatePathNeeded);
           return;
         }
         if (array.length == 1 && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
           // try to select a parent of a missed file
           VirtualFile parent = array[0].getParent();
           if (parent != null && parent.isValid()) {
-            selectInTree(new VirtualFile[]{parent}, requestFocus);
+            selectInTree(new VirtualFile[]{parent}, requestFocus, updatePathNeeded);
             return;
           }
         }
 
         reportFileNotFound();
-        updatePathFromTree(fileList, true);
+        if (updatePathNeeded) {
+          updatePathFromTree(fileList, true);
+        }
         if (requestFocus) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> myFileSystemTree.getTree().requestFocus());
@@ -713,7 +715,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
     else {
       reportFileNotFound();
-      updatePathFromTree(fileList, true);
+      if (updatePathNeeded) {
+        updatePathFromTree(fileList, true);
+      }
     }
   }
 

@@ -128,7 +128,7 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
   mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
 }
 
-fake container ::= object | literal
+fake container ::=
 
 reference_expression ::= INDENTIFIER
 

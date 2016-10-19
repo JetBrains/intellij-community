@@ -85,12 +85,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
 
     return if (activate != null)
-      if (File(shellPath).name == "bash") {
-        mutableListOf(shellPath, "--rcfile", activate)
-      }
-      else {
-        mutableListOf(shellPath, "-c", "source '$activate'")
-      }
+      mutableListOf(shellPath, "-c", "source '$activate'")
     else super.getShellProcessCommand()
   }
 

@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import com.intellij.lang.PsiParser;
-import com.intellij.psi.tree.IElementType;
-
 import static com.jetbrains.commandInterface.commandLine.CommandLineElementTypes.*;
 import static com.jetbrains.commandInterface.commandLine.CommandLineParserUtil.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.LightPsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class CommandLineParser implements PsiParser, LightPsiParser {
@@ -47,11 +47,11 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
   public static boolean argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, "<argument>");
+    Marker m = enter_section_(b, l, _NONE_, ARGUMENT, "<argument>");
     r = consumeToken(b, LITERAL_STARTS_FROM_LETTER);
     if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_DIGIT);
     if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_SYMBOL);
-    exit_section_(b, l, m, ARGUMENT, r, false, null);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -79,10 +79,10 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "option")) return false;
     if (!nextTokenIs(b, "<option>", LONG_OPTION_NAME_TOKEN, SHORT_OPTION_NAME_TOKEN)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, "<option>");
+    Marker m = enter_section_(b, l, _NONE_, OPTION, "<option>");
     r = option_0(b, l + 1);
     if (!r) r = option_1(b, l + 1);
-    exit_section_(b, l, m, OPTION, r, false, null);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

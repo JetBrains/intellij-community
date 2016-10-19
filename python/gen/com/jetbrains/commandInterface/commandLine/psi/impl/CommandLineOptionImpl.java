@@ -18,8 +18,12 @@ public class CommandLineOptionImpl extends CommandLineElement implements Command
     super(node);
   }
 
+  public void accept(@NotNull CommandLineVisitor visitor) {
+    visitor.visitOption(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof CommandLineVisitor) ((CommandLineVisitor)visitor).visitOption(this);
+    if (visitor instanceof CommandLineVisitor) accept((CommandLineVisitor)visitor);
     else super.accept(visitor);
   }
 

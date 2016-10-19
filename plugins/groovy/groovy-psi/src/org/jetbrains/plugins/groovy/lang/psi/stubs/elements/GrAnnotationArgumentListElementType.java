@@ -15,20 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.psi.stubs.EmptyStubElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationArgumentListStub;
 
-import java.io.IOException;
-
-public class GrAnnotationArgumentListElementType extends GrStubElementType<GrAnnotationArgumentListStub, GrAnnotationArgumentList> {
+public class GrAnnotationArgumentListElementType extends EmptyStubElementType<GrAnnotationArgumentList> {
 
   public GrAnnotationArgumentListElementType() {
-    super("annotation arguments");
+    super("annotation arguments", GroovyLanguage.INSTANCE);
   }
 
   @Override
@@ -37,23 +34,7 @@ public class GrAnnotationArgumentListElementType extends GrStubElementType<GrAnn
   }
 
   @Override
-  public void serialize(@NotNull GrAnnotationArgumentListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-  }
-
-  @NotNull
-  @Override
-  public GrAnnotationArgumentListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new GrAnnotationArgumentListStub(parentStub);
-  }
-
-  @Override
-  public GrAnnotationArgumentList createPsi(@NotNull GrAnnotationArgumentListStub stub) {
+  public GrAnnotationArgumentList createPsi(@NotNull EmptyStub stub) {
     return new GrAnnotationArgumentListImpl(stub);
-  }
-
-  @NotNull
-  @Override
-  public GrAnnotationArgumentListStub createStub(@NotNull GrAnnotationArgumentList psi, StubElement parentStub) {
-    return new GrAnnotationArgumentListStub(parentStub);
   }
 }

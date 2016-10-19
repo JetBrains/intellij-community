@@ -36,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -272,12 +271,6 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     setEditor();
 
     super.addNotify();
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      final JScrollPane scrollPane = UIUtil.findComponentOfType(myEditorField, JScrollPane.class);
-      if (scrollPane != null) {
-        scrollPane.setBorder(new EmptyBorder(1,0,1,0));
-      }
-    }
     myEditorField.getFocusTarget().addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {

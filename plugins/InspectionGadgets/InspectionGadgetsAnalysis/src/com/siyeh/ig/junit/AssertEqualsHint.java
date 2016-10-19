@@ -50,13 +50,8 @@ public class AssertEqualsHint {
       return null;
     }
     final PsiClass containingClass = method.getContainingClass();
-    final boolean messageOnLastPosition = InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
-                                          InheritanceUtil.isInheritor(containingClass, "org.testng.Assert");
-    if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) &&
-        !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) &&
-        !InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE) &&
-        !InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") &&
-        !messageOnLastPosition) {
+    final boolean messageOnLastPosition = isMessageOnLastPosition(containingClass);
+    if (!isMessageOnFirstPosition(containingClass) && !messageOnLastPosition) {
       return null;
     }
     final PsiParameterList parameterList = method.getParameterList();
@@ -81,6 +76,18 @@ public class AssertEqualsHint {
       argumentIndex = 0;
     }
     return new AssertEqualsHint(argumentIndex, method);
+  }
+
+  public static boolean isMessageOnFirstPosition(PsiClass containingClass) {
+    return InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE) ||
+           InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit");
+  }
+
+  public static boolean isMessageOnLastPosition(PsiClass containingClass) {
+    return InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
+           InheritanceUtil.isInheritor(containingClass, "org.testng.Assert");
   }
 
   public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression) {

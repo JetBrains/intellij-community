@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -40,13 +41,19 @@ public class Restarter {
 
   public static boolean isSupported() {
     if (SystemInfo.isWindows) {
-      return JnaLoader.isLoaded() && new File(PathManager.getBinPath(), "restarter.exe").exists();
+      return JnaLoader.isLoaded() &&
+             new File(PathManager.getBinPath(), "restarter.exe").exists();
     }
+
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath().contains(".app") && new File(PathManager.getBinPath(), "restarter").canExecute();
+      return PathManager.getHomePath().contains(".app") &&
+             new File(PathManager.getBinPath(), "restarter").canExecute();
     }
+
     if (SystemInfo.isUnix) {
-      return CreateDesktopEntryAction.getLauncherScript() != null && new File(PathManager.getBinPath(), "restart.py").canExecute();
+      return JnaLoader.isLoaded() &&
+             CreateDesktopEntryAction.getLauncherScript() != null &&
+             new File(PathManager.getBinPath(), "restart.py").canExecute();
     }
 
     return false;
@@ -135,7 +142,12 @@ public class Restarter {
   private static void restartOnUnix(String... beforeRestart) throws IOException {
     String launcherScript = CreateDesktopEntryAction.getLauncherScript();
     if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
+
+    LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+    int pid = lib.getpid();
+
     doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
+      commands.add(String.valueOf(pid));
       commands.add(launcherScript);
       Collections.addAll(commands, beforeRestart);
     });
@@ -181,5 +193,10 @@ public class Restarter {
 
   private interface Shell32 extends StdCallLibrary {
     Pointer CommandLineToArgvW(WString command_line, IntByReference argc);
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface LibC extends Library {
+    int getpid();
   }
 }
