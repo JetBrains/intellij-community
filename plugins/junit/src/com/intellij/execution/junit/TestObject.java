@@ -159,8 +159,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
-    final GlobalSearchScope scope = sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
-    if (JUnitUtil.isJUnit5(scope, project)) {
+    if (isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) {
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
 
@@ -179,6 +178,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     
     return javaParameters;
+  }
+
+  public static boolean isJUnit5(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
+    return JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project),
+                              project);
   }
 
   @NotNull

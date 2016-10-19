@@ -62,8 +62,9 @@ public class TestPackage extends TestObject {
       @Override
       protected void search() {
         myClasses.clear();
-        SourceScope sourceScope = getSourceScope();
-        if (sourceScope != null && !ReadAction.compute(() -> JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), myProject))) {
+        final SourceScope sourceScope = getSourceScope();
+        final Module module = getConfiguration().getConfigurationModule().getModule();
+        if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
           try {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
@@ -102,7 +103,7 @@ public class TestPackage extends TestObject {
     try {
       dumbService.setAlternativeResolveEnabled(true);
       final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-      if (sourceScope == null || !JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), project)) { //check for junit 5
+      if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
         getClassFilter(data);//check if junit 4 found
       }
     }
