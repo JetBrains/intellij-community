@@ -79,14 +79,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
 
   @Override
   public void doMove(Project project, PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable MoveCallback callback) {
-    String initialPath = null;
-    if (targetContainer instanceof PsiFile) {
-      initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(targetContainer));
-    }
-    if (initialPath == null) {
-      initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(elements[0]));
-    }
-    
+    final String initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(elements[0]));
     final BaseRefactoringProcessor processor;
     if (isMovableLocalFunctionOrMethod(elements[0])) {
       final PyFunction function = (PyFunction)elements[0];
@@ -137,27 +130,23 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
                            @Nullable DataContext dataContext,
                            @Nullable PsiReference reference,
                            @Nullable Editor editor) {
-    PsiFile targetContainer = null;
-    if (editor != null) {
-      final Document document = editor.getDocument();
-      targetContainer = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (targetContainer instanceof PyFile && selectionSpansMultipleLines(editor)) {
-        final List<PyElement> moduleMembers = collectAllMovableElementsInSelection(editor, (PyFile)targetContainer);
-        if (moduleMembers.isEmpty()) {
-          showBadSelectionErrorHint(project, editor);
-        }
-        else {
-          doMove(project, ContainerUtil.findAllAsArray(moduleMembers, PsiNamedElement.class), targetContainer, null);
-        }
-        return true;
+    final PsiFile currentFile = element.getContainingFile();
+    if (editor != null && currentFile instanceof PyFile && selectionSpansMultipleLines(editor)) {
+      final List<PyElement> moduleMembers = collectAllMovableElementsInSelection(editor, (PyFile)currentFile);
+      if (moduleMembers.isEmpty()) {
+        showBadSelectionErrorHint(project, editor);
       }
+      else {
+        doMove(project, ContainerUtil.findAllAsArray(moduleMembers, PsiNamedElement.class), null, null);
+      }
+      return true;
     }
 
     // Fallback to the old way to select single element to move
     final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
     if (e != null && PyMoveModuleMembersHelper.hasMovableElementType(e)) {
       if (PyMoveModuleMembersHelper.isMovableModuleMember(e) || isMovableLocalFunctionOrMethod(e)) {
-        doMove(project, new PsiElement[]{e}, targetContainer, null);
+        doMove(project, new PsiElement[]{e}, null, null);
       }
       else {
         showBadSelectionErrorHint(project, editor);
