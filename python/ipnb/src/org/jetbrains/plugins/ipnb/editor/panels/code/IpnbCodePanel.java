@@ -143,7 +143,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       addOutputPanel(outputPanel, outputCell, hideOutputListener, true);
     }
 
-    outputPanel.addMouseListener(hideOutputListener);
+    if (!myCell.getCellOutputs().isEmpty()) {
+      outputPanel.addMouseListener(hideOutputListener);
+    }
+    
     return outputPanel;
   }
 
