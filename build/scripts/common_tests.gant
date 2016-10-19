@@ -136,7 +136,7 @@ target("coverage_report": "Generate coverage report") {
       }
       sourcefiles() {
         // cobbled together haphazardly, but sources aren't really needed anyway
-        fileset(dir: "${home}/../adt/idea/android/common/src")
+        fileset(dir: "${home}/../adt/idea/common/src")
         fileset(dir: "${home}/../adt/idea/android/src")
         fileset(dir: "${home}/../adt/idea/designer/src")
         fileset(dir: "${home}/../adt/idea/sdk-updates/src")
