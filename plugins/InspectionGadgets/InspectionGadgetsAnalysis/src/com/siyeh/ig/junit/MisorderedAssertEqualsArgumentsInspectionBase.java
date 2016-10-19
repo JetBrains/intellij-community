@@ -85,41 +85,12 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (method == null) {
         return;
       }
-      final PsiClass containingClass = method.getContainingClass();
-      final boolean junit;
-      if (InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")) {
-        junit = false;
-      }
-      else if (InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") ||
-               InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
-               InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
-        junit = true;
-      }
-      else {
+      final ExpectedActual expectedActual = ExpectedActual.create(method, callExpression.getArgumentList().getExpressions(), true);
+      if (expectedActual == null) {
         return;
       }
-      final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiType stringType = TypeUtils.getStringType(callExpression);
-      final PsiType parameterType1 = parameters[0].getType();
-      final PsiExpressionList argumentList = callExpression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression expectedArgument;
-      final PsiExpression actualArgument;
-      if (junit) {
-        if (parameterType1.equals(stringType) && parameters.length > 2) {
-          expectedArgument = arguments[1];
-          actualArgument = arguments[2];
-        }
-        else {
-          expectedArgument = arguments[0];
-          actualArgument = arguments[1];
-        }
-      }
-      else {
-        actualArgument = arguments[0];
-        expectedArgument = arguments[1];
-      }
+      final PsiExpression expectedArgument = expectedActual.getExpected();
+      final PsiExpression actualArgument = expectedActual.getActual();
       final PsiElement copy = expectedArgument.copy();
       expectedArgument.replace(actualArgument);
       actualArgument.replace(copy);
@@ -129,6 +100,49 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
   @Override
   public final BaseInspectionVisitor buildVisitor() {
     return new MisorderedAssertEqualsParametersVisitor();
+  }
+
+  private static class ExpectedActual {
+    private final PsiExpression myExpected;
+    private final PsiExpression myActual;
+
+    private ExpectedActual(PsiExpression expected, PsiExpression actual) {
+      myExpected = expected;
+      myActual = actual;
+    }
+
+    public PsiExpression getExpected() {
+      return myExpected;
+    }
+
+    public PsiExpression getActual() {
+      return myActual;
+    }
+
+    static ExpectedActual create(PsiMethod method, PsiExpression[] arguments, boolean checkTestNG) {
+      final PsiClass containingClass = method.getContainingClass();
+      final PsiExpression expectedArgument;
+      final PsiExpression actualArgument;
+      if (checkTestNG && InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")){
+        expectedArgument = arguments[1];
+        actualArgument = arguments[0];
+      }
+      else {
+        final boolean messageOnFirstPosition = AssertEqualsHint.isMessageOnFirstPosition(containingClass);
+        final boolean messageOnLastPosition = AssertEqualsHint.isMessageOnLastPosition(containingClass);
+        if (!messageOnFirstPosition && !messageOnLastPosition) {
+          return null;
+        }
+        int offset = messageOnFirstPosition && method.getParameterList().getParameters().length > 2 ? 1 : 0;
+        expectedArgument = arguments[offset];
+        actualArgument   = arguments[offset + 1];
+      }
+      if (expectedArgument == null || actualArgument == null) {
+        return null;
+      }
+
+      return new ExpectedActual(expectedArgument, actualArgument);
+    }
   }
 
   private class MisorderedAssertEqualsParametersVisitor extends BaseInspectionVisitor {
@@ -150,33 +164,14 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (arguments.length < 2) {
         return;
       }
-      final PsiType stringType = TypeUtils.getStringType(expression);
-      final PsiClass containingClass = method.getContainingClass();
-      final PsiExpression expectedArgument;
-      final PsiExpression actualArgument;
-      if (checkTestNG() ?
-          InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") :
-          InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
-          InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
-        final PsiType firstArgumentType = arguments[0].getType();
-        if (stringType.equals(firstArgumentType) && arguments.length > 2) {
-          expectedArgument = arguments[1];
-          actualArgument = arguments[2];
-        }
-        else {
-          expectedArgument = arguments[0];
-          actualArgument = arguments[1];
-        }
-      } else if (checkTestNG() && InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")){
-        expectedArgument = arguments[1];
-        actualArgument = arguments[0];
-      } else {
+
+      final ExpectedActual expectedActual = ExpectedActual.create(method, arguments, checkTestNG());
+
+      if (expectedActual == null) {
         return;
       }
-      if (expectedArgument == null || actualArgument == null) {
-        return;
-      }
-      if (looksLikeExpectedArgument(expectedArgument) || !looksLikeExpectedArgument(actualArgument)) {
+
+      if (looksLikeExpectedArgument(expectedActual.getExpected()) || !looksLikeExpectedArgument(expectedActual.getActual())) {
         return;
       }
       registerMethodCallError(expression);
