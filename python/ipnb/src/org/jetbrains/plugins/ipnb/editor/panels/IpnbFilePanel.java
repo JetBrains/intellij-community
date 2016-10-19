@@ -43,7 +43,6 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -269,14 +268,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
     
     final IpnbEditablePanel cellToMergePanel = getSelectedCell();
-    final IpnbCell cellToMerge = cellToMergePanel.myCell;
-    if (cellToMerge instanceof IpnbEditableCell) {
-      final List<String> currentCellSource = getCellSource(currentCellPanel);
-      final List<String> cellToMergeSource = ((IpnbEditableCell)cellToMerge).getSource();
-      final ArrayList<String> source = mergeCellsSource(currentCellSource, cellToMergeSource, below);
-      ((IpnbEditableCell)cellToMerge).setSource(source);
-      cellToMergePanel.updateCellView();
-    }
+    final IpnbCell cellToMerge = cellToMergePanel.getCell();
+    final List<String> currentCellSource = getCellSource(currentCellPanel);
+    final List<String> cellToMergeSource = ((IpnbEditableCell)cellToMerge).getSource();
+    final ArrayList<String> source = mergeCellsSource(currentCellSource, cellToMergeSource, below);
+    ((IpnbEditableCell)cellToMerge).setSource(source);
+    cellToMergePanel.updateCellView();
     
     actualizeCellData(cellToMerge);
     
@@ -322,7 +319,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final String newCellText = cellPanel.getText(position);
     
     if (oldCellText != null) {
-      final JTextArea editablePanel = cellPanel.myEditablePanel;
+      final JTextArea editablePanel = cellPanel.getEditablePanel();
       if (editablePanel != null) {
         editablePanel.setText(oldCellText);
       }
@@ -365,15 +362,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @NotNull
   private static List<String> getCellSource(@NotNull IpnbEditablePanel cellPanel) {
-    final IpnbCell cell = cellPanel.myCell;
-    List<String> source = new ArrayList<>();
-    if (cell instanceof IpnbEditableCell) {
-      source = ((IpnbEditableCell)cell).getSource();
-    }
-    else if (cell instanceof IpnbRawCell) {
-      source = ((IpnbRawCell)cell).getSource();
-    }
-    return source;
+    final IpnbCell cell = cellPanel.getCell();
+    return ((IpnbEditableCell)cell).getSource();
   }
 
   public void deleteSelectedCell() {

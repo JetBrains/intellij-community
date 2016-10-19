@@ -287,6 +287,8 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   public K getCell() {
     return myCell;
   }
-
   
+  public JTextArea getEditablePanel() {
+    return myEditablePanel;
+  }  
 }
