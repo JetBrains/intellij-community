@@ -265,13 +265,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             else {
               P properties = variants.get(0).createProperties();
               result.setResult(
-                Promise.resolve((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+                Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
               return;
             }
           }
           P properties = type.createBreakpointProperties(file, line);
           result.setResult(
-            Promise.resolve((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+            Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
           return;
         }
         result.setResult(rejectedPromise());
