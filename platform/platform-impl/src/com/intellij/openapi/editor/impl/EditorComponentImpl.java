@@ -89,6 +89,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
       @Override
       public Point magnify(double scale, Point at) {
+        if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         double currentSize = myEditor.getColorsScheme().getEditorFontSize();
         int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
