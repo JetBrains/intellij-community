@@ -15,13 +15,13 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -51,7 +51,7 @@ public class Restarter {
     }
 
     if (SystemInfo.isUnix) {
-      return JnaLoader.isLoaded() &&
+      return UnixProcessManager.getCurrentProcessId() > 0 &&
              CreateDesktopEntryAction.getLauncherScript() != null &&
              new File(PathManager.getBinPath(), "restart.py").canExecute();
     }
@@ -143,8 +143,8 @@ public class Restarter {
     String launcherScript = CreateDesktopEntryAction.getLauncherScript();
     if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
 
-    LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
-    int pid = lib.getpid();
+    int pid = UnixProcessManager.getCurrentProcessId();
+    if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
       commands.add(String.valueOf(pid));
@@ -193,10 +193,5 @@ public class Restarter {
 
   private interface Shell32 extends StdCallLibrary {
     Pointer CommandLineToArgvW(WString command_line, IntByReference argc);
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private interface LibC extends Library {
-    int getpid();
   }
 }
