@@ -29,15 +29,15 @@ public class IpnbCodeCellAction extends AnAction {
 
   public void changeTypeToCode(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
-    final IpnbEditablePanel selectedCell = filePanel.getSelectedCell();
-    if (selectedCell == null) return;
-    final IpnbEditableCell cell = selectedCell.getCell();
+    final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
+    if (selectedCellPanel == null) return;
+    final IpnbEditableCell cell = selectedCellPanel.getCell();
 
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
-    final int index = cells.indexOf(selectedCell.getCell());
+    final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(), cell.getMetadata());
     if (index >= 0)
       cells.set(index, codeCell);
-    filePanel.replaceComponent(selectedCell, codeCell);
+    filePanel.replaceComponent(selectedCellPanel, codeCell);
   }
 }

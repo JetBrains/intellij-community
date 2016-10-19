@@ -28,15 +28,15 @@ public class IpnbMarkdownCellAction extends AnAction {
 
   public void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
-    final IpnbEditablePanel selectedCell = filePanel.getSelectedCell();
-    if (selectedCell == null) return;
-    final IpnbEditableCell cell = selectedCell.getCell();
+    final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
+    if (selectedCellPanel == null) return;
+    final IpnbEditableCell cell = selectedCellPanel.getCell();
 
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
-    final int index = cells.indexOf(selectedCell.getCell());
+    final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource(), cell.getMetadata());
     if (index >= 0)
       cells.set(index, markdownCell);
-    filePanel.replaceComponent(selectedCell, markdownCell);
+    filePanel.replaceComponent(selectedCellPanel, markdownCell);
   }
 }
