@@ -20,6 +20,7 @@ gradle.taskGraph.whenReady {taskGraph ->
 
 dependencies {
     compile project(':client')
+    compile project(':mp.utils')
 }
 
 intellij {
