@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.continuation.Where;
 import com.intellij.vcsUtil.VcsUtil;
@@ -44,14 +43,14 @@ import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
 public class LocalChangesPromptTask extends BaseMergeTask {
 
-  @Nullable private final List<CommittedChangeList> myChangeListsToMerge;
+  @Nullable private final List<SvnChangeList> myChangeListsToMerge;
 
   public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
     myChangeListsToMerge = null;
   }
 
-  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @NotNull List<CommittedChangeList> changeListsToMerge) {
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @NotNull List<SvnChangeList> changeListsToMerge) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
     myChangeListsToMerge = changeListsToMerge;
   }
@@ -96,7 +95,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable
   private Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
-                                              @NotNull List<CommittedChangeList> changeListsToMerge) {
+                                              @NotNull List<SvnChangeList> changeListsToMerge) {
 
     Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
 
@@ -104,9 +103,8 @@ public class LocalChangesPromptTask extends BaseMergeTask {
   }
 
   @NotNull
-  private Set<FilePath> collectPaths(@NotNull List<CommittedChangeList> lists) {
+  private Set<FilePath> collectPaths(@NotNull List<SvnChangeList> lists) {
     return lists.stream()
-      .map(SvnChangeList.class::cast)
       .flatMap(list -> list.getAffectedPaths().stream())
       .map(this::getLocalPath)
       .filter(Objects::nonNull)

@@ -17,13 +17,13 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.SeparatePiecesRunner;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.util.List;
 
@@ -94,7 +94,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     return ar(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
   }
 
-  protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists, @NotNull String title) {
+  protected void runChangeListsMerge(@NotNull List<SvnChangeList> lists, @NotNull String title) {
     next(new LocalChangesPromptTask(myMergeProcess, lists),
          new MergeTask(myMergeProcess, new ChangeListsMergerFactory(lists, false, false, true), title));
   }

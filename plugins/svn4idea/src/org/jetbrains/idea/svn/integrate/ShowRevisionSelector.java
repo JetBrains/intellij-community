@@ -15,22 +15,22 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
 
 public class ShowRevisionSelector extends BaseMergeTask {
 
-  @NotNull private final List<CommittedChangeList> myChangeLists;
+  @NotNull private final List<SvnChangeList> myChangeLists;
   @NotNull private final MergeChecker myMergeChecker;
   private final boolean myAllStatusesCalculated;
   private final boolean myAllListsLoaded;
 
   public ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
-                              @NotNull List<CommittedChangeList> changeLists,
+                              @NotNull List<SvnChangeList> changeLists,
                               @NotNull MergeChecker mergeChecker,
                               boolean allStatusesCalculated,
                               boolean allListsLoaded) {
@@ -55,7 +55,7 @@ public class ShowRevisionSelector extends BaseMergeTask {
         next(getMergeAllTasks(true));
         break;
       default:
-        List<CommittedChangeList> lists = result.getSelectedLists();
+        List<SvnChangeList> lists = result.getSelectedLists();
 
         if (!lists.isEmpty()) {
           runChangeListsMerge(lists, myMergeContext.getTitle());

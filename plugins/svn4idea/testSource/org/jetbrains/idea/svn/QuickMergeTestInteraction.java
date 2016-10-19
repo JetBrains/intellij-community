@@ -17,10 +17,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
@@ -37,10 +37,10 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   private QuickMergeContentsVariants myMergeVariant = QuickMergeContentsVariants.all;
   private final boolean myReintegrateAnswer;
-  @Nullable private final Function.Mono<List<CommittedChangeList>> mySelectedListsProvider;
+  @Nullable private final Function.Mono<List<SvnChangeList>> mySelectedListsProvider;
   @NotNull private final List<Exception> myExceptions;
 
-  public QuickMergeTestInteraction(boolean reintegrate, @Nullable Function.Mono<List<CommittedChangeList>> selectedListsProvider) {
+  public QuickMergeTestInteraction(boolean reintegrate, @Nullable Function.Mono<List<SvnChangeList>> selectedListsProvider) {
     myReintegrateAnswer = reintegrate;
     mySelectedListsProvider = selectedListsProvider;
     myExceptions = newArrayList();
@@ -68,7 +68,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
                                                  @NotNull MergeChecker mergeChecker,
                                                  boolean allStatusesCalculated,
                                                  boolean allListsLoaded) {

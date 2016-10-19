@@ -22,9 +22,9 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.IntersectingLocalChangesPanel;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
@@ -78,7 +78,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
                                                  @NotNull MergeChecker mergeChecker,
                                                  boolean allStatusesCalculated,
                                                  boolean allListsLoaded) {
@@ -87,7 +87,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     dialog.show();
 
     QuickMergeContentsVariants resultCode = toMergeVariant(dialog.getExitCode());
-    List<CommittedChangeList> selectedLists = resultCode == QuickMergeContentsVariants.select ? dialog.getSelected() : emptyList();
+    List<SvnChangeList> selectedLists = resultCode == QuickMergeContentsVariants.select ? dialog.getSelected() : emptyList();
 
     return new SelectMergeItemsResult(resultCode, selectedLists);
   }

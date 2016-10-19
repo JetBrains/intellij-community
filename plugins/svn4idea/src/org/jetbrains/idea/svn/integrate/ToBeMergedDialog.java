@@ -31,12 +31,10 @@ import com.intellij.openapi.vcs.QuantitySelection;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ObjectUtils;
@@ -65,6 +63,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
@@ -77,8 +76,8 @@ public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
   @NotNull private final MergeContext myMergeContext;
-  @NotNull private final ListTableModel<CommittedChangeList> myRevisionsModel;
-  private TableView<CommittedChangeList> myRevisionsList;
+  @NotNull private final ListTableModel<SvnChangeList> myRevisionsModel;
+  private TableView<SvnChangeList> myRevisionsList;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
 
@@ -94,7 +93,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ToBeMergedDialog.MoreXAction myMore500Action;
 
   public ToBeMergedDialog(@NotNull MergeContext mergeContext,
-                          @NotNull List<CommittedChangeList> changeLists,
+                          @NotNull List<SvnChangeList> changeLists,
                           final String title,
                           @NotNull MergeChecker mergeChecker,
                           boolean allStatusesCalculated,
@@ -139,7 +138,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     return totalRows > 0 ? myRevisionsModel.getItem(totalRows - 1).getNumber() : 0;
   }
 
-  public void addMoreLists(@NotNull List<CommittedChangeList> changeLists) {
+  public void addMoreLists(@NotNull List<SvnChangeList> changeLists) {
     myRevisionsModel.addRows(changeLists);
     myRevisionsList.revalidate();
     myRevisionsList.repaint();
@@ -158,13 +157,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     myDisposed = true;
   }
 
-  private void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
+  private void refreshListStatus(@NotNull final List<SvnChangeList> changeLists) {
     if (myDisposed) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       int cnt = 10;
-      for (CommittedChangeList list : changeLists) {
+      for (SvnChangeList list : changeLists) {
         // at the moment we calculate only "merged" since we don;t have branch copy point
-        myStatusMap.put(list.getNumber(), toListMergeStatus(myMergeChecker.checkList((SvnChangeList)list)));
+        myStatusMap.put(list.getNumber(), toListMergeStatus(myMergeChecker.checkList(list)));
 
         --cnt;
         if (cnt <= 0) {
@@ -216,11 +215,11 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   @NotNull
-  public List<CommittedChangeList> getSelected() {
+  public List<SvnChangeList> getSelected() {
     Set<Long> selected = myWiseSelection.getSelected();
     Set<Long> unselected = myWiseSelection.getUnselected();
     // todo: can be made faster
-    Condition<CommittedChangeList> filter =
+    Condition<SvnChangeList> filter =
       myWiseSelection.areAllSelected() ? list -> !unselected.contains(list.getNumber()) : list -> selected.contains(list.getNumber());
 
     return filter(myRevisionsModel.getItems(), filter);
@@ -237,25 +236,20 @@ public class ToBeMergedDialog extends DialogWrapper {
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        List<CommittedChangeList> changeLists = myRevisionsList.getSelectedObjects();
-        myRepositoryChangesBrowser.setChangesToDisplay(emptyList());
+        List<SvnChangeList> changeLists = myRevisionsList.getSelectedObjects();
+
         myAlreadyMerged.clear();
-        if (!changeLists.isEmpty()) {
-          List<SvnChangeList> svnChangeLists = findAll(changeLists, SvnChangeList.class);
-
-          for (SvnChangeList svnChangeList : svnChangeLists) {
-            myAlreadyMerged.addAll(getAlreadyMergedPaths(svnChangeList));
-          }
-
-          myRepositoryChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.collectChanges(svnChangeLists, false));
+        for (SvnChangeList changeList : changeLists) {
+          myAlreadyMerged.addAll(getAlreadyMergedPaths(changeList));
         }
+        myRepositoryChangesBrowser.setChangesToDisplay(collectChanges(changeLists, false));
 
         mySplitter.doLayout();
         myRepositoryChangesBrowser.repaint();
       }
     };
     final MyListCellRenderer listCellRenderer = new MyListCellRenderer();
-    myRevisionsList = new TableView<CommittedChangeList>() {
+    myRevisionsList = new TableView<SvnChangeList>() {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return listCellRenderer;
@@ -268,9 +262,9 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
     };
     myRevisionsList.setExpandableItemsEnabled(false);
-    new TableViewSpeedSearch<CommittedChangeList>(myRevisionsList) {
+    new TableViewSpeedSearch<SvnChangeList>(myRevisionsList) {
       @Override
-      protected String getItemText(@NotNull CommittedChangeList element) {
+      protected String getItemText(@NotNull SvnChangeList element) {
         return element.getComment();
       }
     };
@@ -301,7 +295,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     mySplitter.setFirstComponent(panel);
 
     myRepositoryChangesBrowser =
-      new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<CommittedChangeList>emptyList(), emptyList(), null);
+      new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<SvnChangeList>emptyList(), emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction()
       .registerCustomShortcutSet(myRepositoryChangesBrowser.getDiffAction().getShortcutSet(), myRevisionsList);
     setChangesDecorator();
@@ -360,9 +354,7 @@ public class ToBeMergedDialog extends DialogWrapper {
           final Rectangle baseRect = myRevisionsList.getCellRect(idx, 0, false);
           baseRect.setSize(checkboxWidth, baseRect.height);
           if (baseRect.contains(e.getPoint())) {
-            SvnChangeList changeList = (SvnChangeList)myRevisionsList.getModel().getValueAt(idx, 0);
-
-            toggleInclusion(changeList);
+            toggleInclusion(myRevisionsModel.getRowValue(idx));
             myRevisionsList.repaint(baseRect);
           }
         }
@@ -374,11 +366,9 @@ public class ToBeMergedDialog extends DialogWrapper {
       @Override
       public void keyReleased(KeyEvent e) {
         if (KeyEvent.VK_SPACE == e.getKeyCode()) {
-          List<CommittedChangeList> selected = myRevisionsList.getSelectedObjects();
+          List<SvnChangeList> selected = myRevisionsList.getSelectedObjects();
           if (!selected.isEmpty()) {
-            selected.stream()
-              .filter(SvnChangeList.class::isInstance)
-              .forEach(ToBeMergedDialog.this::toggleInclusion);
+            selected.forEach(ToBeMergedDialog.this::toggleInclusion);
             myRevisionsList.repaint();
             e.consume();
           }
@@ -387,7 +377,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     });
   }
 
-  private void toggleInclusion(@NotNull CommittedChangeList list) {
+  private void toggleInclusion(@NotNull SvnChangeList list) {
     long number = list.getNumber();
 
     if (myWiseSelection.isSelected(number)) {
@@ -450,7 +440,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     private final long myStartNumber;
     private final int myQuantity;
-    private List<CommittedChangeList> myLists;
+    private List<SvnChangeList> myLists;
     private boolean myIsLastListLoaded;
 
     public LoadChangeListsTask(long startNumber, int quantity) {
@@ -462,7 +452,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       try {
-        Pair<List<CommittedChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, myStartNumber, getBunchSize(myQuantity));
+        Pair<List<SvnChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, myStartNumber, getBunchSize(myQuantity));
 
         myLists = loadResult.first;
         myIsLastListLoaded = loadResult.second;
@@ -558,10 +548,10 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<CommittedChangeList, CommittedChangeList>("fake column") {
+  private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<SvnChangeList, SvnChangeList>("fake column") {
     @Override
-    public CommittedChangeList valueOf(CommittedChangeList committedChangeList) {
-      return committedChangeList;
+    public SvnChangeList valueOf(SvnChangeList changeList) {
+      return changeList;
     }
   };
 }

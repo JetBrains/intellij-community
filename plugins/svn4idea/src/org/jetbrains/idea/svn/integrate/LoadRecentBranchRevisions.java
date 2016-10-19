@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   private boolean myLastLoaded;
   @NotNull private final Consumer<LoadRecentBranchRevisions> myCallback;
   @NotNull private final OneShotMergeInfoHelper myMergeChecker;
-  @NotNull private final List<CommittedChangeList> myCommittedChangeLists;
+  @NotNull private final List<SvnChangeList> myCommittedChangeLists;
 
   public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess, @NotNull Consumer<LoadRecentBranchRevisions> callback) {
     super(mergeProcess, "Loading recent " + mergeProcess.getMergeContext().getBranchName() + " revisions", Where.POOLED);
@@ -65,7 +64,7 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
     ProgressManager.progress2("Calculating not merged revisions");
     myMergeChecker.prepare();
 
-    Pair<List<CommittedChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));
+    Pair<List<SvnChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));
     myCommittedChangeLists.addAll(loadResult.first);
     myLastLoaded = loadResult.second;
 
@@ -73,10 +72,9 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   }
 
   @NotNull
-  public static Pair<List<CommittedChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
+  public static Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
     throws VcsException {
-    List<CommittedChangeList> changeLists =
-      getNotMergedChangeLists(getChangeListsBefore(mergeContext, beforeRevision, size), beforeRevision);
+    List<SvnChangeList> changeLists = getNotMergedChangeLists(getChangeListsBefore(mergeContext, beforeRevision, size), beforeRevision);
 
     return Pair.create(
       changeLists.subList(0, min(size, changeLists.size())),
@@ -115,9 +113,9 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   }
 
   @NotNull
-  private static List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
-                                                                   long revision) {
-    List<CommittedChangeList> result = newArrayList();
+  private static List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
+                                                             long revision) {
+    List<SvnChangeList> result = newArrayList();
 
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       // do not take first since it's equal
@@ -137,7 +135,7 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   }
 
   @NotNull
-  public List<CommittedChangeList> getChangeLists() {
+  public List<SvnChangeList> getChangeLists() {
     return myCommittedChangeLists;
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
   @NotNull private final OneShotMergeInfoHelper myMergeChecker;
-  @NotNull private final List<CommittedChangeList> myNotMergedChangeLists;
+  @NotNull private final List<SvnChangeList> myNotMergedChangeLists;
   @NotNull private final Consumer<MergeCalculatorTask> myCallback;
 
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
@@ -62,7 +61,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
   }
 
   @NotNull
-  public List<CommittedChangeList> getChangeLists() {
+  public List<SvnChangeList> getChangeLists() {
     return myNotMergedChangeLists;
   }
 
@@ -106,8 +105,8 @@ public class MergeCalculatorTask extends BaseMergeTask {
   }
 
   @NotNull
-  private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
-    List<CommittedChangeList> result = newArrayList();
+  private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+    List<SvnChangeList> result = newArrayList();
     ProgressManager.getInstance().getProgressIndicator().setText("Checking merge information...");
 
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {

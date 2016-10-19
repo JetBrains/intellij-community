@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.util.List;
 
 public class SelectMergeItemsResult {
   @NotNull private final QuickMergeContentsVariants myResultCode;
-  @NotNull private final List<CommittedChangeList> myLists;
+  @NotNull private final List<SvnChangeList> myLists;
 
-  public SelectMergeItemsResult(@NotNull QuickMergeContentsVariants resultCode, @NotNull List<CommittedChangeList> lists) {
+  public SelectMergeItemsResult(@NotNull QuickMergeContentsVariants resultCode, @NotNull List<SvnChangeList> lists) {
     myResultCode = resultCode;
     myLists = lists;
   }
@@ -35,7 +35,7 @@ public class SelectMergeItemsResult {
   }
 
   @NotNull
-  public List<CommittedChangeList> getSelectedLists() {
+  public List<SvnChangeList> getSelectedLists() {
     return myLists;
   }
 }
