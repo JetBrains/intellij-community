@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
   private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
     myElementReference = new SoftReference<PsiElement>(null);
-    myMessage = "Element " + node.getClass() + " of type " + node.getElementType() + (message == null ? "" : "; " + message);
+    final IElementType elementType = node.getElementType();
+    myMessage = "Element " + node.getClass() + " of type " + elementType + " (" + elementType.getClass() + ")" +
+                (message == null ? "" : "; " + message);
     myDiagnostic = createAttachments(findInvalidationTrace(node));
   }
 
