@@ -72,8 +72,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static String findRCFile(String shellName) {
     if (shellName != null) {
-      if ("bash".equals(shellName)) {
-        shellName = "sh";
+      if ("sh".equals(shellName)) {
+        shellName = "bash";
       }
       try {
 
@@ -195,10 +195,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
         String rcFilePath = findRCFile(shellName);
 
-
         if (rcFilePath != null &&
             shellIntegration) {
-          if (shellName.equals("bash") || shellName.equals("sh")) {
+          if (shellName.equals("bash") || (SystemInfo.isMac && shellName.equals("sh"))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
           }
           else if (shellName.equals("zsh")) {
