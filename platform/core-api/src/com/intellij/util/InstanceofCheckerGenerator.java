@@ -15,14 +15,13 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import net.sf.cglib.asm.$ClassVisitor;
-import net.sf.cglib.asm.$Label;
-import net.sf.cglib.asm.$Type;
-import net.sf.cglib.core.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.lang.reflect.Modifier;
 
@@ -33,13 +32,6 @@ public class InstanceofCheckerGenerator {
   private static final InstanceofCheckerGenerator ourInstance;
 
   static {
-    try {
-      ClassGenerator.class.getDeclaredMethod("generateClass", $ClassVisitor.class);
-    }
-    catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Incorrect cglib version in the classpath, source=" + PathManager.getJarPathForClass(ClassGenerator.class));
-    }
-
     try {
       ourInstance = new InstanceofCheckerGenerator();
     }
@@ -52,6 +44,7 @@ public class InstanceofCheckerGenerator {
     return ourInstance;
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final ConcurrentFactoryMap<Class, Condition<Object>> myCache = new ConcurrentFactoryMap<Class, Condition<Object>>() {
     @Override
     protected Condition<Object> create(final Class key) {
@@ -64,9 +57,28 @@ public class InstanceofCheckerGenerator {
         };
       }
 
-      return new InstanceofClassGenerator(key).createClass();
+      String name = "com.intellij.util.InstanceofChecker$$$$$" + key.getName().replace('.', '$');
+      //noinspection unchecked
+      return (Condition<Object>)ReflectionUtil.newInstance(obtainClass(key, name, generateConditionClass(key, name)));
     }
   };
+
+  private synchronized Class obtainClass(Class checkedClass, String name, byte[] bytes) {
+    ClassLoader loader = checkedClass.getClassLoader();
+    if (loader == null) loader = InstanceofCheckerGenerator.class.getClassLoader();
+    try {
+      return loader.loadClass(name);
+    }
+    catch (ClassNotFoundException ignore) {
+    }
+
+    try {
+      return ReflectionUtil.defineClass(name, bytes, loader);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @NotNull
   public Condition<Object> getInstanceofChecker(final Class<?> someClass) {
@@ -74,66 +86,44 @@ public class InstanceofCheckerGenerator {
   }
 
   private static String toInternalName(Class<?> someClass) {
-    return someClass.getName().replace('.', '/');
+    return toInternalName(someClass.getName());
   }
 
-  private static class InstanceofClassGenerator extends AbstractClassGenerator {
-    private static final Source SOURCE = new Source("IntellijInstanceof");
-    private final Class<?> myCheckedClass;
-
-    public InstanceofClassGenerator(Class<?> checkedClass) {
-      super(SOURCE);
-      myCheckedClass = checkedClass;
-    }
-
-    @Override
-    protected ClassLoader getDefaultClassLoader() {
-      return myCheckedClass.getClassLoader();
-    }
-
-    public Condition<Object> createClass() {
-      return (Condition<Object>)super.create(myCheckedClass);
-    }
-
-    @Override
-    protected Object firstInstance(Class type) throws Exception {
-      return type.newInstance();
-    }
-
-    @Override
-    protected Object nextInstance(Object instance) throws Exception {
-      return instance;
-    }
-
-    @Override
-    public void generateClass($ClassVisitor classVisitor) throws Exception {
-      ClassEmitter cv = new ClassEmitter(classVisitor);
-
-      cv.visit(Constants.V1_2, Modifier.PUBLIC, "com/intellij/util/InstanceofChecker$$$$$" + myCheckedClass.getName().replace('.', '$'), null, toInternalName(Object.class), new String[]{toInternalName(Condition.class)});
-      cv.visitSource(Constants.SOURCE_FILE, null);
-      final Signature signature = new Signature("<init>", "()V");
-      final CodeEmitter cons = cv.begin_method(Modifier.PUBLIC, signature, new $Type[0]);
-      cons.load_this();
-      cons.dup();
-      cons.super_invoke_constructor(signature);
-      cons.return_value();
-      cons.end_method();
-
-      final CodeEmitter e = cv.begin_method(Modifier.PUBLIC, new Signature("value", "(L" + toInternalName(Object.class) + ";)Z"), new $Type[0]);
-      e.load_arg(0);
-      e.instance_of($Type.getType(myCheckedClass));
-
-      $Label fail = e.make_label();
-      e.if_jump(CodeEmitter.EQ, fail);
-      e.push(true);
-      e.return_value();
-
-      e.mark(fail);
-      e.push(false);
-      e.return_value();
-      e.end_method();
-
-      cv.visitEnd();
-    }
+  @NotNull
+  private static String toInternalName(String name) {
+    return name.replace('.', '/');
   }
+
+  private static byte[] generateConditionClass(Class<?> checkedClass, final String generatedName) {
+    ClassWriter cv = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    cv.visit(Opcodes.V1_2, Modifier.PUBLIC, toInternalName(generatedName), null, toInternalName(Object.class), new String[]{toInternalName(Condition.class)});
+
+    defaultConstructor(cv);
+
+    conditionValue(checkedClass, cv);
+
+    cv.visitEnd();
+    return cv.toByteArray();
+  }
+
+  private static void defaultConstructor(ClassWriter cv) {
+    MethodVisitor mv = cv.visitMethod(Modifier.PUBLIC, "<init>", "()V", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, toInternalName(Object.class), "<init>", "()V", false);
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+  }
+
+  private static void conditionValue(Class<?> checkedClass, ClassWriter cv) {
+    MethodVisitor mv = cv.visitMethod(Modifier.PUBLIC, "value", "(L" + toInternalName(Object.class) + ";)Z", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(Opcodes.ALOAD, 1);
+    mv.visitTypeInsn(Opcodes.INSTANCEOF, Type.getType(checkedClass).getInternalName());
+    mv.visitInsn(Opcodes.IRETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+  }
+
 }

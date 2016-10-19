@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
     <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>
