@@ -238,7 +238,11 @@ class CommunityRepositoryModules {
       withModule("java-decompiler-engine", mainJarName)
       doNotCreateSeparateJarForLocalizableResources()
     },
-    javaFXPlugin("javaFX-CE")
+    javaFXPlugin("javaFX-CE"),
+    plugin("terminal") {
+      withResource("resources/.zshrc", "")
+      withResource("resources/jediterm-sh.in", "")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
