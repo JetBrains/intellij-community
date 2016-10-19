@@ -11,7 +11,8 @@
     <projectConfigurable groupId="build" instance="com.intellij.coverage.CoverageOptionsConfigurable" id="coverage" displayName="Coverage" />
     <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
     <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
-    <executor implementation="com.intellij.coverage.CoverageExecutor" />
+    <!-- Android Studio: disable coverage runner until we have proper coverage integration
+    <executor implementation="com.intellij.coverage.CoverageExecutor" /> -->
   </extensions>
   <actions>
     <group id="CoverageMenu">
