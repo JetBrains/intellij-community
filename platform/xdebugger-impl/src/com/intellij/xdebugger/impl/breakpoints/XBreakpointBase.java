@@ -293,6 +293,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myState.setDependencyState(state);
   }
 
+  @Nullable
   public String getGroup() {
     return myState.getGroup();
   }

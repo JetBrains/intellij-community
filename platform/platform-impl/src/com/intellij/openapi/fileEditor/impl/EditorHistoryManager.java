@@ -138,10 +138,11 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       for (int i = states.length - 1; i >= 0; i--) {
         final FileEditorProvider provider = oldProviders [i];
         LOG.assertTrue(provider != null);
-        FileEditor editor = editors[i];
-        if (!editor.isValid()) continue;
         providers[i] = provider;
-        states[i] = editor.getState(FileEditorStateLevel.FULL);
+        FileEditor editor = editors[i];
+        if (editor.isValid()) {
+          states[i] = editor.getState(FileEditorStateLevel.FULL);
+        }
       }
       addEntry(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
       trimToSize();

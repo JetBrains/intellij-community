@@ -50,6 +50,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -517,12 +518,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   @Nullable
   private static LocatableEvent getLocatableEvent(EventSet eventSet) {
-    for (Event event : eventSet) {
-      if (event instanceof LocatableEvent) {
-        return (LocatableEvent)event;
-      }
-    }
-    return null;
+    return StreamEx.of(eventSet).select(LocatableEvent.class).findFirst().orElse(null);
   }
 
   private void processDefaultEvent(SuspendContextImpl suspendContext) {

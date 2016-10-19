@@ -226,9 +226,7 @@ public class XFramesView extends XDebugView {
       }
 
       myListenersEnabled = false;
-      for (StackFramesListBuilder builder : myBuilders.values()) {
-        builder.dispose();
-      }
+      myBuilders.values().forEach(StackFramesListBuilder::dispose);
       myBuilders.clear();
 
       if (suspendContext == null) {
@@ -435,9 +433,7 @@ public class XFramesView extends XDebugView {
     @SuppressWarnings("unchecked")
     public void initModel(final DefaultListModel model) {
       model.removeAllElements();
-      for (XStackFrame stackFrame : myStackFrames) {
-        model.addElement(stackFrame);
-      }
+      myStackFrames.forEach(model::addElement);
       if (myErrorMessage != null) {
         model.addElement(myErrorMessage);
       }

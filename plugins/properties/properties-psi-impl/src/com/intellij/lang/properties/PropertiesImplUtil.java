@@ -21,6 +21,7 @@ import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -137,7 +138,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   public static boolean canBePropertyFile(PsiFile file) {
-    return file instanceof PropertiesFile || file instanceof XmlFile;
+    return file instanceof PropertiesFile || file instanceof XmlFile && file.getFileType() == StdFileTypes.XML;
   }
 
   @Nullable

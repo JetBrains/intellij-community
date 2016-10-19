@@ -1,9 +1,9 @@
 class Foo{
     Foo(int arg) {
     }
-    Foo(boolean arg) {
-    }
     Foo() {
+    }
+    Foo(boolean arg) {
     }
 
     {

@@ -51,8 +51,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertEqualsHint assertEqualsHint = AssertEqualsHint.create(expression);
-      if (assertEqualsHint == null) {
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
+      if (assertHint == null) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -60,7 +60,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
       if (arguments.length != 3 && arguments.length != 2) {
         return;
       }
-      final int argIndex = assertEqualsHint.getArgIndex();
+      final int argIndex = assertHint.getArgIndex();
       final PsiExpression argument1 = arguments[argIndex];
       if (!couldBeAssertSameArgument(argument1)) {
         return;

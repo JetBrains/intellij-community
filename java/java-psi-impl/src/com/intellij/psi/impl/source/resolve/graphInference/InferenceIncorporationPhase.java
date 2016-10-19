@@ -296,7 +296,7 @@ public class InferenceIncorporationPhase {
         if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
           if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
-            if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter) {
+            if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter && !mySession.isProperType(upperBound)) {
               mySession.setErased();
             }
             continue;

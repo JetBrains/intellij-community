@@ -17,52 +17,15 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog;
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserNode {
-
-  private final int myUnversionedSize;
-  private final int myUnversionedDirsSize;
-  private boolean myManyUnversioned;
-  @NotNull private final Runnable myDialogShower;
+public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilesNode {
 
   public ChangesBrowserUnversionedFilesNode(@NotNull Project project,
                                             int unversionedSize,
                                             int unversionedDirsSize,
                                             boolean manyUnversioned) {
-    super(UNVERSIONED_FILES_TAG);
-    myUnversionedSize = unversionedSize;
-    myUnversionedDirsSize = unversionedDirsSize;
-    myManyUnversioned = manyUnversioned;
-    myDialogShower = () -> new UnversionedViewDialog(project).show();
-  }
-
-  public int getUnversionedSize() {
-    return myUnversionedSize;
-  }
-
-  @Override
-  public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    super.render(renderer, selected, expanded, hasFocus);
-    if (isManyUnversioned()) {
-      renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
-    }
-  }
-
-  @Override
-  public int getCount() {
-    return myUnversionedSize - myUnversionedDirsSize;
-  }
-
-  @Override
-  public int getDirectoryCount() {
-    return myUnversionedDirsSize;
-  }
-
-  public boolean isManyUnversioned() {
-    return myManyUnversioned;
+    super(UNVERSIONED_FILES_TAG, unversionedSize, unversionedDirsSize, manyUnversioned, () -> new UnversionedViewDialog(project).show());
   }
 
   @Override

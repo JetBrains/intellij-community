@@ -72,6 +72,10 @@
       <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
+      <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
+                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                       key="simplifiable.testng.assertion.display.name" groupName="TestNG"
+                       enabledByDefault="false" level="WARNING"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.TestNGTestDiscoveryListener"/>

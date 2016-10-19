@@ -238,13 +238,12 @@ public class HgStatusCommand {
   }
 
   @NotNull
-  public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
-    Collection<VirtualFile> untrackedFiles = new HashSet<>();
-    List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
-    Set<HgChange> change = executeInCurrentThread(repo, filePaths);
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) throws VcsException {
+    Collection<VirtualFile> resultFiles = new HashSet<>();
+    Set<HgChange> change = executeInCurrentThread(repo, files != null ? ObjectsConvertor.vf2fp(files) : null);
     for (HgChange hgChange : change) {
-      untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+      resultFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
     }
-    return untrackedFiles;
+    return resultFiles;
   }
 }

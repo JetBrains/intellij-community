@@ -17,9 +17,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +31,6 @@ import java.util.SortedMap;
 public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String>> {
   public SwitchedFileHolder(final Project project, final HolderType holderType) {
     super(project, holderType);
-  }
-
-  public void takeFrom(final SwitchedFileHolder holder) {
-    myMap.clear();
-    myMap.putAll(holder.myMap);
   }
 
   public synchronized SwitchedFileHolder copy() {
@@ -52,6 +46,10 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
     return scope.belongsTo(VcsUtil.getFilePath(file));
   }
 
+  private boolean fileDropped(final VirtualFile file) {
+    return !file.isValid() || myVcsManager.getVcsFor(file) == null;
+  }
+  
   public Map<VirtualFile, String> getFilesMapCopy() {
     final HashMap<VirtualFile, String> result = new HashMap<>();
     for (final VirtualFile vf : myMap.keySet()) {
@@ -79,7 +77,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
     if (floor == null) return false;
     final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor, true);
     for (VirtualFile parent : floorMap.keySet()) {
-      if (VfsUtil.isAncestor(parent, file, false)) {
+      if (VfsUtilCore.isAncestor(parent, file, false)) {
         final Pair<Boolean, String> value = floorMap.get(parent);
         return parent.equals(file) || value.getFirst();
       }
@@ -93,27 +91,10 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
     if (floor == null) return null;
     final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor);
     for (VirtualFile parent : floorMap.keySet()) {
-      if (VfsUtil.isAncestor(parent, file, false)) {
+      if (VfsUtilCore.isAncestor(parent, file, false)) {
         return floorMap.get(parent).getSecond();
       }
     }
     return null;
-  }
-
-  public void calculateChildren() {
-    //myMap.optimizeMap(MyOptimizeProcessor.getInstance());
-  }
-
-  private static class MyOptimizeProcessor implements PairProcessor<Pair<Boolean, String>, Pair<Boolean, String>> {
-    private final static MyOptimizeProcessor ourInstance = new MyOptimizeProcessor();
-
-    public static MyOptimizeProcessor getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public boolean process(final Pair<Boolean, String> parentPair, final Pair<Boolean, String> childPair) {
-      return Boolean.TRUE.equals(parentPair.getFirst()) && parentPair.getSecond().equals(childPair.getSecond());
-    }
   }
 }
