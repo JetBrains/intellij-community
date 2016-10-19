@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
@@ -114,7 +116,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @NotNull PsiElement place) {
-    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(this);
+    DelegatesToInfo info = GrDelegatesToUtilKt.getDelegatesToInfo(this);
     if (info == null) {
       return null;
     }
