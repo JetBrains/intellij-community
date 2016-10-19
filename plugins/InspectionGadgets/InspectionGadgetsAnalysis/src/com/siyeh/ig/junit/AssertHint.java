@@ -17,17 +17,21 @@ package com.siyeh.ig.junit;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-public class AssertEqualsHint {
+import java.util.function.Predicate;
+
+public class AssertHint {
   private final int myArgIndex;
+  private final PsiExpression myMessage;
   private final PsiMethod myMethod;
 
-  private AssertEqualsHint(int index, PsiMethod method) {
+  private AssertHint(int index, PsiExpression message, PsiMethod method) {
     myArgIndex = index;
+    myMessage = message;
     myMethod = method;
   }
 
@@ -39,10 +43,29 @@ public class AssertEqualsHint {
     return myMethod;
   }
 
-  public static AssertEqualsHint create(PsiMethodCallExpression expression) {
+  public PsiExpression getPosition(PsiExpression[] arguments) {
+    return arguments[myArgIndex];
+  }
+
+  @Nullable
+  public PsiExpression getMessage() {
+    return myMessage;
+  }
+
+  public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertEquals".equals(methodName), 2);
+  }
+
+  public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName), 1);
+  }
+
+  private static AssertHint create(PsiMethodCallExpression expression,
+                                   Predicate<String> methodNameValidator,
+                                   int minimumParamCount) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"assertEquals".equals(methodName)) {
+    if (!methodNameValidator.test(methodName)) {
       return null;
     }
     final PsiMethod method = expression.resolveMethod();
@@ -51,50 +74,56 @@ public class AssertEqualsHint {
     }
     final PsiClass containingClass = method.getContainingClass();
     final boolean messageOnLastPosition = isMessageOnLastPosition(containingClass);
-    if (!isMessageOnFirstPosition(containingClass) && !messageOnLastPosition) {
+    final boolean messageOnFirstPosition = isMessageOnFirstPosition(containingClass);
+    if (!messageOnFirstPosition && !messageOnLastPosition) {
       return null;
     }
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
-    if (parameters.length < 2) {
+    if (parameters.length < minimumParamCount) {
       return null;
     }
-    final PsiType firstParameterType = parameters[0].getType();
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final int argumentIndex;
-    if (!messageOnLastPosition && firstParameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      if (arguments.length < 3) {
-        return null;
+    final PsiExpression message;
+    if (messageOnFirstPosition) {
+      if (parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) && parameters.length > minimumParamCount) {
+        argumentIndex = 1;
+        message = arguments[0];
       }
-      argumentIndex = 1;
+      else {
+        argumentIndex = 0;
+        message = null;
+      }
     }
     else {
-      if (arguments.length < 2) {
-        return null;
-      }
       argumentIndex = 0;
+      message = parameters.length > minimumParamCount ? arguments[parameters.length - 1] : null;
     }
-    return new AssertEqualsHint(argumentIndex, method);
+
+    return new AssertHint(argumentIndex, message, method);
   }
 
   public static boolean isMessageOnFirstPosition(PsiClass containingClass) {
-    return InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
-           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
-           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE) ||
-           InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit");
+    final String qualifiedName = containingClass.getQualifiedName();
+    return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
+           JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
+           JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
+           "org.testng.AssertJUnit".equals(qualifiedName);
   }
 
   public static boolean isMessageOnLastPosition(PsiClass containingClass) {
-    return InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
-           InheritanceUtil.isInheritor(containingClass, "org.testng.Assert");
+    final String qualifiedName = containingClass.getQualifiedName();
+    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
+           "org.testng.Assert".equals(qualifiedName);
   }
 
   public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression) {
-    final AssertEqualsHint assertEqualsHint = create(expression);
-    if (assertEqualsHint == null) return null;
+    final AssertHint assertHint = createAssertEqualsHint(expression);
+    if (assertHint == null) return null;
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    final int argIndex = assertEqualsHint.getArgIndex();
+    final int argIndex = assertHint.getArgIndex();
     final PsiType type1 = arguments[argIndex].getType();
     if (type1 == null) {
       return null;
@@ -103,7 +132,7 @@ public class AssertEqualsHint {
     if (type2 == null) {
       return null;
     }
-    final PsiParameter[] parameters = assertEqualsHint.getMethod().getParameterList().getParameters();
+    final PsiParameter[] parameters = assertHint.getMethod().getParameterList().getParameters();
     final PsiType parameterType1 = parameters[argIndex].getType();
     final PsiType parameterType2 = parameters[argIndex + 1].getType();
     final PsiClassType objectType = TypeUtils.getObjectType(expression);

@@ -21,7 +21,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.siyeh.ig.junit.AssertEqualsHint;
+import com.siyeh.ig.junit.AssertHint;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJ
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
-        final String errorMessage = AssertEqualsHint.areExpectedActualTypesCompatible(expression);
+        final String errorMessage = AssertHint.areExpectedActualTypesCompatible(expression);
         if (errorMessage != null) {
           final PsiElement referenceNameElement = expression.getMethodExpression().getReferenceNameElement();
           if (referenceNameElement == null) {
