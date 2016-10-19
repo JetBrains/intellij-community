@@ -50,6 +50,11 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot.getNameWithoutExtension()));
   }
 
+  @NotNull
+  public VirtualFile getRootVirtualFile() {
+    return myJarRoot;
+  }
+
   @Nullable
   @Override
   public PsiDocComment getDocComment() {
