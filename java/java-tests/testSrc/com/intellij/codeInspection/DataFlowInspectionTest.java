@@ -55,6 +55,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testTryReturnCatchInWhileNotComplex() throws Throwable { doTest(); }
   public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
   public void testExceptionFromFinally() throws Throwable { doTest(); }
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
