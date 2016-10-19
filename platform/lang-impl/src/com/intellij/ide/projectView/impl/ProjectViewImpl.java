@@ -611,10 +611,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         public void setSelected(AnActionEvent event, boolean flag) {
           final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
           final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
-
+          if (isGlobalOptions()) {
+            setFlattenPackages(flag, viewPane.getId());
+          }
           super.setSelected(event, flag);
 
           selectionInfo.apply(viewPane);
+        }
+
+        @Override
+        public boolean isSelected(AnActionEvent event) {
+          if (isGlobalOptions()) return getGlobalOptions().getFlattenPackages();
+          return super.isSelected(event);
         }
       }).setAsSecondary(true);
     }
@@ -626,6 +634,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                       @NotNull Icon icon,
                                       boolean optionDefaultValue) {
         super(optionsMap, text, description, icon, optionDefaultValue);
+      }
+
+      @Override
+      public void setSelected(AnActionEvent event, boolean flag) {
+        if (isGlobalOptions()) {
+          getGlobalOptions().setFlattenPackages(flag);
+        }
+        super.setSelected(event, flag);
       }
 
       @Override
@@ -1460,8 +1476,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public void setFlattenPackages(boolean flattenPackages, String paneId) {
     if (isGlobalOptions()) {
       getGlobalOptions().setFlattenPackages(flattenPackages);
+      for (String pane : myFlattenPackages.keySet()) {
+        setPaneOption(myFlattenPackages, flattenPackages, pane, true);
+      }
+    } else {
+      setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
     }
-    setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
   }
 
   public boolean isFoldersAlwaysOnTop() {
@@ -1561,8 +1581,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
     if (isGlobalOptions()) {
       getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
+      for (String pane : myHideEmptyPackages.keySet()) {
+        setPaneOption(myHideEmptyPackages, hideEmptyPackages, pane, true);
+      }
+    } else {
+      setPaneOption(myHideEmptyPackages, hideEmptyPackages, paneId, true);
     }
-    setPaneOption(myHideEmptyPackages, hideEmptyPackages, paneId, true);
   }
 
   @Override
@@ -1600,16 +1624,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
 
+      if (isGlobalOptions()) {
+        getGlobalOptions().setHideEmptyPackages(flag);
+      }
       super.setSelected(event, flag);
 
       selectionInfo.apply(viewPane);
     }
 
     @Override
+    public boolean isSelected(AnActionEvent event) {
+      if (isGlobalOptions()) return getGlobalOptions().getHideEmptyPackages();
+      return super.isSelected(event);
+    }
+
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      if (isFlattenPackages(myCurrentViewId)) {
+      if (isHideEmptyMiddlePackages(myCurrentViewId)) {
         presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
       }
