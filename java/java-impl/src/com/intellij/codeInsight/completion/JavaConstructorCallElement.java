@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,16 +38,17 @@ import java.util.function.Supplier;
 /**
  * @author peter
  */
-public class JavaConstructorCallElement extends JavaMethodCallElement {
+public class JavaConstructorCallElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private static final Key<JavaConstructorCallElement> WRAPPING_CONSTRUCTOR_CALL = Key.create("WRAPPING_CONSTRUCTOR_CALL");
-  @NotNull private final LookupElement myClassItem;
+  @NotNull private final PsiMethod myConstructor;
   @NotNull private final PsiClassType myType;
+  @NotNull private final PsiSubstitutor mySubstitutor;
 
-  private JavaConstructorCallElement(@NotNull LookupElement classItem, @NotNull PsiMethod constructor, @NotNull Supplier<PsiClassType> type) {
-    super(constructor);
-    myClassItem = classItem;
-    myType = type.get();
-    setQualifierSubstitutor(myType.resolveGenerics().getSubstitutor());
+  private JavaConstructorCallElement(@NotNull LookupElement classItem, @NotNull PsiMethod constructor, @NotNull PsiClassType type) {
+    super(classItem);
+    myConstructor = constructor;
+    myType = type;
+    mySubstitutor = myType.resolveGenerics().getSubstitutor();
 
     markClassItemWrapped(classItem);
   }
@@ -61,26 +64,36 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
 
   @NotNull
   @Override
+  public PsiMethod getObject() {
+    return myConstructor;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || super.equals(o) && myConstructor.equals(((JavaConstructorCallElement)o).myConstructor);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + myConstructor.hashCode();
+  }
+
+  @NotNull
+  @Override
   public PsiType getType() {
     return myType;
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
-    myClassItem.handleInsert(context);
-    super.handleInsert(context);
-  }
-
-  @Override
   public void renderElement(LookupElementPresentation presentation) {
-    myClassItem.renderElement(presentation);
+    super.renderElement(presentation);
 
     String tailText = StringUtil.notNullize(presentation.getTailText());
     int genericsEnd = tailText.lastIndexOf('>') + 1;
 
     presentation.clearTail();
     presentation.appendTailText(tailText.substring(0, genericsEnd), false);
-    presentation.appendTailText(MemberLookupHelper.getMethodParameterString(getObject(), getSubstitutor()), false);
+    presentation.appendTailText(MemberLookupHelper.getMethodParameterString(myConstructor, mySubstitutor), false);
     presentation.appendTailText(tailText.substring(genericsEnd), true);
   }
 
@@ -94,7 +107,7 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
     if (Registry.is("java.completion.show.constructors") && isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));
       if (!constructors.isEmpty()) {
-        return ContainerUtil.map(constructors, c -> new JavaConstructorCallElement(classItem, c, type));
+        return ContainerUtil.map(constructors, c -> new JavaConstructorCallElement(classItem, c, type.get()));
       }
     }
     return Collections.singletonList(classItem);
@@ -117,8 +130,10 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
     });
   }
 
-  static boolean isWrapped(LookupElement element) {
-    return element.getUserData(WRAPPING_CONSTRUCTOR_CALL) != null;
+  @Nullable
+  static PsiMethod extractCalledConstructor(@NotNull LookupElement element) {
+    JavaConstructorCallElement callItem = element.getUserData(WRAPPING_CONSTRUCTOR_CALL);
+    return callItem != null ? callItem.getObject() : null;
   }
 
 }

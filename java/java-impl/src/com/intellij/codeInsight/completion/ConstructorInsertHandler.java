@@ -79,13 +79,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
     final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
-    boolean fillTypeArgs = false;
     if (delegate instanceof PsiTypeLookupItem) {
-      fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&
-                     psiClass.getTypeParameters().length > 0 &&
-                     ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
-                     context.getCompletionChar() != '(';
-
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
         PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset(), PsiJavaCodeReferenceElement.class, false);
@@ -124,14 +118,15 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       final int offset = context.getTailOffset();
 
       document.insertString(offset, " {}");
-      editor.getCaretModel().moveToOffset(offset + 2);
+      OffsetKey insideBraces = context.trackOffset(offset + 2, true);
 
       final PsiFile file = context.getFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       reformatEnclosingExpressionListAtOffset(file, offset);
 
-      if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
+      if (promptTypeOrConstructorArgs(context, delegate, context.getOffset(insideRef))) return;
 
+      editor.getCaretModel().moveToOffset(context.getOffset(insideBraces));
       context.setLaterRunnable(generateAnonymousBody(editor, file));
     }
     else {
@@ -147,10 +142,30 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       if (mySmart) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
-      if (fillTypeArgs) {
-        JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef));
-      }
+      promptTypeOrConstructorArgs(context, delegate, context.getOffset(insideRef));
     }
+  }
+
+  private static boolean promptTypeOrConstructorArgs(InsertionContext context, LookupElement delegate, int refOffset) {
+    if (shouldFillTypeArgs(context, delegate) && JavaCompletionUtil.promptTypeArgs(context, refOffset)) {
+      return true;
+    }
+
+    PsiMethod constructor = JavaConstructorCallElement.extractCalledConstructor(delegate);
+    return constructor != null && JavaMethodCallElement.startArgumentLiveTemplate(context, constructor);
+  }
+
+  private static boolean shouldFillTypeArgs(InsertionContext context, LookupElement delegate) {
+    if (!(delegate instanceof PsiTypeLookupItem) ||
+        isRawTypeExpected(context, (PsiTypeLookupItem)delegate) ||
+        !((PsiClass)delegate.getObject()).hasTypeParameters()) {
+      return false;
+    }
+
+    PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    return position != null &&
+           ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
+           context.getCompletionChar() != '(';
   }
 
   private static void reformatEnclosingExpressionListAtOffset(@NotNull PsiFile file, int offset) {
@@ -195,7 +210,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
                                           LookupElement delegate,
                                           final PsiClass psiClass,
                                           final boolean forAnonymous) {
-    if (context.getCompletionChar() == '[' || JavaConstructorCallElement.isWrapped(delegate)) {
+    if (context.getCompletionChar() == '[') {
       return false;
     }
 
