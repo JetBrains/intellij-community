@@ -25,9 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -734,5 +736,14 @@ public class PsiImplUtil {
     ResolveResult[] results =
       ResolveCache.getInstance(project).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+  }
+
+  public static VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
+    if (module instanceof LightJavaModule) {
+      return ((LightJavaModule)module).getRootVirtualFile();
+    }
+    else {
+      return module.getContainingFile().getVirtualFile();
+    }
   }
 }
