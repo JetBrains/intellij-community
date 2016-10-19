@@ -70,7 +70,12 @@ class LookupPreview {
   private String getSuffixText(@Nullable LookupElement item) {
     if (item != null) {
       String itemText = StringUtil.notNullize(LookupElementPresentation.renderElement(item).getItemText());
-      FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(myLookup.itemPattern(item), itemText);
+      String prefix = myLookup.itemPattern(item);
+      if (prefix.isEmpty()) {
+        return itemText;
+      }
+
+      FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(prefix, itemText);
       if (fragments != null && !fragments.isEmpty()) {
         List<TextRange> list = ContainerUtil.newArrayList(fragments);
         return itemText.substring(list.get(list.size() - 1).getEndOffset(), itemText.length());
