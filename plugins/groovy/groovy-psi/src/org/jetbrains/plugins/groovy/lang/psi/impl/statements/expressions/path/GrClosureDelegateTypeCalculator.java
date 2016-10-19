@@ -53,7 +53,7 @@ public class GrClosureDelegateTypeCalculator extends GrExpressionTypeCalculator 
     );
     if (closureClass == null || !closureClass.equals(method.getContainingClass())) return null;
 
-    final GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(expression, closure);
+    final GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(closure);
     if (info == null) return null;
 
     return info.getTypeToDelegate();

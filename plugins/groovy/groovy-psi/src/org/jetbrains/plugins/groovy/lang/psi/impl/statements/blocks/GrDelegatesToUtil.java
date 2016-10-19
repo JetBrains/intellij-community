@@ -55,7 +55,7 @@ public class GrDelegatesToUtil {
   public static final Key<Integer> DELEGATES_TO_STRATEGY_KEY = Key.create("groovy.closure.delegatesTo.strategy");
 
   @Nullable
-  public static DelegatesToInfo getDelegatesToInfo(@NotNull PsiElement place, @NotNull final GrClosableBlock closableBlock) {
+  public static DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
@@ -72,7 +72,7 @@ public class GrDelegatesToUtil {
     final GrClosureSignature signature = inferSignature(element);
     if (signature == null) return null;
 
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(place, call, signature);
+    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(closableBlock, call, signature);
     if (map == null) return null;
 
     if (!(element instanceof PsiMethod)) return null;
@@ -84,7 +84,10 @@ public class GrDelegatesToUtil {
     final String delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY);
     final Integer strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY);
     if (delegateFqnData != null) {
-      return new DelegatesToInfo(TypesUtil.createType(delegateFqnData, place), strategyData == null ? Closure.OWNER_FIRST : strategyData);
+      return new DelegatesToInfo(
+        TypesUtil.createType(delegateFqnData, closableBlock),
+        strategyData == null ? Closure.OWNER_FIRST : strategyData
+      );
     }
 
     final PsiModifierList modifierList = parameter.getModifierList();

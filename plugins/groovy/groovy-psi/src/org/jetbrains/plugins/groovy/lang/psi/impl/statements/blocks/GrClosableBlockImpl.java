@@ -114,7 +114,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @NotNull PsiElement place) {
-    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(place, this);
+    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(this);
     if (info == null) {
       return null;
     }
