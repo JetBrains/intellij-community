@@ -27,14 +27,14 @@
     <fail message="Please edit the file ${ant.file} and fill in the 'asm.src' property" unless="asm.src.present"/>
   </target>
 
-  <target name="clean" depends="check">
+  <target name="clean">
     <delete dir="${src.dir}" quiet="true"/>
     <delete dir="${out.dir}" quiet="true"/>
     <delete file="${src.zip}" quiet="true"/>
     <delete file="${out.jar}" quiet="true"/>
   </target>
 
-  <target name="unpack" depends="clean">
+  <target name="unpack" depends="check,clean">
     <unzip src="${asm.src}" dest="${src.dir}"/>
   </target>
 
@@ -60,5 +60,10 @@
   <target name="package" depends="compile">
     <zip destfile="${src.zip}" basedir="${src.dir}" duplicate="fail"/>
     <jar destfile="${out.jar}" basedir="${out.dir}" duplicate="fail"/>
+  </target>
+
+  <target name="update" depends="package">
+    <copy file="${out.jar}" todir="${basedir}/../../lib"/>
+    <copy file="${src.zip}" todir="${basedir}/../../lib/src"/>
   </target>
 </project>

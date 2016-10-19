@@ -91,8 +91,8 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         junit = false;
       }
       else if (InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") ||
-               InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") ||
-               InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
+               InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
+               InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
         junit = true;
       }
       else {
@@ -156,8 +156,8 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       final PsiExpression actualArgument;
       if (checkTestNG() ?
           InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") :
-          InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") ||
-          InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
+          InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT) ||
+          InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_ASSERT)) {
         final PsiType firstArgumentType = arguments[0].getType();
         if (stringType.equals(firstArgumentType) && arguments.length > 2) {
           expectedArgument = arguments[1];

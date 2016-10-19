@@ -67,7 +67,7 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
         for (option in component.getChildren("option")) {
           element.setAttribute(option.getAttributeValue("key"), option.getAttributeValue("value"))
         }
-        break;
+        break
       }
     }
 

@@ -29,22 +29,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileDocumentContentImpl extends DocumentContentImpl implements FileContent {
-  @Nullable private final Project myProject;
   @NotNull private final VirtualFile myFile;
 
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
                                  @NotNull VirtualFile file) {
-    super(document, file.getFileType(), file, getSeparator(file), file.getCharset(), file.getBOM() != null);
-    myProject = project;
+    super(project, document, file.getFileType(), file, getSeparator(file), file.getCharset(), file.getBOM() != null);
     myFile = file;
   }
 
   @Nullable
   @Override
   public Navigatable getNavigatable(@NotNull LineCol position) {
-    if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
-    return new OpenFileDescriptor(myProject, myFile, position.line, position.column);
+    Project project = getProject();
+    if (project == null || project.isDefault() || !myFile.isValid()) return null;
+    return new OpenFileDescriptor(project, myFile, position.line, position.column);
   }
 
   @Nullable

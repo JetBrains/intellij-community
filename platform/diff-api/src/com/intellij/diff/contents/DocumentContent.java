@@ -63,7 +63,7 @@ public interface DocumentContent extends DiffContent {
    * @return original file byte order mark
    */
   @Nullable
-  default Boolean getBOM() { return null; }
+  default Boolean hasBom() { return null; }
 
   @Nullable
   @Deprecated

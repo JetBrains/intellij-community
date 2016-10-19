@@ -17,10 +17,8 @@ package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
@@ -106,7 +104,6 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
@@ -921,7 +918,7 @@ public class BuildManager implements Disposable {
       }
     }
 
-    final JavaSdkVersion oldestPossible = getOldestPossiblePlatformForBuildProcess(project);
+    final JavaSdkVersion oldestPossible = JavaSdkVersion.JDK_1_8;
 
     if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(oldestPossible)) {
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
@@ -943,16 +940,6 @@ public class BuildManager implements Disposable {
       }
     }
     return version;
-  }
-
-  @NotNull
-  private static JavaSdkVersion getOldestPossiblePlatformForBuildProcess(Project project) {
-    final BackendCompiler javaCompiler = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler();
-    final String id = javaCompiler != null? javaCompiler.getId() : JavaCompilers.JAVAC_ID;
-    if (id == JavaCompilers.ECLIPSE_ID || id == JavaCompilers.ECLIPSE_EMBEDDED_ID) {
-      return JavaSdkVersion.JDK_1_7; // because bundled ecj is compiled against 1.7
-    }
-    return JavaSdkVersion.JDK_1_6;
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
@@ -1155,13 +1142,13 @@ public class BuildManager implements Disposable {
 
     //TODO[Dmitry Batkovich] should be replaced with the proper solution
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
-      cmdLine.addParameter("-XaddExports:jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED");
+      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
     }
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName")

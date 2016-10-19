@@ -281,7 +281,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
 
-    PsiClass searchClass = (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess());
+    PsiClass searchClass = ReadAction.compute(() -> (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess()));
     final CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
     return compilerReferenceService.getDirectInheritors(searchClass,
                                                         (GlobalSearchScope)useScope,

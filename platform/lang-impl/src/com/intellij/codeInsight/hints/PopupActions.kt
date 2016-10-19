@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.InlayModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -48,7 +49,9 @@ class ShowParameterHintsSettings : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
-    val dialog = ParameterNameHintsConfigurable(project)
+    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+    val dialog = ParameterNameHintsConfigurable(project, hintExtension)
     dialog.show()
   }
 }
@@ -78,7 +81,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
   override fun getFamilyName(): String = presentableFamilyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor)
+    return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor, file)
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -115,10 +118,17 @@ class ToggleInlineHintsAction : AnAction() {
   }
 }
 
-private fun hasParameterHintAtOffset(editor: Editor): Boolean {
+private fun hasParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
+  if (editor.inlayModel !is InlayModel) return false
+  
   val offset = editor.caretModel.offset
+  val element = file.findElementAt(offset)
+  
+  val startOffset = element?.textRange?.startOffset ?: offset
+  val endOffset = element?.textRange?.endOffset ?: offset
+  
   return editor.inlayModel is InlayModelImpl && editor.inlayModel
-      .getInlineElementsInRange(offset, offset)
+      .getInlineElementsInRange(startOffset, endOffset)
       .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }
 
@@ -144,7 +154,7 @@ private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
   val info = hintsProvider.getMethodInfo(method) ?: return
 
   val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-  ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, pattern)
 
   refreshAllOpenEditors()
 }

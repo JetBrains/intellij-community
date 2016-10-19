@@ -15,58 +15,86 @@
  */
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider
+import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import junit.framework.TestCase
+
+
+class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider {
+  override val language: Language = PlainTextLanguage.INSTANCE
+}
 
 class ParameterNameSettingsTest : TestCase() {
 
-  fun `test deleted value is saved to state`() {
-    val settings = ParameterNameHintsSettings()
-    val ignoreSet = settings.ignorePatternSet
-
-    assert(ignoreSet.size > 0)
-    val first = ignoreSet.first()
-    ignoreSet.remove(first)
-
-    settings.ignorePatternSet = ignoreSet
-
-    val diff = settings.state!!.diff
-    assert(diff.size == 1)
-    assert(diff[0].startsWith("-"))
-    assert(diff[0].endsWith(first))
+  lateinit var settings: ParameterNameHintsSettings
+  lateinit var inlayProvider: InlayParameterHintsProvider
+  
+  override fun setUp() {
+    settings = ParameterNameHintsSettings()
+    inlayProvider = MockInlayProvider(setOf())
+  }
+  
+  fun defaultSettingsUpdated(vararg newDefault: String) {
+    inlayProvider = MockInlayProvider(setOf(*newDefault))
   }
 
-  fun `test saved value is saved to state`() {
-    val settings = ParameterNameHintsSettings()
-    val newPattern = "java.util.*(*)"
-    settings.addIgnorePattern(newPattern)
-
-    val diff = settings.state!!.diff
-    assert(diff.size == 1)
-    assert(diff[0].startsWith("+"))
-    assert(diff[0].endsWith(newPattern))
+  fun addIgnorePattern(newPattern: String) {
+    settings.addIgnorePattern(inlayProvider.language, newPattern)
   }
 
-  fun `test on defaults change ensure removed default items remains removed`() {
-    val settings = ParameterNameHintsSettings()
-    settings.setDefaultSet(setOf("aaa", "bbb", "ccc"))
-    
-    settings.ignorePatternSet = setOf("aaa", "ccc", "zzz")
-    settings.addIgnorePattern("xxx")
-    
-    val savedState = settings.state
-    
-    val newSettings = ParameterNameHintsSettings()
-    newSettings.setDefaultSet(setOf("aaa", "bbb", "ccc", "qqq", "xxx"))
-    newSettings.loadState(savedState)
+  fun setIgnorePattern(vararg newPatternSet: String) {
+    settings.setIgnorePatternSet(inlayProvider, setOf(*newPatternSet))
+  }
+  
+  fun getIgnoreSet(): Set<String> = settings.getIgnorePatternSet(inlayProvider)
 
-    val newIgnoreSet = newSettings.ignorePatternSet
-    assert(newIgnoreSet.containsAll(setOf("aaa", "ccc", "qqq", "zzz", "xxx")))
-    assert(newIgnoreSet.size == 5)
-    newSettings.ignorePatternSet = newSettings.ignorePatternSet
+  fun `test ignore pattern is added`() {
+    defaultSettingsUpdated("xxx")
     
-    val diff = newSettings.state!!.diff
-    assert(diff.containsAll(setOf("-bbb", "+zzz")))
-    assert(diff.size == 2)
+    var ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 1)
+    
+    addIgnorePattern("aaa")
+    
+    ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 2)
+    assert(ignoreSet.contains("aaa"))
+    assert(ignoreSet.contains("xxx"))
+  }
+
+  fun `test removed pattern is removed when defaults are updated`() {
+    defaultSettingsUpdated("aaa", "bbb")
+
+    var ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 2)
+
+    setIgnorePattern("aaa")
+    assert(getIgnoreSet().size == 1)
+    
+    defaultSettingsUpdated("aaa", "bbb", "ccc")
+    
+    ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 2)
+    assert(ignoreSet.contains("aaa"))
+    assert(ignoreSet.contains("ccc"))
+  }
+
+  fun `test added items remain added on defaults update`() {
+    defaultSettingsUpdated("aaa")
+    var ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 1)
+
+    addIgnorePattern("xxx")
+    ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 2)
+
+    defaultSettingsUpdated("aaa", "bbb")
+    ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 3)
+    assert(ignoreSet.contains("aaa"))
+    assert(ignoreSet.contains("bbb"))
+    assert(ignoreSet.contains("xxx"))
   }
   
 }

@@ -117,18 +117,31 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
 
+  public PyDebugProcess(@NotNull XDebugSession session,
+                        @NotNull ServerSocket serverSocket,
+                        @NotNull ExecutionConsole executionConsole,
+                        @Nullable ProcessHandler processHandler, boolean multiProcess) {
+    this(session, multiProcess ? process -> process.createMultiprocessDebugger(serverSocket)
+                               : process -> new RemoteDebugger(process, serverSocket, process.getConnectTimeout()),
+         executionConsole, processHandler);
+  }
+
   public PyDebugProcess(final @NotNull XDebugSession session,
-                        @NotNull final ServerSocket serverSocket,
                         @NotNull final ExecutionConsole executionConsole,
-                        @Nullable final ProcessHandler processHandler, boolean multiProcess) {
+                        @Nullable final ProcessHandler processHandler,
+                        @NotNull String serverHost, int serverPort) {
+    this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
+  }
+
+  private PyDebugProcess(@NotNull XDebugSession session,
+                        @NotNull DebuggerFactory debuggerFactory,
+                        @NotNull ExecutionConsole executionConsole,
+                        @Nullable ProcessHandler processHandler) {
     super(session);
+
     session.setPauseActionSupported(true);
-    if (multiProcess) {
-      myDebugger = createMultiprocessDebugger(serverSocket);
-    }
-    else {
-      myDebugger = new RemoteDebugger(this, serverSocket, getConnectTimeout());
-    }
+
+    myDebugger = debuggerFactory.createDebugger(this);
 
     List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
@@ -1162,5 +1175,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       pyType = psiFacade.parseTypeAnnotation(typeName, dummyFile);
     }
     return pyType;
+  }
+
+  private interface DebuggerFactory {
+    @NotNull ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
   }
 }

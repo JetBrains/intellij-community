@@ -58,12 +58,14 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
+import os
+
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SO_REUSEPORT, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN
 
 try:
@@ -143,6 +145,8 @@ CMD_SHOW_RETURN_VALUES = 146
 CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
+CMD_PROCESS_CREATED = 149
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -198,6 +202,8 @@ ID_TO_MEANING = {
     '146': 'CMD_SHOW_RETURN_VALUES',
     '147': 'CMD_INPUT_REQUESTED',
     '148': 'CMD_GET_DESCRIPTION',
+
+    '149': 'CMD_PROCESS_CREATED',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -479,10 +485,30 @@ class WriterThread(PyDBDaemonThread):
 def start_server(port):
     """ binds to a port, waits for the debugger to connect """
     s = socket(AF_INET, SOCK_STREAM)
+    s.settimeout(None)
+
+    if os.name == 'nt':
+        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    else:
+        s.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+
     s.bind(('', port))
-    s.listen(1)
-    newSock, _addr = s.accept()
-    return newSock
+    pydevd_log(1, "Bound to port ", str(port))
+
+    try:
+        s.listen(1)
+        newSock, _addr = s.accept()
+        pydevd_log(1, "Connection accepted")
+        # closing server socket is not necessary but we don't need it
+        s.shutdown(SHUT_RDWR)
+        s.close()
+        return newSock
+
+    except:
+        sys.stderr.write("Could not bind to port: %s\n" % (port,))
+        sys.stderr.flush()
+        traceback.print_exc()
+        sys.exit(1) #TODO: is it safe?
 
 #=======================================================================================================================
 # start_client
@@ -559,6 +585,9 @@ class NetCommandFactory:
         cmdText = "<xml>" + self._thread_to_xml(thread) + "</xml>"
         return NetCommand(CMD_THREAD_CREATE, 0, cmdText)
 
+    def make_process_created_message(self):
+        cmdText = '<process/>'
+        return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
