@@ -34,13 +34,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
@@ -74,16 +70,6 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     return null;
   }
 
-  public static boolean isWithSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
-    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-    if (qualifierExpression != null) {
-      final List<PsiElement> sideEffects = new ArrayList<>();
-      SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-      return !sideEffects.isEmpty();
-    }
-    return false;
-  }
-
   private static class MethodRefToLambdaVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
@@ -92,12 +78,13 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
       if (interfaceType != null &&
           LambdaUtil.getFunctionalInterfaceMethod(interfaceType) != null &&
           methodReferenceExpression.resolve() != null) {
-        registerError(methodReferenceExpression, getFixFactory(isWithSideEffects(methodReferenceExpression), isOnTheFly()));
+        registerError(methodReferenceExpression,
+                      getFixFactory(LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression), isOnTheFly()));
       }
     }
 
-    private static FixFactory getFixFactory(boolean withSideEffects, boolean onTheFly) {
-      if (!withSideEffects) return MethodRefToLambdaFix::new;
+    private static FixFactory getFixFactory(boolean canConvert, boolean onTheFly) {
+      if (canConvert) return MethodRefToLambdaFix::new;
       if (onTheFly || ApplicationManager.getApplication().isUnitTestMode()) return SideEffectsMethodRefToLambdaFix::new;
       return null;
     }

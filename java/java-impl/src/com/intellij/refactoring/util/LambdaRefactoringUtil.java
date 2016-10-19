@@ -77,7 +77,6 @@ public class LambdaRefactoringUtil {
     final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
 
     final StringBuilder buf = new StringBuilder("(");
-    LOG.assertTrue(functionalInterfaceType != null);
     buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")(");
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
@@ -103,6 +102,7 @@ public class LambdaRefactoringUtil {
         else {
           initialName = parameter.getName();
         }
+        LOG.assertTrue(initialName != null);
         baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
       }
 
@@ -264,5 +264,17 @@ public class LambdaRefactoringUtil {
         }
       }
     }
+  }
+
+  /**
+   * Checks whether method reference can be converted to lambda without significant semantics change
+   * (i.e. method reference qualifier has no side effects)
+   *
+   * @param methodReferenceExpression method reference to check
+   * @return true if method reference can be converted to lambda
+   */
+  public static boolean canConvertToLambda(PsiMethodReferenceExpression methodReferenceExpression) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    return qualifierExpression != null && !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
 }
