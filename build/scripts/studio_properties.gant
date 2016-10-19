@@ -30,7 +30,6 @@ def getProperties(String home, String buildNumber) {
   def gradleOut = "${home}/../../out/studio"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
-  def bundleGradlePlugin = System.getProperty("bundle.gradle.plugin") ? !System.getProperty("bundle.gradle.plugin").isEmpty() : false
 
   return new org.jetbrains.intellij.build.ProductProperties() {
     {
@@ -313,15 +312,6 @@ def getProperties(String home, String buildNumber) {
                 moduleTests("android-uitests")
               }
             }
-          }
-        }
-      }
-
-      if (bundleGradlePlugin) {
-        // Update the builder-model copy in our plugin's lib folder with the one we just built at head.
-        ant.copy(todir: "$targetDirectory/plugins/android/lib", flatten: true, overwrite: true) {
-          fileset(dir: "${gradleOut}/repo/com/android/tools/build/builder-model") {
-            include(name: "**/*-dev.jar")
           }
         }
       }

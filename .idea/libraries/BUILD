@@ -135,14 +135,6 @@ java_library(
 )
 
 java_library(
-    name = "builder-model",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
-    runtime_deps = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
-)
-
-java_library(
     name = "bouncy-castle",
     tags = ["managed"],
     visibility = ["//visibility:public"],
