@@ -153,7 +153,7 @@ public class HgLocalIgnoredHolder implements Disposable {
   public Set<VirtualFile> getIgnoredFiles() {
     try {
       SET_LOCK.readLock().lock();
-      return myIgnoredSet;
+      return ContainerUtil.newHashSet(myIgnoredSet);
     }
     finally {
       SET_LOCK.readLock().unlock();
@@ -173,6 +173,12 @@ public class HgLocalIgnoredHolder implements Disposable {
   }
 
   public int getSize() {
-    return getIgnoredFiles().size();
+    try {
+      SET_LOCK.readLock().lock();
+      return myIgnoredSet.size();
+    }
+    finally {
+      SET_LOCK.readLock().unlock();
+    }
   }
 }
