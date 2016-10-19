@@ -52,7 +52,7 @@ public class PasswordPromptComponent {
       myRememberCheckBox.setSelected(false);
     }
     else {
-      myRememberCheckBox.setSelected(true);
+      myRememberCheckBox.setSelected(false); // do not force people to un-check this every time!
       myRememberCheckBox.setToolTipText("The password will be stored between application sessions.");
     }
 
