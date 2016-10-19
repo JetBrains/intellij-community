@@ -256,9 +256,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public void mergeCell(boolean below) {
     final IpnbEditablePanel currentCellPanel = getSelectedCellPanel();
     if (currentCellPanel == null) return;
-    
-    final boolean hasCellToMerge = below ? hasNextCell(currentCellPanel) : hasPrevCell(currentCellPanel);
-    if (!hasCellToMerge) return;
 
     if (below) {
       selectNext(currentCellPanel);
