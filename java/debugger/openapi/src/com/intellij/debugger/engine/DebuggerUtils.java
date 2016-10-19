@@ -497,10 +497,7 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    for (SyntheticTypeComponentProvider provider : SyntheticTypeComponentProvider.EP_NAME.getExtensions()) {
-      if (provider.isSynthetic(typeComponent)) return true;
-    }
-    return false;
+    return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
   /**
@@ -508,10 +505,7 @@ public abstract class DebuggerUtils {
    */
   @Deprecated
   public static boolean isSimpleGetter(PsiMethod method) {
-    for (SimpleGetterProvider provider : SimpleGetterProvider.EP_NAME.getExtensions()) {
-      if (provider.isSimpleGetter(method)) return true;
-    }
-    return false;
+    return Arrays.stream(SimpleGetterProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSimpleGetter(method));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
@@ -519,10 +513,8 @@ public abstract class DebuggerUtils {
       PsiMethod psiMethod = PsiTreeUtil.getParentOfType(contextElement, PsiMethod.class);
       if (psiMethod != null && provider.isSimpleGetter(psiMethod)) return true;
     }
-    for (SimplePropertyGetterProvider provider : SimplePropertyGetterProvider.EP_NAME.getExtensions()) {
-      if (provider.isInsideSimpleGetter(contextElement)) return true;
-    }
-    return false;
+    return Arrays.stream(SimplePropertyGetterProvider.EP_NAME.getExtensions())
+      .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
   public static boolean isPrimitiveType(final String typeName) {
@@ -578,11 +570,7 @@ public abstract class DebuggerUtils {
       return true;
     }
 
-    for (JavaDebugAware provider : JavaDebugAware.EP_NAME.getExtensions()) {
-      if (breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file)) {
-        return true;
-      }
-    }
-    return false;
+    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
+      .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
   }
 }

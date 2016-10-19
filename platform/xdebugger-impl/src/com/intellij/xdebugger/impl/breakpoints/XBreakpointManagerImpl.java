@@ -36,6 +36,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -396,21 +397,15 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myBreakpointsDefaults.clear();
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
-        loadBreakpoint(breakpointState, true);
-      }
-      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-        if (!myDefaultBreakpoints.containsKey(type)) {
-          addDefaultBreakpoint(type);
-        }
-      }
+      state.getDefaultBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
-      for (XBreakpointBase<?, ?, ?> breakpoint : myBreakpoints.values()) {
-        doRemoveBreakpoint(breakpoint);
-      }
-      for (BreakpointState breakpointState : state.getBreakpoints()) {
-        loadBreakpoint(breakpointState, false);
-      }
+      Arrays.stream(XBreakpointUtil.getBreakpointTypes())
+        .filter(type -> !myDefaultBreakpoints.containsKey(type))
+        .forEach(this::addDefaultBreakpoint);
+
+      myBreakpoints.values().forEach(this::doRemoveBreakpoint);
+
+      state.getBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, false));
 
       for (BreakpointState defaults : state.getBreakpointsDefaults()) {
         XBreakpointType<?, ?> type = XBreakpointUtil.findType(defaults.getTypeId());
@@ -460,14 +455,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   public Set<String> getAllGroups() {
-    HashSet<String> res = new HashSet<>();
-    for (XBreakpointBase breakpoint : myAllBreakpoints) {
-      String group = breakpoint.getGroup();
-      if (group != null) {
-        res.add(group);
-      }
-    }
-    return res;
+    return StreamEx.of(myAllBreakpoints).map(XBreakpointBase::getGroup).nonNull().toSet();
   }
 
   public String getDefaultGroup() {

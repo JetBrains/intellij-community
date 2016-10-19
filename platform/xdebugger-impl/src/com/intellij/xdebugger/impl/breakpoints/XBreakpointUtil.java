@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -63,12 +64,7 @@ public class XBreakpointUtil {
 
   @Nullable
   public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
-    for (XBreakpointType breakpointType : getBreakpointTypes()) {
-      if (id.equals(breakpointType.getId())) {
-        return breakpointType;
-      }
-    }
-    return null;
+    return Arrays.stream(getBreakpointTypes()).filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
   }
 
   public static XBreakpointType<?, ?>[] getBreakpointTypes() {

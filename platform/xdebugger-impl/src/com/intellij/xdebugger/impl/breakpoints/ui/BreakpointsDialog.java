@@ -432,9 +432,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private void disposeItems() {
-    for (BreakpointItem item : myBreakpointItems) {
-      item.dispose();
-    }
+    myBreakpointItems.forEach(BreakpointItem::dispose);
   }
 
   @Nullable

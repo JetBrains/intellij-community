@@ -108,9 +108,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   private void fillComboBox() {
     myComboBox.removeAllItems();
-    for (XExpression expression : getRecentExpressions()) {
-      myComboBox.addItem(expression);
-    }
+    getRecentExpressions().forEach(myComboBox::addItem);
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }

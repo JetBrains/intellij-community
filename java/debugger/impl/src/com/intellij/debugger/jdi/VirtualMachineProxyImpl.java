@@ -661,12 +661,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean isSuspended() {
-    for (ThreadReferenceProxyImpl thread : allThreads()) {
-      if (thread.getSuspendCount() != 0) {
-        return true;
-      }
-    }
-    return false;
+    return allThreads().stream().anyMatch(thread -> thread.getSuspendCount() != 0);
   }
 
   public void logThreads() {

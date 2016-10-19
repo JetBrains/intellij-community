@@ -79,9 +79,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     }
     myInplaceEditorComponent = null;
     onHidden();
-    for (Runnable action : myRemoveActions) {
-      action.run();
-    }
+    myRemoveActions.forEach(Runnable::run);
     myRemoveActions.clear();
 
     Disposer.dispose(myDisposable);

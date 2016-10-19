@@ -67,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -97,9 +98,9 @@ public class JavaDebugProcess extends XDebugProcess {
     handlers.add(new JavaBreakpointHandler.JavaMethodBreakpointHandler(process));
     handlers.add(new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process));
 
-    for (JavaBreakpointHandlerFactory factory : Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME)) {
-      handlers.add(factory.createHandler(process));
-    }
+    Arrays.stream(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
+      .map(factory -> factory.createHandler(process))
+      .forEach(handlers::add);
 
     myBreakpointHandlers = handlers.toArray(new XBreakpointHandler[handlers.size()]);
 

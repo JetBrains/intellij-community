@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -266,11 +267,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
         }
       }
     }
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (!instanceFilter.isEnabled()) {
-        idxs.add(instanceFilter);
-      }
-    }
+    Arrays.stream(myInstanceFilters).filter(instanceFilter -> !instanceFilter.isEnabled()).forEach(idxs::add);
     myInstanceFilters = idxs.toArray(new InstanceFilter[idxs.size()]);
   }
 
