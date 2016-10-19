@@ -85,7 +85,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
 
     return if (activate != null)
-      mutableListOf(shellPath, "-c", "source '$activate'")
+      mutableListOf(shellPath, "-c", ". '$activate'")
     else super.getShellProcessCommand()
   }
 
