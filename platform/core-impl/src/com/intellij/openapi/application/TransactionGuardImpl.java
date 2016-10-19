@@ -260,13 +260,20 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     final TransactionIdImpl id = getContextTransaction();
-    Runnable runnable = new Runnable() {
+    final ModalityState startModality = ModalityState.defaultModalityState();
+    invokeLater(new Runnable() {
       @Override
       public void run() {
-        submitTransaction(parentDisposable, id, transaction);
+        boolean allowWriting = ModalityState.current() == startModality;
+        AccessToken token = startActivity(allowWriting);
+        try {
+          submitTransaction(parentDisposable, id, transaction);
+        }
+        finally {
+          token.finish();
+        }
       }
-    };
-    invokeLater(runnable);
+    });
   }
 
   private static void invokeLater(Runnable runnable) {
