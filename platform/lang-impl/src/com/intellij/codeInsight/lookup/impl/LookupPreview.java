@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
@@ -98,8 +97,6 @@ class LookupPreview {
 
       @Override
       public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-        g.setColor(editor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
-        g.fillRect(r.x, r.y, r.width, r.height);
         g.setColor(JBColor.GRAY);
         g.setFont(getFont(editor));
         g.drawString(suffix, r.x, r.y + ((EditorImpl)editor).getAscent());
