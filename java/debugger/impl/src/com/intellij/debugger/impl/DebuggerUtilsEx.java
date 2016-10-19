@@ -882,21 +882,24 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiElement body = lambda.getBody();
     if (body == null || !intersects(lineRange, body)) return null;
     if (body instanceof PsiCodeBlock) {
-      for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-        // return first statement starting on the line
-        if (lineRange.contains(statement.getTextOffset())) {
-          return statement;
-        }
-        // otherwise check all children
-        else if (intersects(lineRange, statement)) {
-          for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
-            if (lineRange.contains(element.getTextOffset())) {
-              return element;
+      PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length > 0) {
+        for (PsiStatement statement : statements) {
+          // return first statement starting on the line
+          if (lineRange.contains(statement.getTextOffset())) {
+            return statement;
+          }
+          // otherwise check all children
+          else if (intersects(lineRange, statement)) {
+            for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
+              if (lineRange.contains(element.getTextOffset())) {
+                return element;
+              }
             }
           }
         }
+        return null;
       }
-      return null;
     }
     return body;
   }
