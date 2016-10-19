@@ -33,15 +33,15 @@ public class IpnbHeadingCellActionBase extends AnAction {
 
   public void changeTypeToHeading(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
-    final IpnbEditablePanel selectedCell = filePanel.getSelectedCell();
-    if (selectedCell == null) return;
-    final IpnbEditableCell cell = selectedCell.getCell();
+    final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
+    if (selectedCellPanel == null) return;
+    final IpnbEditableCell cell = selectedCellPanel.getCell();
 
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
-    final int index = cells.indexOf(selectedCell.getCell());
+    final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbHeadingCell heading = new IpnbHeadingCell(cell.getSource(), myLevel, cell.getMetadata());
     if (index >= 0)
       cells.set(index, heading);
-    filePanel.replaceComponent(selectedCell, heading);
+    filePanel.replaceComponent(selectedCellPanel, heading);
   }
 }

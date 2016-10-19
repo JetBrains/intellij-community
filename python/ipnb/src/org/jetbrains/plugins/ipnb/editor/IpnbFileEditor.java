@@ -137,15 +137,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myCellTypeCombo.getSelectedItem();
-        final IpnbEditablePanel selectedCell = myIpnbFilePanel.getSelectedCell();
-        if (selectedCell != null && selectedItem instanceof String) {
-          updateCellType((String)selectedItem, selectedCell);
+        final IpnbEditablePanel selectedCellPanel = myIpnbFilePanel.getSelectedCellPanel();
+        if (selectedCellPanel != null && selectedItem instanceof String) {
+          updateCellType((String)selectedItem, selectedCellPanel);
         }
       }
     });
-    final IpnbPanel selectedCell = myIpnbFilePanel.getSelectedCell();
-    if (selectedCell != null) {
-      updateCellTypeCombo(selectedCell);
+    final IpnbPanel selectedCellPanel = myIpnbFilePanel.getSelectedCellPanel();
+    if (selectedCellPanel != null) {
+      updateCellTypeCombo(selectedCellPanel);
     }
     controlPanel.add(myCellTypeCombo);
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
