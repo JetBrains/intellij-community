@@ -39,6 +39,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -300,16 +301,18 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
-    List<VirtualFile> excludedFiles = ContainerUtil.newArrayList(entry.getExcludeFolderFiles());
+    Set<VirtualFile> excludedFiles = ContainerUtil.newHashSet(entry.getExcludeFolderFiles());
     if (project != null) {
       for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
         ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
       }
     }
-    for (VirtualFile excludedFile : excludedFiles) {
-      if (VfsUtilCore.isAncestor(excludedFile, file, false)) {
-        return true;
-      }
+    Set<VirtualFile> sourceRoots = ContainerUtil.set(entry.getSourceFolderFiles());
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (excludedFiles.contains(parent)) return true;
+      if (sourceRoots.contains(parent)) return false;
+      parent = parent.getParent();
     }
     return false;
   }

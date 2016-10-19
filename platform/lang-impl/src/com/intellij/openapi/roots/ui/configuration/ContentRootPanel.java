@@ -36,7 +36,6 @@ import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.ui.roots.ResizingWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -108,14 +107,9 @@ public abstract class ContentRootPanel extends JPanel {
     final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
     MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<>();
     for (SourceFolder folder : sourceFolders) {
-      if (folder.isSynthetic()) {
-        continue;
+      if (!folder.isSynthetic()) {
+        folderByType.putValue(folder.getRootType(), folder);
       }
-      final VirtualFile folderFile = folder.getFile();
-      if (folderFile != null && isExcludedOrUnderExcludedDirectory(folderFile)) {
-        continue;
-      }
-      folderByType.putValue(folder.getRootType(), folder);
     }
 
     Insets insets = new Insets(0, 0, 10, 0);
