@@ -21,4 +21,4 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 @JvmField val DELEGATES_TO_KEY = Key.create<String>("groovy.closure.delegatesTo.type")
 @JvmField val DELEGATES_TO_STRATEGY_KEY = Key.create<Int>("groovy.closure.delegatesTo.strategy")
 
-fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = GrDelegatesToUtil.getDelegatesToInfo(closure)
+fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = DefaultDelegatesToProvider.getDelegatesToInfo(closure)

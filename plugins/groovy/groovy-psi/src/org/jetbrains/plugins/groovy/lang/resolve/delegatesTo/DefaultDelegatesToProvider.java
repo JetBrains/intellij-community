@@ -50,7 +50,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 /**
  * @author Max Medvedev
  */
-public class GrDelegatesToUtil {
+public class DefaultDelegatesToProvider {
 
   @Nullable
   public static DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
