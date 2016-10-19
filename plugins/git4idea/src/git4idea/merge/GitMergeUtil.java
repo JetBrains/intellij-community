@@ -36,9 +36,10 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 /**
  * Utilities for merge
@@ -127,12 +128,10 @@ public class GitMergeUtil {
                                  final Label beforeLabel,
                                  final String actionName,
                                  final ActionInfo actionInfo) {
-    final UpdatedFiles files = UpdatedFiles.create();
+    UpdatedFiles files = UpdatedFiles.create();
     MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
     collector.collect(files, exceptions);
-    if (exceptions.size() != 0) {
-      return;
-    }
+    if (!exceptions.isEmpty()) return;
 
     UIUtil.invokeLaterIfNeeded(() -> {
       ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
@@ -141,16 +140,9 @@ public class GitMergeUtil {
       tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
     });
 
-    final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final ArrayList<VirtualFile> unmerged = new ArrayList<>();
-      for (String fileName : unmergedNames) {
-        VirtualFile f = lfs.findFileByPath(fileName);
-        if (f != null) {
-          unmerged.add(f);
-        }
-      }
+      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
       UIUtil.invokeLaterIfNeeded(() -> {
         GitVcs vcs = GitVcs.getInstance(project);
         if (vcs != null) {
