@@ -32,8 +32,8 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         next(getMergeAllTasks(true));
         break;
       case showLatest:
-        next(new LoadRecentBranchRevisions(myMergeProcess, task ->
-          next(new ShowRevisionSelector(myMergeProcess, task.getChangeLists(), task.getMergeChecker(), false, task.isLastLoaded()))));
+        next(new MergeCalculatorTask(myMergeProcess, task ->
+          next(new ShowRevisionSelector(myMergeProcess, task.getChangeLists(), task.getMergeChecker(), false, task.areAllListsLoaded()))));
         break;
       case select:
         next(new LookForBranchOriginTask(myMergeProcess, false, copyPoint ->

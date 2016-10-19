@@ -69,8 +69,8 @@ import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
-import static org.jetbrains.idea.svn.integrate.LoadRecentBranchRevisions.getBunchSize;
-import static org.jetbrains.idea.svn.integrate.LoadRecentBranchRevisions.loadChangeLists;
+import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
+import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.loadChangeLists;
 
 public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
