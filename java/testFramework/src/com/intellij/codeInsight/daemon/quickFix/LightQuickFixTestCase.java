@@ -103,7 +103,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                               String testName,
                               QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
-                                                     () -> "Test: "+testFullPath+"\nInfos: "+quickFix.doHighlighting());
+                                                     "Test: "+testFullPath+"\nInfos: "+quickFix.doHighlighting());
     if (action != null) {
       String text = action.getText();
       quickFix.invoke(action);
@@ -157,7 +157,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected IntentionAction findActionAndCheck(@NotNull ActionHint hint, String testFullPath) {
-    return hint.findAndCheck(getAvailableActions(), () -> "Test: "+testFullPath);
+    return hint.findAndCheck(getAvailableActions(), "Test: "+testFullPath);
   }
 
   protected IntentionAction findActionWithText(@NotNull String text) {
