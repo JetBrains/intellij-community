@@ -41,11 +41,15 @@ public class Restarter {
 
   public static boolean isSupported() {
     if (SystemInfo.isWindows) {
-      return JnaLoader.isLoaded() && new File(PathManager.getBinPath(), "restarter.exe").exists();
+      return JnaLoader.isLoaded() &&
+             new File(PathManager.getBinPath(), "restarter.exe").exists();
     }
+
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath().contains(".app") && new File(PathManager.getBinPath(), "restarter").canExecute();
+      return PathManager.getHomePath().contains(".app") &&
+             new File(PathManager.getBinPath(), "restarter").canExecute();
     }
+
     if (SystemInfo.isUnix) {
       return JnaLoader.isLoaded() &&
              CreateDesktopEntryAction.getLauncherScript() != null &&

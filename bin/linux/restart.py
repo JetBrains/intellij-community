@@ -17,10 +17,8 @@ while os.getppid() == pid:
     time.sleep(0.5)
 
 if len(sys.argv) > 3:
-    os.spawnv(os.P_WAIT, sys.argv[3], sys.argv[3:])
+    to_launch = sys.argv[3:]
+    os.spawnv(os.P_WAIT, to_launch[0], to_launch)
 
-to_launch = sys.argv[2]
-if sys.platform == 'darwin':
-    os.execv('/usr/bin/open', ['/usr/bin/open', to_launch])
-else:
-    os.execv(to_launch, [to_launch])
+to_launch = ['/usr/bin/open', sys.argv[2]] if sys.platform == 'darwin' else [sys.argv[2]]
+os.execv(to_launch[0], to_launch)
