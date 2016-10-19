@@ -241,7 +241,7 @@ class CommunityRepositoryModules {
     javaFXPlugin("javaFX-CE"),
     plugin("terminal") {
       withResource("resources/.zshrc", "")
-      withResource("resources/jediterm-bash.in", "")
+      withResource("resources/jediterm-sh.in", "")
     }
   ]
 
