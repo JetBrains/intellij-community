@@ -1342,7 +1342,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitSuperExpression(final PsiSuperExpression super1) {
-    myMatchingVisitor.setResult(true);
+    myMatchingVisitor.setResult(myMatchingVisitor.getElement() instanceof PsiSuperExpression);
   }
 
   @Override

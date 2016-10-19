@@ -3488,4 +3488,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find diamond new expressions", 3, findMatchesCount(source, "new A<>()"));
     assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
   }
+
+
+
+  public void testFindSuperCall() {
+    String source = "class A {" +
+                    "  public String toString() {" +
+                    "    System.out.println();" +
+                    "    return super.toString();" +
+                    "  }" +
+                    "}";
+    assertEquals("find super call", 1, findMatchesCount(source, "super.$m$()"));
+  }
 }
