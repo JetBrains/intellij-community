@@ -16,7 +16,6 @@
 package com.intellij.application
 
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
@@ -53,8 +52,8 @@ class TransactionTest extends LightPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     super.setUp()
+    assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     TransactionGuardImpl.testingTransactions = true
   }
 
@@ -357,6 +356,16 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
+  }
+
+  void "test submitTransactionLater vs app invokeLater ordering in the same modality state"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      guard.submitTransactionLater testRootDisposable, { log << '2' }
+      app.invokeLater { log << '3' }
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
   }
 
 }
