@@ -45,13 +45,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
+  private static final int LEXER_INCREMENTALITY_THRESHOLD = 200;
+  private static final Set<Class> ourNonIncrementalLexers = new HashSet<>();
   private HighlighterClient myEditor;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
@@ -212,6 +211,44 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         myLexer.advance();
         lastTokenStart = tokenStart;
         lastLexerState = lexerState;
+      }
+
+      /*
+        Highlighting lexer is expected to periodically return to its "initial state" and
+        so to denote valid starting points for incremental highlighting.
+
+        If this requirement is unfulfiled, document has to be always re-analyzed from the beginning
+        up to the point of modification,  which can hog CPU and make typing / editing very sluggish,
+        especially at large offsets (with at least O(n) time complexity).
+
+        As the faulty lexer implementations otherwise behave normally, it's often hard to spot the problem in the wild.
+        Despite additng LexerTestCase.checkCorrectRestart and LexerTestCase.checkZeroState checks and fixing many lexers,
+        it's still not so unusual to discover a further broken lexer through pure luck.
+
+        The following runtime check reports cases when document has to be re-analyzed from 0 offset and
+        the number of traversed tokens is greater than a predefined threshold.
+
+        Because many highlighting lexers are implemented via the LayeredLexer which forces non-initial state
+        (and thus suppresses incrementality) within layers, some false-positivess are probable.
+        For example, it's possible to trigger the warning by creating a file with a really large comment
+        right at the beginning, and then to modify text at the end of that comment.
+        However, this seems to be a rather unusual use case, so that the gain from detecting faulty
+        lexers (including third-party ones) justifies the check.
+
+        In a sense, the warning is always righteous, as even with proper layered lexers there really is
+        no incrementality within layers, which might lead to performance problem in corresponding cases.
+       */
+      if (ApplicationManager.getApplication().isInternal() &&
+          startOffset == 0 && startIndex > LEXER_INCREMENTALITY_THRESHOLD) {
+
+        Class lexerClass = myLexer.getClass();
+
+        if (!ourNonIncrementalLexers.contains(lexerClass)) {
+          LOG.warn(String.format("%s is probably not incremental: no initial state throughout %d tokens",
+                                 lexerClass.getName(), startIndex));
+
+          ourNonIncrementalLexers.add(lexerClass);
+        }
       }
 
       startOffset = mySegments.getSegmentStart(startIndex);
