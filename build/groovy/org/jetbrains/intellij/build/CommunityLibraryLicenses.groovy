@@ -248,6 +248,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
     new LibraryLicense(name: "markdownj", libraryName: "markdownj", version: "0.4.2", license: "New BSD",
                        url: "https://github.com/myabc/markdownj", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
+    new LibraryLicense(name: "MathJax", libraryName: "MathJax", version: "2.6.1", license: "Apache-2.0",
+                       url: "git://github.com/mathjax/MathJax", licenseUrl: "https://github.com/mathjax/MathJax/blob/master/LICENSE"),
     new LibraryLicense(name: "maven-2.2.1-uber", version: "2.2.1", libraryName: "maven-2.2.1-uber.jar", license: "Apache 2.0",
                        url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "maven-artifact", version: "3.0.5", libraryName: "maven-artifact-3.0.5.jar", license: "Apache 2.0",

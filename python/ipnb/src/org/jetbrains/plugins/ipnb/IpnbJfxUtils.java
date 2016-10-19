@@ -1,14 +1,17 @@
 package org.jetbrains.plugins.ipnb;
 
+import com.github.rjeschke.txtmark.Configuration;
+import com.github.rjeschke.txtmark.Processor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
+import com.sun.javafx.webkit.Accessor;
+import com.sun.webkit.WebPage;
+import com.sun.webkit.graphics.WCSize;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -16,9 +19,9 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.markdown4j.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -33,37 +36,41 @@ import java.awt.event.MouseWheelEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class IpnbJfxUtils {
   private static final Logger LOG = Logger.getInstance(IpnbJfxUtils.class);
-  private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
-                                          "            MathJax.Hub.Config({\n" +
-                                          "                tex2jax: {\n" +
-                                          "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
-                                          "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
-                                          "                    processEscapes: true,\n" +
-                                          "                    processEnvironments: true\n" +
-                                          "                },\n" +
-                                          "                displayAlign: 'center',\n" +
-                                          "                \"HTML-CSS\": {\n" +
-                                          "                    styles: {'#mydiv': {\"font-size\": %s}},\n" +
-                                          "                    preferredFont: null,\n" +
-                                          "                    linebreaks: { automatic: true }\n" +
-                                          "                }\n" +
-                                          "            });\n" +
-                                          "</script><script type=\"text/javascript\"\n" +
-                                          " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
-                                          " </script></head><body><div id=\"mydiv\">";
-
+  private static final String ourStyle = "<html><head><style>#mydiv\n{\n" +
+                                         "min-width: %spx;\n" +
+                                         "}</style>";
+  private static final String ourBody = "</head><body><div id=\"mydiv\">";
+  private static final String ourMathJaxPrefix = ourStyle +
+                                                 "<script type=\"text/x-mathjax-config\">\n" +
+                                                 "            MathJax.Hub.Config({\n" +
+                                                 "                tex2jax: {\n" +
+                                                 "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
+                                                 "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
+                                                 "                    processEscapes: true,\n" +
+                                                 "                    processEnvironments: true\n" +
+                                                 "                },\n" +
+                                                 "                displayAlign: 'center',\n" +
+                                                 "                \"HTML-CSS\": {\n" +
+                                                 "                    styles: {'#mydiv': {\"font-size\": %s}},\n" +
+                                                 "                    preferredFont: null,\n" +
+                                                 "                    linebreaks: { automatic: true }\n" +
+                                                 "                }\n" +
+                                                 "            });\n" +
+                                                 "</script><script type=\"text/javascript\"\n" +
+                                                 " src=\"" +
+                                                 IpnbFileType.class.getResource("/MathJax/MathJax.js") +
+                                                 "?config=TeX-AMS_HTML-full\">\n" +
+                                                 " </script>" + ourBody;
+  private static final String ourPrefix = ourStyle + ourBody;
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
   public static JComponent createHtmlPanel(@NotNull final String source, int width) {
 
-    final JFXPanel javafxPanel = new JFXPanel(){
+    final JFXPanel javafxPanel = new JFXPanel() {
       @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {
         final Container parent = getParent();
@@ -79,72 +86,96 @@ public class IpnbJfxUtils {
       });
       final WebEngine engine = webView.getEngine();
       initHyperlinkListener(engine);
-      engine.setOnStatusChanged(status -> adjustHeight(webView, javafxPanel, source));
 
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() + 4);
-      engine.loadContent(prefix + convertToHtml(source) + ourPostfix);
+      final boolean hasMath = source.contains("$");
+      if (hasMath) {
+        engine.setOnStatusChanged(event -> adjustHeight(webView, javafxPanel, source));
+      }
+      else {
+        engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+          if (newValue == Worker.State.SUCCEEDED) {
+            adjustHeight(webView, javafxPanel, source);
+          }
+        });
+      }
       final BorderPane pane = new BorderPane(webView);
-      final Scene scene = new Scene(pane, width != 0 ? width : 20, 20);
+      final String prefix;
+      if (hasMath) {
+        prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+      }
+      else {
+        prefix = String.format(ourPrefix, width - 500);
+      }
+      final String content = prefix + convertToHtml(source) + ourPostfix;
+      engine.loadContent(content);
+
+      final Scene scene = new Scene(pane, 0, 0);
+
       javafxPanel.setScene(scene);
-      Platform.runLater(() -> adjustHeight(webView, javafxPanel, source));
       updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo,
-                pane, engine, javafxPanel);
+                engine, javafxPanel);
     });
 
     return javafxPanel;
   }
 
   private static String convertToHtml(@NotNull String source) {
-    source = StringUtil.replace(source, "class=\"alert alert-success\"", "class=\"alert-success\"");
-    source = StringUtil.replace(source, "class=\"alert alert-error\"", "class=\"alert-error\"");
-    ArrayList<String> lines = ContainerUtil.newArrayList(source.split("\n|\r|\r\n"));
+    final String result = wrapMath(source);
 
-    MarkdownUtil.replaceHeaders(lines);
-    source = StringUtil.join(lines, "\n");
-    final StringBuilder result = new StringBuilder();
+    final ExtDecorator decorator = new ExtDecorator();
+    final Configuration.Builder builder = Configuration.builder().forceExtentedProfile()
+      .registerPlugins(new Plugin[]{new YumlPlugin(), new WebSequencePlugin(), new IncludePlugin()}).setDecorator(decorator)
+      .setCodeBlockEmitter(new CodeBlockEmitter());
+    String processed = Processor.process(result, builder.build());
+    processed = unwrapMath(processed);
 
-    source = replaceLinks(source);
+    return processed;
+  }
 
-    boolean escaped = false;
-    int start = 0;
-    int end = StringUtil.indexOf(source, "```");
-    while (end > 0) {
-      result.append(source.substring(start, end));
-      result.append(escaped? "</pre>" : "<pre>");
-      escaped = !escaped;
-      start = end + 3;
-      end = StringUtil.indexOf(source, "```", end + 1);
-    }
-    result.append(source.substring(start));
-
-    return result.toString();
+  private static String unwrapMath(@NotNull String processed) {
+    processed = processed.replaceAll("<code>\\$\\$", "\\$\\$");
+    processed = processed.replaceAll("\\$\\$</code>", "\\$\\$");
+    processed = processed.replaceAll("\\$</code>", "\\$");
+    processed = processed.replaceAll("<code>\\$", "\\$");
+    return processed;
   }
 
   @NotNull
-  private static String replaceLinks(@NotNull String source) {
-    final Pattern inlineLink = Pattern.compile("(\\[(.*?)\\]\\([ \\t]*<?(.*?)>?[ \\t]*(([\'\"])(.*?)\\5)?\\))", Pattern.DOTALL);
-    final Matcher matcher = inlineLink.matcher(source);
-    final StringBuffer sb = new StringBuffer();
-    while (matcher.find()) {
-      String linkText = matcher.group(2);
-      String url = matcher.group(3);
-      String title = matcher.group(6);
-      StringBuilder link = new StringBuilder();
-      link.append("<a href=\"").append(url).append("\"");
-      if(title != null) {
-        link.append(" title=\"");
-        link.append(title);
-        link.append("\"");
+  private static String wrapMath(@NotNull final String source) {
+    final StringBuilder result = new StringBuilder();
+    boolean inMath = false;
+    int start = 0;
+    boolean single;
+    int end = StringUtil.indexOf(source, "$");
+    single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+    while (end > 0) {
+      String substring = source.substring(start, end);
+      if (start != 0) {
+        result.append(escapeMath(inMath, single));
       }
+      result.append(substring);
 
-      link.append(">").append(linkText);
-      link.append("</a>");
-      matcher.appendReplacement(sb, link.toString());
+      inMath = !inMath;
+      single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+      start = end + (single ? 1 : 2);
+      end = StringUtil.indexOf(source, "$", start);
     }
-    matcher.appendTail(sb);
+    if (start != 0) {
+      result.append(escapeMath(inMath, single));
+    }
 
-    source = sb.toString();
-    return source;
+    String substring = source.substring(start);
+    result.append(substring);
+    return result.toString();
+  }
+
+  private static String escapeMath(boolean inMath, boolean single) {
+    if (single) {
+      return inMath ? "`$" : "$`";
+    }
+    else {
+      return inMath ? "`$$" : "$$`";
+    }
   }
 
   private static void initHyperlinkListener(@NotNull final WebEngine engine) {
@@ -194,43 +225,70 @@ public class IpnbJfxUtils {
             LOG.warn(e.getMessage());
           }
         });
-
       }
     }
   }
 
   private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
-    try {
-      Object result = webView.getEngine().executeScript("document.getElementById(\"mydiv\").offsetHeight");
-      if (result instanceof Integer) {
-        final int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        double x = (double)source.length() * 8 / (int)result;
-        final double height = (source.length() * fontSize) / x + 20;
-        final int width = (int)(webView.getWidth() == 0 ? 1500 : webView.getWidth());
-        final Dimension size = new Dimension(width, (int)height);
+    final WebEngine engine = webView.getEngine();
+    final Document document = engine.getDocument();
+    if (document != null) {
+      final Element mydiv = document.getElementById("mydiv");
+      if (mydiv != null) {
+        final WebPage webPage = Accessor.getPageFor(engine);
+        final WCSize wcsize = webPage.getContentSize(webPage.getMainFrame());
+        final int height = wcsize.getIntHeight();
+        int width = wcsize.getIntWidth();
+        if (width < javafxPanel.getWidth()) width = javafxPanel.getWidth();
+        if (height <= 0 || width <= 0) return;
+        webView.setPrefWidth(wcsize.getWidth());
+        webView.setMinWidth(wcsize.getWidth());
+        int count = 1;
+        if (source.contains("```")) {
+          count += 1;
+        }
+        boolean inMath = false;
 
+        if (source.contains("\\frac")) {
+          count += 1;
+        }
+        while (source.contains("$$")) {
+          if (inMath) {
+            final String substring = source.substring(0, source.indexOf("$$") + 2);
+            count += StringUtil.countNewLines(substring);
+            for (int i = 0, len = substring.length(); i < len; ++i) {
+              if (substring.charAt(i) == '\\' && i + 1 < substring.length() && substring.charAt(i + 1) == '\\') {
+                count++;
+                i += 1;
+              }
+            }
+          }
+          inMath = !inMath;
+          source = source.substring(source.indexOf("$$") + 2);
+        }
+
+        int finalHeight = height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+        int finalWidth = width;
         UIUtil.invokeLaterIfNeeded(() -> {
+          final Dimension size = new Dimension(finalWidth, finalHeight);
           javafxPanel.setPreferredSize(size);
+          javafxPanel.setMinimumSize(size);
           javafxPanel.revalidate();
-          javafxPanel.repaint();
         });
       }
     }
-    catch (JSException ignore) {
-    }
   }
 
-  private static void updateLaf(boolean isDarcula, BorderPane pane, WebEngine engine, JFXPanel jfxPanel) {
+  private static void updateLaf(boolean isDarcula, WebEngine engine, JFXPanel jfxPanel) {
     if (isDarcula) {
-      updateLafDarcula(pane, engine, jfxPanel);
+      updateLafDarcula(engine, jfxPanel);
     }
   }
 
-  private static void updateLafDarcula(BorderPane pane, WebEngine engine, JFXPanel jfxPanel) {
+  private static void updateLafDarcula(WebEngine engine, JFXPanel jfxPanel) {
     Platform.runLater(() -> {
       ourStyleUrl = IpnbFileType.class.getResource("/style/javaFXBrowserDarcula.css");
       engine.setUserStyleSheetLocation(ourStyleUrl.toExternalForm());
-      pane.setStyle("-fx-background-color: #313335");
       jfxPanel.getScene().getStylesheets().add(ourStyleUrl.toExternalForm());
       engine.reload();
     });
