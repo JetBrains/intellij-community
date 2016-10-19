@@ -134,14 +134,11 @@ public class GitMergeUtil {
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-        UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-        tree.setBefore(beforeLabel);
-        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
+      tree.setBefore(beforeLabel);
+      tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
     });
 
     final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
@@ -154,13 +151,10 @@ public class GitMergeUtil {
           unmerged.add(f);
         }
       }
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          GitVcs vcs = GitVcs.getInstance(project);
-          if (vcs != null) {
-            AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        GitVcs vcs = GitVcs.getInstance(project);
+        if (vcs != null) {
+          AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
         }
       });
     }
