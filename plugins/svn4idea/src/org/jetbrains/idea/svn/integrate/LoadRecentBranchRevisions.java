@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairFunction;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
@@ -72,8 +73,13 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   @NotNull
   public static Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
     throws VcsException {
-    List<SvnChangeList> changeLists = getNotMergedChangeLists(getChangeListsBefore(mergeContext, beforeRevision, size), beforeRevision);
+    ChangeBrowserSettings settings = new ChangeBrowserSettings();
+    if (beforeRevision > 0) {
+      settings.CHANGE_BEFORE = String.valueOf(beforeRevision);
+      settings.USE_CHANGE_BEFORE_FILTER = true;
+    }
 
+    List<SvnChangeList> changeLists = getChangeLists(mergeContext, settings, beforeRevision, size, (changeList, tree) -> changeList);
     return Pair.create(
       changeLists.subList(0, min(size, changeLists.size())),
       changeLists.size() < size + 1);
@@ -86,37 +92,21 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
   }
 
   @NotNull
-  private static List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsBefore(@NotNull MergeContext mergeContext,
-                                                                                  long beforeRevision,
-                                                                                  int size) throws VcsException {
-    ChangeBrowserSettings settings = new ChangeBrowserSettings();
-    if (beforeRevision > 0) {
-      settings.CHANGE_BEFORE = String.valueOf(beforeRevision);
-      settings.USE_CHANGE_BEFORE_FILTER = true;
-    }
-
-    List<Pair<SvnChangeList, LogHierarchyNode>> result = newArrayList();
+  private static <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
+                                            @NotNull ChangeBrowserSettings settings,
+                                            long revisionToExclude,
+                                            int size,
+                                            @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
+    List<T> result = newArrayList();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
       .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),
-                                             size + (beforeRevision > 0 ? 2 : 1),
-                                             (list, tree) -> result.add(Pair.create(list, tree)));
-    return result;
-  }
-
-  @NotNull
-  private static List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
-                                                             long revision) {
-    List<SvnChangeList> result = newArrayList();
-
-    for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
-      // do not take first since it's equal
-      if (revision <= 0 || revision != pair.getFirst().getNumber()) {
-        // TODO: Currently path filtering from MergeCalculatorTask.checkListForPaths is not applied as it removes some necessary revisions
-        // TODO: (i.e. merge revisions) from list. Check if that filtering is really necessary for "Quick Manual Select" option.
-        result.add(pair.getFirst());
-      }
-    }
+                                             size + (revisionToExclude > 0 ? 2 : 1),
+                                             (changeList, tree) -> {
+                                               if (revisionToExclude != changeList.getNumber()) {
+                                                 result.add(resultProvider.fun(changeList, tree));
+                                               }
+                                             });
 
     return result;
   }
