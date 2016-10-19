@@ -18,6 +18,8 @@ package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiMethod
+
 /**
  * @author peter
  */
@@ -64,6 +66,9 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.complete(CompletionType.SMART)
     def items = myFixture.lookup.items
     assert items.size() == 3
+    assert ((PsiMethod) items[0].object).parameterList.parametersCount == 0
+    myFixture.type('\n')
+    checkResult()
   }
 
 }

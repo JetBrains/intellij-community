@@ -214,9 +214,11 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       return false;
     }
 
+    PsiMethod constructor = JavaConstructorCallElement.extractCalledConstructor(delegate);
+
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = hasConstructorParameters(psiClass, place);
+    boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
 
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
 
