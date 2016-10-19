@@ -517,7 +517,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  Configuration[] getPredefinedTemplates() {
+  public Configuration[] getPredefinedTemplates() {
     return JavaPredefinedConfigurations.createPredefinedTemplates();
   }
 
