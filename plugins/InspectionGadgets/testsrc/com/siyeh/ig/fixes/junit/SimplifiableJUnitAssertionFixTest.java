@@ -28,6 +28,8 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testJUnit4TestCase() { doTest(); }
   public void testIntegerPrimitive() { doTest(); }
   public void testDoublePrimitive() { doTest(); }
+  public void testEqualsToTrueJUnit5() { doTest(); }
+  public void testTrueToEqualsJUnit5() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
@@ -67,5 +69,16 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
                        "@Retention(RetentionPolicy.RUNTIME)" +
                        "@Target({ElementType.METHOD})" +
                        "public @interface Test {}");
+
+    myFixture.addClass("package java.util.function; public interface Supplier<T> { T get();}");
+
+    myFixture.addClass("package org.junit.jupiter.api;\n" +
+                       "import java.util.function.Supplier;\n" +
+                       "public final class Assertions {\n" +
+                       "    public static void assertEquals(Object expected, Object actual) {}\n" +
+                       "    public static void assertTrue(boolean expected) {}\n" +
+                       "    public static void assertEquals(Object expected, Object actual, Supplier<String> message) {}\n" +
+                       "    public static void assertTrue(Object expected, Supplier<String> message) {}\n" +
+                       "}");
   }
 }
