@@ -114,9 +114,13 @@ public class AssertHint {
   }
 
   public static boolean isMessageOnLastPosition(PsiClass containingClass) {
+    return isMessageOnLastPosition(containingClass, true);
+  }
+
+  public static boolean isMessageOnLastPosition(PsiClass containingClass, boolean checkTestNG) {
     final String qualifiedName = containingClass.getQualifiedName();
     return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
-           "org.testng.Assert".equals(qualifiedName);
+           checkTestNG && "org.testng.Assert".equals(qualifiedName);
   }
 
   public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression) {

@@ -123,13 +123,19 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       final PsiClass containingClass = method.getContainingClass();
       final PsiExpression expectedArgument;
       final PsiExpression actualArgument;
-      if (checkTestNG && InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")){
-        expectedArgument = arguments[1];
-        actualArgument = arguments[0];
+      if (checkTestNG){
+        if (InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")) {
+          expectedArgument = arguments[1];
+          actualArgument = arguments[0];
+        }
+        else {
+          expectedArgument = null;
+          actualArgument = null;
+        }
       }
       else {
         final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(containingClass);
-        final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass);
+        final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass, false);
         if (!messageOnFirstPosition && !messageOnLastPosition) {
           return null;
         }
