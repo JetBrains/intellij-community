@@ -16,9 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 
 @JvmField val DELEGATES_TO_KEY = Key.create<String>("groovy.closure.delegatesTo.type")
 @JvmField val DELEGATES_TO_STRATEGY_KEY = Key.create<Int>("groovy.closure.delegatesTo.strategy")
 
-fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = DefaultDelegatesToProvider.getDelegatesToInfo(closure)
+fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
+  Result.create(doGetDelegatesToInfo(closure), PsiModificationTracker.MODIFICATION_COUNT)
+}
+
+private fun doGetDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
+  return GrDelegatesToProvider.EP_NAME.extensions.asSequence().mapNotNull { it.getDelegatesToInfo(closure) }.firstOrNull()
+}
+

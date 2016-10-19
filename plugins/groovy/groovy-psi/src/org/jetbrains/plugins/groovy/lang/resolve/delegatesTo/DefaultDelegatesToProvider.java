@@ -50,10 +50,10 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 /**
  * @author Max Medvedev
  */
-public class DefaultDelegatesToProvider {
+public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
 
   @Nullable
-  public static DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
+  public DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
