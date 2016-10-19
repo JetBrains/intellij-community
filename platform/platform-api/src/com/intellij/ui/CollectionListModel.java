@@ -75,10 +75,14 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   public void add(@NotNull final List<? extends T> elements) {
+    addAll(myItems.size(), elements);
+  }
+
+  public void addAll(int index, @NotNull final List<? extends T> elements) {
     if (elements.isEmpty()) return;
-    int i = myItems.size();
-    myItems.addAll(elements);
-    fireIntervalAdded(this, i, i + elements.size() - 1);
+
+    myItems.addAll(index, elements);
+    fireIntervalAdded(this, index, index + elements.size() - 1);
   }
 
   public void remove(@NotNull T element) {
@@ -167,4 +171,19 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   public boolean isEmpty() {
     return myItems.isEmpty();
   }
+
+  public boolean contains(T item) {
+    return getElementIndex(item) >= 0;
+  }
+
+  public void removeRange(int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) {
+      throw new IllegalArgumentException("fromIndex must be <= toIndex");
+    }
+    for(int i = toIndex; i >= fromIndex; i--) {
+      itemReplaced(myItems.remove(i), null);
+    }
+    fireIntervalRemoved(this, fromIndex, toIndex);
+  }
+
 }
