@@ -116,7 +116,7 @@ class CompilerReferenceReader {
     final PsiManager psiManager = ReadAction.compute(() -> PsiManager.getInstance(project));
 
     candidatesPerFile.forEach((file, directInheritors) -> ReadAction.run(() -> {
-      final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)ReadAction.compute(() -> psiManager.findFile(file));
+      final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport) psiManager.findFile(file);
       final T[] currInheritors = searchType.performSearchInFile(directInheritors, baseClass, myIndex.getByteSeqEum(), psiFile, adapter);
       if (currInheritors.length == directInheritors.size()) {
         inheritors.put(file, currInheritors);
