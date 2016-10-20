@@ -32,6 +32,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -190,7 +191,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
       icon = UIManager.getIcon("CheckBox.icon");
     }
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      icon = EmptyIcon.create(20, 18);
+      icon = JBUI.scale(EmptyIcon.create(20, 18));
     }
     if (icon != null) {
       final Rectangle r1 = new Rectangle(checkBox.getWidth(), checkBox.getHeight());

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +24,7 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class SizedIcon implements Icon, ScalableIcon {
+public class SizedIcon extends JBUI.JBAbstractIcon implements Icon, ScalableIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
@@ -36,37 +37,39 @@ public class SizedIcon implements Icon, ScalableIcon {
     myHeight = height;
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    x = scale(x);
-    y = scale(y);
-    int dx = scale(myWidth) - scale(myDelegate.getIconWidth());
-    int dy = scale(myHeight) - scale(myDelegate.getIconHeight());
+    int dx = scaleVal(myWidth) - delegate().getIconWidth();
+    int dy = scaleVal(myHeight) - delegate().getIconHeight();
     if (dx > 0 || dy > 0) {
-      myDelegate.paintIcon(c, g, x + dx/2, y + dy/2);
+      delegate().paintIcon(c, g, x + dx/2, y + dy/2);
     }
     else {
-      myDelegate.paintIcon(c, g, x, y);
+      delegate().paintIcon(c, g, x, y);
     }
   }
 
-  private int scale(int n) {
-    return myScale == 1f ? n : (int) (n * myScale);
+  public Icon delegate() {
+    return myScaledDelegate != null ? myScaledDelegate : myDelegate;
+  }
+
+  @Override
+  public int scaleVal(int n) {
+    return super.scaleVal(myScale == 1f ? n : (int) (n * myScale));
   }
 
   public int getIconWidth() {
-    if (myDelegate instanceof ScalableIcon) {
-      return myDelegate.getIconWidth();
+    if (delegate() instanceof ScalableIcon) {
+      return delegate().getIconWidth();
     }
-
-    return myWidth;
+    return scaleVal(myWidth);
   }
 
   public int getIconHeight() {
-    if (myDelegate instanceof ScalableIcon) {
-      return myDelegate.getIconHeight();
+    if (delegate() instanceof ScalableIcon) {
+      return delegate().getIconHeight();
     }
-
-    return myHeight;
+    return scaleVal(myHeight);
   }
 
   @Override
@@ -76,6 +79,7 @@ public class SizedIcon implements Icon, ScalableIcon {
     } else if (myDelegate instanceof ScalableIcon) {
       myScaledDelegate = ((ScalableIcon)myDelegate).scale(scaleFactor);
     }
+    myScale = scaleFactor;
     return this;
   }
 }

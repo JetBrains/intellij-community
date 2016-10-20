@@ -58,7 +58,7 @@ import java.util.Set;
 public class LookupCellRenderer implements ListCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupCellRenderer");
   //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
-  private Icon myEmptyIcon = EmptyIcon.create(5);
+  private Icon myEmptyIcon = JBUI.scale(EmptyIcon.create(5));
   private final Font myNormalFont;
   private final Font myBoldFont;
   private final FontMetrics myNormalMetrics;
@@ -478,7 +478,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   int updateMaximumWidth(final LookupElementPresentation p, LookupElement item) {
     final Icon icon = p.getIcon();
     if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
-      myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
+      myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
     return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) +

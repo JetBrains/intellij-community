@@ -32,6 +32,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled;
   private T myParam;
-  private static final Icon EMPTY_ICON = JBUI.emptyIcon(16);
+  private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(16));
   private final boolean myNeedReadAction;
   private boolean myDone;
   private final boolean myAutoUpdatable;

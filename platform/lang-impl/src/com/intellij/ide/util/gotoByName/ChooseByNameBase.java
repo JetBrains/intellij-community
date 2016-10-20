@@ -463,7 +463,7 @@ public abstract class ChooseByNameBase {
     toolbarComponent.setBorder(null);
 
     if (myToolArea == null) {
-      myToolArea = new JLabel(EmptyIcon.create(1, 24));
+      myToolArea = new JLabel(JBUI.scale(EmptyIcon.create(1, 24)));
     }
     hBox.add(myToolArea);
     hBox.add(toolbarComponent);

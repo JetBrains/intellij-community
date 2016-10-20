@@ -35,6 +35,7 @@ import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
-  private static final Icon ourCheckedIcon = new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18);
+  private static final Icon ourCheckedIcon = JBUI.scale(new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18));
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
   private final ActionRef<AnAction> myAction;

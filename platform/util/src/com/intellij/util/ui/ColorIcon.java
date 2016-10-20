@@ -26,7 +26,7 @@ import java.awt.*;
 public class ColorIcon extends EmptyIcon {
   private final Color myColor;
   private boolean myBorder;
-  private int myColorSize;
+  protected int myColorSize;
 
   public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
     super(size, size);
@@ -66,13 +66,13 @@ public class ColorIcon extends EmptyIcon {
   }
 
   protected int getColorSize() {
-    return scale(myColorSize);
+    return scaleVal(myColorSize);
   }
 
 
   @Override
   protected EmptyIcon createScaledInstance(float scale) {
-    return new ColorIcon(getIconWidth(), myColorSize, myColor, myBorder);
+    return new ColorIcon(width, myColorSize, myColor, myBorder).withJBUIScale(getJBUIScale());
   }
 
   @Override

@@ -34,6 +34,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ import java.util.List;
  */
 public class JdkComboBox extends ComboBoxWithWidePopup {
 
-  private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
+  private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(1, 16));
 
   @Nullable
   private final Condition<Sdk> myFilter;

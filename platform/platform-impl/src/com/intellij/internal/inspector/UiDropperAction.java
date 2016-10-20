@@ -306,7 +306,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(new TwoColorsIcon(11, component.getForeground(), component.getBackground()));
+        setIcon(JBUI.scale(new TwoColorsIcon(11, component.getForeground(), component.getBackground())));
       }
 
       setForeground(foreground);
@@ -765,7 +765,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
-      setIcon(new ColorIcon(13, 11, value, true));
+      setIcon(JBUI.scale(new ColorIcon(13, 11, value, true)));
       return this;
     }
   }

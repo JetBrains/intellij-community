@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +154,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
     if (myColor != null) {
-      presentation.setTypeText("", new ColorIcon(12, myColor));
+      presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
     } else {
       presentation.setTypeText(getType().getPresentableText());
     }
