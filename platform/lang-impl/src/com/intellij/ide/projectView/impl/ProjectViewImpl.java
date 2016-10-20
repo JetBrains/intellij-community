@@ -679,7 +679,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isShowMembersOptionSupported()) {
       myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                                    IdeBundle.message("action.show.hide.members"),
-                                                   AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults))
+                                                   AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults) {
+        @Override
+        public boolean isSelected(AnActionEvent event) {
+          if (isGlobalOptions()) return getGlobalOptions().getShowMembers();
+          return super.isSelected(event);
+        }
+
+        @Override
+        public void setSelected(AnActionEvent event, boolean flag) {
+          if (isGlobalOptions()) {
+            getGlobalOptions().setShowMembers(flag);
+          }
+          super.setSelected(event, flag);
+        }
+      })
         .setAsSecondary(true);
     }
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
