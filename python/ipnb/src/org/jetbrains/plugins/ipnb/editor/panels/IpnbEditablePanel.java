@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
   protected boolean isRunning = false;
+  private OnePixelSplitter mySplitter;
+  private JPanel myViewPrompt;
+  private JPanel myEditablePrompt;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -33,22 +37,23 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     super(cell, layoutManager);
   }
 
-
   protected void initPanel() {
+    mySplitter = new OnePixelSplitter(true);
     addViewPanel();
     addEditablePanel();
-
+    mySplitter.setFirstComponent(myViewPrompt);
+    mySplitter.setSecondComponent(null);
+    setBackground(IpnbEditorUtil.getBackground());
+    add(mySplitter);
   }
 
   private void addEditablePanel() {
     myEditablePanel = createEditablePanel();
-    final JPanel panel = new JPanel(new GridBagLayout());
+    myEditablePrompt = new JPanel(new GridBagLayout());
 
-    panel.setName(EDITABLE_PANEL);
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel);
-
-    add(panel, EDITABLE_PANEL);
+    myEditablePrompt.setName(EDITABLE_PANEL);
+    myEditablePrompt.setBackground(IpnbEditorUtil.getBackground());
+    addPromptPanel(myEditablePrompt, null, IpnbEditorUtil.PromptType.None, myEditablePanel);
   }
 
   private void addViewPanel() {
@@ -66,10 +71,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     });
     myViewPanel.setName(VIEW_PANEL);
 
-    final JPanel panel = new JPanel(new GridBagLayout());
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel);
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    add(panel, VIEW_PANEL);
+    myViewPrompt = new JPanel(new GridBagLayout());
+    addPromptPanel(myViewPrompt, null, IpnbEditorUtil.PromptType.None, myViewPanel);
+    myViewPrompt.setBackground(IpnbEditorUtil.getBackground());
   }
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
@@ -103,11 +107,8 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   public void switchToEditing() {
     setEditing(true);
 
-    final LayoutManager layout = getLayout();
-    if (layout instanceof CardLayout) {
-      ((CardLayout)layout).show(this, EDITABLE_PANEL);
-      UIUtil.requestFocus(myEditablePanel);
-    }
+    mySplitter.setFirstComponent(myEditablePrompt);
+    mySplitter.setSecondComponent(null);
   }
 
   public boolean isModified() {
@@ -122,11 +123,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected String getRawCellText() { return ""; }
 
   public void runCell() {
-    final LayoutManager layout = getLayout();
-    if (layout instanceof CardLayout) {
+    if (mySplitter != null) {
       updateCellSource();
       updateCellView();
-      ((CardLayout)layout).show(this, VIEW_PANEL);
+      mySplitter.setFirstComponent(myViewPrompt);
+      mySplitter.setSecondComponent(null);
       setEditing(false);
     }
   }
