@@ -56,7 +56,7 @@ public class FindUsagesProcessPresentation {
 
   @NotNull
   public List<Action> getNotFoundActions() {
-    return myNotFoundActions == null ? Collections.<Action>emptyList() : myNotFoundActions;
+    return myNotFoundActions == null ? Collections.emptyList() : myNotFoundActions;
   }
 
   public boolean isShowNotFoundMessage() {
@@ -98,7 +98,7 @@ public class FindUsagesProcessPresentation {
 
   @NotNull
   public Collection<VirtualFile> getLargeFiles() {
-    return myLargeFiles == null ? Collections.<VirtualFile>emptyList() : myLargeFiles;
+    return myLargeFiles == null ? Collections.emptyList() : myLargeFiles;
   }
 
   public boolean isShowFindOptionsPrompt() {
