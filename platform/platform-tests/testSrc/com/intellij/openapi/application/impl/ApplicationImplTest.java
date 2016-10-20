@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
@@ -40,7 +41,9 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -598,6 +601,22 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         assertTrue(app.hasWriteAction(actionClass));
         waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
       }));
+    }));
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
+  public void testPooledThreadsThatHappenInSuspendedWriteActionStayInSuspendedWriteAction() {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    app.invokeLater(() -> WriteAction.run(() -> {
+      try {
+        app.executeSuspendingWriteAction(ourProject, "", () -> app.executeOnPooledThread(() -> TimeoutUtil.sleep(1000)));
+        fail();
+      }
+      catch (AssertionError e) {
+        assertTrue(e.getMessage().contains("should have been terminated"));
+      }
     }));
     UIUtil.dispatchAllInvocationEvents();
   }

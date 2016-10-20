@@ -1256,8 +1256,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       try {
         runModalProgress(project, title, true, runnable);
       } finally {
-        myLock.writeResume();
-        myWriteStackBase = prevBase;
+        try {
+          myLock.writeResume();
+        }
+        finally {
+          myWriteStackBase = prevBase;
+        }
       }
     });
   }
