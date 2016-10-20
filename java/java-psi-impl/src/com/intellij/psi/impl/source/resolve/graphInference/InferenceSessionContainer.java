@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
@@ -174,7 +173,11 @@ public class InferenceSessionContainer {
               final int idx = LambdaUtil.getLambdaIdx(call.getArgumentList(), gParent);
               final PsiMethod method = call.resolveMethod();
               if (method != null && idx > -1) {
-                final PsiType parameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), idx, true);
+                final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+                if (methodParameters.length == 0) {
+                  break;
+                }
+                final PsiType parameterType = PsiTypesUtil.getParameterType(methodParameters, idx, true);
                 final PsiType parameterTypeInTermsOfSession = initialInferenceState.getInferenceSubstitutor().substitute(parameterType);
                 final PsiType lambdaTargetType = compoundInitialState.getInitialSubstitutor().substitute(parameterTypeInTermsOfSession);
                 return LambdaUtil.performWithLambdaTargetType((PsiLambdaExpression)gParent, lambdaTargetType, new Producer<PsiSubstitutor>() {

@@ -1010,7 +1010,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
       myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
-        myIndentIcons[i] = new EmptyIcon(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
+        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }
       myIndentedExpandIcon = new IndentedIcon(myExpandIcon, getPropertyIndentWidth());
       myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, getPropertyIndentWidth());

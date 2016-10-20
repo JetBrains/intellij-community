@@ -34,6 +34,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -131,7 +132,7 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (color != null) {
-        final ColorIcon icon = new ColorIcon(8, color);
+        final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
         final Annotation annotation = holder.createInfoAnnotation(element, null);
         annotation.setGutterIconRenderer(new ColorIconRenderer(icon, element));
       }

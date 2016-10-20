@@ -264,8 +264,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     private SelectVisibleRootAction(@NotNull VirtualFile root) {
       super(root.getName(), root.getPresentableUrl(), null);
       myRoot = root;
-      myIcon = new CheckboxColorIcon(JBUI.scale(CHECKBOX_ICON_SIZE), VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
-      getTemplatePresentation().setIcon(EmptyIcon.create(JBUI.scale(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
+      myIcon = JBUI.scale(new CheckboxColorIcon(CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
+      getTemplatePresentation().setIcon(JBUI.scale(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
     @Override
@@ -330,6 +330,13 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
 
     @Override
+    public CheckboxColorIcon withJBUIScale(float jbuiScale) {
+      super.setJBUIScale(jbuiScale);
+      mySizedIcon = JBUI.scale(mySizedIcon);
+      return this;
+    }
+
+    @Override
     public void paintIcon(Component component, Graphics g, int i, int j) {
       super.paintIcon(component, g, i, j);
       if (mySelected) {
@@ -383,8 +390,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     private SelectFromHistoryAction(@NotNull VcsLogStructureFilter filter) {
       super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles()).replace("\n", " "), null);
       myFilter = filter;
-      myIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE);
-      myEmptyIcon = EmptyIcon.create(CHECKBOX_ICON_SIZE);
+      myIcon = JBUI.scale(new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE));
+      myEmptyIcon = JBUI.scale(EmptyIcon.create(CHECKBOX_ICON_SIZE));
     }
 
     @Override

@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.ipnb;
 
-//import com.github.rjeschke.txtmark.Configuration;
-//import com.github.rjeschke.txtmark.Processor;
-
+import com.github.rjeschke.txtmark.Configuration;
+import com.github.rjeschke.txtmark.Processor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -22,6 +21,7 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.markdown4j.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -36,8 +36,6 @@ import java.awt.event.MouseWheelEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-
-//import org.markdown4j.*;
 
 public class IpnbJfxUtils {
   private static final Logger LOG = Logger.getInstance(IpnbJfxUtils.class);
@@ -122,17 +120,16 @@ public class IpnbJfxUtils {
   }
 
   private static String convertToHtml(@NotNull String source) {
-    //final String result = wrapMath(source);
+    final String result = wrapMath(source);
 
-    //final ExtDecorator decorator = new ExtDecorator();
-    //final Configuration.Builder builder = Configuration.builder().forceExtentedProfile()
-    //  .registerPlugins(new Plugin[]{new YumlPlugin(), new WebSequencePlugin(), new IncludePlugin()}).setDecorator(decorator)
-    //  .setCodeBlockEmitter(new CodeBlockEmitter());
-    //String processed = Processor.process(result, builder.build());
-    //processed = unwrapMath(processed);
+    final ExtDecorator decorator = new ExtDecorator();
+    final Configuration.Builder builder = Configuration.builder().forceExtentedProfile()
+      .registerPlugins(new Plugin[]{new YumlPlugin(), new WebSequencePlugin(), new IncludePlugin()}).setDecorator(decorator)
+      .setCodeBlockEmitter(new CodeBlockEmitter());
+    String processed = Processor.process(result, builder.build());
+    processed = unwrapMath(processed);
 
-    //return processed;
-    return source;
+    return processed;
   }
 
   private static String unwrapMath(@NotNull String processed) {
@@ -150,7 +147,7 @@ public class IpnbJfxUtils {
     int start = 0;
     boolean single;
     int end = StringUtil.indexOf(source, "$");
-    single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+    single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
     while (end > 0) {
       String substring = source.substring(start, end);
       if (start != 0) {
@@ -159,7 +156,7 @@ public class IpnbJfxUtils {
       result.append(substring);
 
       inMath = !inMath;
-      single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+      single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
       start = end + (single ? 1 : 2);
       end = StringUtil.indexOf(source, "$", start);
     }

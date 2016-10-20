@@ -312,7 +312,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (isCountFilterEnabled()) {
       debugProcess.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
-      ((Breakpoint)this).createRequest(debugProcess);
+      createRequest(debugProcess);
       debugProcess.getVirtualMachineProxy().resume();
     }
     if (isInstanceFiltersEnabled()) {

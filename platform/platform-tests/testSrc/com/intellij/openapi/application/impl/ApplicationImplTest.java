@@ -26,10 +26,13 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +43,9 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -543,13 +548,18 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     });
   }
 
+  private static void safeWrite(Runnable r) {
+    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(r::run));
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
   public void testSuspendWriteActionDelaysForeignReadActions() throws Exception {
-    List<String> log = new ArrayList<>();
+    List<String> log = Collections.synchronizedList(new ArrayList<>());
 
     Semaphore mayStartForeignRead = new Semaphore();
     mayStartForeignRead.down();
 
-    List<Future> futures = Collections.synchronizedList(new ArrayList<>());
+    List<Future> futures = new ArrayList<>();
 
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     futures.add(app.executeOnPooledThread(() -> {
@@ -557,7 +567,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       ReadAction.run(() -> log.add("foreign read"));
     }));
 
-    app.invokeLater(() -> WriteAction.run(() -> {
+    safeWrite(() -> {
       log.add("write started");
       app.executeSuspendingWriteAction(ourProject, "", () -> {
         app.invokeAndWait(() ->
@@ -571,8 +581,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
       });
       log.add("write finished");
-    }));
-    UIUtil.dispatchAllInvocationEvents();
+    });
 
     futures.forEach(ApplicationImplTest::waitForFuture);
     assertOrderedEquals(log, "write started", "progress read", "nested write", "forked read", "write finished", "foreign read", "foreign read");
@@ -592,13 +601,83 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     assertFalse(app.hasWriteAction(actionClass));
-    app.invokeLater(() -> WriteAction.run(() -> {
+    safeWrite(() -> {
       assertTrue(app.hasWriteAction(actionClass));
       app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
         assertTrue(app.hasWriteAction(actionClass));
         waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
       }));
-    }));
-    UIUtil.dispatchAllInvocationEvents();
+    });
+  }
+
+  public void testPooledThreadsThatHappenInSuspendedWriteActionStayInSuspendedWriteAction() {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+
+    Ref<Future> future = Ref.create();
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    safeWrite(() -> {
+      try {
+        Semaphore started = new Semaphore();
+        started.down();
+        app.executeSuspendingWriteAction(ourProject, "", () -> {
+          future.set(app.executeOnPooledThread(() -> {
+            started.up();
+            TimeoutUtil.sleep(1000);
+          }));
+          assertTrue(started.waitFor(1000));
+        });
+        fail("should not allow pooled thread to stay there");
+      }
+      catch (AssertionError e) {
+        assertTrue(ExceptionUtil.getThrowableText(e), isEscapingThreadAssertion(e));
+      }
+    });
+    waitForFuture(future.get());
+  }
+
+  public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() {
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    safeWrite(new Runnable() {
+      @Override
+      public void run() {
+        for (int i = 0; i < 1000; i++) {
+          checkPooledThreadsDontGetWrongPrivileges();
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      }
+
+      private void checkPooledThreadsDontGetWrongPrivileges() {
+        Ref<Future> future = Ref.create();
+
+        Disposable disableStderrDumping = Disposer.newDisposable();
+        LoggedErrorProcessor.getInstance().disableStderrDumping(disableStderrDumping);
+
+        Semaphore mayFinish = new Semaphore();
+        mayFinish.down();
+        try {
+          app.executeSuspendingWriteAction(ourProject, "", () ->
+            future.set(app.executeOnPooledThread(
+              () -> assertTrue(mayFinish.waitFor(1000)))));
+        }
+        catch (AssertionError e) {
+          if (!isEscapingThreadAssertion(e)) {
+            e.printStackTrace();
+            throw e;
+          }
+        }
+        finally {
+          Disposer.dispose(disableStderrDumping);
+        }
+
+        app.executeSuspendingWriteAction(ourProject, "", () -> {});
+        mayFinish.up();
+        waitForFuture(future.get());
+      }
+
+    });
+  }
+
+  private static boolean isEscapingThreadAssertion(AssertionError e) {
+    return e.getMessage().contains("should have been terminated");
   }
 }

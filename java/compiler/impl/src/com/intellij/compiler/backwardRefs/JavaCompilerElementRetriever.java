@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -52,7 +51,7 @@ public class JavaCompilerElementRetriever {
     int funExprIdx = 0;
     for (StubElement<?> element : tree.getPlainList()) {
       if (FUN_EXPR.contains(element.getStubType()) && indices.contains(funExprIdx++)) {
-        result[resIdx++] = asPsi((FunctionalExpressionStub<?>) element, psiFile, tree, foreign);
+        result[resIdx++] = (PsiFunctionalExpression)element.getPsi();
       }
     }
     return result;
@@ -76,24 +75,13 @@ public class JavaCompilerElementRetriever {
 
     for (StubElement<?> element : tree.getPlainList()) {
       if (element instanceof PsiClassStub && match((PsiClassStub)element, matchers)) {
-        result.add(asPsi((StubBase<PsiClass>)element, psiFile, tree, foreign));
+        result.add(((StubBase<PsiClass>)element).getPsi());
       }
     }
 
     return result;
   }
 
-
-  private static <T extends PsiElement> T asPsi(StubBase<T> stub, PsiFileWithStubSupport file, StubTree tree, boolean foreign) {
-    if (foreign) {
-      final T cachedPsi = (stub).getCachedPsi();
-      if (cachedPsi != null) return cachedPsi;
-
-      final ASTNode ast = file.findTreeForStub(tree, stub);
-      return ast != null ? (T)ast.getPsi() : null;
-    }
-    return stub.getPsi();
-  }
 
   private static boolean match(PsiClassStub stub, Collection<InternalClassMatcher> matchers) {
     for (InternalClassMatcher matcher : matchers) {

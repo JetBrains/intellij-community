@@ -62,13 +62,10 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author egor
@@ -78,6 +75,14 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
+
+  private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
+    JavaBreakpointHandler.JavaLineBreakpointHandler::new,
+    JavaBreakpointHandler.JavaExceptionBreakpointHandler::new,
+    JavaBreakpointHandler.JavaFieldBreakpointHandler::new,
+    JavaBreakpointHandler.JavaMethodBreakpointHandler::new,
+    JavaBreakpointHandler.JavaWildcardBreakpointHandler::new
+  };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
@@ -91,18 +96,10 @@ public class JavaDebugProcess extends XDebugProcess {
     myEditorsProvider = new JavaDebuggerEditorsProvider();
     final DebugProcessImpl process = javaSession.getProcess();
 
-    List<XBreakpointHandler> handlers = new ArrayList<>();
-    handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaFieldBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaMethodBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process));
-
-    Arrays.stream(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
+    myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
+      .append(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
       .map(factory -> factory.createHandler(process))
-      .forEach(handlers::add);
-
-    myBreakpointHandlers = handlers.toArray(new XBreakpointHandler[handlers.size()]);
+      .toArray(XBreakpointHandler[]::new);
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override

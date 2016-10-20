@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
+package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -45,17 +44,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_STRATEGY_KEY;
 
 /**
  * @author Max Medvedev
  */
-public class GrDelegatesToUtil {
-
-  public static final Key<String> DELEGATES_TO_KEY = Key.create("groovy.closure.delegatesTo");
-  public static final Key<Integer> DELEGATES_TO_STRATEGY_KEY = Key.create("groovy.closure.delegatesTo.strategy");
+public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
 
   @Nullable
-  public static DelegatesToInfo getDelegatesToInfo(@NotNull PsiElement place, @NotNull final GrClosableBlock closableBlock) {
+  public DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
@@ -72,7 +70,7 @@ public class GrDelegatesToUtil {
     final GrClosureSignature signature = inferSignature(element);
     if (signature == null) return null;
 
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(place, call, signature);
+    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(closableBlock, call, signature);
     if (map == null) return null;
 
     if (!(element instanceof PsiMethod)) return null;
@@ -84,7 +82,10 @@ public class GrDelegatesToUtil {
     final String delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY);
     final Integer strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY);
     if (delegateFqnData != null) {
-      return new DelegatesToInfo(TypesUtil.createType(delegateFqnData, place), strategyData == null ? Closure.OWNER_FIRST : strategyData);
+      return new DelegatesToInfo(
+        TypesUtil.createType(delegateFqnData, closableBlock),
+        strategyData == null ? Closure.OWNER_FIRST : strategyData
+      );
     }
 
     final PsiModifierList modifierList = parameter.getModifierList();
@@ -314,23 +315,5 @@ public class GrDelegatesToUtil {
 
     GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", expression, getArgumentTypes(expression, false));
     return PsiImplUtil.extractUniqueResult(calls);
-  }
-
-  public static class DelegatesToInfo {
-    final PsiType myClassToDelegate;
-    final int myStrategy;
-
-    private DelegatesToInfo(@Nullable PsiType classToDelegate, int strategy) {
-      myClassToDelegate = classToDelegate;
-      myStrategy = strategy;
-    }
-
-    public PsiType getTypeToDelegate() {
-      return myClassToDelegate;
-    }
-
-    public int getStrategy() {
-      return myStrategy;
-    }
   }
 }

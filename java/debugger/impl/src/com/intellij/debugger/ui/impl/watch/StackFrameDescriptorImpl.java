@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -282,7 +283,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     catch (EvaluateException ignored) {
     }
-    return EmptyIcon.create(6);//AllIcons.Debugger.StackFrame;
+    return JBUI.scale(EmptyIcon.create(6));//AllIcons.Debugger.StackFrame;
   }
 
   public Icon getIcon() {

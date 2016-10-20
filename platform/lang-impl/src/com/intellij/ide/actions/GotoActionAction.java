@@ -55,6 +55,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Iterator;
 import java.util.Set;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
@@ -97,6 +98,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     final Disposable disposable = Disposer.newDisposable();
     final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+      @Override
+      protected void filterInEDT(Set<Object> elements) {
+        for (Iterator<Object> iterator = elements.iterator(); iterator.hasNext(); ) {
+          Object o = iterator.next();
+          if (o instanceof GotoActionModel.MatchedValue) {
+            Comparable value = ((GotoActionModel.MatchedValue)o).value;
+            if (value instanceof GotoActionModel.ActionWrapper) {
+              GotoActionModel.ActionWrapper wrapper = (GotoActionModel.ActionWrapper)value;
+              if (!wrapper.getPresentation().isEnabled() || !wrapper.getPresentation().isVisible()) iterator.remove();
+            }
+          }
+        }
+      }
+
       @Override
       protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);

@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.List;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
+  private static final EmptyIcon EMPTY_ICON = EmptyIcon.create(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   private Set<VirtualFile> myRegisteredFiles = null;
   private boolean myHasUnmarked = false;

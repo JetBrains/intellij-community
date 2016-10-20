@@ -38,6 +38,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingBy
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -122,10 +123,9 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   @Override
   public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
-    XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      manager.getBreakpoints(type).stream().map(XBreakpointItem::new).forEach(items::add);
-    }
+    Arrays.stream(XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints())
+      .map(XBreakpointItem::new)
+      .forEach(items::add);
   }
 
   private static class MyXBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

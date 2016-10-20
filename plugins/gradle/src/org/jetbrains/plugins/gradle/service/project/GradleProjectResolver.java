@@ -103,12 +103,32 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                   @Nullable final GradleExecutionSettings settings,
                                                   @NotNull final ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+
+    if (isPreviewMode) {
+      // Create project preview model w/o request to gradle, there are two main reasons for the it:
+      // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading buildscript dependencies)
+      // * Ability to open  an invalid projects (e.g. with errors in build scripts)
+      String projectName = new File(projectPath).getName();
+      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
+      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+
+      final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
+      final String mainModuleFileDirectoryPath =
+        ideProjectPath == null ? projectPath : ideProjectPath + "/.idea/modules/";
+
+      projectDataNode
+        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(),
+                                                                     projectName, mainModuleFileDirectoryPath, projectPath))
+        .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
+      return projectDataNode;
+    }
+
     if (settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
     }
 
     final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
-    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(id, projectPath, settings, listener, isPreviewMode);
+    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(id, projectPath, settings, listener, false);
     final DataNode<ProjectData> resultProjectDataNode = myHelper.execute(
       projectPath, settings, new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain, false)
     );
@@ -116,7 +136,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // auto-discover buildSrc project if needed
     final String buildSrcProjectPath = projectPath + "/buildSrc";
     DefaultProjectResolverContext buildSrcResolverCtx =
-      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, isPreviewMode);
+      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, false);
     resolverContext.copyUserDataTo(buildSrcResolverCtx);
     handleBuildSrcProject(resultProjectDataNode, new ProjectConnectionDataNodeFunction(buildSrcResolverCtx, projectResolverChain, true));
     return resultProjectDataNode;

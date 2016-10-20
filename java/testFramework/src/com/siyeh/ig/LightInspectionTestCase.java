@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,14 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       if (text.isEmpty()) {
         newText.append("</warning>");
       }
+      else if ("!".equals(text)) {
+        newText.append("</error>");
+      }
       else if ("_".equals(text)) {
         newText.append("<caret>");
+      }
+      else if (text.startsWith("!")) {
+        newText.append("<error descr=\"").append(text.substring(1)).append("\">");
       }
       else {
         newText.append("<warning descr=\"").append(text).append("\">");

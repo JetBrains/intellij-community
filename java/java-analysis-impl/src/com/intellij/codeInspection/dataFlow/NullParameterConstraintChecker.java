@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -83,7 +84,6 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   @Override
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
-
     if (instruction instanceof PushInstruction) {
       final DfaValue var = ((PushInstruction)instruction).getValue();
       if (var instanceof DfaVariableValue) {
@@ -127,6 +127,11 @@ class NullParameterConstraintChecker extends DataFlowRunner {
 
     protected MyDfaMemoryState(DfaValueFactory factory) {
       super(factory);
+      for (PsiParameter parameter : myPossiblyViolatedParameters) {
+        setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false), new DfaVariableState(Collections.emptySet(),
+                                                                                                                  Collections.emptySet(),
+                                                                                                                  Nullness.NULLABLE));
+      }
     }
 
     protected MyDfaMemoryState(MyDfaMemoryState toCopy) {

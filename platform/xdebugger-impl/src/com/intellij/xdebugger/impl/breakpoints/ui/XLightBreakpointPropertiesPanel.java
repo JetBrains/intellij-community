@@ -147,7 +147,12 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionPanel.setVisible(false);
     }
 
-    myShowMoreOptions = mySubPanels.stream().anyMatch(panel -> panel.lightVariant(showAllOptions));
+    myShowMoreOptions = false;
+    for (XBreakpointPropertiesSubPanel panel : mySubPanels) {
+      if (panel.lightVariant(showAllOptions)) {
+        myShowMoreOptions = true;
+      }
+    }
 
     XBreakpointCustomPropertiesPanel customPropertiesPanel = breakpointType.createCustomPropertiesPanel(project);
     if (customPropertiesPanel != null) {

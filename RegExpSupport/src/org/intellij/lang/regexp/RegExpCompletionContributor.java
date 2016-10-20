@@ -42,7 +42,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author vnikolaenko
  */
 public final class RegExpCompletionContributor extends CompletionContributor {
-  private static final Icon emptyIcon = new EmptyIcon(PlatformIcons.PROPERTY_ICON.getIconWidth(), PlatformIcons.PROPERTY_ICON.getIconHeight());
+  private static final Icon emptyIcon = EmptyIcon.create(PlatformIcons.PROPERTY_ICON);
 
   public RegExpCompletionContributor() {
     {

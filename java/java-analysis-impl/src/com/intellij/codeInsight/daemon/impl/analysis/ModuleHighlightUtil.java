@@ -63,7 +63,10 @@ public class ModuleHighlightUtil {
     if (index.isInLibraryClasses(file)) {
       VirtualFile classRoot = index.getClassRootForFile(file);
       if (classRoot != null) {
-        VirtualFile descriptorFile = findModuleDescriptor(classRoot);
+        VirtualFile descriptorFile = classRoot.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (descriptorFile == null) {
+          descriptorFile = classRoot.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+        }
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
           if (psiFile instanceof PsiJavaFile) {
@@ -86,14 +89,6 @@ public class ModuleHighlightUtil {
         .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
         .orElse(null);
     }
-  }
-
-  private static VirtualFile findModuleDescriptor(VirtualFile classRoot) {
-    VirtualFile result = classRoot.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-    if (result == null) {
-      result = classRoot.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
-    }
-    return result;
   }
 
   @Nullable

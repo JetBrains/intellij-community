@@ -38,6 +38,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private Sdk myJdk;
   private String myMainClass;
   private final PathsList myClassPath = new PathsList();
+  private String myModuleName;
+  private final PathsList myModulePath = new PathsList();
   private final ParametersList myVmParameters = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myUseDynamicClasspath;
@@ -65,6 +67,18 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public PathsList getClassPath() {
     return myClassPath;
+  }
+
+  public String getModuleName() {
+    return myModuleName;
+  }
+
+  public void setModuleName(String moduleName) {
+    myModuleName = moduleName;
+  }
+
+  public PathsList getModulePath() {
+    return myModulePath;
   }
 
   public ParametersList getVMParametersList() {

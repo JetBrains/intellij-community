@@ -124,6 +124,15 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "}");
   }
 
+  public void testAvoidNPE() {
+    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;\n" +
+           "class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {\n" +
+           "  private T value = null;\n" +
+           "  private static final AtomicReferenceFieldUpdater updater = \n" +
+           "      AtomicReferenceFieldUpdater.newUpdater(Z.class, Object.class, \"value\");\n" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

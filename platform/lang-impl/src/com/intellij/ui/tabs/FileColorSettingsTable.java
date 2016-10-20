@@ -21,6 +21,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -311,7 +312,7 @@ public abstract class FileColorSettingsTable extends JBTable {
     @Override
     Icon getIcon(FileColorConfiguration configuration) {
       Color color = myManager.getColor(configuration.getColorName());
-      return color == null ? EmptyIcon.ICON_16 : new ColorIcon(16, 13, color, true);
+      return color == null ? EmptyIcon.ICON_16 : JBUI.scale(new ColorIcon(16, 13, color, true));
     }
 
     @Override

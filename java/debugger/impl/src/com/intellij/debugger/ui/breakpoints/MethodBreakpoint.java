@@ -32,6 +32,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,6 +63,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.*;
 import java.util.List;
@@ -130,27 +134,53 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassPrepareRequest request = debugProcess.getRequestsManager().createClassPrepareRequest((debuggerProcess, referenceType) -> {
       if (instanceOf(referenceType, baseType)) {
-        createRequestForPreparedClassEmulated(debugProcess, referenceType, () -> {});
+        createRequestForPreparedClassEmulated(debugProcess, referenceType, false);
       }
     }, null);
     if (request != null) {
       request.enable();
     }
 
-    processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, () -> {}));
+    processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false));
   }
 
-  private void createRequestForPreparedClassEmulated(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType, Runnable onCreated) {
+  private void createRequestForPreparedClassEmulated(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType, boolean base) {
     try {
       for (Method method : classType.methods()) {
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
-          // desired class found - now also track all new classes
-          Location firstLocation = ContainerUtil.getFirstItem(method.allLineLocations());
-          if (firstLocation != null) {
-            RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-            requestsManager.enableRequest(requestsManager.createBreakpointRequest(this, firstLocation));
+          List<Location> allLineLocations = method.allLineLocations();
+          if (isWatchEntry()) {
+            createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
           }
-          onCreated.run();
+          if (isWatchExit()) {
+            MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
+              int myLastLine = 0;
+              @Override
+              public void visitLineNumber(int line, Label start) {
+                myLastLine = line;
+              }
+
+              @Override
+              public void visitInsn(int opcode) {
+                switch (opcode) {
+                  case Opcodes.RETURN:
+                  case Opcodes.IRETURN:
+                  case Opcodes.FRETURN:
+                  case Opcodes.ARETURN:
+                  case Opcodes.LRETURN:
+                  case Opcodes.DRETURN:
+                  case Opcodes.ATHROW:
+                    allLineLocations.stream()
+                      .filter(l -> l.lineNumber() == myLastLine)
+                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
+                }
+              }
+            });
+          }
+          if (base) {
+            // desired class found - now also track all new classes
+            createRequestForSubClasses(debugProcess, classType);
+          }
           break;
         }
       }
@@ -161,8 +191,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
-    if (Registry.is("debugger.emulate.method.breakpoints")) {
-      createRequestForPreparedClassEmulated(debugProcess, classType, () -> createRequestForSubClasses(debugProcess, classType));
+    if (isEmulated()) {
+      createRequestForPreparedClassEmulated(debugProcess, classType, true);
     }
     else {
       createRequestForPreparedClassOriginal(debugProcess, classType);
@@ -420,6 +450,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
 
     return false;
+  }
+
+  private boolean isEmulated() {
+    return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
   }
 
   private boolean isWatchEntry() {

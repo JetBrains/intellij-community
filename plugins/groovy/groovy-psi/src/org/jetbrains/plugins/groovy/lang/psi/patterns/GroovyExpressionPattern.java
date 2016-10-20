@@ -28,6 +28,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
     super(aClass);
   }
 
+  @NotNull
   public Self ofType(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
       @Override
@@ -37,6 +38,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
     });
   }
 
+  @NotNull
   public Self skipParentheses(final ElementPattern<? extends GrExpression> expressionPattern) {
     return with(new PatternCondition<T>("skipParentheses") {
       @Override

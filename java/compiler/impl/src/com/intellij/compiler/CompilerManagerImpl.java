@@ -57,8 +57,7 @@ import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -345,7 +344,7 @@ public class CompilerManagerImpl extends CompilerManager {
                                                  Collection<File> files,
                                                  File outputDir) throws IOException, CompilationException {
 
-    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myProject);
+    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
     String javaHome = null;
     final Sdk sdk = runtime.getFirst();

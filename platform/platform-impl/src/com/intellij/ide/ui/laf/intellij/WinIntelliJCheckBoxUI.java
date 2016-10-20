@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -52,6 +53,6 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return JBUI.emptyIcon(18).asUIResource();
+    return JBUI.scale(EmptyIcon.create(18)).asUIResource();
   }
 }

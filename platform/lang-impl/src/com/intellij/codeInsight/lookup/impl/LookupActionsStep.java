@@ -50,7 +50,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
         h = Math.max(h, icon.getIconHeight());
       }
     }
-    myEmptyIcon = new EmptyIcon(w, h);
+    myEmptyIcon = EmptyIcon.create(w, h);
   }
 
   @Override

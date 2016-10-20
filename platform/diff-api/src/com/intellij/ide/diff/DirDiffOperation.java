@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,7 @@ public enum DirDiffOperation {
       case DELETE:    return AllIcons.Vcs.Remove;
       case NONE:
     }
-    return EmptyIcon.create(16);
+    return JBUI.scale(EmptyIcon.create(16));
   }
 
   public Color getTextColor() {

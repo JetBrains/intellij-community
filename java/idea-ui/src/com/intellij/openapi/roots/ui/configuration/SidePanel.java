@@ -23,6 +23,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final SidePanelItem value) {
-        return EmptyIcon.create(16, 20);
+        return JBUI.scale(EmptyIcon.create(16, 20));
       }
 
       @Override

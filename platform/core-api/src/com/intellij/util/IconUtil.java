@@ -201,7 +201,7 @@ public class IconUtil {
     if (baseIcon == null) {
       return EmptyIcon.ICON_16;
     }
-    return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
+    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {

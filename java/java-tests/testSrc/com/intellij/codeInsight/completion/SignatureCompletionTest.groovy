@@ -76,4 +76,12 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
+  void testNewAnonymousInMethodArgTemplate() {
+    configureByTestName()
+    myFixture.type('new ')
+    myFixture.complete(CompletionType.SMART)
+    myFixture.type('\n')
+    checkResult()
+  }
+
 }
