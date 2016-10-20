@@ -17,8 +17,10 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -31,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MethodBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPanel<XBreakpoint<JavaMethodBreakpointProperties>> {
+  private JCheckBox myEmulatedCheckBox;
   private JCheckBox myWatchEntryCheckBox;
   private JCheckBox myWatchExitCheckBox;
 
@@ -44,6 +47,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
   public JComponent getComponent() {
     JPanel _panel, _panel0;
 
+    myEmulatedCheckBox = new JCheckBox("Emulated");
     myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
     myWatchExitCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
     DialogUtil.registerMnemonic(myWatchEntryCheckBox);
@@ -51,6 +55,9 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
 
 
     Box watchBox = Box.createVerticalBox();
+    _panel = JBUI.Panels.simplePanel();
+    _panel.add(myEmulatedCheckBox, BorderLayout.NORTH);
+    watchBox.add(_panel);
     _panel = new JPanel(new BorderLayout());
     _panel.add(myWatchEntryCheckBox, BorderLayout.NORTH);
     watchBox.add(_panel);
@@ -91,13 +98,19 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
 
   @Override
   public void loadFrom(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    myEmulatedCheckBox.setVisible(
+      Registry.is("debugger.emulate.method.breakpoints") && breakpoint.getType() instanceof JavaMethodBreakpointType);
+    myEmulatedCheckBox.setSelected(breakpoint.getProperties().EMULATED);
+
     myWatchEntryCheckBox.setSelected(breakpoint.getProperties().WATCH_ENTRY);
     myWatchExitCheckBox.setSelected(breakpoint.getProperties().WATCH_EXIT);
   }
 
   @Override
   public void saveTo(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
-    boolean changed = breakpoint.getProperties().WATCH_ENTRY != myWatchEntryCheckBox.isSelected();
+    boolean changed = breakpoint.getProperties().EMULATED != myEmulatedCheckBox.isSelected();
+    breakpoint.getProperties().EMULATED = myEmulatedCheckBox.isSelected();
+    changed = breakpoint.getProperties().WATCH_ENTRY != myWatchEntryCheckBox.isSelected() || changed;
     breakpoint.getProperties().WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
     changed = breakpoint.getProperties().WATCH_EXIT != myWatchExitCheckBox.isSelected() || changed;
     breakpoint.getProperties().WATCH_EXIT = myWatchExitCheckBox.isSelected();

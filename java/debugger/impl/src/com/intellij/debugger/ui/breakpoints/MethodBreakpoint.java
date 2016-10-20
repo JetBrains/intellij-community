@@ -199,7 +199,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
 
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
-    if (Registry.is("debugger.emulate.method.breakpoints")) {
+    if (isEmulated()) {
       createRequestForPreparedClassEmulated(debugProcess, classType, true);
     }
     else {
@@ -458,6 +458,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
 
     return false;
+  }
+
+  private boolean isEmulated() {
+    return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
   }
 
   private boolean isWatchEntry() {
