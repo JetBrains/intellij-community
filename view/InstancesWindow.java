@@ -108,6 +108,11 @@ public class InstancesWindow extends DialogWrapper {
     setTitle(String.format("Instances of %s%s", myClassName, warning));
   }
 
+  @NotNull
+  @Override
+  protected String getDimensionServiceKey() {
+    return "#org.jetbrains.debugger.memory.view.InstancesWindow";
+  }
 
   @Nullable
   @Override
