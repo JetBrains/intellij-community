@@ -19,8 +19,6 @@ package org.jetbrains.jps.model.java.compiler;
  * @author nik
  */
 public class JpsJavaCompilerOptions {
-  public static final String COLLECT_REFERENCES_PROPERTY = "jps.javac.collect.references";
-
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean DEPRECATION = true;

@@ -87,7 +87,7 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  static boolean isEnabled() {
+  public static boolean isEnabled() {
     return SystemProperties.getBooleanProperty(PROP_KEY, false) || forceEnabled;
   }
 
