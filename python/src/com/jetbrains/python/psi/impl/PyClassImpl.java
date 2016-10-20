@@ -304,22 +304,29 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  public List<String> getSlots(TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<>();
-    boolean found = false;
+  @Nullable
+  public List<String> getSlots(@Nullable TypeEvalContext context) {
     final List<String> ownSlots = getOwnSlots();
-    if (ownSlots != null) {
-      found = true;
-      result.addAll(ownSlots);
+    if (ownSlots == null) {
+      return null;
     }
+
+    final Set<String> result = new LinkedHashSet<>(ownSlots);
+
     for (PyClass cls : getAncestorClasses(context)) {
-      final List<String> ancestorSlots = cls.getOwnSlots();
-      if (ancestorSlots != null) {
-        found = true;
-        result.addAll(ancestorSlots);
+      if (PyUtil.isObjectClass(cls)) {
+        continue;
       }
+
+      final List<String> ancestorSlots = cls.getOwnSlots();
+      if (ancestorSlots == null) {
+        return null;
+      }
+
+      result.addAll(ancestorSlots);
     }
-    return found ? new ArrayList<>(result) : null;
+
+    return new ArrayList<>(result);
   }
 
   @Nullable

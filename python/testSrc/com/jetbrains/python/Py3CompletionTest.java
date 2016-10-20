@@ -184,6 +184,12 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  // PY-21060
+  public void testGenericTypeInheritor() {
+    myFixture.copyDirectoryToProject("../typing", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
