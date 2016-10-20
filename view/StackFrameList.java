@@ -92,15 +92,18 @@ class StackFrameList extends JBList {
         OpenFileDescriptor descriptor = info.getDescriptor();
         if (descriptor != null) {
           FileEditorManager manager = FileEditorManager.getInstance(myProject);
-          if (myEditorState.myIsNeedToCloseLastOpenedFile && myEditorState.myLastOpenedFile != null &&
-              manager.isFileOpen(myEditorState.myLastOpenedFile)) {
+          VirtualFile lastFile = myEditorState.myLastOpenedFile;
+          if (myEditorState.myIsNeedToCloseLastOpenedFile && lastFile != null &&
+              manager.isFileOpen(lastFile) && !lastFile.equals(descriptor.getFile())) {
             manager.closeFile(myEditorState.myLastOpenedFile);
           }
 
-          descriptor.setUseCurrentWindow(false);
           descriptor.setScrollType(ScrollType.CENTER);
 
-          myEditorState.myIsNeedToCloseLastOpenedFile = !manager.isFileOpen(descriptor.getFile());
+          if (lastFile == null || !lastFile.equals(descriptor.getFile())) {
+            myEditorState.myIsNeedToCloseLastOpenedFile = !manager.isFileOpen(descriptor.getFile());
+          }
+
           List<FileEditor> fileEditors = manager.openEditor(descriptor, focusOnEditor);
           if (!fileEditors.isEmpty()) {
             myEditorState.myLastOpenedFile = descriptor.getFile();
