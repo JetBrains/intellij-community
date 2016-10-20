@@ -42,6 +42,12 @@ public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
 
   @Nullable
+  public static PsiJavaModule findDescriptorByElement(@NotNull PsiElement element) {
+    PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+    return fsItem != null ? ModuleHighlightUtil.getModuleDescriptor(fsItem) : null;
+  }
+
+  @Nullable
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
@@ -57,10 +63,14 @@ public class JavaModuleGraphUtil {
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
-    Project project = source.getProject();
-    RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
-    return graph.reads(source, destination);
+    return getRequiresGraph(source).reads(source, destination);
+  }
+
+  @NotNull
+  public static Collection<PsiJavaModule> moduleDependencies(@NotNull PsiJavaModule start) {
+    Set<PsiJavaModule> result = ContainerUtil.newHashSet();
+    visit(getRequiresGraph(start), start, result);
+    return result;
   }
 
   // Looks for cycles between Java modules in the project sources.
@@ -111,6 +121,12 @@ public class JavaModuleGraphUtil {
     return map;
   }
 
+  private static RequiresGraph getRequiresGraph(@NotNull PsiJavaModule source) {
+    Project project = source.getProject();
+    return CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+  }
+
   // Starting from source modules, collects all module dependencies in the project.
   // The resulting graph is used for tracing readability.
   private static RequiresGraph buildRequiresGraph(Project project) {
@@ -142,6 +158,12 @@ public class JavaModuleGraphUtil {
     }
   }
 
+  private static void visit(RequiresGraph graph, PsiJavaModule module, Set<PsiJavaModule> result) {
+    if (result.add(module)) {
+      graph.dependencies(module).forEach(dependency -> visit(graph, dependency, result));
+    }
+  }
+
   private static class RequiresGraph {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myPublicEdges;
@@ -163,6 +185,10 @@ public class JavaModuleGraphUtil {
         }
       }
       return false;
+    }
+
+    public Iterable<PsiJavaModule> dependencies(PsiJavaModule node) {
+      return myGraph.getNodes().contains(node) ? () -> myGraph.getIn(node) : Collections.emptyList();
     }
 
     public static String key(PsiJavaModule module, PsiJavaModule exporter) {

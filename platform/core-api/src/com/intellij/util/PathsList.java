@@ -63,6 +63,10 @@ public class PathsList  {
     }
   };
 
+  public boolean isEmpty() {
+    return myPathSet.isEmpty();
+  }
+
   public void add(String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
@@ -75,6 +79,13 @@ public class PathsList  {
 
   public void add(VirtualFile file) {
     add(LOCAL_PATH.fun(file));
+  }
+
+  public void remove(VirtualFile file) {
+    String path = LOCAL_PATH.fun(file);
+    if (path != null) {
+      remove(path);
+    }
   }
 
   public void addFirst(String path) {
