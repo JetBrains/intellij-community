@@ -192,9 +192,7 @@ public class GraphTableController {
   }
 
   private boolean showTooltip(int row, int column, @NotNull Point point, boolean now) {
-    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(point),
-                                                          myTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN)
-                                                            .getWidth());
+    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(point), row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
