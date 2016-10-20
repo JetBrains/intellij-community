@@ -55,6 +55,11 @@ public interface AppLifecycleListener {
    */
   void appClosing();
 
+  /**
+   * Fired after all exit checks and after saving the settings. At this point the app is guaranteed to exit.
+   */
+  default void appWillExit() { }
+
   abstract class Adapter implements AppLifecycleListener {
     @Override
     public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) { }
