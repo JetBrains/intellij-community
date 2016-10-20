@@ -108,6 +108,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     setEditing(true);
 
     mySplitter.setFirstComponent(myEditablePrompt);
+    UIUtil.requestFocus(myEditablePanel);
     mySplitter.setSecondComponent(null);
   }
 
