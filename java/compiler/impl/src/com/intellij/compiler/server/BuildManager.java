@@ -17,6 +17,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
@@ -104,6 +105,7 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
@@ -1081,6 +1083,7 @@ public class BuildManager implements Disposable {
     }
     cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
     cmdLine.addParameter("-D"+ GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + Boolean.toString(config.REBUILD_ON_DEPENDENCY_CHANGE));
+    cmdLine.addParameter("-D" + JpsJavaCompilerOptions.COLLECT_REFERENCES_PROPERTY + "=" + CompilerReferenceService.isEnabled());
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");

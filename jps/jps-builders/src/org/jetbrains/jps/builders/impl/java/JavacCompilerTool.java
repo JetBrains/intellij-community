@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.impl.java;
 
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.sun.source.util.JavacTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.javac.ast.JavacReferencesCollector;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import javax.tools.*;
 import java.io.File;
@@ -85,6 +87,8 @@ public class JavacCompilerTool extends JavaCompilingTool {
 
   @Override
   public void prepareCompilationTask(@NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options) {
-    JavacReferencesCollector.installOn((JavacTask)task);
+    if (SystemProperties.getBooleanProperty(JpsJavaCompilerOptions.COLLECT_REFERENCES_PROPERTY, false)) {
+      JavacReferencesCollector.installOn((JavacTask)task);
+    }
   }
 }
