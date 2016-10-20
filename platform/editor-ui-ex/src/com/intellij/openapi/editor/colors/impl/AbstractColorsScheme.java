@@ -639,7 +639,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       }
 
       if (myParentScheme != null) {
-        // fallback attributes must be not used, otherwise derived scheme as copy will not have such ke
+        // fallback attributes must be not used, otherwise derived scheme as copy will not have such key
         TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme
                                           ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key)
                                           : myParentScheme.getAttributes(key);
