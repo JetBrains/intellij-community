@@ -111,7 +111,7 @@ public class ProcessOutput {
    * @return false if exit code wasn't set, 
    * for example, when our CapturingProcessHandler.runProcess() is interrupted)
    */
-  public boolean isErrorCodeSet() {
+  public boolean isExitCodeSet() {
     return myExitCode != null;
   }
 
