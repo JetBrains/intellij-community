@@ -19,10 +19,15 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author traff
@@ -38,27 +43,61 @@ public class TerminalSettingsPanel {
   private JBCheckBox myCopyOnSelectionCheckBox;
   private JBCheckBox myOverrideIdeShortcuts;
   private JBCheckBox myShellIntegration;
+  private TextFieldWithBrowseButton myStartDirectoryField;
+  private JPanel myProjectSettingsPanel;
+  private JPanel myGlobalSettingsPanel;
   private TerminalOptionsProvider myOptionsProvider;
+  private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  public JComponent createPanel(@NotNull TerminalOptionsProvider provider) {
+  public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
     myOptionsProvider = provider;
+    myProjectOptionsProvider = projectOptionsProvider;
+
+    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Project settings"));
+    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Application settings"));
 
     FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false);
 
     myShellPathField.addBrowseFolderListener(
       "",
-      "Shell Executable Path",
+      "Shell executable path",
       null,
       fileChooserDescriptor,
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-      false
-    );
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+
+    fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+
+    myStartDirectoryField.addBrowseFolderListener(
+      "",
+      "Starting directory",
+      null,
+      fileChooserDescriptor,
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+
+    myShellPathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myShellPathField
+          .getTextField().setForeground(myProjectOptionsProvider.isShellPathDefault(myShellPathField.getText()) ?
+                                        getDefaultValueColor() : getChangedValueColor());
+      }
+    });
+
+    myStartDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myStartDirectoryField
+          .getTextField().setForeground(myProjectOptionsProvider.isStartingDirectoryDefault(myStartDirectoryField.getText()) ?
+                                        getDefaultValueColor() : getChangedValueColor());
+      }
+    });
 
     return myWholePanel;
   }
 
   public boolean isModified() {
-    return !Comparing.equal(myShellPathField.getText(), myOptionsProvider.getShellPath())
+    return !Comparing.equal(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
+           || !Comparing.equal(myStartDirectoryField.getText(), myProjectOptionsProvider.getStartingDirectory())
            || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
            || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
@@ -71,7 +110,8 @@ public class TerminalSettingsPanel {
   }
 
   public void apply() {
-    myOptionsProvider.setShellPath(myShellPathField.getText());
+    myProjectOptionsProvider.setShellPath(myShellPathField.getText());
+    myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
     myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
@@ -83,7 +123,8 @@ public class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myShellPathField.setText(myOptionsProvider.getShellPath());
+    myShellPathField.setText(myProjectOptionsProvider.getShellPath());
+    myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
     myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());
     myMouseReportCheckBox.setSelected(myOptionsProvider.enableMouseReporting());
@@ -92,5 +133,27 @@ public class TerminalSettingsPanel {
     myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
+  }
+
+  public Color getDefaultValueColor() {
+    return findColorByKey("TextField.inactiveForeground", "nimbusDisabledText");
+  }
+
+  @NotNull
+  private static Color findColorByKey(String... colorKeys) {
+    Color c = null;
+    for (String key : colorKeys) {
+      c = UIManager.getColor(key);
+      if (c != null) {
+        break;
+      }
+    }
+
+    assert c != null : "Can't find color for keys " + Arrays.toString(colorKeys);
+    return c;
+  }
+
+  public Color getChangedValueColor() {
+    return findColorByKey("TextField.foreground");
   }
 }
