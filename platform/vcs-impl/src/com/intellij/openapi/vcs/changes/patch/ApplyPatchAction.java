@@ -58,6 +58,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,9 +242,9 @@ public class ApplyPatchAction extends DumbAwareAction {
         @Override
         public boolean value(MergeTool.MergeViewer viewer) {
           int result = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                      "Would you like to (A)bort&Rollback applying patch action or (S)kip this file?",
-                                                      "Close Merge",
-                                                      "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
+                                                      XmlStringUtil.wrapInHtml(
+                                                        "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
+                                                      "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
 
           if (result == Messages.YES) {
             applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
