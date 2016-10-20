@@ -13,7 +13,7 @@ import java.awt.*;
 
 public abstract class IpnbPanel<T extends JComponent, K extends IpnbCell> extends JPanel {
   protected T myViewPanel;
-  protected K myCell;
+  protected final K myCell;
 
   public IpnbPanel(@NotNull final K cell) {
     super(new CardLayout());

@@ -60,8 +60,8 @@ import java.util.Map;
 public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
-  private Map<String, IpnbConnection> myKernels = new HashMap<>();
-  private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<>();
+  private final Map<String, IpnbConnection> myKernels = new HashMap<>();
+  private final Map<String, IpnbCodePanel> myUpdateMap = new HashMap<>();
   private static final int MAX_ATTEMPTS = 10;
 
   public IpnbConnectionManager(final Project project) {

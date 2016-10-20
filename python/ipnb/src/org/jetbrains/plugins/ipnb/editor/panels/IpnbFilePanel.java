@@ -49,10 +49,10 @@ import java.util.stream.Collectors;
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
   private final DocumentAdapter myDocumentListener;
-  private Document myDocument;
+  private final Document myDocument;
   private IpnbFile myIpnbFile;
-  private Project myProject;
-  @NotNull private IpnbFileEditor myParent;
+  private final Project myProject;
+  @NotNull private final IpnbFileEditor myParent;
   @NotNull private final VirtualFile myVirtualFile;
   @NotNull private final IpnbFileEditor.CellSelectionListener myListener;
 
@@ -255,7 +255,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
     saveToFile(false);
   }
-  
+
   public void mergeCell(boolean below) {
     final IpnbEditablePanel currentCellPanel = getSelectedCellPanel();
     if (currentCellPanel == null) return;
@@ -373,9 +373,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  private boolean deleteCell(@NotNull final IpnbEditablePanel cell) {
+  private void deleteCell(@NotNull final IpnbEditablePanel cell) {
     final int index = myIpnbPanels.indexOf(cell);
-    if (index < 0) return true;
+    if (index < 0) return;
     myIpnbPanels.remove(index);
     myIpnbFile.removeCell(index);
     remove(index);
@@ -383,7 +383,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     int indexToSelect = index < myIpnbPanels.size() ? index : index-1;
     final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
     setSelectedCell(panel);
-    return false;
   }
 
   public void saveToFile(boolean synchronize) {

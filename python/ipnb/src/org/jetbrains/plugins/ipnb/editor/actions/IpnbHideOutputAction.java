@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 
 public class IpnbHideOutputAction extends AnAction {
-  private IpnbCodePanel myParent;
+  private final IpnbCodePanel myParent;
 
   public IpnbHideOutputAction(@NotNull IpnbCodePanel parent) {
     super("Toggle Output Button (Double-Click)");
