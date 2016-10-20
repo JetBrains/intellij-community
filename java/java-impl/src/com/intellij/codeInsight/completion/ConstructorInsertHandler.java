@@ -194,6 +194,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     PsiExpressionList listToReformat = getEnclosingExpressionList(elementAtOffset.getParent());
     if (listToReformat != null) {
       CodeStyleManager.getInstance(file.getProject()).reformat(listToReformat);
+      PostprocessReformattingAspect.getInstance(file.getProject()).doPostponedFormatting();
     }
   }
 
