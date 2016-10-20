@@ -105,7 +105,6 @@ public class JdkUtil {
 
   /** @deprecated to be removed in IDEA 2018 */
   @Nullable
-  @SuppressWarnings("unused")
   public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
     VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifestFile != null) {
@@ -306,8 +305,8 @@ public class JdkUtil {
                                                boolean storeProgramParametersInJar) {
     try {
       final Manifest manifest = new Manifest();
-      manifest.getMainAttributes().putValue("Created-By",
-                                            ApplicationNamesInfo.getInstance().getFullProductName());
+      manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
+
       final boolean writeDynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
       if (writeDynamicVMOptions) {
         List<String> dParams = new ArrayList<>();
@@ -318,7 +317,8 @@ public class JdkUtil {
         }
 
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(dParams));
-        final ArrayList<String> restParams = new ArrayList<>(vmParametersList.getList());
+
+        final List<String> restParams = new ArrayList<>(vmParametersList.getList());
         restParams.removeAll(dParams);
         commandLine.addParameters(restParams);
       }
@@ -361,7 +361,7 @@ public class JdkUtil {
   private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {
     if (javaParameters.isUseClasspathJar() && useClasspathJar()) {
       try {
-        final ArrayList<URL> urls = new ArrayList<>();
+        final List<URL> urls = new ArrayList<>();
         for (String path : javaParameters.getClassPath().getPathList()) {
           if (!path.equals(currentPath)) {
             try {
