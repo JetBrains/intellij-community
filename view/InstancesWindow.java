@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.lang.Math.min;
 
 public class InstancesWindow extends DialogWrapper {
-  private static final int DEFAULT_WINDOW_WIDTH = 700;
+  private static final int DEFAULT_WINDOW_WIDTH = 870;
   private static final int DEFAULT_WINDOW_HEIGHT = 400;
   private static final int FILTERING_BUTTON_ADDITIONAL_WIDTH = 30;
   private static final int BORDER_LAYOUT_DEFAULT_GAP = 5;
@@ -108,11 +108,6 @@ public class InstancesWindow extends DialogWrapper {
     setTitle(String.format("Instances of %s%s", myClassName, warning));
   }
 
-  @NotNull
-  @Override
-  protected String getDimensionServiceKey() {
-    return "#org.jetbrains.debugger.memory.view.InstancesWindow";
-  }
 
   @Nullable
   @Override
