@@ -44,7 +44,11 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   }
 
   public void testAssignmentWithUnpacking() {
-    doNegativeTest();
+    doPositiveTest();
+  }
+
+  public void testAssignmentWithComplexUnpacking() {
+    doPositiveTest();
   }
 
   public void testMultilineAssignment() {
@@ -60,11 +64,19 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   }
 
   public void testForLoopWithUnpacking() {
-    doNegativeTest();
+    doPositiveTest();
+  }
+
+  public void testForLoopWithComplexUnpacking() {
+    doPositiveTest();
   }
 
   public void testWithStatementWithUnpacking() {
-    doNegativeTest();
+    doPositiveTest();
+  }
+
+  public void testWithStatementWithComplexUnpacking() {
+    doPositiveTest();
   }
 
   public void testWithStatementWithMultipleWithItems() {
