@@ -18,6 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -133,8 +134,8 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         if (i == notThisOne) {
           continue;
         }
-        final PsiType type = parameters[i].getType();
-        final PsiType otherType = otherParameters[i].getType();
+        final PsiType type = TypeConversionUtil.erasure(parameters[i].getType());
+        final PsiType otherType = TypeConversionUtil.erasure(otherParameters[i].getType());
         if (!type.isAssignableFrom(otherType) && !otherType.isAssignableFrom(type)) {
           return false;
         }

@@ -51,3 +51,8 @@ interface Consumer<T> {
 interface IntPredicate {
   boolean test(int value);
 }
+class Generics<M, K> {
+  void <warning descr="Lambda unfriendly overload of method 'm()'">m</warning>(IntFunction r, M l) {}
+  void <warning descr="Lambda unfriendly overload of method 'm()'">m</warning>(Function f, K l) {}
+
+}
