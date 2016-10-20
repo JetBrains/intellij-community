@@ -436,21 +436,17 @@ public class XDebuggerTestUtil {
   public static <T extends XBreakpointType> XBreakpoint addBreakpoint(@NotNull final Project project,
                                                                       @NotNull final Class<T> exceptionType,
                                                                       @NotNull final XBreakpointProperties properties) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
-    final Ref<XBreakpoint> breakpoint = Ref.create(null);
-    for (XBreakpointType type : types) {
-      if (exceptionType.isInstance(type)) {
-        final T breakpointType = exceptionType.cast(type);
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
-          }
-        }.execute();
-        break;
-      }
-    }
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    Ref<XBreakpoint> breakpoint = Ref.create(null);
+    XBreakpointUtil.getBreakpointTypes().select(exceptionType).findFirst().ifPresent(type -> {
+      final T breakpointType = exceptionType.cast(type);
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
+        }
+      }.execute();
+    });
     return breakpoint.get();
   }
 

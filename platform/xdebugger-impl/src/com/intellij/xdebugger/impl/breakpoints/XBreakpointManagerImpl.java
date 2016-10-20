@@ -75,9 +75,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         HttpVirtualFileListener httpVirtualFileListener = this::updateBreakpointInFile;
         HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
       }
-      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-        addDefaultBreakpoint(type);
-      }
+      XBreakpointUtil.getBreakpointTypes().forEach(this::addDefaultBreakpoint);
     }
   }
 
@@ -399,9 +397,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     ApplicationManager.getApplication().runReadAction(() -> {
       state.getDefaultBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
-      Arrays.stream(XBreakpointUtil.getBreakpointTypes())
-        .filter(type -> !myDefaultBreakpoints.containsKey(type))
-        .forEach(this::addDefaultBreakpoint);
+      XBreakpointUtil.getBreakpointTypes().remove(myDefaultBreakpoints::containsKey).forEach(this::addDefaultBreakpoint);
 
       myBreakpoints.values().forEach(this::doRemoveBreakpoint);
 

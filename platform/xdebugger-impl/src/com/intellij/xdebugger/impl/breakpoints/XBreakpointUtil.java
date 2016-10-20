@@ -34,13 +34,13 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -64,11 +64,11 @@ public class XBreakpointUtil {
 
   @Nullable
   public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
-    return Arrays.stream(getBreakpointTypes()).filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
+    return getBreakpointTypes().filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
   }
 
-  public static XBreakpointType<?, ?>[] getBreakpointTypes() {
-    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions();
+  public static StreamEx<XBreakpointType> getBreakpointTypes() {
+    return StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.getExtensions());
   }
 
   @NotNull
