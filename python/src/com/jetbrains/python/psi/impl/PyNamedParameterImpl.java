@@ -361,6 +361,18 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
           super.visitPyCallExpression(node);
         }
+
+        @Override
+        public void visitPyForStatement(PyForStatement node) {
+          Optional
+            .of(node.getForPart())
+            .map(PyForPart::getSource)
+            .map(PyExpression::getReference)
+            .filter(reference -> reference.isReferenceTo(PyNamedParameterImpl.this))
+            .ifPresent(reference -> result.add(PyNames.ITER));
+
+          super.visitPyForStatement(node);
+        }
       });
     }
     return result;

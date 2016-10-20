@@ -1145,6 +1145,15 @@ public class PyTypeTest extends PyTestCase {
            "expr = f\n");
   }
 
+  // PY-20832
+  public void testStructuralTypeWithDunderIter() {
+    doTest("{__iter__}",
+           "def expand(values1):\n" +
+           "    for a in values1:\n" +
+           "        print(a)\n" +
+           "    expr = values1\n");
+  }
+
   // PY-20833
   public void testStructuralTypeWithDunderLen() {
     doTest("{__len__}",
