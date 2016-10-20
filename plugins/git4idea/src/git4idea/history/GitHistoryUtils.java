@@ -840,7 +840,8 @@ public class GitHistoryUtils {
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
           if (!refs.add(ref)) {
-            LOG.error("Adding duplicate element to the set");
+            VcsRef otherRef = ContainerUtil.find(refs, r -> GitLogProvider.DONT_CONSIDER_SHA.equals(r, ref));
+            LOG.error("Adding duplicate element " + ref + " to the set containing " + otherRef);
           }
         }
         return commit;
