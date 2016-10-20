@@ -348,7 +348,6 @@
 
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
 
-    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
