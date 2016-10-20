@@ -841,7 +841,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
 
       if (scheme instanceof EditorColorsSchemeImpl) {
-        ((EditorColorsSchemeImpl)scheme).setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes(), !isInherited() && myIsInheritedInitial);
+        if (!isInherited()) {
+          ((EditorColorsSchemeImpl)scheme).setAttributes(key, getTextAttributes(), myIsInheritedInitial);
+        }
+        else if (!myIsInheritedInitial) {
+          // set only if previously was not inherited (and, so, we must mark it as inherited)
+          // https://youtrack.jetbrains.com/issue/IDEA-162844
+          scheme.setAttributes(key, USE_INHERITED_MARKER);
+        }
       }
       else {
         scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
