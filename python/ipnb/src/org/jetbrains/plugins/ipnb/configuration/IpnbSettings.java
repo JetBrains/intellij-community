@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @State(name = "IpnbSettings")
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
-  public static String DEFAULT_URL = "http://127.0.0.1:8888";
+  public static final String DEFAULT_URL = "http://127.0.0.1:8888";
   public String URL = DEFAULT_URL;
   private String myWorkingDirectory;
 

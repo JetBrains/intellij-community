@@ -50,7 +50,7 @@ public class IpnbParser {
   }
 
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) throws IOException {
+  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) {
     myErrors.clear();
 
     final String path = virtualFile.getPath();
@@ -193,7 +193,7 @@ public class IpnbParser {
   }
 
   private static class IpnbWorksheet {
-    List<IpnbCellRaw> cells = new ArrayList<>();
+    final List<IpnbCellRaw> cells = new ArrayList<>();
   }
 
   @SuppressWarnings("unused")
@@ -267,7 +267,6 @@ public class IpnbParser {
         cell = new IpnbCodeCell(language == null ? "python" : language,
                                 input == null ? (isValidSource ? source : Collections.emptyList()) : input,
                                 prompt, outputCells, metadata);
-        ;
       }
       else if (cell_type.equals("raw")) {
         cell = new IpnbRawCell(isValidSource ? source : Collections.emptyList());

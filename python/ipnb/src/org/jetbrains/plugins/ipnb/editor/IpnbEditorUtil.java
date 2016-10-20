@@ -47,7 +47,7 @@ import java.util.List;
 public class IpnbEditorUtil {
   public enum PromptType {In, Out, None}
 
-  public static Dimension PROMPT_SIZE = new Dimension(80, 30);
+  public static final Dimension PROMPT_SIZE = new Dimension(80, 30);
 
   public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();

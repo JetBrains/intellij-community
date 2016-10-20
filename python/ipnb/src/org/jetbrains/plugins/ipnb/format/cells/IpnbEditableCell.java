@@ -8,7 +8,7 @@ import java.util.Map;
 
 public abstract class IpnbEditableCell implements IpnbCell {
   @NotNull private List<String> mySource;
-  @NotNull Map<String, Object> myMetadata;
+  @NotNull final Map<String, Object> myMetadata;
 
   IpnbEditableCell(@NotNull final List<String> source, @NotNull Map<String, Object> metadata) {
     mySource = source;
@@ -42,7 +42,7 @@ public abstract class IpnbEditableCell implements IpnbCell {
     IpnbEditableCell cell = (IpnbEditableCell)o;
 
     if (!mySource.equals(cell.mySource)) return false;
-    if (myMetadata != null ? !myMetadata.equals(cell.myMetadata) : cell.myMetadata != null) return false;
+    if (!myMetadata.equals(cell.myMetadata)) return false;
 
     return true;
   }
@@ -50,7 +50,7 @@ public abstract class IpnbEditableCell implements IpnbCell {
   @Override
   public int hashCode() {
     int result = mySource.hashCode();
-    result = 31 * result + (myMetadata != null ? myMetadata.hashCode() : 0);
+    result = 31 * result + myMetadata.hashCode();
     return result;
   }
 }
