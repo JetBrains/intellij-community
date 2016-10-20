@@ -17,14 +17,20 @@ package com.intellij.ide;
 
 import com.android.tools.analytics.UsageTracker;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.io.Files;
-import com.google.wireless.android.sdk.stats.*;
+import com.google.wireless.android.sdk.stats.AndroidStudioEvent;
 import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventCategory;
 import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventKind;
+import com.google.wireless.android.sdk.stats.StudioCrash;
+import com.google.wireless.android.sdk.stats.StudioPerformanceStats;
+import com.google.wireless.android.sdk.stats.UIActionStats;
 import com.google.wireless.android.sdk.stats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.IdePerformanceListener;
 import com.intellij.diagnostic.ThreadDump;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -36,6 +42,8 @@ import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -53,6 +61,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
@@ -219,9 +228,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             return;
           }
 
-          //GoogleCrash.getInstance().submit(
-          //  CrashReport.Builder.createForPerfReport(t.getFileName().toString(), lines)
-          //    .build());
+          reportAnr(t.getFileName().toString(), lines);
         });
     });
   }
@@ -231,8 +238,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       return;
     }
 
-    //CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
-    //GoogleCrash.getInstance().submit(report);
+    reportCrashes(descriptions);
     trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
   }
 
@@ -537,5 +543,91 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       return currentClass.getSimpleName();
     }
     return currentClass.getCanonicalName();
+  }
+
+  public static void reportException(Throwable t) {
+    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+      return;
+    }
+
+    ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
+    if (reporter != null) {
+      IdeaLoggingEvent e = new AndroidStudioExceptionEvent(t.getMessage(), t);
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
+      });
+    }
+  }
+
+  private static void reportAnr(@NotNull String fileName, @NotNull List<String> threadDump) {
+    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+      return;
+    }
+
+    ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
+    if (reporter != null) {
+      IdeaLoggingEvent e = new AndroidStudioAnrEvent(fileName, Joiner.on('\n').join(threadDump));
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
+      });
+    }
+  }
+
+  private static void reportCrashes(@NotNull List<String> descriptions) {
+    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+      return;
+    }
+
+    ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
+    if (reporter != null) {
+      IdeaLoggingEvent e = new AndroidStudioCrashEvents(descriptions);
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
+      });
+    }
+  }
+
+  private static class AndroidStudioExceptionEvent extends IdeaLoggingEvent {
+    public AndroidStudioExceptionEvent(String message, Throwable throwable) {
+      super(message, throwable);
+    }
+
+    @Nullable
+    @Override
+    public Object getData() {
+      return "Exception"; // keep consistent with the error reporter in android plugin
+    }
+  }
+
+  private static class AndroidStudioAnrEvent extends IdeaLoggingEvent {
+    private final String myFileName;
+    private final String myThreadDump;
+
+    public AndroidStudioAnrEvent(@NotNull String fileName, @NotNull String threadDump) {
+      super("", null);
+      myFileName = fileName;
+      myThreadDump = threadDump;
+    }
+
+    @Nullable
+    @Override
+    public Object getData() {
+      return ImmutableMap.of("Type", "ANR", // keep consistent with the error reporter in android plugin
+                             "file", myFileName,
+                             "threadDump", myThreadDump);
+    }
+  }
+
+  private static class AndroidStudioCrashEvents extends IdeaLoggingEvent {
+    private List<String> myDescriptions;
+
+    public AndroidStudioCrashEvents(@NotNull List<String> descriptions) {
+      super("", null);
+      myDescriptions = descriptions;
+    }
+
+    @Nullable
+    @Override
+    public Object getData() {
+      return ImmutableMap.of("Type", "Crashes", // keep consistent with the error reporter in android plugin
+                             "descriptions", myDescriptions);
+    }
   }
 }

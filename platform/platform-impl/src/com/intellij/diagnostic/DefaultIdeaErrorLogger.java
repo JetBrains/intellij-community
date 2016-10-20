@@ -25,13 +25,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.ErrorLogger;
-import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.io.MappingFailedException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -84,14 +84,12 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     // Android Studio: track exception count
     if (UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
       Throwable t = event.getThrowable();
-      //if (t != null) {
-      //  t = CrashReport.getRootCause(t);
-      //  if (GoogleCrash.isReportableCrash(t)) {
-      //    incrementAndSaveExceptionCount(t);
-      //    CrashReport report = CrashReport.Builder.createForException(t).build();
-      //    GoogleCrash.getInstance().submit(report);
-      //  }
-      //}
+      if (t != null) {
+        if (isReportableCrash(t)) {
+          incrementAndSaveExceptionCount(t);
+          SystemHealthMonitor.reportException(t);
+        }
+      }
     }
 
     try {
@@ -121,6 +119,20 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         ourLoggerBroken = true;
       }
     }
+  }
+
+  public static boolean isReportableCrash(@NotNull Throwable t) {
+    if (t instanceof ClassNotFoundException) {
+      String cls = t.getMessage();
+      if (cls != null && cls.startsWith("com.sun.jdi.")) {
+        // Android Studio:
+        // Running on a JRE. We're already warning about that in the System Health Monitor.
+        // https://code.google.com/p/android/issues/detail?id=225130
+        return false;
+      }
+    }
+
+    return !(t instanceof Logger.EmptyThrowable);
   }
 
   private static void incrementAndSaveExceptionCount(Throwable t) {

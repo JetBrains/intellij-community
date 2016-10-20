@@ -984,6 +984,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     //return null;
   }
 
+  // NOTE: This API is only present in Android Studio, so don't invoke it from a plugin
+  @Nullable
+  public static ErrorReportSubmitter getAndroidErrorReporter() {
+    final ErrorReportSubmitter[] reporters;
+    try {
+      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
+    }
+    catch (Throwable t) {
+      return null;
+    }
+
+    return getErrorReporter(reporters, "android");
+  }
+
   @Nullable
   private static ErrorReportSubmitter getErrorReporter(@NotNull ErrorReportSubmitter[] reporters, @NotNull String id) {
     for (ErrorReportSubmitter reporter : reporters) {

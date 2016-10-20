@@ -62,7 +62,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @SuppressWarnings("deprecation")
   public boolean submit(@NotNull IdeaLoggingEvent[] events,
                         @Nullable String additionalInfo,
-                        @NotNull Component parentComponent,
+                        @Nullable Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }

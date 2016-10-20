@@ -145,9 +145,11 @@ public class ThreadDumper {
    * @param threadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
    */
   @Nullable
-  public static String getEdtStackForCrash(@NotNull List<String> threadDump) {
+  public static String getEdtStackForCrash(@NotNull String fullThreadDump) {
     // We know that the AWT-EventQueue-* thread is dumped out first (see #sort above), and for each thread, there are at the very least
     // 3 lines printed out before the stack trace. If we don't see any of this, then return early
+    List<String> threadDump = Arrays.asList(fullThreadDump.split("\n"));
+
     if (threadDump.size() < 3) {
       return null;
     }
