@@ -73,15 +73,19 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     final PsiElement parent = myInitializer.getParent();
     if (!(parent instanceof PsiAssignmentExpression)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType());
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final PsiType type = assignmentExpression.getType();
     if (!(type instanceof PsiArrayType)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType());
     }
-    return ((PsiArrayType)type).getComponentType();
+    return validateType(((PsiArrayType)type).getComponentType());
+  }
+
+  private static PsiType validateType(PsiType type) {
+    return LambdaUtil.notInferredType(type) ? null : type;
   }
 
   @Override
