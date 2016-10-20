@@ -15,9 +15,7 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.InstanceofCheckerGenerator;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
@@ -40,9 +38,8 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   protected ObjectPattern(final Class<T> aClass) {
     this(new InitialPatternCondition<T>(aClass) {
-      final Condition<Object> checker = InstanceofCheckerGenerator.getInstance().getInstanceofChecker(aClass);
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return checker.value(o);
+        return aClass.isInstance(o);
       }
     });
   }

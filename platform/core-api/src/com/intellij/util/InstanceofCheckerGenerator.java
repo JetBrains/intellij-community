@@ -28,6 +28,7 @@ import java.lang.reflect.Modifier;
 
 /**
  * @author peter
+ * @deprecated use Class.isInstance instead
  */
 public class InstanceofCheckerGenerator {
   private static final InstanceofCheckerGenerator ourInstance;
