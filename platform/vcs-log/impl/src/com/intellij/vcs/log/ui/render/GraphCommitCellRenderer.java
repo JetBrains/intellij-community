@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
@@ -38,6 +37,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   @Nullable private final ReferencePainter myTooltipPainter;
 
   @NotNull private final MyComponent myComponent;
+  @NotNull private final MyComponentWithFadeOut myTemplateComponent;
 
   private boolean myExpanded;
 
@@ -50,19 +50,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myFadeOutPainter = isRedesignedLabels() ? new FadeOutPainter(painter) : null;
     myTooltipPainter = isRedesignedLabels() ? new LabelPainter(myLogData) : null;
 
-    myComponent = new MyComponent(logData, painter, table) {
-      @Override
-      public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        if (myFadeOutPainter != null) {
-          if (!myExpanded) {
-            int start = Math.max(myGraphImage.getWidth(), getWidth() - myFadeOutPainter.getWidth());
-            myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
-          }
-        }
-      }
-    };
+    myComponent = new MyComponentWithFadeOut(logData, painter, table);
+    myTemplateComponent = new MyComponentWithFadeOut(logData, painter, table);
   }
 
   @Override
@@ -86,15 +75,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Nullable
-  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int width) {
+  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
     if (myTooltipPainter == null) return null;
 
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      myTooltipPainter
-        .customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(), myComponent.getWidth());
-      if (myTooltipPainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
+      myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(), getColumnWidth());
+      if (getReferencesWidth(row) >= getColumnWidth() - point.getX()) {
         return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
       }
     }
@@ -105,19 +93,28 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myComponent.getPreferredHeight();
   }
 
-  public int getTooltipXCoordinate(int row) {
-    TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
-
+  private int getReferencesWidth(int row) {
     GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    if (myFadeOutPainter != null && !refs.isEmpty()) {
-      myFadeOutPainter.getTemplateComponent().customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
-                                                        row, GraphTableModel.COMMIT_COLUMN);
-      int labelWidth = myFadeOutPainter.getTemplateComponent().myReferencePainter.getSize().width;
-      return commitColumn.getWidth() - (labelWidth - LabelPainter.GRADIENT_WIDTH) / 2;
+    if (!refs.isEmpty()) {
+      myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
+                                    row, GraphTableModel.COMMIT_COLUMN);
+      return myTemplateComponent.getReferencePainter().getSize().width - LabelPainter.GRADIENT_WIDTH;
     }
 
-    return commitColumn.getWidth() / 2;
+    return 0;
+  }
+
+  public int getTooltipXCoordinate(int row) {
+    int referencesWidth = getReferencesWidth(row);
+    if (referencesWidth != 0) {
+      return getColumnWidth() - referencesWidth / 2;
+    }
+    return getColumnWidth() / 2;
+  }
+
+  private int getColumnWidth() {
+    return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -193,11 +190,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphImage.getWidth());
         myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
-
-        int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground,
-                                            Math.min(columnWidth - super.getPreferredSize().width, columnWidth / 3));
+                                            getAvailableWidth(row, column));
       }
+    }
+
+    protected int getAvailableWidth(int row, int column) {
+      int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
+      return Math.min(columnWidth - super.getPreferredSize().width, columnWidth / 3);
     }
 
     private int calculateHeight() {
@@ -235,6 +235,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
       return new PaintInfo(image, width);
     }
+
+    @NotNull
+    public ReferencePainter getReferencePainter() {
+      return myReferencePainter;
+    }
   }
 
   private static class PaintInfo {
@@ -266,7 +271,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private int myWidth = LabelPainter.GRADIENT_WIDTH;
 
     private FadeOutPainter(@NotNull GraphCellPainter painter) {
-      myTemplateComponent = new MyComponent(myLogData, painter, myGraphTable);
+      myTemplateComponent = new MyComponentWithFadeOut(myLogData, painter, myGraphTable);
     }
 
     public void customize(@NotNull Collection<VcsRef> currentRefs, int row, int column, @NotNull JTable table) {
@@ -308,6 +313,47 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull
     public MyComponent getTemplateComponent() {
       return myTemplateComponent;
+    }
+  }
+
+  private class MyComponentWithFadeOut extends MyComponent {
+    private final MyComponent myTemplateComponent;
+
+    public MyComponentWithFadeOut(@NotNull VcsLogData logData, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table) {
+      super(logData, painter, table);
+      myTemplateComponent = new MyComponent(logData, painter, table);
+    }
+
+    @Override
+    protected int getAvailableWidth(int row, int column) {
+      int currentAvailableWidth = super.getAvailableWidth(row, column);
+      if (row > 0) {
+        GraphCommitCell cell = getValue(myGraphTable.getValueAt(row - 1, column));
+        if (cell.getRefsToThisCommit().isEmpty()) {
+          myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row - 1), myGraphTable.hasFocus(), row - 1, column);
+          currentAvailableWidth = Math.min(currentAvailableWidth, myTemplateComponent.getAvailableWidth(row - 1, column));
+        }
+      }
+      if (row < myGraphTable.getRowCount() - 1) {
+        GraphCommitCell cell = getValue(myGraphTable.getValueAt(row + 1, column));
+        if (cell.getRefsToThisCommit().isEmpty()) {
+          myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row + 1), myGraphTable.hasFocus(), row + 1, column);
+          currentAvailableWidth = Math.min(currentAvailableWidth, myTemplateComponent.getAvailableWidth(row + 1, column));
+        }
+      }
+      return currentAvailableWidth;
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      if (myFadeOutPainter != null) {
+        if (!myExpanded) {
+          int start = Math.max(myGraphImage.getWidth(), getWidth() - myFadeOutPainter.getWidth());
+          myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
+        }
+      }
     }
   }
 }
