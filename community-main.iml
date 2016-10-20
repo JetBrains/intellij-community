@@ -86,7 +86,6 @@
     <orderEntry type="module" module-name="tasks-tests" />
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="hg4idea" />
-    <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="adt-branding" />
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="gradle" />
@@ -137,5 +136,6 @@
     <orderEntry type="module" module-name="script-debugger-ui" scope="TEST" />
     <orderEntry type="module" module-name="remote-servers-git-java" />
     <orderEntry type="module" module-name="terminal" />
+    <orderEntry type="module" module-name="android-plugin" />
   </component>
 </module>

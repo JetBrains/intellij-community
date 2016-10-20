@@ -25,6 +25,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" group="plugins/Android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
@@ -196,7 +197,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-checks/lint-checks.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-checks/lint-checks.iml" group="android/sdktools/lint" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/main_AndroidStudio.iml" filepath="$PROJECT_DIR$/../adt/idea/android/main_AndroidStudio.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../base/build-system/manifest-merger/manifest-merger.iml" filepath="$PROJECT_DIR$/../base/build-system/manifest-merger/manifest-merger.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />

@@ -837,93 +837,102 @@ def reorder(String home, String targetDirectory) {
 
 def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
-    layoutPlugin("android") {
-      fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
-      fileset(dir: "${androidHome}/android/lib") {
-        include(name: "**/*.jar")
-        include(name: "licenses/*")
-        exclude(name: "**/fest-*.jar")
-        exclude(name: "src/*.jar")
-      }
-      fileset(dir: "${home}/../../out/studio/runtime")
+    dir("android") {
+      dir("lib") {
+        jar("android.jar") {
+          noResources("android")
+          noResources("android-plugin")
+        }
+        resources("android")
+        resources("android-plugin")
 
-      jar("android-common.jar") {
-        module("android-common")
-      }
-      jar("adt-ui.jar") {
-        module("adt-ui")
-      }
-      jar("repository.jar") {
-        module("repository")
-      }
-      jar("android-rt.jar") {
-        module("android-rt")
-      }
-      jar("data-binding.jar") {
-        module("db-baseLibrary")
-        module("db-compilerCommon")
-        module("db-compiler")
-      }
-      jar("constraint-layout.jar") {
-        module("sherpa-solver")
-        module("sherpa-ui")
-      }
-      jar("sdklib.jar") {
-        module("sdklib")
-      }
-      jar("sdk-common.jar") {
-        module("sdk-common")
-      }
-      jar("layoutlib-api.jar") {
-        module("layoutlib-api")
-      }
-      jar("layoutlib-loader.jar") {
-        module("layoutlib")
-      }
-      jar("manifest-merger.jar") {
-        module("manifest-merger")
-      }
-      jar("pixelprobe.jar") {
-        module("chunkio")
-        module("pixelprobe")
-      }
-      jar("sdk-tools.jar") {
-        module("assetstudio")
-        module("binary-resources")
-        module("ddmlib")
-        module("dvlib")
-        module("draw9patch")
-        module("instant-run-client")
-        module("instant-run-common")
-        module("lint-api")
-        module("lint-checks")
-        module("ninepatch")
-        module("perflib")
-        module("rpclib")
-        module("builder-model")
-        module("builder-test-api")
-      }
-      jar("androidAnnotations.jar") {
-        fileset(dir: "$androidHome/android/annotations")
-      }
-      dir("jps") {
-        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
-      }
-      dir("device-art-resources") {
-        fileset(dir: "$androidHome/android/device-art-resources")
-      }
+        fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
+        fileset(dir: "${androidHome}/android/lib") {
+          include(name: "**/*.jar")
+          include(name: "licenses/*")
+          exclude(name: "**/fest-*.jar")
+          exclude(name: "src/*.jar")
+        }
+        fileset(dir: "${home}/../../out/studio/runtime")
 
-      dir("jps") {
-        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
-      }
-      dir("templates") {
-        fileset(dir: "$androidToolsBaseHome/templates")
-      }
+        jar("android-common.jar") {
+          module("android-common")
+        }
+        jar("adt-ui.jar") {
+          module("adt-ui")
+        }
+        jar("repository.jar") {
+          module("repository")
+        }
+        jar("android-rt.jar") {
+          module("android-rt")
+        }
+        jar("data-binding.jar") {
+          module("db-baseLibrary")
+          module("db-compilerCommon")
+          module("db-compiler")
+        }
+        jar("constraint-layout.jar") {
+          module("sherpa-solver")
+          module("sherpa-ui")
+        }
+        jar("sdklib.jar") {
+          module("sdklib")
+        }
+        jar("sdk-common.jar") {
+          module("sdk-common")
+        }
+        jar("layoutlib-api.jar") {
+          module("layoutlib-api")
+        }
+        jar("layoutlib-loader.jar") {
+          module("layoutlib")
+        }
+        jar("manifest-merger.jar") {
+          module("manifest-merger")
+        }
+        jar("pixelprobe.jar") {
+          module("chunkio")
+          module("pixelprobe")
+        }
+        jar("sdk-tools.jar") {
+          module("assetstudio")
+          module("binary-resources")
+          module("ddmlib")
+          module("dvlib")
+          module("draw9patch")
+          module("instant-run-client")
+          module("instant-run-common")
+          module("lint-api")
+          module("lint-checks")
+          module("ninepatch")
+          module("perflib")
+          module("rpclib")
+          module("builder-model")
+          module("builder-test-api")
+        }
+        jar("androidAnnotations.jar") {
+          fileset(dir: "$androidHome/android/annotations")
+        }
+        dir("jps") {
+          jar("android-gradle-jps.jar") { module("android-gradle-jps") }
+        }
+        dir("device-art-resources") {
+          fileset(dir: "$androidHome/android/device-art-resources")
+        }
 
-      dir("layoutlib") {
-        fileset(dir: "${home}/../../prebuilts/studio/layoutlib") {
-          exclude(name: "PREBUILT")
-          exclude(name: "**/layoutlib.jar")
+        dir("jps") {
+          jar("android-jps-plugin.jar") { module("android-jps-plugin") }
+        }
+        dir("templates") {
+          fileset(dir: "$androidToolsBaseHome/templates")
+        }
+
+        dir("layoutlib") {
+          fileset(dir: "${home}/../../prebuilts/studio/layoutlib") {
+            exclude(name: "PREBUILT")
+            exclude(name: "**/layoutlib.jar")
+          }
         }
       }
     }
