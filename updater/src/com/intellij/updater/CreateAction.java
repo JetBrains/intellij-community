@@ -72,6 +72,10 @@ public class CreateAction extends PatchAction {
         if (link) {
           ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
           Utils.copyStream(in, bytesOut);
+          File containingDir = toFile.getAbsoluteFile().getParentFile();
+          if (!containingDir.exists() && !containingDir.mkdirs()) {
+            throw new IOException("Failed to mkdirs: " + toFile.getAbsoluteFile().getParent());
+          }
           Process proc = Runtime.getRuntime().exec(new String[] {"ln", "-s", bytesOut.toString(), toFile.getAbsolutePath()});
           BufferedReader errorReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
           try {
