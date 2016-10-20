@@ -17,7 +17,6 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -33,11 +32,10 @@ import java.net.Socket;
 class ProcessProxyImpl implements ProcessProxy {
   public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
 
-  @NonNls public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
-  @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+  public static final String PROPERTY_BIN_PATH = "idea.launcher.bin.path";
+  public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
+  public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 
-  @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
   private static final int SOCKET_NUMBER_START = 7532;
   private static final int SOCKET_NUMBER = 100;
   private static final boolean[] ourUsedSockets = new boolean[SOCKET_NUMBER];
@@ -46,8 +44,7 @@ class ProcessProxyImpl implements ProcessProxy {
   private PrintWriter myWriter;
   private Socket mySocket;
 
-  public static class NoMoreSocketsException extends Exception {
-  }
+  public static class NoMoreSocketsException extends Exception { }
 
   public ProcessProxyImpl() throws NoMoreSocketsException {
     myPortNumber = findFreePort();
@@ -91,7 +88,7 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
-  private synchronized void writeLine(@NonNls final String s) {
+  private synchronized void writeLine(String s) {
     if (myWriter == null) {
       try {
         if (mySocket == null) {
@@ -115,9 +112,5 @@ class ProcessProxyImpl implements ProcessProxy {
   @Override
   public void sendStop() {
     writeLine("STOP");
-  }
-
-  public static boolean useLauncher() {
-    return !Boolean.valueOf(System.getProperty(DONT_USE_LAUNCHER_PROPERTY));
   }
 }
