@@ -15,22 +15,28 @@
  */
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellBaseAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
+import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -56,6 +62,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     mySource = cell.getSourceAsString();
     final JComponent panel = createViewPanel();
     add(panel);
+    addRightClickMenu();
   }
 
   public void addMouseListener(@NotNull final EditorMouseListener listener) {
@@ -193,5 +200,26 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       }
     });
     return panel;
+  }
+
+  @Override
+  protected void addRightClickMenu() {
+    addMouseListener(new EditorMouseAdapter() {
+      @Override
+      public void mousePressed(EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
+          final ListPopup menu = createPopupMenu(new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(),
+                                                                        new IpnbSplitCellAction()));
+          menu.show(RelativePoint.fromScreen(e.getMouseEvent().getLocationOnScreen()));
+        }
+      }
+    });
+  }
+
+  public ListPopup createPopupMenu(@NotNull DefaultActionGroup group) {
+    final DataContext context = DataManager.getInstance().getDataContext(this);
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                                               false);
   }
 }

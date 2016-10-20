@@ -1,10 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -216,13 +213,14 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     return (myEditing && myEditablePanel != null) ? myEditablePanel.getCaretPosition() : -1;
   }
 
-  public void addRightClickMenu() {
+  @Override
+  protected void addRightClickMenu() {
     myViewPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
           final DefaultActionGroup group = new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction());
-          final ListPopup menu = createClickMenu(group);
+          final ListPopup menu = createPopupMenu(group);
           menu.show(RelativePoint.fromScreen(e.getLocationOnScreen()));
         }
       }
@@ -232,18 +230,14 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
           final DefaultActionGroup group = new DefaultActionGroup(new IpnbSplitCellAction());
-          final ListPopup menu = createClickMenu(group);
+          final ListPopup menu = createPopupMenu(group);
           menu.show(RelativePoint.fromScreen(e.getLocationOnScreen()));
         }
       }
     });
   }
 
-  protected ListPopup createClickMenu(@NotNull DefaultActionGroup group) {
-    final DataContext context = DataManager.getInstance().getDataContext(this);
-    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
-                                                               false);
-  }
+  
 
   @Nullable
   public String getText(int from, int to) {

@@ -1,5 +1,10 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
@@ -24,5 +29,13 @@ public abstract class IpnbPanel<T extends JComponent, K extends IpnbCell> extend
     return myCell;
   }
 
+  public ListPopup createPopupMenu(@NotNull DefaultActionGroup group) {
+    final DataContext context = DataManager.getInstance().getDataContext(this);
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                                               false);
+  }
+
   protected abstract T createViewPanel();
+  
+  protected abstract void addRightClickMenu();
 }
