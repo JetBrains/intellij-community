@@ -150,7 +150,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
           List<Location> allLineLocations = method.allLineLocations();
           if (isWatchEntry()) {
-            createLocationBreakpoint(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
+            createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
           }
           if (isWatchExit()) {
             MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
@@ -172,7 +172,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                   case Opcodes.ATHROW:
                     allLineLocations.stream()
                       .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpoint(location, debugProcess));
+                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
                 }
               }
             });
@@ -189,14 +189,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       LOG.debug(e);
     }
   }
-
-  private void createLocationBreakpoint(@Nullable Location location, @NotNull DebugProcessImpl debugProcess) {
-    if (location != null) {
-      RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-      requestsManager.enableRequest(requestsManager.createBreakpointRequest(this, location));
-    }
-  }
-
 
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
     if (isEmulated()) {

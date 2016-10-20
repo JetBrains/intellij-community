@@ -19,14 +19,12 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,11 +89,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             }
           }
         }
-        if (location != null) {
-          final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-          final BreakpointRequest request = requestsManager.createBreakpointRequest(this, location);
-          requestsManager.enableRequest(request);
-        }
+        createLocationBreakpointRequest(location, debugProcess);
       }
     }
     catch (ClassNotPreparedException ex) {
