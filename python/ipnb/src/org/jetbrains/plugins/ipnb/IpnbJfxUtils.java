@@ -147,7 +147,7 @@ public class IpnbJfxUtils {
     int start = 0;
     boolean single;
     int end = StringUtil.indexOf(source, "$");
-    single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+    single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
     while (end > 0) {
       String substring = source.substring(start, end);
       if (start != 0) {
@@ -156,7 +156,7 @@ public class IpnbJfxUtils {
       result.append(substring);
 
       inMath = !inMath;
-      single = !(source.length() > end + 1 && source.charAt(end + 1) == '$');
+      single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
       start = end + (single ? 1 : 2);
       end = StringUtil.indexOf(source, "$", start);
     }
