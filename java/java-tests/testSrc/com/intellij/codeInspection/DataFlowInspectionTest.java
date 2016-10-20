@@ -407,4 +407,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testNullLiteralArgumentDoesntReportedWhenMethodOnlyThrowAnException() { doTest(); }
+  public void testNullLiteralArgumentValueUsedAsReturnValue() {
+    doTest();
+  }
 }
