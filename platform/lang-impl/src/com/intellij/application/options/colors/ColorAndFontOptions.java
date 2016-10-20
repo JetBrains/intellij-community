@@ -839,7 +839,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       if (scheme == null) {
         scheme = getScheme();
       }
-      scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
+
+      if (scheme instanceof EditorColorsSchemeImpl) {
+        ((EditorColorsSchemeImpl)scheme).setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes(), !isInherited() && myIsInheritedInitial);
+      }
+      else {
+        scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
+      }
     }
 
     @Override
