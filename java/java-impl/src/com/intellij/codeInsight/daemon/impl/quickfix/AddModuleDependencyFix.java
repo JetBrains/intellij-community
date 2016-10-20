@@ -106,7 +106,7 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && !myCurrentModule.isDisposed() && myModules.stream().noneMatch(Module::isDisposed);
+    return !project.isDisposed() && !myCurrentModule.isDisposed() && !myModules.isEmpty() && myModules.stream().noneMatch(Module::isDisposed);
   }
 
   @Override
