@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
@@ -42,11 +43,14 @@ class BuildUtils {
       if (classLoader instanceof GroovyClassLoader) {
         classLoader.addClasspath(path)
       }
+      else if (classLoader instanceof AntClassLoader) {
+        classLoader.addPathElement(path)
+      }
       else if (classLoader instanceof RootLoader) {
         classLoader.addURL(new File(path).toURI().toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy classloader $classLoader")
+        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
