@@ -23,11 +23,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +57,7 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -203,9 +204,18 @@ public class InstancesWindow extends DialogWrapper {
         myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
       });
 
-      JBScrollPane treeScrollPane = new JBScrollPane(myInstancesTree);
+
+      StackFrameList list = new StackFrameList(myProject,
+          Collections.emptyList(),
+          GlobalSearchScope.allScope(myProject));
+
+      list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
+
+      InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(myDebugSession,
+          myInstancesTree, list);
+
       add(filteringPane, BorderLayout.NORTH);
-      add(treeScrollPane, BorderLayout.CENTER);
+      add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
 
       JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
       UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
@@ -268,6 +278,7 @@ public class InstancesWindow extends DialogWrapper {
       XExpression expression = myFilterConditionEditor.getExpression();
       if (expression != null && !expression.getExpression().isEmpty()) {
         try {
+          myEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(expression));
           myEvaluator.setReferenceExpression(TextWithImportsImpl.
               fromXExpression(expression));
           evaluator = myEvaluator.getEvaluator();

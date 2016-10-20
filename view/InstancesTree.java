@@ -1,7 +1,9 @@
 package org.jetbrains.debugger.memory.view;
 
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebugSession;
@@ -12,15 +14,18 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InstancesTree extends XDebuggerTree implements DataProvider {
+public class InstancesTree extends XDebuggerTree {
   public static final DataKey<XDebugSession> DEBUG_SESSION_DATA_KEY = DataKey.create("InstancesTree.DebugSession");
   private final XValueNodeImpl myRoot;
   private final Runnable myOnRootExpandAction;
@@ -72,9 +77,31 @@ public class InstancesTree extends XDebuggerTree implements DataProvider {
   }
 
   @Nullable
+  ObjectReference getSelectedReference() {
+    TreePath selectionPath = getSelectionPath();
+    Object selectedItem = selectionPath != null ? selectionPath.getLastPathComponent() : null;
+    if (selectedItem instanceof XValueNodeImpl) {
+      XValueNodeImpl xValueNode = (XValueNodeImpl) selectedItem;
+      XValue valueContainer = xValueNode.getValueContainer();
+
+      if (valueContainer instanceof NodeDescriptorProvider) {
+        NodeDescriptor descriptor = ((NodeDescriptorProvider) valueContainer).getDescriptor();
+
+        if (descriptor instanceof ValueDescriptor) {
+          Value value = ((ValueDescriptor) descriptor).getValue();
+
+          if (value instanceof ObjectReference) return (ObjectReference) value;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if(DEBUG_SESSION_DATA_KEY.is(dataId)) {
+    if (DEBUG_SESSION_DATA_KEY.is(dataId)) {
       return myDebugSession;
     }
 
