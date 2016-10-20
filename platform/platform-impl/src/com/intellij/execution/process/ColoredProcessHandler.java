@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,18 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 /**
- * @author Roman Chernyatchik
- * @author traff
+ * <p>This process handler supports ANSI coloring.</p>
+ * <p>Although it supports the {@link KillableProcessHandler"soft-kill" feature}, it is turned off by default for compatibility reasons.
+ * To turn it on either call {@link #setShouldKillProcessSoftly(boolean)}, or extend from {@link KillableColoredProcessHandler}.
  */
-public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
+public class ColoredProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = ContainerUtil.newArrayList();
 
   public ColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
+    setShouldKillProcessSoftly(false);
   }
 
   /**
@@ -42,6 +44,7 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
    */
   public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
+    setShouldKillProcessSoftly(false);
   }
 
   /**
@@ -49,6 +52,7 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
    */
   public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
+    setShouldKillProcessSoftly(false);
   }
 
   @Override
