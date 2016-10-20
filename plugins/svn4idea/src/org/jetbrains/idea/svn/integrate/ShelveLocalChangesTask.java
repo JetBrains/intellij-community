@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -30,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.stream.Collectors.toList;
@@ -57,11 +56,10 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
     List<VirtualFile> changedFiles = newArrayList();
     ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
+    getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+
     for (Map.Entry<String, List<Change>> entry : myIntersection.getChangesByLists().entrySet()) {
       try {
-        // TODO: Could this be done once before for loop?
-        saveAllDocuments();
-
         shelveManager
           .shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true, true);
         // TODO: ChangesUtil.getFilesFromChanges() performs refresh of several files.
@@ -77,9 +75,5 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
     }
 
     return changedFiles;
-  }
-
-  private static void saveAllDocuments() {
-    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
   }
 }
