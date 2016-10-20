@@ -108,6 +108,13 @@ public class ProcessOutput {
   }
 
   /**
+   * @deprecated use {@link #isExitCodeSet instead}. To be removed in IntelliJ 2017.1
+   */
+  public boolean hasErrorExitCode() {
+    return !isErrorCodeSet();
+  }
+  
+  /**
    * @return false if exit code wasn't set, 
    * for example, when our CapturingProcessHandler.runProcess() is interrupted)
    */
