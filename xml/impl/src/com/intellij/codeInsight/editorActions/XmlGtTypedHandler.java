@@ -167,7 +167,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (startToken == null || !startToken.getText().equals("<")) return Result.CONTINUE;
 
       String name = tag.getName();
-      if (elementAtCaret instanceof XmlToken && ((XmlToken)elementAtCaret).getTokenType() == XmlTokenType.XML_NAME) {
+      if (elementAtCaret instanceof XmlToken &&
+           (((XmlToken)elementAtCaret).getTokenType() == XmlTokenType.XML_NAME ||
+            ((XmlToken)elementAtCaret).getTokenType() == XmlTokenType.XML_TAG_NAME)) {
         name = name.substring(0, offset - elementAtCaret.getTextOffset());
       }
       if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return Result.CONTINUE;
