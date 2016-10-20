@@ -10,13 +10,12 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbLatexOutputCell;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
 
 public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
 
   public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell, @NotNull final IpnbFilePanel parent,
-                        @Nullable MouseAdapter hideOutputListener) {
-    super(cell, parent, hideOutputListener);
+                        @Nullable IpnbCodePanel ipnbCodePanel) {
+    super(cell, parent, ipnbCodePanel);
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     setBackground(IpnbEditorUtil.getBackground());
   }

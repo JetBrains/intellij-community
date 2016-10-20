@@ -8,13 +8,12 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbHtmlOutputCell;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
 
 public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
 
   public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell, @NotNull final IpnbFilePanel parent,
-                       @Nullable MouseAdapter hideOutputListener) {
-    super(cell, parent, hideOutputListener);
+                       @Nullable IpnbCodePanel ipnbCodePanel) {
+    super(cell, parent, ipnbCodePanel);
   }
 
   @Override
