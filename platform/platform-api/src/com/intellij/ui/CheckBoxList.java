@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +114,7 @@ public class CheckBoxList<T> extends JBList {
     }
     if (icon == null) {
       // com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI.getDefaultIcon()
-      icon = JBUI.emptyIcon(20);
+      icon = JBUI.scale(EmptyIcon.create(20));
     }
     Insets margin = checkBox.getMargin();
     return new Dimension(margin.left + icon.getIconWidth(), margin.top + icon.getIconHeight());

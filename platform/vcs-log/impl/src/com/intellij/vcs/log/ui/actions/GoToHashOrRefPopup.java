@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
@@ -230,7 +231,7 @@ public class GoToHashOrRefPopup {
       if (myColorManager.isMultipleRoots()) {
         lookupBuilder = lookupBuilder
           .withTypeText(getTypeText(item),
-                        new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)),
+                        JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager))),
                         true);
       }
       return lookupBuilder;

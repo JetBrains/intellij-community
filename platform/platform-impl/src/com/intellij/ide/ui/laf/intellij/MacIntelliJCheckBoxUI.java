@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -25,7 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
-  public static final Icon DEFAULT_ICON = EmptyIcon.create(20);
+  public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(20));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setOpaque(false);

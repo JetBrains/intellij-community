@@ -40,6 +40,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -156,8 +157,8 @@ public class ScopeEditorPanel {
         cancelCurrentProgress();
       }
     });
-    myPartiallyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED));
-    myRecursivelyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED));
+    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
   }
 
   private void updateCaretPositionText() {

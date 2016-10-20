@@ -71,8 +71,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import gnu.trove.THashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -90,13 +88,12 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
-  private Map<Class<? extends XBreakpointType>, XBreakpointType<?, ?>> myBreakpointTypeByClass;
+  private Map<Class<? extends XBreakpointType>, XBreakpointType> myBreakpointTypeByClass;
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
-      myLineBreakpointTypes =
-        StreamEx.of(XBreakpointUtil.getBreakpointTypes()).select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
+      myLineBreakpointTypes = XBreakpointUtil.getBreakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
     }
     return myLineBreakpointTypes;
   }
@@ -292,12 +289,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass) {
     if (myBreakpointTypeByClass == null) {
-      myBreakpointTypeByClass = new THashMap<>();
-      for (XBreakpointType<?, ?> breakpointType : XBreakpointUtil.getBreakpointTypes()) {
-        myBreakpointTypeByClass.put(breakpointType.getClass(), breakpointType);
-      }
+      myBreakpointTypeByClass = XBreakpointUtil.getBreakpointTypes().toMap(XBreakpointType::getClass, t -> t);
     }
-    XBreakpointType<?, ?> type = myBreakpointTypeByClass.get(typeClass);
+    XBreakpointType type = myBreakpointTypeByClass.get(typeClass);
     //noinspection unchecked
     return (T)type;
   }

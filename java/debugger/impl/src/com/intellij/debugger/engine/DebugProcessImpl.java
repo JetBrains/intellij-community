@@ -169,7 +169,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myNodeRenderersMap.clear();
         myRenderers.clear();
         try {
-          NodeRendererSettings.getInstance().getAllRenderers().stream().filter(NodeRenderer::isEnabled).forEach(myRenderers::add);
+          NodeRendererSettings.getInstance().getAllRenderers().stream().filter(NodeRenderer::isEnabled).forEachOrdered(myRenderers::add);
         }
         finally {
           DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
@@ -396,18 +396,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   private static List<ClassFilter> getActiveFilters() {
-    List<ClassFilter> activeFilters = new ArrayList<>();
     DebuggerSettings settings = DebuggerSettings.getInstance();
+    StreamEx<ClassFilter> stream = StreamEx.of(Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME))
+      .flatCollection(DebuggerClassFilterProvider::getFilters);
     if (settings.TRACING_FILTERS_ENABLED) {
-      Arrays.stream(settings.getSteppingFilters())
-        .filter(ClassFilter::isEnabled)
-        .forEach(activeFilters::add);
+      stream = stream.prepend(settings.getSteppingFilters());
     }
-    Arrays.stream(Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME))
-      .flatMap(provider -> provider.getFilters().stream())
-      .filter(ClassFilter::isEnabled)
-      .forEach(activeFilters::add);
-    return activeFilters;
+    return stream.filter(ClassFilter::isEnabled).toList();
   }
 
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {

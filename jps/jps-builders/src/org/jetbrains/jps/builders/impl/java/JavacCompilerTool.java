@@ -16,7 +16,6 @@
 package org.jetbrains.jps.builders.impl.java;
 
 import com.intellij.util.ExceptionUtil;
-import com.sun.source.util.JavacTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
@@ -85,6 +84,6 @@ public class JavacCompilerTool extends JavaCompilingTool {
 
   @Override
   public void prepareCompilationTask(@NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options) {
-    JavacReferencesCollector.installOn((JavacTask)task);
+    JavacReferencesCollector.installOn(task);
   }
 }

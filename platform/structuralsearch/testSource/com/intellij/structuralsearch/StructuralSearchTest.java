@@ -458,7 +458,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String arrays = "int[] a = new int[20];\n" +
                     "byte[] b = new byte[30]";
-    String arrayPattern = "new int[$a$]";
+    String arrayPattern = "new int['_a]";
     assertEquals(
       "Improper array search",
       1,
@@ -492,7 +492,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "        // do stuff\n" +
                 "    }\n" +
                 "};";
-    String s4 = "new Thread($args$)";
+    String s4 = "new Thread('_args)";
 
     assertEquals(
       "Find inner class by new",
@@ -507,7 +507,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "    return (T[])array.clone();\n" +
                 "  }\n" +
                 "}";
-    String s6 = "($T$[])$expr$";
+    String s6 = "('_T[])'_expr";
 
     assertEquals(
       "Find cast to array",
@@ -711,7 +711,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String target = "String[][] $s$;";
+    String target = "String[][] '_s;";
     assertEquals("should find multi-dimensional c-style array declarations", 1, findMatchesCount(source, target));
 
     String target2 = "class '_A { int[] 'f(); }";
@@ -1559,7 +1559,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(
       "find annotated type parameter",
       1,
-      findMatchesCount(source2, "class $A$<@Q $T$> {}")
+      findMatchesCount(source2, "class '_A<@Q '_T> {}")
     );
 
     // @todo typed vars constrains (super),
@@ -2222,7 +2222,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String s12 = "assert agentInfo != null : \"agentInfo is null\";\n" +
                  "assert addresses != null : \"addresses is null\";";
-    String s13 = "assert $exp$ != null : \"$exp$ is null\";";
+    String s13 = "assert '_exp != null : \"'_exp is null\";";
 
     assertEquals(
       "reference to substitution in comment",
@@ -2270,9 +2270,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "       int g=0; //sss\n" +
                  "   }\n" +
                  "}";
-    String s19 = "class $c$ {\n" +
-                 "   $type$ $f$($t$ $p$){\n" +
-                 "       $s$; // sss\n" +
+    String s19 = "class '_c {\n" +
+                 "   '_type '_f('_t '_p){\n" +
+                 "       '_s; // sss\n" +
                  "   }\n" +
                  "}";
     assertEquals(
@@ -2378,7 +2378,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     } catch(MalformedPatternException ex) {
     }
 
-    final String s106 = "$_ReturnType$ $MethodName$($_ParameterType$ $_Parameter$);";
+    final String s106 = "'_ReturnType 'MethodName('_ParameterType '_Parameter);";
     final String s105 = " aaa; ";
 
     try {
@@ -2524,11 +2524,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "public class TestBean4";
     String s2 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
-                "public class $a$ {}\n";
+                "public class '_a {}\n";
 
     assertEquals("Simple find annotated class",2,findMatchesCount(s1,s2,false));
-    assertEquals("Match value of anonymous name value pair 1", 1, findMatchesCount(s1, "@MyBean(\"a\") class $a$ {}"));
-    assertEquals("Match value of anonymous name value pair 2", 2, findMatchesCount(s1, "@MyBean(\"\") class $a$ {}"));
+    assertEquals("Match value of anonymous name value pair 1", 1, findMatchesCount(s1, "@MyBean(\"a\") class '_a {}"));
+    assertEquals("Match value of anonymous name value pair 2", 2, findMatchesCount(s1, "@MyBean(\"\") class '_a {}"));
 
     String s3 = "@VisualBean(\"????????? ?????????? ? ??\")\n" +
                 "public class TestBean\n" +
@@ -2959,11 +2959,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  c = 2;\n" +
                 "}}";
     String s2 = "{\n" +
-                "  '_a*:[contains( \"'type $a$ = $b$;\" )];\n" +
+                "  '_a*:[contains( \"'type '_a = '_b;\" )];\n" +
                 "}";
 
     String s2_2 = "{\n" +
-                "  '_a*:[!contains( \"$type$ $a$ = $b$;\" )];\n" +
+                "  '_a*:[!contains( \"'_type '_a = '_b;\" )];\n" +
                 "}";
 
     assertEquals(2, findMatchesCount(s1, s2));
@@ -3058,7 +3058,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                "  Category cat2 = Category.getInstance(F.class.getName());\n" +
                "  Category cat3 = Category.getInstance(F.class.getName());\n" +
                "}";
-    String s2 = "static $Category$ $cat$ = $Category$.getInstance($Arg$);";
+    String s2 = "static '_Category '_cat = '_Category.getInstance('_Arg);";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
@@ -3489,15 +3489,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
   }
 
-
-
   public void testFindSuperCall() {
     String source = "class A {" +
                     "  public String toString() {" +
                     "    System.out.println();" +
+                    "    if (false) {" +
+                    "      toString();" +
+                    "      this.toString();" +
+                    "    }" +
                     "    return super.toString();" +
                     "  }" +
                     "}";
-    assertEquals("find super call", 1, findMatchesCount(source, "super.$m$()"));
+    assertEquals("find super call", 1, findMatchesCount(source, "super.'_m()"));
+    assertEquals("find super and non super call", 2, findMatchesCount(source, "'_q:[regex( super|this )].'_m()"));
   }
 }

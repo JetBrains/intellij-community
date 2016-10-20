@@ -66,7 +66,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
         return EmptyIcon.ICON_0;
       }
 
-      return new EmptyIcon(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());
+      return EmptyIcon.create(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());
     }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {

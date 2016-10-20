@@ -45,6 +45,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
+import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -257,6 +258,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       }
     }
     return null;
+  }
+
+  protected void createLocationBreakpointRequest(@Nullable Location location, @NotNull DebugProcessImpl debugProcess) {
+    if (location != null) {
+      RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
+      requestsManager.enableRequest(requestsManager.createBreakpointRequest(this, location));
+    }
   }
 
   @Override

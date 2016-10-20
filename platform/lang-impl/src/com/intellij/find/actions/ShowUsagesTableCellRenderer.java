@@ -37,6 +37,7 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,7 +128,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         else if (column == 2) {
           Icon icon = presentation.getIcon();
           textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
-          textChunks.append("").appendTextPadding(16 + 5);
+          textChunks.append("").appendTextPadding(JBUI.scale(16 + 5));
           for (int i = 1; i < text.length; i++) {
             TextChunk chunk = text[i];
             textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, bg, fg, chunk));

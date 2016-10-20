@@ -1259,7 +1259,7 @@ public class InferenceSession {
     }
 
     if (type == PsiType.NULL) {
-      if (var.isThrownBound() && isThrowable(var.getBounds(InferenceBound.UPPER))) {
+      if (var.isThrownBound() && myPolicy.inferRuntimeExceptionForThrownBoundWithNoConstraints() && isThrowable(var.getBounds(InferenceBound.UPPER))) {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {

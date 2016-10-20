@@ -296,7 +296,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
-    boolean privileged = myLock.isPrivilegedReader();
+    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
     return ourThreadExecutorsService.submit(new Runnable() {
       @Override
       public String toString() {
@@ -305,7 +305,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
-        try (AccessToken ignored = myLock.setupReadPrivilege(privileged)) {
+        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -324,11 +324,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
-    boolean privileged = myLock.isPrivilegedReader();
+    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        try (AccessToken ignored = myLock.setupReadPrivilege(privileged)) {
+        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           return action.call();
         }
         catch (ProcessCanceledException e) {
@@ -1245,30 +1245,30 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     assertIsDispatchThread();
     if (!myLock.isWriteLocked()) {
-      runModalProgress(project, title, false, runnable);
+      runModalProgress(project, title, runnable);
       return;
     }
 
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       int prevBase = myWriteStackBase;
       myWriteStackBase = myWriteActionsStack.size();
-      myLock.writeSuspend();
-      try {
-        runModalProgress(project, title, true, runnable);
+      try (AccessToken ignored = myLock.writeSuspend()) {
+        runModalProgress(project, title, () -> {
+          try (AccessToken ignored1 = myLock.grantReadPrivilege()) {
+            runnable.run();
+          }
+        });
       } finally {
-        myLock.writeResume();
         myWriteStackBase = prevBase;
       }
     });
   }
 
-  private void runModalProgress(@Nullable Project project, @NotNull String title, boolean withReadPrivileges, @NotNull Runnable runnable) {
+  private static void runModalProgress(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = myLock.setupReadPrivilege(withReadPrivileges)) {
-          runnable.run();
-        }
+        runnable.run();
       }
     });
   }

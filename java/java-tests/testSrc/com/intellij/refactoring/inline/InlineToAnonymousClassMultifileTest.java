@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,13 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -47,6 +53,10 @@ public class InlineToAnonymousClassMultifileTest extends RefactoringTestCase {
     doTest("p1.Inlined");
   }
 
+  public void testFromLibrary() throws Exception {   // IDEADEV-18745
+    doTest("p.P");
+  }
+
   private String getRoot() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineToAnonymousClass/multifile/" + getTestName(true);
   }
@@ -55,7 +65,23 @@ public class InlineToAnonymousClassMultifileTest extends RefactoringTestCase {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+    String path = getRoot() + "/lib/simple.jar";
+    VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+    if (libJarLocal != null) {
+      ModuleRootModificationUtil.updateModel(myModule, model -> {
+        LibraryTable libraryTable = model.getModuleLibraryTable();
+        Library library = libraryTable.createLibrary("test");
+        Library.ModifiableModel libraryModel = library.getModifiableModel();
+        VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
+        assertNotNull(jarRoot);
+        libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
+        libraryModel.addRoot(VfsUtilCore.pathToUrl(getRoot() + "/lib/src"), OrderRootType.SOURCES);
+        libraryModel.commit();
+      });
+    }
+
     PsiClass classToInline = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
+    classToInline = (PsiClass)classToInline.getNavigationElement();
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(myProject, 
                                                                                     classToInline,

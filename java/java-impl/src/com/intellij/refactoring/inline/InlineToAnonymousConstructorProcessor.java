@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,8 @@ class InlineToAnonymousConstructorProcessor {
     checkInlineChainingConstructor();
     JavaResolveResult classResolveResult = myNewExpression.getClassReference().advancedResolve(false);
     JavaResolveResult methodResolveResult = myNewExpression.resolveMethodGenerics();
-    myConstructor = (PsiMethod) methodResolveResult.getElement();
+    final PsiElement element = methodResolveResult.getElement();
+    myConstructor = element != null ? (PsiMethod) element.getNavigationElement() : null;
     myConstructorArguments = myNewExpression.getArgumentList();
 
     PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();

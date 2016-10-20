@@ -17,10 +17,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -142,9 +139,9 @@ public abstract class GitTextHandler extends GitHandler {
     return new MyOSProcessHandler(commandLine);
   }
 
-  private static class MyOSProcessHandler extends OSProcessHandler {
+  private static class MyOSProcessHandler extends KillableProcessHandler {
     private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      super(commandLine);
+      super(commandLine, true);
     }
 
     @NotNull

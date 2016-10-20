@@ -34,8 +34,12 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-    if (attributes == USE_INHERITED_MARKER || !attributes.equals(getAttributes(key))) {
+  public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
+    setAttributes(key, attributes, false);
+  }
+
+  public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes, boolean force) {
+    if (force || attributes == USE_INHERITED_MARKER || !attributes.equals(getAttributes(key))) {
       myAttributesMap.put(key, attributes);
     }
   }
@@ -50,17 +54,17 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   @Override
   public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
     if (key != null) {
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (fallbackKey != null) {
-        if (attributes != null && attributes != USE_INHERITED_MARKER) {
-          return attributes;
-        }
-        attributes = getFallbackAttributes(fallbackKey);
+      if (attributes != null && attributes != USE_INHERITED_MARKER) {
+        return attributes;
       }
 
-      if (attributes != null) {
-        return attributes;
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
+        attributes = getFallbackAttributes(fallbackKey);
+        if (attributes != null) {
+          return attributes;
+        }
       }
     }
     return myParentScheme.getAttributes(key);

@@ -29,7 +29,8 @@ public class MonospaceEditorCustomization implements EditorCustomization {
 
   @Override
   public void customize(@NotNull EditorEx editor) {
-    // ensure we've got a monospace font by loading up the global editor scheme
+    /* For the sake of simplicity and consistency, we load the global editor scheme here, although its font is not necessarily monospace.
+       However if the main editor has not monospaced font, we don't wanna use monospace here either. */
     editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
   }
 }

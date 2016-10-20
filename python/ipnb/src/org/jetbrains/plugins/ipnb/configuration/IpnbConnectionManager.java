@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,20 +101,12 @@ public final class IpnbConnectionManager implements ProjectComponent {
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final boolean serverStarted = startIpythonServer(url, fileEditor);
-          if (!serverStarted) {
-            return;
-          }
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              startConnection(codePanel, path, url, true);
-            }
-          });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        final boolean serverStarted = startIpythonServer(url, fileEditor);
+        if (!serverStarted) {
+          return;
         }
+        UIUtil.invokeLaterIfNeeded(() -> startConnection(codePanel, path, url, true));
       });
     }
   }
@@ -127,32 +118,28 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
   @Nullable
   public static String showDialogUrl(@NotNull final String initialUrl) {
-    final String url = UIUtil.invokeAndWaitIfNeeded(new Computable<String>() {
-      @Override
-      public String compute() {
-        return Messages.showInputDialog("Jupyter Notebook URL:", "Start Jupyter Notebook", null, initialUrl,
-                                 new InputValidator() {
-                                   @Override
-                                   public boolean checkInput(String inputString) {
-                                     try {
-                                       final URI uri = new URI(inputString);
-                                       if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
-                                         return false;
-                                       }
-                                     }
-                                     catch (URISyntaxException e) {
+    final String url = UIUtil.invokeAndWaitIfNeeded(
+      () -> Messages.showInputDialog("Jupyter Notebook URL:", "Start Jupyter Notebook", null, initialUrl,
+                                   new InputValidator() {
+                                 @Override
+                                 public boolean checkInput(String inputString) {
+                                   try {
+                                     final URI uri = new URI(inputString);
+                                     if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
                                        return false;
                                      }
-                                     return !inputString.isEmpty();
                                    }
+                                   catch (URISyntaxException e) {
+                                     return false;
+                                   }
+                                   return !inputString.isEmpty();
+                                 }
 
-                                   @Override
-                                   public boolean canClose(String inputString) {
-                                     return true;
-                                   }
-                                 });
-      }
-    });
+                                 @Override
+                                 public boolean canClose(String inputString) {
+                                   return true;
+                                 }
+                               }));
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
@@ -256,12 +243,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
       message, null, MessageType.WARNING.getPopupBackground(), listener);
     final Balloon balloon = balloonBuilder.createBalloon();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        balloon.showInCenterOf(fileEditor.getRunCellButton());
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> balloon.showInCenterOf(fileEditor.getRunCellButton()));
   }
 
   public boolean startIpythonServer(@NotNull final String initUrl, @NotNull final IpnbFileEditor fileEditor) {
@@ -352,34 +334,16 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       };
       processHandler.setShouldDestroyProcessRecursively(true);
-      GuiUtils.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          new RunContentExecutor(myProject, processHandler)
-            .withTitle("Jupyter Notebook")
-            .withStop(new Runnable() {
-              @Override
-              public void run() {
-                myKernels.clear();
-                processHandler.destroyProcess();
-                UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
-              }
-            }, new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return !processHandler.isProcessTerminated();
-              }
-            })
-            .withRerun(new Runnable() {
-              @Override
-              public void run() {
-                startIpythonServer(url, fileEditor);
-              }
-            })
-            .withHelpId("reference.manage.py")
-            .run();
-        }
-      }, ModalityState.defaultModalityState());
+      GuiUtils.invokeLaterIfNeeded(() -> new RunContentExecutor(myProject, processHandler)
+        .withTitle("Jupyter Notebook")
+        .withStop(() -> {
+          myKernels.clear();
+          processHandler.destroyProcess();
+          UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
+        }, () -> !processHandler.isProcessTerminated())
+        .withRerun(() -> startIpythonServer(url, fileEditor))
+        .withHelpId("reference.manage.py")
+        .run(), ModalityState.defaultModalityState());
       int countAttempt = 0;
       while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
         countAttempt += 1;

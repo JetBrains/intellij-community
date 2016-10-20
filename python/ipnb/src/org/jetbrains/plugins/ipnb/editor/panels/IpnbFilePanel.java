@@ -79,18 +79,15 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     myDocument = myParent.getDocument();
     myDocument.addDocumentListener(myDocumentListener);
 
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        readFromFile(true);
-        addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseClicked(MouseEvent e) {
-            updateCellSelection(e);
-          }
-        });
-        setFocusable(true);
-      }
+    alarm.addRequest(() -> {
+      readFromFile(true);
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          updateCellSelection(e);
+        }
+      });
+      setFocusable(true);
     }, 10, ModalityState.stateForComponent(this));
 
     UIUtil.requestFocus(this);
@@ -107,16 +104,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       myIpnbPanels.clear();
       mySelectedCell = null;
       if (myIpnbFile.getCells().isEmpty()) {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
-                saveToFile();
-              }
-            });
-          }
-        });
+        CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+          createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
+          saveToFile();
+        }));
 
       }
     } catch (IOException e) {
@@ -149,12 +140,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       }
     }
     add(createEmptyPanel());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (mySelectedCell != null)
-          myParent.updateScrollPosition(mySelectedCell);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (mySelectedCell != null)
+        myParent.updateScrollPosition(mySelectedCell);
     });
   }
 
@@ -386,40 +374,34 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void replaceComponent(@NotNull final IpnbEditablePanel from, @NotNull final IpnbCell cell) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final int index = myIpnbPanels.indexOf(from);
-            IpnbEditablePanel panel;
-            if (cell instanceof IpnbCodeCell) {
-              panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
-            }
-            else if (cell instanceof IpnbMarkdownCell) {
-              panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, myParent.getIpnbFilePanel());
-            }
-            else if (cell instanceof IpnbHeadingCell) {
-              panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
-            }
-            else {
-              throw new UnsupportedOperationException(cell.getClass().toString());
-            }
-            if (index >= 0) {
-              myIpnbFile.removeCell(index);
-              myIpnbFile.addCell(cell, index);
-              myIpnbPanels.remove(index);
-              myIpnbPanels.add(index, panel);
-            }
-
-            if (from instanceof IpnbCodePanel) {
-              switchToEditing = true;
-            }
-            setSelectedCell(panel);
-            saveToFile();
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final int index = myIpnbPanels.indexOf(from);
+      IpnbEditablePanel panel;
+      if (cell instanceof IpnbCodeCell) {
+        panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
       }
-    }, "Ipnb.changeCellType", new Object());
+      else if (cell instanceof IpnbMarkdownCell) {
+        panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, myParent.getIpnbFilePanel());
+      }
+      else if (cell instanceof IpnbHeadingCell) {
+        panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
+      }
+      else {
+        throw new UnsupportedOperationException(cell.getClass().toString());
+      }
+      if (index >= 0) {
+        myIpnbFile.removeCell(index);
+        myIpnbFile.addCell(cell, index);
+        myIpnbPanels.remove(index);
+        myIpnbPanels.add(index, panel);
+      }
+
+      if (from instanceof IpnbCodePanel) {
+        switchToEditing = true;
+      }
+      setSelectedCell(panel);
+      saveToFile();
+    }), "Ipnb.changeCellType", new Object());
 
   }
 

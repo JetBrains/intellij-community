@@ -299,33 +299,13 @@ var {
     font-style: italic
 }
 
-table {
-    border-color: Gray;
-    border-style: outset
-}
-
 tr {
     text-align: left
-}
-
-td {
-    border-color: Gray;
-    border-style: inset;
-    padding-left: 3;
-    padding-right: 3;
-    padding-top: 3;
-    padding-bottom: 3
 }
 
 th {
     text-align: center;
     font-weight: bold;
-    border-color: Gray;
-    border-style: inset;
-    padding-left: 3;
-    padding-right: 3;
-    padding-top: 3;
-    padding-bottom: 3
 }
 
 blockquote {
@@ -352,10 +332,6 @@ pre p {
 caption {
     caption-side: top;
     text-align: center
-}
-
-table {
-    border: none;
 }
 
 td {

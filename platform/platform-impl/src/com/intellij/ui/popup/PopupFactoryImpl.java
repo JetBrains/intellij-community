@@ -984,7 +984,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public void buildGroup(@NotNull ActionGroup actionGroup) {
       calcMaxIconSize(actionGroup);
-      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? new EmptyIcon(myMaxIconWidth, myMaxIconHeight) : null;
+      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
 
       appendActionsFromGroup(actionGroup);
 

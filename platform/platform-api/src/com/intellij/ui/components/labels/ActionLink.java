@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class ActionLink extends LinkLabel implements DataProvider {
-  private static final EmptyIcon ICON = new EmptyIcon(0, 12);
+  private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
   private String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
