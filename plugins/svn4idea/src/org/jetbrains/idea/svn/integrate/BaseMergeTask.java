@@ -91,7 +91,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
       : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
         next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
 
-    return ar(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
+    return ar(new LocalChangesPromptTask(myMergeProcess, null), mergeAllTask);
   }
 
   protected void runChangeListsMerge(@NotNull List<SvnChangeList> lists, @NotNull String title) {

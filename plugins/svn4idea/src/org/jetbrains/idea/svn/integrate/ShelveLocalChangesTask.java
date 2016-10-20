@@ -27,7 +27,6 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
     List<VirtualFile> changedFiles = newArrayList();
     ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
-    for (Map.Entry<String, Collection<Change>> entry : myIntersection.getChangesSubset().entrySet()) {
+    for (Map.Entry<String, List<Change>> entry : myIntersection.getChangesByLists().entrySet()) {
       try {
         // TODO: Could this be done once before for loop?
         saveAllDocuments();

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -38,6 +37,8 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
+import static org.jetbrains.idea.svn.integrate.Intersection.isEmpty;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
@@ -45,12 +46,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable private final List<SvnChangeList> myChangeListsToMerge;
 
-  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess) {
-    super(mergeProcess, "local changes intersection check", Where.AWT);
-    myChangeListsToMerge = null;
-  }
-
-  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @NotNull List<SvnChangeList> changeListsToMerge) {
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @Nullable List<SvnChangeList> changeListsToMerge) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
     myChangeListsToMerge = changeListsToMerge;
   }
@@ -70,14 +66,16 @@ public class LocalChangesPromptTask extends BaseMergeTask {
                                 ? getChangesIntersection(localChangeLists, myChangeListsToMerge)
                                 : getAllChangesIntersection(localChangeLists);
 
-    if (intersection != null && !intersection.getChangesSubset().isEmpty()) {
-      processIntersection(intersection);
-    }
+    processIntersection(intersection);
   }
 
-  private void processIntersection(@NotNull Intersection intersection) {
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (myInteraction.selectLocalChangesAction(myChangeListsToMerge == null)) {
+  private void processIntersection(@Nullable Intersection intersection) {
+    boolean mergeAll = myChangeListsToMerge == null;
+    LocalChangesAction nextAction = !isEmpty(intersection) ? myInteraction.selectLocalChangesAction(mergeAll) : continueMerge;
+
+    switch (nextAction) {
+      case continueMerge:
+        break;
       case shelve:
         next(new ShelveLocalChangesTask(myMergeProcess, intersection));
         break;
@@ -85,9 +83,9 @@ public class LocalChangesPromptTask extends BaseMergeTask {
         end();
         break;
       case inspect:
-        // here's cast is due to generic's bug
-        @SuppressWarnings("unchecked") Collection<Change> changes = (Collection<Change>)intersection.getChangesSubset().values();
-        myInteraction.showIntersectedLocalPaths(sorted(getPaths(changes), FilePathByPathComparator.getInstance()));
+        List<FilePath> intersectedPaths = sorted(getPaths(intersection.getAllChanges()), FilePathByPathComparator.getInstance());
+
+        myInteraction.showIntersectedLocalPaths(intersectedPaths);
         end();
         break;
     }
@@ -96,7 +94,6 @@ public class LocalChangesPromptTask extends BaseMergeTask {
   @Nullable
   private Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
                                               @NotNull List<SvnChangeList> changeListsToMerge) {
-
     Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
 
     return !changeListsToMerge.isEmpty() ? getChangesIntersection(localChangeLists, change -> hasPathToMerge(change, pathsToMerge)) : null;
@@ -124,7 +121,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     for (LocalChangeList changeList : changeLists) {
       for (Change change : changeList.getChanges()) {
         if (filter.value(change)) {
-          result.add(changeList.getName(), changeList.getComment(), change);
+          result.add(changeList, change);
         }
       }
     }
