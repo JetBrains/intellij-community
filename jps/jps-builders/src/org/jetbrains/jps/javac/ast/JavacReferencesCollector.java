@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * Code here should not depend on any javac private API located in tools.jar if no JavacFileReferencesRegistrar will be run.
+ * Code here should not depend on any javac private API located in tools.jar if no JavacFileReferencesRegistrar-s will be run.
  * A workaround to allow run standalone jps with improperly configured classloader without NoClassDefFoundError (e.g: IDEA-162877)
  */
 public class JavacReferencesCollector {
