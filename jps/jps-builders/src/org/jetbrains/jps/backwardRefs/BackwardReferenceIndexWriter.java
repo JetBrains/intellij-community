@@ -32,7 +32,6 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -93,10 +92,6 @@ public class BackwardReferenceIndexWriter {
 
   void close() {
     myIndex.close();
-  }
-
-  int enumerateFile(JavaFileObject file) {
-    return enumeratePath(file.getName());
   }
 
   synchronized LightRef.JavaLightClassRef asClassUsage(Symbol name) {
@@ -199,7 +194,7 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  private synchronized int enumeratePath(String file) {
+  synchronized int enumeratePath(String file) {
     try {
       return myIndex.getFilePathEnumerator().enumerate(file);
     }

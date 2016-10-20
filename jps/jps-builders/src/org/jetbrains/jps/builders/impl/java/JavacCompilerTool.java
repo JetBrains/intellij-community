@@ -16,10 +16,8 @@
 package org.jetbrains.jps.builders.impl.java;
 
 import com.intellij.util.ExceptionUtil;
-import com.sun.source.util.JavacTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
@@ -86,8 +84,6 @@ public class JavacCompilerTool extends JavaCompilingTool {
 
   @Override
   public void prepareCompilationTask(@NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options) {
-    if (BackwardReferenceIndexWriter.isEnabled()) {
-      JavacReferencesCollector.installOn((JavacTask)task);
-    }
+    JavacReferencesCollector.installOn(task);
   }
 }

@@ -21,7 +21,6 @@ import com.sun.tools.javac.code.Type;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
-import javax.tools.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -59,8 +58,8 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, List<JavacRefSymbol> defs) {
-    final int fileId = myWriter.enumerateFile(file);
+  public void registerFile(String filePath, Set<JavacRefSymbol> refs, List<JavacRefSymbol> defs) {
+    final int fileId = myWriter.enumeratePath(filePath);
     int funExprId = 0;
 
     final List<LightRef> definitions = new ArrayList<LightRef>(defs.size());
