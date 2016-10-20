@@ -32,22 +32,40 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 public class PyConvertTypeCommentToVariableAnnotation extends PyBaseIntentionAction {
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiComment comment = findCommentUnderCaret(editor, file);
     if (comment != null) {
-      final PyTargetExpression target = findTypeCommentTarget(comment);
-      if (target != null) {
-        final String annotation = PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-        final PsiElement prev = PyPsiUtils.getPrevNonWhitespaceSibling(comment);
-        final int commentStart = prev != null ? prev.getTextRange().getEndOffset() : comment.getTextRange().getStartOffset();
-        final int commentEnd = comment.getTextRange().getEndOffset();
+      final String annotation = PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+      final PyTargetExpression assignmentTarget = findAssignmentTypeCommentTarget(comment);
+      if (assignmentTarget != null) {
+        comment.delete();
         final Document document = editor.getDocument();
         runWithDocumentReleasedAndCommitted(project, document, () -> {
-          document.deleteString(commentStart, commentEnd);
-          document.insertString(target.getTextRange().getEndOffset(), ": " + annotation);
+          document.insertString(assignmentTarget.getTextRange().getEndOffset(), ": " + annotation);
         });
+        return;
+      }
+      final PyTargetExpression compoundTarget;
+      final PyTargetExpression forTarget = findForLoopTypeCommentTarget(comment);
+      if (forTarget != null) {
+        compoundTarget = forTarget;
+      }
+      else {
+        compoundTarget = findWithStatementTypeCommentTarget(comment);
+      }
+      if (compoundTarget != null) {
+        comment.delete();
+        final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+        final PyTypeDeclarationStatement declaration = generator.createFromText(LanguageLevel.PYTHON36,
+                                                                                PyTypeDeclarationStatement.class,
+                                                                                compoundTarget.getText() + ": " + annotation);
+        final PyStatement containingStatement = PsiTreeUtil.getParentOfType(compoundTarget, PyStatement.class);
+        assert containingStatement != null;
+        containingStatement.getParent().addBefore(declaration, containingStatement);
       }
     }
   }
@@ -80,13 +98,15 @@ public class PyConvertTypeCommentToVariableAnnotation extends PyBaseIntentionAct
     return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
   }
 
-  private boolean isSuitableTypeComment(@NotNull PsiComment comment) {
+  private static boolean isSuitableTypeComment(@NotNull PsiComment comment) {
     final String annotation = PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    return annotation != null && findTypeCommentTarget(comment) != null;
+    return annotation != null && (findAssignmentTypeCommentTarget(comment) != null ||
+                                  findForLoopTypeCommentTarget(comment) != null ||
+                                  findWithStatementTypeCommentTarget(comment) != null);
   }
 
   @Nullable
-  private PyTargetExpression findTypeCommentTarget(@NotNull PsiComment comment) {
+  private static PyTargetExpression findAssignmentTypeCommentTarget(@NotNull PsiComment comment) {
     final PsiElement parent = comment.getParent();
     if (parent instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)parent;
@@ -100,6 +120,37 @@ public class PyConvertTypeCommentToVariableAnnotation extends PyBaseIntentionAct
     }
     return null;
   }
+
+  @Nullable
+  private static PyTargetExpression findForLoopTypeCommentTarget(@NotNull PsiComment comment) {
+    final PsiElement parent = comment.getParent();
+    if (parent instanceof PyForPart) {
+      final PyForPart forPart = (PyForPart)parent;
+      final PyTargetExpression target = as(forPart.getTarget(), PyTargetExpression.class);
+      if (target != null && target.getTypeComment() == comment) {
+        return target;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyTargetExpression findWithStatementTypeCommentTarget(@NotNull PsiComment comment) {
+    final PsiElement parent = comment.getParent();
+    if (parent instanceof PyWithStatement) {
+      final PyWithStatement withStatement = (PyWithStatement)parent;
+      final PyWithItem[] withItems = withStatement.getWithItems();
+      if (withItems.length == 1) {
+        final PyTargetExpression target = as(withItems[0].getTarget(), PyTargetExpression.class);
+        if (target != null && target.getTypeComment() == comment) {
+          return target;
+        }
+      }
+    }
+    return null;
+  }
+
+
 
   public static void runWithDocumentReleasedAndCommitted(@NotNull Project project, @NotNull Document document, @NotNull Runnable runnable) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
