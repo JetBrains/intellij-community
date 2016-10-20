@@ -53,13 +53,13 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertEqualsHint assertEqualsHint = AssertEqualsHint.create(expression);
-      if (assertEqualsHint == null) {
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
+      if (assertHint == null) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final int argIndex = assertEqualsHint.getArgIndex();
+      final int argIndex = assertHint.getArgIndex();
       final PsiType type1 = arguments[argIndex].getType();
       final PsiType type2 = arguments[argIndex + 1].getType();
       if (!(type1 instanceof PsiArrayType) || !(type2 instanceof PsiArrayType)) {

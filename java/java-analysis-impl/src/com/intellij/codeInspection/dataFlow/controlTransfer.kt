@@ -46,6 +46,18 @@ open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : 
     return ControlTransferHandler(state, runner, transferValue.target).iteration(transferValue.traps).toTypedArray()
   }
 
+  fun getPossibleTargetIndices() : List<Int> {
+    if (transfer == null) return emptyList()
+
+    val result = ArrayList(transfer.traps.flatMap(Trap::getPossibleTargets))
+    if (transfer.target is InstructionTransfer) {
+      result.add(transfer.target.offset.instructionOffset)
+    }
+    return result
+  }
+
+  fun getPossibleTargetInstructions(allInstructions: Array<Instruction>) = getPossibleTargetIndices().map { allInstructions[it] }
+
   override fun toString() = transfer.toString()
 }
 
@@ -53,6 +65,14 @@ sealed class Trap(val anchor: PsiElement) {
   class TryCatch(tryStatement : PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>): Trap(tryStatement)
   class TryFinally(val finallyBlock: PsiCodeBlock, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(finallyBlock)
   class InsideFinally(val finallyBlock: PsiCodeBlock): Trap(finallyBlock)
+
+  internal fun getPossibleTargets(): Collection<Int> {
+    return when (this) {
+      is TryCatch -> clauses.values.map { it.instructionOffset }
+      is TryFinally -> listOf(jumpOffset.instructionOffset)
+      else -> emptyList()
+    }
+  }
 }
 
 private class ControlTransferHandler(val state: DfaMemoryState, val runner: DataFlowRunner, val target: TransferTarget) {

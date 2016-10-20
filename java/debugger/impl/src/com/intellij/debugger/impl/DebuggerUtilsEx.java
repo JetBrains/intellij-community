@@ -245,12 +245,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    for (ClassFilter filter : classFilters) {
-      if (isFiltered(filter, qName)) {
-        return true;
-      }
-    }
-    return false;
+    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
   }
   
   public static int getEnabledNumber(ClassFilter[] classFilters) {

@@ -403,7 +403,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final Set<VirtualFile> refreshFiles = new HashSet<>();
     try {
       synchronized (myDataLock) {
-        final IgnoredFilesHolder fileHolder = (IgnoredFilesHolder)myComposite.get(FileHolder.HolderType.IGNORED);
+        final IgnoredFilesCompositeHolder fileHolder = myComposite.getIgnoredFileHolder();
 
         for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
           final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
@@ -805,10 +805,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   /**
    * @return only roots for ignored folders, and ignored files
    */
-  List<VirtualFile> getIgnoredFiles() {
+  @NotNull
+  public List<VirtualFile> getIgnoredFiles() {
     synchronized (myDataLock) {
       return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
     }
+  }
+
+  @NotNull
+  public Couple<Integer> getIgnoredFilesSize() {
+    synchronized (myDataLock) {
+      IgnoredFilesCompositeHolder ignoredFileHolder = myComposite.getIgnoredFileHolder();
+      return Couple.of(ignoredFileHolder.getFilesNum(), ignoredFileHolder.getDirNum());
+    }
+  }
+
+  boolean isIgnoredInUpdateMode() {
+    return myComposite.getIgnoredFileHolder().isInUpdatingMode();
   }
 
   public List<VirtualFile> getLockedFolders() {

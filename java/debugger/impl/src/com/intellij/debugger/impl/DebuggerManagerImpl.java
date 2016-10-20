@@ -159,10 +159,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public DebuggerSession getSession(DebugProcess process) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    for (final DebuggerSession debuggerSession : getSessions()) {
-      if (process == debuggerSession.getProcess()) return debuggerSession;
-    }
-    return null;
+    return getSessions().stream().filter(debuggerSession -> process == debuggerSession.getProcess()).findFirst().orElse(null);
   }
 
   @NotNull
@@ -379,16 +376,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myCustomPositionManagerFactories.remove(factory);
   }
 
-  private static boolean hasWhitespace(String string) {
-    int length = string.length();
-    for (int i = 0; i < length; i++) {
-      if (Character.isWhitespace(string.charAt(i))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /* Remoting */
   private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
     final Sdk jdk = parameters.getJdk();
@@ -481,7 +468,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       debuggeeRunProperties += ",suspend=n,server=y";
     }
 
-    if (hasWhitespace(debuggeeRunProperties)) {
+    if (StringUtil.containsWhitespaces(debuggeeRunProperties)) {
       debuggeeRunProperties = "\"" + debuggeeRunProperties + "\"";
     }
     final String _debuggeeRunProperties = debuggeeRunProperties;

@@ -155,6 +155,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
 
   private void setInlaysAndFragmentIterator() {
     mySegmentEndOffset = getCurrentFoldRegionStartOffset();
+    assert mySegmentEndOffset >= mySegmentStartOffset;
     if (mySegmentEndOffset > mySegmentStartOffset) {
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;

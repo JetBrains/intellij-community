@@ -26,7 +26,8 @@ import java.io.*;
 import java.util.Arrays;
 
 public class ByteArrayEnumerator extends PersistentEnumeratorDelegate<byte[]> {
-  @Nullable private final CachingEnumerator<byte[]> myCache;
+  @NotNull
+  private final CachingEnumerator<byte[]> myCache;
 
   public ByteArrayEnumerator(@NotNull final File file) throws IOException {
     super(file, ByteSequenceDataExternalizer.INSTANCE, 1024 * 4, null);
@@ -45,9 +46,9 @@ public class ByteArrayEnumerator extends PersistentEnumeratorDelegate<byte[]> {
   }
 
   @Override
-  public int enumerate(@Nullable byte[] value) {
+  public synchronized int enumerate(@Nullable byte[] value) {
     try {
-      return myCache != null ? myCache.enumerate(value) : super.enumerate(value);
+      return myCache.enumerate(value);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -56,14 +57,14 @@ public class ByteArrayEnumerator extends PersistentEnumeratorDelegate<byte[]> {
 
   @Nullable
   @Override
-  public byte[] valueOf(int idx) throws IOException {
-    return myCache != null ? myCache.valueOf(idx) : super.valueOf(idx);
+  public synchronized byte[] valueOf(int idx) throws IOException {
+    return myCache.valueOf(idx);
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     super.close();
-    if (myCache != null) myCache.close();
+    myCache.close();
   }
 
   @NotNull

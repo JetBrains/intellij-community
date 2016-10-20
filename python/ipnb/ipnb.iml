@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="markdownj" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module-library">
       <library>
@@ -25,5 +24,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="markdown4j-2.2" level="project" />
   </component>
 </module>

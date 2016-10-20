@@ -100,7 +100,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   private IntentionAction findActionAndCheck(final ActionHint actionHint, Collection<HighlightInfo> infosBefore) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(getEditor(), getFile());
-    return actionHint.findAndCheck(actions, "Infos: " + infosBefore);
+    return actionHint.findAndCheck(actions, () -> "Infos: " + infosBefore);
   }
 
   public void testAddDependency() throws Exception {

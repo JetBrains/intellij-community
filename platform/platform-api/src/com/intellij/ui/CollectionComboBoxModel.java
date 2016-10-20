@@ -66,7 +66,4 @@ public class CollectionComboBoxModel<T> extends CollectionListModel<T> implement
     super.fireContentsChanged(this, -1, -1);
   }
 
-  public boolean contains(T item) {
-    return getElementIndex(item) != -1;
-  }
 }

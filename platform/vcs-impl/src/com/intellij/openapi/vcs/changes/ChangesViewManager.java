@@ -34,7 +34,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -332,14 +335,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
+    TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.isShowFlatten())
+      .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
+           changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
+           changeListManager.getLockedFolders(),
+           changeListManager.getLogicallyLockedFolders())
+      .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize());
+    if (myState.myShowIgnored) {
+      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.getIgnoredFilesSize(),
+                                  changeListManager.isIgnoredInUpdateMode());
+    }
     myView.updateModel(
-      new TreeModelBuilder(myProject, myView.isShowFlatten())
-        .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
-             changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
-             myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
-             changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize())
-        .build()
+      treeModelBuilder.build()
     );
 
     changeDetails();

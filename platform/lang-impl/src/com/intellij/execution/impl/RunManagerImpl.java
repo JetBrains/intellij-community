@@ -20,6 +20,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -1073,7 +1076,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Override
-  public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings) {
+  public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings, boolean withLiveIndicator) {
     final String uniqueID = settings.getUniqueID();
     RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
     String selectedId = selectedConfiguration != null ? selectedConfiguration.getUniqueID() : "";
@@ -1125,7 +1128,15 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       myIdToIcon.put(uniqueID, icon);
       myIconCheckTimes.put(uniqueID, System.currentTimeMillis());
     }
-
+    if (withLiveIndicator) {
+      List<RunContentDescriptor> runningDescriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(s -> s == settings);
+      if (runningDescriptors.size() == 1) {
+        icon = ExecutionUtil.getLiveIndicator(icon);
+      }
+      if (runningDescriptors.size() > 1) {
+        icon = IconUtil.addText(icon, String.valueOf(runningDescriptors.size()));
+      }
+    }
     return icon;
   }
 

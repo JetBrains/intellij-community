@@ -119,11 +119,7 @@ public class XLineBreakpointManager {
   public void updateBreakpointsUI() {
     if (myProject.isDefault()) return;
 
-    DumbAwareRunnable runnable = () -> {
-      for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-        breakpoint.updateUI();
-      }
-    };
+    DumbAwareRunnable runnable = () -> myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
 
     if (ApplicationManager.getApplication().isUnitTestMode() || myStartupManager.startupActivityPassed()) {
       runnable.run();
@@ -217,9 +213,7 @@ public class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-          breakpoint.updateUI();
-        }
+        myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
       }
     });
   }

@@ -191,6 +191,11 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     public boolean isShowExcludedFiles() {
       return myShowExcludedFiles;
     }
+
+    @Override
+    public boolean isToBuildChildrenInBackground(Object element) {
+      return true;
+    }
   }
 
   private final class ShowExcludedFilesAction extends ToggleAction implements DumbAware {

@@ -343,9 +343,7 @@ public class JavaStackFrame extends XStackFrame {
                                                        @NotNull SourcePosition sourcePosition,
                                                        @NotNull EvaluationContextImpl evalContext) {
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
-    for (TextWithImports text : usedVars.second) {
-      alreadyCollected.add(text.getText());
-    }
+    usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
     for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {

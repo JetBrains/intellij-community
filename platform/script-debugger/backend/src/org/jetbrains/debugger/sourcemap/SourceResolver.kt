@@ -138,7 +138,7 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
   var path = url
-  if (url[0] != '/') {
+  if (!FileUtil.isAbsolute(url)) {
     val basePath = baseUrl.path
     if (baseUrlIsFile) {
       val lastSlashIndex = basePath.lastIndexOf('/')

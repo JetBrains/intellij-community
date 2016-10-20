@@ -37,6 +37,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     super(condition);
   }
 
+  @NotNull
   @Override
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
@@ -84,6 +85,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     });
   }
 
+  @NotNull
   public Self regExpOperatorArgument() {
     return with(new PatternCondition<T>("regExpOperatorArg") {
       @Override

@@ -43,10 +43,10 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   public void testAddRcConfig() {
-    hasRcConfig("bash -i", "jediterm-sh.in", Maps.newHashMap());
-    hasRcConfig("sh --login", "jediterm-sh.in", Maps.newHashMap());
+    hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
+    hasRcConfig("sh --login", "jediterm-bash.in", Maps.newHashMap());
     Map<String, String> envs = Maps.newHashMap();
-    hasRcConfig("sh --rcfile ~/.bashrc", "jediterm-sh.in", envs);
+    hasRcConfig("sh --rcfile ~/.bashrc", "jediterm-bash.in", envs);
     assertEquals("~/.bashrc", envs.get("JEDITERM_SOURCE"));
   }
 

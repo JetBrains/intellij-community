@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
@@ -71,7 +70,12 @@ class LookupPreview {
   private String getSuffixText(@Nullable LookupElement item) {
     if (item != null) {
       String itemText = StringUtil.notNullize(LookupElementPresentation.renderElement(item).getItemText());
-      FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(myLookup.itemPattern(item), itemText);
+      String prefix = myLookup.itemPattern(item);
+      if (prefix.isEmpty()) {
+        return itemText;
+      }
+
+      FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(prefix, itemText);
       if (fragments != null && !fragments.isEmpty()) {
         List<TextRange> list = ContainerUtil.newArrayList(fragments);
         return itemText.substring(list.get(list.size() - 1).getEndOffset(), itemText.length());
@@ -98,8 +102,6 @@ class LookupPreview {
 
       @Override
       public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-        g.setColor(editor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
-        g.fillRect(r.x, r.y, r.width, r.height);
         g.setColor(JBColor.GRAY);
         g.setFont(getFont(editor));
         g.drawString(suffix, r.x, r.y + ((EditorImpl)editor).getAscent());

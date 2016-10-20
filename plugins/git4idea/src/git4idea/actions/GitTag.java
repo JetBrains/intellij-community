@@ -15,15 +15,15 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitTagDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Git "tag" action
@@ -43,14 +43,15 @@ public class GitTag extends GitRepositoryAction {
    */
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
-                         final List<VcsException> exceptions) throws VcsException {
+                         @NotNull final VirtualFile defaultRoot) {
     GitTagDialog d = new GitTagDialog(project, gitRoots, defaultRoot);
-    if (!d.showAndGet()) {
-      return;
+    if (d.showAndGet()) {
+      new Task.Modal(project, "Tagging...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          d.runAction();
+        }
+      }.queue();
     }
-    d.runAction(exceptions);
   }
-
 }

@@ -73,23 +73,12 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     final PsiExpression[] expressions = argumentList.getExpressions();
     if (!name.startsWith("map") && expressions.length == 0) return true;
     if (expressions.length != 1) return false;
-    if (!isSupportedForConversion(expressions[0], true)) return false;
+    if (!StreamRefactoringUtil.isRefactoringCandidate(expressions[0], true)) return false;
 
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     return InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
-  }
-
-  private static boolean isSupportedForConversion(PsiExpression expression, boolean requireExpressionLambda) {
-    if(expression instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)expression;
-      return lambdaExpression.getParameterList().getParametersCount() == 1 &&
-             (!requireExpressionLambda || LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) != null);
-    } else if(expression instanceof PsiMethodReferenceExpression) {
-      return LambdaRefactoringUtil.canConvertToLambda((PsiMethodReferenceExpression)expression);
-    }
-    return false;
   }
 
   @Nullable
@@ -107,7 +96,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       if (!nextName.equals("boxed") && !nextName.equals("asLongStream") && !nextName.equals("asDoubleStream")) return null;
       return nextCall;
     }
-    if (expressions.length != 1 || !isSupportedForConversion(expressions[0], false)) return null;
+    if (expressions.length != 1 || !StreamRefactoringUtil.isRefactoringCandidate(expressions[0], false)) return null;
 
     return nextCall;
   }

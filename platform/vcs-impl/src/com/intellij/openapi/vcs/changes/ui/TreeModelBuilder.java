@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -100,18 +101,28 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setUnversioned(@NotNull List<VirtualFile> unversionedFiles, @NotNull Couple<Integer> sizes) {
-    if (!unversionedFiles.isEmpty()) {
-      resetGrouping();
+    if (ContainerUtil.isEmpty(unversionedFiles)) return this;
+    return insertSpecificNodeToModel(unversionedFiles, new ChangesBrowserUnversionedFilesNode(
+      myProject, sizes.getFirst(), sizes.getSecond(), unversionedFiles.size() > UNVERSIONED_MAX_SIZE));
+  }
 
-      ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(
-        myProject, sizes.getFirst(), sizes.getSecond(), unversionedFiles.size() > UNVERSIONED_MAX_SIZE);
-      model.insertNodeInto(node, root, root.getChildCount());
+  @NotNull
+  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, Couple<Integer> sizes, boolean updatingMode) {
+    if (ContainerUtil.isEmpty(ignoredFiles)) return this;
+    return insertSpecificNodeToModel(ignoredFiles,
+                                     new ChangesBrowserIgnoredFilesNode(myProject, sizes.getFirst(), sizes.getSecond(),
+                                                                        ignoredFiles.size() > UNVERSIONED_MAX_SIZE, updatingMode));
+  }
 
-      if (!node.isManyUnversioned()) {
-        insertFilesIntoNode(unversionedFiles, node);
-      }
+  @NotNull
+  private TreeModelBuilder insertSpecificNodeToModel(@NotNull List<VirtualFile> specificFiles,
+                                                     @NotNull ChangesBrowserSpecificFilesNode node) {
+    resetGrouping();
+    model.insertNodeInto(node, root, root.getChildCount());
+
+    if (!node.isManyFiles()) {
+      insertFilesIntoNode(specificFiles, node);
     }
-
     return this;
   }
 
@@ -147,7 +158,6 @@ public class TreeModelBuilder {
                               @NotNull List<VirtualFile> modifiedWithoutEditing,
                               @NotNull MultiMap<String, VirtualFile> switchedFiles,
                               @Nullable Map<VirtualFile, String> switchedRoots,
-                              @Nullable List<VirtualFile> ignoredFiles,
                               @Nullable List<VirtualFile> lockedFolders,
                               @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     resetGrouping();
@@ -164,10 +174,6 @@ public class TreeModelBuilder {
     if (!switchedFiles.isEmpty()) {
       resetGrouping();
       buildSwitchedFiles(switchedFiles);
-    }
-    if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
-      resetGrouping();
-      buildVirtualFiles(ignoredFiles, ChangesBrowserNode.IGNORED_FILES_TAG);
     }
     if (lockedFolders != null && !lockedFolders.isEmpty()) {
       resetGrouping();

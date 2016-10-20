@@ -62,7 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.Arrays;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
   public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
@@ -183,13 +183,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
 
-    List list = debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded);
-    for (final Object aList : list) {
-      ReferenceType refType = (ReferenceType)aList;
-      if (refType.isPrepared()) {
-        processClassPrepare(debugProcess, refType);
-      }
-    }
+    debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded).stream()
+      .filter(ReferenceType::isPrepared)
+      .forEach(aList -> processClassPrepare(debugProcess, aList));
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
@@ -308,12 +304,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    * @return true if the ID was added or false otherwise
    */
   private boolean hasObjectID(long id) {
-    for (InstanceFilter instanceFilter : getInstanceFilters()) {
-      if (instanceFilter.getId() == id) {
-        return true;
-      }
-    }
-    return false;
+    return Arrays.stream(getInstanceFilters()).anyMatch(instanceFilter -> instanceFilter.getId() == id);
   }
 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -321,7 +312,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (isCountFilterEnabled()) {
       debugProcess.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
-      ((Breakpoint)this).createRequest(debugProcess);
+      createRequest(debugProcess);
       debugProcess.getVirtualMachineProxy().resume();
     }
     if (isInstanceFiltersEnabled()) {
@@ -403,12 +394,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (hasEnabled && !matches) {
       return false;
     }
-    for (ClassFilter classFilter : exludeFilters) {
-      if (classFilter.isEnabled() && classFilter.matches(typeName)) {
-        return false;
-      }
-    }
-    return true;
+    return Arrays.stream(exludeFilters).noneMatch(classFilter -> classFilter.isEnabled() && classFilter.matches(typeName));
   }
 
   private void handleTemporaryBreakpointHit(final DebugProcessImpl debugProcess) {

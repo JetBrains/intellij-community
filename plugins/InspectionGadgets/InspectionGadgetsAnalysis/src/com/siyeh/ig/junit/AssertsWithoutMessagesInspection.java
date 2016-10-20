@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -82,8 +81,8 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      final boolean messageOnFirstPosition = AssertEqualsHint.isMessageOnFirstPosition(containingClass);
-      final boolean messageOnLastPosition = AssertEqualsHint.isMessageOnLastPosition(containingClass);
+      final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(containingClass);
+      final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass);
       if (!messageOnFirstPosition && !messageOnLastPosition) {
         return;
       }

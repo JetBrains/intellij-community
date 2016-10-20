@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,12 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -125,13 +126,9 @@ public class ToStringRenderer extends NodeRendererImpl {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
-    if(type instanceof ClassType) {
-      final List<Method> methods = ((ClassType)type).methodsByName("toString", "()Ljava/lang/String;");
-      for (Method method : methods) {
-        if (!(method.declaringType().name()).equals(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return true;
-        }
-      }
+    if (type instanceof ClassType) {
+      return ((ClassType)type).methodsByName("toString", "()Ljava/lang/String;").stream()
+        .anyMatch(method -> !CommonClassNames.JAVA_LANG_OBJECT.equals(method.declaringType().name()));
     }
     return false;
   }

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,15 +175,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      IgnoredFilesHolder ignoredFilesHolder = myComposite.getIgnoredFileHolder();
-      if (ignoredFilesHolder instanceof IgnoredFilesCompositeHolder) {
-        IgnoredFilesHolder holder = ((IgnoredFilesCompositeHolder)ignoredFilesHolder).getAppropriateIgnoredHolder();
-        if (holder instanceof MapIgnoredFilesHolder) {
-          ((MapIgnoredFilesHolder)holder).addByVcsChangeProvider(file);
-          return;
-        }
-      }
-      ignoredFilesHolder.addFile(file);
+      ObjectUtils.assertNotNull(myComposite.getIgnoredFileHolder().getActiveVcsHolder()).addFile(file);
     }
   }
 

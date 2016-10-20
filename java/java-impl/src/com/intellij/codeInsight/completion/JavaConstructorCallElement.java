@@ -49,8 +49,6 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     myConstructor = constructor;
     myType = type;
     mySubstitutor = myType.resolveGenerics().getSubstitutor();
-
-    markClassItemWrapped(classItem);
   }
 
   private void markClassItemWrapped(@NotNull LookupElement classItem) {
@@ -60,6 +58,12 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
       if (!(delegate instanceof LookupElementDecorator)) break;
       delegate = ((LookupElementDecorator)delegate).getDelegate();
     }
+  }
+
+  @Override
+  public void handleInsert(InsertionContext context) {
+    markClassItemWrapped(getDelegate());
+    super.handleInsert(context);
   }
 
   @NotNull
