@@ -50,4 +50,24 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   public void testMultilineAssignment() {
     doPositiveTest();
   }
+
+  public void testSimpleForLoop() {
+    doPositiveTest();
+  }
+
+  public void testSimpleWithStatement() {
+    doPositiveTest();
+  }
+
+  public void testForLoopWithUnpacking() {
+    doNegativeTest();
+  }
+
+  public void testWithStatementWithUnpacking() {
+    doNegativeTest();
+  }
+
+  public void testWithStatementWithMultipleWithItems() {
+    doNegativeTest();
+  }
 }
