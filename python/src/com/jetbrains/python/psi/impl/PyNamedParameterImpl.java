@@ -28,7 +28,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -336,6 +339,27 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               elseIfCondition.accept(this);
             }
           }
+        }
+
+        @Override
+        public void visitPyCallExpression(PyCallExpression node) {
+          Optional
+            .ofNullable(node.getCallee())
+            .map(context::getType)
+            .map(type -> PyUtil.as(type, PyFunctionType.class))
+            .map(PyFunctionType::getCallable)
+            .map(PyCallable::getName)
+            .filter("len"::equals)
+            .ifPresent(
+              callable -> {
+                final PyReferenceExpression argument = node.getArgument(0, PyReferenceExpression.class);
+                if (argument != null && argument.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+                  result.add(PyNames.LEN);
+                }
+              }
+            );
+
+          super.visitPyCallExpression(node);
         }
       });
     }
