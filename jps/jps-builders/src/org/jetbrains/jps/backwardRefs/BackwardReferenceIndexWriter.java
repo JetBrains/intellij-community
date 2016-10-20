@@ -43,6 +43,7 @@ import static com.sun.tools.javac.code.Flags.PRIVATE;
 
 public class BackwardReferenceIndexWriter {
   public static final String PROP_KEY = "ref.index.builder";
+
   public static volatile boolean forceEnabled;
 
   private static volatile BackwardReferenceIndexWriter ourInstance;
@@ -245,12 +246,12 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  static byte[] bytes(Symbol symbol) {
+  private static byte[] bytes(Symbol symbol) {
     return symbol.flatName().toUtf();
   }
 
   @Nullable
-  static LightRef fromSymbol(JavacRefSymbol refSymbol, ByteArrayEnumerator byteArrayEnumerator) {
+  private static LightRef fromSymbol(JavacRefSymbol refSymbol, ByteArrayEnumerator byteArrayEnumerator) {
     Symbol symbol = refSymbol.getSymbol();
     final Tree.Kind kind = refSymbol.getPlaceKind();
     if (symbol instanceof Symbol.ClassSymbol) {

@@ -15,7 +15,9 @@
  */
 package org.jetbrains.jps.javac.ast;
 
+import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.Tree;
+import com.sun.source.util.JavacTask;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
 import com.sun.tools.javac.code.Symbol;
@@ -28,6 +30,9 @@ import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.tools.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +49,29 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private Set<JavacRefSymbol> myCollectedReferences;
   private List<JavacRefSymbol> myCollectedDefinitions;
 
-  public JavacReferenceCollectorListener(JavacFileReferencesRegistrar[] fullASTListenerArray, JavacFileReferencesRegistrar[] importsListenerArray) {
+  static void installOn(JavaCompiler.CompilationTask task,
+                        JavacFileReferencesRegistrar[] fullASTListenerArray,
+                        JavacFileReferencesRegistrar[] onlyImportsListenerArray) {
+    JavacTask javacTask = (JavacTask)task;
+    Method addTaskMethod = ReflectionUtil.getMethod(JavacTask.class, "addTaskListener", TaskListener.class); // jdk >= 8
+    final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(fullASTListenerArray, onlyImportsListenerArray);
+    if (addTaskMethod != null) {
+      try {
+        addTaskMethod.invoke(task, taskListener);
+      }
+      catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+      catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      // jdk 6-7
+      javacTask.setTaskListener(taskListener);
+    }
+  }
+
+  private JavacReferenceCollectorListener(JavacFileReferencesRegistrar[] fullASTListenerArray, JavacFileReferencesRegistrar[] importsListenerArray) {
     myFullASTListeners = fullASTListenerArray;
     myOnlyImportsListeners = importsListenerArray;
     myAstScanner = JavacTreeRefScanner.createASTScanner();

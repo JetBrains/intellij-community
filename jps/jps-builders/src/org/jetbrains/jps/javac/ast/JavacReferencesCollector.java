@@ -15,16 +15,11 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.sun.source.util.JavacTask;
-import com.sun.source.util.TaskListener;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -48,22 +43,6 @@ public class JavacReferencesCollector {
       return;
     }
 
-    JavacTask javacTask = (JavacTask)task;
-    Method addTaskMethod = ReflectionUtil.getMethod(JavacTask.class, "addTaskListener", TaskListener.class); // jdk >= 8
-    final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(fullASTListenerArray, onlyImportsListenerArray);
-    if (addTaskMethod != null) {
-      try {
-        addTaskMethod.invoke(task, taskListener);
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-      catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      }
-    } else {
-      // jdk 6-7
-      javacTask.setTaskListener(taskListener);
-    }
+    JavacReferenceCollectorListener.installOn(task, fullASTListenerArray, onlyImportsListenerArray);
   }
 }
