@@ -238,11 +238,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     super.doCancelAction();
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   private CheckboxTree createTree() {
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode root = rootAndPreselectedNode.first;
