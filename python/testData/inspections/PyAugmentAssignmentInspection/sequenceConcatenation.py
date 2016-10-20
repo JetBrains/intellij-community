@@ -11,13 +11,12 @@ def expand(values1, values2):
     <weak_warning descr="Assignment can be replaced with augmented assignment">values1 = values1 + values2</weak_warning>
 
 
-#def expand(values1, values2):
-#    a = len(values1)
-#    b = len(values2)
-#
-#    values1 = values2 + values1
-#    values1 = values1 + values2
-#    inspection should suggest replacement only for the second assignment
+def expand(values1, values2):
+    a = len(values1)
+    b = len(values2)
+
+    values1 = values2 + values1
+    <weak_warning descr="Assignment can be replaced with augmented assignment">values1 = values1 + values2</weak_warning>
 
 
 #def expand(values1, values2):
