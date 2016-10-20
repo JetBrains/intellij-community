@@ -593,13 +593,4 @@ public class ReflectionUtil {
     }
   };
 
-  private static final Method DEFINE_CLASS =
-    ObjectUtils.assertNotNull(getDeclaredMethod(ClassLoader.class, "defineClass", String.class, byte[].class, int.class, int.class));
-
-  public static Class defineClass(@NotNull String className, @NotNull byte[] bytes, ClassLoader loader) throws Exception {
-    Class c = (Class)DEFINE_CLASS.invoke(loader, className, bytes, 0, bytes.length);
-    Class.forName(className, true, loader);
-    return c;
-  }
-
 }
