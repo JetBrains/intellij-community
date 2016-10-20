@@ -152,21 +152,6 @@
     <action id="SurroundWithLiveTemplate">
       <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
     </action>
-    <action id="SwitchApply">
-      <keyboard-shortcut first-keystroke="control alt ENTER"/>
-    </action>
-    <action id="SwitchDown">
-      <keyboard-shortcut first-keystroke="control alt DOWN"/>
-    </action>
-    <action id="SwitchLeft">
-      <keyboard-shortcut first-keystroke="control alt LEFT"/>
-    </action>
-    <action id="SwitchRight">
-      <keyboard-shortcut first-keystroke="control alt RIGHT"/>
-    </action>
-    <action id="SwitchUp">
-      <keyboard-shortcut first-keystroke="control alt UP"/>
-    </action>
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="control E" second-keystroke="H"/>
     </action>
