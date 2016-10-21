@@ -17,7 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
@@ -64,9 +64,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void moduleListing() {
-    String path = myTempDir.getRoot().getPath();
-    assertThat(JrtFileSystem.listModules(path)).containsExactlyInAnyOrder("java.base", "test1");
+  public void nonRoot() {
+    String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, JavaTestUtil.getJavaTestDataPath() + JrtFileSystem.SEPARATOR);
+    VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+    assertThat(root).isNull();
   }
 
   @Test

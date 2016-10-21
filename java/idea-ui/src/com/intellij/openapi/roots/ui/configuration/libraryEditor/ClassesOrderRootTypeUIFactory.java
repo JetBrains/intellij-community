@@ -23,7 +23,7 @@ import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
