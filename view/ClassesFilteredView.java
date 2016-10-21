@@ -17,10 +17,12 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
@@ -41,12 +43,14 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
@@ -71,7 +75,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   /**
    * Indicates that the debug session had been stopped at least once.
-   *
+   * <p>
    * State: false -> true
    */
   private volatile boolean myIsTrackersActivated = false;
@@ -194,13 +198,43 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     });
 
+    Function<MouseEvent, Boolean> isOpenNewInstancesClick = e -> {
+      int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
+      ReferenceType ref = myTable.getSelectedClass();
+      return column == ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX && ref != null && getStrategy(ref) != null;
+    };
+
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        handleClassSelection(myTable.getSelectedClass());
-        return true;
+        if (!isOpenNewInstancesClick.apply(event)) {
+          handleClassSelection(myTable.getSelectedClass());
+          return true;
+        }
+
+        return false;
       }
     }.installOn(myTable);
+
+    myTable.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() != 1 || !isOpenNewInstancesClick.apply(e) || e.getButton() != MouseEvent.BUTTON1) {
+          return;
+        }
+
+        ReferenceType ref = myTable.getSelectedClass();
+        TrackerForNewInstances strategy = ref == null ? null : getStrategy(ref);
+        if (strategy != null && strategy.isReady() && strategy.getCount() > 0) {
+          List<ObjectReference> newInstances = strategy.getNewInstances();
+          CreationPositionTracker.getInstance(myDebugSession.getProject()).pinStacks(myDebugSession, ref);
+          InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
+          Disposer.register(instancesWindow.getDisposable(),
+              () -> CreationPositionTracker.getInstance(myDebugSession.getProject()).unpinStacks(myDebugSession, ref));
+          instancesWindow.show();
+        }
+      }
+    });
 
     final MemoryViewManagerListener memoryViewManagerListener = state -> {
       myTable.setFilteringByDiffNonZero(state.isShowWithDiffOnly);

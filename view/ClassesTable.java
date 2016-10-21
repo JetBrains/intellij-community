@@ -3,7 +3,6 @@ package org.jetbrains.debugger.memory.view;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -22,7 +21,6 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
@@ -33,8 +31,6 @@ import org.jetbrains.debugger.memory.utils.InstancesProvider;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,9 +44,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
-  private static final int COUNT_COLUMN_MAX_WIDTH = 100;
   private static final int DIFF_COLUMN_MIN_WIDTH = 80;
-  private static final int DIFF_COLUMN_MAX_WIDTH = 100;
 
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
@@ -82,17 +76,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
     TableColumn diffColumn = getColumnModel().getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
 
-    setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
+    setAutoResizeMode(AUTO_RESIZE_NEXT_COLUMN);
     classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
-    classesColumn.setResizable(false);
 
     countColumn.setMinWidth(JBUI.scale(COUNT_COLUMN_MIN_WIDTH));
-    countColumn.setMaxWidth(JBUI.scale(COUNT_COLUMN_MAX_WIDTH));
-    countColumn.setResizable(false);
 
     diffColumn.setMinWidth(JBUI.scale(DIFF_COLUMN_MIN_WIDTH));
-    diffColumn.setMaxWidth(JBUI.scale(DIFF_COLUMN_MAX_WIDTH));
-    diffColumn.setResizable(false);
 
     setShowGrid(false);
     setIntercellSpacing(new JBDimension(0, 0));
@@ -101,26 +90,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setDefaultRenderer(Long.class, new MyCountColumnRenderer());
     setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (columnAtPoint(e.getPoint()) != DiffViewTableModel.DIFF_COLUMN_INDEX ||
-            e.getButton() != MouseEvent.BUTTON1) {
-          return;
-        }
 
-        ReferenceType ref = myElems.get(convertRowIndexToModel(rowAtPoint(e.getPoint())));
-        TrackerForNewInstances strategy = myParent.getStrategy(ref);
-        if (strategy != null && strategy.isReady() && strategy.getCount() > 0) {
-          List<ObjectReference> newInstances = strategy.getNewInstances();
-          CreationPositionTracker.getInstance(myDebugSession.getProject()).pinStacks(myDebugSession, ref);
-          InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
-          Disposer.register(instancesWindow.getDisposable(),
-              () -> CreationPositionTracker.getInstance(myDebugSession.getProject()).unpinStacks(myDebugSession, ref));
-          instancesWindow.show();
-        }
-      }
-    });
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
       @Override
@@ -288,14 +258,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   private TrackingType getTrackingType(int row) {
-    ReferenceType ref = (ReferenceType) getValueAt(row, DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
+    ReferenceType ref = (ReferenceType) getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
 
-  private class DiffViewTableModel extends AbstractTableModelWithColumns {
-    private final static int CLASSNAME_COLUMN_INDEX = 0;
-    private final static int COUNT_COLUMN_INDEX = 1;
-    private final static int DIFF_COLUMN_INDEX = 2;
+  class DiffViewTableModel extends AbstractTableModelWithColumns {
+    final static int CLASSNAME_COLUMN_INDEX = 0;
+    final static int COUNT_COLUMN_INDEX = 1;
+    final static int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
     private ReferenceType mySelectedClassWhenHided = null;
@@ -417,6 +387,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
+      column = convertColumnIndexToModel(column);
       TrackingType trackingType = getTrackingType(row);
       if (trackingType != null && !isSelected) {
         JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
