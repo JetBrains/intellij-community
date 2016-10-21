@@ -16,9 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.util.JpsPathUtil
-
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  *
