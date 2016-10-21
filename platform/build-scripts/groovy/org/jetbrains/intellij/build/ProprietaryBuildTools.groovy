@@ -17,8 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
-import groovy.transform.Immutable
-
 /**
  * Describes proprietary tools which are used to build the product. Pass the instance of this class {@link BuildContext#createContext} method.
  *
