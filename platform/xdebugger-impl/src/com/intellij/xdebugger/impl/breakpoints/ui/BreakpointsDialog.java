@@ -306,11 +306,10 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree, myDisposable);
 
-    DefaultActionGroup breakpointTypes = new DefaultActionGroup();
-    XBreakpointUtil.getBreakpointTypes()
+    DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
       .filter(XBreakpointType::isAddBreakpointButtonVisible)
       .map(AddXBreakpointAction::new)
-      .forEach(breakpointTypes::add);
+      .toListAndThen(DefaultActionGroup::new);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setAddAction(new AnActionButtonRunnable() {

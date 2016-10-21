@@ -22,10 +22,10 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * Date: 27-Mar-2008
  */
-public class OverridenUsageInfo extends TypeMigrationUsageInfo {
+public class OverriddenUsageInfo extends TypeMigrationUsageInfo {
   private volatile String myMigrateMethodName;
 
-  public OverridenUsageInfo(@NotNull PsiElement element) {
+  public OverriddenUsageInfo(@NotNull PsiElement element) {
     super(element);
   }
 

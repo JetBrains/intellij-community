@@ -34,7 +34,7 @@ class Test {
   {
     Set<String> m = replyWith(this::query);
     System.out.println(m);
-    Set<String> m1 = replyWith<error descr="Ambiguous method call: both 'Test.replyWith(Function<String, List<String>>)' and 'Test.replyWith(Callable<List<String>>)' match">(this::query1)</error>;
+    Set<String> m1 = replyWith<error descr="Ambiguous method call: both 'Test.replyWith(Function<Object, List<Object>>)' and 'Test.replyWith(Callable<List<Object>>)' match">(this::query1)</error>;
     System.out.println(m1);
   }
 }

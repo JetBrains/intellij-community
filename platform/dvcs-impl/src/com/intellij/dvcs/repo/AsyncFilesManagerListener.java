@@ -15,13 +15,19 @@
  */
 package com.intellij.dvcs.repo;
 
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+
 import java.util.EventListener;
 
 /**
- * The listener interface for handling async vcs files holder events.
- * When a files holder model starts/finishes to update itself -> updateStarted/Finished will be called for all subscribers.
- * e.g. vcs updates its ignored file model after that we should trigger ui update in ChangesView;
+ * <p>
+ * The listener interface for handling async {@link ChangeListManager} node models updating.
+ * </p>
+ * <p>
+ * When model starts/finishes to update itself -> updateStarted/Finished will be called for all subscribers.<br/>
+ * e.g. vcs updates its ignored file model after that we should trigger ui update in ChangesView;<br/>
  * moreover, when long duration update starts we should also trigger some action;
+ * </p>
  */
 public interface AsyncFilesManagerListener extends EventListener {
 

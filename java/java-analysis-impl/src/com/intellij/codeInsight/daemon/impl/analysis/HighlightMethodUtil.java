@@ -656,13 +656,13 @@ public class HighlightMethodUtil {
     if (methodCandidate2 != null) {
       PsiMethod element1 = methodCandidate1.getElement();
       String m1 = PsiFormatUtil.formatMethod(element1,
-                                             methodCandidate1.getSubstitutor(),
+                                             methodCandidate1.getSubstitutor(false),
                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_PARAMETERS,
                                              PsiFormatUtilBase.SHOW_TYPE);
       PsiMethod element2 = methodCandidate2.getElement();
       String m2 = PsiFormatUtil.formatMethod(element2,
-                                             methodCandidate2.getSubstitutor(),
+                                             methodCandidate2.getSubstitutor(false),
                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_PARAMETERS,
                                              PsiFormatUtilBase.SHOW_TYPE);

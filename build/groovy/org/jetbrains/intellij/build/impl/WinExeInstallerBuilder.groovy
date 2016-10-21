@@ -143,6 +143,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
+!define LINK_TO_JRE64 "${customizer.linkToJRE64(buildContext)}"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build

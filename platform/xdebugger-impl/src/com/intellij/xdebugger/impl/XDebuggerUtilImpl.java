@@ -93,7 +93,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
-      myLineBreakpointTypes = XBreakpointUtil.getBreakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
+      myLineBreakpointTypes = XBreakpointUtil.breakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
     }
     return myLineBreakpointTypes;
   }
@@ -289,7 +289,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass) {
     if (myBreakpointTypeByClass == null) {
-      myBreakpointTypeByClass = XBreakpointUtil.getBreakpointTypes().toMap(XBreakpointType::getClass, t -> t);
+      myBreakpointTypeByClass = XBreakpointUtil.breakpointTypes().toMap(XBreakpointType::getClass, t -> t);
     }
     XBreakpointType type = myBreakpointTypeByClass.get(typeClass);
     //noinspection unchecked

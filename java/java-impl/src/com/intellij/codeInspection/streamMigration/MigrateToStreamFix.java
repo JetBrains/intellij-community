@@ -56,6 +56,7 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(loopStatement)) return;
       PsiElement result = migrate(project, loopStatement, body, tb);
       if(result != null) {
+        source.cleanUpSource();
         simplifyAndFormat(project, result);
       }
     }

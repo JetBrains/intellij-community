@@ -71,7 +71,7 @@ class FileCredentialStoreTest {
       credentialMap.put(attributes, credentials)
     }
 
-    provider.setMasterPassword("foo")
+    provider.setMasterPassword("foo".toByteArray())
 
     val pdbFile = baseDir.resolve("c.kdbx")
     val pdbPwdFile = baseDir.resolve("pdb.pwd")

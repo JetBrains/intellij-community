@@ -50,7 +50,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -408,9 +407,20 @@ public abstract class PluginManagerMain implements Disposable {
     loadPluginsFromHostInBackground();
   }
 
+  /**
+   * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
+   */
   public static boolean downloadPlugins(final List<PluginNode> plugins,
                                         final List<PluginId> allPlugins,
                                         final Runnable onSuccess,
+                                        @Nullable final Runnable cleanup) throws IOException {
+    return downloadPlugins(plugins, allPlugins, onSuccess, new PluginEnabler.HEADLESS(), cleanup);
+  }
+
+  public static boolean downloadPlugins(final List<PluginNode> plugins,
+                                        final List<PluginId> allPlugins,
+                                        final Runnable onSuccess,
+                                        PluginEnabler pluginEnabler,
                                         @Nullable final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];
     try {
@@ -418,7 +428,7 @@ public abstract class PluginManagerMain implements Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins, indicator)) {
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins, pluginEnabler, indicator)) {
               ApplicationManager.getApplication().invokeLater(onSuccess);
               result[0] = true;
             }
@@ -708,6 +718,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   public interface PluginEnabler {
     void enablePlugins(Set<IdeaPluginDescriptor> disabled);
+    void disablePlugins(Set<IdeaPluginDescriptor> disabled);
 
     boolean isDisabled(PluginId pluginId);
 
@@ -716,6 +727,13 @@ public abstract class PluginManagerMain implements Disposable {
       public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
           PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+        }
+      }
+
+      @Override
+      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        for (IdeaPluginDescriptor descriptor : disabled) {
+          PluginManagerCore.disablePlugin(descriptor.getPluginId().getIdString());
         }
       }
 
@@ -739,7 +757,12 @@ public abstract class PluginManagerMain implements Disposable {
 
       @Override
       public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
-        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), true);
+      }
+
+      @Override
+      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), false);
       }
 
       @Override

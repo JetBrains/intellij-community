@@ -120,7 +120,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     });
   }
 
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behaviour of the splitter after disposing is

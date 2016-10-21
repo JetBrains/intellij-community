@@ -19,9 +19,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.SystemInfo;
-
-import java.io.File;
 
 /**
  * @author traff
@@ -44,7 +41,6 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
 
   @Override
   public void loadState(State state) {
-    myState.myShellPath = state.myShellPath;
     myState.myCloseSessionOnLogout = state.myCloseSessionOnLogout;
     myState.myReportMouse = state.myReportMouse;
     myState.mySoundBell = state.mySoundBell;
@@ -88,7 +84,6 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
   }
 
   public static class State {
-    public String myShellPath = getDefaultShellPath();
     public String myTabName = "Local";
     public boolean myCloseSessionOnLogout = true;
     public boolean myReportMouse = true;
@@ -97,33 +92,6 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     public boolean myPasteOnMiddleMouseButton = true;
     public boolean myOverrideIdeShortcuts = true;
     public boolean myShellIntegration = true;
-  }
-
-  public String getShellPath() {
-    return myState.myShellPath;
-  }
-
-  private static String getDefaultShellPath() {
-    String shell = System.getenv("SHELL");
-
-    if (shell != null && new File(shell).canExecute()) {
-      return shell;
-    }
-
-    if (SystemInfo.isUnix) {
-      if (new File("/bin/bash").exists()) {
-        return "/bin/bash";
-      } else {
-        return "/bin/sh";
-      }
-    }
-    else {
-      return "cmd.exe";
-    }
-  }
-
-  public void setShellPath(String shellPath) {
-    myState.myShellPath = shellPath;
   }
 
   public void setTabName(String tabName) {

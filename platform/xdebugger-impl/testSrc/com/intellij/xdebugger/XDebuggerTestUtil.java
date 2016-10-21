@@ -438,15 +438,14 @@ public class XDebuggerTestUtil {
                                                                       @NotNull final XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
-    XBreakpointUtil.getBreakpointTypes().select(exceptionType).findFirst().ifPresent(type -> {
-      final T breakpointType = exceptionType.cast(type);
+    XBreakpointUtil.breakpointTypes().select(exceptionType).findFirst().ifPresent(type ->
       new WriteAction() {
         @Override
         protected void run(@NotNull Result result) throws Throwable {
-          breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
+          breakpoint.set(breakpointManager.addBreakpoint(type, properties));
         }
-      }.execute();
-    });
+      }.execute()
+    );
     return breakpoint.get();
   }
 

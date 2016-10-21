@@ -97,4 +97,12 @@ abstract class WindowsDistributionCustomizer {
   String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null
   }
+
+  /**
+   * Link to a JetBrains JRE64 which is used by windows installation.
+   * JRE64 will be install (optional) together with JRE x86 (not replace).
+   */
+  String linkToJRE64(BuildContext buildContext) {
+    return null
+  }
 }

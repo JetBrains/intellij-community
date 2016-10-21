@@ -187,15 +187,14 @@ public class MigrationPanel extends JPanel implements Disposable {
           if (userObject instanceof MigrationRootNode) {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
               final HashSet<VirtualFile> files = new HashSet<>();
-              final TypeMigrationUsageInfo[] usages = ApplicationManager.getApplication().runReadAction(new Computable<TypeMigrationUsageInfo[]>() {
-                @Override
-                public TypeMigrationUsageInfo[] compute() {
+              final TypeMigrationUsageInfo[] usages = ApplicationManager.getApplication().runReadAction(
+                (Computable<TypeMigrationUsageInfo[]>)() -> {
                   final Collection<? extends AbstractTreeNode> children = ((MigrationRootNode)userObject).getChildren();
                   for (AbstractTreeNode child : children) {
                     expandTree((MigrationNode)child);
                   }
-                  final TypeMigrationUsageInfo[] usages = myLabeler.getMigratedUsages();
-                  for (TypeMigrationUsageInfo usage : usages) {
+                  final TypeMigrationUsageInfo[] usages1 = myLabeler.getMigratedUsages();
+                  for (TypeMigrationUsageInfo usage : usages1) {
                     if (!usage.isExcluded()) {
                       final PsiElement element = usage.getElement();
                       if (element != null) {
@@ -203,9 +202,8 @@ public class MigrationPanel extends JPanel implements Disposable {
                       }
                     }
                   }
-                  return usages;
-                }
-              });
+                  return usages1;
+                });
 
 
               ApplicationManager.getApplication().invokeLater(() -> {
@@ -306,7 +304,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     }
 
     public Object getData(@NonNls final String dataId) {
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
         return selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode
                ? ((MigrationNode)selectedNodes[0].getUserObject()).getInfo().getElement() : null;

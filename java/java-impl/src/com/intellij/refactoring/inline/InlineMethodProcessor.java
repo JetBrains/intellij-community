@@ -470,7 +470,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
-          myMethod.delete();
         }
         else {
           List<PsiReferenceExpression> refExprList = new ArrayList<>();
@@ -513,8 +512,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               psiElement.delete();
             }
           }
-          if (myMethod.isWritable()) myMethod.delete();
         }
+        if (myMethod.isWritable()) myMethod.delete();
       }
       removeAddedBracesWhenPossible();
     }
@@ -544,8 +543,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public static void inlineConstructorCall(PsiCall constructorCall) {
-    final PsiMethod oldConstructor = constructorCall.resolveMethod();
+    PsiMethod oldConstructor = constructorCall.resolveMethod();
     LOG.assertTrue(oldConstructor != null);
+    oldConstructor = (PsiMethod)oldConstructor.getNavigationElement();
     PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();
     if (oldConstructor.isVarArgs()) { //wrap with explicit array
       final PsiParameter[] parameters = oldConstructor.getParameterList().getParameters();

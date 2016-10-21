@@ -840,7 +840,9 @@ public class GitHistoryUtils {
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
           if (!refs.add(ref)) {
-            LOG.error("Adding duplicate element to the set");
+            // relying on the fact that intersection method puts elements of the first argument into the result
+            VcsRef otherRef = ContainerUtil.getFirstItem(ContainerUtil.intersection(refs, Collections.singleton(ref)));
+            LOG.error("Adding duplicate element " + ref + " to the set containing " + otherRef);
           }
         }
         return commit;

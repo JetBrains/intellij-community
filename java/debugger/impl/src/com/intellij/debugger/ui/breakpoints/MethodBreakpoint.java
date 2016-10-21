@@ -150,7 +150,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
           List<Location> allLineLocations = method.allLineLocations();
           if (isWatchEntry()) {
-            createLocationBreakpoint(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
+            createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
           }
           if (isWatchExit()) {
             MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
@@ -169,10 +169,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                   case Opcodes.ARETURN:
                   case Opcodes.LRETURN:
                   case Opcodes.DRETURN:
-                  case Opcodes.ATHROW:
+                  //case Opcodes.ATHROW:
                     allLineLocations.stream()
                       .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpoint(location, debugProcess));
+                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
                 }
               }
             });
@@ -190,16 +190,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
-  private void createLocationBreakpoint(@Nullable Location location, @NotNull DebugProcessImpl debugProcess) {
-    if (location != null) {
-      RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-      requestsManager.enableRequest(requestsManager.createBreakpointRequest(this, location));
-    }
-  }
-
-
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
-    if (Registry.is("debugger.emulate.method.breakpoints")) {
+    if (isEmulated()) {
       createRequestForPreparedClassEmulated(debugProcess, classType, true);
     }
     else {
@@ -458,6 +450,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
 
     return false;
+  }
+
+  private boolean isEmulated() {
+    return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
   }
 
   private boolean isWatchEntry() {

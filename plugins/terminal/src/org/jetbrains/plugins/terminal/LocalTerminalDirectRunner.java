@@ -24,10 +24,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
@@ -129,22 +127,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      return PtyProcess.exec(command, envs, directory != null ? directory : currentProjectFolder());
+      return PtyProcess.exec(command, envs, directory != null ? directory : TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
     }
-  }
-
-  private String currentProjectFolder() {
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-
-    final VirtualFile[] roots = projectRootManager.getContentRoots();
-    if (roots.length == 1) {
-      roots[0].getCanonicalPath();
-    }
-    final VirtualFile baseDir = myProject.getBaseDir();
-    return baseDir == null ? null : baseDir.getCanonicalPath();
   }
 
   @Override
@@ -176,7 +163,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private String getShellPath() {
-    return TerminalOptionsProvider.getInstance().getShellPath();
+    return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
 
   @NotNull

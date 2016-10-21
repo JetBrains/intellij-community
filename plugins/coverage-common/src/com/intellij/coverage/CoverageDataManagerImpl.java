@@ -115,7 +115,15 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
     });
-    addSuiteListener(new CoverageViewSuiteListener(this, myProject), myProject);
+    final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
+    if (coverageViewListener != null) {
+      addSuiteListener(coverageViewListener, myProject);
+    }
+  }
+
+  @Nullable
+  protected CoverageViewSuiteListener createCoverageViewListener() {
+    return new CoverageViewSuiteListener(this, myProject);
   }
 
 

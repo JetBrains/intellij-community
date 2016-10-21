@@ -19,7 +19,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -54,8 +53,6 @@ public class LaterInvocator {
   private static final boolean DEBUG = LOG.isDebugEnabled();
 
   private static final Object LOCK = new Object();
-  private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
-  private static final FrequentEventDetector ourFrequentEventDetector = new FrequentEventDetector(1009, 100);
 
   private LaterInvocator() { }
 
@@ -93,8 +90,6 @@ public class LaterInvocator {
   private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK
   private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
-
-  private static final Stack<AWTEvent> ourEventStack = new Stack<>(); // guarded by RUN_LOCK
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
@@ -146,8 +141,6 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    ourFrequentEventDetector.eventHappened(runnable);
-
     final ActionCallback callback = new ActionCallback();
     RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
     synchronized (LOCK) {
@@ -394,7 +387,6 @@ public class LaterInvocator {
   }
 
   private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
-  private static final Object RUN_LOCK = new Object();
 
   private static class FlushQueue implements Runnable {
     @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private RunnableInfo myLastInfo;
@@ -412,25 +404,16 @@ public class LaterInvocator {
       myLastInfo = lastInfo;
 
       if (lastInfo != null) {
-        synchronized (RUN_LOCK) { // necessary only because of switching to our own event queue
-          AWTEvent event = ourEventQueue.getTrueCurrentEvent();
-          ourEventStack.push(event);
-          int stackSize = ourEventStack.size();
-
-          try {
-            lastInfo.runnable.run();
-            lastInfo.callback.setDone();
-          }
-          catch (ProcessCanceledException ignored) { }
-          catch (Throwable t) {
-            LOG.error(t);
-          }
-          finally {
-            LOG.assertTrue(ourEventStack.size() == stackSize);
-            ourEventStack.pop();
-
-            if (!DEBUG) myLastInfo = null;
-          }
+        try {
+          lastInfo.runnable.run();
+          lastInfo.callback.setDone();
+        }
+        catch (ProcessCanceledException ignored) { }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+        finally {
+          if (!DEBUG) myLastInfo = null;
         }
       }
       return lastInfo != null;

@@ -64,10 +64,10 @@ public class XBreakpointUtil {
 
   @Nullable
   public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
-    return getBreakpointTypes().filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
+    return breakpointTypes().filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
   }
 
-  public static StreamEx<XBreakpointType> getBreakpointTypes() {
+  public static StreamEx<XBreakpointType> breakpointTypes() {
     return StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.getExtensions());
   }
 

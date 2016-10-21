@@ -202,7 +202,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
       if (returnType != null && valueType != null) {
         if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType) && !isGetter(value, method), true, true)
-            && TypeMigrationLabeler.typeContainsTypeParameters(returnType, Collections.<PsiTypeParameter>emptySet())) {
+            && TypeMigrationLabeler.typeContainsTypeParameters(returnType, Collections.emptySet())) {
           value.accept(this);
         }
       }
@@ -638,7 +638,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       PsiType type = myTypeEvaluator.evaluateType(expr);
       type = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
       myType = GenericsUtil.getVariableTypeByExpressionType(type);
-      myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
+      myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
     public TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
@@ -649,7 +649,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       if (evalSubstitutor != null) realMap.putAll(evalSubstitutor.getSubstitutionMap());
 
       myType = PsiSubstitutorImpl.createSubstitutor(realMap).substitute(myTypeEvaluator.getType(var));
-      myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
+      myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
     public PsiType getType() {

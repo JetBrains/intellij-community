@@ -37,7 +37,7 @@ import java.util.*;
 public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> implements DuplicateNodeRenderer.DuplicatableNode  {
   private final TypeMigrationLabeler myLabeler;
   private List<MigrationNode> myCachedChildren;
-  private final PsiElement myRoots[];
+  private final PsiElement[] myRoots;
   private final boolean myPreviewUsages;
 
   protected MigrationRootNode(Project project,

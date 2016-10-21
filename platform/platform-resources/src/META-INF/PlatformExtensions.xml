@@ -215,6 +215,9 @@
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
+    <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
+                        serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
