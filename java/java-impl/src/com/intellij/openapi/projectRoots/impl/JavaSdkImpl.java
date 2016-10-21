@@ -36,7 +36,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -665,12 +665,10 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    String path = file.getPath();
-    if (JrtFileSystem.isModularJdk(path)) {
-      String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(path) + JrtFileSystem.SEPARATOR);
-      for (String module : JrtFileSystem.listModules(path)) {
-        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url + module));
-      }
+    VirtualFile jrt = fileManager.findFileByUrl(
+      VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()) + JrtFileSystem.SEPARATOR));
+    if (jrt != null) {
+      ContainerUtil.addAll(result, jrt.getChildren());
     }
 
     for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
