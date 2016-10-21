@@ -21,7 +21,6 @@ import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.resolveActualCall
 class LogbackDelegatesToProvider : GrDelegatesToProvider {
 
   private companion object {
-    val appenderMethod = GroovyPatterns.psiMethod().withName("appender").definedInClass(CONFIG_DELEGATE_FQN)
     val appenderDelegate = "ch.qos.logback.classic.gaffer.AppenderDelegate"
   }
 
@@ -39,7 +37,7 @@ class LogbackDelegatesToProvider : GrDelegatesToProvider {
 
     val result = resolveActualCall(call)
     val method = result.element as? PsiMethod ?: return null
-    if (!appenderMethod.accepts(method)) return null
+    if (!appenderMethodPattern.accepts(method)) return null
 
     val signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY, true)
     val map = GrClosureSignatureUtil.mapParametersToArguments(
