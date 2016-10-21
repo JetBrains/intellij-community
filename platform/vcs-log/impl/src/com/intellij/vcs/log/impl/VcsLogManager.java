@@ -225,7 +225,7 @@ public class VcsLogManager implements Disposable {
           String message = "Fatal error, VCS Log recreated: " + e.getMessage();
           if (isLogVisible()) {
             LOG.info(e);
-            VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+            displayFatalErrorMessage(message);
           }
           else {
             LOG.error(message, e);
