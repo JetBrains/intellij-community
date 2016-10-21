@@ -390,7 +390,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
   }
 
-  static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement) {
+  static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, StreamSource source) {
     PsiElement declaration = variable.getParent();
     // For-loop initializer is not effectively final, but suitable for stream conversion
     if(declaration instanceof PsiDeclarationStatement) {
@@ -407,6 +407,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
+    }
+    if(statement instanceof PsiWhileStatement && source.getVariable() == variable) {
+      return ReferencesSearch.search(variable, variable.getUseScope()).forEach(ref -> {
+        PsiElement element = ref.getElement();
+        return !(element instanceof PsiExpression) ||
+               PsiTreeUtil.isAncestor(((PsiWhileStatement)statement).getCondition(), element, false) ||
+               !PsiUtil.isAccessedForWriting((PsiExpression)element);
+      });
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
   }
@@ -429,6 +437,58 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return null;
   }
 
+  /**
+   * Checks whether variable can be referenced between start and loop entry. Back-edges are also considered, so the actual place
+   * where it referenced might be outside of (start, loop entry) interval.
+   *
+   * @param flow ControlFlow to analyze
+   * @param start start point
+   * @param loop loop to check
+   * @param variable variable to analyze
+   * @return true if variable can be referenced between start and stop points
+   */
+  private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
+                                                             final int start,
+                                                             final PsiLoopStatement loop,
+                                                             final PsiVariable variable) {
+    final int loopStart = flow.getStartOffset(loop);
+    final int loopEnd = flow.getEndOffset(loop);
+    if(start == loopStart) return false;
+
+    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, start);
+    // DFS visits instructions mainly in backward direction while here visiting in forward direction
+    // greatly reduces number of iterations.
+    Collections.reverse(edges);
+
+    BitSet referenced = new BitSet();
+    boolean changed = true;
+    while(changed) {
+      changed = false;
+      for(ControlFlowUtil.ControlFlowEdge edge: edges) {
+        int from = edge.myFrom;
+        int to = edge.myTo;
+        if(referenced.get(from)) {
+          // jump to the loop start from within the loop is not considered as loop entry
+          if(to == loopStart && (from < loopStart || from >= loopEnd)) {
+            return true;
+          }
+          if(!referenced.get(to)) {
+            referenced.set(to);
+            changed = true;
+          }
+          continue;
+        }
+        if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
+          referenced.set(from);
+          referenced.set(to);
+          if(to == loopStart) return true;
+          changed = true;
+        }
+      }
+    }
+    return false;
+  }
+
   enum InitializerUsageStatus {
     // Variable is declared just before the wanted place
     DECLARED_JUST_BEFORE,
@@ -440,7 +500,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     UNKNOWN
   }
 
-  static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement nextStatement) {
+  static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement nextStatement) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, nextStatement)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression
@@ -458,7 +518,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     int start = controlFlow.getEndOffset(var.getInitializer())+1;
     int stop = controlFlow.getStartOffset(nextStatement);
-    if(ControlFlowUtil.isVariableReferencedBetween(controlFlow, start, stop, var)) return UNKNOWN;
+    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, nextStatement, var)) return UNKNOWN;
     if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }
@@ -495,6 +555,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
+      super.visitWhileStatement(statement);
+      processLoop(statement);
+    }
+
+    @Override
     public void visitForStatement(PsiForStatement statement) {
       super.visitForStatement(statement);
       processLoop(statement);
@@ -524,7 +590,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       int startOffset = controlFlow.getStartOffset(body);
       int endOffset = controlFlow.getEndOffset(body);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
-        .remove(variable -> isVariableSuitableForStream(variable, statement)).toList();
+        .remove(variable -> isVariableSuitableForStream(variable, statement, source)).toList();
 
       if (exitPoints.isEmpty()) {
         if(getIncrementedVariable(tb, nonFinalVariables) != null) {
@@ -679,6 +745,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiStatement initialization = ((PsiForStatement)statement).getInitialization();
         LOG.assertTrue(initialization != null);
         return initialization.getTextRange();
+      } else if(statement instanceof PsiWhileStatement) {
+        PsiJavaToken rParenth = ((PsiWhileStatement)statement).getRParenth();
+        if (wholeStatement && rParenth != null) {
+          return new TextRange(statement.getTextOffset(), rParenth.getTextOffset() + 1);
+        }
+        return statement.getFirstChild().getTextRange();
       } else {
         throw new IllegalStateException("Unexpected statement type: "+statement);
       }
@@ -964,6 +1036,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       super(null, expression, variable);
     }
 
+    void cleanUpSource() {
+    }
+
     @Contract("null -> null")
     static StreamSource tryCreate(PsiLoopStatement statement) {
       if(statement instanceof PsiForStatement) {
@@ -973,7 +1048,66 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
         return source == null ? CollectionStream.from((PsiForeachStatement)statement) : source;
       }
+      if(statement instanceof PsiWhileStatement) {
+        return BufferedReaderLines.from((PsiWhileStatement)statement);
+      }
       return null;
+    }
+  }
+
+  static class BufferedReaderLines extends StreamSource {
+    private BufferedReaderLines(PsiVariable variable, PsiExpression expression) {
+      super(variable, expression);
+    }
+
+    @Override
+    String createReplacement() {
+      return myExpression.getText()+".lines()";
+    }
+
+    @Override
+    void cleanUpSource() {
+      myVariable.delete();
+    }
+
+    @Nullable
+    public static BufferedReaderLines from(PsiWhileStatement whileLoop) {
+      // while ((line = br.readLine()) != null)
+      PsiExpression condition = PsiUtil.skipParenthesizedExprDown(whileLoop.getCondition());
+      if(!(condition instanceof PsiBinaryExpression)) return null;
+      PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
+      if(!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
+      PsiExpression operand = null;
+      if(ExpressionUtils.isNullLiteral(binOp.getROperand())) {
+        operand = binOp.getLOperand();
+      } else if(ExpressionUtils.isNullLiteral(binOp.getLOperand())) {
+        operand = binOp.getROperand();
+      }
+      if(operand == null) return null;
+      PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
+      if(assignment == null) return null;
+      PsiExpression lValue = assignment.getLExpression();
+      if(!(lValue instanceof PsiReferenceExpression)) return null;
+      PsiElement element = ((PsiReferenceExpression)lValue).resolve();
+      if(!(element instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable var = (PsiLocalVariable)element;
+      if(!ReferencesSearch.search(var, var.getUseScope()).forEach(ref -> {
+        return PsiTreeUtil.isAncestor(whileLoop, ref.getElement(), true);
+      })) {
+        return null;
+      }
+      PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+      if(!(rValue instanceof PsiMethodCallExpression)) return null;
+      PsiMethodCallExpression call = (PsiMethodCallExpression)rValue;
+      if(call.getArgumentList().getExpressions().length != 0) return null;
+      if(!"readLine".equals(call.getMethodExpression().getReferenceName())) return null;
+      PsiExpression readerExpression = call.getMethodExpression().getQualifierExpression();
+      if(readerExpression == null) return null;
+      PsiMethod method = call.resolveMethod();
+      if(method == null) return null;
+      PsiClass aClass = method.getContainingClass();
+      if(aClass == null || !"java.io.BufferedReader".equals(aClass.getQualifiedName())) return null;
+      return new BufferedReaderLines(var, readerExpression);
     }
   }
 
@@ -1224,7 +1358,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if(source == null || body == null) return null;
         // flatMap from primitive to primitive is supported only if primitive types match
         // otherwise it would be necessary to create bogus step like
-        // .mapToObj(var -> blahblah.stream()).flatMap(Function.identity())
+        // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
         if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
         FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable, loopStatement);
         TerminalBlock withFlatMap = new TerminalBlock(op, source.getVariable(), body);

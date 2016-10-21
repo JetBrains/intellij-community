@@ -29,7 +29,6 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1330,30 +1329,47 @@ public class ControlFlowUtil {
   }
 
   /**
-   * Checks whether variable can be referenced between start and stop points. Back-edges are also considered, so the actual place
-   * where it referenced might be outside of (start, stop) interval.
+   * Checks if the control flow instruction at given offset accesses (reads or writes) given variable
    *
-   * @param flow ControlFlow to analyze
-   * @param start start point
-   * @param stop stop point
-   * @param variable variable to analyze
-   * @return true if variable can be referenced between start and stop points
+   * @param flow control flow
+   * @param offset offset inside given control flow
+   * @param variable a variable the access to which is to be checked
+   * @return true if the given instruction is actually a variable access
    */
-  public static boolean isVariableReferencedBetween(final ControlFlow flow,
-                                                    final int start,
-                                                    final int stop,
-                                                    final PsiVariable variable) {
-    if(start == stop) return false;
+  public static boolean isVariableAccess(ControlFlow flow, int offset, PsiVariable variable) {
+    Instruction instruction = flow.getInstructions().get(offset);
+    return instruction instanceof ReadVariableInstruction && ((ReadVariableInstruction)instruction).variable == variable ||
+           instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == variable;
+  }
 
-    // DFS visits instructions mainly in backward direction while here visiting in forward direction
-    // greatly reduces number of iterations. So first we just collect edges, then reverse their order.
-    // contains (from, to) pairs representing control flow arcs
-    final TIntArrayList list = new TIntArrayList();
+  public static class ControlFlowEdge {
+    public final int myFrom;
+    public final int myTo;
+
+    public ControlFlowEdge(int from, int to) {
+      myFrom = from;
+      myTo = to;
+    }
+
+    @Override
+    public String toString() {
+      return myFrom+"->"+myTo;
+    }
+  }
+
+  /**
+   * Returns control flow edges which are potentially reachable from start instruction
+   *
+   * @param flow control flow to analyze
+   * @param start starting instruction offset
+   * @return a list of edges
+   */
+  public static List<ControlFlowEdge> getEdges(ControlFlow flow, int start) {
+    final List<ControlFlowEdge> list = new ArrayList<ControlFlowEdge>();
     depthFirstSearch(flow, new InstructionClientVisitor<Void>() {
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
-        list.add(offset);
-        list.add(nextOffset);
+        list.add(new ControlFlowEdge(offset, nextOffset));
       }
 
       @Override
@@ -1361,34 +1377,7 @@ public class ControlFlowUtil {
         return null;
       }
     }, start, flow.getSize());
-    BitSet violated = new BitSet();
-    List<Instruction> instructions = flow.getInstructions();
-    boolean changed = true;
-    while(changed) {
-      changed = false;
-      for(int i=list.size()-2; i>=0; i-=2) {
-        int from = list.get(i);
-        int to = list.get(i+1);
-        if(from == stop) continue;
-        if(violated.get(from)) {
-          if(!violated.get(to)) {
-            if(to == stop) return true;
-            violated.set(to);
-            changed = true;
-          }
-          continue;
-        }
-        Instruction instruction = instructions.get(from);
-        if((instruction instanceof ReadVariableInstruction && ((ReadVariableInstruction)instruction).variable == variable) ||
-           (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == variable)) {
-          violated.set(from);
-          violated.set(to);
-          if(to == stop) return true;
-          changed = true;
-        }
-      }
-    }
-    return false;
+    return list;
   }
 
   /**
