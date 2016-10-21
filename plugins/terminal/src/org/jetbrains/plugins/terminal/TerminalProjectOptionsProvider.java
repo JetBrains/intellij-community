@@ -33,7 +33,7 @@ import java.io.File;
  * @author traff
  */
 @State(
-  name = "TerminalOptionsProvider",
+  name = "TerminalProjectOptionsProvider",
   storages = @Storage("terminal.xml")
 )
 public class TerminalProjectOptionsProvider implements PersistentStateComponent<TerminalProjectOptionsProvider.State> {
@@ -42,7 +42,7 @@ public class TerminalProjectOptionsProvider implements PersistentStateComponent<
   private State myState = new State();
   private final Project myProject;
 
-  public TerminalProjectOptionsProvider(Project project) {myProject = project;}
+  public TerminalProjectOptionsProvider(@NotNull  Project project) {myProject = project;}
 
 
   public static TerminalProjectOptionsProvider getInstance(@NotNull Project project) {
