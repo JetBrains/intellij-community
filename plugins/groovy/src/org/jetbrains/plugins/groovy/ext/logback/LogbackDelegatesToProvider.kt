@@ -15,41 +15,30 @@
  */
 package org.jetbrains.plugins.groovy.ext.logback
 
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
 import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
+import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.resolveActualCall
 
 class LogbackDelegatesToProvider : GrDelegatesToProvider {
 
   private companion object {
-    val appenderDelegate = "ch.qos.logback.classic.gaffer.AppenderDelegate"
+    val APPENDER_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.AppenderDelegate"
+    val appendClosure = groovyClosure().inMethod(appenderMethodPattern)
+    val receiverClosure = groovyClosure().inMethod(psiMethod(CONFIG_DELEGATE_FQN, "receiver"))
+    val turboFilterClosure = groovyClosure().inMethod(psiMethod(CONFIG_DELEGATE_FQN, "turboFilter"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
-    val call = getContainingCall(closure) ?: return null
-
-    val result = resolveActualCall(call)
-    val method = result.element as? PsiMethod ?: return null
-    if (!appenderMethodPattern.accepts(method)) return null
-
-    val signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY, true)
-    val map = GrClosureSignatureUtil.mapParametersToArguments(
-        signature, call.namedArguments, call.expressionArguments, call.closureArguments, closure, false, false
-    ) ?: return null
-
-
-    val paramIndex = map.indexOfFirst { closure in it.args }
-    if (paramIndex == 2) {
-      return DelegatesToInfo(TypesUtil.createType(appenderDelegate, closure), Closure.DELEGATE_FIRST)
+    if (appendClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(APPENDER_DELEGATE_FQN, closure), Closure.DELEGATE_FIRST)
     }
-
+    if (receiverClosure.accepts(closure) || turboFilterClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(COMPONENT_DELEGATE_FQN, closure), Closure.DELEGATE_FIRST)
+    }
     return null
   }
 }

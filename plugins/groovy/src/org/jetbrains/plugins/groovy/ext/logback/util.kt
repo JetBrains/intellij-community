@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 
 internal val CONFIG_NAME = "logback.groovy"
 internal val CONFIG_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
+internal val COMPONENT_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.ComponentDelegate"
 internal val appenderMethodPattern = psiMethod(CONFIG_DELEGATE_FQN, "appender")
 internal val appenderDeclarationPattern = groovyLiteralExpression().methodCallParameter(0, appenderMethodPattern)
 

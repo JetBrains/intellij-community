@@ -39,10 +39,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
 
-  private companion object {
-    val COMPONENT_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.ComponentDelegate"
-  }
-
   override fun getParentClassName() = COMPONENT_DELEGATE_FQN
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {

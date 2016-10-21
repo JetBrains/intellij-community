@@ -27,3 +27,5 @@ fun groovyList() = groovyExpression<GrListOrMap>().with(object : PatternConditio
 })
 
 fun psiMethod(containingClass: String, name: String) = GroovyPatterns.psiMethod().withName(name).definedInClass(containingClass)
+
+fun groovyClosure() = GroovyClosurePattern()
