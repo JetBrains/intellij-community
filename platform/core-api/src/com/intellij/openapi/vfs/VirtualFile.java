@@ -36,8 +36,8 @@ import java.nio.charset.Charset;
 
 /**
  * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by equal
- * <code>VirtualFile</code> instances for the entire lifetime of the IntelliJ IDEA process, unless the file
- * is deleted, in which case {@link #isValid()} will return <code>false</code>.
+ * {@code VirtualFile} instances for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * is deleted, in which case {@link #isValid()} will return {@code false}.
  * <p/>
  * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
  * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link UserDataHolder}).
@@ -141,7 +141,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
-   * It has the following format: <code>&lt;protocol&gt;://&lt;path&gt;</code>.
+   * It has the following format: {@code <protocol>://<path>}.
    * <p>
    * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
    * <p>
@@ -197,12 +197,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
 
   /**
-   * Renames this file to the <code>newName</code>.<p>
+   * Renames this file to the {@code newName}.<p>
    * This method should be only called within write-action.
    * See {@link Application#runWriteAction(Runnable)}.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param newName   the new file name
    * @throws IOException if file failed to be renamed
@@ -220,7 +220,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Checks whether this file has write permission. Note that this value may be cached and may differ from
    * the write permission of the physical file.
    *
-   * @return <code>true</code> if this file is writable, <code>false</code> otherwise
+   * @return {@code true} if this file is writable, {@code false} otherwise
    */
   public abstract boolean isWritable();
 
@@ -231,14 +231,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this file is a directory.
    *
-   * @return <code>true</code> if this file is a directory, <code>false</code> otherwise
+   * @return {@code true} if this file is a directory, {@code false} otherwise
    */
   public abstract boolean isDirectory();
 
   /**
    * Checks whether this file has a specific property.
    *
-   * @return <code>true</code> if the file has a specific property, <code>false</code> otherwise
+   * @return {@code true} if the file has a specific property, {@code false} otherwise
    * @since 13.0
    */
   public boolean is(@NotNull VFileProperty property) {
@@ -251,9 +251,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
    * work with those provided by a user.
    *
-   * @return <code>getPath()</code> if there are no symbolic links in a file's path;
-   *         <code>getCanonicalFile().getPath()</code> if the link was successfully resolved;
-   *         <code>null</code> otherwise
+   * @return {@code getPath()} if there are no symbolic links in a file's path;
+   *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
+   *         {@code null} otherwise
    * @since 11.1
    */
   @Nullable
@@ -267,9 +267,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
    * work with those provided by a user.
    *
-   * @return <code>this</code> if there are no symbolic links in a file's path;
-   *         instance of <code>VirtualFile</code> if the link was successfully resolved;
-   *         <code>null</code> otherwise
+   * @return {@code this} if there are no symbolic links in a file's path;
+   *         instance of {@code VirtualFile} if the link was successfully resolved;
+   *         {@code null} otherwise
    * @since 11.1
    */
   @Nullable
@@ -278,27 +278,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Checks whether this <code>VirtualFile</code> is valid. File can be invalidated either by deleting it or one of its
+   * Checks whether this {@code VirtualFile} is valid. File can be invalidated either by deleting it or one of its
    * parents with {@link #delete} method or by an external change.
    * If file is not valid only {@link #equals}, {@link #hashCode} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
    * produce unpredictable results.
    *
-   * @return <code>true</code> if this is a valid file, <code>false</code> otherwise
+   * @return {@code true} if this is a valid file, {@code false} otherwise
    */
   public abstract boolean isValid();
 
   /**
-   * Gets the parent <code>VirtualFile</code>.
+   * Gets the parent {@code VirtualFile}.
    *
-   * @return the parent file or <code>null</code> if this file is a root directory
+   * @return the parent file or {@code null} if this file is a root directory
    */
   public abstract VirtualFile getParent();
 
   /**
    * Gets the child files.
    *
-   * @return array of the child files or <code>null</code> if this file is not a directory
+   * @return array of the child files or {@code null} if this file is not a directory
    */
   public abstract VirtualFile[] getChildren();
 
@@ -306,7 +306,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Finds child of this file with the given name.
    *
    * @param name the file name to search by
-   * @return the file if found any, <code>null</code> otherwise
+   * @return the file if found any, {@code null} otherwise
    */
   @Nullable
   public VirtualFile findChild(@NotNull String name) {
@@ -342,7 +342,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Finds file by path relative to this file.
    *
    * @param relPath the relative path with / used as separators
-   * @return the file if found any, <code>null</code> otherwise
+   * @return the file if found any, {@code null} otherwise
    */
   @Nullable
   public VirtualFile findFileByRelativePath(@NotNull String relPath) {
@@ -383,10 +383,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param name      directory name
-   * @return <code>VirtualFile</code> representing the created directory
+   * @return {@code VirtualFile} representing the created directory
    * @throws IOException if directory failed to be created
    */
   @NotNull
@@ -415,9 +415,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
-   * @return <code>VirtualFile</code> representing the created file
+   * @return {@code VirtualFile} representing the created file
    * @throws IOException if file failed to be created
    */
   @NotNull
@@ -446,7 +446,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @throws IOException if file failed to be deleted
    */
@@ -460,7 +460,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
@@ -570,13 +570,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Creates the <code>OutputStream</code> for this file.
+   * Creates the {@code OutputStream} for this file.
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
-   * @return <code>OutputStream</code>
+   * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
   public final OutputStream getOutputStream(Object requestor) throws IOException {
@@ -584,7 +584,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Gets the <code>OutputStream</code> for this file and sets modification stamp and time stamp to the specified values
+   * Gets the {@code OutputStream} for this file and sets modification stamp and time stamp to the specified values
    * after closing the stream.<p>
    * <p/>
    * Normally you should not use this method.
@@ -592,11 +592,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor            any object to control who called this method. Note that
-   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             it is considered to be an external change if {@code requestor} is {@code null}.
    *                             See {@link VirtualFileEvent#getRequestor}
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp         new time stamp or -1 if no special value should be set
-   * @return <code>OutputStream</code>
+   * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
    */
@@ -637,7 +637,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see #getTimeStamp()
    */
   public long getModificationStamp() {
-    throw new UnsupportedOperationException(this.getClass().getName());
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   /**
@@ -658,18 +658,18 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Refreshes the cached file information from the physical file system. If this file is not a directory
-   * the timestamp value is refreshed and <code>contentsChanged</code> event is fired if it is changed.<p>
-   * If this file is a directory the set of its children is refreshed. If recursive value is <code>true</code> all
+   * the timestamp value is refreshed and {@code contentsChanged} event is fired if it is changed.<p>
+   * If this file is a directory the set of its children is refreshed. If recursive value is {@code true} all
    * children are refreshed recursively.
    * <p/>
    * When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
    * NOT be in a read action, otherwise a deadlock may occur.
    *
-   * @param asynchronous if <code>true</code>, the method will return immediately and the refresh will be processed
-   *                     in the background. If <code>false</code>, the method will return only after the refresh
+   * @param asynchronous if {@code true}, the method will return immediately and the refresh will be processed
+   *                     in the background. If {@code false}, the method will return only after the refresh
    *                     is done and the VFS change events caused by the refresh have been fired and processed
    *                     in the event dispatch thread. Instead of synchronous refreshes, it's recommended to use
-   *                     asynchronous refreshes with a <code>postRunnable</code> whenever possible.
+   *                     asynchronous refreshes with a {@code postRunnable} whenever possible.
    * @param recursive    whether to refresh all the files in this directory recursively
    */
   public void refresh(boolean asynchronous, boolean recursive) {
@@ -677,7 +677,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * The same as {@link #refresh(boolean, boolean)} but also runs <code>postRunnable</code>
+   * The same as {@link #refresh(boolean, boolean)} but also runs {@code postRunnable}
    * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
@@ -700,10 +700,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Gets the <code>InputStream</code> for this file.
+   * Gets the {@code InputStream} for this file.
    * Skips BOM if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
-   * @return <code>InputStream</code>
+   * @return {@code InputStream}
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
@@ -733,7 +733,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
   public static boolean isValidName(@NotNull String name) {
-    return name.length() > 0 && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");

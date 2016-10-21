@@ -82,7 +82,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     }
     JavaBuilder.addAnnotationProcessingOptions(options, profile);
 
-    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myEvaluationContext.getProject());
+    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myEvaluationContext.getProject());
     final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
     // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
     if (buildRuntimeVersion != null && debuggeeVersion != null) {

@@ -44,8 +44,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
-import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -381,16 +381,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   private static String generateModuleInfo(PsiJavaModule module) {
     StringBuilder sb = new StringBuilder();
 
-    VirtualFile file = null;
-    if (module instanceof LightJavaModule) {
-      PsiElement target = module.getNavigationElement();
-      if (target instanceof PsiDirectory) {
-        file = ((PsiDirectory)target).getVirtualFile();
-      }
-    }
-    else {
-      file = module.getContainingFile().getVirtualFile();
-    }
+    VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
     sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getModuleName());

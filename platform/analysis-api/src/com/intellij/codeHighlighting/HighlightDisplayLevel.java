@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,10 +151,10 @@ public class HighlightDisplayLevel {
     Color getColor();
   }
 
-  public static class SingleColorIcon implements Icon, ColoredIcon {
+  private static class SingleColorIcon implements Icon, ColoredIcon {
     private final TextAttributesKey myKey;
 
-    public SingleColorIcon(@NotNull TextAttributesKey key) {
+    private SingleColorIcon(@NotNull TextAttributesKey key) {
       myKey = key;
     }
 
@@ -164,13 +164,13 @@ public class HighlightDisplayLevel {
     }
 
     @Nullable
-    public Color getColorInner() {
+    private Color getColorInner() {
       final EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) {
         TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
-        Color stripe = attributes.getErrorStripeColor();
+        Color stripe = attributes == null ? null : attributes.getErrorStripeColor();
         if (stripe != null) return stripe;
-        return attributes.getEffectColor();
+        return attributes != null ? attributes.getEffectColor() : null;
       }
       TextAttributes defaultAttributes = myKey.getDefaultAttributes();
       if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;

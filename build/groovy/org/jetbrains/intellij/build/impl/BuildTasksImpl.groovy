@@ -243,7 +243,8 @@ idea.fatal.error.notification=disabled
   void buildDistributions() {
     checkProductProperties()
 
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
                    buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
@@ -259,7 +260,7 @@ idea.fatal.error.notification=disabled
     def propertiesFile = patchIdeaPropertiesFile()
     List<BuildTaskRunnable<String>> tasks = [
       createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile) }
+        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
       }),
       createDistributionForOsTask("linux", { BuildContext context ->
         context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
@@ -438,26 +439,31 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    List<V> results = buildContext.messages.block("Run parallel tasks") {
-      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
-      def executorService = Executors.newCachedThreadPool()
-      List<Future<V>> futures = tasks.collect { task ->
-        def childContext = buildContext.forkForParallelTask(task.taskName)
-        executorService.submit({
-          def start = System.currentTimeMillis()
-          childContext.messages.onForkStarted()
-          try {
-            return task.run(childContext)
-          }
-          finally {
-            buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
-            childContext.messages.onForkFinished()
-          }
-        } as Callable<V>)
+    List<V> results = []
+    try {
+      results = buildContext.messages.block("Run parallel tasks") {
+        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+        def executorService = Executors.newCachedThreadPool()
+        List<Future<V>> futures = tasks.collect { task ->
+          def childContext = buildContext.forkForParallelTask(task.taskName)
+          executorService.submit({
+            def start = System.currentTimeMillis()
+            childContext.messages.onForkStarted()
+            try {
+              return task.run(childContext)
+            }
+            finally {
+              buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+              childContext.messages.onForkFinished()
+            }
+          } as Callable<V>)
+        }
+        futures.collect { it.get() }
       }
-      futures.collect { it.get() }
     }
-    buildContext.messages.onAllForksFinished()
+    finally {
+      buildContext.messages.onAllForksFinished()
+    }
     results
   }
 
@@ -472,7 +478,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext)
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     jarsBuilder.buildJARs()
     layoutShared()
 

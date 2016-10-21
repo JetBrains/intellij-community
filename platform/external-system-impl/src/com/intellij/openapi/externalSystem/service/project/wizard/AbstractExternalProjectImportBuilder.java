@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -169,7 +171,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (dialog.hasMultipleDataToSelect()) {
           dialog.showAndGet();
         } else {
-          dialog.dispose();
+          Disposer.dispose(dialog.getDisposable());
         }
       }
 
@@ -192,8 +194,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     // resolve dependencies
     final Runnable resolveDependenciesTask = () -> ExternalSystemUtil.refreshProject(
-      project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
-      ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+      project, myExternalSystemId, projectSettings.getExternalProjectPath(),
+      createFinalImportCallback(project, projectSettings), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, true);
     if (!isFromUI) {
       resolveDependenciesTask.run();
     }
@@ -215,6 +217,23 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         }
       });
     }
+  }
+
+  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull Project project,
+                                                                     @NotNull ExternalProjectSettings projectSettings) {
+    return new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        if (externalProject == null) {
+          return;
+        }
+        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      }
+    };
   }
 
   @NotNull
