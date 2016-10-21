@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class TestStatusLine extends JPanel {
       return;
     }
     String result = "";
-    if (finishedTestsCount == testsTotal) {
+    if (finishedTestsCount == testsTotal || testsTotal < 0) {
       if (testsTotal > 1 && (failuresCount == 0 && ignoredTestsCount == 0 || failuresCount == testsTotal || ignoredTestsCount == testsTotal)) {
         result = "All ";
       }
@@ -76,7 +76,7 @@ public class TestStatusLine extends JPanel {
       result = "Stopped. " + finishedTestsCount + " of ";
     }
 
-    result += getTestsTotalMessage(testsTotal);
+    result += getTestsTotalMessage(testsTotal > 0 ? testsTotal : finishedTestsCount);
 
     if (failuresCount == 0 && ignoredTestsCount == 0) {
       myState.append(result + " passed");
