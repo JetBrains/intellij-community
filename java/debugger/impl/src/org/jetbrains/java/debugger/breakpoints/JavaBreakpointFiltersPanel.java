@@ -267,8 +267,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
         }
       }
     }
-    StreamEx.of(myInstanceFilters).remove(InstanceFilter::isEnabled).forEach(idxs::add);
-    myInstanceFilters = idxs.toArray(new InstanceFilter[idxs.size()]);
+    myInstanceFilters = StreamEx.of(myInstanceFilters).remove(InstanceFilter::isEnabled).prepend(idxs).toArray(InstanceFilter[]::new);
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {

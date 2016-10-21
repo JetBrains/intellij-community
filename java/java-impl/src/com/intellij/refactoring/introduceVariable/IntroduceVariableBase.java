@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
-import com.intellij.psi.scope.processor.VariablesProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -755,14 +753,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean skipForStatement = true;
     final PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class);
     if (forStatement != null) {
-      final VariablesProcessor variablesProcessor = new VariablesProcessor(false) {
-        @Override
-        protected boolean check(PsiVariable var, ResolveState state) {
-          return PsiTreeUtil.isAncestor(forStatement.getInitialization(), var, true);
-        }
-      };
-      PsiScopesUtil.treeWalkUp(variablesProcessor, expr, null);
-      skipForStatement = variablesProcessor.size() == 0;
+      Set<PsiVariable> vars = new HashSet<>();
+      SyntaxTraverser.psiTraverser().withRoot(expr)
+        .filter(element -> element instanceof PsiReferenceExpression)
+        .forEach(element -> {
+          final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+          if (resolve instanceof PsiVariable) {
+            vars.add((PsiVariable)resolve);
+          }
+        });
+      skipForStatement = vars.stream().noneMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true));
     }
 
     PsiElement containerParent = tempContainer;

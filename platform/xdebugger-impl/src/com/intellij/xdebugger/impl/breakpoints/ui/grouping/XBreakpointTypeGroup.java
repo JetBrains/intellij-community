@@ -74,6 +74,6 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
   }
 
   private static int indexOfType(XBreakpointType type) {
-    return (int)XBreakpointUtil.getBreakpointTypes().indexOf(type).orElse(-1);
+    return (int)XBreakpointUtil.breakpointTypes().indexOf(type).orElse(-1);
   }
 }

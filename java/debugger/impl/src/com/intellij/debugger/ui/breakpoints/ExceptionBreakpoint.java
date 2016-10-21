@@ -26,6 +26,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +49,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.ExceptionEvent;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.request.ExceptionRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
@@ -144,9 +144,9 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return;
     }
     // trying to create a request
-    ExceptionRequest request = debugProcess.getRequestsManager().createExceptionRequest(this, refType, isNotifyCaught(),
-                                                                                        isNotifyUncaught());
-    debugProcess.getRequestsManager().enableRequest(request);
+    RequestManagerImpl manager = debugProcess.getRequestsManager();
+    manager.enableRequest(manager.createExceptionRequest(this, refType, isNotifyCaught(), isNotifyUncaught()));
+
     if (LOG.isDebugEnabled()) {
       if (refType != null) {
         LOG.debug("Created exception request for reference type " + refType.name());

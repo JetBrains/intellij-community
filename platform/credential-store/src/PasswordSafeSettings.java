@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
 
-  private ProviderType myProviderType = ProviderType.MASTER_PASSWORD;
+  private ProviderType myProviderType = ProviderType.KEYCHAIN;
 
   @NotNull
   public ProviderType getProviderType() {
@@ -56,23 +56,10 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
   }
 
   public void loadState(@NotNull State state) {
-    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.MASTER_PASSWORD));
+    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.KEYCHAIN));
   }
 
   public static class State {
-    public ProviderType PROVIDER = ProviderType.MASTER_PASSWORD;
-  }
-
-  public enum ProviderType {
-    @Deprecated
-    DO_NOT_STORE,
-    /**
-     * The passwords are stored only in the memory
-     */
-    MEMORY_ONLY,
-    /**
-     * The passwords are encrypted with master password
-     */
-    MASTER_PASSWORD
+    public ProviderType PROVIDER = ProviderType.KEYCHAIN;
   }
 }

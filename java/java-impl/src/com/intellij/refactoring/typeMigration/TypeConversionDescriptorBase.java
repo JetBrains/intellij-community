@@ -46,15 +46,6 @@ public class TypeConversionDescriptorBase {
     return null;
   }
 
-  /**
-   * @return substitutor of converted method parameters
-   * or null if expression is not method call expression
-   */
-  @Nullable
-  public PsiSubstitutor getConvertedMethodParameters() {
-    return null;
-  }
-
   public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
     return expression;
   }

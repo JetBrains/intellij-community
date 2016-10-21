@@ -112,7 +112,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
       val oldDbFile = Paths.get(PathManager.getConfigPath(), "options", "security.xml")
       if (oldDbFile.exists()) {
         val settings = ServiceManager.getService(PasswordSafeSettings::class.java)
-        if (settings.providerType != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+        if (settings.providerType != ProviderType.KEYCHAIN) {
           return
         }
 

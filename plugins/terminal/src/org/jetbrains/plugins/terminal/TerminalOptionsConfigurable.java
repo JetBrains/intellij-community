@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +34,11 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
 
   private TerminalSettingsPanel myPanel;
   private final TerminalOptionsProvider myOptionsProvider;
+  private final TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  public TerminalOptionsConfigurable() {
+  public TerminalOptionsConfigurable(@NotNull Project project) {
     myOptionsProvider = TerminalOptionsProvider.getInstance();
+    myProjectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project);
   }
 
   @NotNull
@@ -58,7 +61,8 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   @Override
   public JComponent createComponent() {
     myPanel = new TerminalSettingsPanel();
-    return myPanel.createPanel(myOptionsProvider);
+    if (myProjectOptionsProvider == null) return new JPanel();
+    return myPanel.createPanel(myOptionsProvider, myProjectOptionsProvider);
   }
 
   @Override

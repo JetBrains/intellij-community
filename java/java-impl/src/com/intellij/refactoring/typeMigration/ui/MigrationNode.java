@@ -121,8 +121,4 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   public MigrationNode getDuplicate() {
     return myDuplicatedNode;
   }
-
-  public boolean hasDuplicate() {
-    return myDuplicatedNode != null;
-  }
 }

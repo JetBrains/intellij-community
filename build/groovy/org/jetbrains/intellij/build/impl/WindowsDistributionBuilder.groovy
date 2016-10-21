@@ -82,14 +82,32 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    List<String> jreDirectoryPaths = [jreDirectoryPath];
+
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
+      if (customizer.linkToJRE64(buildContext) != null && arch != JvmArchitecture.x64) {
+        File archive = buildContext.bundledJreManager.findJreArchive("win")
+        if (archive != null) {
+          //do copy of JRE64 archive
+          def versionString = buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+          buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/jre64-for-${versionString}.tar.gz", overwrite: "true")
+          //prepare JRE64 folder for win archive
+          def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
+          if (! new File("${jreDirectoryPath64}/jre64").exists()) {
+            buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
+              fileset(dir: "${jreDirectoryPath64}/jre")
+            }
+          }
+          jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
+        }
+      }
+      buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
     if (arch != null && customizer.buildZipWithBundledOracleJre) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
-        buildWinZip(oracleJrePath, "-oracle-win", winDistPath)
+        buildWinZip([oracleJrePath], "-oracle-win", winDistPath)
       }
       else {
         buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
@@ -208,13 +226,15 @@ IDS_VM_OPTIONS=$vmOptions
     }
   }
 
-  private void buildWinZip(String jreDirectoryPath, String zipNameSuffix, String winDistPath) {
+  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
-      if (jreDirectoryPath != null) {
-        dirs += jreDirectoryPath
+      if (jreDirectoryPaths != null) {
+        jreDirectoryPaths.each {
+          dirs += it
+        }
       }
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath) {

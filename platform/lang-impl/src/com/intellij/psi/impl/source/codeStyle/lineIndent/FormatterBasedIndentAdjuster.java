@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class FormatterBasedIndentAdjuster  {
 
-  private static final String ADJUST_INDENT_COMMAND_NAME = "Adjust Indent";
-
   private FormatterBasedIndentAdjuster() {
   }
 
@@ -57,10 +55,10 @@ public class FormatterBasedIndentAdjuster  {
 
     public void run() {
       int lineStart = myDocument.getLineStartOffset(myLine);
-      CommandProcessor.getInstance().executeCommand(myProject, () ->
+      CommandProcessor.getInstance().runUndoTransparentAction(() ->
         ApplicationManager.getApplication().runWriteAction(() -> {
           CodeStyleManager.getInstance(myProject).adjustLineIndent(myDocument, lineStart);
-        }), ADJUST_INDENT_COMMAND_NAME, null);
+        }));
     }
   }
   

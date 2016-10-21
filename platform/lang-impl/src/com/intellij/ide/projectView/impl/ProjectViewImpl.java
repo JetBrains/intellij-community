@@ -1409,9 +1409,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       for (String pane : myFlattenPackages.keySet()) {
         setPaneOption(myFlattenPackages, flattenPackages, pane, true);
       }
-    } else {
-      setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
     }
+    setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
   }
 
   public boolean isFoldersAlwaysOnTop() {
@@ -1514,9 +1513,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       for (String pane : myHideEmptyPackages.keySet()) {
         setPaneOption(myHideEmptyPackages, hideEmptyPackages, pane, true);
       }
-    } else {
-      setPaneOption(myHideEmptyPackages, hideEmptyPackages, paneId, true);
     }
+    setPaneOption(myHideEmptyPackages, hideEmptyPackages, paneId, true);
   }
 
   @Override

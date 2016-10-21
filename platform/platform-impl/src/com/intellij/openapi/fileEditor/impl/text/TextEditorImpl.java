@@ -57,7 +57,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
     myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
-    myLoadingFinished = myAsyncLoader.scheduleBackgroundLoading(true);
+    myLoadingFinished = myAsyncLoader.start();
   }
 
   @NotNull
