@@ -98,7 +98,7 @@ class BundledJreManager {
     return targetDir
   }
 
-  private File findJreArchive(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+  File findJreArchive(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     def jdkDir = new File(buildContext.paths.projectHome, "build/jdk/$osDirName")
     String suffix = arch == JvmArchitecture.x32 ? "_x86" : "_x64"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix

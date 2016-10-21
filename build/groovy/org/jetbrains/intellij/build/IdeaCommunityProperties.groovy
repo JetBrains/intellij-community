@@ -78,6 +78,12 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
         "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
       }
+
+      @Override
+      String linkToJRE64(BuildContext buildContext) {
+        def versionString = buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+        return "https://download.jetbrains.com/idea/jre64-for-${versionString}.tar.gz"
+      }
     }
   }
 
