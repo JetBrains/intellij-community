@@ -39,6 +39,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
       myServerSocket.setSoTimeout(myConnectionTimeout);
 
       Socket socket = myServerSocket.accept();
+      myConnected = true;
       try {
         myDebuggerReader = new DebuggerReader(myDebugger, socket.getInputStream());
       }
