@@ -26,7 +26,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
 
   public VcsLogUserIndex(@NotNull String logId,
                          @NotNull VcsUserRegistryImpl userRegistry,
-                         @NotNull FatalErrorConsumer consumer,
+                         @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
     super(logId, "users", VcsLogPersistentIndex.getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
           disposableParent);

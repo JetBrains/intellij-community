@@ -18,7 +18,7 @@ package com.intellij.vcs.log.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FatalErrorConsumer {
+public interface FatalErrorHandler {
   void consume(@Nullable Object source, @NotNull Exception exception);
 
   void displayFatalErrorMessage(@NotNull String message);

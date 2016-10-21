@@ -78,7 +78,7 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsConsumer());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
     myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
 
@@ -205,7 +205,7 @@ public class VcsLogManager implements Disposable {
     disposeLog();
   }
 
-  private class MyFatalErrorsConsumer implements FatalErrorConsumer {
+  private class MyFatalErrorsHandler implements FatalErrorHandler {
     private boolean myIsBroken = false;
 
     @Override

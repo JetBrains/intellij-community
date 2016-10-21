@@ -35,7 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
@@ -82,12 +82,12 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
+  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogIndex myIndex;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull FatalErrorConsumer fatalErrorsConsumer) {
+                    @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");

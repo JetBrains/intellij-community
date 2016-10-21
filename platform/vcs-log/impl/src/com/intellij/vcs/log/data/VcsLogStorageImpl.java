@@ -28,7 +28,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
@@ -59,12 +59,12 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
-  @NotNull private final FatalErrorConsumer myExceptionReporter;
+  @NotNull private final FatalErrorHandler myExceptionReporter;
   private volatile boolean myDisposed = false;
 
   public VcsLogStorageImpl(@NotNull Project project,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull FatalErrorConsumer exceptionReporter,
+                           @NotNull FatalErrorHandler exceptionReporter,
                            @NotNull Disposable parent) throws IOException {
     myExceptionReporter = exceptionReporter;
 
