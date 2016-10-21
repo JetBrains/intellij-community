@@ -26,7 +26,7 @@ class TestCircletAction : AnAction() {
         val client = project.component<IdePluginClient>()
         val connection = client.connectionState?.connection ?: return
 
-        ServerApi(connection).getSpaces() then {
+        ServerApi(connection).spaces() then {
             it.forEach {
                 log.info { "Space: ${it.name}" }
             }
