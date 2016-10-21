@@ -128,7 +128,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     FileAttributes attributes = handler.getAttributes(JarFile.MANIFEST_NAME);
     assertTrue(attributes != null);
     assertTrue(attributes.length == 0);
-    assertTrue(attributes.lastModified == jar.lastModified());
+    IoTestUtil.assertTimestampsEqual(attributes.lastModified, jar.lastModified());
 
     if (((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(jar)) {
       // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
