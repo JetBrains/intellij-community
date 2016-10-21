@@ -18,15 +18,26 @@ package com.jetbrains.python.refactoring.move;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Mikhail Golubev
@@ -77,5 +88,32 @@ public class PyMoveRefactoringUtil {
       return element instanceof PyFunction ? name + "()" : name;
     }
     return "";
+  }
+
+  /**
+   * Returns anchor PSI element for {@link PsiElement#addBefore(PsiElement, PsiElement)}.
+   * <p>
+   * If there are any usages at file's level returns the top-level parent element for the first of them,
+   * otherwise return {@code null} which means that the element can be safely inserted at the end of the file.
+   *
+   * @param usages      usages of the original element
+   * @param destination file where original/generated element is to be moved
+   * @return anchor element as described
+   */
+  @Nullable
+  public static PsiElement findLowestPossibleTopLevelInsertionPosition(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
+    return findFirstTopLevelUsageInFile(usages, destination)
+      .map(element -> PyPsiUtils.getParentRightBefore(element, element.getContainingFile()))
+      .orElse(null);
+  }
+
+  @NotNull
+  private static Optional<PsiElement> findFirstTopLevelUsageInFile(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
+    return usages.stream()
+      .map(UsageInfo::getElement)
+      .filter(Objects::nonNull)
+      .filter(element -> ScopeUtil.getScopeOwner(element) == destination)
+      .filter(element -> PyImportStatementNavigator.getImportStatementByElement(element) == null)
+      .min(PsiUtilCore::compareElementsByPosition);
   }
 }

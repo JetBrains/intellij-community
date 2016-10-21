@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,33 +95,8 @@ public class PyMoveSymbolProcessor {
 
   @NotNull
   private PsiElement addElementToFile(@NotNull PsiElement element) {
-    final PsiElement firstUsage = findFirstTopLevelWithUsageAtDestination();
-    if (firstUsage != null) {
-      return myDestinationFile.addBefore(element, firstUsage);
-    }
-    else {
-      return myDestinationFile.add(element);
-    }
-  }
-
-  @Nullable
-  private PsiElement findFirstTopLevelWithUsageAtDestination() {
-    final List<PsiElement> topLevelAtDestination = ContainerUtil.mapNotNull(myUsages, usage -> {
-      final PsiElement element = usage.getElement();
-      if (element != null && ScopeUtil.getScopeOwner(element) == myDestinationFile && getImportStatementByElement(element) == null) {
-        return findTopLevelParent(element);
-      }
-      return null;
-    });
-    if (topLevelAtDestination.isEmpty()) {
-      return null;
-    }
-    return Collections.min(topLevelAtDestination, PsiUtilCore::compareElementsByPosition);
-  }
-
-  @Nullable
-  private PsiElement findTopLevelParent(@NotNull PsiElement element) {
-    return PsiTreeUtil.findFirstParent(element, element1 -> element1.getParent() == myDestinationFile);
+    final PsiElement anchor = PyMoveRefactoringUtil.findLowestPossibleTopLevelInsertionPosition(myUsages, myDestinationFile);
+    return myDestinationFile.addBefore(element, anchor);
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {

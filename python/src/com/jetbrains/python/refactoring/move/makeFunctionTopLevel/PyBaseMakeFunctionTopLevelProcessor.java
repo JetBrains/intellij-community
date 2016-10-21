@@ -37,7 +37,6 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -46,11 +45,9 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -117,11 +114,12 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
     }
-    
+
+    final PsiElement position = PyMoveRefactoringUtil.findLowestPossibleTopLevelInsertionPosition(Arrays.asList(usages), targetFile);
     // We should update usages before we generate and insert new function, because we have to update its usages inside 
     // (e.g. recursive calls) it first 
     updateUsages(newParameters, usages);
-    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), targetFile);
+    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), targetFile, position);
 
     myFunction.delete();
 
@@ -200,17 +198,16 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @NotNull
-  protected PyFunction insertFunction(@NotNull PyFunction newFunction, PyFile newFile) {
-    final PyFunction replacement;
+  protected PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
     if (mySourceFile == newFile) {
-      final PsiElement anchor;
-      anchor = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
-      replacement = (PyFunction)mySourceFile.addAfter(newFunction, anchor);
+      // In the same file try inserting generated function at the top level but preferably right after the original scope owner
+      final PsiElement surroundingStatement = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
+      if (anchor == null || surroundingStatement.getTextRange().getEndOffset() < anchor.getTextRange().getStartOffset()) {
+        return (PyFunction)mySourceFile.addAfter(newFunction, surroundingStatement);
+      }
     }
-    else {
-      replacement = (PyFunction)newFile.addAfter(newFunction, AddImportHelper.getFileInsertPosition(newFile));
-    }
-    return replacement;
+    // Insert at the end or before first top-level usage in the file
+    return (PyFunction)newFile.addBefore(newFunction, anchor);
   }
 
   @NotNull
