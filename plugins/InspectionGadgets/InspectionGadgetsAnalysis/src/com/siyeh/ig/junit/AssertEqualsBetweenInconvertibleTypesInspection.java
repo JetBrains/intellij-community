@@ -50,7 +50,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final String compatibilityErrorMessage = AssertHint.areExpectedActualTypesCompatible(expression);
+      final String compatibilityErrorMessage = AssertHint.areExpectedActualTypesCompatible(expression, false);
       if (compatibilityErrorMessage != null) {
         registerMethodCallError(expression, compatibilityErrorMessage);
       }

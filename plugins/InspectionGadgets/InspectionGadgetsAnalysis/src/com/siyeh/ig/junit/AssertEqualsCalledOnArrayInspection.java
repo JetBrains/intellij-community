@@ -53,7 +53,7 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, false);
       if (assertHint == null) {
         return;
       }

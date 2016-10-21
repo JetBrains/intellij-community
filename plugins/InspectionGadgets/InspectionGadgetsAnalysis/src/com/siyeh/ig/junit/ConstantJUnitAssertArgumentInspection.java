@@ -73,9 +73,8 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
       if (method == null) {
         return;
       }
-      final PsiClass containingClass = method.getContainingClass();
-      final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(containingClass);
-      final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass);
+      final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(method, false);
+      final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(method, false);
       if (!messageOnFirstPosition && !messageOnLastPosition) {
         return;
       }

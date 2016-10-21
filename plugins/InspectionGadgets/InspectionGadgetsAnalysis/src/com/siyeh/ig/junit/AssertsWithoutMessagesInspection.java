@@ -15,102 +15,37 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.*;
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
-public class AssertsWithoutMessagesInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("asserts.without.messages.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "MessageMissingOnJUnitAssertion";
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("asserts.without.messages.problem.descriptor");
-  }
+public abstract class AssertsWithoutMessagesInspection extends BaseInspection {
+  protected abstract Map<String, Integer> getAssertMethods();
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssertionsWithoutMessagesVisitor();
   }
 
-  private static class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
+  protected abstract boolean checkTestNG();
 
-    @NonNls private static final Set<String> s_assertMethods = new HashSet<>(8);
-
-    static {
-      s_assertMethods.add("assertArrayEquals");
-      s_assertMethods.add("assertEquals");
-      s_assertMethods.add("assertFalse");
-      s_assertMethods.add("assertNotNull");
-      s_assertMethods.add("assertNotSame");
-      s_assertMethods.add("assertNull");
-      s_assertMethods.add("assertSame");
-      s_assertMethods.add("assertThat");
-      s_assertMethods.add("assertTrue");
-      s_assertMethods.add("fail");
-    }
+  private class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (methodName == null || !s_assertMethods.contains(methodName)) {
+      AssertHint assertHint = AssertHint.create(expression, methodName -> getAssertMethods().get(methodName), checkTestNG());
+      if (assertHint == null) {
         return;
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(containingClass);
-      final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass);
-      if (!messageOnFirstPosition && !messageOnLastPosition) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      final int parameterCount = parameterList.getParametersCount();
-      if (parameterCount < 2 && methodName.startsWith("assert")) {
+      PsiExpression message = assertHint.getMessage();
+      if (message == null) {
         registerMethodCallError(expression);
-        return;
       }
-      if (parameterCount < 1) {
-        registerMethodCallError(expression);
-        return;
-      }
-      final PsiType stringType = TypeUtils.getStringType(expression);
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiType parameterType1 = parameters[messageOnFirstPosition ? 0 : parameters.length - 1].getType();
-      if (!parameterType1.equals(stringType)) {
-        registerMethodCallError(expression);
-        return;
-      }
-      if (parameters.length != 2) {
-        return;
-      }
-      final PsiType parameterType2 = parameters[messageOnFirstPosition ? parameterCount - 1 : 0].getType();
-      if (!parameterType2.equals(stringType)) {
-        return;
-      }
-      registerMethodCallError(expression);
     }
   }
 }

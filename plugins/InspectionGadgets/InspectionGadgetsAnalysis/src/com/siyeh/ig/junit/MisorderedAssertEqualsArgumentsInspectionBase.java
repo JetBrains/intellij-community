@@ -137,8 +137,8 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         }
       }
       else {
-        final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(containingClass);
-        final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(containingClass, false);
+        final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(method, false);
+        final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(method, false);
         if (!messageOnFirstPosition && !messageOnLastPosition) {
           return null;
         }
