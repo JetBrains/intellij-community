@@ -127,7 +127,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      return PtyProcess.exec(command, envs, directory != null ? directory : TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory());
+      return PtyProcess.exec(command, envs, directory != null ? directory : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -163,7 +163,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private String getShellPath() {
-    return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
+    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getShellPath();
   }
 
   @NotNull
