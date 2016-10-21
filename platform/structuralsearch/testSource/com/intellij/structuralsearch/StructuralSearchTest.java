@@ -2353,14 +2353,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       3
     );
 
-    final String s125 = "a=1;";
-    final String s126 = "'t:[regex(a)]";
-
-    try {
-      findMatchesCount(s125,s126);
-      assertFalse("spaces around reg exp check",false);
-    } catch(MalformedPatternException ex) {}
-
     final String s101 = "class A { void b() { String d; String e; String[] f; f.length=1; f.length=1; } }";
     final String s102 = "'_:[ref('T)] '_;";
 
@@ -2369,23 +2361,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s101,s102),
       1
     );
-
-    final String s103 = " a=1; ";
-    final String s104 = "'T:{ ;";
-    try {
-      findMatchesCount(s103,s104);
-      assertFalse("incorrect reg exp",false);
-    } catch(MalformedPatternException ex) {
-    }
-
-    final String s106 = "'_ReturnType 'MethodName('_ParameterType '_Parameter);";
-    final String s105 = " aaa; ";
-
-    try {
-      findMatchesCount(s105,s106);
-      assertFalse("incorrect reg exp 2",false);
-    } catch(UnsupportedPatternException ex) {
-    }
 
     String s107 = "class A {\n" +
                   "  /* */\n" +
