@@ -428,7 +428,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         selectPrev(mySelectedCell);
       }
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-        selectNext(mySelectedCell);
+        selectNext(mySelectedCell, false);
       }
       else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
         if (!mySelectedCell.isEditing()) {
@@ -465,10 +465,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  public void selectNext(@NotNull IpnbEditablePanel cell) {
+  public void selectNext(@NotNull IpnbEditablePanel cell, boolean addNew) {
     int index = myIpnbPanels.indexOf(cell);
     if (index < myIpnbPanels.size() - 1) {
       setSelectedCell(myIpnbPanels.get(index + 1));
+    }
+    else if (addNew) {
+      createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
+      CommandProcessor.getInstance().executeCommand(getProject(),
+                                                  () -> ApplicationManager.getApplication().runWriteAction(
+                                                    () -> saveToFile()), "Ipnb.runCell", new Object());
     }
   }
 
@@ -521,12 +527,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
     mySelectedCell = ipnbPanel;
-    revalidate();
-    UIUtil.requestFocus(this);
-    repaint();
+    revalidateAndRepaint();
     if (ipnbPanel.getBounds().getHeight() != 0) {
       myListener.selectionChanged(ipnbPanel, mouse);
     }
+  }
+
+  public void revalidateAndRepaint() {
+    revalidate();
+    UIUtil.requestFocus(this);
+    repaint();
   }
 
   @Nullable
