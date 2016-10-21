@@ -31,8 +31,8 @@ class Test {
         String i1 = instanceCall(this::m0);
         String i2 = instanceCall(this::m1);
         String i3 = instanceCall(this::m2);
-        String i4 = instanceCall<error descr="Ambiguous method call: both 'Test.instanceCall(I0)' and 'Test.instanceCall(I1<String>)' match">(this::m01)</error>;
-        String i5 = instanceCall<error descr="Ambiguous method call: both 'Test.instanceCall(I0)' and 'Test.instanceCall(I1<String>)' match">(this::m012)</error>;
+        String i4 = instanceCall<error descr="Ambiguous method call: both 'Test.instanceCall(I0)' and 'Test.instanceCall(I1<Object>)' match">(this::m01)</error>;
+        String i5 = instanceCall<error descr="Ambiguous method call: both 'Test.instanceCall(I0)' and 'Test.instanceCall(I1<Object>)' match">(this::m012)</error>;
     }
 
     void n0() { }
@@ -53,7 +53,7 @@ class Test {
         Test s1 = staticCall(Test::n0);
         Test s2 = staticCall(Test::n1);
         Test s3 = staticCall<error descr="Cannot resolve method 'staticCall(<method reference>)'">(Test::n2)</error>;
-        Test s4 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Test>)' and 'Test.staticCall(I2<Test, String>)' match">(Test::n01)</error>;
-        Test s5 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Test>)' and 'Test.staticCall(I2<Test, String>)' match">(Test::n012)</error>;
+        Test s4 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Object>)' and 'Test.staticCall(I2<Object, String>)' match">(Test::n01)</error>;
+        Test s5 = staticCall<error descr="Ambiguous method call: both 'Test.staticCall(I1<Object>)' and 'Test.staticCall(I2<Object, String>)' match">(Test::n012)</error>;
     }
 }

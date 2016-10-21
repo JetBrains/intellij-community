@@ -29,6 +29,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 abstract class Row() {
+  abstract var enabled: Boolean
+
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     Label(text, style, fontColor, bold)(gapLeft = gapLeft)
   }
@@ -55,7 +57,7 @@ abstract class Row() {
     panel(*constraints)
   }
 
-  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0)
+  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null)
 
   inline fun right(init: Row.() -> Unit) {
     alignRight()
@@ -64,9 +66,7 @@ abstract class Row() {
 
   protected abstract fun alignRight()
 
-  @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
-  fun row(label: String, init: Row.() -> Unit) {
-  }
+  abstract fun row(label: String, init: Row.() -> Unit): Row
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: JLabel? = null, init: Row.() -> Unit) {
@@ -75,4 +75,8 @@ abstract class Row() {
   @Deprecated(message = "Nested noteRow is prohibited", level = DeprecationLevel.ERROR)
   fun noteRow(text: String) {
   }
+}
+
+enum class GrowPolicy {
+  SHORT_TEXT
 }

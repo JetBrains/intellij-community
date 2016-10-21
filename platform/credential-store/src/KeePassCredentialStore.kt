@@ -41,7 +41,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
                                       private val dbFile: Path = baseDirectory.resolve(DB_FILE_NAME),
-                                      existingMasterPassword: String? = null) : PasswordStorage, CredentialStore {
+                                      existingMasterPassword: ByteArray? = null) : PasswordStorage, CredentialStore {
   private val db: KeePassDatabase
 
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
@@ -52,7 +52,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
 
-      val masterPassword = existingMasterPassword?.toByteArray() ?: masterKeyStorage.get()
+      val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
       if (masterPassword == null) {
         LOG.catchAndLog {
           if (dbFile.exists()) {
@@ -66,7 +66,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       else {
         db = loadKdbx(dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
         if (existingMasterPassword != null) {
-          masterKeyStorage.set(existingMasterPassword.toByteArray())
+          masterKeyStorage.set(existingMasterPassword)
         }
       }
     }
@@ -178,12 +178,11 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     }
   }
 
-  fun setMasterPassword(password: String) {
+  fun setMasterPassword(masterPassword: ByteArray) {
     LOG.assertTrue(!memoryOnly)
 
-    val masterKey = password.toByteArray()
-    masterKeyStorage.set(masterKey)
-    dbFile.writeSafe { db.save(KdbxPassword(masterKey), it) }
+    masterKeyStorage.set(masterPassword)
+    dbFile.writeSafe { db.save(KdbxPassword(masterPassword), it) }
     dbFile.setOwnerPermissions()
   }
 }
@@ -192,7 +191,7 @@ internal fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory:
   val dbFile = baseDirectory.resolve(DB_FILE_NAME)
   Files.copy(path, dbFile, StandardCopyOption.REPLACE_EXISTING)
   dbFile.setOwnerPermissions()
-  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword)
+  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword.toByteArray())
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
