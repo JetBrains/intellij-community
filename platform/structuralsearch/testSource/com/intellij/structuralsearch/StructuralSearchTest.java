@@ -2389,5 +2389,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}";
     assertEquals("find super call", 1, findMatchesCount(source, "super.'_m()"));
     assertEquals("find super and non super call", 2, findMatchesCount(source, "'_q:[regex( super|this )].'_m()"));
+
+    String source2 = "class A {" +
+                     "  public boolean equals(Object o) {" +
+                     "    return super.equals(o);" +
+                     "  }" +
+                     "}";
+    assertEquals("find method with super call and matching parameter", 1,
+                 findMatchesCount(source2, "'_rt '_m('_t '_p*) { return super.'_m('_p); }"));
   }
 }
