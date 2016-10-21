@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.containers.ContainerUtil.ar;
 import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
 
 public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
@@ -29,7 +28,12 @@ public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    next(supportsMergeInfo() ? ar(new MergeAllOrSelectedChooserTask(myMergeProcess)) : getMergeAllTasks(false));
+    if (supportsMergeInfo()) {
+      next(new MergeAllOrSelectedChooserTask(myMergeProcess));
+    }
+    else {
+      mergeAll(false);
+    }
   }
 
   private boolean supportsMergeInfo() {

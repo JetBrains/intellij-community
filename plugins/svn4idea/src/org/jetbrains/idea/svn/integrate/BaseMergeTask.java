@@ -28,7 +28,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
 
@@ -80,8 +79,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     myRunner.ping();
   }
 
-  @NotNull
-  protected TaskDescriptor[] getMergeAllTasks(boolean supportsMergeInfo) {
+  protected void mergeAll(boolean supportsMergeInfo) {
     // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
     // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
     // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
@@ -91,12 +89,13 @@ public abstract class BaseMergeTask extends TaskDescriptor {
       : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
         next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
 
-    return ar(new LocalChangesPromptTask(myMergeProcess, null), mergeAllTask);
+    next(new LocalChangesPromptTask(myMergeProcess, null), mergeAllTask);
   }
 
-  protected void runChangeListsMerge(@NotNull List<SvnChangeList> lists, @NotNull String title) {
-    next(new LocalChangesPromptTask(myMergeProcess, lists),
-         new MergeTask(myMergeProcess, new ChangeListsMergerFactory(lists, false, false, true), title));
+  protected void merge(@NotNull List<SvnChangeList> lists) {
+    ChangeListsMergerFactory mergerFactory = new ChangeListsMergerFactory(lists, false, false, true);
+
+    next(new LocalChangesPromptTask(myMergeProcess, lists), new MergeTask(myMergeProcess, mergerFactory, myMergeContext.getTitle()));
   }
 
   protected void end() {

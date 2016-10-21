@@ -52,13 +52,13 @@ public class ShowRevisionSelector extends BaseMergeTask {
         end();
         break;
       case all:
-        next(getMergeAllTasks(true));
+        mergeAll(true);
         break;
       default:
         List<SvnChangeList> lists = result.getSelectedLists();
 
         if (!lists.isEmpty()) {
-          runChangeListsMerge(lists, myMergeContext.getTitle());
+          merge(lists);
         }
         break;
     }

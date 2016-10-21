@@ -26,10 +26,9 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (myInteraction.selectMergeVariant()) {
       case all:
-        next(getMergeAllTasks(true));
+        mergeAll(true);
         break;
       case showLatest:
         next(new MergeCalculatorTask(myMergeProcess, task ->
@@ -39,6 +38,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         next(new LookForBranchOriginTask(myMergeProcess, false, copyPoint ->
           next(new MergeCalculatorTask(myMergeProcess, copyPoint, task ->
             next(new ShowRevisionSelector(myMergeProcess, task.getChangeLists(), task.getMergeChecker(), true, true))))));
+      case cancel:
         break;
     }
   }
