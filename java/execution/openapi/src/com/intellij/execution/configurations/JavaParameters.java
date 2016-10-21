@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -85,7 +87,8 @@ public class JavaParameters extends SimpleJavaParameters {
     if (!pathsList.getPathList().isEmpty()) {
       ParametersList vmParameters = getVMParametersList();
       if (vmParameters.hasProperty(JAVA_LIBRARY_PATH_PROPERTY)) {
-        LOG.info(JAVA_LIBRARY_PATH_PROPERTY + " property is already specified, native library paths from dependencies (" + pathsList.getPathsString() + ") won't be added");
+        LOG.info(JAVA_LIBRARY_PATH_PROPERTY + " property is already specified, " +
+                 "native library paths from dependencies (" + pathsList.getPathsString() + ") won't be added");
       }
       else {
         vmParameters.addProperty(JAVA_LIBRARY_PATH_PROPERTY, pathsList.getPathsString());
@@ -154,7 +157,9 @@ public class JavaParameters extends SimpleJavaParameters {
     return result;
   }
 
-  public void configureByProject(final Project project, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, final Sdk jdk) throws CantRunException {
+  public void configureByProject(Project project,
+                                 @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType,
+                                 Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -170,7 +175,7 @@ public class JavaParameters extends SimpleJavaParameters {
     configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
   }
 
-  private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, Sdk jdk) {
+  private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
     if ((classPathType & JDK_ONLY) == 0) {
       enumerator = enumerator.withoutSdk();
     }
@@ -180,8 +185,14 @@ public class JavaParameters extends SimpleJavaParameters {
     OrderRootsEnumerator rootsEnumerator = enumerator.classes();
     if ((classPathType & JDK_ONLY) != 0) {
       rootsEnumerator = rootsEnumerator.usingCustomRootProvider(
-        e -> e instanceof JdkOrderEntry ? jdk.getRootProvider().getFiles(OrderRootType.CLASSES) : e.getFiles(OrderRootType.CLASSES));
+        e -> e instanceof JdkOrderEntry ? jdkRoots(jdk) : e.getFiles(OrderRootType.CLASSES));
     }
     return rootsEnumerator;
+  }
+
+  private static VirtualFile[] jdkRoots(Sdk jdk) {
+    return Arrays.stream(jdk.getRootProvider().getFiles(OrderRootType.CLASSES))
+      .filter(f -> !JrtFileSystem.isModuleRoot(f))
+      .toArray(VirtualFile[]::new);
   }
 }
