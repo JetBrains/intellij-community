@@ -758,8 +758,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return;
       }
 
-      final AppLifecycleListener publisher = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
-      publisher.appClosing();
+      getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
 
       myDisposeInProgress = true;
 
@@ -769,7 +768,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       saveSettings();
 
-      publisher.appWillExit();
 
       boolean success = disposeSelf(!force);
     if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
