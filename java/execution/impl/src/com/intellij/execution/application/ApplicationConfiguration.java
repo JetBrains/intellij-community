@@ -30,19 +30,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
@@ -292,34 +286,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
         PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
         if (mainModule != null) {
           params.setModuleName(mainModule.getModuleName());
-
-          PathsList modulePath = params.getModulePath(), classPath = params.getClassPath();
-          ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(module.getProject());
-          JavaModuleGraphUtil.moduleDependencies(mainModule).stream()
-            .map(PsiImplUtil::getModuleVirtualFile)
-            .flatMap(f -> classRoots(f, index))
-            .forEach(f -> {
-              modulePath.add(f);
-              classPath.remove(f);
-            });
+          params.getModulePath().addAll(params.getClassPath().getPathList());
         }
       }
-    }
-
-    private static Stream<VirtualFile> classRoots(VirtualFile file, ProjectFileIndex index) {
-      if (index.isInSourceContent(file)) {
-        Module module = index.getModuleForFile(file);
-        if (module != null) {
-          return Stream.of(OrderEnumerator.orderEntries(module).runtimeOnly().withoutSdk().withoutLibraries().withoutDepModules().getClassesRoots());
-        }
-      }
-      else {
-        VirtualFile root = index.getClassRootForFile(file);
-        if (root != null) {
-          return Stream.of(root);
-        }
-      }
-      return Stream.empty();
     }
   }
 }
