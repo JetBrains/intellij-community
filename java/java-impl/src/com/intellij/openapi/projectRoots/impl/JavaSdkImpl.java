@@ -161,7 +161,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
@@ -372,7 +371,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public void setupSdkPaths(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
@@ -486,11 +484,6 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     return versionString;
-  }
-
-  @Override
-  public int compareTo(@NotNull String versionString, @NotNull String versionNumber) {
-    return getVersionNumber(versionString).compareTo(versionNumber);
   }
 
   @Override
@@ -676,7 +669,7 @@ public class JavaSdkImpl extends JavaSdk {
       ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
     }
 
-    Collections.sort(result, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+    Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
 
     return result;
   }
@@ -689,13 +682,11 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  @SuppressWarnings("HardCodedStringLiteral")
   private static VirtualFile findSources(File file) {
     return findSources(file, "src");
   }
 
   @Nullable
-  @SuppressWarnings("HardCodedStringLiteral")
   private static VirtualFile findSources(File file, final String srcName) {
     File jarFile = new File(file, srcName + ".jar");
     if (!jarFile.exists()) {
@@ -717,7 +708,6 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static void addDocs(File file, SdkModificator rootContainer) {
     VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {

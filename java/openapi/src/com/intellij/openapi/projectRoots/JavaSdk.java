@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,18 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public abstract class JavaSdk extends SdkType implements JavaSdkType {
-  public JavaSdk(@NotNull @NonNls String name) {
-    super(name);
-  }
-
   public static JavaSdk getInstance() {
     return ApplicationManager.getApplication().getComponent(JavaSdk.class);
+  }
+
+  public JavaSdk(@NotNull String name) {
+    super(name);
   }
 
   @NotNull
@@ -37,13 +36,8 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
     return createJdk(jdkName, jreHome, true);
   }
 
-  /**
-   * @deprecated use {@link #isOfVersionOrHigher(Sdk, JavaSdkVersion)} instead
-   */
-  public abstract int compareTo(@NotNull String versionString, @NotNull String versionNumber);
-
   @NotNull
-  public abstract Sdk createJdk(@NonNls String jdkName, @NotNull String home, boolean isJre);
+  public abstract Sdk createJdk(String jdkName, @NotNull String home, boolean isJre);
 
   @Nullable
   public abstract JavaSdkVersion getVersion(@NotNull Sdk sdk);
