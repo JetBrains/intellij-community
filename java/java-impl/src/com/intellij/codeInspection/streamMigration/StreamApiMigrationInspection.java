@@ -953,7 +953,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if (!(myType instanceof PsiPrimitiveType)) {
           return myVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
         }
-        if(myType.equals(myVariable.getType())) {
+        if(myType.equals(myVariable.getType()) && !(myVariable instanceof PsiParameter)) {
           return "";
         }
         if (PsiType.LONG.equals(myType) && PsiType.INT.equals(myVariable.getType())) {
@@ -965,7 +965,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       String operationName = "map";
       if(myType instanceof PsiPrimitiveType) {
-        if(!myType.equals(myVariable.getType())) {
+        if(!myType.equals(myVariable.getType()) || myVariable instanceof PsiParameter) {
           if(PsiType.INT.equals(myType)) {
             operationName = "mapToInt";
           } else if(PsiType.LONG.equals(myType)) {
