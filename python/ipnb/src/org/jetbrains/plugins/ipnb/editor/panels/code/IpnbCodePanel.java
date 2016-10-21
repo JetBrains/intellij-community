@@ -141,37 +141,29 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   public void updatePanel(@Nullable final String replacementContent, @Nullable final List<IpnbOutputCell> outputContent) {
     final Application application = ApplicationManager.getApplication();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (replacementContent != null) {
-          myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              myCodeSourcePanel.getEditor().getDocument().setText(replacementContent);
-            }
-          });
-        }
-        myCell.removeCellOutputs();
-        myViewPanel.removeAll();
-
-        final JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(IpnbEditorUtil.getBackground());
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
-        myViewPanel.add(panel);
-        isRunning = false;
-        if (outputContent != null) {
-          for (IpnbOutputCell output : outputContent) {
-            myCell.addCellOutput(output);
-            addOutputPanel(myViewPanel, output, true);
-          }
-        }
-
-        final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
-        filePanel.revalidate();
-        filePanel.repaint();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      if (replacementContent != null) {
+        myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
+        application.runWriteAction(() -> myCodeSourcePanel.getEditor().getDocument().setText(replacementContent));
       }
+      myCell.removeCellOutputs();
+      myViewPanel.removeAll();
+
+      final JPanel panel = new JPanel(new GridBagLayout());
+      panel.setBackground(IpnbEditorUtil.getBackground());
+      addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
+      myViewPanel.add(panel);
+      isRunning = false;
+      if (outputContent != null) {
+        for (IpnbOutputCell output : outputContent) {
+          myCell.addCellOutput(output);
+          addOutputPanel(myViewPanel, output, true);
+        }
+      }
+
+      final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
+      filePanel.revalidate();
+      filePanel.repaint();
     });
   }
 
