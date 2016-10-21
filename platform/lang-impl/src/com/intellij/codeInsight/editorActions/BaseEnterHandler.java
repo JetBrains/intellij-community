@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
 public abstract class BaseEnterHandler extends EditorWriteActionHandler {
-  public static final String GROUP_ID = "EnterHandler.GROUP_ID";
+  private static final String GROUP_ID = "EnterHandler.GROUP_ID";
 
   protected BaseEnterHandler() {
     super(false);
