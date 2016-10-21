@@ -19,8 +19,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.util.stream.Collectors.toList;
 
 public class ShelveLocalChangesTask extends BaseMergeTask {
 
@@ -44,36 +39,24 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
   }
 
   @Override
-  public void run() {
-    List<VirtualFile> changedFiles = shelveChanges();
-
-    suspend();
-    RefreshQueue.getInstance().refresh(true, false, this::ping, changedFiles);
+  public void run() throws VcsException {
+    try {
+      shelveChanges();
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
   }
 
-  @NotNull
-  private List<VirtualFile> shelveChanges() {
-    List<VirtualFile> changedFiles = newArrayList();
-    ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
-
+  private void shelveChanges() throws VcsException, IOException {
     getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
-    for (Map.Entry<String, List<Change>> entry : myIntersection.getChangesByLists().entrySet()) {
-      try {
-        shelveManager
-          .shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true, true);
-        // TODO: ChangesUtil.getFilesFromChanges() performs refresh of several files.
-        // TODO: Check if logic of collecting files to refresh could be revised here.
-        changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));
-      }
-      catch (IOException e) {
-        end(new VcsException(e));
-      }
-      catch (VcsException e) {
-        end(e);
-      }
-    }
+    ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
-    return changedFiles;
+    for (Map.Entry<String, List<Change>> entry : myIntersection.getChangesByLists().entrySet()) {
+      String shelfName = myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)";
+
+      shelveManager.shelveChanges(entry.getValue(), shelfName, true, true);
+    }
   }
 }
