@@ -1577,6 +1577,10 @@ public class UIUtil {
     sb.append(Integer.toHexString(color.getBlue()));
   }
 
+  public static void drawDottedRectangle(Graphics g, Rectangle r) {
+    drawDottedRectangle(g, r.x, r.y, r.x + r.width, r.y + r.height);
+  }
+
   /**
    * @param g  graphics.
    * @param x  top left X coordinate.
