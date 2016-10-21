@@ -17,12 +17,13 @@ package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
-import groovy.lang.Closure
+import groovy.lang.Closure.DELEGATE_FIRST
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -39,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName() = COMPONENT_DELEGATE_FQN
+  override fun getParentClassName() = componentDelegateFqn
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
     val name = processor.getHint(NameHint.KEY)?.getName(state)
@@ -107,7 +108,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       // (name, clazz)
       // (name, clazz, configuration)
       wrappedBase.copy().apply {
-        addParameter("name", CommonClassNames.JAVA_LANG_STRING)
+        addParameter("name", JAVA_LANG_STRING)
         addParameter("clazz", classType)
         addParameter("configuration", GROOVY_LANG_CLOSURE, true)
       }.let {
@@ -119,8 +120,8 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       wrappedBase.copy().apply {
         addParameter("clazz", classType)
         addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true).apply {
-          putUserData(DELEGATES_TO_KEY, COMPONENT_DELEGATE_FQN)
-          putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
+          putUserData(DELEGATES_TO_KEY, componentDelegateFqn)
+          putUserData(DELEGATES_TO_STRATEGY_KEY, DELEGATE_FIRST)
         }
       }.let {
         if (!delegate.execute(it, state)) return false

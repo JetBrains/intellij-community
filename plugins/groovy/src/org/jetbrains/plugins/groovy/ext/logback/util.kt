@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.ext.logback
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -27,24 +26,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 
-internal val CONFIG_NAME = "logback.groovy"
-internal val CONFIG_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
-internal val COMPONENT_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.ComponentDelegate"
-internal val appenderMethodPattern = psiMethod(CONFIG_DELEGATE_FQN, "appender")
+internal val configName = "logback.groovy"
+internal val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
+internal val componentDelegateFqn = "ch.qos.logback.classic.gaffer.ComponentDelegate"
+internal val appenderMethodPattern = psiMethod(configDelegateFqn, "appender")
 internal val appenderDeclarationPattern = groovyLiteralExpression().methodCallParameter(0, appenderMethodPattern)
 
 internal fun PsiClass?.isLogbackConfig() = this is GroovyScriptClass && this.containingFile.isLogbackConfig()
 
-internal fun PsiFile?.isLogbackConfig() = this?.originalFile?.virtualFile.isLogbackConfig()
-
-private fun VirtualFile?.isLogbackConfig() = this?.name == CONFIG_NAME
+internal fun PsiFile?.isLogbackConfig() = this?.originalFile?.virtualFile?.name == configName
 
 internal fun PsiElement.isBefore(other: PsiElement) = textRange.startOffset < other.textRange.startOffset
 
-internal fun PsiFile.getAppenderDeclarations(): Map<String, GrLiteral> {
-  return CachedValuesManager.getCachedValue(this) {
-    Result.create(computeAppenderDeclarations(), this)
-  }
+internal val PsiFile.appenderDeclarations: Map<String, GrLiteral> get() = CachedValuesManager.getCachedValue(this) {
+  Result.create(computeAppenderDeclarations(), this)
 }
 
 private fun PsiFile.computeAppenderDeclarations(): Map<String, GrLiteral> {

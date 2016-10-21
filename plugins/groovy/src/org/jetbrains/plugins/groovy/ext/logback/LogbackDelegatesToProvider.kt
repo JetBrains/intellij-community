@@ -26,18 +26,18 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvid
 class LogbackDelegatesToProvider : GrDelegatesToProvider {
 
   private companion object {
-    val APPENDER_DELEGATE_FQN = "ch.qos.logback.classic.gaffer.AppenderDelegate"
+    val appenderDelegateFqn = "ch.qos.logback.classic.gaffer.AppenderDelegate"
     val appendClosure = groovyClosure().inMethod(appenderMethodPattern)
-    val receiverClosure = groovyClosure().inMethod(psiMethod(CONFIG_DELEGATE_FQN, "receiver"))
-    val turboFilterClosure = groovyClosure().inMethod(psiMethod(CONFIG_DELEGATE_FQN, "turboFilter"))
+    val receiverClosure = groovyClosure().inMethod(psiMethod(configDelegateFqn, "receiver"))
+    val turboFilterClosure = groovyClosure().inMethod(psiMethod(configDelegateFqn, "turboFilter"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     if (appendClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(APPENDER_DELEGATE_FQN, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(TypesUtil.createType(appenderDelegateFqn, closure), Closure.DELEGATE_FIRST)
     }
     if (receiverClosure.accepts(closure) || turboFilterClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(COMPONENT_DELEGATE_FQN, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(TypesUtil.createType(componentDelegateFqn, closure), Closure.DELEGATE_FIRST)
     }
     return null
   }

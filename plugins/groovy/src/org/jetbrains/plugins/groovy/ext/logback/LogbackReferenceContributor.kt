@@ -32,8 +32,8 @@ class LogbackReferenceContributor : PsiReferenceContributor() {
   companion object {
     val appenderReferencePlace = GroovyPatterns.groovyLiteralExpression().withParent(
         StandardPatterns.or(
-            groovyList().methodCallParameter(1, psiMethod(CONFIG_DELEGATE_FQN, "root")),
-            groovyList().methodCallParameter(2, psiMethod(CONFIG_DELEGATE_FQN, "logger"))
+            groovyList().methodCallParameter(1, psiMethod(configDelegateFqn, "root")),
+            groovyList().methodCallParameter(2, psiMethod(configDelegateFqn, "logger"))
         )
     )
   }

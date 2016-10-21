@@ -18,14 +18,15 @@ package org.jetbrains.plugins.groovy.ext.logback
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor
 import org.jetbrains.plugins.groovy.lang.resolve.Import
-import org.jetbrains.plugins.groovy.lang.resolve.ImportType
+import org.jetbrains.plugins.groovy.lang.resolve.ImportType.STAR
+import org.jetbrains.plugins.groovy.lang.resolve.ImportType.STATIC_STAR
 
 class LogbackImportContributor : GrImportContributor {
 
   private val imports by lazy {
     listOf(
         Import("ch.qos.logback.classic.encoder.PatternLayoutEncoder"),
-        Import("ch.qos.logback.classic.Level", ImportType.STATIC_STAR)
+        Import("ch.qos.logback.classic.Level", STATIC_STAR)
     ) + listOf(
         "ch.qos.logback.core",
         "ch.qos.logback.core.encoder",
@@ -33,7 +34,7 @@ class LogbackImportContributor : GrImportContributor {
         "ch.qos.logback.core.rolling",
         "ch.qos.logback.core.status",
         "ch.qos.logback.classic.net"
-    ).map { Import(it, ImportType.STAR) }
+    ).map { Import(it, STAR) }
   }
 
   override fun getImports(file: GroovyFile) = if (file.isLogbackConfig()) imports else emptyList()

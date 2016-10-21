@@ -20,4 +20,4 @@ import com.intellij.psi.ManipulatableTarget
 import com.intellij.psi.PsiElement
 
 @Presentation(typeName = "Appender")
-class AppenderTarget(declaration: PsiElement) : ManipulatableTarget(declaration)
+internal class AppenderTarget(declaration: PsiElement) : ManipulatableTarget(declaration)

@@ -23,11 +23,11 @@ import com.intellij.psi.impl.PomTargetPsiElementImpl
 import icons.JetgroovyIcons.Groovy.Groovy_16x16
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 
-class AppenderReference(literal: GrLiteral) : PsiPolyVariantReferenceBase<GrLiteral>(literal) {
+internal class AppenderReference(literal: GrLiteral) : PsiPolyVariantReferenceBase<GrLiteral>(literal) {
 
   override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
     if (incompleteCode) return emptyArray()
-    val declaration = element.containingFile.getAppenderDeclarations()[value] ?: return emptyArray()
+    val declaration = element.containingFile.appenderDeclarations[value] ?: return emptyArray()
     if (!declaration.isBefore(element)) return emptyArray()
     val target = AppenderTarget(declaration)
     val targetPsi = object : PomTargetPsiElementImpl(target) {
@@ -37,12 +37,9 @@ class AppenderReference(literal: GrLiteral) : PsiPolyVariantReferenceBase<GrLite
     return arrayOf(resolveResult)
   }
 
-  override fun getVariants(): Array<out Any> {
-    val filtered = element.containingFile.getAppenderDeclarations().filterValues {
-      it.isBefore(element)
-    }.keys.map {
-      LookupElementBuilder.create(it).withTypeText("Appender", true).withIcon(Groovy_16x16)
-    }
-    return filtered.toTypedArray()
-  }
+  override fun getVariants() = element.containingFile.appenderDeclarations.filterValues {
+    it.isBefore(element)
+  }.keys.map {
+    LookupElementBuilder.create(it).withTypeText("Appender", true).withIcon(Groovy_16x16)
+  }.toTypedArray()
 }

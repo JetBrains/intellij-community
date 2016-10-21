@@ -48,6 +48,6 @@ class LogbackTopLevelMemberContributor : NonCodeMembersContributor() {
       }
     }
 
-    JavaPsiFacade.getInstance(place.project).findClass(CONFIG_DELEGATE_FQN, scope)?.processDeclarations(processor, state, null, place)
+    JavaPsiFacade.getInstance(place.project).findClass(configDelegateFqn, scope)?.processDeclarations(processor, state, null, place)
   }
 }
