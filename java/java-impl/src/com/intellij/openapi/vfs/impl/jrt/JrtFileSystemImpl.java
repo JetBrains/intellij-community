@@ -23,18 +23,22 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,36 +46,19 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
-public class JrtFileSystem extends ArchiveFileSystem {
-  public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
-  public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
-  public static final String SEPARATOR = JarFileSystem.JAR_SEPARATOR;
-
-  private static final boolean SUPPORTED =
-    SystemInfo.isJavaVersionAtLeast("9") || SystemInfo.isJavaVersionAtLeast("1.8") && !SystemInfo.isJavaVersionAtLeast("1.9");
-
-  private static final URI ROOT_URI = URI.create("jrt:/");
-
+public class JrtFileSystemImpl extends JrtFileSystem {
   private final Map<String, ArchiveHandler> myHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
-  public JrtFileSystem() {
+  public JrtFileSystemImpl() {
     scheduleConfiguredSdkCheck();
   }
 
@@ -212,52 +199,5 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @Override
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
     return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
-  }
-
-  public static boolean isSupported() {
-    return SUPPORTED;
-  }
-
-  public static boolean isModularJdk(@NotNull String homePath) {
-    return new File(homePath, "lib/modules").exists() && new File(homePath, "jrt-fs.jar").isFile();
-  }
-
-  public static boolean isRoot(@NotNull VirtualFile file) {
-    return file.getParent() == null && file.getFileSystem() instanceof JrtFileSystem;
-  }
-
-  public static boolean isModuleRoot(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    return parent != null && isRoot(parent);
-  }
-
-  @NotNull
-  public static List<String> listModules(@NotNull String path) {
-    try {
-      Path root = getFileSystem(path).getPath("/modules");
-      return Files.list(root).map(p -> p.getFileName().toString()).collect(Collectors.toList());
-    }
-    catch (IOException | InvalidPathException e) {
-      Logger.getInstance(JrtFileSystem.class).warn(path, e);
-      return Collections.emptyList();
-    }
-  }
-
-  static FileSystem getFileSystem(String path) throws IOException {
-    try {
-      if (SystemInfo.isJavaVersionAtLeast("9")) {
-        return FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
-      }
-      else {
-        File file = new File(path, "jrt-fs.jar");
-        if (!file.exists()) throw new IOException("Missing provider: " + file);
-        URL url = file.toURI().toURL();
-        ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-        return FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
-      }
-    }
-    catch (Error e) {
-      throw new IOException("Error mounting JRT filesystem at " + path, e);
-    }
   }
 }

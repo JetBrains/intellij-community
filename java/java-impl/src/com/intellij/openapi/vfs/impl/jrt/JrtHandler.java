@@ -15,20 +15,27 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
+  private static final URI ROOT_URI = URI.create("jrt:/");
+
   private SoftReference<FileSystem> myFileSystem;
 
   public JrtHandler(@NotNull String path) {
@@ -38,8 +45,23 @@ class JrtHandler extends ArchiveHandler {
   private synchronized FileSystem getFileSystem() throws IOException {
     FileSystem fs = SoftReference.dereference(myFileSystem);
     if (fs == null) {
-      fs = JrtFileSystem.getFileSystem(getFile().getPath());
-      myFileSystem = new SoftReference<>(fs);
+      String path = getFile().getPath();
+      try {
+        if (SystemInfo.isJavaVersionAtLeast("9")) {
+          fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
+        }
+        else {
+          File file = new File(path, "jrt-fs.jar");
+          if (!file.exists()) throw new IOException("Missing provider: " + file);
+          URL url = file.toURI().toURL();
+          ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
+          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+        }
+        myFileSystem = new SoftReference<>(fs);
+      }
+      catch (RuntimeException | Error e) {
+        throw new IOException("Error mounting JRT filesystem at " + path, e);
+      }
     }
     return fs;
   }

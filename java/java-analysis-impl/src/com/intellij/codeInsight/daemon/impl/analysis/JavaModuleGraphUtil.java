@@ -63,14 +63,10 @@ public class JavaModuleGraphUtil {
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
-    return getRequiresGraph(source).reads(source, destination);
-  }
-
-  @NotNull
-  public static Collection<PsiJavaModule> moduleDependencies(@NotNull PsiJavaModule start) {
-    Set<PsiJavaModule> result = ContainerUtil.newHashSet();
-    visit(getRequiresGraph(start), start, result);
-    return result;
+    Project project = source.getProject();
+    RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+    return graph.reads(source, destination);
   }
 
   // Looks for cycles between Java modules in the project sources.
@@ -121,12 +117,6 @@ public class JavaModuleGraphUtil {
     return map;
   }
 
-  private static RequiresGraph getRequiresGraph(@NotNull PsiJavaModule source) {
-    Project project = source.getProject();
-    return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
-  }
-
   // Starting from source modules, collects all module dependencies in the project.
   // The resulting graph is used for tracing readability.
   private static RequiresGraph buildRequiresGraph(Project project) {
@@ -158,12 +148,6 @@ public class JavaModuleGraphUtil {
     }
   }
 
-  private static void visit(RequiresGraph graph, PsiJavaModule module, Set<PsiJavaModule> result) {
-    if (result.add(module)) {
-      graph.dependencies(module).forEach(dependency -> visit(graph, dependency, result));
-    }
-  }
-
   private static class RequiresGraph {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myPublicEdges;
@@ -185,10 +169,6 @@ public class JavaModuleGraphUtil {
         }
       }
       return false;
-    }
-
-    public Iterable<PsiJavaModule> dependencies(PsiJavaModule node) {
-      return myGraph.getNodes().contains(node) ? () -> myGraph.getIn(node) : Collections.emptyList();
     }
 
     public static String key(PsiJavaModule module, PsiJavaModule exporter) {
