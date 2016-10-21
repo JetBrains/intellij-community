@@ -22,13 +22,12 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.editor.impl.InlayModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -119,7 +118,7 @@ class ToggleInlineHintsAction : AnAction() {
 }
 
 private fun hasParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
-  if (editor.inlayModel !is InlayModel) return false
+  if (editor is EditorWindow) return false
   
   val offset = editor.caretModel.offset
   val element = file.findElementAt(offset)
@@ -127,7 +126,7 @@ private fun hasParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
-  return editor.inlayModel is InlayModelImpl && editor.inlayModel
+  return editor.inlayModel
       .getInlineElementsInRange(startOffset, endOffset)
       .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }
