@@ -94,7 +94,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
     }
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
+        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, pluginHelper, null);
       }
       catch (IOException e) {
         LOG.error(e);
