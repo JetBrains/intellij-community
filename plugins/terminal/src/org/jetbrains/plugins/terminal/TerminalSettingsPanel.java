@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
@@ -78,7 +79,7 @@ public class TerminalSettingsPanel {
       @Override
       protected void textChanged(DocumentEvent e) {
         myShellPathField
-          .getTextField().setForeground(myProjectOptionsProvider.isShellPathDefault(myShellPathField.getText()) ?
+          .getTextField().setForeground(StringUtil.equals(myShellPathField.getText(), myProjectOptionsProvider.getDefaultShellPath()) ?
                                         getDefaultValueColor() : getChangedValueColor());
       }
     });
@@ -87,8 +88,9 @@ public class TerminalSettingsPanel {
       @Override
       protected void textChanged(DocumentEvent e) {
         myStartDirectoryField
-          .getTextField().setForeground(myProjectOptionsProvider.isStartingDirectoryDefault(myStartDirectoryField.getText()) ?
-                                        getDefaultValueColor() : getChangedValueColor());
+          .getTextField()
+          .setForeground(StringUtil.equals(myStartDirectoryField.getText(), myProjectOptionsProvider.getDefaultStartingDirectory()) ?
+                         getDefaultValueColor() : getChangedValueColor());
       }
     });
 
