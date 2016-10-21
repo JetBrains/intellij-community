@@ -19,7 +19,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -55,7 +54,6 @@ public class LaterInvocator {
 
   private static final Object LOCK = new Object();
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
-  private static final FrequentEventDetector ourFrequentEventDetector = new FrequentEventDetector(1009, 100);
 
   private LaterInvocator() { }
 
@@ -146,8 +144,6 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    ourFrequentEventDetector.eventHappened(runnable);
-
     final ActionCallback callback = new ActionCallback();
     RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
     synchronized (LOCK) {
