@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @NotNull private final IpnbFileEditor myParent;
   private IpnbCodeSourcePanel myCodeSourcePanel;
   private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
+  private boolean mySelectNext;
 
   public IpnbCodePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final IpnbCodeCell cell) {
     super(cell, new BorderLayout());
@@ -117,8 +119,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   @Override
-  public void runCell() {
-    super.runCell();
+  public void runCell(boolean selectNext) {
+    mySelectNext = selectNext;
     updateCellSource();
     isRunning = true;
     updatePanel(null, null);
@@ -141,7 +143,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   public void updatePanel(@Nullable final String replacementContent, @Nullable final List<IpnbOutputCell> outputContent) {
     final Application application = ApplicationManager.getApplication();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    application.invokeAndWait(() -> {
       if (replacementContent != null) {
         myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
         application.runWriteAction(() -> myCodeSourcePanel.getEditor().getDocument().setText(replacementContent));
@@ -160,11 +162,13 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
           addOutputPanel(myViewPanel, output, true);
         }
       }
-
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
-      filePanel.revalidate();
-      filePanel.repaint();
-    });
+      setEditing(false);
+      filePanel.revalidateAndRepaint();
+      if (mySelectNext && (replacementContent != null || outputContent != null)) {
+        filePanel.selectNext(this, true);
+      }
+    }, ModalityState.stateForComponent(this));
   }
 
   @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})

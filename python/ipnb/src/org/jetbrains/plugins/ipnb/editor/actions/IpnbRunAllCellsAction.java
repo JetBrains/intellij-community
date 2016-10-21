@@ -58,7 +58,7 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
 
   private static void runCells(List<IpnbEditablePanel> cells, IpnbFilePanel ipnbFilePanel) {
     for (IpnbEditablePanel cell : cells) {
-      cell.runCell();
+      cell.runCell(true);
       ipnbFilePanel.revalidate();
       ipnbFilePanel.repaint();
       ipnbFilePanel.requestFocus();

@@ -123,7 +123,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   protected String getRawCellText() { return ""; }
 
-  public void runCell() {
+  public void runCell(boolean selectNext) {
     if (mySplitter != null) {
       updateCellSource();
       updateCellView();
@@ -133,6 +133,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       final Container parent = getParent();
       if (parent instanceof IpnbFilePanel) {
         UIUtil.requestFocus((IpnbFilePanel)parent);
+        if (selectNext) {
+          ((IpnbFilePanel)parent).selectNext(this, true);
+        }
       }
     }
   }
