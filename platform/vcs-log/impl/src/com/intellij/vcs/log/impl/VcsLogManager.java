@@ -212,14 +212,14 @@ public class VcsLogManager implements Disposable {
     @Override
     public void consume(@Nullable Object source, @NotNull final Exception e) {
       if (myIsBroken.compareAndSet(false, true)) {
-        processErrorFirstTime(source, e);
+        processError(source, e);
       }
       else {
         LOG.debug(e);
       }
     }
 
-    protected void processErrorFirstTime(@Nullable Object source, @NotNull Exception e) {
+    protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
           String message = "Fatal error, VCS Log recreated: " + e.getMessage();
