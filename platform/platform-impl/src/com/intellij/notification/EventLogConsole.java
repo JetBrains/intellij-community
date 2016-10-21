@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -171,6 +172,9 @@ class EventLogConsole {
       }
     });
     editor.setColorsScheme(ConsoleViewUtil.updateConsoleColorScheme(editor.createBoundColorSchemeDelegate(globalScheme)));
+    if (editor instanceof EditorImpl) {
+      ((EditorImpl)editor).setUseEditorAntialiasing(false);
+    }
   }
 
   private static DefaultActionGroup createPopupActions(ActionManager actionManager,
