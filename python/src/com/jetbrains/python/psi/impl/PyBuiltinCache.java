@@ -395,7 +395,8 @@ public class PyBuiltinCache {
     }
   }
 
-  private PyType getStrOrUnicodeType() {
+  @Nullable
+  public PyType getStrOrUnicodeType() {
     return PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
   }
 

@@ -61,6 +61,14 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
+    if (actual instanceof PyClassType) {
+      final PyClassType classType = (PyClassType)actual;
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(classType.getPyClass());
+
+      if (actual == builtinCache.getObjectType(PyNames.BASESTRING)) {
+        return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
+      }
+    }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
