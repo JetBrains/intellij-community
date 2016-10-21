@@ -107,7 +107,12 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiReference reference) {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
-    myDynamicUsage = reference.resolve() == null;
+    if (reference instanceof PsiPolyVariantReference) {
+      myDynamicUsage = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
+    }
+    else {
+      myDynamicUsage = reference.resolve() == null;
+    }
   }
 
   public UsageInfo(@NotNull PsiQualifiedReferenceElement reference) {
