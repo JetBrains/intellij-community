@@ -1,4 +1,4 @@
-// "Replace with sum()" "true"
+// "Replace with sum()" "false"
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,8 +8,7 @@ public class Main {
     String line = "";
     long count = 0;
     wh<caret>ile((line = br.readLine()) != null) {
-      line = line.trim();
-      count+=line.length();
+      count+=(line = line.trim()).length();
     }
     System.out.println(count);
   }
