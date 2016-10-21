@@ -42,11 +42,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-    final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
-    if (writer != null) {
-      writer.close();
-    }
-    BackwardReferenceIndexWriter.clearInstance();
+    BackwardReferenceIndexWriter.closeIfNeed();
   }
 
   @Override

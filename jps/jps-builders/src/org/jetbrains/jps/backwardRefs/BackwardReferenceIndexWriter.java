@@ -39,9 +39,7 @@ import java.util.*;
 import static com.sun.tools.javac.code.Flags.PRIVATE;
 
 public class BackwardReferenceIndexWriter {
-  public static final String PROP_KEY = "ref.index.builder";
-
-  public static volatile boolean forceEnabled;
+  public static final String PROP_KEY = "jps.backward.ref.index.builder";
 
   private static volatile BackwardReferenceIndexWriter ourInstance;
 
@@ -53,8 +51,14 @@ public class BackwardReferenceIndexWriter {
     myRebuild = rebuild;
   }
 
-  public static void clearInstance() {
-    ourInstance = null;
+  public static void closeIfNeed() {
+    if (ourInstance != null) {
+      try {
+        ourInstance.close();
+      } finally {
+        ourInstance = null;
+      }
+    }
   }
 
   static BackwardReferenceIndexWriter getInstance() {
@@ -85,7 +89,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   public static boolean isEnabled() {
-    return SystemProperties.getBooleanProperty(PROP_KEY, false) || forceEnabled;
+    return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
   void close() {
