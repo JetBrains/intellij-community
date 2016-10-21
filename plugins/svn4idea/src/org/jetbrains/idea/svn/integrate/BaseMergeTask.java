@@ -23,6 +23,7 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.util.List;
@@ -83,19 +84,22 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
     // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
     // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
-    BaseMergeTask mergeAllTask =
-      supportsMergeInfo && is18()
-      ? new MergeAllWithBranchCopyPointTask(myMergeProcess)
-      : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
-        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
-
-    next(new LocalChangesPromptTask(myMergeProcess, null), mergeAllTask);
+    next(supportsMergeInfo && is18()
+         ? new MergeAllWithBranchCopyPointTask(myMergeProcess)
+         : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
+           next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo))));
   }
 
-  protected void merge(@NotNull List<SvnChangeList> lists) {
-    ChangeListsMergerFactory mergerFactory = new ChangeListsMergerFactory(lists, false, false, true);
+  protected void merge(@NotNull List<SvnChangeList> changeLists) {
+    if (!changeLists.isEmpty()) {
+      ChangeListsMergerFactory mergerFactory = new ChangeListsMergerFactory(changeLists, false, false, true);
 
-    next(new LocalChangesPromptTask(myMergeProcess, lists), new MergeTask(myMergeProcess, mergerFactory, myMergeContext.getTitle()));
+      merge(myMergeContext.getTitle(), mergerFactory, changeLists);
+    }
+  }
+
+  protected void merge(@NotNull String title, @NotNull MergerFactory mergerFactory, @Nullable List<SvnChangeList> changeLists) {
+    next(new LocalChangesPromptTask(myMergeProcess, changeLists), new MergeTask(myMergeProcess, mergerFactory, title));
   }
 
   protected void end() {

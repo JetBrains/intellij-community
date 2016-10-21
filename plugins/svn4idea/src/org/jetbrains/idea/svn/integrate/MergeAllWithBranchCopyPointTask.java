@@ -49,7 +49,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
       MergerFactory mergerFactory = createBranchMergerFactory(reintegrate);
       String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
 
-      next(new MergeTask(myMergeProcess, mergerFactory, title));
+      merge(title, mergerFactory, null);
     }
   }
 
