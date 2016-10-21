@@ -135,8 +135,8 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   }
 
   @Override
-  protected void doWhenFirstShown() {
-    super.doWhenFirstShown();
+  protected void setUpDialog() {
+    super.setUpDialog();
     enlargeDialogHeightIfNecessary();
   }
   

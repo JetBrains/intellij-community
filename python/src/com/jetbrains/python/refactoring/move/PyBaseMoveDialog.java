@@ -19,11 +19,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,16 +57,11 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
 
   @Override
   protected void init() {
-    UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
-      @Override
-      public void run() {
-        doWhenFirstShown();
-      }
-    });
     super.init();
+    setUpDialog();
   }
 
-  protected void doWhenFirstShown() {
+  protected void setUpDialog() {
     preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
   }
 
@@ -78,6 +73,7 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
     if (start + 1 < end) {
       field.select(start + 1, end);
     }
+    field.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
   }
 
   @Override
