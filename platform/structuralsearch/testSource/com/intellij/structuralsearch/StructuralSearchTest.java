@@ -1221,9 +1221,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s2 = "'_b:[script( \"^^^\" )]";
 
     try {
-      final int count = findMatchesCount(s1, s2);
-      assertFalse("Validation does not work", true);
-    } catch (MalformedPatternException ex) {}
+      findMatchesCount(s1, s2);
+      fail("Validation does not work");
+    } catch (MalformedPatternException ignored) {}
   }
 
   //public void testRelationBetweenVars() {
@@ -1630,8 +1630,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // noncompatible same typed var constraints
     try {
       findMatchesCount(s22,s21_2);
-      assertFalse("search for noncompatible typed var constraint",false);
-    } catch(MalformedPatternException e) {
+      fail("search for noncompatible typed var constraint");
+    } catch(MalformedPatternException ignored) {
     }
 
       // compatible same typed var constraints
@@ -2051,8 +2051,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     try {
       findMatchesCount(s109,s110_4);
-      assertFalse("implements navigation match in definition 2 with nested conditions - incorrect cond",false);
-    } catch(UnsupportedPatternException ex) {}
+      fail("implements navigation match in definition 2 with nested conditions - incorrect cond");
+    } catch(UnsupportedPatternException ignored) {}
 
     final String s111 = "interface E {} class A implements E {} class B extends A { int f = 0; } class C extends B {} class D { void e() { C c; B b; A a;} }";
     final String s112 = "'_";
@@ -2714,10 +2714,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     try {
       findMatchesCount(s1,s2_3);
-      assertTrue("Finding package-private dcls",false);
-    } catch(MalformedPatternException ex) {
-
-    }
+      fail("Finding package-private dcls");
+    } catch (MalformedPatternException ignored) {}
 
     String s3 = "class A {\n" +
                 "  int a;\n" +
