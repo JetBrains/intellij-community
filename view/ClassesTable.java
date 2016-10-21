@@ -14,10 +14,10 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
+import icons.MemoryViewIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -389,11 +389,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
                                          boolean hasFocus, int row, int column) {
       column = convertColumnIndexToModel(column);
       TrackingType trackingType = getTrackingType(row);
-      if (trackingType != null && !isSelected) {
-        JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
-            ? trackingType.color()
-            : TrackingType.inactiveColor();
-        setBackground(UIUtil.toAlpha(color, 20));
+
+      if (trackingType != null && column == DiffViewTableModel.DIFF_COLUMN_INDEX) {
+        setIcon(MemoryViewIcons.CLASS_TRACKED);
+        setTransparentIconBackground(true);
       }
 
       if (value != null) {
