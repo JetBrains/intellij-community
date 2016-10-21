@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
@@ -140,7 +141,7 @@ public class InferenceSessionContainer {
                                             final PsiSubstitutor partialSubstitutor,
                                             @NotNull final PsiCall parent,
                                             @NotNull final ParameterTypeInferencePolicy policy,
-                                            final MethodCandidateInfo.CurrentCandidateProperties properties,
+                                            @NotNull final MethodCandidateInfo.CurrentCandidateProperties properties,
                                             final InferenceSession parentSession) {
     final CompoundInitialState compoundInitialState = createState(parentSession);
     InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(parent);
@@ -148,6 +149,7 @@ public class InferenceSessionContainer {
       final InferenceSession childSession = new InferenceSession(initialInferenceState);
       final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
       if (errorMessages != null) {
+        properties.getInfo().setInferenceError(StringUtil.join(errorMessages, "\n"));
         return childSession.prepareSubstitution();
       }
       return childSession.collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
