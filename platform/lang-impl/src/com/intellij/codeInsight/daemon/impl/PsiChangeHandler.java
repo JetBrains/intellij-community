@@ -104,7 +104,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
 
   private void updateChangesForDocument(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (DaemonListeners.isUnderIgnoredAction(null) || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
       // The document has been changed, but psi hasn't

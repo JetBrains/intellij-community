@@ -173,7 +173,6 @@ public class DaemonListeners implements Disposable {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
-        if (isUnderIgnoredAction(null)) return;
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
@@ -348,12 +347,6 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  static boolean isUnderIgnoredAction(@Nullable Object action) {
-    return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
-           action == DocumentRunnable.IgnoreDocumentRunnable.class ||
-           ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
-  }
-
   private boolean worthBothering(final Document document, Project project) {
     if (document == null) return true;
     if (project != null && project != myProject) return false;
@@ -432,7 +425,6 @@ public class DaemonListeners implements Disposable {
     @Override
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (isUnderIgnoredAction(null)) return;
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
@@ -461,7 +453,6 @@ public class DaemonListeners implements Disposable {
     @Override
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (isUnderIgnoredAction(null)) return;
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
       if (myEscPressed) {
