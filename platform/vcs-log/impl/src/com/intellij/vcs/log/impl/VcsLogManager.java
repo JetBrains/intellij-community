@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
@@ -206,36 +207,36 @@ public class VcsLogManager implements Disposable {
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
-    private boolean myIsBroken = false;
+    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
     public void consume(@Nullable Object source, @NotNull final Exception e) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myIsBroken) {
-          myIsBroken = true;
-          processErrorFirstTime(source, e);
-        }
-        else {
-          LOG.debug(e);
-        }
-      });
+      if (myIsBroken.compareAndSet(false, true)) {
+        processErrorFirstTime(source, e);
+      }
+      else {
+        LOG.debug(e);
+      }
     }
 
     protected void processErrorFirstTime(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        String message = "Fatal error, VCS Log recreated: " + e.getMessage();
-        if (isLogVisible()) {
-          LOG.info(e);
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
-        }
-        else {
-          LOG.error(message, e);
-        }
-        myRecreateMainLogHandler.run();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String message = "Fatal error, VCS Log recreated: " + e.getMessage();
+          if (isLogVisible()) {
+            LOG.info(e);
+            VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+          }
+          else {
+            LOG.error(message, e);
+          }
+          myRecreateMainLogHandler.run();
+        });
       }
       else {
         LOG.error(e);
       }
+
       if (source instanceof VcsLogStorage) {
         myLogData.getIndex().markCorrupted();
       }
