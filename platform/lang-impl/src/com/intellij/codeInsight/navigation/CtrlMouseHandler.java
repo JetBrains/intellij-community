@@ -85,7 +85,6 @@ import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -597,9 +596,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
-    if (element != null) {
-      PsiElement identifier = element.getNameIdentifier();
+    final PsiElement element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
+    if (element instanceof PsiNameIdentifierOwner) {
+      PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
       if (identifier != null && identifier.isValid()) {
         return new Info(identifier){
           @Override
