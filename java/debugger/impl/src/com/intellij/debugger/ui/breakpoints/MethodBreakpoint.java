@@ -169,7 +169,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                   case Opcodes.ARETURN:
                   case Opcodes.LRETURN:
                   case Opcodes.DRETURN:
-                  case Opcodes.ATHROW:
+                  //case Opcodes.ATHROW:
                     allLineLocations.stream()
                       .filter(l -> l.lineNumber() == myLastLine)
                       .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
