@@ -62,10 +62,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     if (startElement != endElement) assertPhysical(endElement);
 
     final TextRange startElementRange = startElement.getTextRange();
-    LOG.assertTrue(startElementRange != null, startElement);
+    // Android Studio: we've removed these text assertions; see https://youtrack.jetbrains.com/issue/IDEA-162940
+    // LOG.assertTrue(startElementRange != null, startElement);
     final TextRange endElementRange = endElement.getTextRange();
-    LOG.assertTrue(endElementRange != null, endElement);
-    if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
+    //LOG.assertTrue(endElementRange != null, endElement);
+    if (startElementRange != null && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
         LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
       }
