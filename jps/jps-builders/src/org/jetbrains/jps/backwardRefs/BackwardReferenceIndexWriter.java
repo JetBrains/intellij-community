@@ -34,10 +34,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.sun.tools.javac.code.Flags.PRIVATE;
 
@@ -213,7 +210,23 @@ public class BackwardReferenceIndexWriter {
 
   private void updateHierarchyIndicesIncrementally(final CompilerBackwardReferenceIndex.LightDefinition classId, LightRef.JavaLightClassRef[] superIds) {
     final Collection<LightRef> rawOldSupers = myIndex.getHierarchyMap().get(classId);
-    Set<LightRef> oldSuperClasses = rawOldSupers == null ? null : new THashSet<LightRef>(rawOldSupers);
+    Set<LightRef> oldSuperClasses;
+    if (rawOldSupers == null) {
+      oldSuperClasses = null;
+    }
+    else {
+      if (superIds.length == rawOldSupers.size()) {
+        boolean needUpdate = false;
+        for (LightRef.JavaLightClassRef id : superIds) {
+          if (!rawOldSupers.contains(id)) {
+            needUpdate = true;
+            break;
+          }
+        }
+        if (!needUpdate) return;
+      }
+      oldSuperClasses = new THashSet<LightRef>(rawOldSupers);
+    }
     for (LightRef.JavaLightClassRef superId: superIds) {
       if (oldSuperClasses == null || !oldSuperClasses.remove(superId)) {
         myIndex.getBackwardHierarchyMap().put(superId, classId);
