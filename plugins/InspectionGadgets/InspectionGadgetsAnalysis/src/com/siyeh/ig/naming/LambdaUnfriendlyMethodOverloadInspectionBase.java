@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -54,14 +53,9 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
 
   private static class LambdaUnfriendlyMethodOverloadVisitor extends BaseInspectionVisitor {
 
-    private static final Key<Boolean> SKIP_MARKER = new Key<>("skip marker for lambda unfriendly method overload inspection");
-
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (method.getUserData(SKIP_MARKER) == Boolean.TRUE) {
-        return;
-      }
       final PsiParameterList parameterList = method.getParameterList();
       final int parametersCount = parameterList.getParametersCount();
       if (parametersCount == 0) {
@@ -84,7 +78,6 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         return;
       }
       final String name = method.getName();
-      boolean problemFound = false;
       for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, true)) {
         if (method.equals(sameNameMethod) || PsiSuperMethodUtil.isSuperMethod(method, sameNameMethod)) {
           continue;
@@ -103,15 +96,9 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         }
 
         if (areSameShapeFunctionalTypes(functionalType, otherFunctionalType)) {
-          problemFound = true;
-          if (containingClass.equals(sameNameMethod.getContainingClass())) {
-            registerMethodError(sameNameMethod, sameNameMethod);
-            sameNameMethod.putUserData(SKIP_MARKER, Boolean.TRUE);
-          }
+          registerMethodError(method, method);
+          return;
         }
-      }
-      if (problemFound) {
-        registerMethodError(method, method);
       }
     }
 
