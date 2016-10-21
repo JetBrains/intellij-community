@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.junit.Assert.*;
 
@@ -126,9 +127,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     File jar = IoTestUtil.createTestJar();
     JarHandler handler = new JarHandler(jar.getPath());
     FileAttributes attributes = handler.getAttributes(JarFile.MANIFEST_NAME);
-    assertTrue(attributes != null);
-    assertTrue(attributes.length == 0);
-    IoTestUtil.assertTimestampsEqual(attributes.lastModified, jar.lastModified());
+    assertNotNull(attributes);
+    assertEquals(0, attributes.length);
+    assertTimestampsEqual(jar.lastModified(), attributes.lastModified);
 
     if (((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(jar)) {
       // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
