@@ -130,6 +130,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       mySplitter.setFirstComponent(myViewPrompt);
       mySplitter.setSecondComponent(null);
       setEditing(false);
+      final Container parent = getParent();
+      if (parent instanceof IpnbFilePanel) {
+        UIUtil.requestFocus((IpnbFilePanel)parent);
+      }
     }
   }
 
