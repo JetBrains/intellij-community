@@ -16,17 +16,17 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -377,17 +377,10 @@ public class DynamicManagerImpl extends DynamicManager {
 
   @Override
   public void fireChange() {
-    fireChangeCodeAnalyze();
-  }
-
-  private void fireChangeCodeAnalyze() {
-    final Editor textEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (textEditor == null) return;
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getDocument());
-    if (file == null) return;
-
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    TransactionGuard.submitTransaction(myProject, () -> {
+      ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+    });
   }
 
   @Override
