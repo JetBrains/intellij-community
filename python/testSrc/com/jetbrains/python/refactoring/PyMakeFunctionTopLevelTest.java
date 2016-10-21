@@ -23,11 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.actions.MoveAction;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -274,6 +270,18 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   public void testLocalFunctionNameCollision() {
     doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", "nested"));
+  }
+
+  public void testMethodInsertionPositionSameFileClassAndUsageNotTopLevel() {
+    doTestSuccess();
+  }
+
+  public void testMethodInsertionPositionUsageInAnotherFile() throws IOException {
+    doMultiFileTest("other.py", null);
+  }
+
+  public void testMethodInsertionPositionNoUsageInAnotherFile() throws IOException {
+    doMultiFileTest("other.py", null);    
   }
 
   @Override
