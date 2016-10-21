@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,14 +61,14 @@ public class AnnotationTargetUtil {
     }
 
     if (owner instanceof PsiModifierList) {
-      if (((PsiModifierList)owner).getNextSibling() instanceof PsiErrorElement) {
-        return TargetType.EMPTY_ARRAY;
-      }
       PsiElement element = ((PsiModifierList)owner).getParent();
       if (element instanceof PsiPackageStatement) {
         return PACKAGE_TARGETS;
       }
       if (element instanceof PsiClass) {
+        if (((PsiClass)element).getModifierList() != owner){
+          return TargetType.EMPTY_ARRAY;
+        }
         if (((PsiClass)element).isAnnotationType()) {
           return ANNOTATION_TARGETS;
         }
