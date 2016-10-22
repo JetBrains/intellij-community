@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -413,8 +414,12 @@ public interface Application extends ComponentManager {
 
   /**
    * Returns lock used for write operations, should be closed in finally block
+   * @see #runWriteAction
+   * @see WriteAction#run(ThrowableRunnable)
+   * @see WriteAction#compute(ThrowableComputable)
    */
   @NotNull
+  @Deprecated
   AccessToken acquireWriteActionLock(@NotNull Class marker);
 
   boolean isInternal();
