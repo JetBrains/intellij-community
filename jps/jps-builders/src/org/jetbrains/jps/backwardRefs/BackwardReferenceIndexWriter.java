@@ -102,7 +102,7 @@ public class BackwardReferenceIndexWriter {
 
   synchronized void processDeletedFiles(Collection<String> paths) {
     for (String path : paths) {
-      final int deletedFileId = enumeratePath(path);
+      final int deletedFileId = enumeratePath(new File(path).getPath());
 
       //remove from reference maps
       final Collection<LightRef> refs = myIndex.getReferenceMap().get(deletedFileId);
