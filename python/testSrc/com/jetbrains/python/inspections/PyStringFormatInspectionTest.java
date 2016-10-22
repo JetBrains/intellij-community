@@ -196,12 +196,7 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   
   // PY-20599
   public void testPy3kAsciiFormatSpecifier() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest();        
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   //PY-21166
