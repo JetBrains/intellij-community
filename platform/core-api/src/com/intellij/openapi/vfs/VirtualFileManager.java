@@ -41,6 +41,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
     }
   };
 
+  private static class InstanceHolder {
+    static final VirtualFileManager ourInstance = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+  }
+
   /**
    * Gets the instance of <code>VirtualFileManager</code>.
    *
@@ -48,7 +52,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   @NotNull
   public static VirtualFileManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+    return InstanceHolder.ourInstance;
   }
 
   /**
