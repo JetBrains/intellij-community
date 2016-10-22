@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -210,10 +211,16 @@ public class ConsoleViewUtil {
 
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      console.print(lexer.getTokenText(), getContentTypeForToken(tokenType, highlighter));
-      if (doOnNewLine != null && "\n".equals(lexer.getTokenText())) {
-        doOnNewLine.run();
+      ConsoleViewContentType contentType = getContentTypeForToken(tokenType, highlighter);
+      StringTokenizer eolTokenizer = new StringTokenizer(lexer.getTokenText(), "\n", true);
+      while (eolTokenizer.hasMoreTokens()){
+        String tok = eolTokenizer.nextToken();
+        console.print(tok, contentType);
+        if (doOnNewLine != null && "\n".equals(tok)) {
+            doOnNewLine.run();
+        }
       }
+
       lexer.advance();
     }
   }
