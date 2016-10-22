@@ -222,7 +222,7 @@ public class VcsLogManager implements Disposable {
     protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          String message = "Fatal error, VCS Log recreated: " + e.getMessage();
+          String message = "Fatal error, VCS Log re-created: " + e.getMessage();
           if (isLogVisible()) {
             LOG.info(e);
             displayFatalErrorMessage(message);
