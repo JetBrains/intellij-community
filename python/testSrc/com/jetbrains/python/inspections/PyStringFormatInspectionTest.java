@@ -203,6 +203,11 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   public void testUnsupportedFormatSpecifierNewStyleFormatting() {
     doTest();
   }
+  
+  // PY-21156
+  public void testPackedStringTooFewArguments() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");

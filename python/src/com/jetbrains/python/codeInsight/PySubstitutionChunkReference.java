@@ -89,6 +89,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private PsiElement resolvePositionalFormat(@NotNull PyArgumentList argumentList) {
     final int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
     int n = 0;
+    boolean notSureAboutStarArgs = false;
     PyStarArgument firstStarArg = null;
     for (PyExpression arg : argumentList.getArguments()) {
       final PyStarArgument starArg = PyUtil.as(arg, PyStarArgument.class);
@@ -98,9 +99,15 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
             firstStarArg = starArg;
           }
           // TODO: Support multiple *args for Python 3.5+
-          final PsiElement resolved = resolvePositionalStarExpression(starArg, n);
-          if (resolved != null) {
-            return resolved;
+          final Ref<PsiElement> resolvedRef = resolvePositionalStarExpression(starArg, n);
+          if (resolvedRef != null) {
+            final PsiElement resolved = resolvedRef.get();
+            if (resolved != null) {
+              return resolved;
+            }
+          }
+          else {
+            notSureAboutStarArgs = true;
           }
         }
       }
@@ -111,7 +118,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         n++;
       }
     }
-    return firstStarArg;
+    return notSureAboutStarArgs ? firstStarArg : null;
   }
 
   @Nullable
@@ -239,10 +246,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
   
   @Nullable
-  private PsiElement resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
-    final PyExpression expr = PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class);
+  private Ref<PsiElement> resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
+    final PyExpression expr = PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
+                                                            PyStringLiteralExpression.class);
     if (expr == null) {
-      return starArgument;
+      return Ref.create(starArgument);
     }
     final int position = (myChunk.getPosition() != null ? myChunk.getPosition() : myPosition) - argumentPosition;
     final PyExpression[] elements;
@@ -253,14 +261,20 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       final PyExpression expression = PyPsiUtils.flattenParens(expr);
       final PyTupleExpression tupleExpr = PyUtil.as(expression, PyTupleExpression.class);
       if (tupleExpr == null) {
-        return starArgument;
+        return Ref.create(starArgument);
       }
       elements = tupleExpr.getElements();
     }
-    else {
-      elements = null;
+    else if (expr instanceof PyStringLiteralExpression) {
+      if (position < ((PyStringLiteralExpression)expr).getStringValue().length()) {
+        return Ref.create(expr);
+      }
+      return Ref.create();
     }
-    return elements != null && position < elements.length ? elements[position] : null;
+    else {
+      return null;
+    }
+    return position < elements.length ? Ref.create(elements[position]) : Ref.create();
   }
 
   @Nullable

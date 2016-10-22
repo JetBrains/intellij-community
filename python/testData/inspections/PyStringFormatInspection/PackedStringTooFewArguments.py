@@ -1,0 +1,1 @@
+<warning descr="Too few mapping keys">'{3}, {1}, {0}'</warning>.format(*'abc')
