@@ -451,7 +451,7 @@ public class PyStringFormatParser {
         chunk.setPrecision(parseWhileCharacterInSet(DIGITS));
       }
 
-      if (isAtSet(NEW_STYLE_CONVERSION_TYPES)) {
+      if (myPos < end - 1) {
         chunk.setConversionType(myLiteral.charAt(myPos));
       }
     } 

@@ -522,10 +522,15 @@ public class PyStringFormatInspection extends PyInspection {
         }
 
         final char conversionType = chunk.getConversionType();
-        if (NEW_STYLE_FORMAT_CONVERSIONS.containsKey(conversionType)) {
-          final String[] s = NEW_STYLE_FORMAT_CONVERSIONS.get(conversionType).split(" or ");
-          addTypes(types, Arrays.asList(s));
-          hasTypeOptions = true;
+        if (conversionType != Character.MIN_VALUE) {
+          if (NEW_STYLE_FORMAT_CONVERSIONS.containsKey(conversionType)) {
+            final String[] s = NEW_STYLE_FORMAT_CONVERSIONS.get(conversionType).split(" or ");
+            addTypes(types, Arrays.asList(s));
+            hasTypeOptions = true;
+          }
+          else {
+            registerProblem(myFormatExpression, PyBundle.message("INSP.unsupported.format.character", conversionType));
+          }
         }
 
         if (!types.isEmpty()) {

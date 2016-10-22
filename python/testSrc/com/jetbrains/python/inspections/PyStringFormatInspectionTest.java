@@ -203,7 +203,12 @@ public class PyStringFormatInspectionTest extends PyTestCase {
       }
     });
   }
-  
+
+  //PY-21166
+  public void testUnsupportedFormatSpecifierNewStyleFormatting() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyStringFormatInspection.class);
