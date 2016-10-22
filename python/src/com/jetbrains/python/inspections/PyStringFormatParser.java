@@ -175,8 +175,8 @@ public class PyStringFormatParser {
       return myUnclosedMapping;
     }
 
-    private void setUnclosedMapping(boolean unclosedMapping) {
-      myUnclosedMapping = unclosedMapping;
+    private void setUnclosedMapping() {
+      myUnclosedMapping = true;
     }
   }
 
@@ -207,8 +207,8 @@ public class PyStringFormatParser {
       return signOption;
     }
 
-    public void setSignOption(boolean signOption) {
-      this.signOption = signOption;
+    public void setSignOption() {
+      this.signOption = true;
     }
 
     public char getConversionType() {
@@ -223,24 +223,24 @@ public class PyStringFormatParser {
       return alternateForm;
     }
 
-    public void setAlternateForm(boolean alternateForm) {
-      this.alternateForm = alternateForm;
+    public void setAlternateForm() {
+      this.alternateForm = true;
     }
 
     public boolean hasZeroPadding() {
       return zeroPadding;
     }
 
-    public void setZeroPadding(boolean zeroPadding) {
-      this.zeroPadding = zeroPadding;
+    public void setZeroPadding() {
+      this.zeroPadding = true;
     }
 
     public boolean hasThousandsSeparator() {
       return thousandsSeparator;
     }
 
-    public void setThousandsSeparator(boolean thousandsSeparator) {
-      this.thousandsSeparator = thousandsSeparator;
+    public void setThousandsSeparator() {
+      this.thousandsSeparator = true;
     }
 
     @Nullable
@@ -276,7 +276,6 @@ public class PyStringFormatParser {
   // new style strings
   private static final String ALIGN_SYMBOLS = "<>=^";
   private static final String SIGN_SYMBOLS = "+- ";
-  private static final String NEW_STYLE_CONVERSION_TYPES = "bcdeEfFgGnosxX%";
   private static final String CONVERSIONS = "rsa";
   private static final char ALTERNATE_FORM_SYMBOL = '#';
   private static final char ZERO_PADDING_SYMBOL = '0';
@@ -318,7 +317,7 @@ public class PyStringFormatParser {
   }
 
   private List<FormatStringChunk> parseNewStyle() {
-    final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
+    final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(myLiteral);
     int autoPositionedFieldsCount = 0;
     while (matcher.find()) {
@@ -425,17 +424,17 @@ public class PyStringFormatParser {
       myPos = Math.max(myPos, StringUtil.indexOfAny(myLiteral, ALIGN_SYMBOLS, myPos, end) + 1);
 
       if (isAtSet(SIGN_SYMBOLS)) {
-        chunk.setSignOption(true);
+        chunk.setSignOption();
         myPos++;
       }
 
       if (isAt(ALTERNATE_FORM_SYMBOL)) {
-        chunk.setAlternateForm(true);
+        chunk.setAlternateForm();
         myPos++;
       }
 
       if (isAt(ZERO_PADDING_SYMBOL)) {
-        chunk.setZeroPadding(true);
+        chunk.setZeroPadding();
         myPos++;
       }
 
@@ -443,7 +442,7 @@ public class PyStringFormatParser {
 
       if (isAt(',')) {
         myPos++;
-        chunk.setThousandsSeparator(true);
+        chunk.setThousandsSeparator();
       }
 
       if (isAt('.')) {
@@ -471,7 +470,7 @@ public class PyStringFormatParser {
       if (mappingEnd < 0) {
         chunk.setEndIndex(myLiteral.length());
         chunk.setMappingKey(myLiteral.substring(myPos + 1));
-        chunk.setUnclosedMapping(true);
+        chunk.setUnclosedMapping();
         myPos = myLiteral.length();
         return;
       }
