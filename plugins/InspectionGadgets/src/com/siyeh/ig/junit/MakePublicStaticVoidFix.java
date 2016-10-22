@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.usageView.UsageInfo;
@@ -50,25 +51,16 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   protected void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
     if (method != null) {
-      if (!PsiType.VOID.equals(method.getReturnType()) ||
-          !method.hasModifierProperty(PsiModifier.PUBLIC) ||
-          !method.hasModifierProperty(PsiModifier.STATIC)) {
-        ChangeSignatureProcessor csp =
-          new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
-                                       new ParameterInfoImpl[0]) {
-            @Override
-            protected void performRefactoring(@NotNull UsageInfo[] usages) {
-              super.performRefactoring(usages);
-              if (myMakeStatic) {
-                final PsiModifierList modifierList = method.getModifierList();
-                if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-                  modifierList.setModifierProperty(PsiModifier.STATIC, true);
-                }
-              }
-            }
-          };
-        csp.run();
-      }
+      ChangeSignatureProcessor csp =
+        new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
+                                     new ParameterInfoImpl[0]) {
+          @Override
+          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+            super.performRefactoring(usages);
+            PsiUtil.setModifierProperty(method, PsiModifier.STATIC, myMakeStatic);
+          }
+        };
+      csp.run();
     }
   }
 
