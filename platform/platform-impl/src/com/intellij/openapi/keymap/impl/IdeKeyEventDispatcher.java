@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -38,7 +39,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -606,7 +606,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final AnActionEvent actionEvent =
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
 
-      ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
+      try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
+        ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
+      }
 
       if (dumb && !action.isDumbAware()) {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {

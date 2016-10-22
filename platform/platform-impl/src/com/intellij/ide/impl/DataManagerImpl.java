@@ -17,8 +17,10 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -63,11 +65,13 @@ public class DataManagerImpl extends DataManager {
 
   @Nullable
   private Object getData(@NotNull String dataId, final Component focusedComponent) {
-    for (Component c = focusedComponent; c != null; c = c.getParent()) {
-      final DataProvider dataProvider = getDataProviderEx(c);
-      if (dataProvider == null) continue;
-      Object data = getDataFromProvider(dataProvider, dataId, null);
-      if (data != null) return data;
+    try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
+      for (Component c = focusedComponent; c != null; c = c.getParent()) {
+        final DataProvider dataProvider = getDataProviderEx(c);
+        if (dataProvider == null) continue;
+        Object data = getDataFromProvider(dataProvider, dataId, null);
+        if (data != null) return data;
+      }
     }
     return null;
   }
