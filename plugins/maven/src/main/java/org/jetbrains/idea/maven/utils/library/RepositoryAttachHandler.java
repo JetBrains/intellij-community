@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +34,6 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +41,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -143,14 +140,10 @@ public class RepositoryAttachHandler {
     final Ref<List<OrderRoot>> result = Ref.create(null);
     doResolveInner(project, getMavenId(coord), extraTypes, repositories, artifacts -> {
       if (!artifacts.isEmpty()) {
-        AccessToken accessToken = WriteAction.start();
-        try {
+        WriteAction.run(() -> {
           final List<OrderRoot> roots = createRoots(artifacts, copyTo);
           result.set(roots);
-        }
-        finally {
-          accessToken.finish();
-        }
+        });
       }
       return true;
     }, indicator);

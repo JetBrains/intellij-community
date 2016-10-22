@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -88,9 +89,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
               }
             }
             else if (component instanceof PersistentStateComponent) {
-              AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(SystemFileProcessor.class);
-              Object state = ((PersistentStateComponent)component).getState();
-              token.finish();
+              Object state = WriteAction.compute(() -> ((PersistentStateComponent)component).getState());
 
               if(state == null){
                 return;

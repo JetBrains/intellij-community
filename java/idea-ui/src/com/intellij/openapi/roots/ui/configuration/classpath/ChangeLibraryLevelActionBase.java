@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,14 +107,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
-
-    AccessToken token = WriteAction.start();
-    try {
-      model.commit();
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> model.commit());
     return copied;
   }
 

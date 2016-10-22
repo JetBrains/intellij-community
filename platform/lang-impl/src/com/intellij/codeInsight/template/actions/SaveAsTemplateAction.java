@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,8 +38,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -49,7 +46,10 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SaveAsTemplateAction extends AnAction {
 
@@ -146,14 +146,7 @@ public class SaveAsTemplateAction extends AnAction {
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);
 
-    PsiFile copy;
-    AccessToken token = WriteAction.start();
-    try {
-      copy = TemplateManagerImpl.insertDummyIdentifier(editor, file);
-    }
-    finally {
-      token.finish();
-    }
+    PsiFile copy = WriteAction.compute(() -> TemplateManagerImpl.insertDummyIdentifier(editor, file));
     Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(copy, startOffset);
 
     for(TemplateContextType contextType: TemplateManagerImpl.getAllContextTypes()) {

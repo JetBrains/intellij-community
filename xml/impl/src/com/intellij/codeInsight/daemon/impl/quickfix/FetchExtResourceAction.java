@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -184,16 +184,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      @SuppressWarnings("deprecation")
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
-      try {
+      WriteAction.run(() -> {
         final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
         final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
         LOG.assertTrue(vFile != null, path);
-      }
-      finally {
-        token.finish();
-      }
+      });
     });
 
     final List<String> downloadedResources = new LinkedList<>();

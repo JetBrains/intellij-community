@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -255,13 +253,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         downloader.createDownloader(Arrays.asList(description), jarName)
                   .downloadFilesWithProgress(file.getPath(), project, myEditorComponent);
       if (jars != null && jars.size() == 1) {
-        AccessToken token = WriteAction.start();
-        try {
-          OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef);
-        }
-        finally {
-          token.finish();
-        }
+        WriteAction.run(() -> OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef));
       }
     }
   }

@@ -22,10 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +31,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,19 +59,19 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      int[] starts = selectionModel.getBlockSelectionStarts();
-      int[] ends = selectionModel.getBlockSelectionEnds();
+      WriteAction.run(() -> {
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        int[] starts = selectionModel.getBlockSelectionStarts();
+        int[] ends = selectionModel.getBlockSelectionEnds();
 
-      int startOffset = starts.length == 0? 0 : starts[0];
-      int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
+        int startOffset = starts.length == 0? 0 : starts[0];
+        int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
 
-      perform(project, editor.getDocument(), startOffset, endOffset);
+        perform(project, editor.getDocument(), startOffset, endOffset);
+      });
     }
     finally {
-      token.finish();
       commandProcessor.finishCommand(project, commandToken, null);
     }
   }

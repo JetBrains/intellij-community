@@ -15,9 +15,8 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
@@ -91,15 +90,16 @@ class CodeStyleSchemeExporterUI {
         String message;
         MessageType messageType;
         if (targetFile != null) {
-          final AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
           try {
-            OutputStream outputStream = targetFile.getOutputStream(this);
-            try {
-              exporter.exportScheme(myScheme, outputStream);
-            }
-            finally {
-              outputStream.close();
-            }
+            WriteAction.run(() -> {
+              OutputStream outputStream = targetFile.getOutputStream(this);
+              try {
+                exporter.exportScheme(myScheme, outputStream);
+              }
+              finally {
+                outputStream.close();
+              }
+            });
             message = ApplicationBundle
               .message("scheme.exporter.ui.code.style.exported.message", myScheme.getName(), targetFile.getPresentableUrl());
             messageType = MessageType.INFO;
@@ -107,9 +107,6 @@ class CodeStyleSchemeExporterUI {
           catch (Exception e) {
             message = ApplicationBundle.message("scheme.exporter.ui.export.failed", e.getMessage());
             messageType = MessageType.ERROR;
-          }
-          finally {
-            writeToken.finish();
           }
         }
         else {

@@ -26,10 +26,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -387,13 +384,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       }
     }
 
-    final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-    try {
-      doSaveDocumentInWriteAction(document, file);
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> doSaveDocumentInWriteAction(document, file));
   }
 
   private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {

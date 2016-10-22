@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -73,14 +72,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       else {
         LibraryModel model = new LibraryModel(myModel);
-        AccessToken token = WriteAction.start();
-        try {
+        WriteAction.run(() -> {
           model.readExternal(element);
           commit(model);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
 
       myFirstLoad = false;

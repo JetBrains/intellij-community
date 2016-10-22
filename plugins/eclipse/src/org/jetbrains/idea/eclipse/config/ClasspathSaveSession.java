@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -114,8 +113,7 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
   public void save() throws IOException {
     CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
         String path = fileSet.getParent(key) + '/' + key;
@@ -143,9 +141,6 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
         }
       }
       deletedContent.clear();
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 }

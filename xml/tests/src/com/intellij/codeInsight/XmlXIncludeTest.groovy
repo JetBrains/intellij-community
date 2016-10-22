@@ -108,13 +108,9 @@ class XmlXIncludeTest extends LightCodeInsightFixtureTestCase {
   }
 
   private changeText(VirtualFile inc1, String s) {
-    def token = WriteAction.start()
-    try {
+    WriteAction.run {
       FileDocumentManager.instance.getDocument(inc1).setText s
       PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-    finally {
-      token.finish()
     }
   }
 }

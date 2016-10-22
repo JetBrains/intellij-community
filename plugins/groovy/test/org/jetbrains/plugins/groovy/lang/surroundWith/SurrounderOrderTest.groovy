@@ -104,9 +104,7 @@ println c /*also important */
   private List<String> getSurrounders(final String fileText) {
     myFixture.configureByText("a.groovy", fileText)
 
-    def token = WriteAction.start()
-
-    try {
+    WriteAction.compute {
       def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
       def names = []
       for (action in actions) {
@@ -118,9 +116,6 @@ println c /*also important */
         names << text.substring(text.indexOf('. ') + 2)
       }
       return names
-    }
-    finally {
-      token.finish()
     }
   }
 }

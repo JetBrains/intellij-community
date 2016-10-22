@@ -98,13 +98,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       final ModifiableModuleModel model = ModuleManager.getInstance(project).getModifiableModel();
       final Module module = model.loadModule(imlFile.getPath());
 
-      AccessToken token = WriteAction.start();
-      try {
-        model.commit();
-      }
-      finally {
-        token.finish();
-      }
+      WriteAction.run(() -> model.commit());
       final Module newModule = ModuleManager.getInstance(project).findModuleByName(module.getName());
       assert newModule != null;
       final Module primaryModule = addPrimaryModuleDependency(project, newModule);

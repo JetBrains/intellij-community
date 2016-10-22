@@ -178,12 +178,6 @@ public class StorageUtil {
       return parentVirtualFile.createChildData(requestor, file.getFileName().toString());
     }
 
-    AccessToken token = WriteAction.start();
-    try {
-      return parentVirtualFile.createChildData(requestor, file.getFileName().toString());
-    }
-    finally {
-      token.finish();
-    }
+    return WriteAction.compute(() -> parentVirtualFile.createChildData(requestor, file.getFileName().toString()));
   }
 }

@@ -15,8 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -734,22 +732,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     if (useVfs) {
       virtualDirectory?.let {
-        var token: AccessToken? = null
-        try {
-          for (file in it.children) {
-            if (filesToDelete.contains(file.name)) {
-              if (token == null) {
-                token = WriteAction.start()
-              }
-
-              errors.catch {
-                file.delete(this)
-              }
+        val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
+        if (childrenToDelete.isNotEmpty()) {
+          runWriteAction {
+            childrenToDelete.forEach { file ->
+              errors.catch { file.delete(this) }
             }
           }
-        }
-        finally {
-          token?.finish()
         }
         return
       }
