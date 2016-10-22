@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.InspectionGadgetsFix;
 
-public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
-  extends BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class BeforeOrAfterIsPublicVoidNoArgInspection extends BeforeOrAfterIsPublicVoidNoArgInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
-    return new MakePublicStaticVoidFix(method, true);
+    return new MakePublicStaticVoidFix(method, false);
   }
 }

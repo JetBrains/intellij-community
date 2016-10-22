@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
+public class BeforeOrAfterIsPublicVoidNoArgInspectionBase extends BaseInspection {
 
   @Override
   @NotNull
@@ -49,8 +49,7 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
     return new BeforeOrAfterIsPublicVoidNoArgVisitor();
   }
 
-  private static class BeforeOrAfterIsPublicVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  private static class BeforeOrAfterIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -67,17 +66,9 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
-        registerMethodError(method);
-      }
-      else if (!returnType.equals(PsiType.VOID)) {
-        registerMethodError(method);
-      }
-      else if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerMethodError(method);
-      }
-      else if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method);
+      if (parameterList.getParametersCount() != 0 || !returnType.equals(PsiType.VOID) ||
+          !method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, method);
       }
     }
   }
