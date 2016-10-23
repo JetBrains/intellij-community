@@ -20,11 +20,9 @@ import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.console.pydev.ConsoleCommunication
@@ -213,39 +211,22 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
 
-  private fun stripEmptyLines(editor: Editor) {
-    object : WriteCommandAction<Nothing>(project) {
-      @Throws(Throwable::class)
-      override fun run(result: Result<Nothing>) {
-        val document = editor.document
-        val lineCount = document.lineCount
-        if (lineCount < 2)
-          return
-        for (count in lineCount - 1 downTo 1) {
-          val lineEndOffset = document.getLineEndOffset(count)
-          val lineStartOffset = document.getLineStartOffset(count)
-          val textRange = TextRange(lineStartOffset, lineEndOffset)
-          val text = document.getText(textRange)
-          if (text.isEmpty()) {
-            document.deleteString(lineStartOffset - 1, lineStartOffset)
-          }
-          else {
-            break
-          }
-
-
-        }
-      }
-    }.execute()
-  }
-
-
   private fun doRunExecuteAction(console: LanguageConsoleView) {
 
+    val doc = myConsoleView.editorDocument
+    val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
+    endMarker.isGreedyToLeft = false
+    endMarker.isGreedyToRight = true
     val isComplete = myEnterHandler.handleEnterPressed(console.consoleEditor)
     if (isComplete || consoleCommunication.isWaitingForInput) {
 
-      stripEmptyLines(myConsoleView.consoleEditor)
+      if (endMarker.endOffset - endMarker.startOffset > 0) {
+        ApplicationManager.getApplication().runWriteAction {
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            doc.deleteString(endMarker.startOffset, endMarker.endOffset)
+          }
+        }
+      }
       if (shouldCopyToHistory(console)) {
         copyToHistoryAndExecute(console)
       }
