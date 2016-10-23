@@ -48,6 +48,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
+  private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiImpl myUi;
@@ -284,6 +285,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       int[] selectedRows = myGraphTable.getSelectedRows();
       if (selectedRows.length != 1) return null;
       return myGraphTable.getModel().getBranchesAtRow(selectedRows[0]);
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
     }
     return null;
   }
