@@ -28,7 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.FileContentUtil;
+import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,11 +55,12 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
      myProject = project;
     if (myProject == null) return;
 
-    myLocalHistory = LocalHistoryImpl.getInstanceImpl().getFacade();
-    myGateway = LocalHistoryImpl.getInstanceImpl().getGateway();
+    LocalHistoryImpl localHistory = LocalHistoryImpl.getInstanceImpl();
+    myLocalHistory = localHistory.getFacade();
+    myGateway = localHistory.getGateway();
     if (myLocalHistory == null || myGateway == null) return; // local history was not initialized (e.g. in headless environment)
 
-    getFileManager().addVirtualFileListener(this, project);
+    localHistory.addVFSListenerAfterLocalHistoryOne(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
       @Override
       public void changeAdded(Change c) {
@@ -67,10 +68,6 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
         myLastChangeId = c.getId();
       }
     }, myProject);
-  }
-
-  private static VirtualFileManager getFileManager() {
-    return VirtualFileManager.getInstance();
   }
 
   @Override
@@ -146,7 +143,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
   private boolean shouldNotProcess(VirtualFileEvent e) {
     return isProjectClosed() || !LocalHistory.getInstance().isUnderControl(e.getFile()) || !myIsInsideCommand
-      || FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor());
+           || FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor());
   }
 
   private boolean isProjectClosed() {
