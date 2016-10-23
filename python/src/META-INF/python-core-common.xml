@@ -312,7 +312,7 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.jetbrains.python.codeInsight.intentions.PyConvertTypeCommentToVariableAnnotation</className>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertTypeCommentToVariableAnnotationIntention</className>
       <category>Python</category>
     </intentionAction>
 
