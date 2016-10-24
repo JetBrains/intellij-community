@@ -284,4 +284,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   protected static void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
   }
+
+  public static Inlay addInlay(int offset) {
+    return EditorTestUtil.addInlay(myEditor, offset);
+  }
+
 }

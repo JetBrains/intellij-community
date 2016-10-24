@@ -55,6 +55,8 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
   fun testSingleQuote() {
     assertTrue(push("'a'"))
     assertTrue(push("a = 'abc'"))
+    assertTrue(push("'abc"))
+    assertTrue(push("a = 'st"))
   }
 
   fun testSimpleSingleLine() {
@@ -108,6 +110,7 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
   fun testCellMagic() {
     assertFalse(push("%%cellm firstline"))
     assertFalse(push("  line2"))
+    assertFalse(push("  line3"))
     assertTrue(push(""))
 
   }

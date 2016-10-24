@@ -578,7 +578,7 @@ abstract class LineLayout {
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
       if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
-      IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
+      IterationState it = new IterationState(view.getEditor(), start, end, null, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;

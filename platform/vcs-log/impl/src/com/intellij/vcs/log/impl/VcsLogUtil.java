@@ -41,18 +41,12 @@ public class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    return groupByRoot(refs, ref -> ref.getRoot());
-  }
-
-  @NotNull
-  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, commit -> commit.getRoot());
+    return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map =
-      new TreeMap<>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
+    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
@@ -88,7 +82,7 @@ public class VcsLogUtil {
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, (root1, root2) -> root1.getPath().compareTo(root2.getPath()));
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
     for (FilePath filePath : files) {
       VirtualFile virtualFile = filePath.getVirtualFile();

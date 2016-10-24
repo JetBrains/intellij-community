@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,9 @@ public class IterationState {
   private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED =
     (r1, r2) -> r2.getAffectedAreaEndOffset() - r1.getAffectedAreaEndOffset();
 
+  private static final CaretData NULL_CARET_DATA = new CaretData(-1, -1, false, false,
+                                                                 ArrayUtilRt.EMPTY_INT_ARRAY, ArrayUtilRt.EMPTY_INT_ARRAY);
+
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
   @Nullable
@@ -96,8 +100,6 @@ public class IterationState {
   private int myEndOffset;
   private final int myEnd;
 
-  private final int[] mySelectionStarts;
-  private final int[] mySelectionEnds;
   private int myCurrentSelectionIndex = 0;
   private Color myCurrentBackgroundColor;
   private Color myLastBackgroundColor;
@@ -113,18 +115,15 @@ public class IterationState {
   private final Color myDefaultBackground;
   private final Color myDefaultForeground;
   private final int myDefaultFontType;
-  private final int myCaretRowStart;
-  private final int myCaretRowEnd;
-  private final boolean myCaretRowStartsWithSoftWrap;
-  private final boolean myCaretRowEndsWithSoftWrap;
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final DocumentEx myDocument;
   private final EditorEx myEditor;
+  private final CaretData myCaretData;
   private final Color myReadOnlyColor;
   private final boolean myUseOnlyFullLineHighlighters;
   private final boolean myReverseIteration;
 
-  public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters,
+  public IterationState(@NotNull EditorEx editor, int start, int end, @Nullable CaretData caretData, boolean useOnlyFullLineHighlighters,
                         boolean useOnlyFontOrForegroundAffectingHighlighters, boolean useFoldRegions, boolean iterateBackwards) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
@@ -138,21 +137,7 @@ public class IterationState {
     LOG.assertTrue(myReverseIteration ? myStartOffset >= myEnd : myStartOffset <= myEnd);
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : editor.getHighlighter().createIterator(start);
 
-    if (!useCaretAndSelection) {
-      mySelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
-      mySelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
-    }
-    else {
-      List<Caret> carets = editor.getCaretModel().getAllCarets();
-      int caretCount = carets.size();
-      mySelectionStarts = new int[caretCount];
-      mySelectionEnds = new int[caretCount];
-      for (int i = 0; i < caretCount; i++) {
-        Caret caret = carets.get(i);
-        mySelectionStarts[iterateBackwards ? caretCount - i - 1 : i] = caret.getSelectionStart();
-        mySelectionEnds[iterateBackwards ? caretCount - i - 1 : i] = caret.getSelectionEnd();
-      }
-    }
+    myCaretData = ObjectUtils.notNull(caretData, NULL_CARET_DATA);
 
     myFoldingModel = useFoldRegions ? editor.getFoldingModel() : null;
     myFoldTextAttributes = useFoldRegions ? myFoldingModel.getPlaceholderAttributes() : null;
@@ -167,16 +152,6 @@ public class IterationState {
     TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
-    myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
-    int visualLineEnd = caretModel.getVisualLineEnd();
-    if (visualLineEnd == myDocument.getTextLength() && myDocument.getLineCount() > 0 && 
-        visualLineEnd > myDocument.getLineStartOffset(myDocument.getLineCount() - 1)) {
-      visualLineEnd++;
-    }
-    myCaretRowEnd = useCaretAndSelection ? visualLineEnd : -1;
-    myCaretRowStartsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowStart) != null;
-    myCaretRowEndsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowEnd) != null;
-
     MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
@@ -186,6 +161,33 @@ public class IterationState {
     myEndOffset = myStartOffset;
 
     advance();
+  }
+
+  public static CaretData createCaretData(@NotNull EditorEx editor) {
+    Document document = editor.getDocument();
+    CaretModel caretModel = editor.getCaretModel();
+    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+
+    int caretRowStart = caretModel.getVisualLineStart();
+    int caretRowEnd = caretModel.getVisualLineEnd();
+    if (caretRowEnd == document.getTextLength() && document.getLineCount() > 0 &&
+        caretRowEnd > document.getLineStartOffset(document.getLineCount() - 1)) {
+      caretRowEnd++;
+    }
+
+    boolean caretRowStartsWithSoftWrap = softWrapModel.getSoftWrap(caretRowStart) != null;
+    boolean caretRowEndsWithSoftWrap = softWrapModel.getSoftWrap(caretRowEnd) != null;
+
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    int caretCount = carets.size();
+    int[] selectionStarts = new int[caretCount];
+    int[] selectionEnds = new int[caretCount];
+    for (int i = 0; i < caretCount; i++) {
+      Caret caret = carets.get(i);
+      selectionStarts[i] = caret.getSelectionStart();
+      selectionEnds[i] = caret.getSelectionEnd();
+    }
+    return new CaretData(caretRowStart, caretRowEnd, caretRowStartsWithSoftWrap, caretRowEndsWithSoftWrap, selectionStarts, selectionEnds);
   }
 
   private class HighlighterSweep {
@@ -314,7 +316,7 @@ public class IterationState {
   }
 
   private int getCaretEnd(int start) {
-    return getNearestValueAhead(start, myCaretRowStart, myCaretRowEnd);
+    return getNearestValueAhead(start, myCaretData.caretRowStart, myCaretData.caretRowEnd);
   }
 
   private int getNearestValueAhead(int offset, int rangeStart, int rangeEnd) {
@@ -354,24 +356,26 @@ public class IterationState {
   }
 
   private void advanceCurrentSelectionIndex() {
-    while (myCurrentSelectionIndex < mySelectionEnds.length && (myReverseIteration ?
-                                                                myStartOffset <= mySelectionStarts[myCurrentSelectionIndex] :
-                                                                myStartOffset >= mySelectionEnds[myCurrentSelectionIndex])) {
+    while (myCurrentSelectionIndex < myCaretData.selectionsSize() && (myReverseIteration ?
+                                                                myStartOffset <= myCaretData.selectionStart(myCurrentSelectionIndex, true) :
+                                                                myStartOffset >= myCaretData.selectionEnd(myCurrentSelectionIndex, false))) {
       myCurrentSelectionIndex++;
     }
   }
 
   private int getSelectionEnd() {
-    if (myCurrentSelectionIndex >= mySelectionStarts.length) {
+    if (myCurrentSelectionIndex >= myCaretData.selectionsSize()) {
       return myEnd;
     }
-    return getNearestValueAhead(myStartOffset, mySelectionStarts[myCurrentSelectionIndex], mySelectionEnds[myCurrentSelectionIndex]);
+    return getNearestValueAhead(myStartOffset,
+                                myCaretData.selectionStart(myCurrentSelectionIndex, myReverseIteration),
+                                myCaretData.selectionEnd(myCurrentSelectionIndex, myReverseIteration));
   }
 
   private boolean isInSelection(boolean atBreak) {
-    return myCurrentSelectionIndex < mySelectionStarts.length &&
-           (myReverseIteration ? lessThan(myStartOffset, mySelectionEnds[myCurrentSelectionIndex], !atBreak)
-                               : lessThan(mySelectionStarts[myCurrentSelectionIndex], myStartOffset, !atBreak));
+    return myCurrentSelectionIndex < myCaretData.selectionsSize() &&
+           (myReverseIteration ? lessThan(myStartOffset, myCaretData.selectionEnd(myCurrentSelectionIndex, true), !atBreak)
+                               : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
   }
 
   private static boolean lessThan(int x, int y, boolean orEquals) {
@@ -600,8 +604,8 @@ public class IterationState {
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
-    return myStartOffset > myCaretRowStart && myStartOffset < myCaretRowEnd ||
-           includeLineStart && myStartOffset == myCaretRowStart || includeLineEnd && myStartOffset == myCaretRowEnd;
+    return myStartOffset > myCaretData.caretRowStart && myStartOffset < myCaretData.caretRowEnd ||
+           includeLineStart && myStartOffset == myCaretData.caretRowStart || includeLineEnd && myStartOffset == myCaretData.caretRowEnd;
   }
 
   public boolean atEnd() {
@@ -636,7 +640,7 @@ public class IterationState {
 
   private Color getBreakBackgroundColor(boolean lineEnd) {
     return Comparing.equal(myCurrentBackgroundColor, myLastBackgroundColor) ? myCurrentBackgroundColor : 
-           isInCaretRow(!myCaretRowStartsWithSoftWrap || !lineEnd, myCaretRowEndsWithSoftWrap && lineEnd) ? 
+           isInCaretRow(!myCaretData.caretRowStartsWithSoftWrap || !lineEnd, myCaretData.caretRowEndsWithSoftWrap && lineEnd) ?
            myCaretRowAttributes.getBackgroundColor() : myDefaultBackground;
   }
 
@@ -652,6 +656,41 @@ public class IterationState {
       int o1Length = o1.getAffectedAreaEndOffset() - o1.getAffectedAreaStartOffset();
       int o2Length = o2.getAffectedAreaEndOffset() - o2.getAffectedAreaStartOffset();
       return o1Length - o2Length;
+    }
+  }
+
+  public static class CaretData {
+    private final int caretRowStart;
+    private final int caretRowEnd;
+    private final boolean caretRowStartsWithSoftWrap;
+    private final boolean caretRowEndsWithSoftWrap;
+    private final int[] selectionStarts;
+    private final int[] selectionEnds;
+
+    private CaretData(int caretRowStart,
+                     int caretRowEnd,
+                     boolean caretRowStartsWithSoftWrap,
+                     boolean caretRowEndsWithSoftWrap,
+                     int[] selectionStarts,
+                     int[] selectionEnds) {
+      this.caretRowStart = caretRowStart;
+      this.caretRowEnd = caretRowEnd;
+      this.caretRowStartsWithSoftWrap = caretRowStartsWithSoftWrap;
+      this.caretRowEndsWithSoftWrap = caretRowEndsWithSoftWrap;
+      this.selectionStarts = selectionStarts;
+      this.selectionEnds = selectionEnds;
+    }
+
+    private int selectionsSize() {
+      return selectionStarts.length;
+    }
+
+    private int selectionStart(int index, boolean reverse) {
+      return selectionStarts[reverse ? selectionStarts.length - 1 - index : index];
+    }
+
+    private int selectionEnd(int index, boolean reverse) {
+      return selectionEnds[reverse ? selectionStarts.length - 1 - index : index];
     }
   }
 }

@@ -54,16 +54,13 @@ public class TextOccurrencesUtil {
   }
 
   private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<PsiElement> processor) {
-    TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-        final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-        final ASTNode node = element.getNode();
-        if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
-          return processor.process(element);
-        }
-        return true;
+    TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
+      final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+      final ASTNode node = element.getNode();
+      if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
+        return processor.process(element);
       }
+      return true;
     };
 
     return helper.processElementsWithWord(occurenceProcessor,
@@ -159,13 +156,10 @@ public class TextOccurrencesUtil {
 
   private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
                                                         final String newQName) {
-    return new UsageInfoFactory() {
-      @Override
-      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        int start = usage.getTextRange().getStartOffset();
-        return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
-                                       newQName);
-      }
+    return (usage, startOffset, endOffset) -> {
+      int start = usage.getTextRange().getStartOffset();
+      return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
+                                     newQName);
     };
   }
 }

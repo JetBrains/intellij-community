@@ -312,6 +312,7 @@ public interface IdeActions {
   String MOVE_ELEMENT_RIGHT = "MoveElementRight";
   
   String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
+  String ACTION_MOVE_LINE_DOWN_ACTION = "MoveLineDown";
 
   String ACTION_COMPARE_CLIPBOARD_WITH_SELECTION = "CompareClipboardWithSelection";
 

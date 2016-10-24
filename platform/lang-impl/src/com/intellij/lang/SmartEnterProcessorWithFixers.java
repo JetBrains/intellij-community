@@ -231,7 +231,8 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     ContainerUtil.addAllNotNull(myAfterEnterProcessors, processors);
   }
 
-  protected void addFixers(Fixer<? extends SmartEnterProcessorWithFixers>... fixers) {
+  @SafeVarargs
+  protected final void addFixers(@NotNull Fixer<? extends SmartEnterProcessorWithFixers>... fixers) {
     ContainerUtil.addAllNotNull(myFixers, fixers);
   }
 

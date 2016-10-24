@@ -25,6 +25,7 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -142,11 +143,13 @@ public abstract class LocalHistoryTestCase extends Assert {
     return v.getChanges();
   }
 
-  public static <T> T[] array(T... objects) {
+  @SafeVarargs
+  public static <T> T[] array(@NotNull T... objects) {
     return objects;
   }
 
-  public static <T> List<T> list(T... objects) {
+  @SafeVarargs
+  public static <T> List<T> list(@NotNull T... objects) {
     return Arrays.asList(objects);
   }
 

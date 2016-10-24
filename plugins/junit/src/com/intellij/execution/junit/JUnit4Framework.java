@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -170,15 +169,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   public boolean isParameterized(PsiClass clazz) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
-    if (annotation != null) {
-      final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      if (value instanceof PsiClassObjectAccessExpression) {
-        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
-        final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-        return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
-      }
-    }
-    return false;
+    return annotation != null && JUnitUtil.isParameterized(annotation);
   }
 
   @Override

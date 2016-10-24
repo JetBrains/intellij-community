@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -107,6 +108,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
       Set<String> removedHints = new HashSet<>();
       TIntObjectHashMap<Caret> caretMap = new TIntObjectHashMap<>();
+      CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
       for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
         caretMap.put(caret.getOffset(), caret);
       }
@@ -131,6 +133,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         String text = e.getValue();
         presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
       }
+      keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
     }
 

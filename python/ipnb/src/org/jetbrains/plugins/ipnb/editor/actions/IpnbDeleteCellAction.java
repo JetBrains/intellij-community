@@ -28,15 +28,10 @@ public class IpnbDeleteCellAction extends AnAction {
   }
 
   public static void deleteCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ipnbFilePanel.deleteSelectedCell();
-            ipnbFilePanel.saveToFile();
-          }
-        });
-      }
-    }, "Ipnb.deleteCell", new Object());
+    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ipnbFilePanel.deleteSelectedCell();
+        ipnbFilePanel.saveToFile(false);
+      }), "Ipnb.deleteCell", new Object());
   }
 }

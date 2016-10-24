@@ -76,7 +76,7 @@ class MacDistributionBuilder {
     ant.delete(file: dmgImageCopy)
 
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "makedmg.sh")
         include(name: "makedmg.pl")
       }
@@ -123,7 +123,7 @@ class MacDistributionBuilder {
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "signapp.sh")
       }
     }

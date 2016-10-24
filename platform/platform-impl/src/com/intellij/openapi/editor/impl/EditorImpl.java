@@ -383,6 +383,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentMarkupModel = new EditorFilteringMarkupModelEx(this, documentMarkup);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
+    myCaretModel.initCarets();
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
@@ -2030,7 +2031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       restoreCaretRelativePosition();
     }
 
-    if (EMPTY_CURSOR != null && !myIsViewer) {
+    if (!myIsViewer && EMPTY_CURSOR != null && EMPTY_CURSOR != myEditorComponent.getCursor()) {
       myEditorComponent.setCursor(EMPTY_CURSOR);
     }
   }
@@ -2095,15 +2096,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
-      myPreferredSize = dim;
+      if (!dim.equals(myPreferredSize)) {
+        myPreferredSize = dim;
 
-      updateGutterSize();
+        updateGutterSize();
 
-      myEditorComponent.setSize(dim);
-      myEditorComponent.fireResized();
+        myEditorComponent.setSize(dim);
+        myEditorComponent.fireResized();
 
-      myMarkupModel.recalcEditorDimensions();
-      myMarkupModel.repaint(-1, -1);
+        myMarkupModel.recalcEditorDimensions();
+        myMarkupModel.repaint(-1, -1);
+      }
     }
   }
 

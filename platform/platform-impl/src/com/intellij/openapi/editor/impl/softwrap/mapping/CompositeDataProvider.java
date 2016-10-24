@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.impl.softwrap.mapping.DataProvider;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +45,7 @@ public class CompositeDataProvider {
    *
    * @param providers   providers to register within the current composite provider
    */
+  @SafeVarargs
   public CompositeDataProvider(@NotNull DataProvider<? extends Comparable<?>, ?> ... providers) {
     // We assume here that given array ownership belongs to the current object now.
     for (int i = 0; i < providers.length; i++) {

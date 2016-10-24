@@ -45,10 +45,17 @@ public interface Iconable {
 
     public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
       ConcurrentIntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
-      if (map == null) {
-        map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.<Icon>createConcurrentIntObjectMap());
+      if (icon == null) {
+        if (map != null) {
+          map.remove(flags);
+        }
       }
-      map.put(flags, icon);
+      else {
+        if (map == null) {
+          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.<Icon>createConcurrentIntObjectMap());
+        }
+        map.put(flags, icon);
+      }
     }
   }
 }

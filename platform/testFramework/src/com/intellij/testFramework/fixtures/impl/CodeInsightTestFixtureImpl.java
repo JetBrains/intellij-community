@@ -341,8 +341,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), inspections);
   }
 
+  @SafeVarargs
   @Override
-  public void enableInspections(@NotNull final Class<? extends LocalInspectionTool>... inspections) {
+  public final void enableInspections(@NotNull final Class<? extends LocalInspectionTool>... inspections) {
     enableInspections(Arrays.asList(inspections));
   }
 

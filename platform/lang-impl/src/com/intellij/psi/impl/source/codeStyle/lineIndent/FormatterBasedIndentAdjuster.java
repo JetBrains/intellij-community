@@ -24,6 +24,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 public class FormatterBasedIndentAdjuster  {
+  
+  private final static int MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE = 100000;
 
   private FormatterBasedIndentAdjuster() {
   }
@@ -33,13 +35,17 @@ public class FormatterBasedIndentAdjuster  {
                                               int myOffset) {
     IndentAdjusterRunnable fixer = new IndentAdjusterRunnable(myProject, myDocument, myOffset);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isSynchronousAdjustment(myDocument)) {
       documentManager.commitDocument(myDocument);
       fixer.run();
     }
     else {
       documentManager.performLaterWhenAllCommitted(fixer);
     }
+  }
+  
+  private static boolean isSynchronousAdjustment(@NotNull Document document) {
+    return ApplicationManager.getApplication().isUnitTestMode() || document.getTextLength() <= MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE;
   }
   
   public static class IndentAdjusterRunnable implements Runnable {

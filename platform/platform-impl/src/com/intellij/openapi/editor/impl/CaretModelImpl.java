@@ -32,8 +32,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
@@ -41,6 +41,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
@@ -51,57 +53,61 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private TextAttributes myTextAttributes;
 
   boolean myIsInUpdate;
-  boolean isDocumentChanged;
+
+  final RangeMarkerTree<CaretImpl.PositionMarker> myPositionMarkerTree;
+  final RangeMarkerTree<CaretImpl.SelectionMarker> mySelectionMarkerTree;
 
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
 
+  int myDocumentUpdateCounter;
+
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
+    myEditor.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName()) && !myEditor.isColumnMode()) {
+          for (CaretImpl caret : myCarets) {
+            caret.resetVirtualSelection();
+          }
+        }
+      }
+    }, this);
+
+    myPositionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
+    mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
+  }
+
+  void initCarets() {
     myCarets.add(new CaretImpl(myEditor));
   }
 
   void onBulkDocumentUpdateStarted() {
-    for (CaretImpl caret : myCarets) {
-      caret.onBulkDocumentUpdateStarted();
-    }
   }
 
   void onBulkDocumentUpdateFinished() {
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.onBulkDocumentUpdateFinished();
-      }
-    });
+    doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
   }
 
   @Override
   public void documentChanged(final DocumentEvent e) {
-    isDocumentChanged = true;
-    try {
-      myIsInUpdate = false;
-      if (!myEditor.getDocument().isInBulkUpdate()) {
-        doWithCaretMerging(() -> {
-          for (CaretImpl caret : myCarets) {
-            caret.afterDocumentChange((DocumentEventImpl)e);
-          }
-        });
-      }
-    }
-    finally {
-      isDocumentChanged = false;
+    myIsInUpdate = false;
+    myDocumentUpdateCounter++;
+    if (!myEditor.getDocument().isInBulkUpdate()) {
+      doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
     }
   }
 
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
-    if (!myEditor.getDocument().isInBulkUpdate()) {
+    myIsInUpdate = true;
+    if (!myEditor.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
       for (CaretImpl caret : myCarets) {
-        caret.beforeDocumentChange(e);
+        caret.updateCachedStateIfNeeded(); // logical position will be needed to restore caret position via diff
       }
     }
-    myIsInUpdate = true;
   }
 
   @Override
@@ -513,8 +519,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
         states.add(new CaretState(caret.getLogicalPosition(),
-                                  myEditor.visualToLogicalPosition(caret.getSelectionStartPosition()),
-                                  myEditor.visualToLogicalPosition(caret.getSelectionEndPosition())));
+                                  caret.getSelectionStartLogicalPosition(),
+                                  caret.getSelectionEndLogicalPosition()));
       }
       return states;
     }
@@ -532,11 +538,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myCaretListeners.getMulticaster().caretRemoved(new CaretEvent(myEditor, caret, caret.getLogicalPosition(), caret.getLogicalPosition()));
   }
 
+  public boolean isIteratingOverCarets() {
+    return myCurrentCaret != null;
+  }
+
   @NotNull
   @Override
   public String dumpState() {
     return "[in update: " + myIsInUpdate +
-           ", document changed: " + isDocumentChanged +
+           ", update counter: " + myDocumentUpdateCounter +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
            ", current caret: " + myCurrentCaret +
            ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";

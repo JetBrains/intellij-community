@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
@@ -42,6 +43,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Calculates width (in pixels) of editor contents.
@@ -170,12 +172,12 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     int widthWithoutCaret = getPreferredWidth();
     int width = widthWithoutCaret;
     if (!myDocument.isInBulkUpdate()) {
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        if (caret.isUpToDate()) {
-          int caretX = myView.visualPositionToXY(caret.getVisualPosition()).x;
-          width = Math.max(caretX, width);
-        }
-      }
+      CaretModelImpl caretModel = myEditor.getCaretModel();
+      int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
+        .filter(Caret::isUpToDate)
+        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .max().orElse(0);
+      width = Math.max(width, caretMaxX);
     }
     if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();

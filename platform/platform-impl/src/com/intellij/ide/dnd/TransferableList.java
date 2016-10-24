@@ -35,7 +35,8 @@ abstract public class TransferableList<T> implements Transferable {
 
   private final List<T> myList;
 
-  public TransferableList(T... array) {
+  @SafeVarargs
+  public TransferableList(@NotNull T... array) {
     this(Arrays.asList(array));
   }
 

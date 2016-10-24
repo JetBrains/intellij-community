@@ -116,7 +116,12 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
-    if (checkRunWith && AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
+    if (checkRunWith) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
+      if (annotation != null) {
+        return !isParameterized(annotation);
+      }
+    }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
@@ -375,6 +380,16 @@ public class JUnitUtil {
       if (isSuiteMethod(method)) return method;
     }
     return null;
+  }
+
+  public static boolean isParameterized(PsiAnnotation annotation) {
+    final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    if (value instanceof PsiClassObjectAccessExpression) {
+      final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+      final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
+      return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+    }
+    return false;
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
