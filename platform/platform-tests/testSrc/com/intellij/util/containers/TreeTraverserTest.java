@@ -306,21 +306,70 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4), Arrays.asList(5)), it.partition(2, false).toList());
 
     assertEquals("[[1, 2], [4, 5]]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2], [3], [4, 5]]", it.partition(EXTRACT, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [4, 5]]", it.partition(KEEP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
     assertEquals("[[1, 2, 3], [4, 5]]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
     assertEquals("[[1, 2], [3, 4, 5]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2, 3, 4], [5]]", it.partition(EXTRACT, o -> o == 5).map(o -> o.toList()).toList().toString());
-    assertEquals("[[], [1], [2, 3, 4, 5]]", it.partition(EXTRACT, o -> o == 1).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4], [5], []]", it.partition(KEEP, o -> o == 5).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [2, 3, 4, 5]]", it.partition(KEEP, o -> o == 1).map(o -> o.toList()).toList().toString());
 
-    assertEquals("[[], [], [], [], []]", it.partition(SKIP, o -> true).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1], [2], [3], [4], [5]]", it.partition(HEAD, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [], [], [], [], []]", it.partition(SKIP, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1], [2], [3], [4], [5], []]", it.partition(HEAD, o -> true).map(o -> o.toList()).toList().toString());
     assertEquals("[[], [1], [2], [3], [4], [5]]", it.partition(TAIL, o -> true).map(o -> o.toList()).toList().toString());
-    assertEquals("[[], [1], [], [2], [], [3], [], [4], [], [5]]", it.partition(EXTRACT, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [], [2], [], [3], [], [4], [], [5], []]", it.partition(KEEP, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(GROUP, o -> true).map(o -> o.toList()).toList().toString());
 
-    assertEquals(3, it.partition(EXTRACT, o -> o % 3 == 0).size());
-    assertEquals(10, it.partition(EXTRACT, o -> true).size());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(SKIP, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(HEAD, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(TAIL, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(KEEP, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.partition(GROUP, o -> false).map(o -> o.toList()).toList().toString());
+
+    assertEquals(3, it.partition(KEEP, o -> o % 3 == 0).size());
+    assertEquals(11, it.partition(KEEP, o -> true).size());
 
     assertEquals(it.partition(2, false).toList(), it.partition(HEAD, o -> o % 2 == 0).map(o -> o.toList()).toList());
+  }
+
+  public void testPartition2() {
+    JBIterable<Integer> it = JBIterable.empty();
+
+    assertEquals("[]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.partition(KEEP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.partition(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(3);
+
+    assertEquals("[[], []]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], []]", it.partition(KEEP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3], []]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3]]", it.partition(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(1, 2, 3, 3, 4, 5);
+
+    assertEquals("[[1, 2], [], [4, 5]]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [], [3], [4, 5]]", it.partition(KEEP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [3], [4, 5]]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [3, 4, 5]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3, 3], [4, 5]]", it.partition(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(3, 3, 1, 2, 3, 3);
+
+    assertEquals("[[], [], [1, 2], [], []]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], [], [3], [1, 2], [3], [], [3], []]", it.partition(KEEP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3], [3], [1, 2, 3], [3], []]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], [3, 1, 2], [3], [3]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", it.partition(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    Function<JBIterable<Integer>, JBIterable<JBIterator<Integer>>> cursor = param -> JBIterator.cursor(JBIterator.from(param.iterator()));
+
+    assertEquals("[[], [], [1, 2], [], []]", cursor.fun(it).partition(SKIP, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[], [3], [], [3], [1, 2], [3], [], [3], []]", cursor.fun(it).partition(KEEP, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[3], [3], [1, 2, 3], [3], []]", cursor.fun(it).partition(HEAD, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[], [3], [3, 1, 2], [3], [3]]", cursor.fun(it).partition(TAIL, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", cursor.fun(it).partition(GROUP, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
   }
 
   public void testIterateUnique() {
