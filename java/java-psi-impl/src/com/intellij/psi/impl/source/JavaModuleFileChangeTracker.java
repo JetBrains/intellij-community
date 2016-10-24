@@ -17,22 +17,23 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class JavaModuleFileChangeTracker implements ModificationTracker {
+  private static final NotNullLazyKey<ModificationTracker, Project> KEY = NotNullLazyKey.create("", new NotNullFunction<Project, ModificationTracker>() {
+    @NotNull
+    @Override
+    public ModificationTracker fun(Project project) {
+      return new JavaModuleFileChangeTracker(project);
+    }
+  });
+
   @NotNull
-  public static ModificationTracker getInstance(@NotNull final Project p) {
-    return CachedValuesManager.getManager(p).getCachedValue(p, new CachedValueProvider<JavaModuleFileChangeTracker>() {
-      @Nullable
-      @Override
-      public Result<JavaModuleFileChangeTracker> compute() {
-        return Result.create(new JavaModuleFileChangeTracker(p), NEVER_CHANGED);
-      }
-    });
+  public static ModificationTracker getInstance(@NotNull Project p) {
+    return KEY.getValue(p);
   }
 
   private volatile long myCount = 0;
