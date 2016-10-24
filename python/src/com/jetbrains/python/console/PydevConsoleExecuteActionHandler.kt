@@ -24,9 +24,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyStatementList
 import java.awt.Font
 
 /**
@@ -63,8 +68,13 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     else {
       text
     }
-    val singleLine = text.count { it == '\n' } < 2
-    sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, singleLine))
+    sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, checkSingleLine(text)))
+  }
+
+  private fun checkSingleLine(text: String): Boolean {
+    val pyFile: PyFile =PyElementGenerator.getInstance(project).createDummyFile(myConsoleView.virtualFile.getUserData(LanguageLevel.KEY), text) as PyFile
+    return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
+
   }
 
   private fun sendLineToConsole(code: ConsoleCommunication.ConsoleCodeFragment) {
