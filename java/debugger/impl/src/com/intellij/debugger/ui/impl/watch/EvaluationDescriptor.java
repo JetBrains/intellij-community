@@ -30,7 +30,9 @@ import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionE
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -40,10 +42,12 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author lex
  */
-public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
+public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   private Modifier myModifier;
   protected TextWithImports myText;
 
@@ -58,7 +62,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     myText = text;
   }
 
-  protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
+  protected abstract EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext);
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
@@ -73,35 +77,15 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
       SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
-      ExpressionEvaluator evaluator = null;
+      ExpressionEvaluator evaluator;
       try {
-        evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
-          public ExpressionEvaluator compute() throws EvaluateException {
-            return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().
-              build(getEvaluationCode(thisEvaluationContext), position);
-          }
-        });
+        evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () ->
+          DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext)
+            .getEvaluatorBuilder()
+            .build(getEvaluationCode(thisEvaluationContext), position));
       }
       catch (UnsupportedExpressionException ex) {
-        if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
-          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
-            public ExpressionEvaluator compute() throws EvaluateException {
-              PsiFile psiFile = psiContext.getContainingFile();
-              PsiCodeFragment fragment = createCodeFragment(psiContext);
-              try {
-                ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
-                                                                     psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
-                if (data != null) {
-                  return new CompilingEvaluatorImpl(evaluationContext, psiContext, data);
-                }
-              }
-              catch (PrepareFailedException e) {
-                LOG.info(e);
-              }
-              return null;
-            }
-          });
-        }
+        evaluator = createCompilingEvaluator(evaluationContext, psiContext, this::createCodeFragment);
         if (evaluator == null) {
           throw ex;
         }
@@ -131,9 +115,35 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
+  @Nullable
+  public static ExpressionEvaluator createCompilingEvaluator(EvaluationContextImpl evaluationContext,
+                                                             @Nullable PsiElement psiContext,
+                                                             Function<PsiElement, PsiCodeFragment> fragmentFactory)
+    throws EvaluateException {
+    if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
+      return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+        try {
+          ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
+            evaluationContext.getProject(),
+            psiContext.getContainingFile(),
+            fragmentFactory.apply(psiContext),
+            CompilingEvaluator.getGeneratedClassName());
+          if (data != null) {
+            return new CompilingEvaluatorImpl(evaluationContext, psiContext, data);
+          }
+        }
+        catch (PrepareFailedException e) {
+          LOG.info(e);
+        }
+        return null;
+      });
+    }
+    return null;
+  }
+
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
-    if(evaluationCode instanceof PsiExpressionCodeFragment) {
+    if (evaluationCode instanceof PsiExpressionCodeFragment) {
       return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
     }
     else {
@@ -171,10 +181,10 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
             }
 
             public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
+                                                                                                      ClassNotLoadedException,
+                                                                                                      IncompatibleThreadStateException,
+                                                                                                      InvalidTypeException,
+                                                                                                      EvaluateException {
               return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
                                                                    evaluationContext.getClassLoader());
             }

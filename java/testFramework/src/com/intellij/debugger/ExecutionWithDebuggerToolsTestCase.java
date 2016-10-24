@@ -47,6 +47,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
 
@@ -430,6 +431,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
           println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
         }
+
+        String logExpression = readValue(comment, "LogExpression");
+        if (logExpression != null) {
+          breakpoint.getXBreakpoint().setLogExpression(logExpression);
+          println("LogExpression = " + logExpression, ProcessOutputTypes.SYSTEM);
+        }
+
         String passCount = readValue(comment, "Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);

@@ -25,12 +25,14 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -38,6 +40,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -63,6 +66,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.function.Function;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
   public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
@@ -264,8 +268,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           try {
             SourcePosition position = ContextUtil.getSourcePosition(context);
             PsiElement element = ContextUtil.getContextElement(context, position);
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
-              () -> EvaluatorBuilderImpl.build(expressionToEvaluate, element, position, myProject));
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () ->
+              createExpressionEvaluator(myProject, context, element, position, expressionToEvaluate, this::createLogMessageCodeFragment));
             Value eval = evaluator.evaluate(context);
             buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
           }
@@ -348,7 +352,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         if (contextPsiElement == null) {
           contextPsiElement = getEvaluationElement(); // as a last resort
         }
-        return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
+        return createExpressionEvaluator(project, context, contextPsiElement, contextSourcePosition, getCondition(),
+                                         this::createConditionCodeFragment);
       });
       return DebuggerUtilsEx.evaluateBoolean(evaluator, context);
     }
@@ -360,6 +365,37 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
       );
     }
+  }
+
+  private static ExpressionEvaluator createExpressionEvaluator(Project project,
+                                                               EvaluationContextImpl context,
+                                                               PsiElement contextPsiElement,
+                                                               SourcePosition contextSourcePosition,
+                                                               TextWithImports text,
+                                                               Function<PsiElement, PsiCodeFragment> fragmentFactory)
+    throws EvaluateException {
+    try {
+      return EvaluatorBuilderImpl.build(text, contextPsiElement, contextSourcePosition, project);
+    }
+    catch (UnsupportedExpressionException ex) {
+      ExpressionEvaluator eval = EvaluationDescriptor.createCompilingEvaluator(context, contextPsiElement, fragmentFactory);
+      if (eval != null) {
+        return eval;
+      }
+      throw ex;
+    }
+  }
+
+  private PsiCodeFragment createConditionCodeFragment(PsiElement context) {
+    return createCodeFragment(getProject(), getCondition(), context);
+  }
+
+  private PsiCodeFragment createLogMessageCodeFragment(PsiElement context) {
+    return createCodeFragment(getProject(), getLogMessage(), context);
+  }
+
+  private static PsiCodeFragment createCodeFragment(Project project, TextWithImports text, PsiElement context) {
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, project);
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
