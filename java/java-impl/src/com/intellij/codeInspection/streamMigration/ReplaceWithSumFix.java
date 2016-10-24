@@ -18,6 +18,8 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,6 +49,11 @@ class ReplaceWithSumFix extends MigrateToStreamFix {
     if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.FLOAT)) return null;
     if (!type.equals(PsiType.DOUBLE) && !type.equals(PsiType.LONG)) {
       type = PsiType.INT;
+    }
+    PsiType addendType = addend.getType();
+    if(addendType != null && !TypeConversionUtil.isAssignable(type, addendType)) {
+      addend = JavaPsiFacade.getElementFactory(project).createExpressionFromText(
+        "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(addend, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), addend);
     }
     StringBuilder builder = generateStream(new MapOp(tb.getLastOperation(), addend, tb.getVariable(), type));
     builder.append(".sum()");
