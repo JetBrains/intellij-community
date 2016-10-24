@@ -1,1 +1,1 @@
-<warning descr="Mapping key \"third\" is unused">'{first}, {second}, {third}'</warning>.format(**dict(first='a', second='b'))
+<warning descr="Key 'third' has no following argument">'{first}, {second}, {third}'</warning>.format(**dict(first='a', second='b'))
