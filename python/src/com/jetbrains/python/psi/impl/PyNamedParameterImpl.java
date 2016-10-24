@@ -345,11 +345,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         public void visitPyCallExpression(PyCallExpression node) {
           Optional
             .ofNullable(node.getCallee())
-            .map(context::getType)
-            .map(type -> PyUtil.as(type, PyFunctionType.class))
-            .map(PyFunctionType::getCallable)
-            .map(PyCallable::getName)
-            .filter("len"::equals)
+            .filter(callee -> "len".equals(callee.getName()))
+            .map(PyExpression::getReference)
+            .map(PsiReference::resolve)
+            .filter(element -> PyBuiltinCache.getInstance(element).isBuiltin(element))
             .ifPresent(
               callable -> {
                 final PyReferenceExpression argument = node.getArgument(0, PyReferenceExpression.class);
