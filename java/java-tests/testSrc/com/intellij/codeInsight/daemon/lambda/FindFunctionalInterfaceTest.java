@@ -172,7 +172,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
                        "}");
 
     assertSize(1, FunctionalExpressionSearch.search(sam).findAll());
-    for (VirtualFile file : JavaFunctionalExpressionSearcher.getFilesToSearchInPsi(sam, getProject())) {
+    for (VirtualFile file : JavaFunctionalExpressionSearcher.getFilesToSearchInPsi(sam)) {
       assertFalse(file.getName(), file.getName().startsWith("_"));
     }
   }

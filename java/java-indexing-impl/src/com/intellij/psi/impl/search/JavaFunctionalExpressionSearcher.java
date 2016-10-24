@@ -99,9 +99,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @TestOnly
-  public static Set<VirtualFile> getFilesToSearchInPsi(PsiClass samClass, Project project) {
+  public static Set<VirtualFile> getFilesToSearchInPsi(PsiClass samClass) {
     Set<VirtualFile> result = new HashSet<>();
-    processOffsets(calcDescriptors(new SearchParameters(samClass, samClass.getUseScope())), project, (file, offsets) -> result.add(file));
+    processOffsets(calcDescriptors(new SearchParameters(samClass, samClass.getUseScope())), samClass.getProject(), (file, offsets) -> result.add(file));
     return result;
   }
 
