@@ -40,6 +40,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -464,7 +465,10 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     File afterFile = afterRevision == null ? null : afterRevision.getFile().getIOFile();
     String shelvedPath = null;
     if (afterFile != null) {
-      File shelvedFile = new File(schemePatchDir, afterFile.getName());
+      String shelvedFileName = afterFile.getName();
+      String name = FileUtil.getNameWithoutExtension(shelvedFileName);
+      String extension = FileUtilRt.getExtension(shelvedFileName);
+      File shelvedFile = FileUtil.findSequentNonexistentFile(schemePatchDir, name, extension);
       FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);
       shelvedPath = shelvedFile.getPath();
     }
