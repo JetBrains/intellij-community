@@ -60,7 +60,6 @@ import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
-import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
@@ -112,7 +111,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-  private final TreeDiffProvider myTreeDiffProvider;
   @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
@@ -153,7 +151,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
-    myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor(myCheckinEnvironment) : null;
     myExecutableValidator = new GitExecutableValidator(myProject);
   }
@@ -513,11 +510,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public RemoteDifferenceStrategy getRemoteDifferenceStrategy() {
     return RemoteDifferenceStrategy.ASK_TREE_PROVIDER;
-  }
-
-  @Override
-  protected TreeDiffProvider getTreeDiffProviderImpl() {
-    return myTreeDiffProvider;
   }
 
   @Override
