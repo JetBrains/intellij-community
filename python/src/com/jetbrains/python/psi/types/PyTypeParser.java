@@ -35,7 +35,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.functionalParser.ForwardDeclaration;
 import com.jetbrains.python.psi.types.functionalParser.FunctionalParser;
@@ -631,7 +631,8 @@ public class PyTypeParser {
         final Token<PyElementType> token = tokens.get(0);
         final String name = token.getText().toString();
         qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
-        PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
+        final List<PsiElement> modules = PyResolveImportUtil.resolveQualifiedName(qName, PyResolveImportUtil.fromFoothold(myAnchor));
+        PsiElement module = !modules.isEmpty() ? modules.get(0) : null;
         if (module == null) {
           break;
         }

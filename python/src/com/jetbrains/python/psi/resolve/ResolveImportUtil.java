@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
@@ -209,18 +208,11 @@ public class ResolveImportUtil {
     }
     try {
       beingImported.add(marker);
-      final QualifiedNameResolver visitor = new QualifiedNameResolverImpl(qualifiedName).fromElement(sourceFile);
-      if (relativeLevel > 0) {
-        // "from ...module import"
-        visitor.withRelative(relativeLevel).withoutRoots();
-      }
-      else {
-        // "from module import"
-        if (!importIsAbsolute) {
-          visitor.withRelative(0);
-        }
-      }
-      return visitor.resultsAsList();
+      final PyQualifiedNameResolveContext initialContext = PyResolveImportUtil.fromFoothold(sourceFile);
+      final PyQualifiedNameResolveContext context = relativeLevel > 0 ?
+                                                    initialContext.copyWithRelative(relativeLevel).copyWithoutRoots() :
+                                                    importIsAbsolute ? initialContext : initialContext.copyWithRelative(0);
+      return PyResolveImportUtil.resolveQualifiedName(qualifiedName, context);
     }
     finally {
       beingImported.remove(marker);
@@ -230,8 +222,9 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     if (foothold == null) return null;
-    QualifiedNameResolver visitor = new QualifiedNameResolverImpl(moduleQualifiedName).fromElement(foothold);
-    return visitor.firstResult();
+    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
+                                                                              PyResolveImportUtil.fromFoothold(foothold));
+    return !results.isEmpty() ? results.get(0) : null;
   }
 
   @Nullable
@@ -367,7 +360,9 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveForeignImports(@NotNull PsiFile foothold, @NotNull String referencedName) {
-    return new QualifiedNameResolverImpl(referencedName).fromElement(foothold).withoutRoots().firstResult();
+    final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(foothold).copyWithoutRoots();
+    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(referencedName), context);
+    return !results.isEmpty() ? results.get(0) : null;
   }
 
   @NotNull

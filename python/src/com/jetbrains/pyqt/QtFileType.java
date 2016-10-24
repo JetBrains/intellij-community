@@ -26,9 +26,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,15 +124,13 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
 
   @Nullable
   private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
-    QualifiedNameResolver visitor = new QualifiedNameResolverImpl(name).fromModule(module).withSdk(sdk);
-    List<PsiDirectory> elements = visitor.resultsOfType(PsiDirectory.class);
-    for (PsiDirectory directory : elements) {
-      VirtualFile tool = directory.getVirtualFile().findChild(toolName + ".exe");
-      if (tool != null) {
-        return tool.getPath();
-      }
-    }
-    return null;
+    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(name),
+                                                                              PyResolveImportUtil.fromSdk(module.getProject(), sdk));
+    return StreamEx.of(results).select(PsiDirectory.class)
+      .map(directory -> directory.getVirtualFile().findChild(toolName + ".exe"))
+      .filter(file -> file != null)
+      .map(file -> file.getPath())
+      .findFirst().orElse(null);
   }
 
   protected abstract String getToolName();

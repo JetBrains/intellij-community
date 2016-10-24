@@ -132,7 +132,8 @@ public class PyUserSkeletonsUtil {
       final VirtualFile directory = getUserSkeletonsDirectory();
       if (directory != null) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
-        PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
+        PsiElement fileSkeleton = PyResolveImportUtil.resolveModuleAt(QualifiedName.fromDottedString(qName), psiDirectory,
+                                                                      PyResolveImportUtil.fromFoothold(foothold));
         if (fileSkeleton instanceof PsiDirectory) {
           fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton, foothold);
         }
