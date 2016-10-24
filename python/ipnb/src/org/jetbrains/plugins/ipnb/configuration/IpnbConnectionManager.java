@@ -265,7 +265,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
     String url = showDialogUrl(initUrl);
     if (url == null) return false;
-    IpnbSettings.getInstance(myProject).setURL(url);
+    final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
+    ipnbSettings.setURL(url);
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
@@ -303,7 +304,12 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final String directory = IpnbSettings.getInstance(myProject).getWorkingDirectory();
+    final String arguments = ipnbSettings.getArguments();
+    if (!StringUtil.isEmptyOrSpaces(arguments)) {
+      parameters.addAll(StringUtil.split(arguments, " "));
+    }
+
+    final String directory = ipnbSettings.getWorkingDirectory();
     final String baseDir = !StringUtil.isEmptyOrSpaces(directory) ? directory :
                            ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
