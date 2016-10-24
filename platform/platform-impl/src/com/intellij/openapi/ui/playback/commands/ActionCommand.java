@@ -25,7 +25,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -76,7 +75,7 @@ public class ActionCommand extends TypeCommand {
 
         final KeyStroke finalStroke = stroke;
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        inWriteSafeContext(() -> {
           final Ref<AnActionListener> listener = new Ref<>();
           listener.set(new AnActionListener.Adapter() {
 
@@ -99,7 +98,7 @@ public class ActionCommand extends TypeCommand {
           am.addAnActionListener(listener.get());
 
           context.runPooledThread(() -> type(context.getRobot(), finalStroke));
-        }, ModalityState.current());
+        });
 
         return result;
       }
