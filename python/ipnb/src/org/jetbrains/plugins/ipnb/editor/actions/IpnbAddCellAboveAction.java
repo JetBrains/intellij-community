@@ -25,16 +25,11 @@ public class IpnbAddCellAboveAction extends AnAction {
   }
 
   public void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ipnbFilePanel.createAndAddCell(false, IpnbCodeCell.createEmptyCodeCell());
-            ipnbFilePanel.saveToFile();
-          }
-        });
-      }
-    }, "Ipnb.createAndAddCell", new Object());
+    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ipnbFilePanel.createAndAddCell(false, IpnbCodeCell.createEmptyCodeCell());
+        ipnbFilePanel.saveToFile(false);
+      }), "Ipnb.createAndAddCell", new Object());
 
   }
 }

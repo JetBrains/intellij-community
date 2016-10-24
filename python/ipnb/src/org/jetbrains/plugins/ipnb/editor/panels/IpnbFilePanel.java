@@ -56,9 +56,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
 
   @Nullable private IpnbEditablePanel mySelectedCell;
-  boolean switchToEditing = false;
   private IpnbEditablePanel myBufferPanel;
   private int myInitialSelection = 0;
+  private boolean mySynchronize;
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -72,8 +72,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final Alarm alarm = new Alarm();
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
-        alarm.cancelAllRequests();
-        alarm.addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(IpnbFilePanel.this));
+        if (mySynchronize) {
+          alarm.cancelAllRequests();
+          alarm.addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(IpnbFilePanel.this));
+        }
       }
     };
     myDocument = myParent.getDocument();
@@ -106,7 +108,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       if (myIpnbFile.getCells().isEmpty()) {
         CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
           createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
-          saveToFile();
+          saveToFile(true);
         }));
 
       }
@@ -134,10 +136,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (myInitialSelection >= 0 && myIpnbPanels.size() > myInitialSelection) {
       final IpnbEditablePanel toSelect = myIpnbPanels.get(myInitialSelection);
       setSelectedCell(toSelect);
-      if (switchToEditing) {
-        toSelect.switchToEditing();
-        switchToEditing = false;
-      }
     }
     add(createEmptyPanel());
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -197,7 +195,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public void createAndAddCell(final boolean below, IpnbCodeCell cell) {
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
-
     addCell(codePanel, below);
   }
 
@@ -210,6 +207,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final IpnbEditableCell cell = panel.getCell();
     myIpnbFile.addCell(cell, index);
     myIpnbPanels.add(index, panel);
+    add(panel, index);
     setSelectedCell(panel);
   }
 
@@ -234,10 +232,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
 
     if (down) {
-      deleteSelectedCell();
       final IpnbEditableCell cell = selectedCell.getCell();
+      deleteSelectedCell();
       myIpnbFile.addCell(cell, index + 1);
       myIpnbPanels.add(index + 1, selectedCell);
+      add(selectedCell, index + 1);
+
       selectPrev(selectedCell);
       setSelectedCell(selectedCell);
     }
@@ -247,8 +247,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       addCell(siblingPanel, true);
       setSelectedCell(selectedCell);
     }
-    saveToFile();
-
+    saveToFile(false);
   }
 
   public void deleteSelectedCell() {
@@ -262,10 +261,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (index < 0) return true;
     myIpnbPanels.remove(index);
     myIpnbFile.removeCell(index);
+    remove(index);
+
+    int indexToSelect = index < myIpnbPanels.size() ? index : index-1;
+    final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
+    setSelectedCell(panel);
     return false;
   }
 
-  public void saveToFile() {
+  public void saveToFile(boolean synchronize) {
+    mySynchronize = synchronize;
     final String oldText = myDocument.getText();
     final String newText = IpnbParser.newDocumentText(this);
     if (newText == null) return;
@@ -348,6 +353,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private class MySynchronizeRequest implements Runnable {
 
     public void run() {
+      mySynchronize = false;
       final Project project = getProject();
       if (project.isDisposed()) {
         return;
@@ -391,18 +397,20 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       }
       if (index >= 0) {
         myIpnbFile.removeCell(index);
-        myIpnbFile.addCell(cell, index);
         myIpnbPanels.remove(index);
+        remove(index);
+
+        myIpnbFile.addCell(cell, index);
         myIpnbPanels.add(index, panel);
+        add(panel, index);
       }
 
       if (from instanceof IpnbCodePanel) {
-        switchToEditing = true;
+        panel.switchToEditing();
       }
       setSelectedCell(panel);
-      saveToFile();
+      saveToFile(false);
     }), "Ipnb.changeCellType", new Object());
-
   }
 
   private void addComponent(@NotNull final IpnbEditablePanel comp) {
@@ -473,8 +481,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     else if (addNew) {
       createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
       CommandProcessor.getInstance().executeCommand(getProject(),
-                                                  () -> ApplicationManager.getApplication().runWriteAction(
-                                                    () -> saveToFile()), "Ipnb.runCell", new Object());
+                                                    () -> ApplicationManager.getApplication().runWriteAction(
+                                                    () -> saveToFile(false)), "Ipnb.runCell", new Object());
     }
   }
 
