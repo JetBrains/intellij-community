@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.JavaModuleFileChangeTracker;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -37,7 +38,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class LightJavaModule extends LightElement implements PsiJavaModule {
@@ -151,7 +151,8 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       @Override
       public Result<LightJavaModule> compute(Pair<PsiManager, VirtualFile> p) {
         LightJavaModule module = new LightJavaModule(p.first, p.second);
-        return Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootModificationTracker.getInstance(p.first.getProject()));
+        Project project = p.first.getProject();
+        return Result.create(module, JavaModuleFileChangeTracker.getInstance(project), ProjectRootModificationTracker.getInstance(project));
       }
     }, false, pair(manager, jarRoot));
   }
