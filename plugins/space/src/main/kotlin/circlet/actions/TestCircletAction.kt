@@ -11,18 +11,13 @@ private val log = KLoggers.logger("plugin/TestCircletAction.kt")
 
 class TestCircletAction : AnAction() {
 
-    override fun update(e: AnActionEvent?) {
-        e ?: return
-        val project = e.project
-        project ?: return
-
+    override fun update(e: AnActionEvent) {
+        val project = e.project ?: return
         e.presentation.isEnabled = project.component<IdePluginClient>().connectionState != null
     }
 
-    override fun actionPerformed(e: AnActionEvent?) {
-        e ?: return
-        val project = e.project
-        project ?: return
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
         val client = project.component<IdePluginClient>()
         val connection = client.connectionState?.connection ?: return
 
