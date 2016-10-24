@@ -184,21 +184,33 @@ public class GraphTableController {
   }
 
   private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {
-    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(e.getPoint()),
+    if (!showTooltip(row, column, e.getPoint(), false)) {
+      if (IdeTooltipManager.getInstance().hasCurrent()) {
+        IdeTooltipManager.getInstance().hideCurrent(e);
+      }
+    }
+  }
+
+  private boolean showTooltip(int row, int column, @NotNull Point point, boolean now) {
+    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(point),
                                                           myTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN)
                                                             .getWidth());
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
       IdeTooltip tooltip =
-        new IdeTooltip(myTable, e.getPoint(), new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
-      IdeTooltipManager.getInstance().show(tooltip, false);
+        new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
+      IdeTooltipManager.getInstance().show(tooltip, now);
+      return true;
     }
-    else {
-      if (IdeTooltipManager.getInstance().hasCurrent()) {
-        IdeTooltipManager.getInstance().hideCurrent(e);
-      }
-    }
+    return false;
+  }
+
+  public void showTooltip(int row) {
+    TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
+    Point point = new Point(rootColumn.getWidth() + myCommitRenderer.getToolipXCoordinate(row),
+                            row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
+    showTooltip(row, GraphTableModel.COMMIT_COLUMN, point, true);
   }
 
   private void performRootColumnAction() {
