@@ -21,6 +21,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -43,6 +44,11 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(true);
+      return;
+    }
+
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
     DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
 
@@ -70,9 +76,11 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    assert project != null;
+    if (project == null) return;
 
-    Navigatable navigatable = e.getRequiredData(CommonDataKeys.NAVIGATABLE);
+    Navigatable navigatable = e.getData(CommonDataKeys.NAVIGATABLE);
+    if (navigatable == null) return;
+
     openEditor(project, navigatable);
   }
 
