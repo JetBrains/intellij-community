@@ -82,10 +82,33 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected String readValue(String comment, String valueName) {
     int valueStart = comment.indexOf(valueName);
-    if (valueStart == -1) return null;
+    if (valueStart == -1) {
+      return null;
+    }
 
-    int valueEnd = comment.indexOf(')', valueStart);
-    return comment.substring(valueStart + valueName.length() + 1, valueEnd);
+    valueStart += valueName.length();
+    return comment.substring(valueStart + 1, findMatchingParenthesis(comment, valueStart));
+  }
+
+  private static int findMatchingParenthesis(String input, int startPos) {
+    int depth = 0;
+    while (startPos < input.length()) {
+      switch (input.charAt(startPos)) {
+        case '(':
+          depth++;
+          break;
+        case ')':
+          if (depth == 1) {
+            return startPos;
+          }
+          else {
+            depth--;
+          }
+          break;
+      }
+      startPos++;
+    }
+    return -1;
   }
 
   protected void resume(SuspendContextImpl context) {
