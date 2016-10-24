@@ -26,6 +26,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
@@ -387,6 +389,21 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
       assertEquals(pair.first.toString(), revision.myHash);
       assertEquals(pair.second, revision.myDate);
     }
+  }
+
+  @Test
+  public void testLoadingDetailsWithU0001Character() throws Exception {
+    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
+
+    String message = "subject containing \u0001 symbol in it\n\ncommit body containing \u0001 symbol in it";
+    touch("file.txt", "content");
+    addCommit(message);
+
+    GitHistoryUtils.loadAllDetails(myProject, myRepo.getRoot(), details::add);
+
+    VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
+    assertNotNull(lastCommit);
+    assertEquals(message, lastCommit.getFullMessage());
   }
 
   private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {
