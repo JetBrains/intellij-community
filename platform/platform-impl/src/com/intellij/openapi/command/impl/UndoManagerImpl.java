@@ -298,20 +298,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
 
     final DocumentReference[] refs = {myOriginatorReference};
-    myCurrentMerger.addAction(new BasicUndoableAction() {
-      @Override
-      public void undo() throws UnexpectedUndoException {
-      }
-
-      @Override
-      public void redo() throws UnexpectedUndoException {
-      }
-
-      @Override
-      public DocumentReference[] getAffectedDocuments() {
-        return refs;
-      }
-    });
+    myCurrentMerger.addAction(new MentionOnlyUndoableAction(refs));
   }
 
   private EditorAndState getCurrentState() {

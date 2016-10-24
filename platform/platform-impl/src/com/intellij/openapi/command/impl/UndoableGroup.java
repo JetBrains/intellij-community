@@ -274,6 +274,10 @@ class UndoableGroup {
     }
   }
 
+  public List<UndoableAction> getActions() {
+    return myActions;
+  }
+
   @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new THashSet<>();
