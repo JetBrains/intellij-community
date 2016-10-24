@@ -32,19 +32,34 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;
   @NotNull private final FileType myType;
+  @Nullable private final VirtualFile myHighlightFile;
 
   public FileContentImpl(@Nullable Project project, @NotNull VirtualFile file) {
+    this(project, file, getHighlightFile(file));
+  }
+
+  public FileContentImpl(@Nullable Project project,
+                         @NotNull VirtualFile file,
+                         @Nullable VirtualFile highlightFile) {
     assert file.isValid() && !file.isDirectory();
-    myProject = project;
     myFile = file;
+    myProject = project;
     myType = file.getFileType();
+    myHighlightFile = highlightFile;
   }
 
   @Nullable
   @Override
   public Navigatable getNavigatable() {
-    if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
-    return new OpenFileDescriptor(myProject, myFile);
+    if (myProject == null || myProject.isDefault()) return null;
+    if (myHighlightFile == null || !myHighlightFile.isValid()) return null;
+    return new OpenFileDescriptor(myProject, myHighlightFile);
+  }
+
+  @Nullable
+  private static VirtualFile getHighlightFile(@NotNull VirtualFile file) {
+    if (file.isInLocalFileSystem()) return file;
+    return null;
   }
 
   @NotNull
