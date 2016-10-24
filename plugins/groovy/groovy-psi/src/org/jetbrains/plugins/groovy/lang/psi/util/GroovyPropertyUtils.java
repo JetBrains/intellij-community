@@ -231,7 +231,8 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method, @Nullable String propertyName) {
-    if (!isSetterLike(method)) return false;
+    if (method == null || method.isConstructor()) return false;
+    if (method.getParameterList().getParametersCount() != 1) return false;
     if (!isSetterName(method.getName())) return false;
     if (propertyName==null) return true;
 
@@ -239,16 +240,10 @@ public class GroovyPropertyUtils {
     return propertyName.equals(bySetter) || (!isPropertyName(bySetter) && propertyName.equals(getPropertyNameBySetterName(method.getName())));
   }
 
-  @Contract("null -> false")
-  public static boolean isSetterLike(@Nullable PsiMethod method) {
-    if (method == null || method.isConstructor()) return false;
+  public static boolean isSetterLike(@NotNull PsiMethod method, @NotNull String prefix) {
+    if (method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 1) return false;
-    return true;
-  }
-
-  @Contract("null, _ -> false")
-  public static boolean isSetterLike(@Nullable PsiMethod method, @NotNull String prefix) {
-    return isSetterLike(method) && isPropertyName(method.getName(), prefix);
+    return isPropertyName(method.getName(), prefix);
   }
 
   @Nullable
