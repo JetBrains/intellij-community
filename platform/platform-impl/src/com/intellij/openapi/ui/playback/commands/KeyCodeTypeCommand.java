@@ -16,12 +16,10 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,14 +59,14 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     final ActionCallback result = new ActionCallback();
 
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+    inWriteSafeContext(() -> {
       TypingTarget typingTarget = findTarget(context);
       if (typingTarget != null) {
         typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeCodes(context, context.getRobot(), codes).notify(result));
       } else {
         typeCodes(context, context.getRobot(), codes).notify(result);
       }
-    }, ModalityState.current());
+    });
 
     return result;
   }
