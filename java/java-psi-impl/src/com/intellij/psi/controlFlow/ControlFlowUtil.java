@@ -1338,7 +1338,9 @@ public class ControlFlowUtil {
    * @param stop stop point
    * @param variable variable to analyze
    * @return true if variable can be referenced between start and stop points
+   * @deprecated Do not use this method, it will be removed in future releases.
    */
+  @Deprecated
   public static boolean isVariableReferencedBetween(final ControlFlow flow,
                                                     final int start,
                                                     final int stop,
