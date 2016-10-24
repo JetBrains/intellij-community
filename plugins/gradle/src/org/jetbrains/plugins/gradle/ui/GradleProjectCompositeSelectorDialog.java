@@ -52,6 +52,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   private static final int MAX_PATH_LENGTH = 40;
   @NotNull
   private final Project myProject;
+  @Nullable
   private final GradleProjectSettings myCompositeRootSettings;
   private JPanel mainPanel;
   private JPanel contentPanel;
@@ -85,12 +86,14 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    Pair[] pairs = myTree.getCheckedNodes(Pair.class, null);
-    Set<String> compositeParticipants = new HashSet<>();
-    for (Pair pair : pairs) {
-      compositeParticipants.add(pair.second.toString());
+    if (myCompositeRootSettings != null) {
+      Pair[] pairs = myTree.getCheckedNodes(Pair.class, null);
+      Set<String> compositeParticipants = new HashSet<>();
+      for (Pair pair : pairs) {
+        compositeParticipants.add(pair.second.toString());
+      }
+      myCompositeRootSettings.setCompositeParticipants(compositeParticipants.isEmpty() ? null : compositeParticipants);
     }
-    myCompositeRootSettings.setCompositeParticipants(compositeParticipants.isEmpty() ? null : compositeParticipants);
     super.doOKAction();
   }
 
@@ -106,20 +109,21 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   private CheckboxTree createTree() {
     final CheckedTreeNode root = new CheckedTreeNode();
-    List<TreeNode> nodes = ContainerUtil.newArrayList();
+    if (myCompositeRootSettings != null) {
+      List<TreeNode> nodes = ContainerUtil.newArrayList();
+      for (GradleProjectSettings projectSettings : GradleSettings.getInstance(myProject).getLinkedProjectsSettings()) {
+        if (projectSettings == myCompositeRootSettings) continue;
+        boolean added = myCompositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath());
 
-    for (GradleProjectSettings projectSettings : GradleSettings.getInstance(myProject).getLinkedProjectsSettings()) {
-      if (projectSettings == myCompositeRootSettings) continue;
-      boolean added = myCompositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath());
+        String representationName = myExternalSystemUiAware.getProjectRepresentationName(
+          projectSettings.getExternalProjectPath(), projectSettings.getExternalProjectPath());
+        CheckedTreeNode treeNode = new CheckedTreeNode(Pair.create(representationName, projectSettings.getExternalProjectPath()));
+        treeNode.setChecked(added);
+        nodes.add(treeNode);
+      }
 
-      String representationName = myExternalSystemUiAware.getProjectRepresentationName(
-        projectSettings.getExternalProjectPath(), projectSettings.getExternalProjectPath());
-      CheckedTreeNode treeNode = new CheckedTreeNode(Pair.create(representationName, projectSettings.getExternalProjectPath()));
-      treeNode.setChecked(added);
-      nodes.add(treeNode);
+      TreeUtil.addChildrenTo(root, nodes);
     }
-
-    TreeUtil.addChildrenTo(root, nodes);
 
     final CheckboxTree tree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
 
