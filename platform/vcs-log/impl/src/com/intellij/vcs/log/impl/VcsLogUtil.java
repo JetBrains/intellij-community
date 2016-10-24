@@ -46,8 +46,7 @@ public class VcsLogUtil {
 
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map =
-      new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
+    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
