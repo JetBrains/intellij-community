@@ -406,7 +406,7 @@ def get_breakpoint(plugin, main_debugger, pydb_frame, frame, event, args):
         if django_breakpoints_for_file:
             pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
             template_line = _get_template_line(frame)
-            pydev_log.debug("Tracing template line: %d\n" % template_line)
+            pydev_log.debug("Tracing template line: %s\n" % str(template_line))
 
             if dict_contains(django_breakpoints_for_file, template_line):
                 django_breakpoint = django_breakpoints_for_file[template_line]
