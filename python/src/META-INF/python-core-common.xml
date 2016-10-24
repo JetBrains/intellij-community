@@ -310,6 +310,11 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyYieldFromIntention</className>
       <category>Python</category>
     </intentionAction>
+    
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertToFStringIntention</className>
+      <category>Python</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertTypeCommentToVariableAnnotationIntention</className>
