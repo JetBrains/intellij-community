@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaModuleFileChangeTracker;
@@ -52,13 +51,13 @@ public class JavaModuleGraphUtil {
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), dependencies(project)));
+      Result.create(findCycles(project), JavaModuleFileChangeTracker.getInstance(project)));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), dependencies(source.getProject())));
+      Result.create(exportsMap(source), JavaModuleFileChangeTracker.getInstance(source.getProject())));
     Set<String> targets = exports.get(packageName);
     return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
   }
@@ -66,12 +65,8 @@ public class JavaModuleGraphUtil {
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
     Project project = source.getProject();
     RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), dependencies(project)));
+      Result.create(buildRequiresGraph(project), JavaModuleFileChangeTracker.getInstance(project)));
     return graph.reads(source, destination);
-  }
-
-  private static Object[] dependencies(Project project) {
-    return new Object[]{JavaModuleFileChangeTracker.getInstance(project), ProjectRootModificationTracker.getInstance(project)};
   }
 
   // Looks for cycles between Java modules in the project sources.

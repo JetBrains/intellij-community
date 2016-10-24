@@ -19,7 +19,6 @@ import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -138,8 +137,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       public Result<PsiJavaModule> compute(Pair<String, Boolean> p) {
         Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), p.first, p.second);
         PsiJavaModule module = modules.size() == 1 ? modules.iterator().next() : null;
-        Project project = refOwner.getProject();
-        return Result.create(module, JavaModuleFileChangeTracker.getInstance(project), ProjectRootModificationTracker.getInstance(project));
+        return Result.create(module, JavaModuleFileChangeTracker.getInstance(refOwner.getProject()));
       }
     }, false, pair(refText, incompleteCode));
   }

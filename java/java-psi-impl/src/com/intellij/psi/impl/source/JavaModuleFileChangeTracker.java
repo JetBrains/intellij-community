@@ -19,8 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.PsiTreeChangeEvent.*;
 
 public class JavaModuleFileChangeTracker implements ModificationTracker {
   private static final NotNullLazyKey<ModificationTracker, Project> KEY = NotNullLazyKey.create("", new NotNullFunction<Project, ModificationTracker>() {
@@ -45,10 +48,17 @@ public class JavaModuleFileChangeTracker implements ModificationTracker {
       @Override public void childReplaced(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
       @Override public void childMoved(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
       @Override public void childrenChanged(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-      @Override public void propertyChanged(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
 
       private void process(PsiFile file) {
         if (file != null && PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
+          myCount++;
+        }
+      }
+
+      @Override
+      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
+        String name = event.getPropertyName();
+        if (name == PROP_FILE_NAME || name == PROP_DIRECTORY_NAME || name == PROP_ROOTS) {
           myCount++;
         }
       }

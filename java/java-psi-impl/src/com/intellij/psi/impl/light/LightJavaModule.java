@@ -17,7 +17,6 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -151,8 +150,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       @Override
       public Result<LightJavaModule> compute(Pair<PsiManager, VirtualFile> p) {
         LightJavaModule module = new LightJavaModule(p.first, p.second);
-        Project project = p.first.getProject();
-        return Result.create(module, JavaModuleFileChangeTracker.getInstance(project), ProjectRootModificationTracker.getInstance(project));
+        return Result.create(module, JavaModuleFileChangeTracker.getInstance(p.first.getProject()));
       }
     }, false, pair(manager, jarRoot));
   }
