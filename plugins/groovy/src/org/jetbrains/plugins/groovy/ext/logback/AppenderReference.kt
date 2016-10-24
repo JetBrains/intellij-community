@@ -41,7 +41,7 @@ internal class AppenderReference(literal: GrLiteral) : PsiPolyVariantReferenceBa
       // i.e. <caret>"appender_name".
       //
       // To override this behaviour we return `this` so when GotoDeclarationAction calls navigate()
-      // the PTPE will delegate it to its target properly placing the curson inside the literal,
+      // the PomTargetPsiElementImpl will delegate it to its target properly placing the cursor inside the literal,
       // i.e. "<caret>appender_name"
     }
     val resolveResult = PsiElementResolveResult(targetPsi)
