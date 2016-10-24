@@ -45,11 +45,6 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, VcsShortCommitDetails::getRoot);
-  }
-
-  @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
     Map<VirtualFile, Set<T>> map =
       new TreeMap<>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
