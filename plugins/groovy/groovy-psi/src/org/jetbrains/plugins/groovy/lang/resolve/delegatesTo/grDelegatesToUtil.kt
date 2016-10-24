@@ -55,15 +55,11 @@ fun getContainingCall(closableBlock: GrClosableBlock): GrCall? {
   return null
 }
 
-fun resolveActualCall(call: GrCall): GroovyResolveResult = if (call is GrMethodCall) {
-  CachedValuesManager.getCachedValue(call) {
-    Result.create(
-        doResolveActualCall(call), PsiModificationTracker.MODIFICATION_COUNT
-    )
+fun resolveActualCall(call: GrCall): GroovyResolveResult = when (call) {
+  is GrMethodCall -> CachedValuesManager.getCachedValue(call) {
+    Result.create(doResolveActualCall(call), PsiModificationTracker.MODIFICATION_COUNT)
   }
-}
-else {
-  call.advancedResolve()
+  else -> call.advancedResolve()
 }
 
 private fun doResolveActualCall(call: GrMethodCall): GroovyResolveResult {
