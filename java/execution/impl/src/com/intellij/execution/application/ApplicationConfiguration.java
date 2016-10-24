@@ -32,6 +32,8 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -47,9 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
@@ -286,10 +285,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     }
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
-      JavaSdkVersion version = Optional.ofNullable(params.getJdk())
-        .map(jdk -> pair(jdk.getSdkType(), jdk))
-        .map(p -> p.first instanceof JavaSdk ? ((JavaSdk)p.first).getVersion(p.second) : null)
-        .orElse(null);
+      JavaSdkVersion version = null;
+      Sdk jdk = params.getJdk();
+      if (jdk != null) {
+        SdkTypeId type = jdk.getSdkType();
+        if (type instanceof JavaSdk) {
+          version = ((JavaSdk)type).getVersion(jdk);
+        }
+      }
       if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_9)) {
         PsiClass mainClass = module.findClass(params.getMainClass());
         if (mainClass != null) {
