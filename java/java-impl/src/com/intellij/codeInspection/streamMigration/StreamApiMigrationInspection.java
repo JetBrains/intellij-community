@@ -485,6 +485,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return false;
   }
 
+  static String tryUnbox(PsiVariable variable) {
+    PsiType type = variable.getType();
+    String mapOp = null;
+    if(type.equals(PsiType.INT)) {
+      mapOp = "mapToInt";
+    } else if(type.equals(PsiType.LONG)) {
+      mapOp = "mapToLong";
+    } else if(type.equals(PsiType.DOUBLE)) {
+      mapOp = "mapToDouble";
+    }
+    return mapOp == null ? "" : "."+mapOp+"("+variable.getName()+" -> "+variable.getName()+")";
+  }
+
   private class StreamApiMigrationVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -1020,7 +1033,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     String createReplacement() {
-      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()";
+      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()" + tryUnbox(myVariable);
     }
 
     @Contract("null, _ -> false")
@@ -1040,7 +1053,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
       if (collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
-          isRawSubstitution(iteratedValueType, collectionClass)) {
+          isRawSubstitution(iteratedValueType, collectionClass) ||
+          !isSupported(statement.getIterationParameter().getType())) {
         return null;
       }
       return new CollectionStream(statement.getIterationParameter(), iteratedValue);
