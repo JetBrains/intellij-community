@@ -104,7 +104,7 @@ public class StandardPatterns {
     return new CollectionPattern<T>();
   }
 
-  public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
+  public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
