@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.ext.logback
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.pom.PomTargetPsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -163,6 +165,17 @@ appender('<caret>FOO_APP', ConsoleAppender)
 appender("BAR_APP", FileAppender) {}
 logger("", ERROR, ['FOO_APP'])
 '''
+    }
+  }
+
+  void 'test element to find usages of exists'() {
+    fixture.with {
+      configureByText 'logback.groovy', '''\
+appender('FOO_<caret>APP', ConsoleAppender)
+'''
+      def targetElement = GotoDeclarationAction.findElementToShowUsagesOf(editor, caretOffset) as PomTargetPsiElement
+      assert targetElement
+      assert targetElement.target instanceof AppenderTarget
     }
   }
 }
