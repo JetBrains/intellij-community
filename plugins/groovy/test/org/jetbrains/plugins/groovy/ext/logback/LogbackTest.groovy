@@ -119,6 +119,7 @@ appender("FULL_STACKTRACE", FileAppender) {
 }
 
 logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+root(warn, [''])
 '''
       enableInspections(GrUnresolvedAccessInspection)
       checkHighlighting()
