@@ -23,6 +23,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.util.TroveUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
