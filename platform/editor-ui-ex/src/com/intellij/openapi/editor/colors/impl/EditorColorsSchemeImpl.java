@@ -39,7 +39,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes, boolean force) {
-    if (force || attributes == USE_INHERITED_MARKER || !attributes.equals(getAttributes(key))) {
+    if (force || attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
     }
   }
