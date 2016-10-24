@@ -16,7 +16,7 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
   }
 
   public static void runCell(@NotNull final IpnbFilePanel ipnbFilePanel, boolean selectNext) {
-    final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCell();
+    final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCellPanel();
     if (cell == null) return;
     cell.runCell(selectNext);
   }

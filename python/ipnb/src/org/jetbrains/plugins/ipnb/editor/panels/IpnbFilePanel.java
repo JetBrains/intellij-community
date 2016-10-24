@@ -261,7 +261,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (currentCellPanel == null) return;
 
     if (below) {
-      selectNext(currentCellPanel);
+      selectNext(currentCellPanel, false);
     }
     else {
       selectPrev(currentCellPanel);
@@ -279,7 +279,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     currentCellPanel.repaint();
     deleteCell(currentCellPanel);
-    saveToFile();
+    saveToFile(false);
   }
 
   private static ArrayList<String> mergeCellsSource(@NotNull List<String> currentCellSource,
@@ -333,7 +333,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     panel = createPanel(cell, newCellSource);
     addCell(panel, true);
 
-    saveToFile();
+    saveToFile(false);
   }
 
   @NotNull
@@ -382,7 +382,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     int indexToSelect = index < myIpnbPanels.size() ? index : index-1;
     final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
-    setSelectedCell(panel);
+    setSelectedCell(panel, false);
   }
 
   public void saveToFile(boolean synchronize) {
