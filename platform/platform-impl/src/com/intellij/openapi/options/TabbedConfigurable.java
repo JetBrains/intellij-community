@@ -22,10 +22,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.options.ex.ConfigurableCardPanel.createConfigurableComponent;
+
 /**
  * @author yole
  */
-public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> {
+public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> implements Configurable.NoScroll,
+                                                                                                Configurable.NoMargin {
   protected TabbedPaneWrapper myTabbedPane;
   private final Disposable myParentDisposable;
 
@@ -38,13 +41,14 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
     myTabbedPane = new TabbedPaneWrapper(myParentDisposable);
     createConfigurableTabs();
     final JComponent component = myTabbedPane.getComponent();
+    component.setBorder(JBUI.Borders.emptyTop(5));
     component.setPreferredSize(JBUI.size(500, 400));
     return component;
   }
 
   protected void createConfigurableTabs() {
     for (Configurable configurable : getConfigurables()) {
-      myTabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
+      myTabbedPane.addTab(configurable.getDisplayName(), createConfigurableComponent(configurable));
     }
   }
 

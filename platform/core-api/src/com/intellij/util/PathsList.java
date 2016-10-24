@@ -81,13 +81,6 @@ public class PathsList  {
     add(LOCAL_PATH.fun(file));
   }
 
-  public void remove(VirtualFile file) {
-    String path = LOCAL_PATH.fun(file);
-    if (path != null) {
-      remove(path);
-    }
-  }
-
   public void addFirst(String path) {
     int index = 0;
     for (String element : chooseFirstTimeItems(path)) {

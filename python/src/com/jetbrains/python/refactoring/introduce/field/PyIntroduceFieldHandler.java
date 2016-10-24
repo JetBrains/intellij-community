@@ -17,8 +17,7 @@ package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -359,8 +358,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success && (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) || myOperation.getInplaceInitPlace() != InitPlace.SAME_METHOD) {
-        final AccessToken accessToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-        try {
+        WriteAction.run(() -> {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
           assert initializer != null;
           final Function<String, PyStatement> callback = FunctionUtil.<String, PyStatement>constant(initializer);
@@ -381,10 +379,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
             initializer.replace(copy);
           }
           initializer.delete();
-        }
-        finally {
-          accessToken.finish();
-        }
+        });
       }
     }
   }

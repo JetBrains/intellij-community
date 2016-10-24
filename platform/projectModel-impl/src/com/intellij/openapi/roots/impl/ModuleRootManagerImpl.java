@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -346,8 +346,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
-    AccessToken token = throwEvent ? WriteAction.start() : ReadAction.start();
-    try {
+    ThrowableRunnable<RuntimeException> r = () -> {
       final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
 
       if (throwEvent) {
@@ -359,12 +358,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
 
       assert !myRootModel.isOrderEntryDisposed();
+    };
+    try {
+      if (throwEvent) WriteAction.run(r);
+      else ReadAction.run(r);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
-    }
-    finally {
-      token.finish();
     }
   }
 

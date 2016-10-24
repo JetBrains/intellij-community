@@ -32,6 +32,7 @@ public class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValuePair,
     super(PsiNameValuePair.class);
   }
 
+  @NotNull
   public PsiNameValuePairPattern withName(@NotNull @NonNls final String requiredName) {
     return with(new PatternCondition<PsiNameValuePair>("withName") {
       public boolean accepts(@NotNull final PsiNameValuePair psiNameValuePair, final ProcessingContext context) {
@@ -41,6 +42,7 @@ public class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValuePair,
     });
   }
 
+  @NotNull
   @Override
   public PsiNameValuePairPattern withName(@NotNull final ElementPattern<String> name) {
     return with(new PsiNamePatternCondition<PsiNameValuePair>("withName", name) {

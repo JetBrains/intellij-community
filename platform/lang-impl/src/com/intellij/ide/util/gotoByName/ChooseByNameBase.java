@@ -1467,9 +1467,6 @@ public abstract class ChooseByNameBase {
     return panel;
   }
 
-  protected void filterInEDT(Set<Object> elements) {
-  }
-
   private class CalcElementsThread extends ReadTask {
     private final String myPattern;
     private final boolean myCheckboxState;
@@ -1520,8 +1517,6 @@ public abstract class ChooseByNameBase {
           LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
-
-          filterInEDT(filtered);
 
           myCallback.consume(filtered);
         }

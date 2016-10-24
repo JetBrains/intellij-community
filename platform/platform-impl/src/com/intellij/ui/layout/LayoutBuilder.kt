@@ -16,6 +16,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Label
+import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
@@ -37,5 +38,16 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(`$`, ButtonGroup()).init()
+  }
+
+  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
+    val group = ButtonGroup()
+    LayoutBuilder(`$`, group).init()
+
+    val listener = ActionListener { elementActionListener() }
+    for (button in group.elements) {
+      button.addActionListener(listener)
+    }
+    return group
   }
 }

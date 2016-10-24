@@ -21,10 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -290,8 +287,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     String ext = PathUtil.getFileExtension(pathName);
     String fileNameExt = PathUtil.getFileName(pathName);
     String fileName = StringUtil.trimEnd(fileNameExt, ext == null ? "" : "." + ext);
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-    try {
+    return WriteAction.compute(() -> {
       VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
       if (option == Option.create_new_always) {
         return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
@@ -299,10 +295,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       else {
         return dir.createChildData(LocalFileSystem.getInstance(), fileNameExt);
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   @Nullable

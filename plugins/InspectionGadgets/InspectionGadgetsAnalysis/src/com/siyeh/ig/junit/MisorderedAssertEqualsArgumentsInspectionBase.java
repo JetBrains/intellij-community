@@ -25,7 +25,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +64,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     return new FlipArgumentsFix();
   }
 
-  private static class FlipArgumentsFix extends InspectionGadgetsFix {
+  private class FlipArgumentsFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -85,7 +88,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (method == null) {
         return;
       }
-      final ExpectedActual expectedActual = ExpectedActual.create(method, callExpression.getArgumentList().getExpressions(), true);
+      final ExpectedActual expectedActual = ExpectedActual.create(method, callExpression.getArgumentList().getExpressions(), checkTestNG());
       if (expectedActual == null) {
         return;
       }

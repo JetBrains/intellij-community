@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -58,8 +57,7 @@ public class GroovyTestGenerator implements TestGenerator {
   @Nullable
   @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
-    AccessToken accessToken = WriteAction.start();
-    try {
+    return WriteAction.compute(() -> {
       final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
         (Computable<PsiElement>)() -> {
           try {
@@ -93,10 +91,7 @@ public class GroovyTestGenerator implements TestGenerator {
       JavaCodeStyleManager.getInstance(test.getProject()).shortenClassReferences(test);
       CodeStyleManager.getInstance(project).reformat(test);
       return test;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Override

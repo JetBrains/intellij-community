@@ -22,6 +22,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("deprecation")
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
 
@@ -66,12 +67,22 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
+  /**
+   * @see #run(ThrowableRunnable)
+   * @see #compute(ThrowableComputable)
+   */
+  @Deprecated
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
     return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
   }
 
+  /**
+   * @see #run(ThrowableRunnable)
+   * @see #compute(ThrowableComputable)
+   */
+  @Deprecated
   @NotNull
   public static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);

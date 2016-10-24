@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -118,18 +117,14 @@ public class GriffonFramework extends MvcFramework {
     final VirtualFile root = findAppRoot(module);
     if (root == null) return;
 
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       MvcModuleStructureUtil.updateModuleStructure(module, createProjectStructure(module, false), root);
 
       if (hasSupport(module)) {
         MvcModuleStructureUtil.updateAuxiliaryPluginsModuleRoots(module, this);
         MvcModuleStructureUtil.updateGlobalPluginModule(module.getProject(), this);
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
 
     final Project project = module.getProject();
     ChangeListManager.getInstance(project).addFilesToIgnore(IgnoredBeanFactory.ignoreUnderDirectory(getUserHomeGriffon(), project));

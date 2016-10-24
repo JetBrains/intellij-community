@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -198,10 +199,7 @@ public class ContentUtilEx extends ContentsUtil {
 
   @Nullable
   public static String getTabNameWithoutPrefix(@NotNull TabbedContent content, @NotNull String fullTabName) {
-    int fullPrefixLength = getFullPrefix(content.getTitlePrefix()).length();
-    if (fullTabName.startsWith(content.getTitlePrefix())) {
-      return fullTabName.substring(fullPrefixLength);
-    }
-    return null;
+    String prefix = content.getTitlePrefix();
+    return prefix == null ? fullTabName : StringUtil.trimStart(fullTabName, getFullPrefix(prefix));
   }
 }

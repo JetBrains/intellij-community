@@ -104,14 +104,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     doExecuteCommand(new Runnable() {
       @Override
       public void run() {
-        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(WriteCommandAction.this.getClass());
-        try {
-          results[0].run();
-          results[0] = null;
-        }
-        finally {
-          token.finish();
-        }
+        //noinspection deprecation
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            results[0].run();
+            results[0] = null;
+          }
+        });
       }
     });
   }

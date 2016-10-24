@@ -668,14 +668,10 @@ println(<selection>a + b</selection>)
 
   private void performRefactoring(String selectedType, boolean isStatic, boolean removeLocal, boolean declareFinal, GrIntroduceFieldSettings.Init initIn, boolean replaceAll) {
     final PsiType type = selectedType == null ? null : JavaPsiFacade.getElementFactory(project).createTypeFromText(selectedType, myFixture.file)
-    def accessToken = WriteAction.start()
-    try {
+    WriteAction.run {
       final IntroduceFieldTestHandler handler = new IntroduceFieldTestHandler(isStatic, removeLocal, declareFinal, initIn, replaceAll, type)
       handler.invoke(project, myFixture.editor, myFixture.file, null)
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-    }
-    finally {
-      accessToken.finish()
     }
   }
 

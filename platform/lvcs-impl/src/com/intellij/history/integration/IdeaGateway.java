@@ -66,8 +66,6 @@ public class IdeaGateway {
 
     if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
 
-    LocalHistoryImpl.getInstanceImpl().dispatchPendingEvents();
-
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
     boolean isInContent = false;

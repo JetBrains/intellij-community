@@ -36,7 +36,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -161,7 +161,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
@@ -372,7 +371,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public void setupSdkPaths(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
@@ -486,11 +484,6 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     return versionString;
-  }
-
-  @Override
-  public int compareTo(@NotNull String versionString, @NotNull String versionNumber) {
-    return getVersionNumber(versionString).compareTo(versionNumber);
   }
 
   @Override
@@ -665,12 +658,10 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    String path = file.getPath();
-    if (JrtFileSystem.isModularJdk(path)) {
-      String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(path) + JrtFileSystem.SEPARATOR);
-      for (String module : JrtFileSystem.listModules(path)) {
-        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url + module));
-      }
+    VirtualFile jrt = fileManager.findFileByUrl(
+      VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()) + JrtFileSystem.SEPARATOR));
+    if (jrt != null) {
+      ContainerUtil.addAll(result, jrt.getChildren());
     }
 
     for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
@@ -678,7 +669,7 @@ public class JavaSdkImpl extends JavaSdk {
       ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
     }
 
-    Collections.sort(result, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+    Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
 
     return result;
   }
@@ -691,13 +682,11 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  @SuppressWarnings("HardCodedStringLiteral")
   private static VirtualFile findSources(File file) {
     return findSources(file, "src");
   }
 
   @Nullable
-  @SuppressWarnings("HardCodedStringLiteral")
   private static VirtualFile findSources(File file, final String srcName) {
     File jarFile = new File(file, srcName + ".jar");
     if (!jarFile.exists()) {
@@ -719,7 +708,6 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static void addDocs(File file, SdkModificator rootContainer) {
     VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {

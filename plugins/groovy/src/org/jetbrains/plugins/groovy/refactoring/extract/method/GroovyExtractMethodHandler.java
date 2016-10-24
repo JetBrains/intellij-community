@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -194,8 +194,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (helper == null) return;
 
     CommandProcessor.getInstance().executeCommand(helper.getProject(), () -> {
-      final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
-      try {
+      WriteAction.run(() -> {
         createMethod(helper, owner);
         GrStatementOwner declarationOwner =
           helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
@@ -207,10 +206,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
           editor.getSelectionModel().removeSelection();
           editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
         }
-      }
-      finally {
-        lock.finish();
-      }
+      });
     }, REFACTORING_NAME, null);
   }
 

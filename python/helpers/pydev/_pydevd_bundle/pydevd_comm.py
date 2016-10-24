@@ -65,7 +65,7 @@ from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SO_REUSEPORT, SHUT_RDWR, timeout
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN
 
 try:
@@ -487,10 +487,11 @@ def start_server(port):
     s = socket(AF_INET, SOCK_STREAM)
     s.settimeout(None)
 
-    if os.name == 'nt':
-        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    else:
+    try:
+        from socket import SO_REUSEPORT
         s.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+    except ImportError:
+        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
     s.bind(('', port))
     pydevd_log(1, "Bound to port ", str(port))

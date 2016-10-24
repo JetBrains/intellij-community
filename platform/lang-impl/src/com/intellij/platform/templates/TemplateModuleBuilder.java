@@ -24,9 +24,9 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -393,15 +393,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             canceledRef.set(true);
             if (!isSomehowOverwriting) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(TemplateProjectDirectoryGenerator.class);
                 try {
-                  baseDir.delete(TemplateProjectDirectoryGenerator.class);
+                  WriteAction.run(() -> baseDir.delete(TemplateProjectDirectoryGenerator.class));
                 }
                 catch (IOException e) {
                   LOG.error(e);
-                }
-                finally {
-                  token.close();
                 }
               });
             }

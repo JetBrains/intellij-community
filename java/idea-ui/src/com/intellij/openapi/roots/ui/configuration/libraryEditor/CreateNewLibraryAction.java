@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -75,13 +74,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     configuration.addRoots(editor);
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyTo((LibraryEx.ModifiableModelEx)model);
-    AccessToken token = WriteAction.start();
-    try {
-      model.commit();
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> model.commit());
     return library;
   }
 

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.WriteAction;
@@ -50,18 +49,13 @@ public class GroovyFacetUtil {
           GroovyBundle.message("groovy.like.library.found.text", module.getName(), library.getName(), utils.getSDKLibVersion(library)),
           GroovyBundle.message("groovy.like.library.found"), JetgroovyIcons.Groovy.Groovy_32x32);
       if (result == Messages.OK) {
-        AccessToken accessToken = WriteAction.start();
-
-        try {
+        WriteAction.run(() -> {
           ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
           LibraryOrderEntry entry = model.addLibraryEntry(libraries[0]);
           LibrariesUtil.placeEntryToCorrectPlace(model, entry);
           model.commit();
-          return true;
-        }
-        finally {
-          accessToken.finish();
-        }
+        });
+        return true;
       }
     }
     return false;

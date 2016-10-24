@@ -80,7 +80,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
       final PsiType returnType = method.getReturnType();
       final PsiParameterList parameterList = method.getParameterList();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method, Problem.STATIC);
+        registerMethodError(method, Problem.STATIC, method);
         return;
       }
       if (parameterList.getParametersCount() != 0) {
@@ -93,12 +93,12 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
           }
         }
         if (!annotated) {
-          registerMethodError(method, Problem.PARAMETER);
+          registerMethodError(method, Problem.PARAMETER, method);
           return;
         }
       }
       if (!PsiType.VOID.equals(returnType) || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerMethodError(method, Problem.NOT_PUBLIC_VOID);
+        registerMethodError(method, Problem.NOT_PUBLIC_VOID, method);
       }
     }
   }

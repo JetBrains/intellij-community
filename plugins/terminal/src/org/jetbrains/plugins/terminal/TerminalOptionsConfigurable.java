@@ -38,7 +38,7 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
 
   public TerminalOptionsConfigurable(@NotNull Project project) {
     myOptionsProvider = TerminalOptionsProvider.getInstance();
-    myProjectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project);
+    myProjectOptionsProvider = TerminalProjectOptionsProvider.Companion.getInstance(project);
   }
 
   @NotNull
@@ -61,7 +61,6 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   @Override
   public JComponent createComponent() {
     myPanel = new TerminalSettingsPanel();
-    if (myProjectOptionsProvider == null) return new JPanel();
     return myPanel.createPanel(myOptionsProvider, myProjectOptionsProvider);
   }
 

@@ -65,13 +65,7 @@ public class ProjectMacrosUtil {
       String macro = it.next();
       String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        AccessToken token = WriteAction.start();
-        try {
-          PathMacros.getInstance().setMacro(macro, value);
-        }
-        finally {
-          token.finish();
-        }
+        WriteAction.run(() -> PathMacros.getInstance().setMacro(macro, value));
         it.remove();
       }
     }

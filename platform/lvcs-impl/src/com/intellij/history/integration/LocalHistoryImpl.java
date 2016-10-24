@@ -23,6 +23,7 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -154,10 +156,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }
 
-  protected void dispatchPendingEvents() {
-    myConnection.deliverImmediately();
-  }
-
   @TestOnly
   public void cleanupForNextTest() {
     disposeComponent();
@@ -190,6 +188,10 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));
+  }
+
+  public void addVFSListenerAfterLocalHistoryOne(VirtualFileListener virtualFileListener, Disposable disposable) {
+    myEventDispatcher.addVirtualFileListener(virtualFileListener, disposable);
   }
 
   private Label label(final LabelImpl impl) {

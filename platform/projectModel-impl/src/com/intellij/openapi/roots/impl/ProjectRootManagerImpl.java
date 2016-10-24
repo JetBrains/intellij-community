@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -93,17 +92,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     protected void levelDown() {
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
-        AccessToken token = WriteAction.start();
         try {
-          fireChange();
+          WriteAction.run(() -> fireChange());
         }
         finally {
-          try {
-            myChanged = false;
-          }
-          finally {
-            token.finish();
-          }
+          myChanged = false;
         }
       }
     }

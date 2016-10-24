@@ -180,14 +180,14 @@ public class RefreshSessionImpl extends RefreshSession {
       return;
     }
 
-    //noinspection unused
-    try (AccessToken dumb  = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
-         AccessToken write = WriteAction.start()) {
-      if (myDumbModePermission != null) {
-        DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
-      } else {
-        fireEventsInWriteAction();
-      }
+    try (AccessToken ignore = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace)) {
+      WriteAction.run(() -> {
+        if (myDumbModePermission != null) {
+          DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
+        } else {
+          fireEventsInWriteAction();
+        }
+      });
     }
     finally {
       mySemaphore.up();

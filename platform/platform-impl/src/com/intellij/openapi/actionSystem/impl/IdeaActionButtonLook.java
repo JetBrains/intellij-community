@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -82,8 +83,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       }
       else {
         final boolean dark = UIUtil.isUnderDarcula();
-        g.setColor(
-          state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
+        final Color pushed = ColorUtil.shift(bg, dark? 1d / 0.7d : UIUtil.isUnderWin10LookAndFeel() ? 0.9d : 0.7d);
+        final Color dark_normal = Gray._255.withAlpha(40);
+        g.setColor(state == ActionButtonComponent.PUSHED ? pushed : dark ? dark_normal : ALPHA_40);
         ((Graphics2D)g).fill(getShape(size));
       }
     }
@@ -111,7 +113,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         //do nothing
       }
       else {
-        final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
+        final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : UIUtil.isUnderWin10LookAndFeel() ? 0.75 : 0.49;
         g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
         ((Graphics2D)g).setStroke(BASIC_STROKE);
         ((Graphics2D)g).draw(getShape(size));
@@ -122,6 +124,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
   private static Shape getShape(Dimension size) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      return new Rectangle2D.Double(1, 1, size.width - 3, size.height - 3);
+    }
     return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
   }
 

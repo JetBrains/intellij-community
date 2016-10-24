@@ -535,16 +535,12 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   }
 
   private void setModulesOutput(final VirtualFile output, final String... moduleNames) {
-    AccessToken accessToken = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (String each : moduleNames) {
         PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), false);
         PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), true);
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void testWebResources() throws Exception {

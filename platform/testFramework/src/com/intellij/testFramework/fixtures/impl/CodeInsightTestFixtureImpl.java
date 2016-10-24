@@ -1359,15 +1359,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     EdtTestUtil.runInEdtAndWait(() -> {
       if (!copy.getFileType().isBinary()) {
-        AccessToken token = WriteAction.start();
         try {
-          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
+          WriteAction.run(() -> copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset())));
         }
         catch (IOException e) {
           throw new RuntimeException(e);
-        }
-        finally {
-          token.finish();
         }
       }
       myFile = copy;

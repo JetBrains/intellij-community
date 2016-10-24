@@ -145,18 +145,12 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
 
-    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
-      final AccessToken accessToken = WriteAction.start();
-      try {
-        final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
-        if (expression instanceof GrString) {
-          GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
-        }
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> WriteAction.run(() -> {
+      final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
+      if (expression instanceof GrString) {
+        GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
       }
-      finally {
-        accessToken.finish();
-      }
-    }, null, null, document);
+    }), null, null, document);
   }
 
   private static boolean containsMultilineStrings(GrExpression expr) {

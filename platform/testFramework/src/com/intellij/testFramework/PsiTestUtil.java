@@ -93,8 +93,7 @@ public class PsiTestUtil {
     PlatformTestCase.synchronizeTempDirVfs(vDir);
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      AccessToken token = WriteAction.start();
-      try {
+      WriteAction.run(() -> {
         if (rootPath != null) {
           VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
           if (vDir1 == null) {
@@ -106,10 +105,7 @@ public class PsiTestUtil {
         if (addProjectRoots) {
           addSourceContentToRoots(module, vDir);
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     });
     return vDir;
   }

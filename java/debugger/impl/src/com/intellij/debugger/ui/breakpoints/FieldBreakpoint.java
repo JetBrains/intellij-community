@@ -49,8 +49,6 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.AccessWatchpointEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;
-import com.sun.jdi.request.AccessWatchpointRequest;
-import com.sun.jdi.request.ModificationWatchpointRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,15 +150,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     if (event instanceof ModificationWatchpointEvent) {
-      ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
-      ObjectReference reference = modificationEvent.object();
+      ObjectReference reference = ((ModificationWatchpointEvent)event).object();
       if (reference != null) {  // non-static
         return reference;
       }
     }
     else if (event instanceof AccessWatchpointEvent) {
-      AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
-      ObjectReference reference = accessEvent.object();
+      ObjectReference reference = ((AccessWatchpointEvent)event).object();
       if (reference != null) { // non-static
         return reference;
       }
@@ -174,28 +170,23 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
                                             ReferenceType refType) {
     VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
     try {
+      RequestManagerImpl manager = debugProcess.getRequestsManager();
       Field field = refType.fieldByName(getFieldName());
       if (field == null) {
-        debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
-                                                                                  getFieldName(), refType.name()));
+        manager.setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
+                                                        getFieldName(), refType.name()));
         return;
       }
-      RequestManagerImpl manager = debugProcess.getRequestsManager();
       if (isWatchModification() && vm.canWatchFieldModification()) {
-        ModificationWatchpointRequest request = manager.createModificationWatchpointRequest(this, field);
-        debugProcess.getRequestsManager().enableRequest(request);
+        manager.enableRequest(manager.createModificationWatchpointRequest(this, field));
         LOG.debug("Modification request added");
       }
       if (isWatchAccess() && vm.canWatchFieldAccess()) {
-        AccessWatchpointRequest request = manager.createAccessWatchpointRequest(this, field);
-        debugProcess.getRequestsManager().enableRequest(request);
+        manager.enableRequest(manager.createAccessWatchpointRequest(this, field));
         if (LOG.isDebugEnabled()) {
           LOG.debug("Access request added field = "+field.name() + "; refType = "+refType.name());
         }
       }
-    }
-    catch (ObjectCollectedException ex) {
-      LOG.debug(ex);
     }
     catch (Exception ex) {
       LOG.debug(ex);
@@ -221,10 +212,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       final Field field = modificationEvent.field();
       if (object != null) {
         return DebuggerBundle.message(
-          "status.field.watchpoint.reached.modification", 
-          field.declaringType().name(), 
-          field.name(), 
-          modificationEvent.valueCurrent(), 
+          "status.field.watchpoint.reached.modification",
+          field.declaringType().name(),
+          field.name(),
+          modificationEvent.valueCurrent(),
           modificationEvent.valueToBe(),
           locationQName,
           locationFileName,
@@ -233,10 +224,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
         );
       }
       return DebuggerBundle.message(
-        "status.static.field.watchpoint.reached.modification", 
-        field.declaringType().name(), 
-        field.name(), 
-        modificationEvent.valueCurrent(), 
+        "status.static.field.watchpoint.reached.modification",
+        field.declaringType().name(),
+        field.name(),
+        modificationEvent.valueCurrent(),
         modificationEvent.valueToBe(),
         locationQName,
         locationFileName,
@@ -249,9 +240,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       final Field field = accessEvent.field();
       if (object != null) {
         return DebuggerBundle.message(
-          "status.field.watchpoint.reached.access", 
-          field.declaringType().name(), 
-          field.name(), 
+          "status.field.watchpoint.reached.access",
+          field.declaringType().name(),
+          field.name(),
           locationQName,
           locationFileName,
           locationLine,
@@ -259,8 +250,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
         );
       }
       return DebuggerBundle.message(
-        "status.static.field.watchpoint.reached.access", 
-        field.declaringType().name(), 
+        "status.static.field.watchpoint.reached.access",
+        field.declaringType().name(),
         field.name(),
         locationQName,
         locationFileName,
