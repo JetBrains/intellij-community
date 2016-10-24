@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,7 @@ import java.awt.event.KeyEvent;
  * @author Dennis.Ushakov
  */
 public abstract class AbstractNewProjectDialog extends DialogWrapper {
-  private JBList myList;
+  private Pair<JPanel, JBList> myPair;
 
   public AbstractNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
@@ -53,13 +51,13 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     setTitle(generators.length == 0 ? "Create Project" : "New Project");
-    final DefaultActionGroup root = createRootStep();
+    DefaultActionGroup root = createRootStep();
 
-    final Pair<JPanel, JBList> panel = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
-    final Dimension size = JBUI.size(666, 385);
-    final JPanel component = panel.first;
+    Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
+    Dimension size = JBUI.size(666, 385);
+    JPanel component = pair.first;
     component.setMinimumSize(size);
     component.setPreferredSize(size);
     new AnAction() {
@@ -68,17 +66,17 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
         close(CANCEL_EXIT_CODE);
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
-    myList = panel.second;
-    UiNotifyConnector.doWhenFirstShown(myList, () -> ScrollingUtil.ensureSelectionExists(myList));
+    myPair = pair;
+    UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 
-    FlatWelcomeFrame.installQuickSearch(panel.second);
+    FlatWelcomeFrame.installQuickSearch(pair.second);
     return component;
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myList;
+    return FlatWelcomeFrame.getPreferredFocusedComponent(myPair);
   }
 
   @Nullable
