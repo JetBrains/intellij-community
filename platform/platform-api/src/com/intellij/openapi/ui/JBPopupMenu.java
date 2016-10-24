@@ -168,6 +168,12 @@ public class JBPopupMenu extends JPopupMenu {
         myShift = newShift;
         myTarget.revalidate();
         myTarget.repaint();
+        Window w = UIUtil.getWindow(myTarget.getComponent());
+        if (w != null) {
+          for (Window window : w.getOwnedWindows()) {
+            window.dispose();
+          }
+        }
       }
     }
 
