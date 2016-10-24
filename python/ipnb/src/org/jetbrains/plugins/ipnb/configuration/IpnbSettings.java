@@ -14,6 +14,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public static final String DEFAULT_URL = "http://127.0.0.1:8888";
   public String URL = DEFAULT_URL;
   private String myWorkingDirectory;
+  private String myArguments;
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);
@@ -35,6 +36,14 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   @Nullable
   public String getWorkingDirectory() {
     return myWorkingDirectory;
+  }
+
+  public String getArguments() {
+    return myArguments;
+  }
+
+  public void setArguments(String arguments) {
+    myArguments = arguments;
   }
 
   @Override
