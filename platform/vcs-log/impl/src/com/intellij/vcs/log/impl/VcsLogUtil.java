@@ -41,12 +41,12 @@ public class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    return groupByRoot(refs, ref -> ref.getRoot());
+    return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
   public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, commit -> commit.getRoot());
+    return groupByRoot(commits, VcsShortCommitDetails::getRoot);
   }
 
   @NotNull
