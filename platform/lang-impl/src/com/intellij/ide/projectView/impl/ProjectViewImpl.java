@@ -285,11 +285,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (!myId2Pane.containsKey(idToRemove)) return;
     pane.removeTreeChangeListener();
-    for (int i = myContentManager.getContentCount() - 1; i >= 0; i--) {
-      Content content = myContentManager.getContent(i);
+    for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
+      Content content = getContentManager().getContent(i);
       String id = content != null ? content.getUserData(ID_KEY) : null;
       if (id != null && id.equals(idToRemove)) {
-        myContentManager.removeContent(content, true);
+        getContentManager().removeContent(content, true);
       }
     }
     myId2Pane.remove(idToRemove);
@@ -301,7 +301,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
-    final Content[] contents = myContentManager.getContents();
+    final Content[] contents = getContentManager().getContents();
     for (int i = 1; i < contents.length; i++) {
       Content content = contents[i];
       Content prev = contents[i - 1];
@@ -346,7 +346,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private void doAddPane(@NotNull final AbstractProjectViewPane newPane) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index;
-    final ContentManager manager = myContentManager;
+    final ContentManager manager = getContentManager();
     for (index = 0; index < manager.getContentCount(); index++) {
       Content content = manager.getContent(index);
       String id = content.getUserData(ID_KEY);
@@ -366,7 +366,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     boolean first = true;
     for (String subId : subIds) {
       final String title = subId != null ?  newPane.getPresentableSubIdName(subId) : newPane.getTitle();
-      final Content content = myContentManager.getFactory().createContent(getComponent(), title, false);
+      final Content content = getContentManager().getFactory().createContent(getComponent(), title, false);
       content.setTabName(title);
       content.putUserData(ID_KEY, id);
       content.putUserData(SUB_ID_KEY, subId);
@@ -473,7 +473,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     isInitialized = true;
     doAddUninitializedPanes();
 
-    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+    getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
@@ -506,7 +506,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private boolean viewSelectionChanged() {
-    Content content = myContentManager.getSelectedContent();
+    Content content = getContentManager().getSelectedContent();
     if (content == null) return false;
     final String id = content.getUserData(ID_KEY);
     String subId = content.getUserData(SUB_ID_KEY);
@@ -762,6 +762,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return null;
   }
 
+  public ContentManager getContentManager() {
+    if (myContentManager == null) {
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).getContentManager();
+    }
+    return myContentManager;
+  }
+
 
   private class PaneOptionAction extends ToggleAction implements DumbAware {
     private final Map<String, Boolean> myOptionsMap;
@@ -837,9 +844,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId);
     if (!viewId.equals(getCurrentViewId())
         || subId != null && !subId.equals(pane.getSubId())) {
-      for (Content content : myContentManager.getContents()) {
+      for (Content content : getContentManager().getContents()) {
         if (viewId.equals(content.getUserData(ID_KEY)) && StringUtil.equals(subId, content.getUserData(SUB_ID_KEY))) {
-          return myContentManager.setSelectedContentCB(content);
+          return getContentManager().setSelectedContentCB(content);
         }
       }
     }
