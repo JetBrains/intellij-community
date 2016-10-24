@@ -22,6 +22,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -40,11 +41,19 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 class PyConsoleEnterHandler {
   fun handleEnterPressed(editor: EditorEx): Boolean {
     val project = editor.project ?: throw IllegalArgumentException()
-    if (editor.document.lineCount > 0) { // move to end of line
+    val lineCount = editor.document.lineCount
+    if (lineCount > 0) { // move to end of line
       editor.selectionModel.removeSelection()
       val caretPosition = editor.caretModel.logicalPosition
-      val lineEndOffset = editor.document.getLineEndOffset(caretPosition.line)
-      editor.caretModel.moveToOffset(lineEndOffset)
+      if (caretPosition.line == lineCount - 1) {
+        // we can move caret if only it's on the last line of command
+        val lineEndOffset = editor.document.getLineEndOffset(caretPosition.line)
+        editor.caretModel.moveToOffset(lineEndOffset)
+      } else {
+        // otherwise just process enter action
+        executeEnterHandler(project, editor)
+        return false;
+      }
     }
     else {
       return true;
@@ -54,11 +63,28 @@ class PyConsoleEnterHandler {
 
     val caretOffset = editor.expectedCaretOffset
     val atElement = findFirstNoneSpaceElement(psiMgr.getPsiFile(editor.document)!!, caretOffset)
-    var insideDocString = false
-    atElement?.let {
-      insideDocString = isElementInsideDocString(atElement, caretOffset)
+    if (atElement == null) {
+      executeEnterHandler(project, editor)
+      return false
     }
 
+    val firstLine = getLineAtOffset(editor.document, DocumentUtil.getFirstNonSpaceCharOffset(editor.document, 0))
+    val isCellMagic = firstLine.trim().startsWith("%%") && !firstLine.trimEnd().endsWith("?")
+    val prevLine = getLineAtOffset(editor.document, caretOffset)
+
+    val isLineContinuation = prevLine.trim().endsWith('\\')
+    val insideDocString = isElementInsideDocString(atElement, caretOffset)
+    val isMultiLineCommand = PsiTreeUtil.getParentOfType(atElement, PyStatementListContainer::class.java) != null || isCellMagic
+    val isAtTheEndOfCommand = editor.document.getLineNumber(caretOffset) == editor.document.lineCount - 1
+
+    val hasCompleteStatement = !insideDocString && !isLineContinuation && checkComplete(atElement)
+
+    executeEnterHandler(project, editor)
+
+    return isAtTheEndOfCommand && hasCompleteStatement && ((isMultiLineCommand && prevLine.isBlank()) || (!isMultiLineCommand))
+  }
+
+  private fun executeEnterHandler(project: Project, editor:EditorEx) {
     val enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
     object : WriteCommandAction<Nothing>(project) {
       @Throws(Throwable::class)
@@ -66,24 +92,17 @@ class PyConsoleEnterHandler {
         enterHandler.execute(editor, null, DataManager.getInstance().getDataContext(editor.component))
       }
     }.execute()
-
-    val firstLine = getLineAtOffset(editor.document, DocumentUtil.getFirstNonSpaceCharOffset(editor.document, 0))
-    val isCellMagic = firstLine.trim().startsWith("%%") && !firstLine.trimEnd().endsWith("?")
-    val isMultiLineCommand = PsiTreeUtil.getParentOfType(atElement, PyStatementListContainer::class.java) != null || isCellMagic
-
-    val hasCompleteStatement = atElement != null && !insideDocString && checkComplete(atElement)
-    val prevLine = getLineAtOffset(editor.document, caretOffset)
-
-    return hasCompleteStatement && ((isMultiLineCommand && prevLine.isBlank()) || (!isMultiLineCommand))
   }
 
   private fun isElementInsideDocString(atElement: PsiElement, caretOffset: Int): Boolean {
-    return atElement.context is PyStringLiteralExpression && PyTokenTypes.TRIPLE_NODES.contains(atElement.node.elementType)
-        && (atElement.textRange.endOffset > caretOffset || !isCompleteDocString(atElement.text))
+    return atElement.context is PyStringLiteralExpression &&
+        (PyTokenTypes.TRIPLE_NODES.contains(atElement.node.elementType) ||
+            atElement.node.elementType === PyTokenTypes.DOCSTRING) &&
+        isMultilineString(atElement.text) &&
+        (atElement.textRange.endOffset > caretOffset || !isCompleteDocString(atElement.text))
   }
 
   private fun checkComplete(el: PsiElement): Boolean {
-    if (!el.isValid) return false
     val compoundStatement = PsiTreeUtil.getParentOfType(el, PyStatementListContainer::class.java)
     if (compoundStatement != null && compoundStatement !is PyTryPart) {
       return compoundStatement.statementList.statements.size != 0
@@ -107,6 +126,11 @@ class PyConsoleEnterHandler {
     val start = doc.getLineStartOffset(line)
     val end = doc.getLineEndOffset(line)
     return doc.getText(TextRange(start, end))
+  }
+
+  private fun isMultilineString(str: String): Boolean {
+    val text = str.substring(PyStringLiteralExpressionImpl.getPrefixLength(str))
+    return text.startsWith("\"\"\"") || text.startsWith("'''")
   }
 
   private fun isCompleteDocString(str: String): Boolean {
