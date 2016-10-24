@@ -121,9 +121,11 @@ public interface Caret extends UserDataHolderEx, Disposable {
   VisualPosition getVisualPosition();
 
   /**
-   * Returns the offset of the caret in the document.
+   * Returns the offset of the caret in the document. Returns 0 for a disposed (invalid) caret.
    *
    * @return the caret offset.
+   *
+   * @see #isValid()
    */
   int getOffset();
 
