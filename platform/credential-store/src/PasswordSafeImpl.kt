@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 import org.jetbrains.concurrency.runAsync
-import java.nio.file.Path
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
   internal @Volatile var currentProvider: PasswordStorage
@@ -43,23 +42,6 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     }
     else {
       currentProvider = createPersistentCredentialStore()
-    }
-  }
-
-  internal fun setProvider(type: ProviderType) {
-    val memoryOnly = type == ProviderType.MEMORY_ONLY
-    if (memoryOnly) {
-      val provider = currentProvider
-      if (provider is KeePassCredentialStore) {
-        provider.memoryOnly = true
-        provider.deleteFileStorage()
-      }
-      else {
-        currentProvider = KeePassCredentialStore(memoryOnly = true)
-      }
-    }
-    else {
-      currentProvider = createPersistentCredentialStore(currentProvider as? KeePassCredentialStore)
     }
   }
 
@@ -117,12 +99,6 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     }
 
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
-  }
-
-  internal fun getKeePassCredentialStore() = currentProvider as KeePassCredentialStore
-
-  fun importFileDatabase(path: Path, masterPassword: String) {
-    currentProvider = copyFileDatabase(path, masterPassword)
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes): Boolean {
