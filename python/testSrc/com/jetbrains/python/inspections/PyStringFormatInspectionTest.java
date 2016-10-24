@@ -208,6 +208,11 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   public void testPackedStringTooFewArguments() {
     doTest();
   }
+  
+  // PY-21156
+  public void testPackedDictCallUnusedMappingKey() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");

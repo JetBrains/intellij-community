@@ -719,7 +719,7 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatStringPackedDictCall() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PyStarArgument.class);
+    assertInstanceOf(target, PyKeywordArgument.class);
   }
 
   //PY-2748

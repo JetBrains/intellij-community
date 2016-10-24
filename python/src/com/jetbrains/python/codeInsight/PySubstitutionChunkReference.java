@@ -395,8 +395,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private PyExpression resolveKeywordPercent(@NotNull PyExpression expression, @NotNull String key) {
     final PyExpression containedExpr = PyPsiUtils.flattenParens(expression);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
-    if (containedExpr instanceof PyDictLiteralExpression) {
-      final Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)containedExpr, key, resolveContext);
+    if (PyUtil.instanceOf(containedExpr, PyDictLiteralExpression.class, PyCallExpression.class)) {
+      final Ref<PyExpression> resolvedRef = getElementFromDictLiteral(containedExpr, key, resolveContext);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
     }
     else if (PyUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class,
@@ -456,7 +456,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     }
     return containedExpression;
   }
-
 
   @Nullable
   private static PyArgumentList getArgumentList(final PsiElement original) {
