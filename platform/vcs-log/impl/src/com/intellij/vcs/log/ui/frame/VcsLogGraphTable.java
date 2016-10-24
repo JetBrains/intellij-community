@@ -430,6 +430,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myController.handleGraphAnswer(answer, dataCouldChange, null, null);
   }
 
+  public void showTooltip(int row) {
+    myController.showTooltip(row);
+  }
+
   static class Selection {
     @NotNull private final VcsLogGraphTable myTable;
     @NotNull private final TIntHashSet mySelectedCommits;

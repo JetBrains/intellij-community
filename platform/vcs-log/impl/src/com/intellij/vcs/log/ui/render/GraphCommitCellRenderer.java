@@ -26,10 +26,12 @@ import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
 import com.intellij.vcs.log.ui.frame.ReferencesPanel;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
@@ -203,6 +205,17 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       }
     }
     return null;
+  }
+
+  public int getTooltipXCoordinate(int row) {
+    GraphCommitCell cell = getAssertCommitCell(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
+    if (!refs.isEmpty()) {
+      customizeRefsPainter(myReferencePainter, refs, getForeground());
+      TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
+      return commitColumn.getWidth() - (myReferencePainter.getSize().width - LabelPainter.GRADIENT_WIDTH) / 2;
+    }
+    return -1;
   }
 
   private static class PaintInfo {
