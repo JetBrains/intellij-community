@@ -30,7 +30,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
+import com.intellij.vcs.log.impl.VcsLogUserFilterImpl
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
