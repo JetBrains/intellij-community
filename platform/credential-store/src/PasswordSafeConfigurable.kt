@@ -106,6 +106,7 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     }
 
     settings.providerType = providerType
+    passwordSafe.currentProvider = provider
   }
 
   fun updateEnabledState() {
