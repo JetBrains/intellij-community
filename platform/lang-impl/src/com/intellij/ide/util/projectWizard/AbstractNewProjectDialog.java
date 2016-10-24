@@ -26,10 +26,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +67,10 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
     myList = panel.second;
-    UiNotifyConnector.doWhenFirstShown(myList, () -> ScrollingUtil.ensureSelectionExists(myList));
+    UiNotifyConnector.doWhenFirstShown(myList, () -> {
+      ScrollingUtil.ensureSelectionExists(myList);
+      FlatWelcomeFrame.requestFocus(panel);
+    });
 
     FlatWelcomeFrame.installQuickSearch(panel.second);
     return component;
