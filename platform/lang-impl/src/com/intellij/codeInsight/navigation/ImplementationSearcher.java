@@ -50,7 +50,7 @@ public class ImplementationSearcher {
         return targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null;
       }
     });
-    return searchImplementations(element, editor, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return searchImplementations(element, editor, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           return element == null || targetElementUtil.includeSelfInGotoImplementation(element);
@@ -60,14 +60,14 @@ public class ImplementationSearcher {
 
   @Nullable
   public PsiElement[] searchImplementations(final PsiElement element,
-                                            final Editor editor, final int offset,
+                                            final Editor editor,
                                             final boolean includeSelfAlways,
                                             final boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     final PsiElement[] elements = searchDefinitions(element, editor);
     if (elements == null) return null; //the search has been cancelled
     if (elements.length > 0) {
-      if (!includeSelfAlways) return filterElements(element, elements, offset);
+      if (!includeSelfAlways) return filterElements(element, elements);
       final PsiElement[] all;
       if (ReadAction.compute(() -> element.getTextRange()) != null) {
         all = new PsiElement[elements.length + 1];
@@ -77,7 +77,7 @@ public class ImplementationSearcher {
       else {
         all = elements;
       }
-      return filterElements(element, all, offset);
+      return filterElements(element, all);
     }
     return (includeSelfAlways || includeSelfIfNoOthers) &&
            ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
@@ -126,7 +126,7 @@ public class ImplementationSearcher {
     DumbService.getInstance(project).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 
-  protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+  protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
     return targetElements;
   }
 
