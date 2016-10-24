@@ -102,15 +102,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract void createRequest(DebugProcessImpl debugProcess);
 
   protected boolean shouldCreateRequest(final DebugProcessImpl debugProcess) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        JavaDebugProcess process = debugProcess.getXdebugProcess();
-        return process != null
-               && debugProcess.isAttached()
-               && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
-               && debugProcess.getRequestsManager().findRequests(Breakpoint.this).isEmpty();
-      }
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      JavaDebugProcess process = debugProcess.getXdebugProcess();
+      return process != null
+             && debugProcess.isAttached()
+             && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
+             && debugProcess.getRequestsManager().findRequests(this).isEmpty();
     });
   }
 
@@ -259,7 +256,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           buf.append("\n");
         }
         if (isLogExpressionEnabled()) {
-          if(!debugProcess.isAttached()) {
+          if (!debugProcess.isAttached()) {
             return;
           }
 
@@ -267,15 +264,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           try {
             SourcePosition position = ContextUtil.getSourcePosition(context);
             PsiElement element = ContextUtil.getContextElement(context, position);
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
-              @Override
-              public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.build(expressionToEvaluate, element, position, myProject);
-              }
-            });
-            final Value eval = evaluator.evaluate(context);
-            final String result = eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval);
-            buf.append(result);
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
+              () -> EvaluatorBuilderImpl.build(expressionToEvaluate, element, position, myProject));
+            Value eval = evaluator.evaluate(context);
+            buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
           }
           catch (EvaluateException e) {
             buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
@@ -348,18 +340,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     try {
       Project project = context.getProject();
       SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
-        @Override
-        public ExpressionEvaluator compute() throws EvaluateException {
-          // IMPORTANT: calculate context psi element basing on the location where the exception
-          // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
-          // for method, exception and field breakpoints these locations differ)
-          PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
-          if (contextPsiElement == null) {
-            contextPsiElement = getEvaluationElement(); // as a last resort
-          }
-          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, () -> {
+        // IMPORTANT: calculate context psi element basing on the location where the exception
+        // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
+        // for method, exception and field breakpoints these locations differ)
+        PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
+        if (contextPsiElement == null) {
+          contextPsiElement = getEvaluationElement(); // as a last resort
         }
+        return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
       });
       return DebuggerUtilsEx.evaluateBoolean(evaluator, context);
     }
