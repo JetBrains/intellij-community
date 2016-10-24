@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.util.containers.ContainerUtil java.util.ArrayList&lt;E&gt; newArrayList(E...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
+  <item name="com.intellij.util.containers.ContainerUtil java.lang.Iterable&lt;T&gt; concat(java.lang.Iterable&lt;? extends T&gt;...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
+  <item name="com.intellij.util.containers.ContainerUtil java.util.List&lt;T&gt; concat(java.util.List&lt;? extends T&gt;...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
+  <item name="com.intellij.util.containers.ContainerUtil java.util.List&lt;T&gt; list(T...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
+  <item name="com.intellij.util.containers.ContainerUtil java.util.Map&lt;K, V&gt; newHashMap(com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;, com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
+</root>
