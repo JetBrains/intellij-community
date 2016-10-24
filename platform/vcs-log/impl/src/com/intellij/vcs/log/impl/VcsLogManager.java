@@ -33,7 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.VcsLogStorage;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;

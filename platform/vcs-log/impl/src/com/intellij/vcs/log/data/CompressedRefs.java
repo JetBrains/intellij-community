@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.util.TroveUtil;
 import gnu.trove.TIntArrayList;

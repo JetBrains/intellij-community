@@ -16,7 +16,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
