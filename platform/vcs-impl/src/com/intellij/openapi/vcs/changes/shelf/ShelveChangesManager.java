@@ -561,11 +561,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
     catch (IOException e) {
       LOG.info(e);
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage());
       return;
     }
     catch (PatchSyntaxException e) {
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage());
       LOG.info(e);
       return;
     }
