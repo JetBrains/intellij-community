@@ -29,8 +29,7 @@ public abstract class JrtFileSystem extends ArchiveFileSystem {
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
 
-  private static final boolean SUPPORTED =
-    SystemInfo.isJavaVersionAtLeast("9") || SystemInfo.isJavaVersionAtLeast("1.8") && !SystemInfo.isJavaVersionAtLeast("1.9");
+  private static final boolean SUPPORTED = SystemInfo.isJavaVersionAtLeast("1.8");
 
   public static boolean isSupported() {
     return SUPPORTED;
