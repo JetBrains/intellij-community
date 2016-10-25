@@ -16,6 +16,7 @@
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.intentions.PyConvertToFStringIntention;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -75,7 +76,11 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
     doNegativeTest();    
   }
 
-  public void testPercentOperatorExpressionContainBadQuotes() {
+  public void testPercentOperatorExpressionContainsOriginalHostQuote() {
+    doNegativeTest();
+  }
+  
+  public void testPercentOperatorExpressionContainsAlternativeHostQuote() {
     doNegativeTest();
   }
 
@@ -85,5 +90,15 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
 
   public void testFormatMethodAttributeReferences() {
     doTest();
+  }
+
+  public void testFormatMethodItemAccess() {
+    doTest();
+  }
+
+  public void testExtractItemAndAttributeAccess() {
+    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0.foo.bar.baz}"), ".foo", ".bar", ".baz");
+    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0[foo][.!:][}]}"), "[foo]", "[.!:]", "[}]");
+    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{foo[bar].baz:}"), "[bar]", ".baz");
   }
 }

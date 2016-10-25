@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -66,10 +68,10 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || !LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON36)) return false;
-    
+
     final Pair<PyStringLiteralExpression, Boolean> pair = findTargetStringUnderCaret(editor, file);
     if (pair == null) return false;
-    
+
     final PyStringLiteralExpression pyString = pair.getFirst();
     final boolean percentOperator = pair.getSecond();
 
@@ -81,10 +83,10 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         return false;
       }
 
-      final List<FormatStringChunk> chunks = percentOperator ? PyStringFormatParser.parsePercentFormat(stringText) 
+      final List<FormatStringChunk> chunks = percentOperator ? PyStringFormatParser.parsePercentFormat(stringText)
                                                              : PyStringFormatParser.parseNewStyleFormat(stringText);
       final List<SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(chunks);
-      
+
       // TODO handle dynamic format spec in both formatting styles
       final boolean hasDynamicFormatting;
       if (percentOperator) {
@@ -94,8 +96,8 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         hasDynamicFormatting = false;
       }
       if (hasDynamicFormatting) return false;
-      
-      final PySubstitutionChunkReference[] references = 
+
+      final PySubstitutionChunkReference[] references =
         PythonFormattedStringReferenceProvider.getReferencesFromChunks(pyString, substitutions, percentOperator);
 
       final PsiElement valuesSource;
@@ -143,14 +145,14 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       final StringNodeInfo info = new StringNodeInfo(nodes.get(0));
       // Nest string contain the same type of quote as host string inside, and we cannot escape inside f-string -- retreat
       final String content = info.getContent();
-      if (content.indexOf(hostQuote) >= 0) {
+      final char targetSingleQuote = invertQuote(hostQuote);
+      if (content.indexOf(hostQuote) >= 0 || content.indexOf(targetSingleQuote) >= 0) {
         return null;
       }
       if (!info.isTerminated()) {
         return null;
       }
       if (info.getSingleQuote() == hostQuote) {
-        final char targetSingleQuote = hostQuote == '"' ? '\'' : '"';
         final String targetQuote = info.getQuote().replace(hostQuote, targetSingleQuote);
         final String stringWithSwappedQuotes = info.getPrefix() + targetQuote + content + targetQuote;
         final PsiElement replaced = literal.replace(generator.createStringLiteralAlreadyEscaped(stringWithSwappedQuotes));
@@ -158,7 +160,6 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           return replaced;
         }
       }
-
     }
     return element;
   }
@@ -167,7 +168,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
   private static Pair<PyStringLiteralExpression, Boolean> findTargetStringUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
     final PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
     if (anchor == null) return null;
-    
+
     final PyBinaryExpression binaryExpr = PsiTreeUtil.getParentOfType(anchor, PyBinaryExpression.class);
     if (binaryExpr != null && binaryExpr.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression pyString = as(binaryExpr.getLeftExpression(), PyStringLiteralExpression.class);
@@ -186,7 +187,6 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       }
     }
     return null;
-    
   }
 
   @Override
@@ -237,7 +237,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
 
         final PsiElement adjusted = adjustQuotesInside(resolveResult, pyString);
         if (adjusted == null) return;
-        
+
         result.append(adjusted.getText());
 
         // TODO mostly duplicates the logic of ConvertFormatOperatorToMethodIntention
@@ -274,7 +274,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
 
     final PyBinaryExpression expressionToReplace = PsiTreeUtil.getParentOfType(pyString, PyBinaryExpression.class);
     assert expressionToReplace != null;
-    
+
     final PyElementGenerator generator = PyElementGenerator.getInstance(pyString.getProject());
     final PyExpression fString = generator.createExpressionFromText(LanguageLevel.PYTHON36, result.toString());
     expressionToReplace.replace(fString);
@@ -300,13 +300,13 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
   private static void convertFormatMethodFormatting(@NotNull PyStringLiteralExpression pyString) {
     // TODO get rid of duplication with #convertPercentOperatorFormatting
     final String stringText = pyString.getText();
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(stringText);
-    assert quotes != null;
+    final StringNodeInfo stringInfo = new StringNodeInfo(pyString.getStringNodes().get(0));
     final StringBuilder result = new StringBuilder();
     result.append("f");
-    result.append(quotes.getFirst().replaceAll("[uU]", ""));
+    result.append(stringInfo.getPrefix().replaceAll("[uU]", ""));
+    result.append(stringInfo.getQuote());
     final List<FormatStringChunk> chunks = PyStringFormatParser.parseNewStyleFormat(stringText);
-    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(stringText);
+    final TextRange contentRange = stringInfo.getContentRange();
     int subsChunkPosition = 0;
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof ConstantChunk) {
@@ -316,7 +316,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       }
       else {
         final SubstitutionChunk subsChunk = (SubstitutionChunk)chunk;
-        
+
         result.append("{");
         final PySubstitutionChunkReference reference = new PySubstitutionChunkReference(pyString, subsChunk, subsChunkPosition, false);
         final PyExpression resolveResult = getActualReplacementExpression(reference);
@@ -324,22 +324,17 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
 
         final PsiElement adjusted = adjustQuotesInside(resolveResult, pyString);
         if (adjusted == null) return;
-        
+
         // Replaces name
         result.append(adjusted.getText());
 
-        // TODO move this into PyStringFormatParser
         final String wholeFragment = subsChunk.getTextRange().substring(stringText);
-        final int itemOrAttrStart = StringUtil.indexOfAny(wholeFragment, ".[");
+
+        final String escapedItemOrAttr = quoteItemsInFragments(wholeFragment, stringInfo.getSingleQuote());
+        if (escapedItemOrAttr == null) return;
+        result.append(escapedItemOrAttr);
+
         final int formatOrConversionCharStart = StringUtil.indexOfAny(wholeFragment, "!:");
-
-        // Handle dot in the format part, like {foo:0.42}
-        final int itemOrAttrEnd = formatOrConversionCharStart < 0 ? wholeFragment.length() - 1 : formatOrConversionCharStart;
-        if (itemOrAttrStart >= 0 && itemOrAttrStart < itemOrAttrEnd) {
-          final String itemOrAttr = wholeFragment.substring(itemOrAttrStart, itemOrAttrEnd);
-          result.append(itemOrAttr);
-        }
-
         if (formatOrConversionCharStart >= 0) {
           final String formatAndConversionChar = wholeFragment.substring(formatOrConversionCharStart, wholeFragment.length() - 1);
           result.append(formatAndConversionChar);
@@ -349,13 +344,79 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         subsChunkPosition++;
       }
     }
-    result.append(quotes.getSecond());
-    
+    result.append(stringInfo.getQuote());
+
     final PyCallExpression expressionToReplace = PsiTreeUtil.getParentOfType(pyString, PyCallExpression.class);
     assert expressionToReplace != null;
-    
+
     final PyElementGenerator generator = PyElementGenerator.getInstance(pyString.getProject());
     final PyExpression fString = generator.createExpressionFromText(LanguageLevel.PYTHON36, result.toString());
     expressionToReplace.replace(fString);
+  }
+
+  @Nullable
+  private static String quoteItemsInFragments(@NotNull String reference, char hostStringQuote) {
+    List<String> escaped = new ArrayList<>();
+    for (String part : extractItemsAndAttributes(reference)) {
+      if (part.startsWith(".")) {
+        escaped.add(part);
+      }
+      else if (part.startsWith("[")) {
+        final String indexText = part.substring(1, part.length() - 1);
+        if (indexText.matches("\\d+")) {
+          escaped.add(part);
+          continue;
+        }
+        final char quote = invertQuote(hostStringQuote);
+        if (indexText.indexOf('\'') >= 0 && indexText.indexOf(quote) >= 0) {
+          return null;
+        }
+        escaped.add("[" + quote + indexText + quote + "]");
+      }
+    }
+    return StringUtil.join(escaped, "");
+  }
+
+  private static char invertQuote(char quote) {
+    return quote == '"' ? '\'' : '"';
+  }
+
+  // TODO move this into PyStringFormatParser
+  // For e.g. {0[foo].bar[!:]!r:something} returns: [foo], .bar, [!:]
+  @VisibleForTesting
+  @NotNull
+  public static List<String> extractItemsAndAttributes(@NotNull String chunkText) {
+    List<String> result = new ArrayList<>();
+
+    boolean insideItem = false;
+    boolean insideAttribute = false;
+    int fragmentStart = 0;
+
+    int offset = 1;
+    while (offset < chunkText.length() - 1) {
+      final char c = chunkText.charAt(offset);
+      if (insideItem) {
+        if (c == ']') {
+          insideItem = false;
+          result.add(chunkText.substring(fragmentStart, offset + 1));
+        }
+      }
+      else if (c == '!' || c == ':' || c == '}') {
+        break;
+      }
+      else if (c == '.' || c == '[') {
+        if (insideAttribute) {
+          result.add(chunkText.substring(fragmentStart, offset));
+        }
+        insideAttribute = c == '.';
+        insideItem = c == '[';
+        fragmentStart = offset;
+      }
+      offset++;
+    }
+    if (insideAttribute) {
+      result.add(chunkText.substring(fragmentStart, offset));
+    }
+    return result;
   }
 }
