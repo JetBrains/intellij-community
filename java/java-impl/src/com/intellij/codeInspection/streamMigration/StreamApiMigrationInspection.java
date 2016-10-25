@@ -259,7 +259,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final PsiVariable variable = tb.getVariable();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
     LOG.assertTrue(methodCallExpression != null);
-    return isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0]);
+    if (!isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0])) return false;
+    PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+    if(qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethod.class);
+      return method == null || !method.getName().equals("addAll");
+    }
+    return true;
   }
 
   private static boolean isCollectCall(TerminalBlock tb) {
@@ -280,7 +286,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
         qualifierClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
       }
-      else if (qualifierExpression == null) {
+      else if (qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) {
         final PsiClass enclosingClass = PsiTreeUtil.getParentOfType(methodCallExpression, PsiClass.class);
         if (PsiUtil.getEnclosingStaticElement(methodCallExpression, enclosingClass) == null) {
           qualifierClass = enclosingClass;
