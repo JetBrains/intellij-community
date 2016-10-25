@@ -337,23 +337,6 @@ public class JBUI {
     public float scaleVal(float value) {
       return value * getAligningJBUIScale();
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof JBIcon)) return false;
-
-      final JBIcon icon = (JBIcon)o;
-
-      if (isPreScaled() != icon.isPreScaled()) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * super.hashCode() + Boolean.valueOf(isPreScaled()).hashCode();
-    }
   }
 
   /**
@@ -399,24 +382,6 @@ public class JBUI {
     public Icon scale(float scale) {
       setScale(scale);
       return this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof ScalableJBIcon)) return false;
-      if (!super.equals(o)) return false;
-
-      final ScalableJBIcon icon = (ScalableJBIcon)o;
-
-      if (myScale != icon.myScale) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * super.hashCode() + (myScale != +0.0f ? Float.floatToIntBits(myScale) : 0);
     }
   }
 

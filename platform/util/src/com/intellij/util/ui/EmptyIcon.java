@@ -137,23 +137,27 @@ public class EmptyIcon extends JBUI.ScalableJBIcon {
   public void paintIcon(Component component, Graphics g, int i, int j) {
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof EmptyIcon)) return false;
-    if (!super.equals(o)) return false;
 
     final EmptyIcon icon = (EmptyIcon)o;
 
     if (height != icon.height) return false;
     if (width != icon.width) return false;
+    if (getScale() != icon.getScale()) return false;
+    if (isPreScaled() != icon.isPreScaled()) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = 31 * super.hashCode() + width;
+    int result = width;
     result = 31 * result + height;
+    result = 31 * result + (getScale() != +0.0f ? Float.floatToIntBits(getScale()) : 0);
+    result = 31 * result + Boolean.valueOf(isPreScaled()).hashCode();
     return result;
   }
 
