@@ -202,12 +202,12 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                   BlockOpeningBrace, 
                                   BlockComment, 
                                   DocBlockEnd, 
-                                  LineComment, 
                                   LeftParenthesis,
                                   LanguageStartDelimiter) ||
                (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
         SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
-        if (!statementStart.after().afterOptional(Whitespace).isAtEnd()) {
+        statementStart.after().afterOptional(Whitespace).afterOptional(LineComment).afterOptional(Whitespace);
+        if (!statementStart.isAtEnd()) {
           return statementStart.getStartOffset();
         }
       }
