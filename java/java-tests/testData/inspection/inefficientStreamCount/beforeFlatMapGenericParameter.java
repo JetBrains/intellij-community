@@ -7,6 +7,6 @@ public class Main {
   private String s;
 
   public Main(List<Map<String, String>> s) {
-    long count = s.stream().<String>f<caret>latMap(map -> map.values().stream()).count();
+    long count = s.stream().<String>flatMap(map -> map.values().stream()).cou<caret>nt();
   }
 }
