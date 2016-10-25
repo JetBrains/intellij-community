@@ -253,23 +253,28 @@ public class FileChooserDescriptor implements Cloneable {
    * Defines whether a file can be chosen.
    */
   public boolean isFileSelectable(VirtualFile file) {
-    if (file == null || (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null)) {
+    if (file == null) return false;
+
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
       return false;
     }
-
-    if (file.isDirectory()) {
-      return myChooseFolders;
-    }
-
-    if (myChooseJars && FileElement.isArchive(file)) {
+    if (file.isDirectory() && myChooseFolders) {
       return true;
     }
 
-    if (myFileFilter != null) {
-      return myFileFilter.value(file);
+    if (myFileFilter != null && !file.isDirectory() && myFileFilter.value(file)) {
+      return true;
     }
 
-    return myChooseFiles;
+    if (acceptAsJarFile(file)) {
+      return true;
+    }
+
+    if (acceptAsGeneralFile(file)) {
+      return true;
+    }
+
+    return false;
   }
 
   public Icon getIcon(final VirtualFile file) {
