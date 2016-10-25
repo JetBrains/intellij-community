@@ -35,13 +35,24 @@ import javax.crypto.spec.SecretKeySpec
 
 private const val GROUP_NAME = "IntelliJ Platform"
 
-private val DB_FILE_NAME = "c.kdbx"
+internal val DB_FILE_NAME = "c.kdbx"
 
 internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
-                                      private val dbFile: Path = baseDirectory.resolve(DB_FILE_NAME),
+                                      dbFile: Path? = null,
                                       existingMasterPassword: ByteArray? = null) : PasswordStorage, CredentialStore {
+  internal var dbFile: Path = dbFile ?: baseDirectory.resolve(DB_FILE_NAME)
+    set(path) {
+      if (field == path) {
+        return
+      }
+
+      field = path
+      needToSave.set(true)
+      save()
+    }
+
   private val db: KeePassDatabase
 
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
@@ -55,16 +66,16 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
       if (masterPassword == null) {
         LOG.catchAndLog {
-          if (dbFile.exists()) {
+          if (this.dbFile.exists()) {
             val renameTo = baseDirectory.resolve("old.c.kdbx")
-            LOG.warn("Credentials database file exists ($dbFile), but no master password file. Moved to $renameTo")
-            dbFile.move(renameTo)
+            LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
+            this.dbFile.move(renameTo)
           }
         }
         db = KeePassDatabase()
       }
       else {
-        db = loadKdbx(dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+        db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
         if (existingMasterPassword != null) {
           masterKeyStorage.set(existingMasterPassword)
         }
@@ -86,7 +97,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
   @Synchronized
   fun save() {
-    if (memoryOnly || !needToSave.compareAndSet(true, false) || !db.isDirty) {
+    if (memoryOnly || (!needToSave.compareAndSet(true, false) && !db.isDirty)) {
       return
     }
 
