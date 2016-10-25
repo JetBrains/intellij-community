@@ -1,23 +1,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.ScreenUtil;
 
-import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 
-public class MaximizeActiveDialogAction extends DumbAwareAction {
-  {
-    setEnabledInModalContext(true);
-  }
-
+public class MaximizeActiveDialogAction extends WindowAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Window window = FocusManager.getCurrentManager().getActiveWindow();
-    if (window instanceof JDialog && ((JDialog)window).isResizable()) {
-      doMaximize((JDialog)window);
+    if (myWindow instanceof JDialog) {
+      doMaximize((JDialog)myWindow);
     }
   }
 
