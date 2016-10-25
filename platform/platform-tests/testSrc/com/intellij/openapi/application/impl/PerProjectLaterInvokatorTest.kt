@@ -29,9 +29,9 @@ import java.util.function.Consumer
  * @author Denis Fokin
  */
 
-private class NumberedRunnable private constructor(private val myNumber: Int?, private val myConsumer: Consumer<Int>? = null) : Runnable {
+private class NumberedRunnable private constructor(private val myNumber: Int, private val myConsumer: (Int) -> Unit = {}) : Runnable {
   override fun run() {
-    myConsumer?.accept(myNumber)
+    myConsumer.invoke(myNumber)
   }
 
   companion object {
@@ -39,7 +39,7 @@ private class NumberedRunnable private constructor(private val myNumber: Int?, p
       return NumberedRunnable(number)
     }
 
-    internal fun withNumber(number: Int, consumer: Consumer<Int>): NumberedRunnable {
+    internal fun withNumber(number: Int, consumer: (Int) -> Unit): NumberedRunnable {
       return NumberedRunnable(number, consumer)
     }
   }
