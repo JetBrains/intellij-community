@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
@@ -34,6 +33,7 @@ import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -118,7 +118,9 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   @Override
   public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                               @NotNull PyNewProjectSettings settings, @NotNull Module module) {
+                               @NotNull PyNewProjectSettings settings,
+                               @NotNull Module module,
+                               @Nullable PyProjectSynchronizer synchronizer) {
     myGenerator.generateProject(project, baseDir);
     final String testHelper = "test_helper.py";
     if (baseDir.findChild(testHelper) != null) return;

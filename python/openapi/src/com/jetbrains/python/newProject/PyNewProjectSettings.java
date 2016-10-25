@@ -16,6 +16,7 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Project generation settings selected on the first page of the new project dialog.
@@ -25,6 +26,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 public class PyNewProjectSettings {
   private Sdk mySdk;
   private boolean myInstallFramework;
+  /**
+   * Path on remote server for remote project
+   */
+  @Nullable
+  private String myRemotePath;
 
   public Sdk getSdk() {
     return mySdk;
@@ -40,5 +46,14 @@ public class PyNewProjectSettings {
 
   public boolean installFramework() {
     return myInstallFramework;
+  }
+
+  public final void setRemotePath(@Nullable final String remotePath) {
+      myRemotePath = remotePath;
+  }
+
+  @Nullable
+  public final String getRemotePath() {
+    return myRemotePath;
   }
 }
