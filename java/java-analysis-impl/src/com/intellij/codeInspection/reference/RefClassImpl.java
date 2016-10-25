@@ -127,6 +127,20 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       getRefManager().getReference(psiField);
     }
 
+    if (!isApplet()) {
+      final PsiClass servlet = getRefJavaManager().getServlet();
+      setServlet(servlet != null && psiClass.isInheritor(servlet, true));
+    }
+    if (!isApplet() && !isServlet()) {
+      final boolean isTestClass = TestFrameworks.getInstance().isTestClass(psiClass);
+      setTestCase(isTestClass);
+      if (isTestClass) {
+        for (RefClass refBase : getBaseClasses()) {
+          ((RefClassImpl)refBase).setTestCase(true);
+        }
+      }
+    }
+
     RefMethod varargConstructor = null;
     for (PsiMethod psiMethod : psiMethods) {
       RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
@@ -173,35 +187,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
+
+    final PsiClass applet = getRefJavaManager().getApplet();
+    setApplet(applet != null && psiClass.isInheritor(applet, true));
     PsiManager psiManager = getRefManager().getPsiManager();
     psiManager.dropResolveCaches();
     PsiFile file = psiClass.getContainingFile();
     if (file != null) {
       InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
-    }
-  }
-
-  @Override
-  public void onInitialized() {
-    super.onInitialized();
-    PsiClass psiClass = getElement();
-    LOG.assertTrue(psiClass != null);
-    final PsiClass applet = getRefJavaManager().getApplet();
-    boolean isApplet = applet != null && psiClass.isInheritor(applet, true);
-    setApplet(isApplet);
-    if (!isApplet) {
-      final PsiClass servlet = getRefJavaManager().getServlet();
-      setServlet(servlet != null && psiClass.isInheritor(servlet, true));
-    }
-
-    if (!isApplet() && !isServlet()) {
-      final boolean isTestClass = TestFrameworks.getInstance().isTestClass(psiClass);
-      setTestCase(isTestClass);
-      if (isTestClass) {
-        for (RefClass refBase : getBaseClasses()) {
-          ((RefClassImpl)refBase).setTestCase(true);
-        }
-      }
     }
   }
 

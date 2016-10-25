@@ -582,9 +582,6 @@ public class RefManagerImpl extends RefManager {
       }
     }
 
-    if (result instanceof RefElementImpl) {
-      ((RefElementImpl)result).onInitialized();
-    }
     return result;
   }
 

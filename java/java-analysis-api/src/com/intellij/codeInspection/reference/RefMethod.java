@@ -75,7 +75,6 @@ public interface RefMethod extends RefJavaElement {
    *
    * @return true if the method is a test method, false otherwise.
    */
-  @Deprecated
   boolean isTestMethod();
 
   /**

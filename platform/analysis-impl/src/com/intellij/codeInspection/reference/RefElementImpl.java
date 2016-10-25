@@ -252,8 +252,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected abstract void initialize();
 
-  public void onInitialized() {}
-
   public void addSuppression(final String text) {
     mySuppressions = text.split("[, ]");
   }
