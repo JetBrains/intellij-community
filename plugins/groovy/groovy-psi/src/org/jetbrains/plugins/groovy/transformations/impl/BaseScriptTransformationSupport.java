@@ -39,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
+import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
+
 public class BaseScriptTransformationSupport implements AstTransformationSupport {
 
   @Override
@@ -100,6 +102,9 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
 
   @Nullable
   private static GrVariableDeclaration findDeclaration(GroovyFile file) {
+    if (!hasNameInFile(file, "BaseScript")) {
+      return null;
+    }
     final Ref<GrVariableDeclaration> ref = Ref.create();
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
