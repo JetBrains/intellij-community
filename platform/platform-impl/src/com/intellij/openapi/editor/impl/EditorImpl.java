@@ -1191,25 +1191,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
+    DataContext context = getDataContext();
+
     Graphics graphics = myEditorComponent.getGraphics();
     if (graphics != null) { // editor component is not showing
-      processKeyTypedImmediately(c, graphics);
+      processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
     }
 
-    ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getDataContext());
+    ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
     MacUIUtil.hideCursor();
-    processKeyTypedNormally(c);
+    processKeyTypedNormally(c, context);
 
     return true;
   }
 
-  void processKeyTypedImmediately(char c, Graphics graphics) {
-    myImmediatePainter.paintCharacter(graphics, c);
+  void processKeyTypedImmediately(char c, Graphics graphics, DataContext dataContext) {
+    EditorActionPlan plan = new EditorActionPlan(this);
+    EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
+    myImmediatePainter.paint(graphics, plan);
   }
 
-  void processKeyTypedNormally(char c) {
-    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, getDataContext());
+  void processKeyTypedNormally(char c, DataContext dataContext) {
+    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
   }
 
   private void fireFocusLost() {
