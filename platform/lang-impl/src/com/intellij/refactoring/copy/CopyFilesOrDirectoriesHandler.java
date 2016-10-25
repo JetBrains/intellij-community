@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,12 +218,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       throw new IllegalArgumentException("no new name should be set; number of elements is: " + elements.length);
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(targetDirectory.getProject(), Collections.singleton(targetDirectory), false)) {
+    final Project project = targetDirectory.getProject();
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Collections.singleton(targetDirectory), false)) {
       return;
     }
 
     String title = RefactoringBundle.message(doClone ? "copy,handler.clone.files.directories" : "copy.handler.copy.files.directories");
-    new WriteCommandAction(targetDirectory.getProject(), title) {
+    new WriteCommandAction(project, title) {
       @Override
       protected void run(@NotNull Result result) {
         try {
@@ -237,20 +238,20 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           }
 
           if (firstFile != null && openInEditor) {
-            CopyHandler.updateSelectionInActiveProjectView(firstFile, getProject(), doClone);
+            CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
             if (!(firstFile instanceof PsiBinaryFile)) {
               EditorHelper.openInEditor(firstFile);
-              ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(getProject()).activateEditorComponent());
+              ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(project).activateEditorComponent(), project.getDisposed());
             }
           }
         }
         catch (final IncorrectOperationException ex) {
           ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
+            () -> Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title")));
         }
         catch (final IOException ex) {
           ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
+            () -> Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title")));
         }
       }
     }.execute();
