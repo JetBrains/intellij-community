@@ -360,6 +360,9 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         escaped.add(part);
       }
       else if (part.startsWith("[")) {
+        if (part.contains("\\")) {
+          return null;
+        }
         final String indexText = part.substring(1, part.length() - 1);
         if (indexText.matches("\\d+")) {
           escaped.add(part);
