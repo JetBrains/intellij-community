@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
@@ -34,7 +35,12 @@ import java.util.*;
  * @author yole
  */
 public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
-  private Key<List<PyCustomMember>> mySocketMembersKey = Key.create("socket.members");
+
+  @NotNull
+  private static final Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");
+
+  @NotNull
+  private static final List<PyCustomMember> MOCK_PATCH_MEMBERS = calcMockPatchMembers();
 
   @NotNull
   @Override
@@ -43,10 +49,10 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {
       final PyFile socketFile = (PyFile)clazz.getContainingFile();
-      List<PyCustomMember> socketMembers = socketFile.getUserData(mySocketMembersKey);
+      List<PyCustomMember> socketMembers = socketFile.getUserData(SOCKET_MEMBERS_KEY);
       if (socketMembers == null) {
         socketMembers = calcSocketMembers(socketFile);
-        socketFile.putUserData(mySocketMembersKey, socketMembers);
+        socketFile.putUserData(SOCKET_MEMBERS_KEY, socketMembers);
       }
       return socketMembers;
     }
@@ -54,7 +60,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     if (location instanceof PyReferenceExpression) {
       final PyCallable mockPatchCallable = mockPatchCallable(classType, ((PyReferenceExpression)location).getQualifier(), typeEvalContext);
       if (mockPatchCallable != null) {
-        return calcMockPatchMembers(mockPatchCallable, typeEvalContext);
+        return MOCK_PATCH_MEMBERS;
       }
     }
 
@@ -65,7 +71,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location, TypeEvalContext context) {
     final PyCallable mockPatchCallable = mockPatchCallable(clazz, location, context);
     if (mockPatchCallable != null) {
-      for (PyCustomMember member : calcMockPatchMembers(mockPatchCallable, context)) {
+      for (PyCustomMember member : MOCK_PATCH_MEMBERS) {
         if (name.equals(member.getName())) {
           return member.resolve(location);
         }
@@ -98,33 +104,11 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   }
 
   @NotNull
-  private static List<PyCustomMember> calcMockPatchMembers(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (!context.maySwitchToAST(callable)) {
-      return Collections.emptyList();
-    }
+  private static List<PyCustomMember> calcMockPatchMembers() {
+    final String[] members = new String[]{"object", "dict", "multiple", "stopall", "TEST_PREFIX"};
+    final String moduleQName = "unittest.mock";
 
-    final List<PyCustomMember> result = new ArrayList<>();
-
-    callable.getContainingFile().acceptChildren(
-      new PyElementVisitor() {
-        @Override
-        public void visitPyElement(PyElement node) {
-        }
-
-        @Override
-        public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-          final PyTargetExpression lhs = PyUtil.as(node.getLeftHandSideExpression(), PyTargetExpression.class);
-          final PyExpression qualifier = lhs == null ? null : lhs.getQualifier();
-          final String name = lhs == null ? null : lhs.getName();
-
-          if (lhs != null && qualifier != null && name != null && "patch".equals(qualifier.getName())) {
-            result.add(new PyCustomMember(name, lhs));
-          }
-        }
-      }
-    );
-
-    return result;
+    return ContainerUtil.map(members, member -> new PyCustomMember(member).resolvesTo(moduleQName).toAssignment("patch." + member));
   }
 
   private static void addMethodsFromAttr(PyFile socketFile, List<PyCustomMember> result, final String attrName) {
