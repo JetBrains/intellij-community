@@ -148,13 +148,17 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       // Nest string contain the same type of quote as host string inside, and we cannot escape inside f-string -- retreat
       final String content = info.getContent();
       final char targetSingleQuote = flipQuote(hostQuote);
-      if (content.indexOf(hostQuote) >= 0 || content.indexOf(targetSingleQuote) >= 0) {
+      if (content.indexOf(hostQuote) >= 0) {
         return null;
       }
       if (!info.isTerminated()) {
         return null;
       }
-      if (info.getSingleQuote() == hostQuote) {
+      if (info.getQuote().startsWith(hostInfo.getQuote())) {
+        if (content.indexOf(targetSingleQuote) >= 0) {
+          return null;
+        }
+        
         final String targetQuote = info.getQuote().replace(hostQuote, targetSingleQuote);
         final String stringWithSwappedQuotes = info.getPrefix() + targetQuote + content + targetQuote;
         final PsiElement replaced = literal.replace(generator.createStringLiteralAlreadyEscaped(stringWithSwappedQuotes));
