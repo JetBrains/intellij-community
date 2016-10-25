@@ -758,6 +758,7 @@ public class SvnUtil {
     }
   }
 
+  @NotNull
   public static SVNURL parseUrl(@NotNull String url) {
     try {
       return SVNURL.parseURIEncoded(url);

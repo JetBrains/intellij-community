@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.SeparatePiecesRunner;
@@ -30,6 +31,7 @@ import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
 
 public abstract class BaseMergeTask extends TaskDescriptor {
@@ -72,14 +74,6 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     myRunner.next(tasks);
   }
 
-  protected void suspend() {
-    myRunner.suspend();
-  }
-
-  protected void ping() {
-    myRunner.ping();
-  }
-
   protected void mergeAll(boolean supportsMergeInfo) {
     // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
     // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
@@ -99,7 +93,16 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   protected void merge(@NotNull String title, @NotNull MergerFactory mergerFactory, @Nullable List<SvnChangeList> changeLists) {
-    next(new LocalChangesPromptTask(myMergeProcess, changeLists), new MergeTask(myMergeProcess, mergerFactory, title));
+    next(new LocalChangesPromptTask(myMergeProcess, changeLists),
+         new MergeTask(myMergeProcess, () ->
+           newIntegrateTask(title, mergerFactory).queue()));
+  }
+
+  @NotNull
+  protected Task newIntegrateTask(@NotNull String title, @NotNull MergerFactory mergerFactory) {
+    return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
+                                       mergerFactory, parseUrl(myMergeContext.getSourceUrl()), title, false,
+                                       myMergeContext.getBranchName());
   }
 
   protected void end() {

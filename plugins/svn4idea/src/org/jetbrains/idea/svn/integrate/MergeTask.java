@@ -20,37 +20,29 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNURL;
-
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class MergeTask extends BaseMergeTask {
 
-  @NotNull private final MergerFactory myFactory;
+  @NotNull private final Runnable myCallback;
 
-  public MergeTask(@NotNull QuickMerge mergeProcess, @NotNull MergerFactory factory, @NotNull String mergeTitle) {
-    super(mergeProcess, mergeTitle, Where.AWT);
-
-    myFactory = factory;
+  public MergeTask(@NotNull QuickMerge mergeProcess, @NotNull Runnable callback) {
+    super(mergeProcess, "", Where.AWT);
+    myCallback = callback;
   }
 
   @Override
   public void run() throws VcsException {
-    next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(createUrl(myMergeContext.getSourceUrl()))));
-
     boolean needRefresh = setupDefaultEmptyChangeListForMerge();
-    if (needRefresh) {
-      refreshChanges();
-    }
-  }
 
-  @NotNull
-  private SvnIntegrateChangesTask newIntegrateTask(@NotNull SVNURL branchUrl) {
-    return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true), myFactory,
-                                       branchUrl, getName(), false, myMergeContext.getBranchName());
+    if (needRefresh) {
+      ChangeListManager.getInstance(myMergeContext.getProject())
+        .invokeAfterUpdate(myCallback, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
+    }
+    else {
+      myCallback.run();
+    }
   }
 
   private boolean setupDefaultEmptyChangeListForMerge() {
@@ -78,11 +70,5 @@ public class MergeTask extends BaseMergeTask {
     }
 
     return needRefresh;
-  }
-
-  private void refreshChanges() {
-    suspend();
-    ChangeListManager.getInstance(myMergeContext.getProject())
-      .invokeAfterUpdate(this::ping, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
   }
 }
