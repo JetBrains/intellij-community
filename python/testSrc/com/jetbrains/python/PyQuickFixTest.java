@@ -597,6 +597,38 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkResult("100");
   }
 
+  // PY-20452
+  public void testRemoveRedundantEscapeInOnePartRegExp() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((\\/(?P<bar>.+))?))\")");
+
+    final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
+    assertEquals(1, quickFixes.size());
+
+    final IntentionAction removeRedundantEscapeFix = quickFixes.get(0);
+    assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
+
+    myFixture.launchAction(removeRedundantEscapeFix);
+    myFixture.checkResult("import re\nre.compile(\"(?P<foo>((/(?P<bar>.+))?))\")");
+  }
+
+  // PY-20452
+  public void testRemoveRedundantEscapeInMultiPartRegExp() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
+                                                       "re.compile(\"(?P<foo>\"\n" +
+                                                       "           \"((\\/(?P<bar>.+))?))\")");
+
+    final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
+    assertEquals(1, quickFixes.size());
+
+    final IntentionAction removeRedundantEscapeFix = quickFixes.get(0);
+    assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
+
+    myFixture.launchAction(removeRedundantEscapeFix);
+    myFixture.checkResult("import re\n" +
+                          "re.compile(\"(?P<foo>\"\n" +
+                          "           \"((/(?P<bar>.+))?))\")");
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

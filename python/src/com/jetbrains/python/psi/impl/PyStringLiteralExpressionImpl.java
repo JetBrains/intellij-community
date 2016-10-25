@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -328,11 +327,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
-    // TODO is this the correct implementation? most likely not
-    ASTNode valueNode = getNode().getFirstChildNode();
-    assert valueNode instanceof LeafElement;
-    ((LeafElement)valueNode).replaceWithText(text);
-    return this;
+    return ElementManipulators.handleContentChange(this, text);
   }
 
   @NotNull
