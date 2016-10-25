@@ -297,7 +297,65 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     return as(resolveResult, PyExpression.class);
   }
 
-  private void convertFormatMethodFormatting(@NotNull PyStringLiteralExpression pyString) {
+  private static void convertFormatMethodFormatting(@NotNull PyStringLiteralExpression pyString) {
+    // TODO get rid of duplication with #convertPercentOperatorFormatting
+    final String stringText = pyString.getText();
+    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(stringText);
+    assert quotes != null;
+    final StringBuilder result = new StringBuilder();
+    result.append("f");
+    result.append(quotes.getFirst().replaceAll("[uU]", ""));
+    final List<FormatStringChunk> chunks = PyStringFormatParser.parseNewStyleFormat(stringText);
+    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(stringText);
+    int subsChunkPosition = 0;
+    for (FormatStringChunk chunk : chunks) {
+      if (chunk instanceof ConstantChunk) {
+        final TextRange rangeWithoutQuotes = chunk.getTextRange().intersection(contentRange);
+        assert rangeWithoutQuotes != null;
+        result.append(rangeWithoutQuotes.substring(stringText));
+      }
+      else {
+        final SubstitutionChunk subsChunk = (SubstitutionChunk)chunk;
+        
+        result.append("{");
+        final PySubstitutionChunkReference reference = new PySubstitutionChunkReference(pyString, subsChunk, subsChunkPosition, false);
+        final PyExpression resolveResult = getActualReplacementExpression(reference);
+        assert resolveResult != null;
+
+        final PsiElement adjusted = adjustQuotesInside(resolveResult, pyString);
+        if (adjusted == null) return;
+        
+        // Replaces name
+        result.append(adjusted.getText());
+
+        // TODO move this into PyStringFormatParser
+        final String wholeFragment = subsChunk.getTextRange().substring(stringText);
+        final int itemOrAttrStart = StringUtil.indexOfAny(wholeFragment, ".[");
+        final int formatOrConversionCharStart = StringUtil.indexOfAny(wholeFragment, "!:");
+
+        // Handle dot in the format part, like {foo:0.42}
+        final int itemOrAttrEnd = formatOrConversionCharStart < 0 ? wholeFragment.length() - 1 : formatOrConversionCharStart;
+        if (itemOrAttrStart >= 0 && itemOrAttrStart < itemOrAttrEnd) {
+          final String itemOrAttr = wholeFragment.substring(itemOrAttrStart, itemOrAttrEnd);
+          result.append(itemOrAttr);
+        }
+
+        if (formatOrConversionCharStart >= 0) {
+          final String formatAndConversionChar = wholeFragment.substring(formatOrConversionCharStart, wholeFragment.length() - 1);
+          result.append(formatAndConversionChar);
+        }
+
+        result.append("}");
+        subsChunkPosition++;
+      }
+    }
+    result.append(quotes.getSecond());
     
+    final PyCallExpression expressionToReplace = PsiTreeUtil.getParentOfType(pyString, PyCallExpression.class);
+    assert expressionToReplace != null;
+    
+    final PyElementGenerator generator = PyElementGenerator.getInstance(pyString.getProject());
+    final PyExpression fString = generator.createExpressionFromText(LanguageLevel.PYTHON36, result.toString());
+    expressionToReplace.replace(fString);
   }
 }
