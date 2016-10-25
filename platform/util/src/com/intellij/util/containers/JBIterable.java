@@ -507,43 +507,59 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} that groups this iterable into lists of the specified size.
+   * Splits this {@code JBIterable} into iterable of lists of the specified size.
    * If 'strict' flag is true only groups of size 'n' are returned.
    */
   @NotNull
-  public final JBIterable<List<E>> partition(final int n, final boolean strict) {
-    if (n <= 0) throw new IllegalArgumentException(n + " <= 0");
-    return intercept(new Function<Iterator<E>, Iterator<List<E>>>() {
+  public final JBIterable<List<E>> split(final int size, final boolean strict) {
+    return split(size).map(new Function<JBIterable<E>, List<E>>() {
       @Override
-      public Iterator<List<E>> fun(Iterator<E> iterator) {
+      public List<E> fun(JBIterable<E> es) {
+        List<E> list = es.addAllTo(ContainerUtilRt.<E>newArrayListWithCapacity(size));
+        return strict && list.size() < size? null : list;
+      }
+    }).filter(Condition.NOT_NULL);
+  }
+
+  /**
+   * Splits this {@code JBIterable} into iterable of iterables of the specified size.
+   * All iterations are performed in-place without data copying.
+   */
+  @NotNull
+  public final JBIterable<JBIterable<E>> split(final int size) {
+    if (size <= 0) throw new IllegalArgumentException(size + " <= 0");
+    return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
+      @Override
+      public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
         final Iterator<E> orig = iterator;
-        return new JBIterator<List<E>>() {
+        return new JBIterator<JBIterable<E>>() {
+          JBIterator<E> it;
+
           @Override
-          protected List<E> nextImpl() {
-            ArrayList<E> next = ContainerUtilRt.newArrayListWithCapacity(n);
-            for (E e : once(orig).take(n)) {
-              next.add(e);
-            }
-            return next.isEmpty() || strict && next.size() < n ? stop() : next;
+          protected JBIterable<E> nextImpl() {
+            // iterate through the previous result fully before proceeding
+            while (it != null && it.advance()) /* no-op */;
+            it = null;
+            return orig.hasNext() ? once((it = JBIterator.wrap(orig)).take(size)) : stop();
           }
         };
       }
     });
   }
 
-  public enum SeparatorOption { HEAD, TAIL, KEEP, SKIP, GROUP }
+  public enum Split {AFTER, BEFORE, AROUND, OFF, GROUP}
 
   /**
-   * Returns a {@code JBIterable} that groups this iterable by the specified condition
-   * without additional memory allocation.
+   * Splits this {@code JBIterable} into iterable of iterables with separators matched by the specified condition.
+   * All iterations are performed in-place without data copying.
    */
   @NotNull
-  public final JBIterable<JBIterable<E>> partition(final SeparatorOption option, final Condition<? super E> separatorCondition) {
+  public final JBIterable<JBIterable<E>> split(final Split mode, final Condition<? super E> separator) {
     return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
       @Override
       public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
         final Iterator<E> orig = iterator;
-        final Condition<? super E> condition = Stateful.copy(separatorCondition);
+        final Condition<? super E> condition = Stateful.copy(separator);
         return new JBIterator<JBIterable<E>>() {
           JBIterator<E> it;
           E stored;
@@ -552,15 +568,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
           @Override
           protected JBIterable<E> nextImpl() {
             // iterate through the previous result fully before proceeding
-            if (it != null && it.hasNext()) once(it).size();
+            while (it != null && it.advance()) /* no-op */;
             it = null;
             // empty case: check hasNext() only if nothing is stored to be compatible with JBIterator#cursor()
             if (stored == null && !orig.hasNext()) {
-              if (st < 0 && option != SeparatorOption.TAIL && option != SeparatorOption.GROUP) { st = 1; return empty(); }
+              if (st < 0 && mode != Split.BEFORE && mode != Split.GROUP) { st = 1; return empty(); }
               return stop();
             }
             // general case: add empty between 2 separators in KEEP mode; otherwise go with some state logic
-            if (st == -2 && option == SeparatorOption.KEEP) { st = -1; return empty(); }
+            if (st == -2 && mode == Split.AROUND) { st = -1; return empty(); }
             E tmp = stored;
             stored = null;
             return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(new Condition<E>() {
@@ -570,15 +586,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
                 int st0 = st;
                 st = st0 < 0 && sep ? -2 : st0 > 0 && !sep? 2 : sep ? -1 : 1;
                 boolean result;
-                switch (option) {
-                  case HEAD: result = st != -2 && (st != 1 || st0 == 0); break;
-                  case TAIL: result = st != -2 && st != -1; break;
-                  case KEEP: result = st0 >= 0 && st > 0; break;
-                  case GROUP:result = st0 >= 0 && st > 0 || st0 <= 0 && st < 0; break;
-                  case SKIP: result = st > 0; break;
+                switch (mode) {
+                  case AFTER:  result = st != -2 && (st != 1 || st0 == 0); break;
+                  case BEFORE: result = st != -2 && st != -1; break;
+                  case AROUND: result = st0 >= 0 && st > 0; break;
+                  case GROUP:  result = st0 >= 0 && st > 0 || st0 <= 0 && st < 0; break;
+                  case OFF:    result = st > 0; break;
                   default: throw new AssertionError(st);
                 }
-                stored = !result && option != SeparatorOption.SKIP ? e : null;
+                stored = !result && mode != Split.OFF ? e : null;
                 return result;
               }
             })));

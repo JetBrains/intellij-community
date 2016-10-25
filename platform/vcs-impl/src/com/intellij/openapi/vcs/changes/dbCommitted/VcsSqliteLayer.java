@@ -302,7 +302,7 @@ public class VcsSqliteLayer {
     final Long lastRevision = lastRevData == null ? null : lastRevData.getNumber();
 
     final Map<String, Long> knowPaths = new HashMap<>();
-    for (List<CommittedChangeList> changeLists : JBIterable.from(lists).partition(20, false)) {
+    for (List<CommittedChangeList> changeLists : JBIterable.from(lists).split(20, false)) {
       final Set<String> names = new HashSet<>();
       final Set<String> paths = new HashSet<>();
       for (Iterator<CommittedChangeList> iterator = changeLists.iterator(); iterator.hasNext(); ) {

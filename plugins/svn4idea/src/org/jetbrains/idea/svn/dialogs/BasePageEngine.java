@@ -25,7 +25,7 @@ public class BasePageEngine<T> implements PageEngine<List<T>> {
   private int myIdx;
 
   public BasePageEngine(@NotNull List<T> data, int pageSize) {
-    mySplitData = JBIterable.from(data).partition(pageSize, false).toList();
+    mySplitData = JBIterable.from(data).split(pageSize, false).toList();
     myIdx = 0;
   }
 
