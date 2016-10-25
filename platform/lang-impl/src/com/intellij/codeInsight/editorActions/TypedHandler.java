@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -57,11 +58,11 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TypedHandler extends TypedActionHandlerBase {
+  private static final Set<Character> COMPLEX_CHARS =
+    new HashSet<>(Arrays.asList('\n', '\t', '(', ')', '<', '>', '[', ']', '{', '}', '"', '\''));
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
@@ -131,6 +132,18 @@ public class TypedHandler extends TypedActionHandlerBase {
   @Deprecated
   public static void registerQuoteHandler(@NotNull FileType fileType, @NotNull QuoteHandler quoteHandler) {
     quoteHandlers.put(fileType, quoteHandler);
+  }
+
+  @Override
+  public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    if (COMPLEX_CHARS.contains(c)) return;
+
+    if (editor.isInsertMode()) {
+      int offset = plan.getCaretOffset();
+      plan.replace(offset, offset, String.valueOf(c));
+    }
+
+    super.beforeExecute(editor, c, context, plan);
   }
 
   @Override
