@@ -31,6 +31,7 @@ import javax.swing.AbstractAction
 import javax.swing.Icon
 import javax.swing.KeyStroke
 
+
 class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
                            private val testRunner: RecentTestRunner,
                            private val locator: TestLocator) : ListPopupImpl(popupStep) {
@@ -50,36 +51,21 @@ class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
   }
 
   private fun registerActions(popup: WizardPopup) {
-    popup.registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        shiftPressed()
-      } 
-    })
+    popup.onShiftPressed { shiftPressed() }
+    popup.onShiftReleased { shiftReleased() }
+    popup.onShiftEnter { handleSelect(true) }
+    popup.onF4 { navigate() }
+  }
 
-    popup.registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        shiftReleased()
-      } 
-    })
-    
-    popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        handleSelect(true)
+  private fun navigate() {
+    val values = selectedValues
+    if (values.size == 1) {
+      val entry = values[0] as RecentTestsPopupEntry
+      getElement(entry)?.let {
+        cancel()
+        PsiNavigateUtil.navigate(it)
       }
-    })
-    
-    popup.registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        val values = selectedValues
-        if (values.size == 1) {
-          val entry = values[0] as RecentTestsPopupEntry
-          getElement(entry)?.let {
-            cancel()
-            PsiNavigateUtil.navigate(it)
-          }
-        }
-      }
-    })
+    }
   }
 
   private fun getElement(entry: RecentTestsPopupEntry): PsiElement? {
@@ -180,4 +166,37 @@ class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
     return null
   }
   
+}
+
+
+private fun WizardPopup.onShiftPressed(action: () -> Unit) {
+  registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
+}
+
+private fun WizardPopup.onShiftReleased(action: () -> Unit) {
+  registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
+}
+
+private fun WizardPopup.onShiftEnter(action: () -> Unit) {
+  registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
+}
+
+private fun WizardPopup.onF4(action: () -> Unit) {
+  registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
 }
