@@ -348,7 +348,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
     EditorImpl.assertIsDispatchThread();
     if (myCurrentCaret != null) {
-      throw new IllegalStateException("Current caret is defined, cannot operate on other ones");
+      throw new IllegalStateException("Recursive runForEachCaret invocations are not allowed");
     }
     doWithCaretMerging(() -> {
       try {
