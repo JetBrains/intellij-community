@@ -183,7 +183,7 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
+  public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator) {
     return null;
   }
 
