@@ -171,13 +171,14 @@ public class TestLoggerFactory implements Logger.Factory {
     if (!success && BUFFER.length() != 0) {
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         // print in several small statements to avoid service messages tearing causing this fold to expand
-        System.err.flush();
-        System.err.println("##teamcity[blockOpened name='DEBUG log']\n");
-        System.err.flush();
-        System.err.println(BUFFER);
-        System.err.flush();
-        System.err.println("\n##teamcity[blockClosed name='DEBUG log']\n");
-        System.err.flush();
+        // using .out instead of .err by the advice from Nikita Skvortsov
+        System.out.flush();
+        System.out.println("##teamcity[blockOpened name='DEBUG log']\n");
+        System.out.flush();
+        System.out.println(BUFFER);
+        System.out.flush();
+        System.out.println("\n##teamcity[blockClosed name='DEBUG log']\n");
+        System.out.flush();
       }
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically

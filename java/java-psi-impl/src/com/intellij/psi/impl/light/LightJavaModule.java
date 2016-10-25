@@ -150,7 +150,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       @Override
       public Result<LightJavaModule> compute(Pair<PsiManager, VirtualFile> p) {
         LightJavaModule module = new LightJavaModule(p.first, p.second);
-        return Result.create(module, JavaModuleFileChangeTracker.getInstance(p.first.getProject()));
+        return Result.create(module, JavaModuleFileChangeTracker.getDependencies(p.first.getProject()));
       }
     }, false, pair(manager, jarRoot));
   }

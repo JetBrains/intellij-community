@@ -417,4 +417,20 @@ public class EditorImplTest extends AbstractEditorTest {
     type('b');
     assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
   }
+
+  public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() throws Exception {
+    initText("abc def ghi");
+    configureSoftWraps(3);
+    JViewport viewport = ((EditorEx)myEditor).getScrollPane().getViewport();
+    viewport.setExtentSize(new Dimension()); // emulate editor becoming invisible
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        Document document = myEditor.getDocument();
+        document.deleteString(0, document.getTextLength());
+      }
+    }.execute();
+    viewport.setExtentSize(new Dimension(1000, 1000)); // editor becomes visible
+    verifySoftWrapPositions();
+  }
 }

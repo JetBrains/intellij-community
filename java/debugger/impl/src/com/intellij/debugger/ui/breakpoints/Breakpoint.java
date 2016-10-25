@@ -32,7 +32,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
+import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -245,7 +245,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       throw new EventProcessingException(title[0], ex.getMessage(), ex);
-    } 
+    }
 
     return true;
   }
@@ -269,7 +269,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
             SourcePosition position = ContextUtil.getSourcePosition(context);
             PsiElement element = ContextUtil.getContextElement(context, position);
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () ->
-              createExpressionEvaluator(myProject, context, element, position, expressionToEvaluate, this::createLogMessageCodeFragment));
+              createExpressionEvaluator(myProject, element, position, expressionToEvaluate, this::createLogMessageCodeFragment));
             Value eval = evaluator.evaluate(context);
             buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
           }
@@ -342,9 +342,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
 
     try {
-      Project project = context.getProject();
       SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, () -> {
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
         // IMPORTANT: calculate context psi element basing on the location where the exception
         // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
         // for method, exception and field breakpoints these locations differ)
@@ -352,7 +351,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         if (contextPsiElement == null) {
           contextPsiElement = getEvaluationElement(); // as a last resort
         }
-        return createExpressionEvaluator(project, context, contextPsiElement, contextSourcePosition, getCondition(),
+        return createExpressionEvaluator(myProject, contextPsiElement, contextSourcePosition, getCondition(),
                                          this::createConditionCodeFragment);
       });
       return DebuggerUtilsEx.evaluateBoolean(evaluator, context);
@@ -368,7 +367,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private static ExpressionEvaluator createExpressionEvaluator(Project project,
-                                                               EvaluationContextImpl context,
                                                                PsiElement contextPsiElement,
                                                                SourcePosition contextSourcePosition,
                                                                TextWithImports text,
@@ -378,7 +376,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       return EvaluatorBuilderImpl.build(text, contextPsiElement, contextSourcePosition, project);
     }
     catch (UnsupportedExpressionException ex) {
-      ExpressionEvaluator eval = EvaluationDescriptor.createCompilingEvaluator(context, contextPsiElement, fragmentFactory);
+      ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, contextPsiElement, fragmentFactory);
       if (eval != null) {
         return eval;
       }
@@ -387,11 +385,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private PsiCodeFragment createConditionCodeFragment(PsiElement context) {
-    return createCodeFragment(getProject(), getCondition(), context);
+    return createCodeFragment(myProject, getCondition(), context);
   }
 
   private PsiCodeFragment createLogMessageCodeFragment(PsiElement context) {
-    return createCodeFragment(getProject(), getLogMessage(), context);
+    return createCodeFragment(myProject, getLogMessage(), context);
   }
 
   private static PsiCodeFragment createCodeFragment(Project project, TextWithImports text, PsiElement context) {

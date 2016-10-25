@@ -22,7 +22,9 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
+import com.intellij.codeInsight.hints.settings.Diff;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -71,12 +73,14 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       myAnnotations.clear();
       if (!isEnabled()) return;
 
-      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(myFile.getLanguage());
+      Language language = myFile.getLanguage();
+      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
       if (provider == null) return;
 
-      List<Matcher> matchers = ParameterNameHintsSettings
-        .getInstance()
-        .getIgnorePatternSet(provider)
+      Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(language);
+      Set<String> blackList = diff.applyOn(provider.getDefaultBlackList());
+
+      List<Matcher> matchers = blackList
         .stream()
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .collect(Collectors.toList());

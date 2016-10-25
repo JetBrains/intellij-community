@@ -517,6 +517,9 @@ class PassExecutorService implements Disposable {
         throw new RuntimeException(message, e);
       }
       if (threadsToStartCountdown.decrementAndGet() == 0) {
+        if (pass instanceof ProgressableTextEditorHighlightingPass) {
+          ((ProgressableTextEditorHighlightingPass)pass).waitForHighlightInfosApplied();
+        }
         log(updateProgress, pass, "Stopping ");
         updateProgress.stopIfRunning();
       }
@@ -543,7 +546,7 @@ class PassExecutorService implements Disposable {
   }
 
   private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
-    ContainerUtil.quickSort(result, (o1, o2) -> o1.getId() - o2.getId());
+    ContainerUtil.quickSort(result, Comparator.comparingInt(TextEditorHighlightingPass::getId));
   }
 
   private static int getThreadNum() {

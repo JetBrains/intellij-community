@@ -51,13 +51,13 @@ public class JavaModuleGraphUtil {
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), JavaModuleFileChangeTracker.getInstance(project)));
+      Result.create(findCycles(project), JavaModuleFileChangeTracker.getDependencies(project)));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), JavaModuleFileChangeTracker.getInstance(source.getProject())));
+      Result.create(exportsMap(source), JavaModuleFileChangeTracker.getDependencies(source.getProject())));
     Set<String> targets = exports.get(packageName);
     return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
   }
@@ -65,7 +65,7 @@ public class JavaModuleGraphUtil {
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
     Project project = source.getProject();
     RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), JavaModuleFileChangeTracker.getInstance(project)));
+      Result.create(buildRequiresGraph(project), JavaModuleFileChangeTracker.getDependencies(project)));
     return graph.reads(source, destination);
   }
 

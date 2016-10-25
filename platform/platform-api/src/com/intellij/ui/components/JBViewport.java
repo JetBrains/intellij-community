@@ -165,10 +165,24 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public void scrollRectToVisible(Rectangle bounds) {
     Component view = getView();
-    if (view instanceof JComponent) {
+    if (view instanceof JComponent && !isAutoscroll(bounds)) {
       JBInsets.addTo(bounds, getViewInsets((JComponent)view));
     }
     super.scrollRectToVisible(bounds);
+  }
+
+  private boolean isAutoscroll(Rectangle bounds) {
+    if (bounds.x == -bounds.width || bounds.x == getWidth()) {
+      if (bounds.y + bounds.height + bounds.y == getHeight()) {
+        return true;
+      }
+    }
+    if (bounds.y == -bounds.height || bounds.y == getHeight()) {
+      if (bounds.x + bounds.width + bounds.x == getWidth()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

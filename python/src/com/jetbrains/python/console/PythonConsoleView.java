@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -112,6 +113,30 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+  }
+
+  private PyConsoleStartFolding createConsoleFolding() {
+    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
+    myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
+    getEditor().getDocument().addDocumentListener(startFolding);
+    ((FoldingModelEx)getEditor().getFoldingModel()).addListener(startFolding, this);
+    return startFolding;
+  }
+
+  public void addConsoleFolding(boolean isDebugConsole) {
+    try {
+      if (isDebugConsole && myExecuteActionHandler != null) {
+        PyConsoleStartFolding folding = createConsoleFolding();
+        // in debug console we should add folding from the place where the folding was turned on
+        folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+      }
+      else {
+        myInitialized.doWhenDone(this::createConsoleFolding);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e.getMessage());
+    }
   }
 
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
