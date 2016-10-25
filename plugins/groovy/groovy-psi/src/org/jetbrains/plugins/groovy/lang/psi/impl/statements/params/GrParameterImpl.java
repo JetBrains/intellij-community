@@ -124,7 +124,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   private boolean isMainMethodFirstUntypedParameter() {
     if (getTypeElementGroovy() != null) return false;
     if (!(getParent() instanceof GrParameterList)) return false;
-    if (getInitializerGroovy() != null) return false;
+    if (isOptional()) return false;
 
     GrParameterList parameterList = (GrParameterList)getParent();
     if (!(parameterList.getParent() instanceof GrMethod)) return false;
