@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.PythonFormattedStringReferenceProvider;
@@ -180,7 +181,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     final PyCallExpression callExpr = PsiTreeUtil.getParentOfType(anchor, PyCallExpression.class);
     if (callExpr != null) {
       final PyReferenceExpression callee = as(callExpr.getCallee(), PyReferenceExpression.class);
-      if (callee != null) {
+      if (callee != null && PyNames.FORMAT.equals(callee.getName())) {
         final PyStringLiteralExpression pyString = as(callee.getQualifier(), PyStringLiteralExpression.class);
         if (pyString != null) {
           return Pair.create(pyString, false);
