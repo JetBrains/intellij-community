@@ -20,7 +20,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.JavaModuleFileChangeTracker;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -37,6 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
+import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -51,13 +51,13 @@ public class JavaModuleGraphUtil {
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), JavaModuleFileChangeTracker.getDependencies(project)));
+      Result.create(findCycles(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), JavaModuleFileChangeTracker.getDependencies(source.getProject())));
+      Result.create(exportsMap(source), source.getContainingFile()));
     Set<String> targets = exports.get(packageName);
     return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
   }
@@ -65,7 +65,7 @@ public class JavaModuleGraphUtil {
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
     Project project = source.getProject();
     RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), JavaModuleFileChangeTracker.getDependencies(project)));
+      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     return graph.reads(source, destination);
   }
 

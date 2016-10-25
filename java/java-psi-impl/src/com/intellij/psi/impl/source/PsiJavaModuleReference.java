@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleReferenceElement> {
   public PsiJavaModuleReference(@NotNull PsiJavaModuleReferenceElement element) {
@@ -137,7 +138,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       public Result<PsiJavaModule> compute(Pair<String, Boolean> p) {
         Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), p.first, p.second);
         PsiJavaModule module = modules.size() == 1 ? modules.iterator().next() : null;
-        return Result.create(module, JavaModuleFileChangeTracker.getDependencies(refOwner.getProject()));
+        return Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false, pair(refText, incompleteCode));
   }

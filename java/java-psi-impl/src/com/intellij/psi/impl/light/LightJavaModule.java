@@ -19,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.JavaModuleFileChangeTracker;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -137,14 +136,14 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @NotNull
   public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
-    PsiDirectory directory = manager.findDirectory(jarRoot);
+    final PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
     return CachedValuesManager.getCachedValue(directory, new CachedValueProvider<LightJavaModule>() {
       @Nullable
       @Override
       public Result<LightJavaModule> compute() {
         LightJavaModule module = new LightJavaModule(manager, jarRoot);
-        return Result.create(module, JavaModuleFileChangeTracker.getDependencies(manager.getProject()));
+        return Result.create(module, directory);
       }
     });
   }
