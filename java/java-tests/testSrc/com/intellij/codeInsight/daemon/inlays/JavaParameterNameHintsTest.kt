@@ -57,6 +57,22 @@ class Groo {
     onLineStartingWith("configure(testNow").assertNoInlays()
   }
 
+
+  fun `test do not show for Exceptions`() {
+    setup("""
+class Fooo {
+  
+  public void test() {
+    Throwable t = new IllegalStateException("crime");
+  }
+  
+}
+""")
+    
+    onLineStartingWith("Throw").assertNoInlays()
+  }
+  
+
   fun `test show hint for single string literal if there is multiple string params`() {
     setup("""class Groo {
 
