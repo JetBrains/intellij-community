@@ -134,8 +134,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     }
 
     if (projectTask instanceof ExecuteRunConfigurationTask) {
-      if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
-
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
       if (runProfile instanceof ApplicationConfiguration) {
         JavaRunConfigurationModule module = ((ApplicationConfiguration)runProfile).getConfigurationModule();
