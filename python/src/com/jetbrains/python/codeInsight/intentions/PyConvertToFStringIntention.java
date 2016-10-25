@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.jetbrains.python.codeInsight.intentions.ConvertFormatOperatorToMethodIntention.convertFormatSpec;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -221,13 +222,12 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       else {
         final SubstitutionChunk subsChunk = (SubstitutionChunk)chunk;
         final char conversionChar = subsChunk.getConversionType();
-        final String widthAndPrecision;
-        if (StringUtil.isNotEmpty(subsChunk.getWidth()) || StringUtil.isNotEmpty(subsChunk.getPrecision())) {
-          widthAndPrecision = StringUtil.notNullize(subsChunk.getWidth()) + "." + StringUtil.notNullize(subsChunk.getPrecision());
+        
+        String widthAndPrecision = StringUtil.notNullize(subsChunk.getWidth());
+        if (StringUtil.isNotEmpty(subsChunk.getPrecision())) {
+          widthAndPrecision += "." + subsChunk.getPrecision();
         }
-        else {
-          widthAndPrecision = "";
-        }
+        
         final String conversionFlags = subsChunk.getConversionFlags();
 
         result.append("{");
@@ -251,10 +251,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           result.append(":");
         }
 
-        if (StringUtil.isNotEmpty(conversionFlags)) {
-          final String conversionStr = String.valueOf(conversionChar);
-          result.append(ConvertFormatOperatorToMethodIntention.convertFormatSpec(conversionFlags, widthAndPrecision, conversionStr));
-        }
+        result.append(convertFormatSpec(StringUtil.notNullize(conversionFlags), widthAndPrecision, String.valueOf(conversionChar)));
 
         if (StringUtil.isNotEmpty(widthAndPrecision)) {
           result.append(widthAndPrecision);
