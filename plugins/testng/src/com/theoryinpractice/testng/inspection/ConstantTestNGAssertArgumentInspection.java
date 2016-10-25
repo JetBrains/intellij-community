@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.junit;
+package com.theoryinpractice.testng.inspection;
 
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.junit.ConstantAssertArgumentInspectionBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantJUnitAssertArgumentInspection extends ConstantAssertArgumentInspectionBase {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("constant.junit.assert.argument.display.name");
-  }
-
+public class ConstantTestNGAssertArgumentInspection extends ConstantAssertArgumentInspectionBase {
   @Override
   protected boolean checkTestNG() {
-    return false;
+    return true;
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Constant TestNG assert argument";
   }
 }
