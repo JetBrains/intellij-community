@@ -58,9 +58,7 @@ public class SizedIcon extends JBUI.ScalableJBIcon {
 
   @Override
   public Icon scale(float scale) {
-    if (scale == 1f) {
-      myScaledDelegate = myDelegate;
-    } else if (myDelegate instanceof ScalableIcon) {
+    if (myDelegate instanceof ScalableIcon) {
       myScaledDelegate = ((ScalableIcon)myDelegate).scale(scale);
     }
     return super.scale(scale);
