@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -77,8 +78,11 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
       if (provider == null) return;
 
-      Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(language);
-      Set<String> blackList = diff.applyOn(provider.getDefaultBlackList());
+      Set<String> blackList = getBlackList(language);
+      Language dependentLanguage = provider.getBlackListDependencyLanguage();
+      if (dependentLanguage != null) {
+        blackList.addAll(getBlackList(dependentLanguage));
+      }
 
       List<Matcher> matchers = blackList
         .stream()
@@ -86,6 +90,16 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .collect(Collectors.toList());
 
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
+    }
+
+    private static Set<String> getBlackList(Language language) {
+      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+      if (provider != null) {
+        ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
+        Diff diff = settings.getBlackListDiff(language);
+        return diff.applyOn(provider.getDefaultBlackList());
+      }
+      return ContainerUtil.newHashOrEmptySet(ContainerUtil.emptyIterable());
     }
 
     private static boolean isEnabled() {
