@@ -206,7 +206,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                   LanguageStartDelimiter) ||
                (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
         SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
-        statementStart.after().afterOptional(Whitespace).afterOptional(LineComment).afterOptional(Whitespace);
+        statementStart.after().afterOptionalMix(Whitespace, LineComment);
         if (!statementStart.isAtEnd()) {
           return statementStart.getStartOffset();
         }
