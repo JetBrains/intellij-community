@@ -15,12 +15,20 @@
  */
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.psi.PsiElement
 import junit.framework.TestCase
 
 
-class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider
+class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider {
+
+  override fun getParameterHints(element: PsiElement) = emptyList<InlayInfo>()
+
+  override fun getMethodInfo(element: PsiElement) = null
+  
+}
 
 
 class ParameterNameSettingsTest : TestCase() {
