@@ -31,17 +31,19 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 public class ShelveLocalChangesTask extends BaseMergeTask {
 
   @NotNull private final Intersection myIntersection;
+  @NotNull private final Runnable myCallback;
 
-  public ShelveLocalChangesTask(@NotNull QuickMerge mergeProcess, @NotNull Intersection intersection) {
+  public ShelveLocalChangesTask(@NotNull QuickMerge mergeProcess, @NotNull Intersection intersection, @NotNull Runnable callback) {
     super(mergeProcess, "Shelving local changes before merge", Where.POOLED);
-
     myIntersection = intersection;
+    myCallback = callback;
   }
 
   @Override
   public void run() throws VcsException {
     try {
       shelveChanges();
+      myCallback.run();
     }
     catch (IOException e) {
       throw new VcsException(e);

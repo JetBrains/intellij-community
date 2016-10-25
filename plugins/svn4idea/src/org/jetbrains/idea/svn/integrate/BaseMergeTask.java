@@ -93,9 +93,9 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   protected void merge(@NotNull String title, @NotNull MergerFactory mergerFactory, @Nullable List<SvnChangeList> changeLists) {
-    next(new LocalChangesPromptTask(myMergeProcess, changeLists),
-         new MergeTask(myMergeProcess, () ->
-           newIntegrateTask(title, mergerFactory).queue()));
+    next(new LocalChangesPromptTask(myMergeProcess, changeLists, () ->
+      next(new MergeTask(myMergeProcess, () ->
+        newIntegrateTask(title, mergerFactory).queue()))));
   }
 
   @NotNull

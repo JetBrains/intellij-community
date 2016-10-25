@@ -45,10 +45,14 @@ import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable private final List<SvnChangeList> myChangeListsToMerge;
+  @NotNull private final Runnable myCallback;
 
-  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @Nullable List<SvnChangeList> changeListsToMerge) {
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
+                                @Nullable List<SvnChangeList> changeListsToMerge,
+                                @NotNull Runnable callback) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
     myChangeListsToMerge = changeListsToMerge;
+    myCallback = callback;
   }
 
   @Nullable
@@ -75,18 +79,16 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
     switch (nextAction) {
       case continueMerge:
+        myCallback.run();
         break;
       case shelve:
-        next(new ShelveLocalChangesTask(myMergeProcess, intersection));
-        break;
-      case cancel:
-        end();
+        next(new ShelveLocalChangesTask(myMergeProcess, intersection, myCallback));
         break;
       case inspect:
         List<FilePath> intersectedPaths = sorted(getPaths(intersection.getAllChanges()), FilePathByPathComparator.getInstance());
-
         myInteraction.showIntersectedLocalPaths(intersectedPaths);
-        end();
+        break;
+      case cancel:
         break;
     }
   }
