@@ -77,7 +77,7 @@ public class ShowFilePathAction extends AnAction {
     }
   };
 
-  private static NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
+  private static final NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
     @Override
     protected String compute() {
       return readDesktopEntryKey("Exec")
