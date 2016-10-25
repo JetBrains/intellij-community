@@ -50,7 +50,7 @@ class ShowParameterHintsSettings : AnAction() {
     val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-    val dialog = ParameterNameHintsConfigurable(project, hintExtension)
+    val dialog = ParameterNameHintsConfigurable(project, hintExtension.defaultBlackList, file.language)
     dialog.show()
   }
 }

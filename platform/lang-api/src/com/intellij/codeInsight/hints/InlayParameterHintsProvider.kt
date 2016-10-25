@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hints
 
-import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -36,13 +35,7 @@ interface InlayParameterHintsProvider {
    * and selects "Do not show for this method".
    */
   fun getMethodInfo(element: PsiElement): MethodInfo? = null
-
-  /**
-   * Language used when saving blacklist methods
-   * Maybe will be moved to MethodInfo
-   */
-  val language: Language
-
+  
   /**
    * Default list of methods for which hints should not be shown
    */

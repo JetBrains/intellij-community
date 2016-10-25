@@ -16,14 +16,12 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
-import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import junit.framework.TestCase
 
 
-class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider {
-  override val language: Language = PlainTextLanguage.INSTANCE
-}
+class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider
+
 
 class ParameterNameSettingsTest : TestCase() {
 
@@ -40,14 +38,20 @@ class ParameterNameSettingsTest : TestCase() {
   }
 
   fun addIgnorePattern(newPattern: String) {
-    settings.addIgnorePattern(inlayProvider.language, newPattern)
+    settings.addIgnorePattern(PlainTextLanguage.INSTANCE, newPattern)
   }
 
   fun setIgnorePattern(vararg newPatternSet: String) {
-    settings.setIgnorePatternSet(inlayProvider, setOf(*newPatternSet))
+    val base = inlayProvider.defaultBlackList
+    val diff = Diff.build(base, setOf(*newPatternSet))
+    
+    settings.setBlackListDiff(PlainTextLanguage.INSTANCE, diff)
   }
   
-  fun getIgnoreSet(): Set<String> = settings.getIgnorePatternSet(inlayProvider)
+  fun getIgnoreSet(): Set<String> {
+    val diff = settings.getBlackListDiff(PlainTextLanguage.INSTANCE)
+    return diff.applyOn(inlayProvider.defaultBlackList)
+  }
 
   fun `test ignore pattern is added`() {
     defaultSettingsUpdated("xxx")
