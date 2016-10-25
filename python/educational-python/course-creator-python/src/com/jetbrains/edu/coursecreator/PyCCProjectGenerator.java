@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
@@ -27,6 +26,7 @@ import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.remote.PyProjectSynchronizer;
 import icons.CourseCreatorPythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ import java.io.File;
 import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 
-public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
+public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings> {
   private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
   private CCNewProjectPanel mySettingsPanel;
 
@@ -57,7 +57,9 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
 
   @Override
   public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                               @NotNull PyNewProjectSettings settings, @NotNull Module module) {
+                               @NotNull PyNewProjectSettings settings,
+                               @NotNull Module module,
+                               @Nullable final PyProjectSynchronizer synchronizer) {
     generateProject(project, baseDir, mySettingsPanel);
   }
 
@@ -84,7 +86,8 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
   }
 
   private static void createTestHelper(@NotNull Project project, PsiDirectory projectDir) {
-    final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
+    final FileTemplate template =
+      FileTemplateManager.getInstance(project).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
     try {
       FileTemplateUtil.createFromTemplate(template, EduNames.TEST_HELPER, null, projectDir);
     }
