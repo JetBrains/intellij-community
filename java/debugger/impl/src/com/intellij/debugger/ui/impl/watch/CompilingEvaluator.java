@@ -51,10 +51,12 @@ import java.util.Collection;
 * @author egor
 */
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
+  @NotNull protected final Project myProject;
   @NotNull protected final PsiElement myPsiContext;
   @NotNull protected final ExtractLightMethodObjectHandler.ExtractedData myData;
 
-  public CompilingEvaluator(@NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+  public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+    myProject = project;
     myPsiContext = context;
     myData = data;
   }
@@ -86,16 +88,15 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)myPsiContext::getProject);
       SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       ExpressionEvaluator evaluator =
-        DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+        DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
             TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
             CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, project), position);
+            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject), position);
           }
         });
       ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
@@ -148,12 +149,8 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
 
   protected String getGenClassQName() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass());
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<String>)() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
   }
 
   ///////////////// Compiler stuff
