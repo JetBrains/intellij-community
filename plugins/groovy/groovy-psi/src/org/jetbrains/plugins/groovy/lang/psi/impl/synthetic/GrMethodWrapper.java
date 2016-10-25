@@ -36,7 +36,11 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
   private volatile boolean myNavigationElementInit;
 
   protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor) {
-    super(method.getManager(), method.getName());
+    this(method, substitutor, method.getName());
+  }
+
+  protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor, String name) {
+    super(method.getManager(), name);
     myWrappedMethod = method;
     setContainingClass(method.getContainingClass());
     getModifierList().copyModifiers(method);
@@ -92,6 +96,10 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
 
   public static GrLightMethodBuilder wrap(GrMethod method, PsiSubstitutor substitutor) {
     return new GrMethodWrapper(method, substitutor);
+  }
+
+  public static GrMethodWrapper wrap(@NotNull PsiMethod method, @NotNull String newName) {
+    return new GrMethodWrapper(method, PsiSubstitutor.EMPTY, newName);
   }
 
   @NotNull
