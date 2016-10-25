@@ -147,7 +147,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
       final StringNodeInfo info = new StringNodeInfo(nodes.get(0));
       // Nest string contain the same type of quote as host string inside, and we cannot escape inside f-string -- retreat
       final String content = info.getContent();
-      final char targetSingleQuote = invertQuote(hostQuote);
+      final char targetSingleQuote = flipQuote(hostQuote);
       if (content.indexOf(hostQuote) >= 0 || content.indexOf(targetSingleQuote) >= 0) {
         return null;
       }
@@ -368,7 +368,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           escaped.add(part);
           continue;
         }
-        final char quote = invertQuote(hostStringQuote);
+        final char quote = flipQuote(hostStringQuote);
         if (indexText.indexOf(hostStringQuote) >= 0 || indexText.indexOf(quote) >= 0) {
           return null;
         }
@@ -378,7 +378,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     return StringUtil.join(escaped, "");
   }
 
-  private static char invertQuote(char quote) {
+  private static char flipQuote(char quote) {
     return quote == '"' ? '\'' : '"';
   }
 
