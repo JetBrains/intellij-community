@@ -842,7 +842,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
       if (scheme instanceof EditorColorsSchemeImpl) {
         if (!isInherited()) {
-          ((EditorColorsSchemeImpl)scheme).setAttributes(key, getTextAttributes(), myIsInheritedInitial);
+          scheme.setAttributes(key, getTextAttributes());
         }
         else if (!myIsInheritedInitial) {
           // set only if previously was not inherited (and, so, we must mark it as inherited)
