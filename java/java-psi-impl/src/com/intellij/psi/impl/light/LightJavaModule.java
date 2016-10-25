@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class LightJavaModule extends LightElement implements PsiJavaModule {
@@ -137,14 +136,14 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @NotNull
   public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
-    PsiDirectory directory = manager.findDirectory(jarRoot);
+    final PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
     return CachedValuesManager.getCachedValue(directory, new CachedValueProvider<LightJavaModule>() {
       @Nullable
       @Override
       public Result<LightJavaModule> compute() {
         LightJavaModule module = new LightJavaModule(manager, jarRoot);
-        return Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(module, directory);
       }
     });
   }
