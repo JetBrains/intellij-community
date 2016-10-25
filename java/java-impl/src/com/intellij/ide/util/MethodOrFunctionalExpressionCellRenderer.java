@@ -15,15 +15,18 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 
 import javax.swing.*;
 
+import static com.intellij.ide.util.PsiClassOrFunctionalExpressionListCellRenderer.renderFunctionalExpression;
+
 public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
-  private final PsiClassListCellRenderer myClassListCellRenderer = PsiClassListCellRenderer.INSTANCE;
   private final MethodCellRenderer myMethodCellRenderer;
   
   public MethodOrFunctionalExpressionCellRenderer(boolean showMethodNames) {
@@ -35,7 +38,7 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
 
   public String getElementText(NavigatablePsiElement element) {
     return element instanceof PsiMethod ? myMethodCellRenderer.getElementText((PsiMethod)element) 
-                                        : PsiExpressionTrimRenderer.render((PsiExpression)element);
+                                        : renderFunctionalExpression((PsiFunctionalExpression)element);
   }
 
   protected Icon getIcon(PsiElement element) {

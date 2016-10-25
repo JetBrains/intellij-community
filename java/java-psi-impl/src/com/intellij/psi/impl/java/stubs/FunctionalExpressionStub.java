@@ -19,11 +19,17 @@ import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 
 public class FunctionalExpressionStub<T extends PsiFunctionalExpression> extends StubBase<T> {
+  private final StringRef myPresentableTextRef;
 
-  protected FunctionalExpressionStub(StubElement parent, IStubElementType elementType) {
+  protected FunctionalExpressionStub(StubElement parent, IStubElementType elementType, StringRef presentableTextRef) {
     super(parent, elementType);
+    myPresentableTextRef = presentableTextRef;
   }
 
+  public String getPresentableText() {
+    return myPresentableTextRef.getString();
+  }
 }
