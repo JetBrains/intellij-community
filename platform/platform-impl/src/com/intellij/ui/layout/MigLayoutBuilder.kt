@@ -16,10 +16,12 @@
 package com.intellij.ui.layout
 
 import com.intellij.codeInspection.SmartHashMap
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.Label
@@ -148,7 +150,8 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
                 cc.split()
               }
 
-              if (component !== lastComponent) {
+              // do not add gap if next component is gear action button
+              if (component !== lastComponent && !row.components.get(index + 1).let { it is JLabel && it.icon === AllIcons.General.Gear }) {
                 cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
               }
             }
@@ -169,7 +172,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 }
 
 private fun addGrowIfNeed(cc: CC, component: Component) {
-  if (component is JTextComponent || component is SeparatorComponent) {
+  if (component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*>) {
     cc.growX()
   }
   else if (component is JPanel && component.componentCount == 1 &&

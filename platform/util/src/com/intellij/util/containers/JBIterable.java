@@ -531,7 +531,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     });
   }
 
-  public enum SeparatorOption {HEAD, TAIL, EXTRACT, SKIP}
+  public enum SeparatorOption { HEAD, TAIL, KEEP, SKIP, GROUP }
 
   /**
    * Returns a {@code JBIterable} that groups this iterable by the specified condition
@@ -544,41 +544,43 @@ public abstract class JBIterable<E> implements Iterable<E> {
       public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
         final Iterator<E> orig = iterator;
         return new JBIterator<JBIterable<E>>() {
-          List<E> stored;
           JBIterator<E> it;
+          E stored;
+          int st; // encode transitions: -2:sep->sep, -1:val->sep, 1:sep->val, 2:val->val
 
           @Override
           protected JBIterable<E> nextImpl() {
             // iterate through the previous result fully before proceeding
             if (it != null && it.hasNext()) once(it).size();
             it = null;
-            List<E> sep = stored;
-            stored = null;
-            if (option == SeparatorOption.EXTRACT && sep != null) return JBIterable.from(sep);
-            if (!orig.hasNext()) {
-              return option == SeparatorOption.TAIL && sep != null ? JBIterable.from(sep) : stop();
+            // empty case: check hasNext() only if nothing is stored to be compatible with JBIterator#cursor()
+            if (stored == null && !orig.hasNext()) {
+              if (st < 0 && option != SeparatorOption.TAIL && option != SeparatorOption.GROUP) { st = 1; return empty(); }
+              return stop();
             }
-            it = JBIterator.wrap(orig);
-            JBIterable<E> next = once(it.takeWhile(new Condition<E>() {
+            // general case: add empty between 2 separators in KEEP mode; otherwise go with some state logic
+            if (st == -2 && option == SeparatorOption.KEEP) { st = -1; return empty(); }
+            E tmp = stored;
+            stored = null;
+            return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(new Condition<E>() {
               @Override
               public boolean value(E e) {
-                if (!separatorCondition.value(e)) return true;
-                stored = Collections.singletonList(e);
-                return false;
-              }
-            }));
-            switch (option) {
-              case HEAD: return next.append(new JBIterable<E>() {
-                @Override
-                public Iterator<E> iterator() {
-                  return stored != null ? stored.iterator() : JBIterable.<E>empty().iterator();
+                boolean sep = separatorCondition.value(e);
+                int st0 = st;
+                st = st0 < 0 && sep ? -2 : st0 > 0 && !sep? 2 : sep ? -1 : 1;
+                boolean result;
+                switch (option) {
+                  case HEAD: result = st != -2 && (st != 1 || st0 == 0); break;
+                  case TAIL: result = st != -2 && st != -1; break;
+                  case KEEP: result = st0 >= 0 && st > 0; break;
+                  case GROUP:result = st0 >= 0 && st > 0 || st0 <= 0 && st < 0; break;
+                  case SKIP: result = st > 0; break;
+                  default: throw new AssertionError(st);
                 }
-              });
-              case TAIL: return sep != null ? JBIterable.from(sep).append(next) : next;
-              case EXTRACT:
-              case SKIP: return next;
-              default: throw new AssertionError(option);
-            }
+                stored = !result && option != SeparatorOption.SKIP ? e : null;
+                return result;
+              }
+            })));
           }
         };
       }
