@@ -204,16 +204,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   }
 
-  public static void requestFocus(@NotNull Pair<JPanel, JBList> panel) {
+  @Nullable
+  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> panel) {
     if (panel.second.getModel().getSize() == 1) {
       JBTextField textField = UIUtil.uiTraverser(panel.first).filter(JBTextField.class).first();
       if (textField != null) {
-        textField.requestFocus();
+        return textField;
       }
     }
-    else {
-      panel.second.requestFocus();
-    }
+    return panel.second;
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
@@ -491,7 +490,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           for (ListSelectionListener listener : listeners) {
             listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
-          FlatWelcomeFrame.requestFocus(panel);
+          JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
+          if (toFocus != null) {
+            toFocus.requestFocus();
+          }
         };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);

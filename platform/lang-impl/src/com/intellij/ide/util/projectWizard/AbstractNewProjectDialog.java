@@ -42,6 +42,7 @@ import java.awt.event.KeyEvent;
  */
 public abstract class AbstractNewProjectDialog extends DialogWrapper {
   private JBList myList;
+  private JComponent myComponentToFocus;
 
   public AbstractNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
@@ -67,10 +68,8 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
     myList = panel.second;
-    UiNotifyConnector.doWhenFirstShown(myList, () -> {
-      ScrollingUtil.ensureSelectionExists(myList);
-      FlatWelcomeFrame.requestFocus(panel);
-    });
+    myComponentToFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
+    UiNotifyConnector.doWhenFirstShown(myList, () -> ScrollingUtil.ensureSelectionExists(myList));
 
     FlatWelcomeFrame.installQuickSearch(panel.second);
     return component;
@@ -79,7 +78,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myList;
+    return myComponentToFocus;
   }
 
   @Nullable
