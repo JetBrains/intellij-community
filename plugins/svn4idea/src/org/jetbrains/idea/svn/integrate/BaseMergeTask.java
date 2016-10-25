@@ -119,14 +119,9 @@ public abstract class BaseMergeTask extends TaskDescriptor {
 
   @CalledInAny
   protected void end(@NotNull VcsException e) {
-    end(myMergeContext.getTitle(), e);
-  }
-
-  @CalledInAny
-  protected void end(@NotNull String message, @NotNull VcsException e) {
-    LOG.info(message, e);
+    LOG.info(e);
 
     end();
-    getApplication().invokeLater(() -> myInteraction.showErrors(message, singletonList(e)));
+    getApplication().invokeLater(() -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(e)));
   }
 }

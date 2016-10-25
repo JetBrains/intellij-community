@@ -42,10 +42,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
   public void run() {
     boolean reintegrate = myCopyPoint != null && myCopyPoint.isInvertedSense();
 
-    if (reintegrate && !myInteraction.shouldReintegrate(myCopyPoint.inverted().getTarget())) {
-      end();
-    }
-    else {
+    if (!reintegrate || myInteraction.shouldReintegrate(myCopyPoint.inverted().getTarget())) {
       MergerFactory mergerFactory = createBranchMergerFactory(reintegrate);
       String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
 

@@ -48,14 +48,14 @@ public class ShowRevisionSelector extends BaseMergeTask {
       myInteraction.selectMergeItems(myChangeLists, myMergeChecker, myAllStatusesCalculated, myAllListsLoaded);
 
     switch (result.getResultCode()) {
-      case cancel:
-        end();
-        break;
       case all:
         mergeAll(true);
         break;
-      default:
+      case select:
+      case showLatest:
         merge(result.getSelectedLists());
+        break;
+      case cancel:
         break;
     }
   }
