@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class IdeConsoleRootType extends ConsoleRootType {
     LayeredIcon icons = new LayeredIcon(2);
     icons.setIcon(icon, 0);
     icons.setIcon(subscript, 1, 8, 8);
-    return icons;
+    return JBUI.scale(icons);
   }
 
   @Override

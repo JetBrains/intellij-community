@@ -228,7 +228,7 @@ public abstract class XDebuggerEditorBase {
     //myChooseFactory.setEnabled(many && languages.contains(language));
 
     if (language != null && language.getAssociatedFileType() != null) {
-      LayeredIcon icon = new LayeredIcon(2);
+      LayeredIcon icon = JBUI.scale(new LayeredIcon(2));
       icon.setIcon(language.getAssociatedFileType().getIcon(), 0);
       icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
       myChooseFactory.setIcon(icon);

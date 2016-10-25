@@ -24,12 +24,11 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.JBAbstractIcon implements Icon, ScalableIcon {
+public class SizedIcon extends JBUI.ScalableJBIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
   private Icon myScaledDelegate;
-  private float myScale = 1f;
 
   public SizedIcon(Icon delegate, int width, int height) {
     myScaledDelegate = myDelegate = delegate;
@@ -49,11 +48,6 @@ public class SizedIcon extends JBUI.JBAbstractIcon implements Icon, ScalableIcon
     }
   }
 
-  @Override
-  public int scaleVal(int n) {
-    return super.scaleVal(myScale == 1f ? n : (int) (n * myScale));
-  }
-
   public int getIconWidth() {
     return scaleVal(myWidth);
   }
@@ -63,13 +57,12 @@ public class SizedIcon extends JBUI.JBAbstractIcon implements Icon, ScalableIcon
   }
 
   @Override
-  public Icon scale(float scaleFactor) {
-    if (scaleFactor == 1f) {
+  public Icon scale(float scale) {
+    if (scale == 1f) {
       myScaledDelegate = myDelegate;
     } else if (myDelegate instanceof ScalableIcon) {
-      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scaleFactor);
+      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scale);
     }
-    myScale = scaleFactor;
-    return this;
+    return super.scale(scale);
   }
 }

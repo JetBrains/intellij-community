@@ -77,7 +77,9 @@ public class TwoColorsIcon extends ColorIcon {
 
   @Override
   protected EmptyIcon createScaledInstance(float scale) {
-    return new TwoColorsIcon(myColorSize, getIconColor(), mySecondColor).withJBUIScale(getJBUIScale());
+    TwoColorsIcon icon = new TwoColorsIcon(myColorSize, getIconColor(), mySecondColor);
+    icon.setPreScaled(isPreScaled());
+    return this;
   }
 
   @Override

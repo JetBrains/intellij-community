@@ -26,13 +26,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 
 public class EditRunConfigurationsAction extends DumbAwareAction {
   public EditRunConfigurationsAction() {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(AllIcons.Actions.EditSource,0,2,2);
     icon.setIcon(EmptyIcon.ICON_18, 1);
-    getTemplatePresentation().setIcon(icon);
+    getTemplatePresentation().setIcon(JBUI.scale(icon));
   }
 
   @Override
