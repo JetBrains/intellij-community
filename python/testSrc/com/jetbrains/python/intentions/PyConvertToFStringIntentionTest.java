@@ -112,6 +112,14 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  public void testPercentOperatorInlineMultilineTripleQuotedString() {
+    doNegativeTest();
+  }
+
+  public void testPercentOperatorInlineOneLineTripleQuotedString() {
+    doTest();
+  }
+
   public void testExtractItemAndAttributeAccess() {
     assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0.foo.bar.baz}"), ".foo", ".bar", ".baz");
     assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0[foo][.!:][}]}"), "[foo]", "[.!:]", "[}]");
