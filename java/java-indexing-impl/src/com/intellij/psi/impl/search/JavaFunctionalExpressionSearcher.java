@@ -320,7 +320,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
         Set<String> likelyNames = ContainerUtil.newLinkedHashSet(className);
         StubIndex.getInstance().processElements(JavaMethodParameterTypesIndex.getInstance().getKey(), className,
-                                                project, searchScope, PsiMethod.class, method -> {
+                                                project, effectiveUseScope, PsiMethod.class, method -> {
             ProgressManager.checkCanceled();
             likelyNames.add(method.getName());
             return true;
