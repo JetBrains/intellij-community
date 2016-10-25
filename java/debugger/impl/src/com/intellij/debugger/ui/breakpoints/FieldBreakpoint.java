@@ -110,25 +110,22 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   public PsiField getPsiField() {
     final SourcePosition sourcePosition = getSourcePosition();
     try {
-      final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
-        @Override
-        public PsiField compute() {
-          final PsiClass psiClass = getPsiClassAt(sourcePosition);
-          return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
-        }
+      PsiField field = ApplicationManager.getApplication().runReadAction((Computable<PsiField>)() -> {
+        PsiClass psiClass = getPsiClassAt(sourcePosition);
+        return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
       });
       if (field != null) {
         return field;
       }
     } catch (IndexNotReadyException ignored) {}
-    return PositionUtil.getPsiElementAt(getProject(), PsiField.class, sourcePosition);
+    return PositionUtil.getPsiElementAt(myProject, PsiField.class, sourcePosition);
   }
 
   @Override
   protected void reload(PsiFile psiFile) {
     super.reload(psiFile);
-    PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, getSourcePosition());
-    if(field != null) {
+    PsiField field = PositionUtil.getPsiElementAt(myProject, PsiField.class, getSourcePosition());
+    if (field != null) {
       setFieldName(field.getName());
       PsiClass psiClass = field.getContainingClass();
       if (psiClass != null) {

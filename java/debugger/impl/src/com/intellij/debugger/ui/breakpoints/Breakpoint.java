@@ -75,7 +75,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected final Project myProject;
 
   @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
-  public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
 
   protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
@@ -209,33 +208,29 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   @Override
-  public boolean processLocatableEvent(final SuspendContextCommandImpl action, final LocatableEvent event) throws EventProcessingException {
-    final SuspendContextImpl context = action.getSuspendContext();
-    if(!isValid()) {
+  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+    SuspendContextImpl context = action.getSuspendContext();
+    if (!isValid()) {
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
       return false;
     }
 
-    final String[] title = {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
+    String title = DebuggerBundle.message("title.error.evaluating.breakpoint.condition");
 
     try {
-      final StackFrameProxyImpl frameProxy = context.getThread().frame(0);
+      StackFrameProxyImpl frameProxy = context.getThread().frame(0);
       if (frameProxy == null) {
         // might be if the thread has been collected
         return false;
       }
 
-      final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(
-        action.getSuspendContext(),
-        frameProxy,
-        getThisObject(context, event)
-      );
+      EvaluationContextImpl evaluationContext = new EvaluationContextImpl(context, frameProxy, getThisObject(context, event));
 
-      if(!evaluateCondition(evaluationContext, event)) {
+      if (!evaluateCondition(evaluationContext, event)) {
         return false;
       }
 
-      title[0] = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
+      title = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
       runAction(evaluationContext, event);
     }
     catch (final EvaluateException ex) {
@@ -244,42 +239,37 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return false;
       }
 
-      throw new EventProcessingException(title[0], ex.getMessage(), ex);
+      throw new EventProcessingException(title, ex.getMessage(), ex);
     }
 
     return true;
   }
 
-  private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
-    final DebugProcessImpl debugProcess = context.getDebugProcess();
+  private void runAction(EvaluationContextImpl context, LocatableEvent event) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
     if (isLogEnabled() || isLogExpressionEnabled()) {
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
         if (myXBreakpoint.isLogMessage()) {
-          buf.append(getEventMessage(event));
-          buf.append("\n");
+          buf.append(getEventMessage(event)).append("\n");
         }
         if (isLogExpressionEnabled()) {
           if (!debugProcess.isAttached()) {
             return;
           }
 
-          final TextWithImports expressionToEvaluate = getLogMessage();
           try {
             SourcePosition position = ContextUtil.getSourcePosition(context);
             PsiElement element = ContextUtil.getContextElement(context, position);
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () ->
-              createExpressionEvaluator(myProject, element, position, expressionToEvaluate, this::createLogMessageCodeFragment));
+              createExpressionEvaluator(myProject, element, position, getLogMessage(), this::createLogMessageCodeFragment));
             Value eval = evaluator.evaluate(context);
             buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
           }
           catch (EvaluateException e) {
-            buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
-            buf.append(" \"");
-            buf.append(expressionToEvaluate);
-            buf.append("\"");
-            buf.append(" : ");
-            buf.append(e.getMessage());
+            buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"))
+              .append(" \"").append(getLogMessage()).append("\"")
+              .append(" : ").append(e.getMessage());
           }
           buf.append("\n");
         }
@@ -304,7 +294,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    final DebugProcessImpl debugProcess = context.getDebugProcess();
+    DebugProcessImpl debugProcess = context.getDebugProcess();
     if (isCountFilterEnabled()) {
       debugProcess.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
@@ -504,8 +494,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected boolean isLogExpressionEnabled() {
-    XExpression expression = myXBreakpoint.getLogExpressionObject();
-    if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+    if (XDebuggerUtilImpl.isEmptyExpression(myXBreakpoint.getLogExpressionObject())) {
       return false;
     }
     return !getLogMessage().isEmpty();
