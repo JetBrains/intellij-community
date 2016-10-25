@@ -116,11 +116,16 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
           if (lessonDir == null) continue;
           for (Task task : lesson.getTaskList()) {
-            final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
+            final VirtualFile taskDir = task.getTaskDir(project);
             if (taskDir == null) continue;
-            VirtualFile studentFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDir.getName());
+            String taskDirName = EduNames.TASK + String.valueOf(task.getIndex());
+            VirtualFile studentFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDirName);
             if (studentFileDir == null) {
               continue;
+            }
+            VirtualFile srcDir = studentFileDir.findChild(EduNames.SRC);
+            if (srcDir != null) {
+              studentFileDir = srcDir;
             }
             for (String taskFile : task.getTaskFiles().keySet()) {
               VirtualFile answerFile = taskDir.findChild(taskFile);
