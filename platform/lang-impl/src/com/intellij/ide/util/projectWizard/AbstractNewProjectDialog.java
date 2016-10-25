@@ -41,8 +41,7 @@ import java.awt.event.KeyEvent;
  * @author Dennis.Ushakov
  */
 public abstract class AbstractNewProjectDialog extends DialogWrapper {
-  private JBList myList;
-  private JComponent myComponentToFocus;
+  private Pair<JPanel, JBList> myPair;
 
   public AbstractNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
@@ -52,13 +51,13 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     setTitle(generators.length == 0 ? "Create Project" : "New Project");
-    final DefaultActionGroup root = createRootStep();
+    DefaultActionGroup root = createRootStep();
 
-    final Pair<JPanel, JBList> panel = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
-    final Dimension size = JBUI.size(666, 385);
-    final JPanel component = panel.first;
+    Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
+    Dimension size = JBUI.size(666, 385);
+    JPanel component = pair.first;
     component.setMinimumSize(size);
     component.setPreferredSize(size);
     new AnAction() {
@@ -67,18 +66,17 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
         close(CANCEL_EXIT_CODE);
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
-    myList = panel.second;
-    myComponentToFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
-    UiNotifyConnector.doWhenFirstShown(myList, () -> ScrollingUtil.ensureSelectionExists(myList));
+    myPair = pair;
+    UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 
-    FlatWelcomeFrame.installQuickSearch(panel.second);
+    FlatWelcomeFrame.installQuickSearch(pair.second);
     return component;
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myComponentToFocus;
+    return FlatWelcomeFrame.getPreferredFocusedComponent(myPair);
   }
 
   @Nullable

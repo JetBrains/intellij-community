@@ -205,14 +205,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   @Nullable
-  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> panel) {
-    if (panel.second.getModel().getSize() == 1) {
-      JBTextField textField = UIUtil.uiTraverser(panel.first).filter(JBTextField.class).first();
+  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> pair) {
+    if (pair.second.getModel().getSize() == 1) {
+      JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
       if (textField != null) {
         return textField;
       }
     }
-    return panel.second;
+    return pair.second;
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
