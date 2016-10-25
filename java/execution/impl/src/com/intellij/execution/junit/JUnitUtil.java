@@ -58,6 +58,7 @@ public class JUnitUtil {
   public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.AfterEach";
 
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+  public static final String PARAMETRIZED_PARAMETER_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameter";
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
@@ -242,19 +243,6 @@ public class JUnitUtil {
   
   public static boolean isTestAnnotated(final PsiMethod method) {
     if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
-      if (annotation != null) {
-        final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-        for (PsiNameValuePair attribute : attributes) {
-          final PsiAnnotationMemberValue value = attribute.getValue();
-          if (value instanceof PsiClassObjectAccessExpression ) {
-            final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
-            if (typeElement.getType().getCanonicalText().equals(PARAMETERIZED_CLASS_NAME)) {
-              return false;
-            }
-          }
-        }
-      }
       return true;
     }
 
