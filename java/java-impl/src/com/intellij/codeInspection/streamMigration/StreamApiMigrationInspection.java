@@ -940,7 +940,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         operationName = "mapToObj";
       }
       PsiExpression expression = myType == null ? myExpression : RefactoringUtil.convertInitializerToNormalExpression(myExpression, myType);
-      if(myType != null && !(myType instanceof PsiPrimitiveType)) {
+      if(myType != null && !(myType instanceof PsiPrimitiveType) && !(myType instanceof PsiCapturedWildcardType)) {
         operationName = "<"+myType.getCanonicalText()+">"+operationName;
       }
       return "." + operationName + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
