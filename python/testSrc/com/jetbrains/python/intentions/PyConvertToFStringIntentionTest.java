@@ -96,6 +96,10 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
     doTest();
   }
 
+  public void testFormatMethodIndexContainsHostAlternativeQuote() {
+    doTest();
+  }
+
   public void testPercentOperatorWidthAndPrecision() {
     doTest();
   }

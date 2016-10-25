@@ -366,7 +366,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           continue;
         }
         final char quote = invertQuote(hostStringQuote);
-        if (indexText.indexOf('\'') >= 0 && indexText.indexOf(quote) >= 0) {
+        if (indexText.indexOf(hostStringQuote) >= 0 || indexText.indexOf(quote) >= 0) {
           return null;
         }
         escaped.add("[" + quote + indexText + quote + "]");
