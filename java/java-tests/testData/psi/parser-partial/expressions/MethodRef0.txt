@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef0.java
-  PsiMethodReferenceExpression:a.b.C::m
+  PsiMethodReferenceExpression
     PsiReferenceExpression:a.b.C
       PsiReferenceExpression:a.b
         PsiReferenceExpression:a
