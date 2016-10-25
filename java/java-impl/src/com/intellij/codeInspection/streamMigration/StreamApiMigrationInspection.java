@@ -397,7 +397,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
-    if(ReferencesSearch.search(variable, variable.getUseScope()).forEach(ref -> {
+    if(ReferencesSearch.search(variable).forEach(ref -> {
       PsiElement element = ref.getElement();
       return !(element instanceof PsiExpression) ||
              !PsiUtil.isAccessedForWriting((PsiExpression)element) ||
