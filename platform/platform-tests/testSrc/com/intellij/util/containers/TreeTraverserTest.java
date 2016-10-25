@@ -328,6 +328,17 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(11, it.partition(KEEP, o -> true).size());
 
     assertEquals(it.partition(2, false).toList(), it.partition(HEAD, o -> o % 2 == 0).map(o -> o.toList()).toList());
+
+    JBIterable<JBIterable<Integer>> statePart = it.partition(GROUP, new JBIterable.StatefulFilter<Integer>() {
+      int i = 4;
+
+      @Override
+      public boolean value(Integer integer) {
+        return (i = (i + 2) % 12) - 5 > 0; // 3 positive, 3 negative (+1 +3 +5 : -5 -3 -1)
+      }
+    });
+    assertEquals("[[1, 2, 3], [4, 5]]", statePart.map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [4, 5]]", statePart.map(o -> o.toList()).toList().toString());
   }
 
   public void testPartition2() {

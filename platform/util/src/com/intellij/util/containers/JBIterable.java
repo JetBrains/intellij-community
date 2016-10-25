@@ -543,6 +543,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
       @Override
       public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
         final Iterator<E> orig = iterator;
+        final Condition<? super E> condition = Stateful.copy(separatorCondition);
         return new JBIterator<JBIterable<E>>() {
           JBIterator<E> it;
           E stored;
@@ -565,7 +566,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
             return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(new Condition<E>() {
               @Override
               public boolean value(E e) {
-                boolean sep = separatorCondition.value(e);
+                boolean sep = condition.value(e);
                 int st0 = st;
                 st = st0 < 0 && sep ? -2 : st0 > 0 && !sep? 2 : sep ? -1 : 1;
                 boolean result;
