@@ -23,13 +23,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import gnu.trove.THashMap;
@@ -47,6 +45,8 @@ public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final Project myProject;
   private final Document myDocument;
   private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<>();
+  private final TransferToEDTQueue<Info> myAddHighlighterInEDTQueue;
+  private final TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @Nullable Editor editor,
@@ -58,6 +58,18 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    myDisposeHighlighterInEDTQueue = new TransferToEDTQueue<>("Dispose abandoned highlighter", highlighter -> {
+      highlighter.dispose();
+      return true;
+    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 200);
+    myAddHighlighterInEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", info -> {
+      final EditorColorsScheme colorsScheme = getColorsScheme();
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), info.myRestrictRange.getStartOffset(),
+                                             info.myRestrictRange.getEndOffset(),
+                                             info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
+
+      return true;
+    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 200);
   }
 
   private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
@@ -118,39 +130,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
   public EditorColorsScheme getColorsScheme() {
     return myEditorColorsScheme;
   }
-
-  private final TransferToEDTQueue<Info> myAddHighlighterInEDTQueue =
-    new TransferToEDTQueue<>("Apply highlighting results", new Processor<Info>() {
-      @Override
-      public boolean process(Info info) {
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil
-          .addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), info.myRestrictRange.getStartOffset(),
-                                               info.myRestrictRange.getEndOffset(),
-                                               info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
-
-        return true;
-      }
-    }, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return myProject.isDisposed() || getProgressIndicator().isCanceled();
-      }
-    }, 200);
-  private final TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue =
-    new TransferToEDTQueue<>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        highlighter.dispose();
-        return true;
-      }
-    }, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return myProject.isDisposed() || getProgressIndicator().isCanceled();
-      }
-    }, 200);
-
 
   void queueHighlightInfo(@NotNull HighlightInfo info,
                           @NotNull TextRange priorityRange,
