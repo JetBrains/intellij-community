@@ -78,4 +78,12 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testPercentOperatorExpressionContainBadQuotes() {
     doNegativeTest();
   }
+
+  public void testFormatMethodSimple() {
+    doTest();
+  }
+
+  public void testFormatMethodAttributeReferences() {
+    doTest();
+  }
 }
