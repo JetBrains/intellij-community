@@ -40,8 +40,8 @@ import static com.intellij.util.concurrency.QueueProcessor.ThreadToUse;
  */
 @SomeQueue
 public class BackgroundTaskQueue {
-  @NotNull protected final String myTitle;
-  @NotNull protected final QueueProcessor<TaskData> myProcessor;
+  @NotNull private final String myTitle;
+  @NotNull private final QueueProcessor<TaskData> myProcessor;
 
   @NotNull private final Object TEST_TASK_LOCK = new Object();
   private volatile boolean myForceAsyncInTests = false;
@@ -110,10 +110,10 @@ public class BackgroundTaskQueue {
     }
   }
 
-  protected interface TaskData extends Consumer<Runnable> {
+  private interface TaskData extends Consumer<Runnable> {
   }
 
-  protected class BackgroundableTaskData implements TaskData {
+  private class BackgroundableTaskData implements TaskData {
     @NotNull private final Task.Backgroundable myTask;
     @Nullable private final ModalityState myModalityState;
     @Nullable private final ProgressIndicator myIndicator;
