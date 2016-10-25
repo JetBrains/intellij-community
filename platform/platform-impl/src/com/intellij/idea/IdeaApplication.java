@@ -44,7 +44,6 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +55,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IdeaApplication {
-  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -360,7 +359,7 @@ public class IdeaApplication {
   /**
    * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
    */
-  public void shutdown(){
+  public void shutdown() {
     myLoaded = false;
     IdeEventQueue.applicationClose();
     ShutDownTracker.getInstance().run();
@@ -370,7 +369,7 @@ public class IdeaApplication {
     return myArgs;
   }
 
-  public void setPerformProjectLoad(boolean performProjectLoad) {
-    myPerformProjectLoad = performProjectLoad;
+  public void disableProjectLoad() {
+    myPerformProjectLoad = false;
   }
 }
