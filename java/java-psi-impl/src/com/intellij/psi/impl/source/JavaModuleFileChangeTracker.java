@@ -16,57 +16,14 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.*;
-import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.util.NotNullFunction;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.PsiTreeChangeEvent.*;
+import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
-public class JavaModuleFileChangeTracker implements ModificationTracker {
-  private static final NotNullLazyKey<ModificationTracker, Project> KEY = NotNullLazyKey.create("", new NotNullFunction<Project, ModificationTracker>() {
-    @NotNull
-    @Override
-    public ModificationTracker fun(Project project) {
-      return new JavaModuleFileChangeTracker(project);
-    }
-  });
-
+public class JavaModuleFileChangeTracker {
   @NotNull
-  public static ModificationTracker getInstance(@NotNull Project p) {
-    return KEY.getValue(p);
-  }
-
-  private volatile long myCount = 0;
-
-  private JavaModuleFileChangeTracker(Project project) {
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override public void childAdded(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-      @Override public void childRemoved(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-      @Override public void childReplaced(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-      @Override public void childMoved(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-      @Override public void childrenChanged(@NotNull PsiTreeChangeEvent event) { process(event.getFile()); }
-
-      private void process(PsiFile file) {
-        if (file != null && PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
-          myCount++;
-        }
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        String name = event.getPropertyName();
-        if (name == PROP_FILE_NAME || name == PROP_DIRECTORY_NAME || name == PROP_ROOTS) {
-          myCount++;
-        }
-      }
-    }, project);
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myCount;
+  public static Object[] getDependencies(@NotNull Project project) {
+    return new Object[]{OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootModificationTracker.getInstance(project)};
   }
 }

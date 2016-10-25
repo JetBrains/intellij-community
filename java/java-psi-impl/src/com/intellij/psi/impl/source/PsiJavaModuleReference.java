@@ -137,7 +137,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       public Result<PsiJavaModule> compute(Pair<String, Boolean> p) {
         Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), p.first, p.second);
         PsiJavaModule module = modules.size() == 1 ? modules.iterator().next() : null;
-        return Result.create(module, JavaModuleFileChangeTracker.getInstance(refOwner.getProject()));
+        return Result.create(module, JavaModuleFileChangeTracker.getDependencies(refOwner.getProject()));
       }
     }, false, pair(refText, incompleteCode));
   }
