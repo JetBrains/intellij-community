@@ -48,9 +48,8 @@ public class LightTreeUtil {
   }
 
   @Nullable
-  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
-    List<LighterASTNode> children = tree.getChildren(node);
-    return firstChildOfType(children, types);
+  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull TokenSet types) {
+    return node == null ? null : firstChildOfType(tree.getChildren(node), types);
   }
 
   @Nullable

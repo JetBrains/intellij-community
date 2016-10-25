@@ -48,4 +48,9 @@ public class JavaLightTreeUtil {
     LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
     return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;
   }
+
+  @Nullable
+  public static LighterASTNode findExpressionChild(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
+    return LightTreeUtil.firstChildOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
+  }
 }

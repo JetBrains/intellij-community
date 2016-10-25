@@ -15,17 +15,27 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.JavaLightTreeUtil;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @author peter
@@ -42,68 +52,81 @@ public class PurityInference {
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
-      boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> doInferPurity(method)) == Boolean.TRUE;
-      return CachedValueProvider.Result.create(pure, method);
+      TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
+      PsiCodeBlock body = method.getBody();
+      PurityInferenceResult result = doInferPurity(TreeBackedLighterAST.wrap(body.getNode()), tree);
+      Boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> result != null && result.isPure(method, body));
+      return CachedValueProvider.Result.create(pure == Boolean.TRUE, method);
     });
   }
 
-  private static boolean doInferPurity(PsiMethod method) {
-    PsiCodeBlock body = method.getBody();
-    if (body == null) return false;
-
-    final Ref<Boolean> impureFound = Ref.create(false);
-    final Ref<Boolean> hasReturns = Ref.create(false);
-    final List<PsiCallExpression> calls = ContainerUtil.newArrayList();
-    body.accept(new JavaRecursiveElementWalkingVisitor() {
+  @Nullable
+  private static PurityInferenceResult doInferPurity(LighterASTNode body, LighterAST tree) {
+    List<LighterASTNode> mutatedRefs = new ArrayList<>();
+    Ref<Boolean> hasReturns = Ref.create(false);
+    List<LighterASTNode> calls = new ArrayList<>();
+    new RecursiveLighterASTNodeWalkingVisitor(tree) {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (!isLocalVarReference(expression.getLExpression(), method)) {
-          impureFound.set(true);
+      public void visitNode(@NotNull LighterASTNode element) {
+        IElementType type = element.getTokenType();
+        if (type == ASSIGNMENT_EXPRESSION) {
+          mutatedRefs.add(tree.getChildren(element).get(0));
         }
-        super.visitAssignmentExpression(expression);
-      }
-
-      @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
-        if (statement.getReturnValue() != null) {
+        else if (type == RETURN_STATEMENT && JavaLightTreeUtil.findExpressionChild(tree, element) != null) {
           hasReturns.set(true);
         }
-        super.visitReturnStatement(statement);
-      }
-
-      @Override
-      public void visitPrefixExpression(PsiPrefixExpression expression) {
-        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand(), method)) {
-          impureFound.set(true);
+        else if ((type == PREFIX_EXPRESSION || type == POSTFIX_EXPRESSION) && isMutatingOperation(element)) {
+          ContainerUtil.addIfNotNull(mutatedRefs, JavaLightTreeUtil.findExpressionChild(tree, element));
         }
-        super.visitPrefixExpression(expression);
-      }
-
-      private boolean isMutatingOperation(IElementType operationTokenType) {
-        return operationTokenType == JavaTokenType.PLUSPLUS || operationTokenType == JavaTokenType.MINUSMINUS;
-      }
-
-      @Override
-      public void visitPostfixExpression(PsiPostfixExpression expression) {
-        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand(), method)) {
-          impureFound.set(true);
+        else if (isCall(element, type)) {
+          calls.add(element);
         }
-        super.visitPostfixExpression(expression);
+
+        super.visitNode(element);
       }
 
-      @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
-        if (!(callExpression instanceof PsiNewExpression) || ((PsiNewExpression)callExpression).getArrayDimensions().length == 0) {
-          calls.add(callExpression);
-        }
-        super.visitCallExpression(callExpression);
+      private boolean isCall(@NotNull LighterASTNode element, IElementType type) {
+        return type == NEW_EXPRESSION && LightTreeUtil.firstChildOfType(tree, element, EXPRESSION_LIST) != null ||
+               type == METHOD_CALL_EXPRESSION;
       }
-    });
 
-    if (impureFound.get() || calls.size() > 1 || !hasReturns.get()) return false;
-    if (calls.isEmpty()) return true;
+      private boolean isMutatingOperation(@NotNull LighterASTNode element) {
+        return LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.PLUSPLUS) != null ||
+               LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.MINUSMINUS) != null;
+      }
 
-    final PsiMethod called = calls.get(0).resolveMethod();
+    }.visitNode(body);
+
+    if (calls.size() > 1 || !hasReturns.get()) return null;
+    
+    int bodyStart = body.getStartOffset();
+    return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> new ExpressionRange(node, bodyStart)),
+                                     calls.isEmpty() ? null : new ExpressionRange(calls.get(0), bodyStart));
+  }
+
+}
+
+class PurityInferenceResult {
+  private final List<ExpressionRange> myMutatedRefs;
+  private final ExpressionRange mySingleCall;
+
+  PurityInferenceResult(List<ExpressionRange> mutatedRefs, @Nullable ExpressionRange singleCall) {
+    myMutatedRefs = mutatedRefs;
+    mySingleCall = singleCall;
+  }
+
+  boolean isPure(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
+    return !mutatesNonLocals(method, body) && callsOnlyPureMethods(body);
+  }
+
+  private boolean mutatesNonLocals(@NotNull PsiMethod method, PsiCodeBlock body) {
+    return ContainerUtil.exists(myMutatedRefs, range -> !isLocalVarReference(range.restoreExpression(body), method));
+  }
+
+  private boolean callsOnlyPureMethods(PsiCodeBlock body) {
+    if (mySingleCall == null) return true;
+
+    final PsiMethod called = ((PsiCall)mySingleCall.restoreExpression(body)).resolveMethod();
     return called != null && ControlFlowAnalyzer.isPure(called);
   }
 
