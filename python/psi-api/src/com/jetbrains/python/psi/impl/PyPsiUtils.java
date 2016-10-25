@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,9 +426,9 @@ public class PyPsiUtils {
   }
 
   @NotNull
-  static <T, U extends PsiElement> List<T> collectStubChildren(U e,
-                                                               final StubElement<U> stub, final IElementType elementType,
-                                                               final Class<T> itemClass) {
+  static <T, U extends PsiElement> List<T> collectStubChildren(@NotNull U e,
+                                                               @Nullable StubElement<U> stub,
+                                                               @NotNull IElementType elementType) {
     final List<T> result = new ArrayList<>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,18 +368,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.CLASS_DECLARATION);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FUNCTION_DECLARATION);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.TARGET_EXPRESSION);
   }
 
   @Override
@@ -474,9 +474,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyImportElement> getImportTargets() {
-    List<PyImportElement> ret = new ArrayList<>();
-    List<PyImportStatement> imports =
-      PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    final List<PyImportElement> ret = new ArrayList<>();
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.IMPORT_STATEMENT);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -486,7 +485,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   @Override
