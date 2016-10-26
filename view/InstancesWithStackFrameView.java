@@ -29,19 +29,20 @@ class InstancesWithStackFrameView {
 
     hideStackFrame();
 
+    CreationPositionTracker tracker = CreationPositionTracker.getInstance(debugSession.getProject());
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = tree.getSelectedReference();
-      if (ref != null) {
-        List<StackFrameDescriptor> stack = CreationPositionTracker.getInstance(debugSession.getProject())
-            .getStack(debugSession, ref);
+      if (ref != null && tracker != null) {
+        List<StackFrameDescriptor> stack = tracker.getStack(debugSession, ref);
         if (stack != null) {
           list.setFrame(stack);
           showStackFrame();
-        } else {
-          list.setFrame(EMPTY_FRAME);
-          hideStackFrame();
+          return;
         }
       }
+
+      list.setFrame(EMPTY_FRAME);
+      hideStackFrame();
     });
   }
 
@@ -59,7 +60,7 @@ class InstancesWithStackFrameView {
   }
 
   private void showStackFrame() {
-    if(myIsHided) {
+    if (myIsHided) {
       mySplitter.getSecondComponent().setVisible(true);
       mySplitter.setProportion(myHidedProportion);
       myIsHided = false;
