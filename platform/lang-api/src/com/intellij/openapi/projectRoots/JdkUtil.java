@@ -223,8 +223,8 @@ public class JdkUtil {
 
   private static void appendOldCommandLineWrapper(SimpleJavaParameters javaParameters,
                                                   GeneralCommandLine commandLine,
-                                                  ParametersList vmParametersList, Class commandLineWrapper) {
-    File classpathFile = null;
+                                                  ParametersList vmParametersList,
+                                                  Class commandLineWrapper) {
     File vmParamsFile = null;
     if (javaParameters.isDynamicVMOptions() && useDynamicVMOptions()) {
       try {
@@ -254,6 +254,8 @@ public class JdkUtil {
     else {
       commandLine.addParameters(vmParametersList.getList());
     }
+
+    File classpathFile = null;
     try {
       classpathFile = FileUtil.createTempFile("classpath", null);
       final PrintWriter writer = new PrintWriter(classpathFile);
@@ -284,6 +286,7 @@ public class JdkUtil {
       LOG.info(e);
       throwUnableToCreateTempFile();
     }
+
     appendEncoding(javaParameters, commandLine, vmParametersList);
     commandLine.addParameter(commandLineWrapper.getName());
     commandLine.addParameter(classpathFile.getAbsolutePath());
@@ -325,6 +328,7 @@ public class JdkUtil {
       else {
         commandLine.addParameters(vmParametersList.getList());
       }
+
       if (storeProgramParametersInJar) {
         manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
       }
