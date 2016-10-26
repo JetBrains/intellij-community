@@ -19,15 +19,8 @@ public class IpnbMoveCellDownAction extends AnAction {
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
       final IpnbFilePanel ipnbFilePanel = ((IpnbFileEditor)editor).getIpnbFilePanel();
-      CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              ipnbFilePanel.moveCell(true);
-            }
-          });
-        }
-      }, "Ipnb.moveCell", new Object());
+      CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+        () -> ipnbFilePanel.moveCell(true)), "Ipnb.moveCell", new Object());
     }
   }
 }
