@@ -59,7 +59,7 @@ public class StudyCheckUtils {
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof StudyEditor) {
         StudyEditor studyEditor = (StudyEditor)fileEditor;
-        StudyUtils.drawAllWindows(studyEditor.getEditor(), taskFile);
+        StudyUtils.drawAllAnswerPlaceholders(studyEditor.getEditor(), taskFile);
       }
     }
   }

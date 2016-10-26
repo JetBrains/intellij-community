@@ -36,13 +36,13 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
       @Override
       public void undo() throws UnexpectedUndoException {
         undoAction(existingPlaceholder, subtaskIndex, info);
-        StudyUtils.drawAllWindows(editor, taskFile);
+        StudyUtils.drawAllAnswerPlaceholders(editor, taskFile);
       }
 
       @Override
       public void redo() throws UnexpectedUndoException {
         redoAction(existingPlaceholder, subtaskIndex, info);
-        StudyUtils.drawAllWindows(editor, taskFile);
+        StudyUtils.drawAllAnswerPlaceholders(editor, taskFile);
       }
     });
   }

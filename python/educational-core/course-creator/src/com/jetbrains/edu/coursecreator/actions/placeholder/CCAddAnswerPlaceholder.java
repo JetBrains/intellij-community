@@ -101,7 +101,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       if (answerPlaceholders.contains(myPlaceholder)) {
         answerPlaceholders.remove(myPlaceholder);
         myEditor.getMarkupModel().removeAllHighlighters();
-        StudyUtils.drawAllWindows(myEditor, myTaskFile);
+        StudyUtils.drawAllAnswerPlaceholders(myEditor, myTaskFile);
         EduAnswerPlaceholderPainter.createGuardedBlocks(myEditor, myTaskFile);
       }
     }

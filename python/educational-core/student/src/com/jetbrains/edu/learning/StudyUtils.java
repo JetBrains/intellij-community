@@ -348,7 +348,7 @@ public class StudyUtils {
     return null;
   }
 
-  public static void drawAllWindows(Editor editor, TaskFile taskFile) {
+  public static void drawAllAnswerPlaceholders(Editor editor, TaskFile taskFile) {
     editor.getMarkupModel().removeAllHighlighters();
     final Project project = editor.getProject();
     if (project == null) return;

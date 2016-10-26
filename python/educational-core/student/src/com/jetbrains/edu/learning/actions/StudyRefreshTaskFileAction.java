@@ -74,7 +74,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    StudyUtils.drawAllWindows(editor, taskFile);
+    StudyUtils.drawAllAnswerPlaceholders(editor, taskFile);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     ApplicationManager.getApplication().invokeLater(
       () -> IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true));
