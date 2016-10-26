@@ -53,6 +53,8 @@ import java.util.function.Function;
 
 // todo: consider batching compilations in order not to start a separate process for every class that needs to be compiled
 public class CompilingEvaluatorImpl extends CompilingEvaluator {
+  private Collection<ClassObject> myCompiledClasses;
+
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
                                 @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
@@ -62,67 +64,71 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   @Override
   @NotNull
   protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
-    Module module = ApplicationManager.getApplication().runReadAction(
-      (Computable<Module>)() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
-    List<String> options = new ArrayList<>();
-    options.add("-encoding");
-    options.add("UTF-8");
-    List<File> platformClasspath = new ArrayList<>();
-    List<File> classpath = new ArrayList<>();
-    AnnotationProcessingConfiguration profile = null;
-    if (module != null) {
-      assert myProject.equals(module.getProject()) : module + " is from another project";
-      profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-        classpath.add(new File(s));
-      }
-      for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
-        platformClasspath.add(new File(s));
-      }
-    }
-    JavaBuilder.addAnnotationProcessingOptions(options, profile);
-
-    Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
-    JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
-    // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
-    if (buildRuntimeVersion != null && debuggeeVersion != null) {
-      JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
-      String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
-      options.add("-source");
-      options.add(sourceOption);
-      options.add("-target");
-      options.add(sourceOption);
-    }
-
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-
-    File sourceFile = null;
-    try {
-      sourceFile = generateTempSourceFile(compilerManager.getJavacCompilerWorkingDir());
-      File srcDir = sourceFile.getParentFile();
-      List<File> sourcePath = Collections.emptyList();
-      Set<File> sources = Collections.singleton(sourceFile);
-
-      return compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), sourcePath, sources, srcDir);
-    }
-    catch (CompilationException e) {
-      StringBuilder res = new StringBuilder("Compilation failed:\n");
-      for (CompilationException.Message m : e.getMessages()) {
-        if (m.getCategory() == CompilerMessageCategory.ERROR) {
-          res.append(m.getText()).append("\n");
+    if (myCompiledClasses == null) {
+      Module module = ApplicationManager.getApplication().runReadAction(
+        (Computable<Module>)() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
+      List<String> options = new ArrayList<>();
+      options.add("-encoding");
+      options.add("UTF-8");
+      List<File> platformClasspath = new ArrayList<>();
+      List<File> classpath = new ArrayList<>();
+      AnnotationProcessingConfiguration profile = null;
+      if (module != null) {
+        assert myProject.equals(module.getProject()) : module + " is from another project";
+        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+          classpath.add(new File(s));
+        }
+        for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
+          platformClasspath.add(new File(s));
         }
       }
-      throw new EvaluateException(res.toString());
-    }
-    catch (Exception e) {
-      throw new EvaluateException(e.getMessage());
-    }
-    finally {
-      if (sourceFile != null) {
-        FileUtil.delete(sourceFile);
+      JavaBuilder.addAnnotationProcessingOptions(options, profile);
+
+      Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
+      JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
+      // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
+      if (buildRuntimeVersion != null && debuggeeVersion != null) {
+        JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
+        String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
+        options.add("-source");
+        options.add(sourceOption);
+        options.add("-target");
+        options.add(sourceOption);
+      }
+
+      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+
+      File sourceFile = null;
+      try {
+        sourceFile = generateTempSourceFile(compilerManager.getJavacCompilerWorkingDir());
+        File srcDir = sourceFile.getParentFile();
+        List<File> sourcePath = Collections.emptyList();
+        Set<File> sources = Collections.singleton(sourceFile);
+
+        myCompiledClasses =
+          compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), sourcePath, sources, srcDir);
+      }
+      catch (CompilationException e) {
+        StringBuilder res = new StringBuilder("Compilation failed:\n");
+        for (CompilationException.Message m : e.getMessages()) {
+          if (m.getCategory() == CompilerMessageCategory.ERROR) {
+            res.append(m.getText()).append("\n");
+          }
+        }
+        throw new EvaluateException(res.toString());
+      }
+      catch (Exception e) {
+        throw new EvaluateException(e.getMessage());
+      }
+      finally {
+        if (sourceFile != null) {
+          FileUtil.delete(sourceFile);
+        }
       }
     }
+    return myCompiledClasses;
   }
 
   @NotNull

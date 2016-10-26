@@ -58,6 +58,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
+import com.sun.jdi.request.EventRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -258,17 +259,19 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
             return;
           }
 
+          TextWithImports logMessage = getLogMessage();
           try {
             SourcePosition position = ContextUtil.getSourcePosition(context);
             PsiElement element = ContextUtil.getContextElement(context, position);
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () ->
-              createExpressionEvaluator(myProject, element, position, getLogMessage(), this::createLogMessageCodeFragment));
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
+              () -> EvaluatorCache.cacheOrGet("LogMessageEvaluator", event.request(), element, logMessage, () ->
+                createExpressionEvaluator(myProject, element, position, logMessage, this::createLogMessageCodeFragment)));
             Value eval = evaluator.evaluate(context);
             buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
           }
           catch (EvaluateException e) {
             buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"))
-              .append(" \"").append(getLogMessage()).append("\"")
+              .append(" \"").append(logMessage).append("\"")
               .append(" : ").append(e.getMessage());
           }
           buf.append("\n");
@@ -316,7 +319,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       return false;
     }
 
-    if (!isConditionEnabled() || getCondition().getText().isEmpty()) {
+    if (!isConditionEnabled()) {
+      return true;
+    }
+
+    TextWithImports condition = getCondition();
+    if (condition.isEmpty()) {
       return true;
     }
 
@@ -324,7 +332,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (frame != null) {
       Location location = frame.location();
       if (location != null) {
-        ThreeState result = debugProcess.getPositionManager().evaluateCondition(context, frame, location, getCondition().getText());
+        ThreeState result = debugProcess.getPositionManager().evaluateCondition(context, frame, location, condition.getText());
         if (result != ThreeState.UNSURE) {
           return result == ThreeState.YES;
         }
@@ -337,12 +345,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         // IMPORTANT: calculate context psi element basing on the location where the exception
         // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
         // for method, exception and field breakpoints these locations differ)
-        PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
-        if (contextPsiElement == null) {
-          contextPsiElement = getEvaluationElement(); // as a last resort
-        }
-        return createExpressionEvaluator(myProject, contextPsiElement, contextSourcePosition, getCondition(),
-                                         this::createConditionCodeFragment);
+        PsiElement contextElement = ContextUtil.getContextElement(contextSourcePosition);
+        PsiElement contextPsiElement = contextElement != null ? contextElement : getEvaluationElement(); // as a last resort
+        return EvaluatorCache.cacheOrGet("ConditionEvaluator", event.request(), contextPsiElement, condition,
+                                         () -> createExpressionEvaluator(myProject,
+                                                                         contextPsiElement,
+                                                                         contextSourcePosition,
+                                                                         condition,
+                                                                         this::createConditionCodeFragment));
       });
       return DebuggerUtilsEx.evaluateBoolean(evaluator, context);
     }
@@ -351,8 +361,35 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return false;
       }
       throw EvaluateExceptionUtil.createEvaluateException(
-        DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
+        DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", condition, ex.getMessage())
       );
+    }
+  }
+
+  private static class EvaluatorCache {
+    private final PsiElement myContext;
+    private final TextWithImports myTextWithImports;
+    private final ExpressionEvaluator myEvaluator;
+
+    private EvaluatorCache(PsiElement context, TextWithImports textWithImports, ExpressionEvaluator evaluator) {
+      myContext = context;
+      myTextWithImports = textWithImports;
+      myEvaluator = evaluator;
+    }
+
+    @Nullable
+    static ExpressionEvaluator cacheOrGet(String propertyName,
+                                          EventRequest request,
+                                          PsiElement context,
+                                          TextWithImports text,
+                                          EvaluatingComputable<ExpressionEvaluator> supplier) throws EvaluateException {
+      EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
+      if (cache != null && cache.myContext.equals(context) && cache.myTextWithImports.equals(text)) {
+        return cache.myEvaluator;
+      }
+      ExpressionEvaluator evaluator = supplier.compute();
+      request.putProperty(propertyName, new EvaluatorCache(context, text, evaluator));
+      return evaluator;
     }
   }
 
