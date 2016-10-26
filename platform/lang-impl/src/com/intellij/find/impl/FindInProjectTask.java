@@ -17,7 +17,7 @@ package com.intellij.find.impl;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.findInProject.FindInProjectManager;
@@ -30,10 +30,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -59,8 +57,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageLimitUtil;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -68,6 +66,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -76,6 +77,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 class FindInProjectTask {
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("find in path", JobSchedulerImpl.CORES_COUNT);
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
@@ -195,19 +197,19 @@ class FindInProjectTask {
     AtomicInteger i = new AtomicInteger();
     AtomicInteger count = new AtomicInteger();
 
-    Processor<VirtualFile> processor = virtualFile -> {
+    Consumer<VirtualFile> searchInFile = virtualFile -> {
       final int index = i.incrementAndGet();
-      if (!virtualFile.isValid()) return true;
+      if (!virtualFile.isValid()) return;
 
       long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
-      if (fileLength == -1) return true; // Binary or invalid
+      if (fileLength == -1) return; // Binary or invalid
 
       final boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
-      if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
+      if (skipProjectFile && !Registry.is("find.search.in.project.files")) return;
 
       if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
         myLargeFiles.add(virtualFile);
-        return true;
+        return;
       }
 
       myProgress.checkCanceled();
@@ -218,7 +220,7 @@ class FindInProjectTask {
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
 
       PsiFile psiFile = ReadAction.compute(() -> findFile(virtualFile));
-      if (psiFile == null) return true;
+      if (psiFile == null) return;
 
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, info -> skipProjectFile || consumer.process(info));
 
@@ -228,7 +230,7 @@ class FindInProjectTask {
           model.setSearchInProjectFiles(true);
           FindInProjectManager.getInstance(myProject).startFindInProject(model);
         });
-        return true;
+        return;
       }
 
       count.addAndGet(countInFile);
@@ -240,9 +242,31 @@ class FindInProjectTask {
           UsageLimitUtil.showAndCancelIfAborted(myProject, message, processPresentation.getUsageViewPresentation());
         }
       }
-      return true;
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(virtualFiles), myProgress, false, processor);
+    forkJoin(virtualFiles, searchInFile);
+  }
+
+  private static void forkJoin(@NotNull Collection<VirtualFile> virtualFiles, Consumer<VirtualFile> searchInFile) {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    List<Future<?>> futures = ContainerUtil.map(virtualFiles, file -> ourExecutor.submit(() -> {
+      ProgressIndicator wrapper = indicator == null ? new EmptyProgressIndicator() : ProgressWrapper.wrap(indicator);
+      ProgressManager.getInstance().runProcess(() -> searchInFile.consume(file), wrapper);
+    }));
+    waitForFutures(futures);
+  }
+
+  private static void waitForFutures(List<Future<?>> futures) {
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException();
+      }
+      catch (ExecutionException e) {
+        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+      }
+    }
   }
 
   // must return non-binary files
