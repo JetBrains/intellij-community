@@ -42,7 +42,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 
   override final fun getOwnSeverityRegistrar() = severityRegistrar
 
-  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+  override final fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
     ContainerUtil.add(listener, profileListeners, parentDisposable)
   }
 

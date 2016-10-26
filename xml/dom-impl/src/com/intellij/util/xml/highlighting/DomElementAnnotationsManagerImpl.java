@@ -21,7 +21,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -30,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -121,7 +121,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
     };
 
-    ApplicationInspectionProfileManager.getInstanceImpl().addProfileChangeListener(profileChangeAdapter, project);
+    InspectionProfileManager.getInstance().addProfileChangeListener(profileChangeAdapter, project);
   }
 
   @Override
