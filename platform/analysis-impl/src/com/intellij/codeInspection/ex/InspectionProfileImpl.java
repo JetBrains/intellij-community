@@ -31,9 +31,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.ProfileEx;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -88,7 +88,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final Object myLock = new Object();
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
-  private InspectionProfileManager myProfileManager;
+  private BaseInspectionProfileManager myProfileManager;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
@@ -102,17 +102,27 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
-                               @NotNull InspectionProfileManager profileManager) {
+                               @NotNull BaseInspectionProfileManager profileManager) {
     this(profileName, registrar, profileManager, getBaseProfile(), null);
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
-    this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), null, null);
+    this(profileName, InspectionToolRegistrar.getInstance());
+  }
+
+  public InspectionProfileImpl(@NotNull String profileName, @NotNull InspectionToolRegistrar registrar) {
+    this(profileName, registrar, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), null, null);
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
-                               @NotNull InspectionProfileManager profileManager,
+                               @Nullable InspectionProfileImpl baseProfile) {
+    this(profileName, registrar, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
+  }
+
+  public InspectionProfileImpl(@NotNull String profileName,
+                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable InspectionProfileImpl baseProfile,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName);
@@ -125,7 +135,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
-                               @NotNull InspectionProfileManager profileManager,
+                               @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     this(profileName, registrar, profileManager, getBaseProfile(), dataHolder);
   }
@@ -140,7 +150,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       public List<InspectionToolWrapper> createTools() {
         return toolWrappers;
       }
-    }, InspectionProfileManager.getInstance());
+    }, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       profile.enableTool(toolWrapper.getShortName(), project);
     }
@@ -166,11 +176,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @NotNull
   @Transient
-  public InspectionProfileManager getProfileManager() {
+  public BaseInspectionProfileManager getProfileManager() {
     return myProfileManager;
   }
 
-  public void setProfileManager(@NotNull InspectionProfileManager profileManager) {
+  public void setProfileManager(@NotNull BaseInspectionProfileManager profileManager) {
     myProfileManager = profileManager;
   }
 
@@ -228,7 +238,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     Project project = element == null ? null : element.getProject();
     final ToolsImpl tools = getTools(inspectionToolKey.toString(), project);
     HighlightDisplayLevel level = tools != null ? tools.getLevel(element) : HighlightDisplayLevel.WARNING;
-    if (!((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
+    if (!getProfileManager().getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level, project);
     }
@@ -242,7 +252,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
       // from old profiles
-      ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
+      getProfileManager().getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
     String version = element.getAttributeValue(VERSION_TAG);

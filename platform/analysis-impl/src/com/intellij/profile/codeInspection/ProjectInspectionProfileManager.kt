@@ -164,10 +164,10 @@ class ProjectInspectionProfileManager(val project: Project,
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
 
-  @Synchronized override fun updateProfile(profile: Profile) {
+  @Synchronized override fun updateProfile(profile: InspectionProfileImpl) {
     super.updateProfile(profile)
 
-    (profile as InspectionProfileImpl).initInspectionTools(project)
+    profile.initInspectionTools(project)
   }
 
   override fun schemeRemoved(scheme: InspectionProfile) {

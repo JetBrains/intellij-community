@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -82,7 +83,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   private static final Pattern COPIED_PROFILE_SUFFIX_PATTERN = Pattern.compile("(.*\\s*copy)\\s*(\\d*)");
 
-  protected final InspectionProfileManager myApplicationProfileManager;
+  protected final BaseInspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final List<SingleInspectionProfilePanel> myPanels = new ArrayList<>();
   private final List<InspectionProfileImpl> myDeletedProfiles = new ArrayList<>();
@@ -93,7 +94,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   public InspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
-    myApplicationProfileManager = InspectionProfileManager.getInstance();
+    myApplicationProfileManager = (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
   }
 
   private static JComponent withBorderOnTop(final JComponent component) {
@@ -138,7 +139,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
     }
 
-    InspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
+    BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
     InspectionProfileImpl inspectionProfile =
       new InspectionProfileImpl(profileDefaultName, InspectionToolRegistrar.getInstance(), profileManager);
 
@@ -422,7 +423,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                              @NotNull InspectionProfileManager profileManager,
+                                                              @NotNull BaseInspectionProfileManager profileManager,
                                                               @NotNull Project project,
                                                               @Nullable JPanel anchorPanel)
     throws JDOMException, IOException, InvalidDataException {
