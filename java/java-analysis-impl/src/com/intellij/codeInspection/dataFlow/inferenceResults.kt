@@ -33,7 +33,7 @@ data class ExpressionRange private constructor (private val startOffset: Int, pr
     fun create(expr: LighterASTNode, scopeStart: Int) = ExpressionRange(expr.startOffset - scopeStart, expr.endOffset - scopeStart)
   }
 
-  internal fun restoreExpression(scope: PsiCodeBlock): PsiExpression? {
+  fun restoreExpression(scope: PsiCodeBlock): PsiExpression? {
     val scopeStart = scope.textRange.startOffset
     return PsiTreeUtil.findElementOfClassAtRange(scope.containingFile, startOffset + scopeStart, endOffset + scopeStart,
                                                  PsiExpression::class.java)

@@ -36,7 +36,7 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
 public abstract class PreContract {
 
   @NotNull
-  abstract List<MethodContract> toContracts(@NotNull PsiMethod method);
+  abstract List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body);
 
 }
 
@@ -54,31 +54,34 @@ class KnownContract extends PreContract {
 
   @NotNull
   @Override
-  List<MethodContract> toContracts(@NotNull PsiMethod method) {
+  List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
     return Collections.singletonList(myKnownContract);
   }
 }
 
 class DelegationContract extends PreContract {
 
-  private final PsiMethodCallExpression myExpression;
+  private final ExpressionRange myExpression;
   private final boolean myNegated;
 
-  DelegationContract(PsiMethodCallExpression expression, boolean negated) {
+  DelegationContract(ExpressionRange expression, boolean negated) {
     myExpression = expression;
     myNegated = negated;
   }
 
   @NotNull
   @Override
-  List<MethodContract> toContracts(@NotNull PsiMethod method) {
-    JavaResolveResult result = myExpression.resolveMethodGenerics();
+  List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
+    PsiMethodCallExpression call = (PsiMethodCallExpression)myExpression.restoreExpression(body);
+    if (call == null) return Collections.emptyList();
+
+    JavaResolveResult result = call.resolveMethodGenerics();
 
     final PsiMethod targetMethod = (PsiMethod)result.getElement();
     if (targetMethod == null) return Collections.emptyList();
 
     final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
-    final PsiExpression[] arguments = myExpression.getArgumentList().getExpressions();
+    final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     final boolean varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.getSubstitutor(), arguments, parameters);
 
     final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
@@ -96,9 +99,10 @@ class DelegationContract extends PreContract {
             break;
           }
 
-          int paramIndex = resolveParameter(arguments[i], method);
+          PsiExpression argument = arguments[i];
+          int paramIndex = resolveParameter(method, argument);
           if (paramIndex < 0) {
-            if (argConstraint != getLiteralConstraint(arguments[i])) {
+            if (argConstraint != getLiteralConstraint(argument)) {
               return null;
             }
           }
@@ -121,26 +125,41 @@ class DelegationContract extends PreContract {
     }
     return fromDelegate;
   }
+
+  private static ValueConstraint getLiteralConstraint(PsiExpression argument) {
+    return argument instanceof PsiLiteralExpression ? ContractInferenceInterpreter.getLiteralConstraint(argument.getFirstChild().getNode().getElementType()) : null;
+  }
+
+  private static int resolveParameter(@NotNull PsiMethod method, PsiExpression expr) {
+    PsiElement target = expr instanceof PsiReferenceExpression && !((PsiReferenceExpression)expr).isQualified()
+                        ? ((PsiReferenceExpression)expr).resolve() : null;
+    return target instanceof PsiParameter && target.getParent() == method.getParameterList()
+           ? method.getParameterList().getParameterIndex((PsiParameter)target) : -1;
+  }
 }
 
 class SideEffectFilter extends PreContract {
-  private final List<PsiExpression> myExpressionsToCheck;
+  private final List<ExpressionRange> myExpressionsToCheck;
   private final List<PreContract> myContracts;
 
-  SideEffectFilter(List<PsiExpression> expressionsToCheck, List<PreContract> contracts) {
+  SideEffectFilter(List<ExpressionRange> expressionsToCheck, List<PreContract> contracts) {
     myExpressionsToCheck = expressionsToCheck;
     myContracts = contracts;
   }
 
   @NotNull
   @Override
-  List<MethodContract> toContracts(@NotNull PsiMethod method) {
-    if (ContainerUtil.exists(myExpressionsToCheck, d -> SideEffectChecker.mayHaveSideEffects(d))) {
+  List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
+    if (ContainerUtil.exists(myExpressionsToCheck, d -> mayHaveSideEffects(body, d))) {
       return Collections.emptyList();
     }
-    return ContainerUtil.concat(myContracts, c -> c.toContracts(method));
+    return ContainerUtil.concat(myContracts, c -> c.toContracts(method, body));
   }
 
+  private static boolean mayHaveSideEffects(PsiCodeBlock body, ExpressionRange range) {
+    PsiExpression exp = range.restoreExpression(body);
+    return exp != null && SideEffectChecker.mayHaveSideEffects(exp);
+  }
 }
 
 class NegatingContract extends PreContract {
@@ -152,8 +171,8 @@ class NegatingContract extends PreContract {
 
   @NotNull
   @Override
-  List<MethodContract> toContracts(@NotNull PsiMethod method) {
-    return ContainerUtil.mapNotNull(myNegated.toContracts(method), NegatingContract::negateContract);
+  List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
+    return ContainerUtil.mapNotNull(myNegated.toContracts(method, body), NegatingContract::negateContract);
   }
 
   @Nullable
@@ -173,18 +192,19 @@ class NegatingContract extends PreContract {
 }
 
 class MethodCallContract extends PreContract {
-  private final PsiMethodCallExpression myCall;
+  private final ExpressionRange myCall;
   private final List<ValueConstraint[]> myStates;
 
-  MethodCallContract(PsiMethodCallExpression call, List<ValueConstraint[]> states) {
+  MethodCallContract(ExpressionRange call, List<ValueConstraint[]> states) {
     myCall = call;
     myStates = states;
   }
 
   @NotNull
   @Override
-  List<MethodContract> toContracts(@NotNull PsiMethod method) {
-    PsiMethod target = myCall.resolveMethod();
+  List<MethodContract> toContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
+    PsiMethodCallExpression call = (PsiMethodCallExpression)myCall.restoreExpression(body);
+    PsiMethod target = call == null ? null : call.resolveMethod();
     if (target != null && NullableNotNullManager.isNotNull(target)) {
       return ContractInferenceInterpreter.toContracts(myStates, NOT_NULL_VALUE);
     }

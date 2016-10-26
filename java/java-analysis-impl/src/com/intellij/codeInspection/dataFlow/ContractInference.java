@@ -17,16 +17,21 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.JavaLightTreeUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +40,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
 
 /**
  * @author peter
@@ -50,31 +59,34 @@ public class ContractInference {
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
-      List<PreContract> preContracts = new ContractInferenceInterpreter(method).inferContracts();
-      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, preContracts));
+      TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
+      PsiCodeBlock body = method.getBody();
+      assert body != null;
+      List<PreContract> preContracts = new ContractInferenceInterpreter(tree, method, TreeBackedLighterAST.wrap(body.getNode())).inferContracts();
+      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, body, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
   @NotNull
-  private static List<MethodContract> postProcessContracts(PsiMethod myMethod, List<PreContract> rawContracts) {
-    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(myMethod));
+  private static List<MethodContract> postProcessContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body, List<PreContract> rawContracts) {
+    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, body));
     if (contracts.isEmpty()) return Collections.emptyList();
     
-    final PsiType returnType = myMethod.getReturnType();
+    final PsiType returnType = method.getReturnType();
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
     List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
       if ((contract.returnValue == NOT_NULL_VALUE || contract.returnValue == NULL_VALUE) &&
-          NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false)) {
+          NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false)) {
         return false;
       }
       return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
     });
     if (compatible.size() > MAX_CONTRACT_COUNT) {
-      LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(myMethod) + ", shrinking the list");
+      LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(method) + ", shrinking the list");
       return compatible.subList(0, MAX_CONTRACT_COUNT);
     }
     return compatible;
@@ -93,28 +105,32 @@ public class ContractInference {
 }
 
 class ContractInferenceInterpreter {
+  private final LighterAST myTree;
   private final PsiMethod myMethod;
   private final ValueConstraint[] myEmptyConstraints;
+  private final LighterASTNode myBody;
 
-  public ContractInferenceInterpreter(PsiMethod method) {
+  public ContractInferenceInterpreter(LighterAST tree, PsiMethod method, LighterASTNode body) {
+    myTree = tree;
     myMethod = method;
+    myBody = body;
     myEmptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
   }
 
   List<PreContract> inferContracts() {
-    PsiCodeBlock body = myMethod.getBody();
-    PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
+    LighterASTNode[] statements = getStatements(myBody);
     if (statements.length == 0) return Collections.emptyList();
 
     if (statements.length == 1) {
-      if (statements[0] instanceof PsiReturnStatement) {
-        List<PreContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
+      if (statements[0].getTokenType() == RETURN_STATEMENT) {
+        List<PreContract> result = handleDelegation(findExpressionChild(myTree, statements[0]), false);
         if (result != null) {
           return result;
         }
       }
-      else if (statements[0] instanceof PsiExpressionStatement && ((PsiExpressionStatement)statements[0]).getExpression() instanceof PsiMethodCallExpression) {
-        List<PreContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
+      else if (statements[0].getTokenType() == EXPRESSION_STATEMENT) {
+        LighterASTNode expr = findExpressionChild(myTree, statements[0]);
+        List<PreContract> result = expr != null && expr.getTokenType() == METHOD_CALL_EXPRESSION ? handleDelegation(expr, false) : null;
         if (result != null) return result;
       }
     }
@@ -123,73 +139,98 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private static List<PreContract> handleDelegation(final PsiExpression expression, final boolean negated) {
-    if (expression instanceof PsiParenthesizedExpression) {
-      return handleDelegation(((PsiParenthesizedExpression)expression).getExpression(), negated);
+  private LighterASTNode getCodeBlock(@Nullable LighterASTNode parent) {
+    return firstChildOfType(myTree, parent, CODE_BLOCK);
+  }
+
+  @NotNull
+  private LighterASTNode[] getStatements(@Nullable LighterASTNode codeBlock) {
+    return codeBlock == null
+           ? LighterASTNode.EMPTY_ARRAY
+           : LightTreeUtil.getChildrenOfType(myTree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET).toArray(LighterASTNode.EMPTY_ARRAY);
+  }
+
+  @Nullable
+  private List<PreContract> handleDelegation(@Nullable LighterASTNode expression, boolean negated) {
+    if (expression == null) return null;
+    if (expression.getTokenType() == PARENTH_EXPRESSION) {
+      return handleDelegation(findExpressionChild(myTree, expression), negated);
     }
 
-    if (expression instanceof PsiPrefixExpression && ((PsiPrefixExpression)expression).getOperationTokenType() == JavaTokenType.EXCL) {
-      return handleDelegation(((PsiPrefixExpression)expression).getOperand(), !negated);
+    if (isNegationExpression(expression)) {
+      return handleDelegation(findExpressionChild(myTree, expression), !negated);
     }
 
-    if (expression instanceof PsiMethodCallExpression) {
-      return Collections.singletonList(new DelegationContract((PsiMethodCallExpression)expression, negated));
+    if (expression.getTokenType() == METHOD_CALL_EXPRESSION) {
+      return Collections.singletonList(new DelegationContract(ExpressionRange.create(expression, myBody.getStartOffset()), negated));
     }
 
     return null;
   }
 
+  private boolean isNegationExpression(@Nullable LighterASTNode expression) {
+    return expression != null && expression.getTokenType() == PREFIX_EXPRESSION && firstChildOfType(myTree, expression, JavaTokenType.EXCL) != null;
+  }
+
   @NotNull
-  private List<PreContract> visitExpression(final List<ValueConstraint[]> states, @Nullable PsiExpression expr) {
+  private List<PreContract> visitExpression(final List<ValueConstraint[]> states, @Nullable LighterASTNode expr) {
+    if (expr == null) return Collections.emptyList();
     if (states.isEmpty()) return Collections.emptyList();
     if (states.size() > 300) return Collections.emptyList(); // too complex
 
-    if (expr instanceof PsiPolyadicExpression) {
-      PsiExpression[] operands = ((PsiPolyadicExpression)expr).getOperands();
-      IElementType op = ((PsiPolyadicExpression)expr).getOperationTokenType();
-      if (operands.length == 2 && (op == JavaTokenType.EQEQ || op == JavaTokenType.NE)) {
-        return asPreContracts(visitEqualityComparison(states, operands[0], operands[1], op == JavaTokenType.EQEQ));
+    IElementType type = expr.getTokenType();
+    if (type == POLYADIC_EXPRESSION || type == BINARY_EXPRESSION) {
+      List<LighterASTNode> operands = getExpressionChildren(myTree, expr);
+      if (operands.size() == 2) {
+        boolean equality = firstChildOfType(myTree, expr, JavaTokenType.EQEQ) != null;
+        if (equality || firstChildOfType(myTree, expr, JavaTokenType.NE) != null) {
+          return asPreContracts(visitEqualityComparison(states, operands.get(0), operands.get(1), equality));
+        }
       }
-      if (op == JavaTokenType.ANDAND || op == JavaTokenType.OROR) {
-        return asPreContracts(visitLogicalOperation(operands, op == JavaTokenType.ANDAND, states));
+      boolean logicalAnd = firstChildOfType(myTree, expr, JavaTokenType.ANDAND) != null;
+      if (logicalAnd || firstChildOfType(myTree, expr, JavaTokenType.OROR) != null) {
+        return asPreContracts(visitLogicalOperation(operands, logicalAnd, states));
       }
     }
 
-    if (expr instanceof PsiConditionalExpression) {
-      List<PreContract> conditionResults = visitExpression(states, ((PsiConditionalExpression)expr).getCondition());
+    if (type == CONDITIONAL_EXPRESSION) {
+      List<LighterASTNode> children = getExpressionChildren(myTree, expr);
+      if (children.size() != 3) return Collections.emptyList();
+
+      List<PreContract> conditionResults = visitExpression(states, children.get(0));
       return ContainerUtil.concat(
-        visitExpression(antecedentsReturning(conditionResults, TRUE_VALUE), ((PsiConditionalExpression)expr).getThenExpression()),
-        visitExpression(antecedentsReturning(conditionResults, FALSE_VALUE), ((PsiConditionalExpression)expr).getElseExpression()));
+        visitExpression(antecedentsReturning(conditionResults, TRUE_VALUE), children.get(1)),
+        visitExpression(antecedentsReturning(conditionResults, FALSE_VALUE), children.get(2)));
     }
 
 
-    if (expr instanceof PsiParenthesizedExpression) {
-      return visitExpression(states, ((PsiParenthesizedExpression)expr).getExpression());
+    if (type == PARENTH_EXPRESSION) {
+      return visitExpression(states, findExpressionChild(myTree, expr));
     }
-    if (expr instanceof PsiTypeCastExpression) {
-      return visitExpression(states, ((PsiTypeCastExpression)expr).getOperand());
+    if (type == TYPE_CAST_EXPRESSION) {
+      return visitExpression(states, findExpressionChild(myTree, expr));
     }
 
-    if (expr instanceof PsiPrefixExpression && ((PsiPrefixExpression)expr).getOperationTokenType() == JavaTokenType.EXCL) {
+    if (isNegationExpression(expr)) {
       List<PreContract> result = ContainerUtil.newArrayList();
-      for (PreContract contract : visitExpression(states, ((PsiPrefixExpression)expr).getOperand())) {
+      for (PreContract contract : visitExpression(states, findExpressionChild(myTree, expr))) {
         ContainerUtil.addIfNotNull(result, NegatingContract.negate(contract));
       }
       return result;
     }
 
-    if (expr instanceof PsiInstanceOfExpression) {
-      final int parameter = resolveParameter(((PsiInstanceOfExpression)expr).getOperand());
+    if (type == INSTANCE_OF_EXPRESSION) {
+      final int parameter = resolveParameter(findExpressionChild(myTree, expr));
       if (parameter >= 0) {
         return asPreContracts(ContainerUtil.mapNotNull(states, state -> contractWithConstraint(state, parameter, NULL_VALUE, FALSE_VALUE)));
       }
     }
 
-    if (expr instanceof PsiNewExpression) {
+    if (type == NEW_EXPRESSION) {
       return asPreContracts(toContracts(states, NOT_NULL_VALUE));
     }
-    if (expr instanceof PsiMethodCallExpression) {
-      return Collections.singletonList(new MethodCallContract((PsiMethodCallExpression)expr, states));
+    if (type == METHOD_CALL_EXPRESSION) {
+      return Collections.singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()), states));
     }
 
     final ValueConstraint constraint = getLiteralConstraint(expr);
@@ -234,8 +275,8 @@ class ContractInferenceInterpreter {
   }
 
   private List<MethodContract> visitEqualityComparison(List<ValueConstraint[]> states,
-                                                       PsiExpression op1,
-                                                       PsiExpression op2,
+                                                       LighterASTNode op1,
+                                                       LighterASTNode op2,
                                                        boolean equality) {
     int parameter = resolveParameter(op1);
     ValueConstraint constraint = getLiteralConstraint(op2);
@@ -273,10 +314,10 @@ class ContractInferenceInterpreter {
     return ContainerUtil.map(states, state -> new MethodContract(state, constraint));
   }
 
-  private List<MethodContract> visitLogicalOperation(PsiExpression[] operands, boolean conjunction, List<ValueConstraint[]> states) {
+  private List<MethodContract> visitLogicalOperation(List<LighterASTNode> operands, boolean conjunction, List<ValueConstraint[]> states) {
     ValueConstraint breakValue = conjunction ? FALSE_VALUE : TRUE_VALUE;
     List<MethodContract> finalStates = ContainerUtil.newArrayList();
-    for (PsiExpression operand : operands) {
+    for (LighterASTNode operand : operands) {
       List<PreContract> opResults = visitExpression(states, operand);
       finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.returnValue == breakValue));
       states = antecedentsReturning(opResults, negateConstraint(breakValue));
@@ -295,72 +336,72 @@ class ContractInferenceInterpreter {
 
   private static class CodeBlockContracts {
     List<PreContract> accumulated = new ArrayList<>();
-    List<PsiDeclarationStatement> declarations = new ArrayList<>();
+    List<ExpressionRange> varInitializers = new ArrayList<>();
 
     void addAll(List<PreContract> contracts) {
       if (contracts.isEmpty()) return;
 
-      if (declarations.isEmpty()) {
+      if (varInitializers.isEmpty()) {
         accumulated.addAll(contracts);
       } else {
-        accumulated.add(new SideEffectFilter(getVariableInitializers(), contracts));
+        accumulated.add(new SideEffectFilter(varInitializers, contracts));
       }
     }
 
-    @NotNull
-    List<PsiExpression> getVariableInitializers() {
-      return JBIterable.from(declarations).
-        flatMap(s -> JBIterable.of(s.getDeclaredElements())).
-        filter(PsiVariable.class).
-        flatMap(var -> JBIterable.of(var.getInitializer())).
-        toList();
+    void registerDeclaration(@NotNull LighterASTNode declStatement, @NotNull LighterAST tree, int scopeStart) {
+      for (LighterASTNode var : LightTreeUtil.getChildrenOfType(tree, declStatement, LOCAL_VARIABLE)) {
+        LighterASTNode initializer = findExpressionChild(tree, var);
+        if (initializer != null) {
+          varInitializers.add(ExpressionRange.create(initializer, scopeStart));
+        }
+      }
     }
   }
 
   @NotNull
-  private List<PreContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
+  private List<PreContract> visitStatements(List<ValueConstraint[]> states, LighterASTNode... statements) {
     CodeBlockContracts result = new CodeBlockContracts();
-    for (PsiStatement statement : statements) {
-      if (statement instanceof PsiBlockStatement) {
-        result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
+    for (LighterASTNode statement : statements) {
+      IElementType type = statement.getTokenType();
+      if (type == BLOCK_STATEMENT) {
+        result.addAll(visitStatements(states, getStatements(getCodeBlock(statement))));
       }
-      else if (statement instanceof PsiIfStatement) {
-        List<PreContract> conditionResults = visitExpression(states, ((PsiIfStatement)statement).getCondition());
+      else if (type == IF_STATEMENT) {
+        List<PreContract> conditionResults = visitExpression(states, findExpressionChild(myTree, statement));
 
-        PsiStatement thenBranch = ((PsiIfStatement)statement).getThenBranch();
-        if (thenBranch != null) {
-          result.addAll(visitStatements(antecedentsReturning(conditionResults, TRUE_VALUE), thenBranch));
+        LighterASTNode[] thenElse = getStatements(statement);
+        if (thenElse.length > 0) {
+          result.addAll(visitStatements(antecedentsReturning(conditionResults, TRUE_VALUE), thenElse[0]));
         }
 
         List<ValueConstraint[]> falseStates = antecedentsReturning(conditionResults, FALSE_VALUE);
-        PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
-        if (elseBranch != null) {
-          result.addAll(visitStatements(falseStates, elseBranch));
+        if (thenElse.length > 1) {
+          result.addAll(visitStatements(falseStates, thenElse[1]));
         } else {
           states = falseStates;
           continue;
         }
       }
-      else if (statement instanceof PsiWhileStatement) {
-        states = antecedentsReturning(visitExpression(states, ((PsiWhileStatement)statement).getCondition()), FALSE_VALUE);
+      else if (type == WHILE_STATEMENT) {
+        states = antecedentsReturning(visitExpression(states, findExpressionChild(myTree, statement)), FALSE_VALUE);
         continue;
       }
-      else if (statement instanceof PsiThrowStatement) {
+      else if (type == THROW_STATEMENT) {
         result.addAll(asPreContracts(toContracts(states, THROW_EXCEPTION)));
       }
-      else if (statement instanceof PsiReturnStatement) {
-        result.addAll(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()));
+      else if (type == RETURN_STATEMENT) {
+        result.addAll(visitExpression(states, findExpressionChild(myTree, statement)));
       }
-      else if (statement instanceof PsiAssertStatement) {
-        List<PreContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
+      else if (type == ASSERT_STATEMENT) {
+        List<PreContract> conditionResults = visitExpression(states, findExpressionChild(myTree, statement));
         result.addAll(asPreContracts(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION)));
       }
-      else if (statement instanceof PsiDeclarationStatement) {
-        result.declarations.add((PsiDeclarationStatement)statement);
+      else if (type == DECLARATION_STATEMENT) {
+        result.registerDeclaration(statement, myTree, myBody.getStartOffset());
         continue;
       }
-      else if (statement instanceof PsiDoWhileStatement) {
-        result.addAll(visitStatements(states, ((PsiDoWhileStatement)statement).getBody()));
+      else if (type == DO_WHILE_STATEMENT) {
+        result.addAll(visitStatements(states, getStatements(statement)));
       }
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'
@@ -369,14 +410,19 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  static ValueConstraint getLiteralConstraint(@Nullable PsiExpression expr) {
-    if (expr instanceof PsiLiteralExpression) {
-      if (expr.textMatches(PsiKeyword.TRUE)) return TRUE_VALUE;
-      if (expr.textMatches(PsiKeyword.FALSE)) return FALSE_VALUE;
-      if (expr.textMatches(PsiKeyword.NULL)) return NULL_VALUE;
-      return NOT_NULL_VALUE;
+  private ValueConstraint getLiteralConstraint(@Nullable LighterASTNode expr) {
+    if (expr != null && expr.getTokenType() == LITERAL_EXPRESSION) {
+      return getLiteralConstraint(myTree.getChildren(expr).get(0).getTokenType());
     }
     return null;
+  }
+
+  @NotNull
+  static ValueConstraint getLiteralConstraint(@NotNull IElementType literalTokenType) {
+    if (literalTokenType.equals(JavaTokenType.TRUE_KEYWORD)) return TRUE_VALUE;
+    if (literalTokenType.equals(JavaTokenType.FALSE_KEYWORD)) return FALSE_VALUE;
+    if (literalTokenType.equals(JavaTokenType.NULL_KEYWORD)) return NULL_VALUE;
+    return NOT_NULL_VALUE;
   }
 
   static ValueConstraint negateConstraint(@NotNull ValueConstraint constraint) {
@@ -390,16 +436,12 @@ class ContractInferenceInterpreter {
     return constraint;
   }
 
-  private int resolveParameter(@Nullable PsiExpression expr) {
-    return resolveParameter(expr, myMethod);
-  }
-
-  static int resolveParameter(@Nullable PsiExpression expr, PsiMethod method) {
-    if (expr instanceof PsiReferenceExpression && !((PsiReferenceExpression)expr).isQualified()) {
-      String name = ((PsiReferenceExpression)expr).getReferenceName();
+  private int resolveParameter(@Nullable LighterASTNode expr) {
+    if (expr != null && expr.getTokenType() == REFERENCE_EXPRESSION && findExpressionChild(myTree, expr) == null) {
+      String name = JavaLightTreeUtil.getNameIdentifierText(myTree, expr);
       if (name == null) return -1;
 
-      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiParameter[] parameters = myMethod.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
         if (name.equals(parameters[i].getName())) {
           return i;
