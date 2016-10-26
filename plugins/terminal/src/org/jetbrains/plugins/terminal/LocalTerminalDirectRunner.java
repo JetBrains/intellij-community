@@ -25,6 +25,7 @@ import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -221,7 +222,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (idx >= 0) {
       command.remove(idx);
       if (idx < command.size()) {
-        envs.put("JEDITERM_SOURCE", command.get(idx));
+        envs.put("JEDITERM_USER_RCFILE", FileUtil.expandUserHome(command.get(idx)));
         command.remove(idx);
       }
     }

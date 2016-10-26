@@ -53,6 +53,11 @@ export -f generate_command_executed_sequence
 #generate escape sequence after command is executed to notify jediterm emulator
 trap "generate_command_executed_sequence" DEBUG
 
+if [ -n "$JEDITERM_USER_RCFILE" ]
+then
+  source $JEDITERM_USER_RCFILE
+fi
+
 if [ -n "$JEDITERM_SOURCE" ]
 then
   source $JEDITERM_SOURCE
