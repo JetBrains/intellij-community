@@ -25,8 +25,10 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
     row(label = Label(label), init = init)
   }
 
-  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit) {
-    `$`.newRow(label, buttonGroup, separated).init()
+  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+    val row = `$`.newRow(label, buttonGroup, separated)
+    row.init()
+    return row
   }
 
   /**

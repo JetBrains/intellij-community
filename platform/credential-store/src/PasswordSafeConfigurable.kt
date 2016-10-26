@@ -145,7 +145,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   fun getCurrentDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
 
   fun updateEnabledState() {
-    modeToRow[ProviderType.KEEPASS]?.enabled = getProviderType() == ProviderType.KEEPASS
+    modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getProviderType() == ProviderType.KEEPASS
   }
 
   override fun getComponent(): JPanel {
@@ -163,7 +163,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           }
         }
 
-        row {
+        modeToRow[ProviderType.KEEPASS] = row {
           inKeePass()
           row("Database:") {
             keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
@@ -193,7 +193,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                 }
             )
           }
-          modeToRow[ProviderType.KEEPASS] = row("Master Password:") {
+          row("Master Password:") {
             keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
           }
         }
