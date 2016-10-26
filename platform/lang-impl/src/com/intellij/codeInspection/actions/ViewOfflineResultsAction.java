@@ -26,7 +26,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -111,13 +110,7 @@ public class ViewOfflineResultsAction extends AnAction {
           final String extension = inspectionFile.getExtension();
           if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
             profileName[0] = ApplicationManager.getApplication().runReadAction(
-                new Computable<String>() {
-                  @Override
-                  @Nullable
-                  public String compute() {
-                    return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
-                  }
-                }
+              (Computable<String>)() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString())
             );
           }
           else if (XML_EXTENSION.equals(extension)) {
@@ -184,7 +177,7 @@ public class ViewOfflineResultsAction extends AnAction {
   @NotNull
   public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull InspectionProfile inspectionProfile,
+                                                      @NotNull InspectionProfileImpl inspectionProfile,
                                                       @NotNull String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);

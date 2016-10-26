@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -47,7 +46,7 @@ import java.util.List;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private GlobalInspectionContextImpl myGlobalInspectionContext;
-  protected InspectionProfile myExternalProfile;
+  protected InspectionProfileImpl myExternalProfile;
 
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
@@ -124,7 +123,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     profiles.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myExternalProfile = (InspectionProfile)profiles.getSelectedItem();
+        myExternalProfile = (InspectionProfileImpl)profiles.getSelectedItem();
         final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
         dialog.setOKActionEnabled(canExecute);
         if (canExecute) {

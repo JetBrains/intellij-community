@@ -22,18 +22,16 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileEx;
-import com.intellij.profile.ProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -158,10 +156,9 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfile profile, Map<String, List<String>> dependencies) throws InvalidDataException {
+  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, Map<String, List<String>> dependencies) {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
-    final ProfileManager profileManager = profile.getProfileManager();
-    final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getOwnSeverityRegistrar();
+    final SeverityRegistrar registrar = profileManager.getOwnSeverityRegistrar();
     HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
     if (level == null) {
       level = HighlightDisplayLevel.WARNING;
@@ -175,48 +172,50 @@ public class ToolsImpl implements Tools {
     final InspectionToolWrapper toolWrapper = myDefaultState.getTool();
 
     final List<Element> scopeElements = toolElement.getChildren(ProfileEx.SCOPE);
-    final List<String> scopeNames = new ArrayList<>();
-    for (Element scopeElement : scopeElements) {
-      final String scopeName = scopeElement.getAttributeValue(ProfileEx.NAME);
-      if (scopeName == null) {
-        continue;
-      }
-      final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
-      NamedScope namedScope = null;
-      if (scopesHolder != null) {
-        namedScope = scopesHolder.getScope(scopeName);
-      }
-      final String errorLevel = scopeElement.getAttributeValue(LEVEL_ATTRIBUTE);
-      final String enabledInScope = scopeElement.getAttributeValue(ENABLED_ATTRIBUTE);
-      final InspectionToolWrapper copyToolWrapper = toolWrapper.createCopy();
-    // check if unknown children exists
-      if (scopeElement.getAttributes().size() > 3 || !scopeElement.getChildren().isEmpty()) {
-        copyToolWrapper.getTool().readSettings(scopeElement);
-      }
-      HighlightDisplayLevel scopeLevel = errorLevel != null ?
-                                         HighlightDisplayLevel.find(registrar.getSeverity(errorLevel)) : null;
-      if (scopeLevel == null) {
-        scopeLevel = level;
-      }
-      if (namedScope != null) {
-        addTool(namedScope, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
-      }
-      else {
-        addTool(scopeName, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+    if (!scopeElements.isEmpty()) {
+      final List<String> scopeNames = new SmartList<>();
+      for (Element scopeElement : scopeElements) {
+        final String scopeName = scopeElement.getAttributeValue(ProfileEx.NAME);
+        if (scopeName == null) {
+          continue;
+        }
+        final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
+        NamedScope namedScope = null;
+        if (scopesHolder != null) {
+          namedScope = scopesHolder.getScope(scopeName);
+        }
+        final String errorLevel = scopeElement.getAttributeValue(LEVEL_ATTRIBUTE);
+        final String enabledInScope = scopeElement.getAttributeValue(ENABLED_ATTRIBUTE);
+        final InspectionToolWrapper copyToolWrapper = toolWrapper.createCopy();
+        // check if unknown children exists
+        if (scopeElement.getAttributes().size() > 3 || !scopeElement.getChildren().isEmpty()) {
+          copyToolWrapper.getTool().readSettings(scopeElement);
+        }
+        HighlightDisplayLevel scopeLevel = errorLevel != null ?
+                                           HighlightDisplayLevel.find(registrar.getSeverity(errorLevel)) : null;
+        if (scopeLevel == null) {
+          scopeLevel = level;
+        }
+        if (namedScope != null) {
+          addTool(namedScope, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+        }
+        else {
+          addTool(scopeName, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+        }
+
+        scopeNames.add(scopeName);
       }
 
-      scopeNames.add(scopeName);
-    }
-
-    for (int i = 0; i < scopeNames.size(); i++) {
-      String scopeName = scopeNames.get(i);
-      List<String> order = dependencies.get(scopeName);
-      if (order == null) {
-        order = new ArrayList<>();
-        dependencies.put(scopeName, order);
-      }
-      for (int j = i + 1; j < scopeNames.size(); j++) {
-        order.add(scopeNames.get(j));
+      for (int i = 0; i < scopeNames.size(); i++) {
+        String scopeName = scopeNames.get(i);
+        List<String> order = dependencies.get(scopeName);
+        if (order == null) {
+          order = new ArrayList<>();
+          dependencies.put(scopeName, order);
+        }
+        for (int j = i + 1; j < scopeNames.size(); j++) {
+          order.add(scopeNames.get(j));
+        }
       }
     }
 
