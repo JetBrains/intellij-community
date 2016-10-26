@@ -57,7 +57,8 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
 
   private String getSubtaskInfo() {
     int index = myTask.getActiveSubtaskIndex() + 1;
-    return EduNames.SUBTASK + " " + index + "/" + myTask.getSubtaskNum();
+    int subtasksNum = myTask.getLastSubtaskIndex() + 1;
+    return EduNames.SUBTASK + " " + index + "/" + subtasksNum;
   }
 
   @Override

@@ -66,10 +66,11 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     };
     String header = isTestFile ? "test" : "task file";
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
-    panel.setText("This is " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + task.getSubtaskNum());
+    int subtaskSize = task.getLastSubtaskIndex() + 1;
+    panel.setText("This is " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
     panel.createActionLabel(SWITCH_SUBTASK, () -> {
       ArrayList<Integer> values = new ArrayList<>();
-      for (int i = 0; i < task.getSubtaskNum(); i++) {
+      for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {
         values.add(i);
       }
       values.add(ADD_SUBTASK_ID);
@@ -155,7 +156,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
         if (selectedValue.equals(SELECT)) {
           StudySubtaskUtils.switchStep(myProject, myTask, mySubtaskIndex);
         } else {
-          if (mySubtaskIndex != myTask.getSubtaskNum() - 1) {
+          if (mySubtaskIndex != myTask.getLastSubtaskIndex()) {
             //TODO: implement
           } else {
             //TODO: delete last subtask
