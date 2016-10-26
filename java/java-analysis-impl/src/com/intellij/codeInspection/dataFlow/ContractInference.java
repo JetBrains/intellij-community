@@ -40,6 +40,7 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
  * @author peter
  */
 public class ContractInference {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ContractInferenceInterpreter");
   public static final int MAX_CONTRACT_COUNT = 10;
 
   @NotNull
@@ -47,28 +48,18 @@ public class ContractInference {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Collections.emptyList();
     }
-    
+
     return CachedValuesManager.getCachedValue(method, () -> {
-      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () ->
-        new ContractInferenceInterpreter(method).inferContracts());
+      List<PreContract> preContracts = new ContractInferenceInterpreter(method).inferContracts();
+      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
-}
 
-class ContractInferenceInterpreter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ContractInferenceInterpreter");
-  private final PsiMethod myMethod;
-  private final ValueConstraint[] myEmptyConstraints;
-
-  public ContractInferenceInterpreter(PsiMethod method) {
-    myMethod = method;
-    myEmptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
-  }
-
-  List<MethodContract> inferContracts() {
-    List<MethodContract> contracts = ContainerUtil.concat(doInferContracts(), c -> c.toContracts(myMethod));
+  @NotNull
+  private static List<MethodContract> postProcessContracts(PsiMethod myMethod, List<PreContract> rawContracts) {
+    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(myMethod));
     if (contracts.isEmpty()) return Collections.emptyList();
     
     final PsiType returnType = myMethod.getReturnType();
@@ -82,9 +73,9 @@ class ContractInferenceInterpreter {
       }
       return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
     });
-    if (compatible.size() > ContractInference.MAX_CONTRACT_COUNT) {
+    if (compatible.size() > MAX_CONTRACT_COUNT) {
       LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(myMethod) + ", shrinking the list");
-      return compatible.subList(0, ContractInference.MAX_CONTRACT_COUNT);
+      return compatible.subList(0, MAX_CONTRACT_COUNT);
     }
     return compatible;
   }
@@ -99,7 +90,18 @@ class ContractInferenceInterpreter {
     });
   }
 
-  private List<PreContract> doInferContracts() {
+}
+
+class ContractInferenceInterpreter {
+  private final PsiMethod myMethod;
+  private final ValueConstraint[] myEmptyConstraints;
+
+  public ContractInferenceInterpreter(PsiMethod method) {
+    myMethod = method;
+    myEmptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+  }
+
+  List<PreContract> inferContracts() {
     PsiCodeBlock body = myMethod.getBody();
     PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
     if (statements.length == 0) return Collections.emptyList();
