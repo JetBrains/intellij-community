@@ -115,8 +115,8 @@ public class IdeEventQueue extends EventQueue {
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
   private WindowManagerEx myWindowManager;
-  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<>();
-  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<>();
+  private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
