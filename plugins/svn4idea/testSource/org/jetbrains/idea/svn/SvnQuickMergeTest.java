@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -25,10 +24,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.SvnTestCase;
@@ -50,9 +45,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -339,56 +334,10 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
     MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
     QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
-    WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
 
-    ApplicationManager.getApplication().invokeLater(() -> quickMerge.execute(descriptor));
+    getApplication().invokeAndWait(quickMerge::execute);
 
-    descriptor.waitForCompletion();
+    quickMerge.waitForTasksToFinish();
     interaction.throwIfExceptions();
-
-    Assert.assertTrue(descriptor.isCompleted());
-  }
-
-  private static class WaitingTaskDescriptor extends TaskDescriptor {
-    private static final long TEST_TIMEOUT = TimeUnit.MINUTES.toMillis(200);
-    private final Semaphore mySemaphore;
-    private volatile boolean myCompleted = false;
-    private volatile boolean myCanceled = false;
-
-    public WaitingTaskDescriptor() {
-      super("waiting", Where.POOLED);
-      mySemaphore = new Semaphore();
-      mySemaphore.down();
-    }
-
-    // will survive in Continuation if cancel occurred
-    @Override
-    public boolean isHaveMagicCure() {
-      return true;
-    }
-
-    @Override
-    public void run(ContinuationContext context) {
-      myCompleted = true;
-      mySemaphore.up();
-    }
-
-    public void waitForCompletion() {
-      mySemaphore.waitFor(TEST_TIMEOUT);
-    }
-
-    @Override
-    public void canceled() {
-      myCanceled = true;
-      mySemaphore.up();
-    }
-
-    private boolean isCompleted() {
-      return myCompleted;
-    }
-
-    private boolean isCanceled() {
-      return myCanceled;
-    }
   }
 }

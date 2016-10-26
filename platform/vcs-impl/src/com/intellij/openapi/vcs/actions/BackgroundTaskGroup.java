@@ -39,7 +39,7 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
   private static final Logger LOG = Logger.getInstance(BackgroundTaskGroup.class);
 
-  @NotNull private final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
+  @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
   @NotNull private final Project myProject;
 
   public BackgroundTaskGroup(@NotNull Project project, @NotNull String title) {

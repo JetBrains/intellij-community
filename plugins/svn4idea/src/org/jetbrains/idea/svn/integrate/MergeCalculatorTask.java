@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
-import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
@@ -50,21 +49,10 @@ public class MergeCalculatorTask extends BaseMergeTask {
   @NotNull private final Consumer<MergeCalculatorTask> myCallback;
   private boolean myAllListsLoaded;
 
-  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess, @NotNull Consumer<MergeCalculatorTask> callback) {
-    this(mergeProcess, "Loading recent " + mergeProcess.getMergeContext().getBranchName() + " revisions", null, callback);
-  }
-
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
-                             @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                             @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint,
                              @NotNull Consumer<MergeCalculatorTask> callback) {
-    this(mergeProcess, "Filtering " + mergeProcess.getMergeContext().getBranchName() + " revisions", copyPoint, callback);
-  }
-
-  private MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
-                              @NotNull String title,
-                              @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint,
-                              @NotNull Consumer<MergeCalculatorTask> callback) {
-    super(mergeProcess, title, Where.POOLED);
+    super(mergeProcess);
     myCopyPoint = copyPoint;
     myCallback = callback;
     myChangeLists = newArrayList();
@@ -108,7 +96,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
       myCallback.consume(this);
     }
     else {
-      end("Everything is up-to-date", false);
+      myMergeProcess.end("Everything is up-to-date", false);
     }
   }
 

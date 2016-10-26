@@ -15,23 +15,28 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.FilePathByPathComparator;
-import com.intellij.util.continuation.Where;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
@@ -50,7 +55,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
   public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
                                 @Nullable List<SvnChangeList> changeListsToMerge,
                                 @NotNull Runnable callback) {
-    super(mergeProcess, "local changes intersection check", Where.AWT);
+    super(mergeProcess);
     myChangeListsToMerge = changeListsToMerge;
     myCallback = callback;
   }
@@ -82,7 +87,10 @@ public class LocalChangesPromptTask extends BaseMergeTask {
         myCallback.run();
         break;
       case shelve:
-        next(new ShelveLocalChangesTask(myMergeProcess, intersection, myCallback));
+        myMergeProcess.runInBackground("Shelving local changes before merge", indicator -> {
+          shelveChanges(intersection);
+          myCallback.run();
+        });
         break;
       case inspect:
         List<FilePath> intersectedPaths = sorted(getPaths(intersection.getAllChanges()), FilePathByPathComparator.getInstance());
@@ -90,6 +98,23 @@ public class LocalChangesPromptTask extends BaseMergeTask {
         break;
       case cancel:
         break;
+    }
+  }
+
+  private void shelveChanges(@NotNull Intersection intersection) throws VcsException {
+    try {
+      getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+
+      ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
+
+      for (Map.Entry<String, List<Change>> entry : intersection.getChangesByLists().entrySet()) {
+        String shelfName = intersection.getComment(entry.getKey()) + " (auto shelve before merge)";
+
+        shelveManager.shelveChanges(entry.getValue(), shelfName, true, true);
+      }
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
     }
   }
 

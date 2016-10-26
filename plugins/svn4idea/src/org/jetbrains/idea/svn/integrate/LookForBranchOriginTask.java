@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
-import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -29,7 +28,7 @@ public class LookForBranchOriginTask extends BaseMergeTask {
   public LookForBranchOriginTask(@NotNull QuickMerge mergeProcess,
                                  boolean fromSource,
                                  @NotNull Consumer<SvnBranchPointsCalculator.WrapperInvertor> callback) {
-    super(mergeProcess, "Looking for branch origin", Where.POOLED);
+    super(mergeProcess);
     myFromSource = fromSource;
     myCallback = callback;
   }
@@ -46,7 +45,7 @@ public class LookForBranchOriginTask extends BaseMergeTask {
       myCallback.consume(copyPoint);
     }
     else {
-      end("Merge start wasn't found", true);
+      myMergeProcess.end("Merge start wasn't found", true);
     }
   }
 }

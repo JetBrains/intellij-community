@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeTask extends BaseMergeTask {
@@ -28,7 +27,7 @@ public class MergeTask extends BaseMergeTask {
   @NotNull private final Runnable myCallback;
 
   public MergeTask(@NotNull QuickMerge mergeProcess, @NotNull Runnable callback) {
-    super(mergeProcess, "", Where.AWT);
+    super(mergeProcess);
     myCallback = callback;
   }
 
