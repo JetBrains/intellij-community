@@ -6,9 +6,20 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
@@ -16,10 +27,9 @@ import java.util.List;
 
 /**
  * @author Pavel.Dolgov
- * Run this test with 'main_idea_tests' classpath
  */
 public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
-  private static final String actionName = "Convert to JavaFX property";
+  private static final String actionName = JavaFxFieldToPropertyIntention.FAMILY_NAME;
 
   @Override
   protected void setUpModule() {
@@ -44,20 +54,33 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testBigDecimalFieldToProperty() throws Exception {
-    doTest(true);
+  public void testFxmlPresenceFieldToProperty() throws Exception {
+    doTest(getTestName(false) + ".java", "sample.fxml");
   }
 
-  public void testLongFieldToProperty() throws Exception {
+  public void testArtifactPresenceFieldToProperty() throws Exception {
     doTest();
   }
 
-  private void doTest() throws Exception {
-    doTest(false);
+  public void testTwoFilesFieldToProperty() throws Exception {
+    final String testName = getTestName(false);
+    final String secondFileName = testName + "SecondFile.java";
+    doTest(testName + ".java", secondFileName);
+
+    final String expected = StringUtil.convertLineSeparators(VfsUtilCore.loadText(getVirtualFile(testName + "SecondFile_after.java")));
+    final PsiClass secondFileClass = JavaPsiFacade.getInstance(myProject).findClass("DoubleDemo2", GlobalSearchScope.allScope(myProject));
+    final String actual = secondFileClass.getContainingFile().getText();
+    assertEquals("Text mismatch[" + secondFileName + "]", expected, actual);
   }
 
-  private void doTest(boolean withFxml) throws Exception {
-    final IntentionAction intentionAction = getIntentionAction(withFxml);
+  private void doTest() throws Exception {
+    doTest(getTestName(false) + ".java");
+  }
+
+  private void doTest(String... fileNames) throws Exception {
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
+
+    final IntentionAction intentionAction = getIntentionAction(fileNames);
     assertNotNull(intentionAction);
 
     Editor editor = getEditor();
@@ -67,13 +90,8 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  protected IntentionAction getIntentionAction(boolean withFxml) throws Exception {
-    if (withFxml) {
-      configureByFiles(null, getTestName(false) + ".java", "sample.fxml");
-    }
-    else {
-      configureByFiles(null, getTestName(false) + ".java");
-    }
+  protected IntentionAction getIntentionAction(String... fileNames) throws Exception {
+    configureByFiles(null, fileNames);
     final List<HighlightInfo> infos = doHighlighting();
     final Editor editor = getEditor();
     final PsiFile file = getFile();
@@ -85,5 +103,4 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("javaFX") + "/testData/intentions/fieldToProperty/";
   }
-
 }

@@ -26,8 +26,8 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
     super.setUpModule();
   }
 
-  public void testLongFieldToProperty() throws Exception {
-    final IntentionAction intentionAction = getIntentionAction(false);
+  public void testArtifactPresenceFieldToProperty() throws Exception {
+    final IntentionAction intentionAction = getIntentionAction(getTestName(false) + ".java");
     // no artifact, no fxml, no javafx.* imports: the intention shoudn't be available
     assertNull(intentionAction);
   }

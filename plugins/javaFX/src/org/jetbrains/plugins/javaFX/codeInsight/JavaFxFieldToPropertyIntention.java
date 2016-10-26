@@ -4,9 +4,15 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,13 +21,17 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.*;
-import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +39,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,19 +47,20 @@ import java.util.Set;
  */
 public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(JavaFxFieldToPropertyIntention.class);
+  public static final String FAMILY_NAME = "Convert to JavaFX property";
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert to JavaFX property";
+    return FAMILY_NAME;
   }
 
   @NotNull
   @Override
   public String getText() {
     //noinspection DialogTitleCapitalization
-    return "Convert to JavaFX property";
+    return FAMILY_NAME;
   }
 
   @Override
@@ -70,41 +81,74 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     LOG.assertTrue(field != null, "field");
     final PropertyInfo property = PropertyInfo.createPropertyInfo(field, project);
     LOG.assertTrue(property != null, "propertyInfo");
+    new SearchUsagesTask(project, property).queue();
+  }
 
-    final Query<PsiReference> refs = ReferencesSearch.search(field);
+  private static class SearchUsagesTask extends Task.Modal {
+    private final PropertyInfo myProperty;
+    private List<PsiReference> myReferences;
+    private Set<PsiFile> myFiles;
 
-    final Set<PsiElement> elements = new HashSet<>();
-    elements.add(element);
-    for (PsiReference reference : refs) {
-      elements.add(reference.getElement());
+    public SearchUsagesTask(@NotNull Project project,
+                            @NotNull PropertyInfo property) {
+      super(project, "Searching for usages of '" + property.myFieldName + "'", true);
+      myProperty = property;
     }
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
-    field.normalizeDeclaration();
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final PsiType fromType = field.getType();
-    final PsiType toType = elementFactory.createTypeFromText(property.myObservableType.myText, field);
-    try {
-      final TypeMigrationRules rules = new TypeMigrationRules();
-      rules.setBoundScope(GlobalSearchScope.fileScope(element.getContainingFile()));
-      final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, toType);
-      final TypeMigrationUsageInfo[] migratedUsages = labeler.getMigratedUsages(false, field);
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      ReadAction.run(() -> {
+        final Query<PsiReference> refs = ReferencesSearch.search(myProperty.myField);
+        myReferences = ContainerUtil.mapNotNull(refs, ref -> ref);
 
-      for (PsiReference reference : refs) {
-        final PsiElement refElement = reference.getElement();
-        if (refElement instanceof PsiExpression) {
-          final TypeConversionDescriptor conversion =
-            property.myObservableType.findDirectConversion(refElement, toType, fromType, labeler);
-          if (conversion != null) {
-            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)refElement, project, conversion, new TypeEvaluator(null, null));
+        final Set<PsiElement> occurrences = new THashSet<>();
+        occurrences.add(myProperty.myField);
+        occurrences.addAll(ContainerUtil.mapNotNull(myReferences, PsiReference::getElement));
+
+        myFiles = ContainerUtil.map2SetNotNull(occurrences, element -> {
+          final PsiFile file = element.getContainingFile();
+          return file != null && file.isPhysical() ? file : null;
+        });
+
+        TransactionGuard.submitTransaction(myProject, () ->
+          WriteCommandAction
+            .runWriteCommandAction(myProject, "Convert '" + myProperty.myFieldName + "' to JavaFX property", null,
+                                   this::replaceUsages, myFiles.toArray(PsiFile.EMPTY_ARRAY)));
+      });
+    }
+
+    private void replaceUsages() {
+      final PsiField field = myProperty.myField;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(myFiles)) return;
+      field.normalizeDeclaration();
+
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      final PsiType fromType = field.getType();
+      final PsiType toType = elementFactory.createTypeFromText(myProperty.myObservableType.myText, field);
+      try {
+        final TypeMigrationRules rules = new TypeMigrationRules();
+        final Set<VirtualFile> virtualFiles = ContainerUtil.map2SetNotNull(myFiles, PsiFile::getVirtualFile);
+        rules.setBoundScope(GlobalSearchScope.filesScope(myProject, virtualFiles));
+        final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, toType);
+        labeler.getMigratedUsages(false, field);
+
+        for (PsiReference reference : myReferences) {
+          final PsiElement refElement = reference.getElement();
+          if (refElement instanceof PsiExpression) {
+            final PsiExpression expression = (PsiExpression)refElement;
+            final TypeConversionDescriptor conversion =
+              myProperty.myObservableType.findDirectConversion(expression, toType, fromType, labeler);
+            if (conversion != null) {
+              TypeMigrationReplacementUtil.replaceExpression(expression, myProject, conversion, new TypeEvaluator(null, null));
+            }
           }
         }
+        myProperty.convertField();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    property.convertField();
   }
 
   @Nullable
