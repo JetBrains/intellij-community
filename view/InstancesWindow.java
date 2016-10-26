@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
@@ -57,6 +58,7 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -210,6 +212,13 @@ public class InstancesWindow extends DialogWrapper {
           GlobalSearchScope.allScope(myProject));
 
       list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent event) {
+          list.navigateToSelectedValue(true);
+          return true;
+        }
+      }.installOn(list);
 
       InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(myDebugSession,
           myInstancesTree, list);
