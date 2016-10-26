@@ -44,11 +44,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
 import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
@@ -273,8 +271,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     return child;
   }
 
-  private static void copyUsedSeveritiesIfUndefined(InspectionProfileImpl selectedProfile, final ProfileManager profileManager) {
-    final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getSeverityRegistrar();
+  private static void copyUsedSeveritiesIfUndefined(InspectionProfileImpl selectedProfile, BaseInspectionProfileManager profileManager) {
+    final SeverityRegistrar registrar = profileManager.getSeverityRegistrar();
     final Set<HighlightSeverity> severities = selectedProfile.getUsedSeverities();
     for (Iterator<HighlightSeverity> iterator = severities.iterator(); iterator.hasNext();) {
       HighlightSeverity severity = iterator.next();

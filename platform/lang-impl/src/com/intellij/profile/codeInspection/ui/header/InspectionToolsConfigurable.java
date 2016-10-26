@@ -47,7 +47,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -573,8 +572,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {
-    final ProfileManager profileManager = inspectionProfile.getProfileManager();
-
     boolean projectProfileFound = false;
     boolean ideProfileFound = false;
 
@@ -587,7 +584,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       if (ideProfileFound && projectProfileFound) break;
     }
 
-    return profileManager == myProjectProfileManager ? projectProfileFound : ideProfileFound;
+    return inspectionProfile.getProfileManager() == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
 
   protected Collection<Profile> getProfiles() {

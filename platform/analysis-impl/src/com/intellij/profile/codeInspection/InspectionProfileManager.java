@@ -16,17 +16,18 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
+import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public interface InspectionProfileManager extends ProfileManager, SeverityProvider {
+public interface InspectionProfileManager extends SeverityProvider {
   String INSPECTION_DIR = "inspection";
 
   @NotNull
@@ -60,4 +61,12 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
 
   @NotNull
   InspectionProfile getCurrentProfile();
+
+  InspectionProfile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
+
+  default InspectionProfile getProfile(@NotNull String name) {
+    return getProfile(name, true);
+  }
+
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 }

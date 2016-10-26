@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -112,20 +113,20 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
 
     String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
-    final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    InspectionProfileImpl profile = (InspectionProfileImpl)inspectionProfileManager.getProfile(currentProfile, false);
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(myProject);
+    InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
     if (profile == null) {
       profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(currentProfile);
       if (profile != null) {
         return profile;
       }
 
-      final String[] availableProfileNames = inspectionProfileManager.getAvailableProfileNames();
+      final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
         //can't be
         return null;
       }
-      profile = (InspectionProfileImpl)inspectionProfileManager.getProfile(availableProfileNames[0]);
+      profile = profileManager.getProfile(availableProfileNames[0], true);
     }
     return profile;
   }
