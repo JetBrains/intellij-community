@@ -33,10 +33,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
-  protected boolean isRunning = false;
   private OnePixelSplitter mySplitter;
   private JPanel myViewPrompt;
   private JPanel myEditablePrompt;
+  protected JLabel myPromptLabel;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -97,12 +97,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
     c.weightx = 0;
     c.anchor = GridBagConstraints.NORTHWEST;
-    Integer number = promptNumber;
-    if (isRunning) {
-      number = -1;
-    }
 
-    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(number, promptType);
+    JLabel promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
+    if (promptType == IpnbEditorUtil.PromptType.In) {
+      myPromptLabel = promptComponent;
+    }
     c.insets = JBUI.insets(2, 2, 2, 5);
     parent.add(promptComponent, c);
 

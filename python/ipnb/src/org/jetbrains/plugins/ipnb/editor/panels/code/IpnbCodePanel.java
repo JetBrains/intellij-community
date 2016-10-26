@@ -116,18 +116,17 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       }
       setSecondComponent(myOutputComponent);
     }
-    
+
     public void hideOutputPanel() {
       setOutputStateInCell(true);
       setFirstComponent(myToggleBar);
       setSecondComponent(null);
     }
   }
-  
+
   @NotNull
   private JPanel createCodeComponent() {
     myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
-
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
@@ -149,7 +148,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return outputPanel;
   }
 
-  
+
 
   public void hideOutputPanel() {
     myHideableOutputPanel.hideOutputPanel();
@@ -253,8 +252,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void runCell(boolean selectNext) {
     mySelectNext = selectNext;
     updateCellSource();
-    isRunning = true;
-    updatePanel(null, null);
+    updatePrompt();
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
     setEditing(false);
@@ -272,32 +270,48 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text)));
   }
 
-  public void updatePanel(@Nullable final String replacementContent, @Nullable final List<IpnbOutputCell> outputContent) {
+  public void updatePrompt() {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeAndWait(() -> {
+      myCell.setPromptNumber(-1);
+      myCell.removeCellOutputs();
+      myViewPanel.removeAll();
+
+      final JComponent panel = createViewPanel();
+      myViewPanel.add(panel);
+    }, ModalityState.stateForComponent(this));
+  }
+
+  public void finishExecution() {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeAndWait(() -> {
+      final String promptText = IpnbEditorUtil.prompt(myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In);
+      myPromptLabel.setText(promptText);
+      final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
+      setEditing(false);
+      filePanel.revalidateAndRepaint();
+      if (mySelectNext) {
+        filePanel.selectNext(this, true);
+      }
+    }, ModalityState.stateForComponent(this));
+  }
+
+  public void updatePanel(@Nullable final String replacementContent, @Nullable final IpnbOutputCell outputContent) {
     final Application application = ApplicationManager.getApplication();
     application.invokeAndWait(() -> {
       if (replacementContent != null) {
         myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
+        String prompt = IpnbEditorUtil.prompt(null, IpnbEditorUtil.PromptType.In);
+        myCell.setPromptNumber(null);
+        myPromptLabel.setText(prompt);
         application.runWriteAction(() -> myCodeSourcePanel.getEditor().getDocument().setText(replacementContent));
       }
-      myCell.removeCellOutputs();
-      myViewPanel.removeAll();
-
-      isRunning = false;
       if (outputContent != null) {
-        for (IpnbOutputCell output : outputContent) {
-          myCell.addCellOutput(output);
-        }
+        myCell.addCellOutput(outputContent);
+        addOutputPanel(myViewPanel, outputContent, outputContent instanceof IpnbOutOutputCell);
       }
-
-      final JComponent panel = createViewPanel();
-      myViewPanel.add(panel);
-
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
-      setEditing(false);
       filePanel.revalidateAndRepaint();
-      if (mySelectNext && (replacementContent != null || outputContent != null)) {
-        filePanel.selectNext(this, true);
-      }
     }, ModalityState.stateForComponent(this));
   }
 

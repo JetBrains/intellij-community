@@ -105,7 +105,7 @@ public class IpnbEditorUtil {
     }
   }
 
-  public static JComponent createPromptComponent(@Nullable Integer promptNumber, @NotNull final PromptType type) {
+  public static JLabel createPromptComponent(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -120,7 +120,7 @@ public class IpnbEditorUtil {
     return promptLabel;
   }
 
-  protected static String prompt(@Nullable Integer promptNumber, @NotNull final PromptType type) {
+  public static String prompt(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In) {
       return promptNumber == null ? type + " [ ]:" : promptNumber > 0 ? String.format(type + " [%d]:", promptNumber) : type + " [*]:";
     }
