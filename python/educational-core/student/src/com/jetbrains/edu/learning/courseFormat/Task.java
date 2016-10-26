@@ -43,7 +43,7 @@ public class Task implements StudyItem {
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
   private int myActiveSubtaskIndex = 0;
-  @Expose private int mySubtaskNum = 1;
+  @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
 
@@ -230,7 +230,7 @@ public class Task implements StudyItem {
         placeholder.setStatus(status);
       }
     }
-    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getSubtaskNum() - 1) {
+    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
       return;
     }
     myStatus = status;
@@ -270,15 +270,15 @@ public class Task implements StudyItem {
     myActiveSubtaskIndex = activeSubtaskIndex;
   }
 
-  public int getSubtaskNum() {
-    return mySubtaskNum;
+  public int getLastSubtaskIndex() {
+    return myLastSubtaskIndex;
   }
 
-  public void setSubtaskNum(int subtaskNum) {
-    mySubtaskNum = subtaskNum;
+  public void setLastSubtaskIndex(int lastSubtaskIndex) {
+    myLastSubtaskIndex = lastSubtaskIndex;
   }
 
   public boolean hasSubtasks() {
-    return mySubtaskNum > 1;
+    return myLastSubtaskIndex > 0;
   }
 }
