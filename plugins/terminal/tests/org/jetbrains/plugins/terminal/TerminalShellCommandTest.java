@@ -44,10 +44,10 @@ public class TerminalShellCommandTest extends TestCase {
 
   public void testAddRcConfig() {
     hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
-    hasRcConfig("sh --login", "jediterm-bash.in", Maps.newHashMap());
+    hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
     Map<String, String> envs = Maps.newHashMap();
-    hasRcConfig("sh --rcfile ~/.bashrc", "jediterm-bash.in", envs);
-    assertEquals("~/.bashrc", envs.get("JEDITERM_SOURCE"));
+    hasRcConfig("bash --rcfile ~/.bashrc", "jediterm-bash.in", envs);
+    assertEquals("~/.bashrc", envs.get("JEDITERM_USER_RCFILE"));
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
