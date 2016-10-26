@@ -53,9 +53,10 @@ public class ContractInference {
       TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
       PsiCodeBlock body = method.getBody();
       assert body != null;
-      ASTNode node = method.getNode();
-      List<PreContract> preContracts = node == null ? Collections.emptyList() :
-                                       new ContractInferenceInterpreter(tree, TreeBackedLighterAST.wrap(node), TreeBackedLighterAST.wrap(body.getNode())).inferContracts();
+      ASTNode methodNode = method.getNode();
+      ASTNode bodyNode = body.getNode();
+      List<PreContract> preContracts = methodNode == null || bodyNode == null ? Collections.emptyList() :
+                                       new ContractInferenceInterpreter(tree, TreeBackedLighterAST.wrap(methodNode), TreeBackedLighterAST.wrap(bodyNode)).inferContracts();
       List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, body, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);

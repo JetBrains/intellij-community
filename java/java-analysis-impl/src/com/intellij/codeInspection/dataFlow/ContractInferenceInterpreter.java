@@ -149,11 +149,7 @@ class ContractInferenceInterpreter {
     }
 
     if (isNegationExpression(expr)) {
-      List<PreContract> result = ContainerUtil.newArrayList();
-      for (PreContract contract : visitExpression(states, findExpressionChild(myTree, expr))) {
-        ContainerUtil.addIfNotNull(result, NegatingContract.negate(contract));
-      }
-      return result;
+      return ContainerUtil.mapNotNull(visitExpression(states, findExpressionChild(myTree, expr)), PreContract::negate);
     }
 
     if (type == INSTANCE_OF_EXPRESSION) {
