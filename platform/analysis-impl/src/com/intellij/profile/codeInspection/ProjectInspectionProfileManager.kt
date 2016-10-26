@@ -264,7 +264,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   override fun getScopesManager() = scopeManager
 
-  @Synchronized override fun getProfiles(): Collection<Profile> {
+  @Synchronized override fun getProfiles(): Collection<InspectionProfile> {
     currentProfile
     return schemeManager.allSchemes
   }
