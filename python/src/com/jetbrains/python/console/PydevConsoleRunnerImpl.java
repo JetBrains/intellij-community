@@ -46,7 +46,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -688,9 +687,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         } else{
           DocumentEx document = myConsoleView.getConsoleEditor().getDocument();
           if (!(document.getTextLength() == 0)) {
+            ApplicationManager.getApplication().runWriteAction(() ->
             CommandProcessor
               .getInstance()
-              .runUndoTransparentAction(() -> document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1)));
+              .runUndoTransparentAction(() -> document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1))));
           }
 
         }
