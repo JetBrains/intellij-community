@@ -13,7 +13,7 @@
   ~  limitations under the License.
   ~
   -->
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
   <description>Plugin for Groovy language support, including Groovy++, Grape, Gant and Griffon</description>
@@ -23,7 +23,7 @@
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <depends optional="true">AntSupport</depends>
+  <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
 
@@ -107,8 +107,6 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebTestNGTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
-
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.XmlMarkupBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.JsonBuilderContributor"/>
@@ -1800,4 +1798,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
+
+  <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

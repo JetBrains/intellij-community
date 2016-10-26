@@ -83,4 +83,14 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testQuotedTypeReferenceTopLevel() {
     assertResolvesTo(LanguageLevel.PYTHON30, PyClass.class, "MyClass");
   }
+
+  // PY-20377
+  public void testFunctionTypeCommentParamTypeReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
+
+  // PY-20377
+  public void testFunctionTypeCommentReturnTypeReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
 }

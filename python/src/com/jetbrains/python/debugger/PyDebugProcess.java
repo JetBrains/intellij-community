@@ -65,6 +65,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.*;
@@ -1141,6 +1142,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     final PyType pyType = resolveTypeFromString(typeName, file);
     return pyType == null ? null : typeToPosition(pyType);
+  }
+
+  @Override
+  public void showNumericContainer(PyDebugValue value) {
+    PyViewNumericContainerAction.showNumericViewer(getProject(), value);
   }
 
   @Nullable

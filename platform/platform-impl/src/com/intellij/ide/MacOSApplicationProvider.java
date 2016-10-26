@@ -142,7 +142,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           for (File file : list) {
             if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
               LOG.debug("MacMenu: load project from ", file);
-              IdeaApplication.getInstance().setPerformProjectLoad(false);
+              IdeaApplication.getInstance().disableProjectLoad();
               return;
             }
           }

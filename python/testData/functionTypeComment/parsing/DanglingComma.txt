@@ -1,0 +1,15 @@
+FunctionTypeComment:a.functionTypeComment
+  PyFunctionTypeAnnotation
+    PyParameterTypeList
+      PsiElement(Py:LPAR)('(')
+      PyReferenceExpression: int
+        PsiElement(Py:IDENTIFIER)('int')
+      PsiElement(Py:COMMA)(',')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

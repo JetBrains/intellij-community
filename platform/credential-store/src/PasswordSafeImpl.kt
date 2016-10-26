@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 import org.jetbrains.concurrency.runAsync
+import java.nio.file.Paths
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
   internal @Volatile var currentProvider: PasswordStorage
@@ -33,12 +34,17 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
-  val isNativeCredentialStoreUsed: Boolean
-    get() = currentProvider !is KeePassCredentialStore
-
   init {
     if (settings.providerType == ProviderType.MEMORY_ONLY || ApplicationManager.getApplication().isUnitTestMode) {
       currentProvider = KeePassCredentialStore(memoryOnly = true)
+    }
+    else if (settings.providerType == ProviderType.KEEPASS) {
+
+      val dbFile = settings.state.keepassDb?.let {
+        LOG.catchAndLog { return@let Paths.get(it) }
+        return@let null
+      }
+      currentProvider = KeePassCredentialStore(memoryOnly = true, dbFile = dbFile)
     }
     else {
       currentProvider = createPersistentCredentialStore()
@@ -101,8 +107,8 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
-  override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes): Boolean {
-    if (isMemoryOnly) {
+  override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
+    if (isMemoryOnly || credentials.password.isNullOrEmpty()) {
       return true
     }
 

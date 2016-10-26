@@ -45,9 +45,9 @@ import java.util.List;
  * @author traff
  */
 public class IpnbEditorUtil {
-  public enum PromptType { In, Out, None }
+  public enum PromptType {In, Out, None}
 
-  public static Dimension PROMPT_SIZE = new Dimension(80, 30);
+  public static final Dimension PROMPT_SIZE = new Dimension(80, 30);
 
   public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
@@ -121,10 +121,12 @@ public class IpnbEditorUtil {
   }
 
   protected static String prompt(@Nullable Integer promptNumber, @NotNull final PromptType type) {
-    if (type == PromptType.In)
+    if (type == PromptType.In) {
       return promptNumber == null ? type + " [ ]:" : promptNumber > 0 ? String.format(type + " [%d]:", promptNumber) : type + " [*]:";
-    else if (type == PromptType.Out)
+    }
+    else if (type == PromptType.Out) {
       return promptNumber == null ? type + "[ ]:" : promptNumber > 0 ? String.format(type + "[%d]:", promptNumber) : type + "[*]:";
+    }
     return "";
   }
 

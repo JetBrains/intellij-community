@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

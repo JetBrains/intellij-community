@@ -26,7 +26,5 @@ public interface PyFrameworkProjectGenerator {
 
   boolean isFrameworkInstalled(Sdk sdk);
 
-  boolean acceptsRemoteSdk();
-
   boolean supportsPython3();
 }

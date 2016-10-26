@@ -180,4 +180,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testReferencesInFStringLiterals() {
     doTest();
   }
+
+  // PY-11208
+  public void testMockPatchObject() {
+    doMultiFileTest(getTestName(true) + ".py");
+  }
 }

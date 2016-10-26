@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,8 +60,8 @@ import java.util.Map;
 public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
-  private Map<String, IpnbConnection> myKernels = new HashMap<>();
-  private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<>();
+  private final Map<String, IpnbConnection> myKernels = new HashMap<>();
+  private final Map<String, IpnbCodePanel> myUpdateMap = new HashMap<>();
   private static final int MAX_ATTEMPTS = 10;
 
   public IpnbConnectionManager(final Project project) {
@@ -120,31 +121,31 @@ public final class IpnbConnectionManager implements ProjectComponent {
   public static String showDialogUrl(@NotNull final String initialUrl) {
     final String url = UIUtil.invokeAndWaitIfNeeded(
       () -> Messages.showInputDialog("Jupyter Notebook URL:", "Start Jupyter Notebook", null, initialUrl,
-                                   new InputValidator() {
-                                 @Override
-                                 public boolean checkInput(String inputString) {
-                                   try {
-                                     final URI uri = new URI(inputString);
-                                     if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
+                                 new InputValidator() {
+                                   @Override
+                                   public boolean checkInput(String inputString) {
+                                     try {
+                                       final URI uri = new URI(inputString);
+                                       if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
+                                         return false;
+                                       }
+                                     }
+                                     catch (URISyntaxException e) {
                                        return false;
                                      }
+                                     return !inputString.isEmpty();
                                    }
-                                   catch (URISyntaxException e) {
-                                     return false;
-                                   }
-                                   return !inputString.isEmpty();
-                                 }
 
-                                 @Override
-                                 public boolean canClose(String inputString) {
-                                   return true;
-                                 }
-                               }));
+                                        @Override
+                                        public boolean canClose(String inputString) {
+                                          return true;
+                                        }
+                                      }));
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
   public boolean startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
-                                  final boolean showNotification) {
+                                 final boolean showNotification) {
     try {
       final boolean[] connectionOpened = {false};
       final IpnbConnectionListenerBase listener = new IpnbConnectionListenerBase() {
@@ -343,6 +344,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }, () -> !processHandler.isProcessTerminated())
         .withRerun(() -> startIpythonServer(url, fileEditor))
         .withHelpId("reference.manage.py")
+        .withFilter(new UrlFilter())
         .run(), ModalityState.defaultModalityState());
       int countAttempt = 0;
       while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {

@@ -119,17 +119,20 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
                                                     file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 
-  public static Object computeProjectSettings(DirectoryProjectGenerator generator, ProjectSpecificSettingsStep settings) {
+  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator, final ProjectSpecificSettingsStep settings) {
     Object projectSettings = null;
     if (generator instanceof PythonProjectGenerator) {
-      projectSettings = ((PythonProjectGenerator)generator).getProjectSettings();
+      final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
+      projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {
-      projectSettings = ((WebProjectTemplate)generator).getPeer().getSettings();
+      projectSettings = ((WebProjectTemplate<?>)generator).getPeer().getSettings();
     }
     if (projectSettings instanceof PyNewProjectSettings) {
-      ((PyNewProjectSettings)projectSettings).setSdk(settings.getSdk());
-      ((PyNewProjectSettings)projectSettings).setInstallFramework(settings.installFramework());
+      final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;
+      newProjectSettings.setSdk(settings.getSdk());
+      newProjectSettings.setInstallFramework(settings.installFramework());
+      newProjectSettings.setRemotePath(settings.getRemotePath());
     }
     return projectSettings;
   }

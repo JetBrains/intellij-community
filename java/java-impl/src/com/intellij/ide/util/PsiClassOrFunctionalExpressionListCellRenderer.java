@@ -15,17 +15,21 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiClassOrFunctionalExpressionListCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
   @Override
   public String getElementText(NavigatablePsiElement element) {
     return element instanceof PsiClass ? ClassPresentationUtil.getNameForClass((PsiClass)element, false) 
-                                       : PsiExpressionTrimRenderer.render((PsiExpression)element);
+                                       : renderFunctionalExpression((PsiFunctionalExpression)element);
   }
 
   @Override
@@ -36,5 +40,13 @@ public class PsiClassOrFunctionalExpressionListCellRenderer extends PsiElementLi
   @Override
   protected int getIconFlags() {
     return 0;
+  }
+
+  @NotNull
+  static String renderFunctionalExpression(@NotNull PsiFunctionalExpression expression) {
+    final StubElement stub = ((StubBasedPsiElementBase<?>)expression).getGreenStub();
+    return stub instanceof FunctionalExpressionStub
+                       ? ((FunctionalExpressionStub)stub).getPresentableText()
+                       : PsiExpressionTrimRenderer.render(expression);
   }
 }

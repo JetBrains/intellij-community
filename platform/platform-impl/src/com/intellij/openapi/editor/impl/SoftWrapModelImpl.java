@@ -455,8 +455,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   public boolean prepareToMapping() {
-    if (myUpdateInProgress || myBulkUpdateInProgress ||
-        myActive > 0 || !isSoftWrappingEnabled() || myEditor.getDocument().getTextLength() <= 0) {
+    if (myUpdateInProgress || myBulkUpdateInProgress || myActive > 0 || !isSoftWrappingEnabled()) {
       return false;
     }
 

@@ -20,15 +20,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import org.junit.Test
 
-class ModuleRenameTest  : LightJava9ModulesCodeInsightFixtureTestCase() {
+class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)

@@ -12,5 +12,4 @@ public class IpnbJpegOutputCell extends IpnbImageOutputCell {
                             @Nullable Map<String, Object> metadata) {
     super(jpeg, text, prompt, metadata);
   }
-
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.hints.settings;
 
-import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -38,12 +38,16 @@ import java.util.stream.Collectors;
 public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private final Project myProject;
-  private final InlayParameterHintsProvider myHintsProvider;
-  
-  public ParameterNameHintsConfigurable(@NotNull Project project, @NotNull InlayParameterHintsProvider provider) {
+  private final Set<String> myDefaultBlackList;
+  private final Language myLanguage;
+
+  public ParameterNameHintsConfigurable(@NotNull Project project, 
+                                        @NotNull Set<String> defaultBlackList,
+                                        @NotNull Language language) {
     super(project);
     myProject = project;
-    myHintsProvider = provider;
+    myDefaultBlackList = defaultBlackList;
+    myLanguage = language;
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
   }
@@ -70,7 +74,8 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .filter((e) -> !e.trim().isEmpty())
       .collect(Collectors.toSet());
     
-    ParameterNameHintsSettings.getInstance().setIgnorePatternSet(myHintsProvider, updatedBlackList);
+    Diff diff = Diff.Builder.build(myDefaultBlackList, updatedBlackList);
+    ParameterNameHintsSettings.getInstance().setBlackListDiff(myLanguage, diff);
   }
 
   @Nullable
@@ -85,10 +90,11 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private void createUIComponents() {
     EditorTextFieldProvider service = ServiceManager.getService(myProject, EditorTextFieldProvider.class);
     myEditorTextField = service.getEditorField(PlainTextLanguage.INSTANCE, myProject, ContainerUtil.emptyIterable());
-    
-    Set<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternSet(myHintsProvider);
+
+    Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(myLanguage);
+    Set<String> blacklist = diff.applyOn(myDefaultBlackList);
+
     String text = StringUtil.join(blacklist, "\n");
-    
     myEditorTextField.setText(text);
     myEditorTextField.addDocumentListener(new DocumentAdapter() {
       @Override

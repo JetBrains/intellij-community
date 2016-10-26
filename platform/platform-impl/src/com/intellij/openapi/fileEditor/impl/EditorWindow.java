@@ -50,6 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -907,7 +908,7 @@ public class EditorWindow {
     if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
 
-    return result;
+    return JBUI.scale(result);
   }
 
   public void unsplit(boolean setCurrent) {

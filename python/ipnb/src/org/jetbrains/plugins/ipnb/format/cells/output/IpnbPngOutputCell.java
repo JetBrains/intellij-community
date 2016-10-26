@@ -11,5 +11,4 @@ public class IpnbPngOutputCell extends IpnbImageOutputCell {
                            @Nullable Map<String, Object> metadata) {
     super(png, text, prompt, metadata);
   }
-
 }

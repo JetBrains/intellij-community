@@ -310,6 +310,16 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyYieldFromIntention</className>
       <category>Python</category>
     </intentionAction>
+    
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertToFStringIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertTypeCommentToVariableAnnotationIntention</className>
+      <category>Python</category>
+    </intentionAction>
 
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
@@ -460,7 +470,7 @@
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
 
     <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
-    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveModuleMembersDelegate"/>
+    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
 
     <refactoring.changeSignatureUsageProcessor implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
 
@@ -503,7 +513,6 @@
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
 
@@ -559,6 +568,10 @@
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
     <lang.parserDefinition language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
     <highlightErrorFilter implementation="com.jetbrains.python.documentation.doctest.PyDocstringErrorFilter"/>
+
+    <!-- PyFunctionTypeAnnotation -->
+    <lang.parserDefinition language="PyFunctionTypeComment" 
+                           implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
@@ -822,13 +835,6 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
-
-    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
-            text="Make Top-Level Function"
-            description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
-      <add-to-group group-id="RefactoringMenu"/>
-    </action>
-
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

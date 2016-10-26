@@ -521,9 +521,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
-    PositionMarker oldMarker = myPositionMarker;
     myPositionMarker = new PositionMarker(offset);
-    oldMarker.dispose();
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myVirtualSpaceOffset = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
   }
@@ -660,12 +658,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public void dispose() {
     if (myPositionMarker != null) {
-      PositionMarker marker = myPositionMarker;
       myPositionMarker = null;
-      marker.dispose();
     }
     if (mySelectionMarker != null) {
-      mySelectionMarker.dispose();
       mySelectionMarker = null;
     }
     isValid = false;
@@ -1162,12 +1157,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         oldSelectionStart = oldSelectionEnd = getOffset();
       }
 
-      SelectionMarker marker = mySelectionMarker;
-      if (marker != null) {
-        marker.dispose();
-      }
-
-      marker = new SelectionMarker(startOffset, endOffset);
+      SelectionMarker marker = new SelectionMarker(startOffset, endOffset);
       if (visualPositionAware) {
         if (endPosition.after(startPosition)) {
           setRangeMarkerStartPosition(startPosition);
@@ -1224,7 +1214,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       if (marker != null && marker.isValid()) {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
-        marker.dispose();
         mySelectionMarker = null;
         myEditor.getSelectionModel().fireSelectionChanged(startOffset, endOffset, caretOffset, caretOffset);
       }

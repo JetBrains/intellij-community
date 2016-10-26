@@ -57,5 +57,4 @@ public class IpnbUtils {
     textArea.setBackground(IpnbEditorUtil.getBackground());
     return textArea;
   }
-
 }

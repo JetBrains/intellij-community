@@ -27,11 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
+import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
+
 public class FieldScriptTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
     final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
+    if (!hasNameInFile(scriptClass.getContainingFile(), "Field")) {
+      return;
+    }
     scriptClass.getContainingFile().accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitVariableDeclaration(@NotNull GrVariableDeclaration element) {

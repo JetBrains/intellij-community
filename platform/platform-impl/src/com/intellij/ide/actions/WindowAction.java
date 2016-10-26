@@ -35,6 +35,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
 
   private static boolean isEnabledFor(Window window) {
     if (window == null || window instanceof IdeFrame) return false;
+    if (window instanceof Dialog && !((Dialog)window).isResizable()) return false;
     JRootPane root = getRootPane(window);
     if (root == null) return true;
     Object property = root.getClientProperty(NO_WINDOW_ACTIONS);

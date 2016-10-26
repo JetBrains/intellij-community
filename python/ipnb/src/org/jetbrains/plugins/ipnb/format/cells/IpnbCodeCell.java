@@ -58,7 +58,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
     return new IpnbCodeCell(myLanguage, new ArrayList<>(getSource()), myPromptNumber, new ArrayList<>(myCellOutputs),
                             myMetadata);
   }
-  
+
   @NotNull
   public static IpnbCodeCell createEmptyCodeCell() {
     return new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<>(),

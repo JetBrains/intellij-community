@@ -40,28 +40,32 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     Project p = e.getProject();
     if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
       PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
-      String nodeType = debugValue.getType();
-      final ViewNumericContainerDialog dialog;
-      if ("ndarray".equals(nodeType)) {
-        dialog = new ViewNumericContainerDialog(p, (dialogWrapper) -> {
-          NumpyArrayTable arrayTable = new NumpyArrayTable(p, dialogWrapper, debugValue);
-          arrayTable.init();
-          return arrayTable.getComponent().getMainPanel();
-        });
-      }
-      else if (("DataFrame".equals(nodeType))) {
-        dialog = new ViewNumericContainerDialog(p, (dialogWrapper) -> {
-          DataFrameTable dataFrameTable = new DataFrameTable(p, dialogWrapper, debugValue);
-          dataFrameTable.init();
-          return dataFrameTable.getComponent().getMainPanel();
-        });
-      }
-      else {
-        throw new IllegalStateException("Cannot render node type: " + nodeType);
-      }
-
-      dialog.show();
+      showNumericViewer(p, debugValue);
     }
+  }
+
+  public static void showNumericViewer(Project project, PyDebugValue debugValue) {
+    String nodeType = debugValue.getType();
+    final ViewNumericContainerDialog dialog;
+    if ("ndarray".equals(nodeType)) {
+      dialog = new ViewNumericContainerDialog(project, (dialogWrapper) -> {
+        NumpyArrayTable arrayTable = new NumpyArrayTable(project, dialogWrapper, debugValue);
+        arrayTable.init();
+        return arrayTable.getComponent().getMainPanel();
+      });
+    }
+    else if (("DataFrame".equals(nodeType))) {
+      dialog = new ViewNumericContainerDialog(project, (dialogWrapper) -> {
+        DataFrameTable dataFrameTable = new DataFrameTable(project, dialogWrapper, debugValue);
+        dataFrameTable.init();
+        return dataFrameTable.getComponent().getMainPanel();
+      });
+    }
+    else {
+      throw new IllegalStateException("Cannot render node type: " + nodeType);
+    }
+
+    dialog.show();
   }
 
   @Nullable

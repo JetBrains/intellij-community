@@ -21,7 +21,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -628,6 +630,21 @@ public class PyPsiUtils {
       return (PsiFileSystemItem)element;
     }
     return element.getContainingFile();
+  }
+
+  @Nullable
+  public static String getContainingFilePath(@NotNull PsiElement element) {
+    final VirtualFile file;
+    if (element instanceof PsiFileSystemItem) {
+      file = ((PsiFileSystemItem)element).getVirtualFile();
+    }
+    else {
+      file = element.getContainingFile().getVirtualFile();
+    }
+    if (file != null) {
+      return FileUtil.toSystemDependentName(file.getPath());
+    }
+    return null;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

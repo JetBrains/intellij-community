@@ -128,6 +128,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       ((RefClassImpl)getOwnerClass()).addLibraryOverrideMethod(this);
     }
 
+    @NonNls final String name = method.getName();
+    if (getOwnerClass().isTestCase() && name.startsWith("test")) {
+      setTestMethod(true);
+    }
+
     PsiParameter[] paramList = method.getParameterList().getParameters();
     if (paramList.length > 0){
       myParameters = new RefParameterImpl[paramList.length];

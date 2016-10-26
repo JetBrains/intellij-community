@@ -28,8 +28,6 @@ public class IpnbMoveCellUpAction extends AnAction {
           });
         }
       }, "Ipnb.moveCell", new Object());
-
     }
   }
-
 }

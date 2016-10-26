@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,6 +240,12 @@ public class GroovyPropertyUtils {
     return propertyName.equals(bySetter) || (!isPropertyName(bySetter) && propertyName.equals(getPropertyNameBySetterName(method.getName())));
   }
 
+  public static boolean isSetterLike(@NotNull PsiMethod method, @NotNull String prefix) {
+    if (method.isConstructor()) return false;
+    if (method.getParameterList().getParametersCount() != 1) return false;
+    return isPropertyName(method.getName(), prefix);
+  }
+
   @Nullable
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     if (getterMethod instanceof GrAccessorMethod) {
@@ -365,11 +372,14 @@ public class GroovyPropertyUtils {
     return new String[]{getSetterName(name)};
   }
 
-  public static boolean isSetterName(String name) {
-    return name != null
-           && name.startsWith(SET_PREFIX)
-           && name.length() > 3
-           && (isUpperCase(name.charAt(3)) || (name.length() > 4 && isUpperCase(name.charAt(3))));
+  @Contract("null -> false")
+  public static boolean isSetterName(@Nullable String name) {
+    return isPropertyName(name, SET_PREFIX);
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isPropertyName(@Nullable String name, @NotNull String prefix) {
+    return name != null && name.startsWith(prefix) && name.length() > prefix.length() && isUpperCase(name.charAt(prefix.length()));
   }
 
   public static boolean isProperty(@Nullable PsiClass aClass, @Nullable String propertyName, boolean isStatic) {

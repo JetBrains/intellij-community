@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
+import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -1933,6 +1934,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+    if (wnd.getType() == ToolWindowType.FLOATING && wnd instanceof ToolWindowImpl) {
+      MaximizeActiveDialogAction.doMaximize(getFloatingDecorator(((ToolWindowImpl)wnd).getId()));
+      return;
+    }
+    if (wnd.getType() == ToolWindowType.WINDOWED && wnd instanceof ToolWindowImpl) {
+      WindowedDecorator decorator = getWindowedDecorator(((ToolWindowImpl)wnd).getId());
+      Frame frame = decorator != null && decorator.getFrame() instanceof Frame ? ((Frame)decorator.getFrame()) : null;
+      if (frame != null) {
+        int state = frame.getState();
+        if (state == Frame.NORMAL) {
+          frame.setState(Frame.MAXIMIZED_BOTH);
+        }
+        else if (state == Frame.MAXIMIZED_BOTH) {
+          frame.setState(Frame.NORMAL);
+        }
+      }
+      return;
+    }
     myToolWindowsPane.setMaximized(wnd, maximized);
   }
 

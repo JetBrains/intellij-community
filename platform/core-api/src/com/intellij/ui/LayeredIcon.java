@@ -25,19 +25,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class LayeredIcon extends AbstractSizeAdjustingIcon {
+public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
-  // Extra scale factor, not counting the global UI scale,
-  // thus the effective icon scale is myScale * JBUI.scale(1f)
-  private float myScale = 1f;
   private final boolean[] myDisabledLayers;
   private final int[] myHShifts;
   private final int[] myVShifts;
 
   private int myXShift;
   private int myYShift;
+
+  private int myWidth;
+  private int myHeight;
 
   public LayeredIcon(int layerCount) {
     myIcons = new Icon[layerCount];
@@ -54,9 +54,21 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   }
 
   @Override
+  public LayeredIcon withPreScaled(boolean preScaled) {
+    super.withPreScaled(preScaled);
+    for (int i = 0; i < myIcons.length; i++) {
+      myHShifts[i] = scaleVal(myHShifts[i], Scale.JBUI);
+      myVShifts[i] = scaleVal(myVShifts[i], Scale.JBUI);
+    }
+    adjustSize();
+    return this;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;
+    if (!super.equals(o)) return false;
 
     final LayeredIcon icon = (LayeredIcon)o;
 
@@ -67,7 +79,6 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     if (!Arrays.equals(myHShifts, icon.myHShifts)) return false;
     if (!Arrays.equals(myIcons, icon.myIcons)) return false;
     if (!Arrays.equals(myVShifts, icon.myVShifts)) return false;
-    if (myScale != icon.myScale) return false;
 
     return true;
   }
@@ -94,8 +105,8 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
       ((LayeredIcon)icon).checkIHaventIconInsideMe(this);
     }
     myIcons[layer] = icon;
-    myHShifts[layer] = hShift;
-    myVShifts[layer] = vShift;
+    myHShifts[layer] = scaleVal(hShift, Scale.JBUI);
+    myVShifts[layer] = scaleVal(vShift, Scale.JBUI);
     adjustSize();
   }
 
@@ -167,18 +178,18 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    if (validateJBUIScale()) adjustSize();
     for (int i = 0; i < myIcons.length; i++) {
       Icon icon = getOrScale(i);
       if (icon == null || myDisabledLayers[i]) continue;
-      float uiScale = JBUI.scale(1f); // [tav] todo: take global scale from Graphics in HiDPI-aware JDK
-      int xOffset = x + scaledVal(myXShift + myHShifts[i], uiScale);
-      int yOffset = y + scaledVal(myYShift + myVShifts[i], uiScale);
+      int xOffset = x + scaleVal(myXShift + myHShifts[i], Scale.ARBITRARY);
+      int yOffset = y + scaleVal(myYShift + myVShifts[i], Scale.ARBITRARY);
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
 
   private Icon getOrScale(int i) {
-    if (myScale == 1f) {
+    if (getScale() == 1f) {
       return myIcons[i];
     }
     if (myScaledIcons == null) {
@@ -189,14 +200,10 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     if (icon == null && myIcons[i] != null) {
       icon = myIcons[i];
       if (icon instanceof ScalableIcon) {
-        icon = myScaledIcons[i] = ((ScalableIcon)icon).scale(myScale);
+        icon = myScaledIcons[i] = ((ScalableIcon)icon).scale(getScale());
       }
     }
     return icon;
-  }
-
-  private Icon[] getIcons() {
-    return myScaledIcons != null && myScale != 1f ? myScaledIcons : myIcons;
   }
 
   public boolean isLayerEnabled(int layer) {
@@ -209,31 +216,20 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
 
   @Override
   public int getIconWidth() {
-    if (myWidth <= 1) { //icon is not loaded yet
+    if (myWidth <= 1 || validateJBUIScale()) {
       adjustSize();
-      return scaledVal(myWidth);
     }
-    return scaledVal(super.getIconWidth());
+    return scaleVal(myWidth, Scale.ARBITRARY);
   }
 
   @Override
   public int getIconHeight() {
-    if (myHeight <= 1) { //icon is not loaded yet
+    if (myHeight <= 1 || validateJBUIScale()) {
       adjustSize();
-      return scaledVal(myHeight);
     }
-    return scaledVal(super.getIconHeight());
+    return scaleVal(myHeight, Scale.ARBITRARY);
   }
 
-  private int scaledVal(int size) {
-    return scaledVal(size, 1f);
-  }
-
-  private int scaledVal(int size, float uiScale) {
-    return (int)(myScale * uiScale * size);
-  }
-
-  @Override
   protected void adjustSize() {
     int minX = Integer.MAX_VALUE;
     int maxX = Integer.MIN_VALUE;
@@ -274,9 +270,9 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   }
 
   @Override
-  public Icon scale(float scaleFactor) {
-    if (myScale != scaleFactor) {
-      myScale = scaleFactor;
+  public Icon scale(float scale) {
+    if (getScale() != scale) {
+      super.scale(scale);
       if (myScaledIcons!= null) Arrays.fill(myScaledIcons, null);
       adjustSize();
     }

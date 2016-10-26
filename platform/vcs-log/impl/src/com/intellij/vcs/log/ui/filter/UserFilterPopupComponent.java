@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

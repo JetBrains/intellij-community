@@ -22,12 +22,12 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.*;
@@ -44,10 +44,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author traff
@@ -136,15 +138,32 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteSdkCredentials data);
 
   /**
-   * Prepares project (i.e. sets appropriate mappings) if sdk is remote.
-   * Do not call this method if sdk is not remote: id does nothing
+   * @param sdk current sdk
+   * @return project synchronizer for this sdk. See {@link PyProjectSynchronizer} for more info
+   * @see PyProjectSynchronizer
    */
-  public abstract void prepareRemoteSettingsIfNeeded(@NotNull final Module module,
-                                                     @NotNull final Sdk sdk);
+  @Nullable
+  public abstract PyProjectSynchronizer getSynchronizer(@NotNull final Sdk sdk);
 
   public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
                                       RemoteSdkCredentials data,
                                       List<PathMappingSettings.PathMapping> mappings);
+
+  /**
+   * Creates form to browse remote box.
+   * You need to show it to user using dialog.
+   *
+   * @return null if remote sdk can't be browsed.
+   * First argument is consumer to get path, chosen by user.
+   * Second is panel to display to user
+   *
+   * @throws ExecutionException credentials can't be obtained due to remote server error
+   * @throws InterruptedException credentials can't be obtained due to remote server error
+   */
+  @Nullable
+  public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
+    throws ExecutionException, InterruptedException;
+
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {

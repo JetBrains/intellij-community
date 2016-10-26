@@ -165,10 +165,44 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public void scrollRectToVisible(Rectangle bounds) {
     Component view = getView();
-    if (view instanceof JComponent) {
+    if (view instanceof JComponent && !isAutoscroll(bounds)) {
       JBInsets.addTo(bounds, getViewInsets((JComponent)view));
     }
     super.scrollRectToVisible(bounds);
+  }
+
+  /**
+   * @param bounds a bounds passed to {@link #scrollRectToVisible}
+   * @return {@code true} if the specified bounds requested by auto-scrolling
+   */
+  private boolean isAutoscroll(Rectangle bounds) {
+    if (bounds.x == -bounds.width || bounds.x == getWidth()) {
+      if (bounds.y + bounds.height + bounds.y == getHeight()) {
+        // Horizontal auto-scrolling:
+        //          /---   or   ---\
+        //          y              y
+        //  /-width-!              !-width-\
+        //  !       !              !       !
+        //  h       !              !       h
+        //  e       !              !       e
+        //  i       !              !       i
+        //  g       !              !       g
+        //  h       !              !       h
+        //  t       !              !       t
+        //  !       !              !       !
+        //  \-------!              !-------/
+        //          y              y
+        //          \---   or   ---/
+        return true;
+      }
+    }
+    if (bounds.y == -bounds.height || bounds.y == getHeight()) {
+      if (bounds.x + bounds.width + bounds.x == getWidth()) {
+        // Vertical auto-scrolling is symmetric to horizontal one
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

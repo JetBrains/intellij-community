@@ -42,7 +42,12 @@ public class MainImpl {
             StartupUtil.runStartupWizard();
           }
 
-          new IdeaApplication(args).run();
+          IdeaApplication app = new IdeaApplication(args);
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> {
+            PluginManager.installExceptionHandler();
+            app.run();
+          });
         });
       }
     });

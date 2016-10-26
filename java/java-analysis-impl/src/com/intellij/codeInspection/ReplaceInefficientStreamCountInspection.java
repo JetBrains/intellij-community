@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -24,12 +25,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection.*;
+import static com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection.getQualifierMethodCall;
+import static com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection.isCallOf;
 
 /**
  * @author Tagir Valeev
  */
 public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
+
   private static final String COUNT_METHOD = "count";
   private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
@@ -55,15 +59,20 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
           final PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
           if (qualifierCall == null) return;
           final PsiMethod qualifier = qualifierCall.resolveMethod();
+          final CountFix fix;
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-            final CountFix fix = new CountFix(false);
-            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
+            fix = new CountFix(false);
           }
           else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FLAT_MAP_METHOD, 1) &&
                    doesFlatMapCallCollectionStream(qualifierCall)) {
-            final CountFix fix = new CountFix(true);
-            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
+            fix = new CountFix(true);
           }
+          else {
+            return;
+          }
+          PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+          LOG.assertTrue(nameElement != null);
+          holder.registerProblem(methodCall, nameElement.getTextRange().shiftRight(-methodCall.getTextOffset()), fix.getMessage(), fix);
         }
       }
     };
@@ -161,8 +170,22 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       if (!isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) return;
       PsiExpression qualifierExpression = qualifierCall.getMethodExpression().getQualifierExpression();
       if(qualifierExpression == null) return;
-      String replacementText = "(long) "+qualifierExpression.getText()+"."+SIZE_METHOD+"()";
-      PsiElement replacement = countCall.replace(factory.createExpressionFromText(replacementText, countCall));
+      boolean addCast = true;
+      PsiElement toReplace = countCall;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
+      if(parent instanceof PsiExpressionStatement) {
+        addCast = false;
+      } else if(parent instanceof PsiTypeCastExpression) {
+        PsiTypeElement castElement = ((PsiTypeCastExpression)parent).getCastType();
+        if(castElement != null && castElement.getType() instanceof PsiPrimitiveType) {
+          addCast = false;
+          if(PsiType.INT.equals(castElement.getType())) {
+            toReplace = parent;
+          }
+        }
+      }
+      String replacementText = (addCast ? "(long) " : "")+qualifierExpression.getText()+"."+SIZE_METHOD+"()";
+      PsiElement replacement = toReplace.replace(factory.createExpressionFromText(replacementText, countCall));
       if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
         RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
       }

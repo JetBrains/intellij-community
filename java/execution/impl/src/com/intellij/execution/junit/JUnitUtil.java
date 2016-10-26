@@ -37,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -60,6 +58,7 @@ public class JUnitUtil {
   public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.AfterEach";
 
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+  public static final String PARAMETRIZED_PARAMETER_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameter";
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
@@ -116,7 +115,12 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
-    if (checkRunWith && AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
+    if (checkRunWith) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
+      if (annotation != null) {
+        return !isParameterized(annotation);
+      }
+    }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
@@ -218,11 +222,11 @@ public class JUnitUtil {
     if (module != null) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
         ProgressManager.checkCanceled();
-        if (isMetaAnnotated(method, TEST5_ANNOTATIONS, module)) return true;
+        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) return true;
       }
 
       for (PsiClass aClass : psiClass.getInnerClasses()) {
-        if (isMetaAnnotated(aClass, JUNIT5_NESTED, module)) return true;
+        if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) return true;
       }
     }
 
@@ -239,41 +243,12 @@ public class JUnitUtil {
   
   public static boolean isTestAnnotated(final PsiMethod method) {
     if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
-      if (annotation != null) {
-        final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-        for (PsiNameValuePair attribute : attributes) {
-          final PsiAnnotationMemberValue value = attribute.getValue();
-          if (value instanceof PsiClassObjectAccessExpression ) {
-            final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
-            if (typeElement.getType().getCanonicalText().equals(PARAMETERIZED_CLASS_NAME)) {
-              return false;
-            }
-          }
-        }
-      }
       return true;
     }
 
-    Module module = ModuleUtilCore.findModuleForPsiElement(method);
-    return module != null && isMetaAnnotated(method, TEST5_ANNOTATIONS, module);
+    return MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
   }
 
-  private static boolean isMetaAnnotated(PsiModifierListOwner owner, final Collection<String> metaAnnotations, final Module module) {
-    for (String annotation : metaAnnotations) {
-      if (isMetaAnnotated(owner, annotation, module)) return true;
-    }
-    return false;
-  }
-
-  private static boolean isMetaAnnotated(PsiModifierListOwner owner, String annotation, Module module) {
-    Collection<PsiClass> annotations = MetaAnnotationUtil.getAnnotationTypesWithChildren(module, annotation, true);
-    Stream<String> qualifiedNames = annotations.stream().map(psiClass -> psiClass.getQualifiedName());
-    if (AnnotationUtil.isAnnotated(owner, qualifiedNames.collect(Collectors.toSet()), false)) {
-      return true;
-    }
-    return false;
-  }
 
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
@@ -375,6 +350,16 @@ public class JUnitUtil {
       if (isSuiteMethod(method)) return method;
     }
     return null;
+  }
+
+  public static boolean isParameterized(PsiAnnotation annotation) {
+    final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    if (value instanceof PsiClassObjectAccessExpression) {
+      final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+      final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
+      return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+    }
+    return false;
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {

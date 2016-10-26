@@ -261,13 +261,16 @@ public class FileChooserDescriptor implements Cloneable {
     if (file.isDirectory() && myChooseFolders) {
       return true;
     }
+
+    if (myFileFilter != null && !file.isDirectory() && myFileFilter.value(file)) {
+      return true;
+    }
+
     if (acceptAsJarFile(file)) {
       return true;
     }
+
     if (acceptAsGeneralFile(file)) {
-      return true;
-    }
-    if (myFileFilter != null && !file.isDirectory() && myFileFilter.value(file)) {
       return true;
     }
 

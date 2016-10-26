@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public class IpnbVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
-    if (visitorClass == PyIncorrectDocstringInspection.class || 
-        visitorClass == PyMissingOrEmptyDocstringInspection.class || 
+    if (visitorClass == PyIncorrectDocstringInspection.class ||
+        visitorClass == PyMissingOrEmptyDocstringInspection.class ||
         visitorClass == PyStatementEffectInspection.class) {
       return false;
     }

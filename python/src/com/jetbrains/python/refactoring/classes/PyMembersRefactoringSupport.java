@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
-import com.jetbrains.python.refactoring.move.PyDependentModuleMembersCollector;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyDependentModuleMembersCollector;
 
 /**
  * @author Dennis.Ushakov

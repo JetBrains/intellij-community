@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -182,17 +183,17 @@ public class GuiUtils {
     final Icon defaultIcon = UIUtil.getRadioButtonIcon();
     LayeredIcon deficon = new LayeredIcon(2);
     deficon.setIcon(defaultIcon, 0);
-    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setIcon(deficon);
 
     LayeredIcon pressed = new LayeredIcon(2);
     pressed.setIcon(defaultIcon, 0);
-    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setPressedIcon(pressed);
 
     LayeredIcon selected = new LayeredIcon(2);
     selected.setIcon(defaultIcon, 0);
-    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setSelectedIcon(selected);
   }
 

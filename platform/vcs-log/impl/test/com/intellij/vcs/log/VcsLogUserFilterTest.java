@@ -26,7 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;

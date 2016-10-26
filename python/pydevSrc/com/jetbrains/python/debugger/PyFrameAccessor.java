@@ -29,4 +29,6 @@ public interface PyFrameAccessor {
 
   @Nullable
   XSourcePosition getSourcePositionForType(String type);
+
+  default void showNumericContainer(PyDebugValue value) {}
 }
