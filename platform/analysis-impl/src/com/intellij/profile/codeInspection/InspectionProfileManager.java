@@ -60,4 +60,13 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
 
   @NotNull
   InspectionProfile getCurrentProfile();
+
+  Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
+
+  default Profile getProfile(@NotNull String name) {
+    return getProfile(name, true);
+  }
+
+  @NotNull
+  String[] getAvailableProfileNames();
 }
