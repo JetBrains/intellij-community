@@ -20,14 +20,17 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,63 +103,9 @@ public class PurityInference {
     if (calls.size() > 1 || !hasReturns.get()) return null;
     
     int bodyStart = body.getStartOffset();
-    return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> new ExpressionRange(node, bodyStart)),
-                                     calls.isEmpty() ? null : new ExpressionRange(calls.get(0), bodyStart));
+    return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),
+                                     calls.isEmpty() ? null : ExpressionRange.create(calls.get(0), bodyStart));
   }
 
 }
 
-class PurityInferenceResult {
-  private final List<ExpressionRange> myMutatedRefs;
-  private final ExpressionRange mySingleCall;
-
-  PurityInferenceResult(List<ExpressionRange> mutatedRefs, @Nullable ExpressionRange singleCall) {
-    myMutatedRefs = mutatedRefs;
-    mySingleCall = singleCall;
-  }
-
-  boolean isPure(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
-    return !mutatesNonLocals(method, body) && callsOnlyPureMethods(body);
-  }
-
-  private boolean mutatesNonLocals(@NotNull PsiMethod method, PsiCodeBlock body) {
-    return ContainerUtil.exists(myMutatedRefs, range -> !isLocalVarReference(range.restoreExpression(body), method));
-  }
-
-  private boolean callsOnlyPureMethods(PsiCodeBlock body) {
-    if (mySingleCall == null) return true;
-
-    final PsiMethod called = ((PsiCall)mySingleCall.restoreExpression(body)).resolveMethod();
-    return called != null && ControlFlowAnalyzer.isPure(called);
-  }
-
-  private static boolean isLocalVarReference(PsiExpression expression, PsiMethod scope) {
-    if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      return target instanceof PsiLocalVariable || target instanceof PsiParameter;
-    }
-    if (expression instanceof PsiArrayAccessExpression) {
-      PsiExpression array = ((PsiArrayAccessExpression)expression).getArrayExpression();
-      PsiElement target = array instanceof PsiReferenceExpression ? ((PsiReferenceExpression)array).resolve() : null;
-      return target instanceof PsiLocalVariable && isLocallyCreatedArray(scope, (PsiLocalVariable)target);
-    }
-    return false;
-  }
-
-  private static boolean isLocallyCreatedArray(PsiMethod scope, PsiLocalVariable target) {
-    PsiExpression initializer = target.getInitializer();
-    if (initializer != null && !(initializer instanceof PsiNewExpression)) {
-      return false;
-    }
-
-    for (PsiReference ref : ReferencesSearch.search(target, new LocalSearchScope(scope)).findAll()) {
-      if (ref instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiReferenceExpression)ref)) {
-        PsiAssignmentExpression assign = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiAssignmentExpression.class);
-        if (assign == null || !(assign.getRExpression() instanceof PsiNewExpression)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-}

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
@@ -32,7 +31,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -104,7 +102,7 @@ public class NullityInference {
         else if (type == METHOD_CALL_EXPRESSION) {
           String calledMethod = JavaLightTreeUtil.getNameIdentifierText(tree, tree.getChildren(expr).get(0));
           if (calledMethod != null) {
-            delegates.putValue(calledMethod, new ExpressionRange(expr, body.getStartOffset()));
+            delegates.putValue(calledMethod, ExpressionRange.create(expr, body.getStartOffset()));
           }
         }
         else {
@@ -141,46 +139,5 @@ public class NullityInference {
       return new NullityInferenceResult.Predefined(Nullness.NOT_NULL);
     }
     return null;
-  }
-}
-
-interface NullityInferenceResult {
-  @NotNull
-  Nullness getNullness(@NotNull PsiMethod method, @NotNull PsiCodeBlock body);
-
-  class Predefined implements NullityInferenceResult {
-    private final Nullness myNullness;
-
-    Predefined(Nullness nullness) {
-      myNullness = nullness;
-    }
-
-    @NotNull
-    @Override
-    public Nullness getNullness(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
-      return myNullness == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(method) ? Nullness.UNKNOWN : myNullness;
-    }
-  }
-
-  class FromDelegate implements NullityInferenceResult {
-    private final Collection<ExpressionRange> myDelegates;
-
-    FromDelegate(Collection<ExpressionRange> delegates) {
-      myDelegates = delegates;
-    }
-
-    @NotNull
-    @Override
-    public Nullness getNullness(@NotNull PsiMethod method, @NotNull PsiCodeBlock body) {
-      return myDelegates.stream().allMatch(range -> isNotNullCall(range, body)) ? Nullness.NOT_NULL : Nullness.UNKNOWN;
-    }
-
-    private static boolean isNotNullCall(ExpressionRange delegate, @NotNull PsiCodeBlock body) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)delegate.restoreExpression(body);
-      if (call.getType() instanceof PsiPrimitiveType) return true;
-
-      PsiMethod target = call.resolveMethod();
-      return target != null && NullableNotNullManager.isNotNull(target);
-    }
   }
 }
