@@ -23,7 +23,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -574,7 +573,24 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (callee instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
         if (qualifier != null && PyNames.ALL.equals(qualifier.getText())) {
-          // TODO handle append and extend with constant arguments here
+          final String calleeName = callee.getName();
+          if ("append".equals(calleeName)) {
+            final PyStringLiteralExpression argument = node.getArgument(0, PyStringLiteralExpression.class);
+            if (argument != null) {
+              myResult.add(argument.getStringValue());
+              return;
+            }
+          }
+          else if ("extend".equals(calleeName)) {
+            final PyExpression argument = node.getArgument(0, PyExpression.class);
+            if (argument != null) {
+              final List<String> results = PyUtil.strListValue(argument);
+              if (results != null) {
+                myResult.addAll(results);
+                return;
+              }
+            }
+          }
           myDynamic = true;
         }
       }
