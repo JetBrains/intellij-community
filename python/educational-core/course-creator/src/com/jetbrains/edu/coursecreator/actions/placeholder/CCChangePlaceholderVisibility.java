@@ -46,7 +46,7 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
     int length = isVisible() ? placeholder.getTaskText().length() : 0;
     placeholder.setLength(length);
     saveIndent(placeholder, state, !visible);
-    StudyUtils.drawAllWindows(state.getEditor(), state.getTaskFile());
+    StudyUtils.drawAllAnswerPlaceholders(state.getEditor(), state.getTaskFile());
   }
 
   private static void saveIndent(AnswerPlaceholder placeholder, CCState state, boolean visible) {

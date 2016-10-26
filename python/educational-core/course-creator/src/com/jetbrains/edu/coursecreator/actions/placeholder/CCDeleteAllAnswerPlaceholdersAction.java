@@ -65,7 +65,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
   private static void updateView(@NotNull final Editor editor,
                                  @NotNull final TaskFile taskFile) {
     editor.getMarkupModel().removeAllHighlighters();
-    StudyUtils.drawAllWindows(editor, taskFile);
+    StudyUtils.drawAllAnswerPlaceholders(editor, taskFile);
   }
 
   @Override

@@ -141,7 +141,7 @@ public class EduUtils {
                                                               VirtualFile answerFile,
                                                               VirtualFile parentDir,
                                                               @Nullable Task task,
-                                                              int toSubtaskIndex) {
+                                                              int targetSubtaskIndex) {
 
     VirtualFile studentFile = copyFile(requestor, parentDir, answerFile);
     if (studentFile == null) {
@@ -167,10 +167,10 @@ public class EduUtils {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
       int fromSubtask = task.getActiveSubtaskIndex();
-      placeholder.switchSubtask(project, studentDocument, fromSubtask, toSubtaskIndex);
+      placeholder.switchSubtask(project, studentDocument, fromSubtask, targetSubtaskIndex);
     }
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      replaceWithTaskText(project, studentDocument, placeholder, toSubtaskIndex);
+      replaceWithTaskText(project, studentDocument, placeholder, targetSubtaskIndex);
     }
     taskFile.setTrackChanges(true);
     studentDocument.removeDocumentListener(listener);

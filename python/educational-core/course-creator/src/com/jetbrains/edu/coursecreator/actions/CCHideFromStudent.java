@@ -64,7 +64,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
         for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getEditors(myFile)) {
           if (fileEditor instanceof TextEditor) {
             Editor editor = ((TextEditor)fileEditor).getEditor();
-            StudyUtils.drawAllWindows(editor, myTaskFile);
+            StudyUtils.drawAllAnswerPlaceholders(editor, myTaskFile);
           }
         }
       }

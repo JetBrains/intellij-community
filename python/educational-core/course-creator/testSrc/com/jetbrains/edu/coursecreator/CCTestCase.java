@@ -123,7 +123,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
       taskFile.addAnswerPlaceholder(placeholder);
     }
     taskFile.sortAnswerPlaceholders();
-    StudyUtils.drawAllWindows(myFixture.getEditor(), taskFile);
+    StudyUtils.drawAllAnswerPlaceholders(myFixture.getEditor(), taskFile);
     CCUtils.createResourceFile(file, StudyTaskManager.getInstance(getProject()).getCourse(), file.getParent());
     return file;
   }
