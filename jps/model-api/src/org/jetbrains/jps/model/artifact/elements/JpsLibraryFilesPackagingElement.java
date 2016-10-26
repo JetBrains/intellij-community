@@ -19,6 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 
 /**
+ * Represents 'library files' node in the output layout tree. When the artifact is being built the 'classes' roots of the specified library will be
+ * copied or packed to the corresponding place under the artifact output directory.
+ *
  * @author nik
  */
 public interface JpsLibraryFilesPackagingElement extends JpsPackagingElement {
