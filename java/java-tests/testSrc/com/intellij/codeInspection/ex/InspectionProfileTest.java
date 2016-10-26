@@ -68,8 +68,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     finally {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       InspectionProfileImpl.INIT_INSPECTIONS = false;
-      InspectionProfileManager.getInstance().deleteProfile(PROFILE);
+      getApplicationProfileManager().deleteProfile(PROFILE);
     }
+  }
+
+  @NotNull
+  private static BaseInspectionProfileManager getApplicationProfileManager() {
+    return (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
   }
 
   public void testCopyProjectProfile() throws Exception {
@@ -90,7 +95,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testSameNameSharedProfile() throws Exception {
-    BaseInspectionProfileManager profileManager = (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
+    BaseInspectionProfileManager profileManager = getApplicationProfileManager();
     InspectionProfileImpl localProfile = createProfile();
     profileManager.updateProfile(localProfile);
 
@@ -291,8 +296,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
-      InspectionToolsConfigurable.importInspectionProfile(toImportElement,
-                                                          (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), getProject(), null);
+      InspectionToolsConfigurable.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject(), null);
 
     //check merged
     Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();

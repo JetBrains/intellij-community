@@ -71,7 +71,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     schemeManager.addScheme(profile)
   }
 
-  override final fun deleteProfile(name: String) {
+  final fun deleteProfile(name: String) {
     schemeManager.removeScheme(name)?.let {
       schemeRemoved(it)
     }
