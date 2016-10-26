@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,9 @@ import org.jetbrains.annotations.NotNull;
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
 
-  private ProviderType myProviderType = ProviderType.MASTER_PASSWORD;
+  private ProviderType myProviderType = ProviderType.KEYCHAIN;
+
+  String keepassDb;
 
   @NotNull
   public ProviderType getProviderType() {
@@ -52,27 +55,20 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
   public State getState() {
     State s = new State();
     s.PROVIDER = myProviderType;
+    if (keepassDb != null && !keepassDb.equals(PasswordSafeConfigurableKt.getDefaultKeePassDbFilePath())) {
+      s.keepassDb = keepassDb;
+    }
     return s;
   }
 
   public void loadState(@NotNull State state) {
-    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.MASTER_PASSWORD));
+    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.KEYCHAIN));
+    keepassDb = StringUtil.nullize(state.keepassDb, true);
   }
 
   public static class State {
-    public ProviderType PROVIDER = ProviderType.MASTER_PASSWORD;
-  }
+    public ProviderType PROVIDER = ProviderType.KEYCHAIN;
 
-  public enum ProviderType {
-    @Deprecated
-    DO_NOT_STORE,
-    /**
-     * The passwords are stored only in the memory
-     */
-    MEMORY_ONLY,
-    /**
-     * The passwords are encrypted with master password
-     */
-    MASTER_PASSWORD
+    public String keepassDb;
   }
 }

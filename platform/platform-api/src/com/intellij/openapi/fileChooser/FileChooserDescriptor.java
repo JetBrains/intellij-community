@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,17 +261,12 @@ public class FileChooserDescriptor implements Cloneable {
     if (file.isDirectory() && myChooseFolders) {
       return true;
     }
-    if (acceptAsJarFile(file)) {
-      return true;
-    }
-    if (acceptAsGeneralFile(file)) {
-      return true;
-    }
-    if (myFileFilter != null && !file.isDirectory() && myFileFilter.value(file)) {
-      return true;
+
+    if (myFileFilter != null && !file.isDirectory()) {
+      return myFileFilter.value(file);
     }
 
-    return false;
+    return acceptAsJarFile(file) || acceptAsGeneralFile(file);
   }
 
   public Icon getIcon(final VirtualFile file) {

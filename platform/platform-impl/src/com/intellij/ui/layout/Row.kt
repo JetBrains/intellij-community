@@ -16,19 +16,41 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ClickListener
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.Link
 import com.intellij.ui.components.Panel
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
 import java.awt.Component
 import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 abstract class Row() {
+  abstract var enabled: Boolean
+
+  abstract var subRowsEnabled: Boolean
+
+  abstract val subRows: List<Row>
+
+  protected abstract val builder: LayoutBuilderImpl
+
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     Label(text, style, fontColor, bold)(gapLeft = gapLeft)
   }
@@ -45,6 +67,39 @@ abstract class Row() {
     button()
   }
 
+  fun textFieldWithBrowseButton(browseDialogTitle: String,
+                                value: String? = null,
+                                project: Project? = null,
+                                fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                                historyProvider: (() -> List<String>)? = null,
+                                fileChoosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+    val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChoosen)
+    value?.let { component.text = it }
+    component()
+    return component
+  }
+
+  fun gearButton(vararg actions: AnAction) {
+    val label = JLabel()
+    label.icon = AllIcons.General.Gear
+
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        JBPopupFactory.getInstance()
+            .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
+              when (dataId) {
+                PlatformDataKeys.CONTEXT_COMPONENT.name -> label
+                else -> null
+              }
+            }, true, null, 10)
+            .showUnderneathOf(label)
+        return true
+      }
+    }.installOn(label)
+
+    label()
+  }
+
   fun hint(text: String) {
     label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER, gapLeft = 3 * HORIZONTAL_GAP)
   }
@@ -55,7 +110,7 @@ abstract class Row() {
     panel(*constraints)
   }
 
-  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0)
+  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null)
 
   inline fun right(init: Row.() -> Unit) {
     alignRight()
@@ -64,9 +119,13 @@ abstract class Row() {
 
   protected abstract fun alignRight()
 
-  @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
-  fun row(label: String, init: Row.() -> Unit) {
+  inline fun row(label: String, init: Row.() -> Unit): Row {
+    val row = createRow(label)
+    row.init()
+    return row
   }
+
+  protected abstract fun createRow(label: String): Row
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: JLabel? = null, init: Row.() -> Unit) {
@@ -75,4 +134,8 @@ abstract class Row() {
   @Deprecated(message = "Nested noteRow is prohibited", level = DeprecationLevel.ERROR)
   fun noteRow(text: String) {
   }
+}
+
+enum class GrowPolicy {
+  SHORT_TEXT
 }

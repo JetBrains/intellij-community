@@ -35,13 +35,24 @@ import javax.crypto.spec.SecretKeySpec
 
 private const val GROUP_NAME = "IntelliJ Platform"
 
-private val DB_FILE_NAME = "c.kdbx"
+internal val DB_FILE_NAME = "c.kdbx"
 
 internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
-                                      private val dbFile: Path = baseDirectory.resolve(DB_FILE_NAME),
-                                      existingMasterPassword: String? = null) : PasswordStorage, CredentialStore {
+                                      dbFile: Path? = null,
+                                      existingMasterPassword: ByteArray? = null) : PasswordStorage, CredentialStore {
+  internal var dbFile: Path = dbFile ?: baseDirectory.resolve(DB_FILE_NAME)
+    set(path) {
+      if (field == path) {
+        return
+      }
+
+      field = path
+      needToSave.set(true)
+      save()
+    }
+
   private val db: KeePassDatabase
 
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
@@ -52,21 +63,21 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
 
-      val masterPassword = existingMasterPassword?.toByteArray() ?: masterKeyStorage.get()
+      val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
       if (masterPassword == null) {
         LOG.catchAndLog {
-          if (dbFile.exists()) {
+          if (this.dbFile.exists()) {
             val renameTo = baseDirectory.resolve("old.c.kdbx")
-            LOG.warn("Credentials database file exists ($dbFile), but no master password file. Moved to $renameTo")
-            dbFile.move(renameTo)
+            LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
+            this.dbFile.move(renameTo)
           }
         }
         db = KeePassDatabase()
       }
       else {
-        db = loadKdbx(dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+        db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
         if (existingMasterPassword != null) {
-          masterKeyStorage.set(existingMasterPassword.toByteArray())
+          masterKeyStorage.set(existingMasterPassword)
         }
       }
     }
@@ -86,7 +97,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
   @Synchronized
   fun save() {
-    if (memoryOnly || !needToSave.compareAndSet(true, false) || !db.isDirty) {
+    if (memoryOnly || (!needToSave.compareAndSet(true, false) && !db.isDirty)) {
       return
     }
 
@@ -178,12 +189,11 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     }
   }
 
-  fun setMasterPassword(password: String) {
+  fun setMasterPassword(masterPassword: ByteArray) {
     LOG.assertTrue(!memoryOnly)
 
-    val masterKey = password.toByteArray()
-    masterKeyStorage.set(masterKey)
-    dbFile.writeSafe { db.save(KdbxPassword(masterKey), it) }
+    masterKeyStorage.set(masterPassword)
+    dbFile.writeSafe { db.save(KdbxPassword(masterPassword), it) }
     dbFile.setOwnerPermissions()
   }
 }
@@ -192,7 +202,7 @@ internal fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory:
   val dbFile = baseDirectory.resolve(DB_FILE_NAME)
   Files.copy(path, dbFile, StandardCopyOption.REPLACE_EXISTING)
   dbFile.setOwnerPermissions()
-  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword)
+  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword.toByteArray())
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {

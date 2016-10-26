@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,17 +149,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
           // don't convert %s -> !s, for %s is the normal way to output the default representation
           out.append(":");
           if (f_modifier != null) {
-            // in strict order
-            if (has(f_modifier, '-')) out.append("<"); // left align
-            else if ("s".equals(fConversion) && !StringUtil.isEmptyOrSpaces(f_width)) {
-              // "%20s" aligns right, "{0:20s}" aligns left; to preserve align, make it explicit
-              out.append(">");
-            }
-            if (has(f_modifier, '+')) out.append("+"); // signed
-            else if (has(f_modifier, ' ')) out.append(" "); // default-signed
-            if (has(f_modifier, '#')) out.append("#"); // alt numbers
-            if (has(f_modifier, '0')) out.append("0"); // padding
-            // anything else can't be here
+            out.append(convertFormatSpec(f_modifier, f_width, fConversion));
           }
           if (f_width != null) {
             out.append(f_width);
@@ -207,6 +198,29 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     StringBuilder result = new StringBuilder();
     for (StringBuilder one : constants) result.append(one);
     return new Pair<>(result, usesNamedFormat);
+  }
+
+  @NotNull
+  public static String convertFormatSpec(@NotNull String modifier,
+                                         @Nullable String widthAndPrecision,
+                                         @Nullable String conversionChar) {
+    final StringBuilder result = new StringBuilder();
+    // in strict order
+    if (has(modifier, '-')) {
+      result.append("<"); // left align
+    }
+    else if ("s".equals(conversionChar) && !StringUtil.isEmptyOrSpaces(widthAndPrecision)) {
+      // "%20s" aligns right, "{0:20s}" aligns left; to preserve align, make it explicit
+      result.append(">");
+    }
+    if (has(modifier, '+')) {
+      result.append("+"); // signed
+    }
+    else if (has(modifier, ' ')) result.append(" "); // default-signed
+    if (has(modifier, '#')) result.append("#"); // alt numbers
+    if (has(modifier, '0')) result.append("0"); // padding
+    // anything else can't be here
+    return result.toString();
   }
 
   private static boolean has(String where, char what) {

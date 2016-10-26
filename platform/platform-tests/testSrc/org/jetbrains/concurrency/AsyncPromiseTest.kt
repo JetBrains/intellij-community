@@ -66,9 +66,9 @@ class AsyncPromiseTest {
   fun blockingGet() {
     val promise = AsyncPromise<String>()
     assertConcurrent(
-        { assertThat(promise.blockingGet(100)).isEqualTo("test") },
+        { assertThat(promise.blockingGet(1000)).isEqualTo("test") },
         {
-          Thread.sleep(80)
+          Thread.sleep(100)
           promise.setResult("test")
         })
   }
@@ -79,7 +79,7 @@ class AsyncPromiseTest {
     assertConcurrent(
         { assertThatThrownBy { promise.blockingGet(100) }.isInstanceOf(TimeoutException::class.java) },
         {
-          Thread.sleep(200)
+          Thread.sleep(1000)
           promise.setResult("test")
         })
   }
@@ -142,7 +142,7 @@ fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
     }
 
     // wait until all threads are ready
-    assertThat(allExecutorThreadsReady.await((runnables.size * 10).toLong(), TimeUnit.MILLISECONDS)).isTrue()
+    assertThat(allExecutorThreadsReady.await((runnables.size * 1000).toLong(), TimeUnit.MILLISECONDS)).isTrue()
     // start all test runners
     afterInitBlocker.countDown()
     assertThat(allDone.await(maxTimeoutSeconds.toLong(), TimeUnit.SECONDS)).isTrue()
