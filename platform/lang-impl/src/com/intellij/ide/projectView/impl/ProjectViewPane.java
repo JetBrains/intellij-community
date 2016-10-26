@@ -194,7 +194,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean isToBuildChildrenInBackground(Object element) {
-      return !(element instanceof AbstractTreeNode) || !((AbstractTreeNode)element).isAlwaysLeaf();
+      return true;
     }
   }
 

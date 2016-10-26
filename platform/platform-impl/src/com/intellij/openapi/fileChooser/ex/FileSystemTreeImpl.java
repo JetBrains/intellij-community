@@ -466,8 +466,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
           }
 
 
-          AbstractTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
-          final boolean async = treeStructure != null && treeStructure.isToBuildChildrenInBackground(virtualFile);
+          final boolean async = myTreeBuilder.isToBuildChildrenInBackground(virtualFile);
           DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
             if (virtualFile instanceof NewVirtualFile) {
               RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);

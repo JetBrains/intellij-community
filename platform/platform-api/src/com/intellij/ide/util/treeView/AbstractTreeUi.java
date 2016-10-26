@@ -292,7 +292,7 @@ public class AbstractTreeUi {
     boolean canUpdateBusyState = false;
 
     if (forcedBusy) {
-      if (canYield() || element != null && getTreeStructure().isToBuildChildrenInBackground(element)) {
+      if (canYield() || isToBuildChildrenInBackground(element)) {
         canUpdateBusyState = true;
       }
     } else {
@@ -693,7 +693,7 @@ public class AbstractTreeUi {
 
 
     final Ref<NodeDescriptor> rootDescriptor = new Ref<>(null);
-    final boolean bgLoading = getTreeStructure().isToBuildChildrenInBackground(rootElement);
+    final boolean bgLoading = isToBuildChildrenInBackground(rootElement);
 
     Runnable build = new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: build") {
       @Override
@@ -854,8 +854,7 @@ public class AbstractTreeUi {
       final AsyncPromise<Boolean> result = new AsyncPromise<>();
       promise = result;
 
-      Object element = getElementFromDescriptor(nodeDescriptor);
-      boolean bgLoading = getTreeStructure().isToBuildChildrenInBackground(element);
+      boolean bgLoading = isToBuildInBackground(nodeDescriptor);
 
       boolean edt = isEdt();
       if (bgLoading) {
@@ -1102,8 +1101,13 @@ public class AbstractTreeUi {
     });
   }
 
+  boolean isToBuildChildrenInBackground(Object element) {
+    AbstractTreeStructure structure = getTreeStructure();
+    return element != null && structure.isToBuildChildrenInBackground(element) && !structure.isAlwaysLeaf(element);
+  }
+
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
-    return getTreeStructure().isToBuildChildrenInBackground(getBuilder().getTreeStructureElement(descriptor));
+    return isToBuildChildrenInBackground(getElementFromDescriptor(descriptor));
   }
 
   @NotNull

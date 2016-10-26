@@ -689,4 +689,9 @@ public class AbstractTreeBuilder implements Disposable {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isSelectionBeingAdjusted();
   }
+
+  public boolean isToBuildChildrenInBackground(Object element) {
+    AbstractTreeUi ui = getUi();
+    return ui != null && ui.isToBuildChildrenInBackground(element);
+  }
 }
