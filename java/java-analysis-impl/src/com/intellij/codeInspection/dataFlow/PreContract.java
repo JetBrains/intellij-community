@@ -114,7 +114,7 @@ class DelegationContract extends PreContract {
         PsiExpression argument = callArguments[i];
         int paramIndex = resolveParameter(callerMethod, argument);
         if (paramIndex >= 0) {
-          answer = withConstraint(answer, paramIndex, argConstraint, callerMethod);
+          answer = withConstraint(answer, paramIndex, argConstraint);
           if (answer == null) {
             return null;
           }

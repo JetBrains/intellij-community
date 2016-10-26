@@ -79,6 +79,12 @@ public class ContractInference {
       contracts = boxReturnValues(contracts);
     }
     List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
+      for (int i = 0; i < contract.arguments.length; i++) {
+        if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(ContractInferenceInterpreter.getParameter(i, method))) {
+          return false;
+        }
+      }
+
       if ((contract.returnValue == NOT_NULL_VALUE || contract.returnValue == NULL_VALUE) &&
           NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false)) {
         return false;
@@ -263,10 +269,10 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private MethodContract contractWithConstraint(ValueConstraint[] state,
+  private static MethodContract contractWithConstraint(ValueConstraint[] state,
                                                        int parameter, ValueConstraint paramConstraint,
                                                        ValueConstraint returnValue) {
-    ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint, myMethod);
+    ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint);
     return newState == null ? null : new MethodContract(newState, returnValue);
   }
 
@@ -306,7 +312,7 @@ class ContractInferenceInterpreter {
     return getParameter(parameter, myMethod);
   }
 
-  private static PsiParameter getParameter(int parameter, PsiMethod method) {
+  static PsiParameter getParameter(int parameter, PsiMethod method) {
     return method.getParameterList().getParameters()[parameter];
   }
 
@@ -452,15 +458,11 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint, PsiMethod method) {
+  static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
     if (constraints[index] == constraint) return constraints;
 
     ValueConstraint negated = negateConstraint(constraint);
     if (negated != constraint && constraints[index] == negated) {
-      return null;
-    }
-
-    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(getParameter(index, method))) {
       return null;
     }
 
