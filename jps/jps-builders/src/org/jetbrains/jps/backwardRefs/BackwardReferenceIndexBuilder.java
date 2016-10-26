@@ -23,6 +23,8 @@ import org.jetbrains.jps.incremental.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public BackwardReferenceIndexBuilder() {
@@ -43,6 +45,11 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   @Override
   public void buildFinished(CompileContext context) {
     BackwardReferenceIndexWriter.closeIfNeed();
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.emptyList();
   }
 
   @Override
