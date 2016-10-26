@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -44,6 +44,7 @@ import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild
 import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
+import static com.intellij.psi.impl.source.tree.LightTreeUtil.getChildrenOfType;
 
 /**
  * @author peter
@@ -62,7 +63,9 @@ public class ContractInference {
       TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
       PsiCodeBlock body = method.getBody();
       assert body != null;
-      List<PreContract> preContracts = new ContractInferenceInterpreter(tree, method, TreeBackedLighterAST.wrap(body.getNode())).inferContracts();
+      ASTNode node = method.getNode();
+      List<PreContract> preContracts = node == null ? Collections.emptyList() :
+                                       new ContractInferenceInterpreter(tree, TreeBackedLighterAST.wrap(node), TreeBackedLighterAST.wrap(body.getNode())).inferContracts();
       List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, body, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -80,7 +83,7 @@ public class ContractInference {
     }
     List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
       for (int i = 0; i < contract.arguments.length; i++) {
-        if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(ContractInferenceInterpreter.getParameter(i, method))) {
+        if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
           return false;
         }
       }
@@ -112,15 +115,19 @@ public class ContractInference {
 
 class ContractInferenceInterpreter {
   private final LighterAST myTree;
-  private final PsiMethod myMethod;
-  private final ValueConstraint[] myEmptyConstraints;
+  private final LighterASTNode myMethod;
   private final LighterASTNode myBody;
 
-  public ContractInferenceInterpreter(LighterAST tree, PsiMethod method, LighterASTNode body) {
+  public ContractInferenceInterpreter(LighterAST tree, LighterASTNode method, LighterASTNode body) {
     myTree = tree;
     myMethod = method;
     myBody = body;
-    myEmptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+  }
+
+  @NotNull
+  private List<LighterASTNode> getParameters() {
+    LighterASTNode paramList = firstChildOfType(myTree, myMethod, PARAMETER_LIST);
+    return paramList != null ? getChildrenOfType(myTree, paramList, PARAMETER) : Collections.emptyList();
   }
 
   List<PreContract> inferContracts() {
@@ -141,7 +148,7 @@ class ContractInferenceInterpreter {
       }
     }
 
-    return visitStatements(Collections.singletonList(myEmptyConstraints), statements);
+    return visitStatements(Collections.singletonList(MethodContract.createConstraintArray(getParameters().size())), statements);
   }
 
   @Nullable
@@ -153,7 +160,7 @@ class ContractInferenceInterpreter {
   private LighterASTNode[] getStatements(@Nullable LighterASTNode codeBlock) {
     return codeBlock == null
            ? LighterASTNode.EMPTY_ARRAY
-           : LightTreeUtil.getChildrenOfType(myTree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET).toArray(LighterASTNode.EMPTY_ARRAY);
+           : getChildrenOfType(myTree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET).toArray(LighterASTNode.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -251,7 +258,7 @@ class ContractInferenceInterpreter {
         if (state[paramIndex] != ANY_VALUE) {
           // the second 'o' reference in cases like: if (o != null) return o;
           result.add(new MethodContract(state, state[paramIndex]));
-        } else if (textMatches(getParameter(paramIndex).getTypeElement(), PsiKeyword.BOOLEAN)) {
+        } else if (JavaTokenType.BOOLEAN_KEYWORD == getPrimitiveParameterType(paramIndex)) {
           // if (boolValue) ...
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, TRUE_VALUE));
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, FALSE_VALUE));
@@ -276,10 +283,6 @@ class ContractInferenceInterpreter {
     return newState == null ? null : new MethodContract(newState, returnValue);
   }
 
-  private static boolean textMatches(@Nullable PsiTypeElement typeElement, @NotNull String text) {
-    return typeElement != null && typeElement.textMatches(text);
-  }
-
   private List<MethodContract> visitEqualityComparison(List<ValueConstraint[]> states,
                                                        LighterASTNode op1,
                                                        LighterASTNode op2,
@@ -294,7 +297,7 @@ class ContractInferenceInterpreter {
       List<MethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
         if (constraint == NOT_NULL_VALUE) {
-          if (!(getParameter(parameter).getType() instanceof PsiPrimitiveType)) {
+          if (getPrimitiveParameterType(parameter) == null) {
             ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, NULL_VALUE, equality ? FALSE_VALUE : TRUE_VALUE));
           }
         } else {
@@ -308,12 +311,11 @@ class ContractInferenceInterpreter {
     return Collections.emptyList();
   }
 
-  private PsiParameter getParameter(int parameter) {
-    return getParameter(parameter, myMethod);
-  }
-
-  static PsiParameter getParameter(int parameter, PsiMethod method) {
-    return method.getParameterList().getParameters()[parameter];
+  @Nullable
+  private IElementType getPrimitiveParameterType(int paramIndex) {
+    LighterASTNode typeElement = firstChildOfType(myTree, getParameters().get(paramIndex), TYPE);
+    LighterASTNode primitive = firstChildOfType(myTree, typeElement, ElementType.PRIMITIVE_TYPE_BIT_SET);
+    return primitive == null ? null : primitive.getTokenType();
   }
 
   static List<MethodContract> toContracts(List<ValueConstraint[]> states, ValueConstraint constraint) {
@@ -355,7 +357,7 @@ class ContractInferenceInterpreter {
     }
 
     void registerDeclaration(@NotNull LighterASTNode declStatement, @NotNull LighterAST tree, int scopeStart) {
-      for (LighterASTNode var : LightTreeUtil.getChildrenOfType(tree, declStatement, LOCAL_VARIABLE)) {
+      for (LighterASTNode var : getChildrenOfType(tree, declStatement, LOCAL_VARIABLE)) {
         LighterASTNode initializer = findExpressionChild(tree, var);
         if (initializer != null) {
           varInitializers.add(ExpressionRange.create(initializer, scopeStart));
@@ -447,9 +449,9 @@ class ContractInferenceInterpreter {
       String name = JavaLightTreeUtil.getNameIdentifierText(myTree, expr);
       if (name == null) return -1;
 
-      PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        if (name.equals(parameters[i].getName())) {
+      List<LighterASTNode> parameters = getParameters();
+      for (int i = 0; i < parameters.size(); i++) {
+        if (name.equals(JavaLightTreeUtil.getNameIdentifierText(myTree, parameters.get(i)))) {
           return i;
         }
       }
