@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -50,32 +47,15 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   private void addPlaceholder(@NotNull CCState state) {
     Editor editor = state.getEditor();
     Project project = state.getProject();
-    PsiFile file = state.getFile();
-
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return;
-    }
+    Document document = editor.getDocument();
     FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
     TaskFile taskFile = state.getTaskFile();
-    int stepIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
-
-    AnswerPlaceholder existingPlaceholder = taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
-    if (existingPlaceholder != null) {
-      int visibleLength = existingPlaceholder.getVisibleLength(stepIndex);
-      int placeholderOffset = existingPlaceholder.getOffset();
-      String possibleAnswer = document.getText(TextRange.create(placeholderOffset, placeholderOffset + visibleLength));
-      AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
-      existingPlaceholder.getSubtaskInfos().put(stepIndex, info);
-      info.setPossibleAnswer(possibleAnswer);
-      StudyUtils.drawAllWindows(editor, taskFile);
-      return;
-    }
+    int subtaskIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
     AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
-    answerPlaceholder.getSubtaskInfos().put(stepIndex, info);
+    answerPlaceholder.getSubtaskInfos().put(subtaskIndex, info);
     int index = taskFile.getAnswerPlaceholders().size();
     answerPlaceholder.setIndex(index);
     answerPlaceholder.setTaskFile(taskFile);
@@ -183,13 +163,14 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   private static boolean canAddPlaceholder(@NotNull CCState state) {
     Editor editor = state.getEditor();
     SelectionModel selectionModel = editor.getSelectionModel();
+    TaskFile taskFile = state.getTaskFile();
     if (selectionModel.hasSelection()) {
       int start = selectionModel.getSelectionStart();
       int end = selectionModel.getSelectionEnd();
-      return !arePlaceholdersIntersect(state.getTaskFile(), start, end);
+      return !arePlaceholdersIntersect(taskFile, start, end);
     }
     int offset = editor.getCaretModel().getOffset();
-    return state.getTaskFile().getAnswerPlaceholder(offset) == null;
+    return taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders()) == null;
   }
 
   private static boolean canDeletePlaceholder(@NotNull CCState state) {
