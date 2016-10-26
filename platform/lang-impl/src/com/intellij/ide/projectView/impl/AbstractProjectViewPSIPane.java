@@ -253,7 +253,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      return ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
+      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
+      // actually, getInitialized().doWhenDone() should be called by builder internally
+      // this will be done in 2017
+      return builder.getInitialized().doWhenDone(() -> builder.select(element, file, requestFocus));
     }
     return ActionCallback.DONE;
   }
