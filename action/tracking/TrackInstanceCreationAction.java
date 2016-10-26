@@ -35,7 +35,7 @@ public class TrackInstanceCreationAction extends ClassesActionBase {
 
     if (selectedClass != null && project != null) {
       InstancesTracker tracker = InstancesTracker.getInstance(project);
-      tracker.add(selectedClass, TrackingType.CREATION);
+      tracker.add(selectedClass.name(), TrackingType.CREATION);
     }
   }
 }

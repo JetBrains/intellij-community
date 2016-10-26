@@ -17,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class CreationPositionTracker extends AbstractProjectComponent {
+  /**
+   * Stores all tracked instance for each debug session.
+   */
   private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameDescriptor>>>
       mySession2Reference2Stack = new ConcurrentHashMap<>();
 

@@ -76,7 +76,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   /**
    * Indicates that the debug session had been stopped at least once.
    * <p>
-   * State: false -> true
+   * State: false to true
    */
   private volatile boolean myIsTrackersActivated = false;
 
@@ -106,6 +106,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
                 }
               });
         }
+        myTable.repaint();
       }
 
       @Override

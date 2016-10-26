@@ -21,7 +21,7 @@ abstract class InstancesTrackingActionBase extends ToggleAction {
       InstancesTracker tracker = InstancesTracker.getInstance(project);
       TrackingType currentType = tracker.getTrackingType(selectedClass.name());
       if (state) {
-        tracker.add(selectedClass, type);
+        tracker.add(selectedClass.name(), type);
       } else if(type.equals(currentType)) {
         tracker.remove(selectedClass);
       }

@@ -221,7 +221,7 @@ public class InstancesWindow extends DialogWrapper {
       }.installOn(list);
 
       InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(myDebugSession,
-          myInstancesTree, list);
+          myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
       add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);

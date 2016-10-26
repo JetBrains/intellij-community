@@ -48,13 +48,12 @@ public class InstancesTracker extends AbstractProjectComponent
     return new HashMap<>(myState.classes);
   }
 
-  public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {
-    String name = ref.name();
+  public void add(@NotNull String name, @NotNull TrackingType type) {
     if (type.equals(myState.classes.getOrDefault(name, null))) {
       return;
     }
 
-    myState.classes.put(ref.name(), type);
+    myState.classes.put(name, type);
     myDispatcher.getMulticaster().classChanged(name, type);
   }
 
