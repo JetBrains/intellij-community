@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
@@ -57,8 +56,7 @@ public class InstancesTracker extends AbstractProjectComponent
     myDispatcher.getMulticaster().classChanged(name, type);
   }
 
-  public boolean remove(@NotNull ReferenceType ref) {
-    String name = ref.name();
+  public boolean remove(@NotNull String name) {
     TrackingType removed = myState.classes.remove(name);
     if (removed != null) {
       myDispatcher.getMulticaster().classRemoved(name);

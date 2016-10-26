@@ -48,6 +48,7 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
     }
 
     XDebugSession session = e.getData(InstancesTree.DEBUG_SESSION_DATA_KEY);
-    return session == null ? null : CreationPositionTracker.getInstance(project).getStack(session, ref);
+    CreationPositionTracker tracker = CreationPositionTracker.getInstance(project);
+    return session == null || tracker == null ? null : tracker.getStack(session, ref);
   }
 }
