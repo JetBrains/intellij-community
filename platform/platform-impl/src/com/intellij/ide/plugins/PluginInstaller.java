@@ -23,6 +23,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
@@ -49,6 +50,7 @@ import java.util.*;
  * @since Nov 29, 2003
  */
 public class PluginInstaller {
+  private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   private static final Object ourLock = new Object();
@@ -214,7 +216,10 @@ public class PluginInstaller {
     if (replacement.isPresent()) {
       PluginReplacement pluginReplacement = replacement.get();
       IdeaPluginDescriptor oldPlugin = PluginManager.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
-      if (oldPlugin != null && !pluginEnabler.isDisabled(oldPlugin.getPluginId())) {
+      if (oldPlugin == null) {
+        LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
+      }
+      else if (!pluginEnabler.isDisabled(oldPlugin.getPluginId())) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
           String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);

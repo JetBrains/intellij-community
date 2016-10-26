@@ -45,6 +45,12 @@ import javax.swing.JLabel
 abstract class Row() {
   abstract var enabled: Boolean
 
+  abstract var subRowsEnabled: Boolean
+
+  abstract val subRows: List<Row>
+
+  protected abstract val builder: LayoutBuilderImpl
+
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     Label(text, style, fontColor, bold)(gapLeft = gapLeft)
   }
@@ -113,7 +119,13 @@ abstract class Row() {
 
   protected abstract fun alignRight()
 
-  abstract fun row(label: String, init: Row.() -> Unit): Row
+  inline fun row(label: String, init: Row.() -> Unit): Row {
+    val row = createRow(label)
+    row.init()
+    return row
+  }
+
+  protected abstract fun createRow(label: String): Row
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: JLabel? = null, init: Row.() -> Unit) {

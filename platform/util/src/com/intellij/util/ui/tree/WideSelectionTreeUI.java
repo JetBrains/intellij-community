@@ -98,8 +98,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
 
+      @NotNull
       @Override
-      protected MouseEvent convert(MouseEvent event) {
+      protected MouseEvent convert(@NotNull MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
           int x = event.getX();
           int y = event.getY();

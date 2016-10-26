@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -135,9 +135,16 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     if (projectTask instanceof ExecuteRunConfigurationTask) {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
-      if (runProfile instanceof ApplicationConfiguration) {
-        JavaRunConfigurationModule module = ((ApplicationConfiguration)runProfile).getConfigurationModule();
-        return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule());
+      if (runProfile instanceof ModuleBasedConfiguration) {
+        RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule())) {
+          return false;
+        }
+      }
+      for (GradleExecutionEnvironmentProvider environmentProvider : GradleExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+        if (environmentProvider.isApplicable(((ExecuteRunConfigurationTask)projectTask))) {
+          return true;
+        }
       }
     }
     return false;
@@ -148,8 +155,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
-    if (task.getRunProfile() instanceof ApplicationConfiguration) {
-      return new GradleApplicationEnvironmentBuilder().build(project, task, executor);
+    for (GradleExecutionEnvironmentProvider environmentProvider : GradleExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+      if (environmentProvider.isApplicable(task)) {
+        return environmentProvider.createExecutionEnvironment(project, task, executor);
+      }
     }
     return null;
   }

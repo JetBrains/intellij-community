@@ -16,4 +16,7 @@ public interface IpnbConnectionListener {
 
   void onPayload(@Nullable final String payload,
                  @NotNull String parentMessageId);
+
+  void onFinished(@NotNull IpnbConnection connection,
+                  @NotNull String parentMessageId);
 }

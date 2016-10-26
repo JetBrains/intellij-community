@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionV3;
@@ -164,7 +163,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
           final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
           cell.getCell().setPromptNumber(connection.getExecCount());
           //noinspection unchecked
-          cell.updatePanel(null, (List<IpnbOutputCell>)connection.getOutput().clone());
+          cell.updatePanel(null, connection.getOutput());
         }
 
         @Override
@@ -174,6 +173,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (payload != null) {
             cell.updatePanel(payload, null);
           }
+        }
+
+        @Override
+        public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          cell.finishExecution();
         }
       };
 
@@ -265,7 +272,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
     String url = showDialogUrl(initUrl);
     if (url == null) return false;
-    IpnbSettings.getInstance(myProject).setURL(url);
+    final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
+    ipnbSettings.setURL(url);
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
@@ -303,7 +311,12 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final String directory = IpnbSettings.getInstance(myProject).getWorkingDirectory();
+    final String arguments = ipnbSettings.getArguments();
+    if (!StringUtil.isEmptyOrSpaces(arguments)) {
+      parameters.addAll(StringUtil.split(arguments, " "));
+    }
+
+    final String directory = ipnbSettings.getWorkingDirectory();
     final String baseDir = !StringUtil.isEmptyOrSpaces(directory) ? directory :
                            ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);

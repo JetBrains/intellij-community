@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
+public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
@@ -60,7 +60,7 @@ public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
       myHShifts[i] = scaleVal(myHShifts[i], Scale.JBUI);
       myVShifts[i] = scaleVal(myVShifts[i], Scale.JBUI);
     }
-    adjustSize();
+    updateSize();
     return this;
   }
 
@@ -107,7 +107,7 @@ public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
     myIcons[layer] = icon;
     myHShifts[layer] = scaleVal(hShift, Scale.JBUI);
     myVShifts[layer] = scaleVal(vShift, Scale.JBUI);
-    adjustSize();
+    updateSize();
   }
 
   /**
@@ -178,7 +178,7 @@ public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (validateJBUIScale()) adjustSize();
+    if (updateJBUIScale()) updateSize();
     for (int i = 0; i < myIcons.length; i++) {
       Icon icon = getOrScale(i);
       if (icon == null || myDisabledLayers[i]) continue;
@@ -216,21 +216,21 @@ public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
 
   @Override
   public int getIconWidth() {
-    if (myWidth <= 1 || validateJBUIScale()) {
-      adjustSize();
+    if (myWidth <= 1 || updateJBUIScale()) {
+      updateSize();
     }
     return scaleVal(myWidth, Scale.ARBITRARY);
   }
 
   @Override
   public int getIconHeight() {
-    if (myHeight <= 1 || validateJBUIScale()) {
-      adjustSize();
+    if (myHeight <= 1 || updateJBUIScale()) {
+      updateSize();
     }
     return scaleVal(myHeight, Scale.ARBITRARY);
   }
 
-  protected void adjustSize() {
+  protected void updateSize() {
     int minX = Integer.MAX_VALUE;
     int maxX = Integer.MIN_VALUE;
     int minY = Integer.MAX_VALUE;
@@ -274,7 +274,7 @@ public class LayeredIcon extends JBUI.ValidatingScalableJBIcon {
     if (getScale() != scale) {
       super.scale(scale);
       if (myScaledIcons!= null) Arrays.fill(myScaledIcons, null);
-      adjustSize();
+      updateSize();
     }
     return this;
   }

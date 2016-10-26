@@ -642,6 +642,26 @@ println(<selection>a + b</selection>)
 ''', EnumSet.of(CUR_METHOD), ReplaceChoice.NO
   }
 
+  void 'test introduce field from this'() {
+    doTest '''\
+class A {
+    def bar 
+    def foo() {
+        th<caret>is.bar
+    }
+}
+''', '''\
+class A {
+    def bar
+    def f = this
+
+    def foo() {
+        f.bar
+    }
+}
+''', false, false, false, FIELD_DECLARATION
+  }
+
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,

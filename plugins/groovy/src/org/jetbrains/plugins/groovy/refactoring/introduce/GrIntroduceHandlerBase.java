@@ -210,9 +210,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       if (expression instanceof GrParenthesizedExpression && !expressions.contains(((GrParenthesizedExpression)expression).getOperand())) {
         expressions.add(((GrParenthesizedExpression)expression).getOperand());
       }
-      if (expression.getParent() instanceof GrReferenceExpression
-          && expression instanceof GrReferenceExpression
-          && ((GrReferenceExpression)expression).resolve() instanceof PsiClass) continue;
       if (expressionIsIncorrect(expression, acceptVoidCalls)) continue;
 
       expressions.add(expression);
@@ -229,7 +226,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final PsiElement resolved = resolveResult.getElement();
       return resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty() || resolved instanceof PsiClass;
     }
-
+    if (expression instanceof GrReferenceExpression && expression.getParent() instanceof GrReferenceExpression) {
+      return !PsiUtil.isThisReference(expression) && ((GrReferenceExpression)expression).resolve() instanceof PsiClass;
+    }
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
     if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID.equals(expression.getType())) return true;
 
@@ -282,7 +281,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       if (expressions.isEmpty()) {
         updateSelectionForVariable(editor, file, selectionModel, offset);
       }
-      else if (expressions.size() == 1) {
+      else if (expressions.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
         final TextRange textRange = expressions.get(0).getTextRange();
         selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
       }

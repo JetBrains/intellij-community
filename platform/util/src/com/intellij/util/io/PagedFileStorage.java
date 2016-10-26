@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -98,13 +99,12 @@ public class PagedFileStorage implements Forceable {
   private ByteBufferWrapper myLastBuffer2;
   private ByteBufferWrapper myLastBuffer3;
   private int myLastChangeCount;
-  private int myLastChangeCount2;
-  private int myLastChangeCount3;
   private int myStorageIndex;
   private final Object myLastAccessedBufferCacheLock = new Object();
 
   private final byte[] myTypedIOBuffer;
   private volatile boolean isDirty;
+  private final AtomicInteger myMappingChangeCount = new AtomicInteger();
   private final File myFile;
   protected volatile long mySize = -1;
   protected final int myPageSize;
@@ -394,24 +394,36 @@ public class PagedFileStorage implements Forceable {
 
   private ByteBufferWrapper getBufferWrapper(long page, boolean modify) {
     synchronized (myLastAccessedBufferCacheLock) {
-      if (myLastPage == page) {
-        ByteBuffer buf = myLastBuffer.getCachedBuffer();
-        if (buf != null && myLastChangeCount == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-          if (modify) markDirty(myLastBuffer);
-          return myLastBuffer;
+      if (myLastChangeCount == myMappingChangeCount.get()) {
+        if (myLastPage == page) {
+          ByteBuffer buf = myLastBuffer.getCachedBuffer();
+          if (buf != null) {
+            if (modify) markDirty(myLastBuffer);
+            return myLastBuffer;
+          }
         }
-      } else if (myLastPage2 == page) {
-        ByteBuffer buf = myLastBuffer2.getCachedBuffer();
-        if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-          if (modify) markDirty(myLastBuffer2);
-          return myLastBuffer2;
+        else if (myLastPage2 == page) {
+          ByteBuffer buf = myLastBuffer2.getCachedBuffer();
+          if (buf != null) {
+            if (modify) markDirty(myLastBuffer2);
+            return myLastBuffer2;
+          }
         }
-      } else if (myLastPage3 == page) {
-        ByteBuffer buf = myLastBuffer3.getCachedBuffer();
-        if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-          if (modify) markDirty(myLastBuffer3);
-          return myLastBuffer3;
+        else if (myLastPage3 == page) {
+          ByteBuffer buf = myLastBuffer3.getCachedBuffer();
+          if (buf != null) {
+            if (modify) markDirty(myLastBuffer3);
+            return myLastBuffer3;
+          }
         }
+      } else {
+        myLastBuffer = null;
+        myLastBuffer2 = null;
+        myLastBuffer3 = null;
+        myLastPage = -1;
+        myLastPage2 = -1;
+        myLastPage3 = -1;
+        myLastChangeCount = myMappingChangeCount.get();
       }
     }
 
@@ -432,19 +444,14 @@ public class PagedFileStorage implements Forceable {
         if (myLastPage != page) {
           myLastPage3 = myLastPage2;
           myLastBuffer3 = myLastBuffer2;
-          myLastChangeCount3 = myLastChangeCount2;
 
           myLastPage2 = myLastPage;
           myLastBuffer2 = myLastBuffer;
-          myLastChangeCount2 = myLastChangeCount;
 
           myLastBuffer = byteBufferWrapper;
           myLastPage = (int)page; // TODO long page
-        } else {
-          myLastBuffer = byteBufferWrapper;
+          myLastChangeCount = myMappingChangeCount.get();
         }
-
-        myLastChangeCount = myStorageLockContext.myStorageLock.myMappingChangeCount;
       }
 
       return byteBufferWrapper;
@@ -457,6 +464,11 @@ public class PagedFileStorage implements Forceable {
   private void markDirty(ByteBufferWrapper buffer) {
     if (!isDirty) isDirty = true;
     buffer.markDirty();
+  }
+
+  @SuppressWarnings("unused")
+  void bufferInvalidated(int pageIndex, ByteBufferWrapper buffer) {
+    myMappingChangeCount.incrementAndGet();
   }
 
   @Override
@@ -487,14 +499,13 @@ public class PagedFileStorage implements Forceable {
     private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
-    private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
+    private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize
     // todo avoid locking for access
 
     private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
     private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<ByteBufferWrapper>();
     private volatile long mySize;
     private volatile long mySizeLimit;
-    private volatile int myMappingChangeCount;
 
     public StorageLock() {
       this(true);
@@ -516,9 +527,12 @@ public class PagedFileStorage implements Forceable {
           // this method can be called after removeEldestEntry
           ByteBufferWrapper wrapper = super.remove(key);
           if (wrapper != null) {
-            ++myMappingChangeCount;
+            int intKey = (Integer)key;
+            final int storageIndex = (intKey & FILE_INDEX_MASK);
+            PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
+            owner.bufferInvalidated(intKey & MAX_PAGES_COUNT, wrapper);
             mySegmentsToRemove.offer(wrapper);
-            mySize -= wrapper.myLength;
+            mySize -= wrapper.allocationSize();
           }
           return wrapper;
         }
@@ -585,7 +599,7 @@ public class PagedFileStorage implements Forceable {
         mySegmentsAccessLock.lock();
         try {
           mySegments.put(key, wrapper);
-          mySize += wrapper.myLength;
+          mySize += wrapper.allocationSize();
         }
         finally {
           mySegmentsAccessLock.unlock();

@@ -70,4 +70,8 @@ public abstract class ByteBufferWrapper {
   public String toString() {
     return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
   }
+
+  public int allocationSize() {
+    return (int)myLength;
+  }
 }

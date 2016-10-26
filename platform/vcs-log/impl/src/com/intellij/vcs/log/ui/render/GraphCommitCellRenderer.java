@@ -213,7 +213,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     return null;
   }
 
-  public int getToolipXCoordinate(int row) {
+  public int getTooltipXCoordinate(int row) {
     GraphCommitCell cell = getAssertCommitCell(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {

@@ -16,6 +16,9 @@
 package org.jetbrains.jps.model.artifact.elements;
 
 /**
+ * Represents 'extracted directory' node in the output layout tree. When the artifact is being built all files in the specified directory inside
+ * the specified archive will be copied or packed to the corresponding place under the artifact output directory.
+ *
  * @author nik
  */
 public interface JpsExtractedDirectoryPackagingElement extends JpsPackagingElement {

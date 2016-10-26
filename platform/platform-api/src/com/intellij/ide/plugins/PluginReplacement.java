@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -45,8 +46,7 @@ public abstract class PluginReplacement implements PluginAware {
 
   @NotNull
   public String getReplacementMessage(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
-    return "<html>'" + newPlugin.getName() + "' plugin is designed as a replacement for currently installed '" + oldPlugin.getName() + "' plugin.<br> Do you want to " +
-           "disable '" + oldPlugin.getName() + "' to avoid possible conflicts?</html>";
+    return IdeBundle.message("plugin.manager.replace.plugin.0.by.plugin.1", oldPlugin.getName(), newPlugin.getName());
   }
 
   @Override

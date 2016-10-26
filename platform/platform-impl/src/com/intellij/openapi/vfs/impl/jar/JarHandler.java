@@ -79,8 +79,31 @@ public class JarHandler extends ZipHandler {
     return fileWithMirrorResolved;
   }
 
-  protected @Nullable FileAccessorCache.Handle<ZipFile> getZipHandleForIteratingEntries() throws IOException {
-    return getCachedZipFileHandle(!myFileSystem.isMakeCopyOfJar(getFile()) || myFileWithMirrorResolved != null);
+  @NotNull
+  @Override
+  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(
+      !myFileSystem.isMakeCopyOfJar(getFile()) || myFileWithMirrorResolved != null);
+
+    if (existingZipRef == null) {
+      File file = getFile();
+      ZipFile zipFile = new ZipFile(file);
+
+      setFileStampAndLength(this, file.getPath());
+      try {
+        return buildEntryMapForZipFile(zipFile);
+      }
+      finally {
+        zipFile.close();
+      }
+    }
+
+    try {
+      return buildEntryMapForZipFile(existingZipRef.get());
+    }
+    finally {
+      existingZipRef.release();
+    }
   }
 
   private File getMirrorFile(@NotNull File originalFile) {

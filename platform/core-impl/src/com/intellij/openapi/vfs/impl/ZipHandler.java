@@ -65,7 +65,7 @@ public class ZipHandler extends ArchiveHandler {
     }
   };
 
-  private static synchronized void setFileStampAndLength(ZipHandler zipHandler, String pathToZip) {
+  protected static synchronized void setFileStampAndLength(ZipHandler zipHandler, String pathToZip) {
     FileAttributes attributes = FileSystemUtil.getAttributes(pathToZip);
 
     zipHandler.myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
@@ -84,21 +84,8 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    FileAccessorCache.Handle<ZipFile> existingZipRef = getZipHandleForIteratingEntries();
-
-    if (existingZipRef == null) {
-      File file = getFile();
-      ZipFile zipFile = new ZipFile(file);
-
-      setFileStampAndLength(this, file.getPath());
-      try {
-        return buildEntryMapForZipFile(zipFile);
-      }
-      finally {
-        zipFile.close();
-      }
-    }
-
+    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(true);
+    assert existingZipRef != null;
     try {
       return buildEntryMapForZipFile(existingZipRef.get());
     }
@@ -107,12 +94,8 @@ public class ZipHandler extends ArchiveHandler {
     }
   }
 
-  protected @Nullable FileAccessorCache.Handle<ZipFile> getZipHandleForIteratingEntries() throws IOException {
-    return getCachedZipFileHandle(true);
-  }
-
   @NotNull
-  private Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
+  protected Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
     map.put("", createRootEntry());
 

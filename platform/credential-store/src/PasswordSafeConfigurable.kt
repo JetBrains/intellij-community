@@ -20,12 +20,15 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
@@ -33,8 +36,11 @@ import com.intellij.ui.components.chars
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
+import java.awt.Component
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import javax.swing.JPanel
 import kotlin.properties.Delegates.notNull
 
@@ -115,7 +121,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         ProviderType.KEEPASS -> {
-          provider = KeePassCredentialStore(memoryOnly = true, existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
+          provider = KeePassCredentialStore(existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
         }
       }
     }
@@ -145,7 +151,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   fun getCurrentDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
 
   fun updateEnabledState() {
-    modeToRow[ProviderType.KEEPASS]?.enabled = getProviderType() == ProviderType.KEEPASS
+    modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getProviderType() == ProviderType.KEEPASS
   }
 
   override fun getComponent(): JPanel {
@@ -163,21 +169,15 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           }
         }
 
-        row {
+        modeToRow[ProviderType.KEEPASS] = row {
           inKeePass()
           row("Database:") {
+            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
+              it.name.endsWith(".kdbx")
+            }
             keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
-                                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
-                                                        it.name.endsWith(".kdbx")
-                                                      },
-                                                      fileChoosen = {
-                                                        if (it.isDirectory) {
-                                                          it.path + File.separator + DB_FILE_NAME
-                                                        }
-                                                        else {
-                                                          it.path
-                                                        }
-                                                      })
+                                                      fileChooserDescriptor = fileChooserDescriptor,
+                                                      fileChoosen = ::normalizeSelectedFile)
             gearButton(
                 object : AnAction("Clear") {
                   override fun actionPerformed(event: AnActionEvent) {
@@ -187,13 +187,34 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                   }
                 },
                 object : AnAction("Import") {
-                  override fun actionPerformed(e: AnActionEvent?) {
-
+                  override fun actionPerformed(event: AnActionEvent) {
+                    chooseFile(fileChooserDescriptor, event) {
+                      val wantedDbFile = Paths.get(normalizeSelectedFile(it))
+                      val dbFile = getCurrentDbFile()
+                      if (dbFile != wantedDbFile) {
+                        val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
+                        Messages.showInputDialog(
+                            contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize()?.let { masterPassword ->
+                          try {
+                            Files.copy(wantedDbFile, dbFile, StandardCopyOption.REPLACE_EXISTING)
+                            passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(),
+                                dbFile = getCurrentDbFile())
+                          }
+                          catch (e: Exception) {
+                            LOG.error(e)
+                            if (e.message == "Inconsistent stream bytes") {
+                              Messages.showMessageDialog(contextComponent, if (e.message == "Inconsistent stream bytes") "Password is not correct" else "Internal error", "Cannot Import", Messages.getErrorIcon())
+                            }
+                          }
+                          keePassMasterPassword.text = ""
+                        }
+                      }
+                    }
                   }
                 }
             )
           }
-          modeToRow[ProviderType.KEEPASS] = row("Master Password:") {
+          row("Master Password:") {
             keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
           }
         }
@@ -218,6 +239,15 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       inKeePass.isSelected -> ProviderType.KEEPASS
       else -> ProviderType.KEYCHAIN
     }
+  }
+}
+
+private fun normalizeSelectedFile(file: VirtualFile): String {
+  if (file.isDirectory) {
+    return file.path + File.separator + DB_FILE_NAME
+  }
+  else {
+    return file.path
   }
 }
 

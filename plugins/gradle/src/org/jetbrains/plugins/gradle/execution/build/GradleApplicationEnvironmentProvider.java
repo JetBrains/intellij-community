@@ -46,17 +46,22 @@ import java.util.Collections;
  * @author Vladislav.Soroka
  * @since 6/21/2016
  */
-public class GradleApplicationEnvironmentBuilder {
+public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvironmentProvider {
+
+  @Override
+  public boolean isApplicable(ExecuteRunConfigurationTask task) {
+    return task.getRunProfile() instanceof ApplicationConfiguration;
+  }
 
   @Nullable
-  public ExecutionEnvironment build(@NotNull Project project,
-                                    @NotNull ExecuteRunConfigurationTask executeRunConfigurationTask,
-                                    @Nullable Executor executor) {
-    if (!(executeRunConfigurationTask.getRunProfile() instanceof ApplicationConfiguration)) return null;
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                         @NotNull ExecuteRunConfigurationTask executeRunConfigurationTask,
+                                                         @Nullable Executor executor) {
+    if (!isApplicable(executeRunConfigurationTask)) return null;
 
     ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)executeRunConfigurationTask.getRunProfile();
     PsiClass mainClass = applicationConfiguration.getMainClass();
-    if(mainClass == null) return null;
+    if (mainClass == null) return null;
 
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(mainClass.getContainingFile().getVirtualFile());
     if (module == null) return null;
@@ -74,7 +79,6 @@ public class GradleApplicationEnvironmentBuilder {
     for (String parameter : params.getVMParametersList().getParameters()) {
       vmParametersString.append("jvmArgs '").append(parameter).append("'\n");
     }
-
 
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
@@ -94,7 +98,8 @@ public class GradleApplicationEnvironmentBuilder {
       int lastPathDelimiterIndex = gradlePath == null ? -1 : gradlePath.lastIndexOf(':');
       if (gradlePath == null || !gradlePath.startsWith(":")) {
         gradlePath = ":";
-      } else {
+      }
+      else {
         if (!gradlePath.equals(":")) {
           gradlePath = gradlePath.substring(0, lastPathDelimiterIndex);
         }

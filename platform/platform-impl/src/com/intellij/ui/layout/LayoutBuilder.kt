@@ -15,6 +15,11 @@
  */
 package com.intellij.ui.layout
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.Label
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
@@ -25,8 +30,10 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
     row(label = Label(label), init = init)
   }
 
-  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit) {
-    `$`.newRow(label, buttonGroup, separated).init()
+  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+    val row = `$`.newRow(label, buttonGroup, separated)
+    row.init()
+    return row
   }
 
   /**
@@ -49,5 +56,9 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
       button.addActionListener(listener)
     }
     return group
+  }
+
+  fun chooseFile(descriptor: FileChooserDescriptor, event: AnActionEvent, fileChoosen: (chosenFile: VirtualFile) -> Unit) {
+    FileChooser.chooseFile(descriptor, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChoosen)
   }
 }
