@@ -80,13 +80,13 @@
     </group>
 
     <group id="AnswerPlaceholderGroup">
-      <action id="CC.HideFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.CCHidePlaceholderFromPrevSubtasks"/>
-      <action id="CC.MakeVisibleFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.CCMakeVisibleForPrevSubtasks"/>
-      <action id="CC.ActivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCActivatePlaceholder"/>
-      <action id="CC.DeactivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCDeactivatePlaceholder" />
-      <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCEditAnswerPlaceholder"/>
-      <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
-      <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
+      <action id="CC.HideFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCHidePlaceholderFromPrevSubtasks"/>
+      <action id="CC.MakeVisibleFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCMakeVisibleForPrevSubtasks"/>
+      <action id="CC.ActivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCActivatePlaceholder"/>
+      <action id="CC.DeactivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCDeactivatePlaceholder" />
+      <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCEditAnswerPlaceholder"/>
+      <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCAddAnswerPlaceholder"/>
+      <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCDeleteAllAnswerPlaceholdersAction"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>

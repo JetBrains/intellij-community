@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCTestCase;
 import com.jetbrains.edu.coursecreator.CCTestsUtil;
+import com.jetbrains.edu.coursecreator.actions.placeholder.CCAddAnswerPlaceholder;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
