@@ -135,7 +135,7 @@ public class FindDialog extends DialogWrapper {
   private ScopeChooserCombo myScopeCombo;
   protected JLabel myReplacePrompt;
   private HideableTitledPanel myScopePanel;
-  private static boolean myPreviousResultsExpandedState;
+  private static boolean myPreviousResultsExpandedState = true;
   private static boolean myPreviewResultsTabWasSelected;
   private static final int RESULTS_PREVIEW_TAB_INDEX = 1;
 
