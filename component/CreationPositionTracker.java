@@ -27,8 +27,9 @@ public class CreationPositionTracker extends AbstractProjectComponent {
     super(project);
   }
 
+  @Nullable
   public static CreationPositionTracker getInstance(@NotNull Project project) {
-    return project.getComponent(CreationPositionTracker.class);
+    return project.isDisposed() ? null : project.getComponent(CreationPositionTracker.class);
   }
 
   @Nullable

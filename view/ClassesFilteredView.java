@@ -57,7 +57,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
-  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNED = "The application is running";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
 
   private final Project myProject;
@@ -153,7 +153,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
         memoryViewManagerState.isShowWithInstancesOnly, this);
-    myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNED);
+    myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, myTable);
 
     myTable.addKeyListener(new KeyAdapter() {
@@ -225,12 +225,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
         ReferenceType ref = myTable.getSelectedClass();
         TrackerForNewInstances strategy = ref == null ? null : getStrategy(ref);
-        if (strategy != null && strategy.isReady() && strategy.getCount() > 0) {
+        final CreationPositionTracker tracker = CreationPositionTracker.getInstance(myDebugSession.getProject());
+        if (strategy != null && strategy.isReady() && strategy.getCount() > 0 && tracker != null) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
-          CreationPositionTracker.getInstance(myDebugSession.getProject()).pinStacks(myDebugSession, ref);
+          tracker.pinStacks(myDebugSession, ref);
           InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
-          Disposer.register(instancesWindow.getDisposable(),
-              () -> CreationPositionTracker.getInstance(myDebugSession.getProject()).unpinStacks(myDebugSession, ref));
+          Disposer.register(instancesWindow.getDisposable(), () -> tracker.unpinStacks(myDebugSession, ref));
           instancesWindow.show();
         }
       }
@@ -248,7 +248,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       public void sessionResumed() {
         myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
         SwingUtilities.invokeLater(() -> {
-          myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNED);
+          myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
           myTable.hideContent();
         });
         mySingleAlarm.cancelAllRequests();
@@ -348,11 +348,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private ActionPopupMenu createContextMenu() {
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
     return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
-  }
-
-  boolean isTrackingActive(@NotNull ReferenceType ref) {
-    TrackerForNewInstances strategy = myConstructorTrackedClasses.getOrDefault(ref, null);
-    return strategy != null && strategy.isReady();
   }
 
   @Override
