@@ -84,46 +84,57 @@ class DelegationContract extends PreContract {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     final boolean varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.getSubstitutor(), arguments, parameters);
 
-    final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
-    ValueConstraint[] emptyConstraints = MethodContract.createConstraintArray(method.getParameterList().getParametersCount());
-    List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), delegateContract -> {
-      ValueConstraint[] answer = emptyConstraints;
-      for (int i = 0; i < delegateContract.arguments.length; i++) {
-        if (i >= arguments.length) return null;
-        ValueConstraint argConstraint = delegateContract.arguments[i];
-        if (argConstraint != ANY_VALUE) {
-          if (varArgCall && i >= parameters.length - 1) {
-            if (argConstraint == NULL_VALUE) {
-              return null;
-            }
-            break;
-          }
-
-          PsiExpression argument = arguments[i];
-          int paramIndex = resolveParameter(method, argument);
-          if (paramIndex < 0) {
-            if (argConstraint != getLiteralConstraint(argument)) {
-              return null;
-            }
-          }
-          else {
-            answer = withConstraint(answer, paramIndex, argConstraint, method);
-            if (answer == null) {
-              return null;
-            }
-          }
-        }
-      }
-      ValueConstraint returnValue = myNegated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
-      if (notNull && returnValue != THROW_EXCEPTION) {
-        returnValue = NOT_NULL_VALUE;
-      }
-      return answer == null ? null : new MethodContract(answer, returnValue);
-    });
-    if (notNull) {
-      return ContainerUtil.concat(fromDelegate, Collections.singletonList(new MethodContract(emptyConstraints, NOT_NULL_VALUE)));
+    List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod),
+                                                                 dc -> convertDelegatedMethodContract(method, parameters, arguments, varArgCall, dc));
+    if (NullableNotNullManager.isNotNull(targetMethod)) {
+      return ContainerUtil.concat(ContainerUtil.map(fromDelegate, DelegationContract::returnNotNull),
+                                  Collections.singletonList(new MethodContract(emptyConstraints(method), NOT_NULL_VALUE)));
     }
     return fromDelegate;
+  }
+
+  @Nullable
+  private MethodContract convertDelegatedMethodContract(@NotNull PsiMethod callerMethod,
+                                                        PsiParameter[] targetParameters,
+                                                        PsiExpression[] callArguments,
+                                                        boolean varArgCall,
+                                                        MethodContract targetContract) {
+    ValueConstraint[] answer = emptyConstraints(callerMethod);
+    for (int i = 0; i < targetContract.arguments.length; i++) {
+      if (i >= callArguments.length) return null;
+      ValueConstraint argConstraint = targetContract.arguments[i];
+      if (argConstraint != ANY_VALUE) {
+        if (varArgCall && i >= targetParameters.length - 1) {
+          if (argConstraint == NULL_VALUE) {
+            return null;
+          }
+          break;
+        }
+
+        PsiExpression argument = callArguments[i];
+        int paramIndex = resolveParameter(callerMethod, argument);
+        if (paramIndex >= 0) {
+          answer = withConstraint(answer, paramIndex, argConstraint, callerMethod);
+          if (answer == null) {
+            return null;
+          }
+        }
+        else if (argConstraint != getLiteralConstraint(argument)) {
+          return null;
+        }
+      }
+    }
+    ValueConstraint returnValue = myNegated ? negateConstraint(targetContract.returnValue) : targetContract.returnValue;
+    return answer == null ? null : new MethodContract(answer, returnValue);
+  }
+
+  private static ValueConstraint[] emptyConstraints(@NotNull PsiMethod method) {
+    return MethodContract.createConstraintArray(method.getParameterList().getParametersCount());
+  }
+
+  @NotNull
+  private static MethodContract returnNotNull(MethodContract mc) {
+    return mc.returnValue == THROW_EXCEPTION ? mc : new MethodContract(mc.arguments, NOT_NULL_VALUE);
   }
 
   private static ValueConstraint getLiteralConstraint(PsiExpression argument) {
