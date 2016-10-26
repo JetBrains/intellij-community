@@ -115,7 +115,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         ProviderType.KEEPASS -> {
-          provider = KeePassCredentialStore(memoryOnly = true, existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
+          provider = KeePassCredentialStore(existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
         }
       }
     }
