@@ -123,6 +123,17 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     myClipboardHandler.resetContent();
   }
 
+  @Nullable
+  private static Clipboard getClipboard() {
+    try {
+      //sun.awt.windows.WClipboard may throw an IllegalStateException
+      return Toolkit.getDefaultToolkit().getSystemClipboard();
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
 
   private static class ClipboardHandler {
     public void init() { }
@@ -130,7 +141,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     public void dispose() { }
 
     public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-      Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+      Clipboard clipboard = getClipboard();
+      if (clipboard == null) return false;
       for (DataFlavor flavor : flavors) {
         if (clipboard.isDataFlavorAvailable(flavor)) {
           return true;
@@ -139,12 +151,18 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       return false;
     }
 
+
     @Nullable
     public Transferable getContents() throws IllegalStateException {
       IllegalStateException last = null;
       for (int i = 0; i < 3; i++) {
         try {
-          return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
+          Clipboard clipboard = getClipboard();
+          if (clipboard == null){
+            TimeoutUtil.sleep(50);
+            continue;
+          }
+          return clipboard.getContents(this);
         }
         catch (IllegalStateException e) {
           TimeoutUtil.sleep(50);
@@ -157,7 +175,12 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       for (int i = 0; i < 3; i++) {
         try {
-          Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, owner);
+          Clipboard clipboard = getClipboard();
+          if (clipboard == null) {
+            TimeoutUtil.sleep(50);
+            continue;
+          }
+          clipboard.setContents(content, owner);
         }
         catch (IllegalStateException e) {
           TimeoutUtil.sleep(50);
@@ -389,7 +412,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
      */
     @Nullable
     private static Collection<DataFlavor> checkContentsQuick() {
-      final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+      final Clipboard clipboard = getClipboard();
+      if (clipboard == null) return null;
       final Class<? extends Clipboard> aClass = clipboard.getClass();
       if (!"sun.awt.X11.XClipboard".equals(aClass.getName())) return null;
 
