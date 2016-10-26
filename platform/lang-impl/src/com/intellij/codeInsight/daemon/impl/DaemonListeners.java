@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
@@ -71,7 +70,8 @@ import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -126,8 +126,8 @@ public class DaemonListeners implements Disposable {
                          @NotNull CommandProcessor commandProcessor,
                          @NotNull EditorColorsManager editorColorsManager,
                          @NotNull final Application application,
-                         @NotNull ApplicationInspectionProfileManager inspectionProfileManager,
-                         @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
+                         @NotNull InspectionProfileManager inspectionProfileManager,
+                         @NotNull InspectionProjectProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
                          @NotNull ActionManagerEx actionManagerEx,
                          @NotNull VirtualFileManager virtualFileManager,

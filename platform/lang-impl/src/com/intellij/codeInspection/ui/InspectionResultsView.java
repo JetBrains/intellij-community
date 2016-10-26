@@ -59,7 +59,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -253,7 +253,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     createActionsToolbar();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
 
-    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(myProject);
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(Profile profile) {
@@ -414,7 +414,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return createToolbar(group);
   }
 
-  private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
+  private JComponent createToolbar(final DefaultActionGroup specialGroup) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false);
     //toolbar.setTargetComponent(this);
     return toolbar.getComponent();
