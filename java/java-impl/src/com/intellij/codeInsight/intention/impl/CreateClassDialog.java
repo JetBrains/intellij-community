@@ -39,6 +39,7 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
+import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -248,11 +249,15 @@ public class CreateClassDialog extends DialogWrapper {
         myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
           @Override
           public PsiDirectory compute() {
-            return destination.getTargetDirectory(getBaseDir(packageName));
+            PsiDirectory baseDir = getBaseDir(packageName);
+            if (baseDir == null && destination instanceof MultipleRootsMoveDestination) {
+              errorString[0] = "Destination not found for package '" + packageName + "'";
+              return null;
+            }
+            return destination.getTargetDirectory(baseDir);
           }
         });
         if (myTargetDirectory == null) {
-          errorString[0] = ""; // message already reported by PackageUtil
           return;
         }
         errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
