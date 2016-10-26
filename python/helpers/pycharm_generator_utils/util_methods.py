@@ -190,9 +190,6 @@ class __coroutine(object):
     def __await__(self):
         return []
 
-    def __iter__(self):
-        return []
-
     def close(self):
         pass
 
