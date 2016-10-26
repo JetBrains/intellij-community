@@ -24,8 +24,13 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public interface InspectionProfileManager extends ProfileManager, SeverityProvider {
   String INSPECTION_DIR = "inspection";
+
+  @NotNull
+  Collection<InspectionProfile> getProfiles();
 
   default NamedScopesHolder getScopesManager() {
     return null;

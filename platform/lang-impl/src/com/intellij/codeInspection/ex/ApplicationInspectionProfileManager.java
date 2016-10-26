@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -40,7 +41,6 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -149,7 +149,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   @Override
   @NotNull
-  public Collection<Profile> getProfiles() {
+  public Collection<InspectionProfile> getProfiles() {
     initProfiles();
     return Collections.unmodifiableList(mySchemeManager.getAllSchemes());
   }

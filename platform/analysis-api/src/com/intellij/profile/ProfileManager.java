@@ -18,16 +18,11 @@ package com.intellij.profile;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
  * User: anna
  * Date: 09-Dec-2005
  */
 public interface ProfileManager {
-  @NotNull
-  Collection<Profile> getProfiles();
-
   Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
   default Profile getProfile(@NotNull String name) {

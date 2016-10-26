@@ -363,8 +363,7 @@ public class InspectionApplication {
     }
     else {
       //check if ide profile is used for project
-      final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
-      for (Profile profile : profiles) {
+      for (InspectionProfile profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = (InspectionProfileImpl)profile;
           logMessageLn(1, "Loaded local profile \'" + profileName + "\'");
