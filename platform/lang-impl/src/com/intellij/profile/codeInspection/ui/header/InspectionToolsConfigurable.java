@@ -47,7 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -82,10 +82,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   private static final Pattern COPIED_PROFILE_SUFFIX_PATTERN = Pattern.compile("(.*\\s*copy)\\s*(\\d*)");
 
-  protected final InspectionProfileManager myApplicationProfileManager;
+  protected final BaseInspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final List<SingleInspectionProfilePanel> myPanels = new ArrayList<>();
-  private final List<Profile> myDeletedProfiles = new ArrayList<>();
+  private final List<InspectionProfileImpl> myDeletedProfiles = new ArrayList<>();
   protected ProfilesChooser myProfiles;
   private JPanel myProfilePanelHolder;
   private AuxiliaryRightPanel myAuxiliaryRightPanel;
@@ -93,7 +93,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   public InspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
-    myApplicationProfileManager = InspectionProfileManager.getInstance();
+    myApplicationProfileManager = (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
   }
 
   private static JComponent withBorderOnTop(final JComponent component) {
@@ -138,7 +138,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
     }
 
-    ProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
+    BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
     InspectionProfileImpl inspectionProfile =
       new InspectionProfileImpl(profileDefaultName, InspectionToolRegistrar.getInstance(), profileManager);
 
@@ -377,7 +377,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
-                myProfiles.getProfilesComboBox().removeProfile((InspectionProfileImpl)existed.getProfile());
+                myProfiles.getProfilesComboBox().removeProfile(existed.getProfile());
                 myPanels.remove(existed);
               }
               final ModifiableModel model = profile.getModifiableModel();
@@ -422,7 +422,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                              @NotNull InspectionProfileManager profileManager,
+                                                              @NotNull BaseInspectionProfileManager profileManager,
                                                               @NotNull Project project,
                                                               @Nullable JPanel anchorPanel)
     throws JDOMException, IOException, InvalidDataException {
@@ -503,7 +503,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   @Override
   public void apply() throws ConfigurationException {
     SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-    for (Profile profile : myDeletedProfiles) {
+    for (InspectionProfileImpl profile : myDeletedProfiles) {
       deleteProfile(profile);
     }
     myDeletedProfiles.clear();
@@ -518,7 +518,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   protected abstract void applyRootProfile(@NotNull String name, boolean isProjectLevel);
 
-  private void deleteProfile(@NotNull Profile profile) {
+  private void deleteProfile(@NotNull InspectionProfileImpl profile) {
     if (profile.getProfileManager() == myApplicationProfileManager) {
       myApplicationProfileManager.deleteProfile(profile.getName());
     }
@@ -572,8 +572,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {
-    final ProfileManager profileManager = inspectionProfile.getProfileManager();
-
     boolean projectProfileFound = false;
     boolean ideProfileFound = false;
 
@@ -586,7 +584,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       if (ideProfileFound && projectProfileFound) break;
     }
 
-    return profileManager == myProjectProfileManager ? projectProfileFound : ideProfileFound;
+    return inspectionProfile.getProfileManager() == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
 
   protected Collection<Profile> getProfiles() {

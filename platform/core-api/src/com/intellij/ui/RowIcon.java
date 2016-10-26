@@ -27,7 +27,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon extends JBUI.ValidatingScalableJBIcon {
+public class RowIcon extends JBUI.AuxScalableJBIcon {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -51,7 +51,7 @@ public class RowIcon extends JBUI.ValidatingScalableJBIcon {
   public RowIcon(Icon... icons) {
     this(icons.length);
     System.arraycopy(icons, 0, myIcons, 0, icons.length);
-    adjustSize();
+    updateSize();
   }
 
 
@@ -81,7 +81,7 @@ public class RowIcon extends JBUI.ValidatingScalableJBIcon {
       ScalableIcon icon = (ScalableIcon)myIcons[i];
       myScaledIcons[i] = icon == null ? null : icon.scale(getScale());
     }
-    adjustSize();
+    updateSize();
   }
 
   @TestOnly
@@ -106,7 +106,7 @@ public class RowIcon extends JBUI.ValidatingScalableJBIcon {
   public void setIcon(Icon icon, int layer) {
     myIcons[layer] = icon;
     rescale();
-    adjustSize();
+    updateSize();
   }
 
   public Icon getIcon(int index) {
@@ -120,7 +120,7 @@ public class RowIcon extends JBUI.ValidatingScalableJBIcon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (validateJBUIScale()) adjustSize();
+    if (updateJBUIScale()) updateSize();
     int _x = x;
     int _y = y;
     for (Icon icon : getIcons()) {
@@ -141,17 +141,17 @@ public class RowIcon extends JBUI.ValidatingScalableJBIcon {
 
   @Override
   public int getIconWidth() {
-    if (validateJBUIScale()) adjustSize();
+    if (updateJBUIScale()) updateSize();
     return scaleVal(myWidth, Scale.ARBITRARY);
   }
 
   @Override
   public int getIconHeight() {
-    if (validateJBUIScale()) adjustSize();
+    if (updateJBUIScale()) updateSize();
     return scaleVal(myHeight, Scale.ARBITRARY);
   }
 
-  protected void adjustSize() {
+  private void updateSize() {
     int width = 0;
     int height = 0;
     for (Icon icon : getIcons()) {

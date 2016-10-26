@@ -34,9 +34,4 @@ public interface Profile extends Comparable, Scheme {
   @Override
   @NotNull
   String getName();
-
-  void setProfileManager(@NotNull ProfileManager profileManager);
-
-  @NotNull
-  ProfileManager getProfileManager();
 }

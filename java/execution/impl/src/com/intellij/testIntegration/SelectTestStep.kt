@@ -31,6 +31,7 @@ import javax.swing.AbstractAction
 import javax.swing.Icon
 import javax.swing.KeyStroke
 
+
 class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
                            private val testRunner: RecentTestRunner,
                            private val locator: TestLocator) : ListPopupImpl(popupStep) {
@@ -50,56 +51,13 @@ class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
   }
 
   private fun registerActions(popup: WizardPopup) {
-    popup.registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        shiftPressed()
-      } 
-    })
+    popup.onShiftPressed { shiftPressed() }
+    popup.onShiftReleased { shiftReleased() }
 
-    popup.registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        shiftReleased()
-      } 
-    })
-    
-    popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        handleSelect(true)
-      }
-    })
-    
-    popup.registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) {
-        val values = selectedValues
-        if (values.size == 1) {
-          val entry = values[0] as RecentTestsPopupEntry
-          getElement(entry)?.let {
-            cancel()
-            PsiNavigateUtil.navigate(it)
-          }
-        }
-      }
-    })
-  }
-
-  private fun getElement(entry: RecentTestsPopupEntry): PsiElement? {
-    var element: PsiElement? = null
-    entry.accept(object : TestEntryVisitor() {
-      override fun visitTest(test: SingleTestEntry) {
-        element = locator.getLocation(test.url)?.psiElement
-      }
-
-      override fun visitSuite(suite: SuiteEntry) {
-        element = locator.getLocation(suite.suiteUrl)?.psiElement
-      }
-
-      override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
-        if (configuration.suites.size == 1) {
-          visitSuite(configuration.suites[0]) 
-        }
-      }
-    })
-    return element
+    if (popup is ListPopupImpl) {
+      popup.selectOnShiftEnter()
+      popup.navigateOnF4(locator, this)
+    }
   }
   
   private fun shiftPressed() {
@@ -180,4 +138,64 @@ class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
     return null
   }
   
+}
+
+
+private fun WizardPopup.onShiftPressed(action: () -> Unit) {
+  registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
+}
+
+private fun WizardPopup.onShiftReleased(action: () -> Unit) {
+  registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      action()
+    }
+  })
+}
+
+private fun ListPopupImpl.selectOnShiftEnter() {
+  registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      handleSelect(true)
+    }
+  })
+}
+
+private fun ListPopupImpl.navigateOnF4(locator: TestLocator, parentPopup: RecentTestsListPopup) {
+  registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) {
+      val values = selectedValues
+      if (values.size == 1) {
+        val entry = values[0] as RecentTestsPopupEntry
+        locator.getNavigatableElement(entry)?.let { 
+          parentPopup.cancel()
+          PsiNavigateUtil.navigate(it) 
+        }
+      }
+    }
+  })
+}
+
+private fun TestLocator.getNavigatableElement(entry: RecentTestsPopupEntry): PsiElement? {
+  var element: PsiElement? = null
+  entry.accept(object : TestEntryVisitor() {
+    override fun visitTest(test: SingleTestEntry) {
+      element = getLocation(test.url)?.psiElement
+    }
+
+    override fun visitSuite(suite: SuiteEntry) {
+      element = getLocation(suite.suiteUrl)?.psiElement
+    }
+
+    override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
+      if (configuration.suites.size == 1) {
+        visitSuite(configuration.suites[0])
+      }
+    }
+  })
+  return element
 }

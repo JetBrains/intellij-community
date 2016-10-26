@@ -15,8 +15,6 @@
  */
 package com.intellij.profile;
 
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.project.ProjectKt;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -36,8 +34,6 @@ public abstract class ProfileEx implements Profile {
 
   @NotNull
   protected String myName;
-
-  protected ProfileManager myProfileManager;
 
   private boolean myIsProjectLevel;
 
@@ -74,18 +70,6 @@ public abstract class ProfileEx implements Profile {
     myName = name;
   }
 
-  @Override
-  @NotNull
-  @Transient
-  public ProfileManager getProfileManager() {
-    return myProfileManager;
-  }
-
-  @Override
-  public void setProfileManager(@NotNull ProfileManager profileManager) {
-    myProfileManager = profileManager;
-  }
-
   public void readExternal(Element element) {
     mySerializer.readExternal(this, element);
   }
@@ -117,14 +101,7 @@ public abstract class ProfileEx implements Profile {
   @NotNull
   public Element writeScheme() {
     Element element = new Element(PROFILE);
-    if (isProjectLevel()) {
-      element.setAttribute("version", "1.0");
-    }
     writeExternal(element);
-
-    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
-      return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(element);
-    }
     return element;
   }
 }

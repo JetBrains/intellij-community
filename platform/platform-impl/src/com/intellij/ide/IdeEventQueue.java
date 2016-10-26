@@ -59,10 +59,8 @@ import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -117,8 +115,8 @@ public class IdeEventQueue extends EventQueue {
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
   private WindowManagerEx myWindowManager;
-  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<>();
-  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<>();
+  private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
@@ -280,28 +278,27 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-
-  public void addDispatcher(final EventDispatcher dispatcher, Disposable parent) {
+  public void addDispatcher(@NotNull EventDispatcher dispatcher, Disposable parent) {
     _addProcessor(dispatcher, parent, myDispatchers);
   }
 
-  public void removeDispatcher(EventDispatcher dispatcher) {
+  public void removeDispatcher(@NotNull EventDispatcher dispatcher) {
     myDispatchers.remove(dispatcher);
   }
 
-  public boolean containsDispatcher(EventDispatcher dispatcher) {
+  public boolean containsDispatcher(@NotNull EventDispatcher dispatcher) {
     return myDispatchers.contains(dispatcher);
   }
 
-  public void addPostprocessor(EventDispatcher dispatcher, @Nullable Disposable parent) {
+  public void addPostprocessor(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
     _addProcessor(dispatcher, parent, myPostProcessors);
   }
 
-  public void removePostprocessor(EventDispatcher dispatcher) {
+  public void removePostprocessor(@NotNull EventDispatcher dispatcher) {
     myPostProcessors.remove(dispatcher);
   }
 
-  private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
+  private static void _addProcessor(@NotNull EventDispatcher dispatcher, Disposable parent, @NotNull Collection<EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
       Disposer.register(parent, () -> set.remove(dispatcher));
@@ -325,7 +322,8 @@ public class IdeEventQueue extends EventQueue {
     private static Component wheelDestinationComponent;
     private static long lastMouseWheel;
 
-    private static AWTEvent changeSourceIfNeeded(AWTEvent awtEvent) {
+    @NotNull
+    private static AWTEvent changeSourceIfNeeded(@NotNull AWTEvent awtEvent) {
       if (SystemInfo.isMac && Registry.is("ide.inertial.mouse.fix") && awtEvent instanceof MouseWheelEvent) {
         MouseWheelEvent mwe = (MouseWheelEvent) awtEvent;
         if (mwe.getWhen() - lastMouseWheel > MOUSE_WHEEL_RESTART_THRESHOLD) {
@@ -412,6 +410,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   @Override
+  @NotNull
   public AWTEvent getNextEvent() throws InterruptedException {
     AWTEvent event = super.getNextEvent();
     if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
@@ -421,7 +420,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   @Nullable
-  static AccessToken startActivity(AWTEvent e) {
+  static AccessToken startActivity(@NotNull AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
       if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
         ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
@@ -432,26 +431,20 @@ public class IdeEventQueue extends EventQueue {
            : ourTransactionGuard.startActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent);
   }
 
-  private void processException(Throwable t) {
+  private void processException(@NotNull Throwable t) {
     if (!myToolkitBugsProcessor.process(t)) {
       PluginManager.processException(t);
     }
   }
 
-  private static int ctrlIsPressedCount;
-  private static boolean leftAltIsPressed;
-  //private static boolean altGrIsPressed = false;
-
-  private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
+  @NotNull
+  private static AWTEvent fixNonEnglishKeyboardLayouts(@NotNull AWTEvent e) {
     if (!(e instanceof KeyEvent)) return e;
 
     KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
     if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     KeyEvent ke = (KeyEvent)e;
-
-    // Try to get it from editor
-    Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     switch (ke.getID()) {
       case KeyEvent.KEY_PRESSED:
@@ -479,7 +472,7 @@ public class IdeEventQueue extends EventQueue {
     // We have a key char. On some non standard layouts it does not correspond to
     // key code in the event.
 
-    Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
+    int keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
 
     // Now we have a correct key code as if we'd gotten  a KeyEvent for
     // standard English layout
@@ -489,18 +482,14 @@ public class IdeEventQueue extends EventQueue {
     }
 
     // Farther we handle a non standard layout
-
-    if (keyCodeFromChar != null) {
-      if (keyCodeFromChar != ke.getKeyCode()) {
-        // non-english layout
-        ke.setKeyCode(keyCodeFromChar);
-      }
-      }
+    // non-english layout
+    ke.setKeyCode(keyCodeFromChar);
 
     return ke;
   }
 
-  private static AWTEvent mapEvent(AWTEvent e) {
+  @NotNull
+  private static AWTEvent mapEvent(@NotNull AWTEvent e) {
     if (SystemInfo.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3) {
       MouseEvent src = (MouseEvent)e;
       if (src.getButton() < 6) {
@@ -520,7 +509,8 @@ public class IdeEventQueue extends EventQueue {
     return e;
   }
 
-  private AWTEvent mapMetaState(AWTEvent e) {
+  @NotNull
+  private AWTEvent mapMetaState(@NotNull AWTEvent e) {
     if (myWinMetaPressed) {
       Application app = ApplicationManager.getApplication();
 
@@ -680,7 +670,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
+  private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
     if (wnd != null && !wnd.isShowing()) {
       Window showingWindow = wnd;
       while (showingWindow != null) {
@@ -786,7 +776,7 @@ public class IdeEventQueue extends EventQueue {
            queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
   }
 
-  private void enterSuspendModeIfNeeded(AWTEvent e) {
+  private void enterSuspendModeIfNeeded(@NotNull AWTEvent e) {
     if (e instanceof KeyEvent) {
       if (!mySuspendMode && shallEnterSuspendMode()) {
         enterSuspendMode();
@@ -798,8 +788,7 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
-  private static boolean processAppActivationEvents(AWTEvent e) {
-
+  private static boolean processAppActivationEvents(@NotNull AWTEvent e) {
     if (e instanceof WindowEvent) {
       final WindowEvent we = (WindowEvent)e;
 
@@ -811,7 +800,7 @@ public class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static void storeLastFocusedComponent(WindowEvent we) {
+  private static void storeLastFocusedComponent(@NotNull WindowEvent we) {
     final Window eventWindow = we.getWindow();
 
     if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
@@ -833,7 +822,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void defaultDispatchEvent(final AWTEvent e) {
+  private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       myDispatchingFocusEvent = e instanceof FocusEvent;
 
@@ -850,21 +839,30 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static Field ourStickyAltField;
+  private static class FieldHolder {
+    private static final Field ourStickyAltField;
+    static {
+      Field field;
+      try {
+        Class<?> aClass = Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor");
+        field = ReflectionUtil.getDeclaredField(aClass, "menuCanceledOnPress");
+      }
+      catch (Exception e) {
+        field = null;
+      }
+      ourStickyAltField = field;
+    }
+  }
 
-  private static void fixStickyAlt(AWTEvent e) {
+  private static void fixStickyAlt(@NotNull AWTEvent e) {
     if (Registry.is("actionSystem.win.suppressAlt.new")) {
       if (UIUtil.isUnderWindowsLookAndFeel() &&
           e instanceof InputEvent &&
           (((InputEvent)e).getModifiers() & (InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)) != 0 &&
           !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
         try {
-          if (ourStickyAltField == null) {
-            Class<?> aClass = Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor");
-            ourStickyAltField = ReflectionUtil.getDeclaredField(aClass, "menuCanceledOnPress");
-          }
-          if (ourStickyAltField != null) {
-            ourStickyAltField.set(null, true);
+          if (FieldHolder.ourStickyAltField != null) {
+            FieldHolder.ourStickyAltField.set(null, true);
           }
         }
         catch (Exception exception) {
@@ -881,7 +879,7 @@ public class IdeEventQueue extends EventQueue {
     return myDispatchingFocusEvent;
   }
 
-  private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
+  private static boolean typeAheadDispatchToFocusManager(@NotNull AWTEvent e) {
     if (e instanceof KeyEvent) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
@@ -907,7 +905,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(Component modalComponent, Condition<AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(Component modalComponent, @NotNull Condition<AWTEvent> exitCondition) {
     AWTEvent event;
     do {
       try {
@@ -940,7 +938,7 @@ public class IdeEventQueue extends EventQueue {
 
   @FunctionalInterface
   public interface EventDispatcher {
-    boolean dispatch(AWTEvent e);
+    boolean dispatch(@NotNull AWTEvent e);
   }
 
   private final class MyFireIdleRequest implements Runnable {
@@ -948,7 +946,7 @@ public class IdeEventQueue extends EventQueue {
     private final int myTimeout;
 
 
-    public MyFireIdleRequest(@NotNull Runnable runnable, final int timeout) {
+    MyFireIdleRequest(@NotNull Runnable runnable, final int timeout) {
       myTimeout = timeout;
       myRunnable = runnable;
     }
@@ -976,7 +974,6 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final class ExitSuspendModeRunnable implements Runnable {
-
     @Override
     public void run() {
       if (mySuspendMode) {
@@ -991,26 +988,28 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
+  @NotNull
   public IdePopupManager getPopupManager() {
     return myPopupManager;
   }
 
+  @NotNull
   public IdeKeyEventDispatcher getKeyEventDispatcher() {
     return myKeyEventDispatcher;
   }
 
   /**
-   * Same as {@link #blockNextEvents(MouseEvent, IdeEventQueue.BlockMode)} with <code>blockMode</code> equal to <code>COMPLETE</code>.
+   * Same as {@link #blockNextEvents(MouseEvent, IdeEventQueue.BlockMode)} with {@code blockMode} equal to {@code COMPLETE}.
    */
-  public void blockNextEvents(final MouseEvent e) {
+  public void blockNextEvents(@NotNull MouseEvent e) {
     blockNextEvents(e, BlockMode.COMPLETE);
   }
 
   /**
-   * When <code>blockMode</code> is <code>COMPLETE</code>, blocks following related mouse events completely, when <code>blockMode</code> is
-   * <code>ACTIONS</code> only blocks performing actions bound to corresponding mouse shortcuts.
+   * When {@code blockMode} is {@code COMPLETE}, blocks following related mouse events completely, when {@code blockMode} is
+   * {@code ACTIONS} only blocks performing actions bound to corresponding mouse shortcuts.
    */
-  public void blockNextEvents(final MouseEvent e, BlockMode blockMode) {
+  public void blockNextEvents(@NotNull MouseEvent e, @NotNull BlockMode blockMode) {
     myMouseEventDispatcher.blockNextEvents(e, blockMode);
   }
 
@@ -1027,10 +1026,6 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void maybeReady() {
-    flushReady();
-  }
-
-  private void flushReady() {
     if (myReady.isEmpty() || !isReady()) return;
 
     Runnable[] ready = myReady.toArray(new Runnable[myReady.size()]);
@@ -1041,7 +1036,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void doWhenReady(final Runnable runnable) {
+  public void doWhenReady(@NotNull Runnable runnable) {
     if (EventQueue.isDispatchThread()) {
       myReady.add(runnable);
       maybeReady();
@@ -1064,7 +1059,7 @@ public class IdeEventQueue extends EventQueue {
     private Robot myRobot;
 
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
@@ -1121,7 +1116,7 @@ public class IdeEventQueue extends EventQueue {
   //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
   private static class EditingCanceller implements EventDispatcher {
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE) {
         final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
                                                              component -> component instanceof JTable || component instanceof JTree);
@@ -1143,7 +1138,7 @@ public class IdeEventQueue extends EventQueue {
     return !SystemInfo.isMac || myInputMethodLock == 0;
   }
 
-  public void disableInputMethods(Disposable parentDisposable) {
+  public void disableInputMethods(@NotNull Disposable parentDisposable) {
     myInputMethodLock++;
     Disposer.register(parentDisposable, () -> myInputMethodLock--);
   }

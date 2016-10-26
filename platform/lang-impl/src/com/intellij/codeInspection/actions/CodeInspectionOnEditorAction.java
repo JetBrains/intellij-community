@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -51,9 +50,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final AnalysisScope scope = new AnalysisScope(psiFile);
     final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
     inspectionContext.setCurrentScope(scope);
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    inspectionContext.setExternalProfile(inspectionProfile);
+    inspectionContext.setExternalProfile((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     inspectionContext.doInspections(scope);
   }
 

@@ -18,7 +18,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +36,7 @@ public class MethodContract {
     this.returnValue = returnValue;
   }
 
+  @NotNull
   static ValueConstraint[] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];
     for (int i = 0; i < args.length; i++) {

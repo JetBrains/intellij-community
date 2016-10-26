@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
@@ -57,7 +58,8 @@ public class PurityInference {
     return CachedValuesManager.getCachedValue(method, () -> {
       TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
       PsiCodeBlock body = method.getBody();
-      PurityInferenceResult result = doInferPurity(TreeBackedLighterAST.wrap(body.getNode()), tree);
+      ASTNode node = body.getNode();
+      PurityInferenceResult result = node == null ? null : doInferPurity(TreeBackedLighterAST.wrap(node), tree);
       Boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> result != null && result.isPure(method, body));
       return CachedValueProvider.Result.create(pure == Boolean.TRUE, method);
     });

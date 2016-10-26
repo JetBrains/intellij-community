@@ -2455,12 +2455,6 @@ class __coroutine(object):
         """
         return []
 
-    def __iter__(self):
-        """
-        :rtype: collections.Iterable[unknown]
-        """
-        return []
-
     def close(self):
         """
         :rtype: None

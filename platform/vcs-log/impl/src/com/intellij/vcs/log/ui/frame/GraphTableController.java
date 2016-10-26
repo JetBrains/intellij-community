@@ -208,7 +208,7 @@ public class GraphTableController {
 
   public void showTooltip(int row) {
     TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    Point point = new Point(rootColumn.getWidth() + myCommitRenderer.getToolipXCoordinate(row),
+    Point point = new Point(rootColumn.getWidth() + myCommitRenderer.getTooltipXCoordinate(row),
                             row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
     showTooltip(row, GraphTableModel.COMMIT_COLUMN, point, true);
   }

@@ -17,6 +17,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JBTextField myFieldUrl;
   private TextFieldWithBrowseButton myWorkingDirField;
+  private JBTextField myArgumentsField;
   @NotNull private final Project myProject;
 
   public IpnbConfigurable(@NotNull Project project) {
@@ -26,6 +27,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     myWorkingDirField.addBrowseFolderListener("Select Working Directory", null, myProject, fileChooserDescriptor);
     myFieldUrl.setText(IpnbSettings.getInstance(myProject).getURL());
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
+    myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
   }
 
   @Nls
@@ -47,11 +49,14 @@ public class IpnbConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     final String oldUrl = IpnbSettings.getInstance(myProject).getURL();
-    final String url = StringUtil.trimEnd(StringUtil.notNullize(myFieldUrl.getText()), "/");
-
     final String oldWorkingDirectory = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getWorkingDirectory());
+    final String oldArguments = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getArguments());
+
+    final String url = StringUtil.trimEnd(StringUtil.notNullize(myFieldUrl.getText()), "/");
     final String workingDirectory = StringUtil.notNullize(myWorkingDirField.getText());
-    return !url.equals(oldUrl) || !workingDirectory.equals(oldWorkingDirectory);
+    final String arguments = StringUtil.notNullize(myArgumentsField.getText());
+
+    return !url.equals(oldUrl) || !workingDirectory.equals(oldWorkingDirectory) || !arguments.equals(oldArguments);
   }
 
   @Override
@@ -60,12 +65,14 @@ public class IpnbConfigurable implements SearchableConfigurable {
     url = StringUtil.trimEnd(url, "/");
     IpnbSettings.getInstance(myProject).setURL(url);
     IpnbSettings.getInstance(myProject).setWorkingDirectory(myWorkingDirField.getText());
+    IpnbSettings.getInstance(myProject).setArguments(myArgumentsField.getText());
   }
 
   @Override
   public void reset() {
     myFieldUrl.setText(IpnbSettings.getInstance(myProject).getURL());
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
+    myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
   }
 
   @Override

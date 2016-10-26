@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
@@ -54,7 +55,8 @@ public class NullityInference {
     return CachedValuesManager.getCachedValue(method, () -> {
       TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
       PsiCodeBlock body = ObjectUtils.assertNotNull(method.getBody());
-      NullityInferenceResult result = doInferNullity(tree, TreeBackedLighterAST.wrap(body.getNode()));
+      ASTNode node = body.getNode();
+      NullityInferenceResult result = node == null ? null : doInferNullity(tree, TreeBackedLighterAST.wrap(node));
       Nullness nullness = result == null ? null : RecursionManager.doPreventingRecursion(method, true, () -> result.getNullness(method, body));
       if (nullness == null) nullness = Nullness.UNKNOWN;
       return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);

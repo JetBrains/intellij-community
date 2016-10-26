@@ -154,8 +154,7 @@ public class InspectionApplication {
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
-      inspectionContext.setExternalProfile((InspectionProfile)inspectionProfile);
+      im.createNewGlobalContext(true).setExternalProfile((InspectionProfileImpl)inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -214,7 +213,7 @@ public class InspectionApplication {
           gracefulExit();
           return;
         }
-        inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        im.createNewGlobalContext(true).launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
         logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
         if (!myErrorCodeRequired) {
           closeProject();
@@ -263,7 +262,7 @@ public class InspectionApplication {
       // convert report
       if (reportConverter != null) {
         try {
-          reportConverter.convert(resultsDataPath, myOutPath, inspectionContext.getTools(), inspectionsResults);
+          reportConverter.convert(resultsDataPath, myOutPath, im.createNewGlobalContext(true).getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
           logError("\n" + e.getMessage());
@@ -307,8 +306,8 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private Profile loadInspectionProfile() throws IOException, JDOMException {
-    Profile inspectionProfile = null;
+  private InspectionProfileImpl loadInspectionProfile() throws IOException, JDOMException {
+    InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
     if (myProfileName != null) {
@@ -340,15 +339,15 @@ public class InspectionApplication {
         if (inspectionProfile != null) return inspectionProfile;
       }
 
-      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+      inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       logError("Using default project profile");
     }
     return inspectionProfile;
   }
 
   @Nullable
-  private Profile loadProfileByPath(final String profilePath) throws IOException, JDOMException {
-    Profile inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
+  private InspectionProfileImpl loadProfileByPath(final String profilePath) throws IOException, JDOMException {
+    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + profilePath + "\'");
     }
@@ -356,17 +355,17 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private Profile loadProfileByName(final String profileName) {
-    Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
+  private InspectionProfileImpl loadProfileByName(final String profileName) {
+    InspectionProfileImpl inspectionProfile =
+      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded shared project profile \'" + profileName + "\'");
     }
     else {
       //check if ide profile is used for project
-      final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
-      for (Profile profile : profiles) {
+      for (InspectionProfile profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
-          inspectionProfile = profile;
+          inspectionProfile = (InspectionProfileImpl)profile;
           logMessageLn(1, "Loaded local profile \'" + profileName + "\'");
           break;
         }
