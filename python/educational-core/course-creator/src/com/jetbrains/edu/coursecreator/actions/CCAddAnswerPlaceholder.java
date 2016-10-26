@@ -75,7 +75,6 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
     AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
-    info.setNeedInsertText(!model.hasSelection());
     answerPlaceholder.getSubtaskInfos().put(stepIndex, info);
     int index = taskFile.getAnswerPlaceholders().size();
     answerPlaceholder.setIndex(index);
@@ -92,7 +91,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     String answerPlaceholderText = dlg.getTaskText();
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     answerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
-    answerPlaceholder.setLength(model.hasSelection() ? StringUtil.notNullize(answerPlaceholderText).length() : 0);
+    answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
     answerPlaceholder.setHints(dlg.getHints());
 
     if (!model.hasSelection()) {
