@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator.actions;
+package com.jetbrains.edu.coursecreator.actions.placeholder;
 
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
