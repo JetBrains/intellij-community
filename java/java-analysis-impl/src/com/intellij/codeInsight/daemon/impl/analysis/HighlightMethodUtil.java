@@ -360,9 +360,10 @@ public class HighlightMethodUtil {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
       if (highlightInfo == null) {
-        final String invalidCallMessage = 
+        String invalidCallMessage =
           LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)resolved, methodCall.getMethodExpression(), resolveResult.getCurrentFileResolveScope(), languageLevel);
         if (invalidCallMessage != null) {
+          invalidCallMessage = HighlightUtil.extendUnsupportedLanguageLevelDescription(invalidCallMessage, methodCall, languageLevel, methodCall.getContainingFile(), LanguageLevel.JDK_1_8);
           highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(invalidCallMessage).range(fixRange).create();
           if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
             QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_8));
@@ -589,9 +590,12 @@ public class HighlightMethodUtil {
         ? LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)element, referenceToMethod, 
                                                                       resolveResult.getCurrentFileResolveScope(), languageLevel) 
         : null;
-      description = staticInterfaceMethodMessage != null 
-                    ? staticInterfaceMethodMessage 
-                    : HighlightUtil.buildProblemWithStaticDescription(element);
+      if (staticInterfaceMethodMessage != null) {
+        description = HighlightUtil.extendUnsupportedLanguageLevelDescription(staticInterfaceMethodMessage, methodCall, languageLevel, referenceToMethod.getContainingFile(), LanguageLevel.JDK_1_8);
+      }
+      else {
+        description = HighlightUtil.buildProblemWithStaticDescription(element);
+      }
       elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else {
