@@ -4,6 +4,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -42,7 +45,26 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
     placeholder.getActiveSubtaskInfo().setNeedInsertText(visible);
     int length = isVisible() ? placeholder.getTaskText().length() : 0;
     placeholder.setLength(length);
+    saveIndent(placeholder, state, !visible);
     StudyUtils.drawAllWindows(state.getEditor(), state.getTaskFile());
+  }
+
+  private static void saveIndent(AnswerPlaceholder placeholder, CCState state, boolean visible) {
+    Document document = state.getEditor().getDocument();
+    int offset = placeholder.getOffset();
+    int lineNumber = document.getLineNumber(offset);
+    int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, lineNumber);
+    int newOffset = offset;
+    int endOffset = offset + placeholder.getRealLength();
+    if (!visible && nonSpaceCharOffset == offset) {
+      newOffset = document.getLineStartOffset(lineNumber);
+    }
+    if (visible) {
+      newOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, offset, endOffset);
+    }
+    placeholder.setOffset(newOffset);
+    int delta = offset - newOffset;
+    placeholder.setPossibleAnswer(document.getText(TextRange.create(newOffset, newOffset + delta + placeholder.getRealLength())));
   }
 
   protected abstract String getName();
