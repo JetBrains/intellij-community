@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CCNewSubtaskAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCNewSubtaskAction.class);
-  public static final String NEW_SUBTASK = "New Subtask";
+  public static final String NEW_SUBTASK = "Add Subtask";
 
   public CCNewSubtaskAction() {
     super(NEW_SUBTASK);
