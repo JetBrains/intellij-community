@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionV3;
@@ -164,7 +163,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
           final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
           cell.getCell().setPromptNumber(connection.getExecCount());
           //noinspection unchecked
-          cell.updatePanel(null, (List<IpnbOutputCell>)connection.getOutput().clone());
+          cell.updatePanel(null, connection.getOutput());
         }
 
         @Override
@@ -174,6 +173,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (payload != null) {
             cell.updatePanel(payload, null);
           }
+        }
+
+        @Override
+        public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          cell.finishExecution();
         }
       };
 
