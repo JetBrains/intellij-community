@@ -70,7 +70,7 @@ public class AssertHint {
       return null;
     }
     final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
+    if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
       return null;
     }
     final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);

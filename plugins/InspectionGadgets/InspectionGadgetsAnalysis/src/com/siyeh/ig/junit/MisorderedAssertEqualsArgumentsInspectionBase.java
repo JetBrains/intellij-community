@@ -18,7 +18,6 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -83,12 +82,8 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (callExpression == null) {
         return;
       }
-      final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-      final PsiMethod method = (PsiMethod)methodExpression.resolve();
-      if (method == null) {
-        return;
-      }
-      final ExpectedActual expectedActual = ExpectedActual.create(method, callExpression.getArgumentList().getExpressions(), checkTestNG());
+
+      final ExpectedActual expectedActual = ExpectedActual.create(callExpression, checkTestNG());
       if (expectedActual == null) {
         return;
       }
@@ -122,36 +117,21 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       return myActual;
     }
 
-    static ExpectedActual create(PsiMethod method, PsiExpression[] arguments, boolean checkTestNG) {
-      final PsiClass containingClass = method.getContainingClass();
-      final PsiExpression expectedArgument;
-      final PsiExpression actualArgument;
-      if (checkTestNG){
-        if (InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")) {
-          expectedArgument = arguments[1];
-          actualArgument = arguments[0];
-        }
-        else {
-          expectedArgument = null;
-          actualArgument = null;
-        }
-      }
-      else {
-        final boolean messageOnFirstPosition = AssertHint.isMessageOnFirstPosition(method, false);
-        final boolean messageOnLastPosition = AssertHint.isMessageOnLastPosition(method, false);
-        if (!messageOnFirstPosition && !messageOnLastPosition) {
-          return null;
-        }
-        int offset = messageOnFirstPosition && method.getParameterList().getParameters().length > 2 ? 1 : 0;
-        expectedArgument = arguments[offset];
-        actualArgument   = arguments[offset + 1];
-      }
-      if (expectedArgument == null || actualArgument == null) {
+    private static ExpectedActual create(PsiMethodCallExpression callExpression, boolean checkTestNG) {
+      AssertHint hint = AssertHint.create(callExpression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG);
+      if (hint == null) {
         return null;
       }
 
+      PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
+
+      int index = hint.getArgIndex();
+      final PsiExpression expectedArgument = arguments[checkTestNG ? index + 1 : index];
+      final PsiExpression actualArgument = arguments[checkTestNG ? index : index + 1];
+
       return new ExpectedActual(expectedArgument, actualArgument);
     }
+
   }
 
   private class MisorderedAssertEqualsParametersVisitor extends BaseInspectionVisitor {
@@ -159,23 +139,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!methodNames.contains(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length < 2) {
-        return;
-      }
-
-      final ExpectedActual expectedActual = ExpectedActual.create(method, arguments, checkTestNG());
-
+      final ExpectedActual expectedActual = ExpectedActual.create(expression, checkTestNG());
       if (expectedActual == null) {
         return;
       }
