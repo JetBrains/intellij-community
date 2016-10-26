@@ -21,7 +21,7 @@ import java.awt.*;
 
 public class VcsLogStandardColors {
   public static class Refs {
-    public static final Color TIP = new JBColor(new Color(0xffe137), new Color(0xe1c731));
+    public static final Color TIP = new JBColor(new Color(0xffd100), new Color(0xe1c731));
     public static final Color LEAF = new JBColor(new Color(0x8a2d6b), new Color(0xc31e8c));
     public static final Color BRANCH = new JBColor(new Color(0x3cb45c), new Color(0x3cb45c));
     public static final Color BRANCH_REF = new JBColor(new Color(0x9f79b5), new Color(0x9f79b5));

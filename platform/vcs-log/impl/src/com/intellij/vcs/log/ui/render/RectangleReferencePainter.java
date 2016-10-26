@@ -58,6 +58,7 @@ public class RectangleReferencePainter implements ReferencePainter {
                                @NotNull Collection<VcsRef> references,
                                @NotNull Color background,
                                @NotNull Color foreground,
+                               boolean isSelected,
                                int availableWidth) {
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + RectanglePainter.TOP_TEXT_PADDING + RectanglePainter.BOTTOM_TEXT_PADDING;
