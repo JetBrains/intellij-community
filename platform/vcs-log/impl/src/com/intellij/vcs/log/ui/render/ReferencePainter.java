@@ -33,6 +33,7 @@ public interface ReferencePainter {
                         @NotNull Collection<VcsRef> references,
                         @NotNull Color background,
                         @NotNull Color foreground,
+                        boolean isSelected,
                         int availableWidth);
 
   void paint(@NotNull Graphics2D g2, int x, int y, int height);
