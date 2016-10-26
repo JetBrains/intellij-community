@@ -25,6 +25,7 @@ class InstancesWithStackFrameView {
                               @NotNull StackFrameList list) {
     mySplitter.setFirstComponent(new JBScrollPane(tree));
     mySplitter.setSecondComponent(new JBScrollPane(list));
+    mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
 
     hideStackFrame();
