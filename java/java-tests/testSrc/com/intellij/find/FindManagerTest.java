@@ -210,7 +210,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
-    List<UsageInfo> result = new ArrayList<>();
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
     FindInProjectUtil.findUsages(findModel, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
