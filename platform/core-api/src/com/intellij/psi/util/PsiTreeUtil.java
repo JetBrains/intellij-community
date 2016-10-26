@@ -156,11 +156,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findCommonContext(@NotNull PsiElement... elements) {
-    return findCommonContext(Arrays.asList(elements));
-  }
-
-  @Nullable
   public static PsiElement findCommonContext(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
     PsiElement toReturn = null;

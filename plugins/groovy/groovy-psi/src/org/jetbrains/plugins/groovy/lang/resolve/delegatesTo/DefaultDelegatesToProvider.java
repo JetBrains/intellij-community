@@ -17,8 +17,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,17 +35,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes;
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_STRATEGY_KEY;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.*;
 
 /**
  * @author Max Medvedev
@@ -275,45 +271,5 @@ public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
     return -1;
   }
 
-  @Nullable
-  static GrCall getContainingCall(@NotNull GrClosableBlock closableBlock) {
-    final PsiElement parent = closableBlock.getParent();
-    if (parent instanceof GrCall && ArrayUtil.contains(closableBlock, ((GrCall)parent).getClosureArguments())) {
-      return (GrCall)parent;
-    }
-    else if (parent instanceof GrArgumentList) {
-      final PsiElement parent1 = parent.getParent();
-      if (parent1 instanceof GrCall) {
-        return (GrCall)parent1;
-      }
-    }
 
-    return null;
-  }
-
-  @NotNull
-  static GroovyResolveResult resolveActualCall(@NotNull GrCall call) {
-    if (call instanceof GrMethodCall) {
-      return CachedValuesManager.getCachedValue(call, () -> CachedValueProvider.Result.create(
-        doResolveActualCall((GrMethodCall)call), PsiModificationTracker.MODIFICATION_COUNT
-      ));
-    }
-    else {
-      return call.advancedResolve();
-    }
-  }
-
-  @NotNull
-  private static GroovyResolveResult doResolveActualCall(@NotNull GrMethodCall call) {
-    GroovyResolveResult result = call.advancedResolve();
-    if (result.getElement() instanceof PsiMethod && !result.isInvokedOnProperty()) {
-      return result;
-    }
-    GrExpression expression = call.getInvokedExpression();
-    PsiType type = expression.getType();
-    if (type == null) return result;
-
-    GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", expression, getArgumentTypes(expression, false));
-    return PsiImplUtil.extractUniqueResult(calls);
-  }
 }

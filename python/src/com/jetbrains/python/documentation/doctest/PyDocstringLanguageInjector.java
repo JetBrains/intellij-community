@@ -25,6 +25,7 @@ import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
@@ -44,9 +45,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
     final Module module = ModuleUtilCore.findModuleForPsiElement(host);
     if (module == null || !PyDocumentationSettings.getInstance(module).isAnalyzeDoctest()) return;
 
-    final PyDocStringOwner
-      docStringOwner = PsiTreeUtil.getParentOfType(host, PyDocStringOwner.class);
-    if (docStringOwner != null && host.equals(docStringOwner.getDocStringExpression())) {
+    if (DocStringUtil.getParentDefinitionDocString(host) == host) {
       int start = 0;
       int end = host.getTextLength() - 1;
       final String text = host.getText();

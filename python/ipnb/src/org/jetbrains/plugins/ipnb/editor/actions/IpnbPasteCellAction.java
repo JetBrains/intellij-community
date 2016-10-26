@@ -28,16 +28,11 @@ public class IpnbPasteCellAction extends AnAction {
   }
 
   public static void pasteCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ipnbFilePanel.pasteCell();
-            ipnbFilePanel.saveToFile();
-          }
-        });
-      }
-    }, "Ipnb.pasteCell", new Object());
+    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ipnbFilePanel.pasteCell();
+        ipnbFilePanel.saveToFile(false);
+      }), "Ipnb.pasteCell", new Object());
 
   }
 }

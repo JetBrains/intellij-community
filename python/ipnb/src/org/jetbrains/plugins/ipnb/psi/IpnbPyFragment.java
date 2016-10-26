@@ -24,7 +24,7 @@ public class IpnbPyFragment extends PyFileImpl {
 
   public IpnbPyFragment(Project project, CharSequence text, boolean isPhysical, IpnbCodeSourcePanel codeSourcePanel) {
     super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
-            new LightVirtualFile("code.py", IpnbPyLanguageDialect.getInstance(), text), isPhysical)
+      new LightVirtualFile("code.py", IpnbPyLanguageDialect.getInstance(), text), isPhysical)
     );
     myPhysical = isPhysical;
     myCodeSourcePanel = codeSourcePanel;
@@ -41,7 +41,8 @@ public class IpnbPyFragment extends PyFileImpl {
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
-    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
+    SingleRootFileViewProvider cloneViewProvider =
+      (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
     cloneViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = cloneViewProvider;
     return clone;
@@ -49,7 +50,7 @@ public class IpnbPyFragment extends PyFileImpl {
 
   @NotNull
   public FileViewProvider getViewProvider() {
-    if(myViewProvider != null) return myViewProvider;
+    if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 

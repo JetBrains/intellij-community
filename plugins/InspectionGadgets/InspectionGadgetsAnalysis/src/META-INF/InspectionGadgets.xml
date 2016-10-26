@@ -1406,10 +1406,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JUnitDatapoint" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.datapoint.display.name" implementationClass="com.siyeh.ig.junit.JUnitDatapointInspection"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MessageMissingOnJUnitAssertion" shortName="AssertsWithoutMessages"
+    <localInspection groupPath="Java" language="JAVA" suppressId="MessageMissingOnJUnitAssertion" shortName="JUnitAssertsWithoutMessages"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.AssertsWithoutMessagesInspection"/>
+                     implementationClass="com.siyeh.ig.junit.JUnitAssertsWithoutMessagesInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="BeforeOrAfterWithIncorrectSignature" shortName="BeforeClassOrAfterClassIsPublicStaticVoidNoArg"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="before.class.or.after.class.is.public.static.void.no.arg.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"

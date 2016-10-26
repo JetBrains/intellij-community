@@ -48,7 +48,6 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
           UIUtil.invokeLaterIfNeeded(() -> connectionManager.startConnection(null, path, finalUrl, false));
           runCells(cells, ipnbFilePanel);
         });
-
       }
       else {
         runCells(cells, ipnbFilePanel);
@@ -58,7 +57,7 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
 
   private static void runCells(List<IpnbEditablePanel> cells, IpnbFilePanel ipnbFilePanel) {
     for (IpnbEditablePanel cell : cells) {
-      cell.runCell();
+      cell.runCell(true);
       ipnbFilePanel.revalidate();
       ipnbFilePanel.repaint();
       ipnbFilePanel.requestFocus();

@@ -19,7 +19,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
@@ -157,9 +156,5 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(logicalColumn, myEditor.getCaretModel().getLogicalPosition().column);
     assertEquals(0, myEditor.getCaretModel().getVisualPosition().line);
     assertEquals(visualColumn, myEditor.getCaretModel().getVisualPosition().column);
-  }
-
-  private static Inlay addInlay(int offset) {
-    return EditorTestUtil.addInlay(myEditor, offset);
   }
 }

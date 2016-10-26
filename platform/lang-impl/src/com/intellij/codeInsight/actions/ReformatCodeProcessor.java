@@ -20,9 +20,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -37,11 +36,8 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -171,33 +167,5 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
     
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
-  }
-
-  private static class CaretVisualPositionKeeper {
-    private final Map<Editor, Integer> myCaretRelativeVerticalPositions = new HashMap<>();
-    
-    private CaretVisualPositionKeeper(@Nullable Document document) {
-      if (document == null) return;
-  
-      Editor[] editors = EditorFactory.getInstance().getEditors(document);
-      for (Editor editor : editors) {
-        Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-        Point pos = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
-        int relativePosition = pos.y - visibleArea.y;
-        myCaretRelativeVerticalPositions.put(editor, relativePosition);
-      }
-    }
-    
-    private void restoreOriginalLocation() {
-      for (Map.Entry<Editor, Integer> e : myCaretRelativeVerticalPositions.entrySet()) {
-        Editor editor = e.getKey();
-        int relativePosition = e.getValue();
-        Point caretLocation = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
-        int scrollOffset = caretLocation.y - relativePosition;
-        editor.getScrollingModel().disableAnimation();
-        editor.getScrollingModel().scrollVertically(scrollOffset);
-        editor.getScrollingModel().enableAnimation();
-      }
-    }
   }
 }

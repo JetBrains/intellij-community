@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class IpnbRawCell implements IpnbCell {
-  @NotNull private List<String> mySource;
+  @NotNull private final List<String> mySource;
 
   public IpnbRawCell(@NotNull final List<String> source) {
     mySource = source;

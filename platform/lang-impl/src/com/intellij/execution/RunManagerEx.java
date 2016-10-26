@@ -94,7 +94,8 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
-  public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
+  @SafeVarargs
+  public static void disableTasks(Project project, RunConfiguration settings, @NotNull Key<? extends BeforeRunTask>... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {
       List<? extends BeforeRunTask> tasks = getInstanceEx(project).getBeforeRunTasks(settings, key);
       for (BeforeRunTask task : tasks) {
@@ -103,7 +104,8 @@ public abstract class RunManagerEx extends RunManager {
     }
   }
 
-  public static int getTasksCount(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
+  @SafeVarargs
+  public static int getTasksCount(Project project, RunConfiguration settings, @NotNull Key<? extends BeforeRunTask>... keys) {
     return Arrays.stream(keys).mapToInt(key -> getInstanceEx(project).getBeforeRunTasks(settings, key).size()).sum();
   }
 }

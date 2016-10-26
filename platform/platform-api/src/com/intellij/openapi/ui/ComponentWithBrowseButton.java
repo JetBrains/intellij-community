@@ -135,6 +135,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
    */
+  @Deprecated
   public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
@@ -146,6 +147,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * @deprecated use {@link #addActionListener(ActionListener)} instead
    */
+  @Deprecated
   @SuppressWarnings("UnusedParameters")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
     addActionListener(actionListener);
@@ -154,6 +156,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * @deprecated use {@link #addActionListener(ActionListener)} instead
    */
+  @Deprecated
   @SuppressWarnings("UnusedParameters")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
     addActionListener(actionListener);

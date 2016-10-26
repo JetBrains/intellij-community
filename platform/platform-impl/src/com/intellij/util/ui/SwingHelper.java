@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
+import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
@@ -428,20 +428,8 @@ public class SwingHelper {
                                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                        @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
-    fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);
-    componentWithBrowseButton.addBrowseFolderListener(
-      browseDialogTitle,
-      null,
-      project,
-      fileChooserDescriptor,
-      textComponentAccessor
-    );
-    FileChooserFactory.getInstance().installFileCompletion(
-      textField,
-      fileChooserDescriptor,
-      true,
-      project
-    );
+    ComponentsKt.installFileCompletionAndBrowseDialog(project, componentWithBrowseButton, textField, browseDialogTitle,
+                                                      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix), textComponentAccessor);
   }
 
   @NotNull
@@ -650,20 +638,7 @@ public class SwingHelper {
                                                                                                 @NotNull String browseDialogTitle,
                                                                                                 @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                                                                 @Nullable NotNullProducer<List<String>> historyProvider) {
-    TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
-    TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
-    textFieldWithHistory.setHistorySize(-1);
-    textFieldWithHistory.setMinimumAndPreferredWidth(0);
-    if (historyProvider != null) {
-      addHistoryOnExpansion(textFieldWithHistory, historyProvider);
-    }
-    installFileCompletionAndBrowseDialog(
-      project,
-      textFieldWithHistoryWithBrowseButton,
-      browseDialogTitle,
-      fileChooserDescriptor
-    );
-    return textFieldWithHistoryWithBrowseButton;
+    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
   }
 
   @NotNull

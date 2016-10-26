@@ -84,7 +84,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     PsiManager manager = ReadAction.compute(() -> p.getElementToSearch().getManager());
     manager.startBatchFilesProcessingMode();
     try {
-      processOffsets(descriptors, (file, offsets) -> {
+      processOffsets(descriptors, project, (file, offsets) -> {
         fileCount.incrementAndGet();
         exprCount.addAndGet(offsets.size());
         return processFile(consumer, descriptors, file, offsets);
@@ -101,7 +101,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @TestOnly
   public static Set<VirtualFile> getFilesToSearchInPsi(PsiClass samClass) {
     Set<VirtualFile> result = new HashSet<>();
-    processOffsets(calcDescriptors(new SearchParameters(samClass, samClass.getUseScope())), (file, offsets) -> result.add(file));
+    processOffsets(calcDescriptors(new SearchParameters(samClass, samClass.getUseScope())), samClass.getProject(), (file, offsets) -> result.add(file));
     return result;
   }
 
@@ -134,8 +134,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<VirtualFile> getLikelyFiles(List<SamDescriptor> descriptors) {
-    return JBIterable.from(descriptors).flatMap(SamDescriptor::getMostLikelyFiles).toSet();
+  private static Set<VirtualFile> getLikelyFiles(List<SamDescriptor> descriptors, Collection<VirtualFile> candidateFiles, Project project) {
+    final GlobalSearchScope candidateFilesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    return JBIterable.from(descriptors).flatMap(descriptor -> descriptor.getMostLikelyFiles(candidateFilesScope)).toSet();
   }
 
   @NotNull
@@ -156,12 +157,14 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return result;
   }
 
-  private static void processOffsets(List<SamDescriptor> descriptors, PairProcessor<VirtualFile, List<Integer>> processor) {
+  private static void processOffsets(List<SamDescriptor> descriptors, Project project, PairProcessor<VirtualFile, List<Integer>> processor) {
     if (descriptors.isEmpty()) return;
 
     List<PsiClass> samClasses = ContainerUtil.map(descriptors, d -> d.samClass);
     MultiMap<VirtualFile, FunExprOccurrence> allCandidates = getAllOccurrences(descriptors);
-    for (VirtualFile vFile : putLikelyFilesFirst(descriptors, allCandidates.keySet())) {
+    if (allCandidates.isEmpty()) return;
+
+    for (VirtualFile vFile : putLikelyFilesFirst(descriptors, allCandidates.keySet(), project)) {
       List<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile));
       if (!toLoad.isEmpty()) {
         LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
@@ -173,9 +176,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<VirtualFile> putLikelyFilesFirst(List<SamDescriptor> descriptors, Set<VirtualFile> allFiles) {
-    Set<VirtualFile> orderedFiles = new LinkedHashSet<>(allFiles);
-    orderedFiles.retainAll(getLikelyFiles(descriptors));
+  private static Set<VirtualFile> putLikelyFilesFirst(List<SamDescriptor> descriptors, Set<VirtualFile> allFiles, Project project) {
+    Set<VirtualFile> orderedFiles = new LinkedHashSet<>(allFiles.size());
+    orderedFiles.addAll(getLikelyFiles(descriptors, allFiles, project));
     orderedFiles.addAll(allFiles);
     return orderedFiles;
   }
@@ -306,7 +309,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
 
     @NotNull
-    private Set<VirtualFile> getMostLikelyFiles() {
+    private Set<VirtualFile> getMostLikelyFiles(GlobalSearchScope searchScope) {
       Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
       ReadAction.run(() -> {
         if (!samClass.isValid()) return;
@@ -326,7 +329,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
-          helper.processFilesWithText(effectiveUseScope, UsageSearchContext.IN_CODE, true, word, processor);
+          helper.processFilesWithText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
         }
       });
       return files;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -167,7 +169,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   @Nullable
   public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
     final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
-
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceDir);
     final CreateClassDialog dialog = new CreateClassDialog(
       psiClass.getProject(), getTitle(psiClass),
@@ -176,7 +178,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       CreateClassKind.CLASS, true, ModuleUtilCore.findModuleForPsiElement(psiClass)) {
       @Override
       protected PsiDirectory getBaseDir(String packageName) {
-        return sourceDir;
+        return fileIndex.getSourceRootForFile(sourceDir.getVirtualFile()) != null ? sourceDir : super.getBaseDir(packageName);
       }
 
       @Override

@@ -22,10 +22,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.event.CaretAdapter;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.SelectionEvent;
-import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -362,33 +358,6 @@ public class EditorImplTest extends AbstractEditorTest {
     assertTrue(visibleArea.contains(caretPoint));
   }
 
-  public void testCaretAndSelectionEventsInBulkMode() throws Exception {
-    initText("abc<selection>def<caret></selection>");
-    StringBuilder output = new StringBuilder();
-    CaretAdapter caretListener = new CaretAdapter() {
-      @Override
-      public void caretPositionChanged(CaretEvent e) {
-        output.append("caret:").append(e.getNewPosition());
-      }
-    };
-    SelectionListener selectionListener = new SelectionListener() {
-      @Override
-      public void selectionChanged(SelectionEvent e) {
-        output.append("selection:").append(e.getNewRange());
-      }
-    };
-    myEditor.getCaretModel().addCaretListener(caretListener);
-    myEditor.getSelectionModel().addSelectionListener(selectionListener);
-    ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(true);
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().insertString(0, " "));
-    assertEquals("", output.toString());
-    ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(false);
-    myEditor.getSelectionModel().removeSelectionListener(selectionListener);
-    myEditor.getCaretModel().removeCaretListener(caretListener);
-    assertEquals("caret:LogicalPosition: (0, 7)selection:(4,7)", output.toString());
-    checkResultByText(" abc<selection>def<caret></selection>");
-  }
-
   public void testChangingHighlightersInBulkModeListener() throws Exception {
     DocumentBulkUpdateListener.Adapter listener = new DocumentBulkUpdateListener.Adapter() {
       @Override
@@ -447,5 +416,21 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
     type('b');
     assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
+  }
+
+  public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() throws Exception {
+    initText("abc def ghi");
+    configureSoftWraps(3);
+    JViewport viewport = ((EditorEx)myEditor).getScrollPane().getViewport();
+    viewport.setExtentSize(new Dimension()); // emulate editor becoming invisible
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        Document document = myEditor.getDocument();
+        document.deleteString(0, document.getTextLength());
+      }
+    }.execute();
+    viewport.setExtentSize(new Dimension(1000, 1000)); // editor becomes visible
+    verifySoftWrapPositions();
   }
 }

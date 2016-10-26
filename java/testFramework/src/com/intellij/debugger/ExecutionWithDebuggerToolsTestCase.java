@@ -47,6 +47,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
 
@@ -82,10 +83,33 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected String readValue(String comment, String valueName) {
     int valueStart = comment.indexOf(valueName);
-    if (valueStart == -1) return null;
+    if (valueStart == -1) {
+      return null;
+    }
 
-    int valueEnd = comment.indexOf(')', valueStart);
-    return comment.substring(valueStart + valueName.length() + 1, valueEnd);
+    valueStart += valueName.length();
+    return comment.substring(valueStart + 1, findMatchingParenthesis(comment, valueStart));
+  }
+
+  private static int findMatchingParenthesis(String input, int startPos) {
+    int depth = 0;
+    while (startPos < input.length()) {
+      switch (input.charAt(startPos)) {
+        case '(':
+          depth++;
+          break;
+        case ')':
+          if (depth == 1) {
+            return startPos;
+          }
+          else {
+            depth--;
+          }
+          break;
+      }
+      startPos++;
+    }
+    return -1;
   }
 
   protected void resume(SuspendContextImpl context) {
@@ -407,6 +431,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
           println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
         }
+
+        String logExpression = readValue(comment, "LogExpression");
+        if (logExpression != null) {
+          breakpoint.getXBreakpoint().setLogExpression(logExpression);
+          println("LogExpression = " + logExpression, ProcessOutputTypes.SYSTEM);
+        }
+
         String passCount = readValue(comment, "Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);

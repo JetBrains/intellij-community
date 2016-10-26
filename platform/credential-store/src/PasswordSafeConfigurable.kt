@@ -18,29 +18,40 @@ package com.intellij.credentialStore
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
+import com.intellij.ui.components.chars
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
-import java.awt.Component
+import java.io.File
+import java.nio.file.Paths
 import javax.swing.JPanel
+import kotlin.properties.Delegates.notNull
 
-class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
+internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
   override fun getSettings() = settings
 
   override fun createUi() = PasswordSafeConfigurableUi()
 }
 
-class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
+internal fun getDefaultKeePassDbFilePath() = "${PathManager.getConfigPath()}${File.separatorChar}${DB_FILE_NAME}"
+
+internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
   private val inKeychain = RadioButton("In Native Keychain")
 
   private val inKeePass = RadioButton("In KeePass")
   private val keePassMasterPassword = JBPasswordField()
+  private var keePassDbFile: TextFieldWithHistoryWithBrowseButton by notNull()
 
   private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
 
@@ -54,6 +65,8 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
       else -> throw IllegalStateException("Unknown provider type: ${settings.providerType}")
     }
 
+    val currentProvider = (PasswordSafe.getInstance() as PasswordSafeImpl).currentProvider
+    keePassDbFile.text = settings.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
     updateEnabledState()
   }
 
@@ -62,8 +75,17 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
       return true
     }
 
-    if (getProviderType() == ProviderType.KEEPASS && String(keePassMasterPassword.password).nullize(true) != null) {
-      return true
+    if (getProviderType() == ProviderType.KEEPASS) {
+      if (!keePassMasterPassword.chars.isNullOrBlank()) {
+        return true
+      }
+
+      getCurrentDbFile()?.let {
+        val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
+        if ((passwordSafe.currentProvider as KeePassCredentialStore).dbFile != it) {
+          return true
+        }
+      }
     }
     return false
   }
@@ -73,7 +95,7 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
     var provider = passwordSafe.currentProvider
 
-    val masterPassword = String(keePassMasterPassword.password).nullize(true)?.toByteArray()
+    val masterPassword = keePassMasterPassword.chars.toString().nullize(true)?.toByteArray()
 
     if (settings.providerType != providerType) {
       @Suppress("NON_EXHAUSTIVE_WHEN")
@@ -93,20 +115,34 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
         }
 
         ProviderType.KEEPASS -> {
-          provider = KeePassCredentialStore(memoryOnly = true, existingMasterPassword = masterPassword)
+          provider = KeePassCredentialStore(memoryOnly = true, existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
         }
       }
     }
 
-    if (providerType == ProviderType.KEEPASS) {
-      if (provider === passwordSafe.currentProvider && masterPassword != null) {
+    val newProvider = provider
+    if (newProvider === passwordSafe.currentProvider && newProvider is KeePassCredentialStore) {
+      if (masterPassword != null) {
         // so, provider is the same and we must change master password for existing database file
-        (provider as KeePassCredentialStore).setMasterPassword(masterPassword)
+        newProvider.setMasterPassword(masterPassword)
+      }
+
+      getCurrentDbFile()?.let {
+        newProvider.dbFile = it
       }
     }
 
     settings.providerType = providerType
+    if (newProvider is KeePassCredentialStore) {
+      settings.keepassDb = newProvider.dbFile.toString()
+    }
+    else {
+      settings.keepassDb = null
+    }
+    passwordSafe.currentProvider = newProvider
   }
+
+  fun getCurrentDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
 
   fun updateEnabledState() {
     modeToRow[ProviderType.KEEPASS]?.enabled = getProviderType() == ProviderType.KEEPASS
@@ -114,7 +150,6 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
 
   override fun getComponent(): JPanel {
     val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
-    val currentProvider = passwordSafe.currentProvider
 
     keePassMasterPassword.setPasswordIsStored(true)
 
@@ -130,7 +165,34 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
 
         row {
           inKeePass()
+          row("Database:") {
+            keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
+                                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
+                                                        it.name.endsWith(".kdbx")
+                                                      },
+                                                      fileChoosen = {
+                                                        if (it.isDirectory) {
+                                                          it.path + File.separator + DB_FILE_NAME
+                                                        }
+                                                        else {
+                                                          it.path
+                                                        }
+                                                      })
+            gearButton(
+                object : AnAction("Clear") {
+                  override fun actionPerformed(event: AnActionEvent) {
+                    if (MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
+                      passwordSafe.clearPasswords()
+                    }
+                  }
+                },
+                object : AnAction("Import") {
+                  override fun actionPerformed(e: AnActionEvent?) {
 
+                  }
+                }
+            )
+          }
           modeToRow[ProviderType.KEEPASS] = row("Master Password:") {
             keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
           }
@@ -139,17 +201,10 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
         row {
           rememberPasswordsUntilClosing()
         }
+
+        val currentProvider = passwordSafe.currentProvider
         if (currentProvider is KeePassCredentialStore && !currentProvider.memoryOnly) {
           row { hint("Existing KeePass file will be removed.") }
-        }
-      }
-
-      if (!passwordSafe.isNativeCredentialStoreUsed) {
-        row(separated = true) {
-          button("Clear Passwords") { event ->
-            passwordSafe.clearPasswords()
-            Messages.showInfoMessage(event.source as Component, "Passwords were cleared", "Clear Passwords")
-          }
         }
       }
     }

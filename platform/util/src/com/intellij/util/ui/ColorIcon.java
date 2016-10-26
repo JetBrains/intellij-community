@@ -72,7 +72,9 @@ public class ColorIcon extends EmptyIcon {
 
   @Override
   protected EmptyIcon createScaledInstance(float scale) {
-    return new ColorIcon(width, myColorSize, myColor, myBorder).withJBUIScale(getJBUIScale());
+    ColorIcon icon = new ColorIcon(width, myColorSize, myColor, myBorder);
+    icon.setPreScaled(isPreScaled());
+    return icon;
   }
 
   @Override

@@ -10,7 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
 
-public class IpnbConnectionV3 extends IpnbConnection{
+public class IpnbConnectionV3 extends IpnbConnection {
   private WebSocketClient myChannelsClient;
   private Thread myChannelsThread;
 

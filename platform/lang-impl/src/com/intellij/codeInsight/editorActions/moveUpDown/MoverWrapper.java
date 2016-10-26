@@ -20,6 +20,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -111,14 +112,33 @@ class MoverWrapper {
       final FoldRegion topRegion = findTopLevelRegionInRange(editor, myInfo.range1);
       final FoldRegion bottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
 
-      document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
-      document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
+      if (document instanceof DocumentEx) {
+        int startFirst = Math.min(start, start2);
+        int endFirst = Math.min(end, end2);
+        int startSecond = Math.max(start, start2);
+        int endSecond = Math.max(end, end2);
+        ((DocumentEx)document).moveText(startFirst, endFirst, startSecond);
+        ((DocumentEx)document).moveText(startSecond, endSecond, startFirst);
+        myInfo.range1.dispose();
+        myInfo.range2.dispose();
+        // we could use existing range markers, but if some range is empty, they won't be moved as expected
+        myInfo.range1 = document.createRangeMarker(start < start2 ? start                 : start2 + end - end2,
+                                                   start < start2 ? start + end2 - start2 : end);
+        myInfo.range2 = document.createRangeMarker(start < start2 ? start + end2 - end    : start2,
+                                                   start < start2 ? end2                  : start2 + end - start);
+        insertLineBreakInTheEndIfMissing(myInfo.range1);
+        insertLineBreakInTheEndIfMissing(myInfo.range2);
+      }
+      else {
+        document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
+        document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
 
-      document.insertString(myInfo.range2.getStartOffset(), textToInsert);
-      int s = myInfo.range2.getStartOffset() + textToInsert.length();
-      int e = myInfo.range2.getEndOffset();
-      if (e > s) {
-        document.deleteString(s, e);
+        document.insertString(myInfo.range2.getStartOffset(), textToInsert);
+        int s = myInfo.range2.getStartOffset() + textToInsert.length();
+        int e = myInfo.range2.getEndOffset();
+        if (e > s) {
+          document.deleteString(s, e);
+        }
       }
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -155,6 +175,16 @@ class MoverWrapper {
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void insertLineBreakInTheEndIfMissing(@NotNull RangeMarker marker) {
+    Document document = marker.getDocument();
+    int startOffset = marker.getStartOffset();
+    int endOffset = marker.getEndOffset();
+    if (startOffset == endOffset || document.getImmutableCharSequence().charAt(endOffset - 1) != '\n') {
+      marker.setGreedyToRight(true);
+      document.insertString(endOffset, "\n");
+    }
   }
 
   private static FoldRegion findTopLevelRegionInRange(Editor editor, RangeMarker range) {

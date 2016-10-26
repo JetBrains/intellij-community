@@ -259,7 +259,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final PsiVariable variable = tb.getVariable();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
     LOG.assertTrue(methodCallExpression != null);
-    return isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0]);
+    if (!isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0])) return false;
+    PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+    if(qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethod.class);
+      return method == null || !method.getName().equals("addAll");
+    }
+    return true;
   }
 
   private static boolean isCollectCall(TerminalBlock tb) {
@@ -280,7 +286,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
         qualifierClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
       }
-      else if (qualifierExpression == null) {
+      else if (qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) {
         final PsiClass enclosingClass = PsiTreeUtil.getParentOfType(methodCallExpression, PsiClass.class);
         if (PsiUtil.getEnclosingStaticElement(methodCallExpression, enclosingClass) == null) {
           qualifierClass = enclosingClass;
@@ -391,7 +397,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
-    if(ReferencesSearch.search(variable, variable.getUseScope()).forEach(ref -> {
+    if(ReferencesSearch.search(variable).forEach(ref -> {
       PsiElement element = ref.getElement();
       return !(element instanceof PsiExpression) ||
              !PsiUtil.isAccessedForWriting((PsiExpression)element) ||
@@ -522,6 +528,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return false;
   }
 
+  static String tryUnbox(PsiVariable variable) {
+    PsiType type = variable.getType();
+    String mapOp = null;
+    if(type.equals(PsiType.INT)) {
+      mapOp = "mapToInt";
+    } else if(type.equals(PsiType.LONG)) {
+      mapOp = "mapToLong";
+    } else if(type.equals(PsiType.DOUBLE)) {
+      mapOp = "mapToDouble";
+    }
+    return mapOp == null ? "" : "."+mapOp+"("+variable.getName()+" -> "+variable.getName()+")";
+  }
+
   private class StreamApiMigrationVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -566,12 +585,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       catch (AnalysisCanceledException ignored) {
         return;
       }
+      int startOffset = tb.getStartOffset(controlFlow);
+      int endOffset = tb.getEndOffset(controlFlow);
+      if(startOffset < 0 || endOffset < 0) return;
       final Collection<PsiStatement> exitPoints = ControlFlowUtil
-        .findExitPointsAndStatements(controlFlow, tb.getStartOffset(controlFlow), tb.getEndOffset(controlFlow),
-                                     new IntArrayList(), PsiContinueStatement.class,
+        .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
                                      PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
-      int startOffset = controlFlow.getStartOffset(body);
-      int endOffset = controlFlow.getEndOffset(body);
+      startOffset = controlFlow.getStartOffset(body);
+      endOffset = controlFlow.getEndOffset(body);
+      if(startOffset < 0 || endOffset < 0) return;
       PsiElement surrounder = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiClass.class);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
         .remove(variable -> PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class, PsiClass.class) != surrounder)
@@ -980,7 +1002,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         operationName = "mapToObj";
       }
       PsiExpression expression = myType == null ? myExpression : RefactoringUtil.convertInitializerToNormalExpression(myExpression, myType);
-      if(myType != null && !(myType instanceof PsiPrimitiveType)) {
+      if(myType != null && !(myType instanceof PsiPrimitiveType) && !(myType instanceof PsiCapturedWildcardType)) {
         operationName = "<"+myType.getCanonicalText()+">"+operationName;
       }
       return "." + operationName + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
@@ -1155,7 +1177,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     String createReplacement() {
-      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()";
+      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()" + tryUnbox(myVariable);
     }
 
     @Contract("null, _ -> false")
@@ -1175,7 +1197,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
       if (collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
-          isRawSubstitution(iteratedValueType, collectionClass)) {
+          isRawSubstitution(iteratedValueType, collectionClass) ||
+          !isSupported(statement.getIterationParameter().getType())) {
         return null;
       }
       return new CollectionStream(statement.getIterationParameter(), iteratedValue);

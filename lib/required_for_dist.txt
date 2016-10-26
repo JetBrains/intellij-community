@@ -3,6 +3,7 @@ automaton.jar
 cglib-nodep-3.2.4.jar
 cli-parser-1.1.jar
 commons-codec-1.9.jar
+commons-compress-1.10.jar
 commons-httpclient-3.1-patched.jar
 commons-logging-1.2.jar
 commons-net-3.3.jar
@@ -79,3 +80,4 @@ xmlrpc-2.0.jar
 xpp3-1.1.4-min.jar
 xstream-1.4.8.jar
 bcprov-jdk15on-155.jar
+xz-1.5.jar

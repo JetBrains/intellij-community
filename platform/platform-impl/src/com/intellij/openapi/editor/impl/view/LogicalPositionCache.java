@@ -40,6 +40,10 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   private ArrayList<LineData> myLines = new ArrayList<>();
   private int myTabSize = -1;
   private int myDocumentChangeOldEndLine;
+  // application's read-write lock should guarantee that writes to this field (happening under write action)
+  // will be visible for reads (happening under read action)
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean myUpdateInProgress;
 
   LogicalPositionCache(EditorView view) {
     myView = view;
@@ -54,6 +58,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    myUpdateInProgress = true;
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
@@ -62,6 +67,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     int startLine = myDocument.getLineNumber(event.getOffset());
     int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
     invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, CharArrayUtil.indexOf(event.getNewFragment(), "\t", 0) == -1);
+    myUpdateInProgress = false;
   }
 
   synchronized void reset(boolean force) {
@@ -75,6 +81,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
 
   @NotNull
   synchronized LogicalPosition offsetToLogicalPosition(int offset) {
+    if (myUpdateInProgress) throw new IllegalStateException();
     int textLength = myDocument.getTextLength();
     if (offset <= 0 || textLength == 0) {
       return new LogicalPosition(0, 0);
@@ -86,6 +93,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   }
   
   synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
+    if (myUpdateInProgress) throw new IllegalStateException();
     if (line < 0 || line >= myDocument.getLineCount()) return 0;
     LineData lineData = getLineInfo(line);
     return lineData.offsetToLogicalColumn(myDocument, line, myTabSize, myDocument.getLineStartOffset(line) + intraLineOffset);
@@ -93,9 +101,32 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
 
   synchronized int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     int line = pos.line;
+    int column = pos.column;
     if (line >= myDocument.getLineCount()) return myDocument.getTextLength();
+    if (myUpdateInProgress) {
+      // direct calculation when we cannot use cache
+      // (use case - com.intellij.openapi.editor.impl.CaretImpl.PositionMarker.changedUpdateImpl())
+      int lineStartOffset = myDocument.getLineStartOffset(line);
+      int lineEndOffset = myDocument.getLineEndOffset(line);
+      return calcOffset(myDocument, column, 0, lineStartOffset, lineEndOffset, myTabSize);
+    }
     LineData lineData = getLineInfo(line);
-    return lineData.logicalColumnToOffset(myDocument, line, myTabSize, pos.column);
+    return lineData.logicalColumnToOffset(myDocument, line, myTabSize, column);
+  }
+
+  private static int calcOffset(@NotNull Document document, int column, int startColumn, int startOffset, int endOffset, int tabSize) {
+    int currentColumn = startColumn;
+    CharSequence text = document.getImmutableCharSequence();
+    for (int i = startOffset; i < endOffset; i++) {
+      if (text.charAt(i) == '\t') {
+        currentColumn = (currentColumn / tabSize + 1) * tabSize;
+      }
+      else {
+        currentColumn++;
+      }
+      if (currentColumn > column) return i;
+    }
+    return endOffset;
   }
 
   private int getAdjustedLineNumber(int offset) {
@@ -237,17 +268,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       if (pos >= 0) return lineStartOffset + (pos + 1) * CACHE_FREQUENCY;
       int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
       int column = pos == -1 ? 0 : columnCache[- pos - 2];
-      CharSequence text = document.getImmutableCharSequence();
-      for (int i = startOffset; i < lineEndOffset; i++) {
-        if (text.charAt(i) == '\t') {
-          column = (column / tabSize + 1) * tabSize;
-        }
-        else {
-          column++;
-        }
-        if (logicalColumn < column) return i;
-      }
-      return lineEndOffset;
+      return calcOffset(document, logicalColumn, column, startOffset, lineEndOffset, tabSize);
     }
   }
 }

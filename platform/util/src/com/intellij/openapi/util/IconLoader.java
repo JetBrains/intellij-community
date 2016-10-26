@@ -363,14 +363,13 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon implements ScalableIcon {
+  private static final class CachedImageIcon extends JBUI.ValidatingScalableJBIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
     @NotNull
     private URL myUrl;
     private volatile boolean dark;
-    private volatile float scale;
     private volatile int numberOfPatchers = ourPatchers.size();
 
     private volatile ImageFilter filter;
@@ -379,18 +378,17 @@ public final class IconLoader {
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
-      scale = SCALE;
       filter = IMAGE_FILTER;
     }
 
     @NotNull
     private synchronized ImageIcon getRealIcon() {
-      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || !isJBUIScaleValid() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
 
       if (!isValid()) {
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        scale = SCALE;
+        validateJBUIScale();
         filter = IMAGE_FILTER;
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
@@ -435,7 +433,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS && scale == SCALE && filter == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
+      return dark == USE_DARK_ICONS && isJBUIScaleValid() && filter == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
     }
 
     @Override
@@ -459,14 +457,15 @@ public final class IconLoader {
     }
 
     @Override
-    public Icon scale(float scaleFactor) {
-      if (scaleFactor == 1f) {
+    public Icon scale(float scale) {
+      if (scale == 1f) {
         return this;
       }
+      super.scale(scale);
 
       if (!isValid()) getRealIcon(); // force state update & cache reset
 
-      Icon icon = myScaledIconsCache.getScaledIcon(scaleFactor);
+      Icon icon = myScaledIconsCache.getScaledIcon(scale);
       if (icon != null) {
         return icon;
       }
@@ -527,11 +526,10 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon implements Icon {
+  public abstract static class LazyIcon extends JBUI.ValidatingScalableJBIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
-    private float scale = SCALE;
     private int numberOfPatchers = ourPatchers.size();
     private ImageFilter filter = IMAGE_FILTER;
 
@@ -556,9 +554,9 @@ public final class IconLoader {
     }
 
     protected final synchronized Icon getOrComputeIcon() {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || !isJBUIScaleValid() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
         isDarkVariant = USE_DARK_ICONS;
-        scale = SCALE;
+        validateJBUIScale();
         filter = IMAGE_FILTER;
         myWasComputed = true;
         numberOfPatchers = ourPatchers.size();
@@ -585,6 +583,15 @@ public final class IconLoader {
         }
       }
       return icon;
+    }
+
+    @Override
+    public Icon scale(float scale) {
+      getOrComputeIcon();
+      if (myIcon instanceof ScalableIcon) {
+        myIcon = ((ScalableIcon)myIcon).scale(scale);
+      }
+      return super.scale(scale);
     }
   }
 

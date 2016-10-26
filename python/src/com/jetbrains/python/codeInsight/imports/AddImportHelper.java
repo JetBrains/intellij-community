@@ -151,6 +151,15 @@ public class AddImportHelper {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
+  /**
+   * Returns position in the file after all leading comments, docstring and import statements.
+   * <p>
+   * Returned PSI element is intended to be used as "anchor" parameter for {@link PsiElement#addBefore(PsiElement, PsiElement)},
+   * hence {@code null} means that element to be inserted will be the first in the file.
+   *
+   * @param file target file where some new top-level element is going to be inserted
+   * @return anchor PSI element as described
+   */
   @Nullable
   public static PsiElement getFileInsertPosition(final PsiFile file) {
     return getInsertPosition(file, null, null);

@@ -119,7 +119,7 @@ class BuildTasksImpl extends BuildTasks {
       new File(classpathFile).text = ideClasspath.join("\n")
 
       buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-        jvmarg(line: "-ea -Xmx500m -XX:MaxPermSize=200m")
+        jvmarg(line: "-ea -Xmx500m")
         jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
         sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
         sysproperty(key: "idea.system.path", value: systemPath)

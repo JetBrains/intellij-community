@@ -342,7 +342,11 @@ public class TypeMigrationLabeler {
         if (usageInfo instanceof OverriddenUsageInfo) {
           final String migrationName = ((OverriddenUsageInfo)usageInfo).getMigrateMethodName();
           if (migrationName != null) {
-            ApplicationManager.getApplication().invokeLater(() -> new RenameProcessor(project, element, migrationName, false, false).run());
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (element.isValid()) {
+                new RenameProcessor(project, element, migrationName, false, false).run();
+              }
+            });
           }
         }
       }

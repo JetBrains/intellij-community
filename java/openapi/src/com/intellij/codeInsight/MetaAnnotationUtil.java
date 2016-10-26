@@ -21,10 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -147,5 +144,52 @@ public class MetaAnnotationUtil {
         collectClassWithChildren(aClass, classes, scope);
       }
     }
+  }
+
+  /**
+   * Check if listOwner is annotated with annotations or listOwner's annotations contain given annotations
+   */
+  public static boolean isMetaAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull final Collection<String> annotations) {
+    if (AnnotationUtil.isAnnotated(listOwner, annotations, false)) {
+      return true;
+    }
+
+    final List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
+    for (String annotationFQN : annotations) {
+      for (PsiClass psiClass : resolvedAnnotations) {
+        ConcurrentFactoryMap<String, Boolean> cachedValue = CachedValuesManager.getCachedValue(psiClass, () ->
+          new CachedValueProvider.Result<>(ConcurrentFactoryMap.createConcurrentMap(anno -> isMetaAnnotated(psiClass, anno, new HashSet<>())),
+                                           PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        if (cachedValue.getOrDefault(annotationFQN, false)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isMetaAnnotated(PsiClass aClass, final String annotation, final Set<PsiClass> visited) {
+    if (AnnotationUtil.isAnnotated(aClass, annotation, false)) {
+      return true;
+    }
+    List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(aClass);
+    for (PsiClass resolvedAnnotation : resolvedAnnotations) {
+      if (visited.add(resolvedAnnotation) && isMetaAnnotated(resolvedAnnotation, annotation, visited)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null) {
+      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), psiAnnotation -> {
+        PsiJavaCodeReferenceElement nameReferenceElement = psiAnnotation.getNameReferenceElement();
+        PsiElement resolve = nameReferenceElement != null ? nameReferenceElement.resolve() : null;
+        return resolve instanceof PsiClass && ((PsiClass)resolve).isAnnotationType() ? (PsiClass)resolve : null;
+      });
+    }
+    return Collections.emptyList();
   }
 }

@@ -185,8 +185,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
     return ContainerUtil.getOrElse(mySettings, providerName, true);
   }
 
+  @SafeVarargs
   @TestOnly
-  public void enableProviders(final Class<? extends InconsistentResourceBundleInspectionProvider>... providerClasses) {
+  public final void enableProviders(final Class<? extends InconsistentResourceBundleInspectionProvider>... providerClasses) {
     Set<Class<? extends InconsistentResourceBundleInspectionProvider>> providersToEnable = ContainerUtil.newHashSet(providerClasses);
     for (InconsistentResourceBundleInspectionProvider inspectionProvider : myInspectionProviders.getValue()) {
       if (providersToEnable.contains(inspectionProvider.getClass())) {

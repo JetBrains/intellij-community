@@ -33,8 +33,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper;
-import com.jetbrains.python.refactoring.move.PyMoveModuleMembersProcessor;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import static com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper.isMovableModuleMember;
+import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
 /**
  * @author vlan
@@ -403,10 +403,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
     String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
-    new PyMoveModuleMembersProcessor(myFixture.getProject(),
-                                     symbols,
-                                     path,
-                                     false).run();
+    new PyMoveModuleMembersProcessor(symbols, path).run();
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {

@@ -102,12 +102,8 @@ class FindInProjectTask {
     myPsiManager = PsiManager.getInstance(project);
 
     final String moduleName = findModel.getModuleName();
-    myModule = moduleName == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project).findModuleByName(moduleName);
-      }
-    });
+    myModule = moduleName == null ? null : ApplicationManager.getApplication().runReadAction(
+      (Computable<Module>)() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileIndex = myModule == null ? myProjectFileIndex : ModuleRootManager.getInstance(myModule).getFileIndex();
 
@@ -127,16 +123,11 @@ class FindInProjectTask {
     myStringToFindInIndices = stringToFind;
   }
 
-  public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull final FindUsagesProcessPresentation processPresentation) {
+  public void findUsages(@NotNull Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
-      final Set<VirtualFile> filesForFastWordSearch = ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
-        @Override
-        public Set<VirtualFile> compute() {
-          return getFilesForFastWordSearch();
-        }
-      });
+      Set<VirtualFile> filesForFastWordSearch = ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)this::getFilesForFastWordSearch);
       myProgress.setIndeterminate(false);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + filesForFastWordSearch.size() + " indexed files");
@@ -146,8 +137,8 @@ class FindInProjectTask {
 
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
-      boolean skipIndexed = canRelyOnIndices();
-      final Collection<VirtualFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
+      boolean canRelyOnIndices = canRelyOnIndices();
+      final Collection<VirtualFile> otherFiles = collectFilesInScope(filesForFastWordSearch, canRelyOnIndices);
       myProgress.setIndeterminate(false);
 
       if (LOG.isDebugEnabled()) {
@@ -156,8 +147,9 @@ class FindInProjectTask {
 
       long start = System.currentTimeMillis();
       searchInFiles(otherFiles, processPresentation, consumer);
-      if (skipIndexed && otherFiles.size() > 1000) {
-        logStats(otherFiles, start);
+      if (canRelyOnIndices && otherFiles.size() > 1000) {
+        long time = System.currentTimeMillis() - start;
+        logStats(otherFiles, time);
       }
     }
     catch (ProcessCanceledException e) {
@@ -176,8 +168,7 @@ class FindInProjectTask {
     }
   }
 
-  private static void logStats(Collection<VirtualFile> otherFiles, long start) {
-    long time = System.currentTimeMillis() - start;
+  private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
 
     final Multiset<String> stats = HashMultiset.create();
     for (VirtualFile file : otherFiles) {
@@ -251,7 +242,6 @@ class FindInProjectTask {
       }
       return true;
     };
-    //virtualFiles.forEach(processor::process);
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(virtualFiles), myProgress, false, processor);
   }
 
@@ -259,8 +249,7 @@ class FindInProjectTask {
   @NotNull
   private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
-    final GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope,
-                                                                                                                       myProject);
+    final GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
@@ -340,12 +329,9 @@ class FindInProjectTask {
     else {
       boolean success = myFileIndex.iterateContent(iterator);
       if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
-        final VirtualFile[] librarySources = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-          @Override
-          public VirtualFile[] compute() {
-            OrderEnumerator enumerator = myModule == null ? OrderEnumerator.orderEntries(myProject) : OrderEnumerator.orderEntries(myModule);
-            return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
-          }
+        final VirtualFile[] librarySources = ApplicationManager.getApplication().runReadAction((Computable<VirtualFile[]>)() -> {
+          OrderEnumerator enumerator = myModule == null ? OrderEnumerator.orderEntries(myProject) : OrderEnumerator.orderEntries(myModule);
+          return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
         });
         iterateAll(librarySources, globalCustomScope, iterator);
       }
@@ -355,13 +341,8 @@ class FindInProjectTask {
 
   private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    final VirtualFileFilter contentFilter = new VirtualFileFilter() {
-      @Override
-      public boolean accept(@NotNull final VirtualFile file) {
-        return file.isDirectory() ||
-               !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
-      }
-    };
+    final VirtualFileFilter contentFilter = file -> file.isDirectory() ||
+           !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
     for (VirtualFile file : files) {
       if (!VfsUtilCore.iterateChildrenRecursively(file, contentFilter, iterator)) return false;
     }

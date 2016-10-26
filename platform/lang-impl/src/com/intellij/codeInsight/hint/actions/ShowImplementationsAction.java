@@ -203,14 +203,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
           return ShowImplementationsAction.filterElements(targetElements);
         }
       };
     }
     return new ImplementationSearcher.FirstImplementationsSearcher() {
       @Override
-      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
         return ShowImplementationsAction.filterElements(targetElements);
       }
     };
@@ -350,8 +350,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                                 @NotNull PsiElement element,
                                                 @NotNull ImplementationSearcher handler,
                                                 final boolean includeSelfAlways) {
-    int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     return ReadAction.compute(() -> {
@@ -451,7 +450,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           }
 
           @Override
-          protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+          protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
             return ShowImplementationsAction.filterElements(targetElements);
           }
         };

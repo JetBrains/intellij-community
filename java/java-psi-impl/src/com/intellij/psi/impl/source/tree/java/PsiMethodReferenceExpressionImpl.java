@@ -395,7 +395,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
   @Override
   public String toString() {
-    return "PsiMethodReferenceExpression:" + getText();
+    return "PsiMethodReferenceExpression";
   }
 
   @Override

@@ -122,13 +122,17 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     }
   }
 
-  private static final Key<ParameterizedCachedValue<PsiJavaModule, Pair<String, Boolean>>> KEY = Key.create("java.module.ref.text.resolve");
+  private static final Key<ParameterizedCachedValue<PsiJavaModule, Pair<String, Boolean>>> K_COMPLETE =
+    Key.create("java.module.ref.text.resolve.complete");
+  private static final Key<ParameterizedCachedValue<PsiJavaModule, Pair<String, Boolean>>> K_INCOMPLETE =
+    Key.create("java.module.ref.text.resolve.incomplete");
 
   @Nullable
   public static PsiJavaModule resolve(@NotNull final PsiElement refOwner, String refText, boolean incompleteCode) {
     if (StringUtil.isEmpty(refText)) return null;
     CachedValuesManager manager = CachedValuesManager.getManager(refOwner.getProject());
-    return manager.getParameterizedCachedValue(refOwner, KEY, new ParameterizedCachedValueProvider<PsiJavaModule, Pair<String, Boolean>>() {
+    Key<ParameterizedCachedValue<PsiJavaModule, Pair<String, Boolean>>> key = incompleteCode ? K_COMPLETE : K_INCOMPLETE;
+    return manager.getParameterizedCachedValue(refOwner, key, new ParameterizedCachedValueProvider<PsiJavaModule, Pair<String, Boolean>>() {
       @Nullable
       @Override
       public Result<PsiJavaModule> compute(Pair<String, Boolean> p) {

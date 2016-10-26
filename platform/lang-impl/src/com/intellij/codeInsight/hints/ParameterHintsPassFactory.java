@@ -22,19 +22,23 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
+import com.intellij.codeInsight.hints.settings.Diff;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,17 +74,32 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       myAnnotations.clear();
       if (!isEnabled()) return;
 
-      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(myFile.getLanguage());
+      Language language = myFile.getLanguage();
+      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
       if (provider == null) return;
 
-      List<Matcher> matchers = ParameterNameHintsSettings
-        .getInstance()
-        .getIgnorePatternSet(provider)
+      Set<String> blackList = getBlackList(language);
+      Language dependentLanguage = provider.getBlackListDependencyLanguage();
+      if (dependentLanguage != null) {
+        blackList.addAll(getBlackList(dependentLanguage));
+      }
+
+      List<Matcher> matchers = blackList
         .stream()
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .collect(Collectors.toList());
 
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
+    }
+
+    private static Set<String> getBlackList(Language language) {
+      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+      if (provider != null) {
+        ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
+        Diff diff = settings.getBlackListDiff(language);
+        return diff.applyOn(provider.getDefaultBlackList());
+      }
+      return ContainerUtil.newHashOrEmptySet(ContainerUtil.emptyIterable());
     }
 
     private static boolean isEnabled() {
@@ -107,6 +126,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
       Set<String> removedHints = new HashSet<>();
       TIntObjectHashMap<Caret> caretMap = new TIntObjectHashMap<>();
+      CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
       for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
         caretMap.put(caret.getOffset(), caret);
       }
@@ -131,6 +151,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         String text = e.getValue();
         presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
       }
+      keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
     }
 

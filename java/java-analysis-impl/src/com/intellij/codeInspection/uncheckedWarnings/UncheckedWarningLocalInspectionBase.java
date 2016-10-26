@@ -39,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,23 +54,17 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
   public boolean IGNORE_UNCHECKED_CAST;
   public boolean IGNORE_UNCHECKED_OVERRIDING;
 
-  protected static JCheckBox createSetting(final String cbText,
-                                           final boolean option,
-                                           final Pass<JCheckBox> pass) {
+  @NotNull
+  static JCheckBox createSetting(@NotNull String cbText, final boolean option, @NotNull Pass<JCheckBox> pass) {
     final JCheckBox uncheckedCb = new JCheckBox(cbText, option);
-    uncheckedCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        pass.pass(uncheckedCb);
-      }
-    });
+    uncheckedCb.addActionListener(e -> pass.pass(uncheckedCb));
     return uncheckedCb;
   }
 
-  public static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType, LocalQuickFix[] generifyFixes) {
+  private static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
-    final List<LocalQuickFix> result = new ArrayList<>();
     LOG.assertTrue(parameter.isValid());
+    final List<LocalQuickFix> result = new ArrayList<>();
     if (itemType != null) {
       for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
         for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
@@ -180,7 +172,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     @NotNull private final LanguageLevel myLanguageLevel;
     private final LocalQuickFix[] myGenerifyFixes;
 
-    public UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
+    UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
       myLanguageLevel = level;
       myGenerifyFixes = onTheFly ? createFixes() : LocalQuickFix.EMPTY_ARRAY;
@@ -300,8 +292,8 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;
       final PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-      checkRawToGenericsAssignment(parameter, iteratedValue, parameterType, itemType, true, myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType,
-                                                                                                                                    myGenerifyFixes) : LocalQuickFix.EMPTY_ARRAY);
+      LocalQuickFix[] fixes = myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType, myGenerifyFixes) : LocalQuickFix.EMPTY_ARRAY;
+      checkRawToGenericsAssignment(parameter, iteratedValue, parameterType, itemType, true, fixes);
     }
 
     @Override

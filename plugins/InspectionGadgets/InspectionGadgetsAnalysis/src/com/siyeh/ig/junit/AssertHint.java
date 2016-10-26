@@ -22,7 +22,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 public class AssertHint {
   private final int myArgIndex;
@@ -52,29 +52,29 @@ public class AssertHint {
     return myMessage;
   }
 
-  public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression) {
-    return create(expression, methodName -> "assertEquals".equals(methodName), 2);
+  public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression, boolean checkTestNG) {
+    return create(expression, methodName -> "assertEquals".equals(methodName) ? 2 : null, checkTestNG);
   }
 
-  public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression) {
-    return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName), 1);
+  public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression, boolean checkTestNG) {
+    return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName) ? 1 : null, checkTestNG);
   }
 
-  private static AssertHint create(PsiMethodCallExpression expression,
-                                   Predicate<String> methodNameValidator,
-                                   int minimumParamCount) {
+  public static AssertHint create(PsiMethodCallExpression expression,
+                                  Function<String, Integer> methodNameToParamCount,
+                                  boolean checkTestNG) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!methodNameValidator.test(methodName)) {
+    Integer minimumParamCount = methodNameToParamCount.apply(methodName);
+    if (minimumParamCount == null) {
       return null;
     }
     final PsiMethod method = expression.resolveMethod();
     if (method == null) {
       return null;
     }
-    final PsiClass containingClass = method.getContainingClass();
-    final boolean messageOnLastPosition = isMessageOnLastPosition(containingClass);
-    final boolean messageOnFirstPosition = isMessageOnFirstPosition(containingClass);
+    final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);
+    final boolean messageOnFirstPosition = isMessageOnFirstPosition(method, checkTestNG);
     if (!messageOnFirstPosition && !messageOnLastPosition) {
       return null;
     }
@@ -86,45 +86,52 @@ public class AssertHint {
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final int argumentIndex;
-    final PsiExpression message;
+    PsiExpression message = null;
     if (messageOnFirstPosition) {
-      if (parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) && parameters.length > minimumParamCount) {
+      if (parameters.length > 0 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) && parameters.length > minimumParamCount) {
         argumentIndex = 1;
         message = arguments[0];
       }
       else {
         argumentIndex = 0;
-        message = null;
       }
     }
     else {
       argumentIndex = 0;
-      message = parameters.length > minimumParamCount ? arguments[parameters.length - 1] : null;
+      if (parameters.length > minimumParamCount && minimumParamCount > 0) {
+        int lastParameterIdx = parameters.length - 1;
+        //check that it's not delta in assertEquals(dbl, dbl, dbl), etc
+        if (parameters[lastParameterIdx].getType() instanceof PsiClassType) {
+          message = arguments[lastParameterIdx];
+        }
+      }
     }
 
     return new AssertHint(argumentIndex, message, method);
   }
 
-  public static boolean isMessageOnFirstPosition(PsiClass containingClass) {
+  public static boolean isMessageOnFirstPosition(PsiMethod method, boolean checkTestNG) {
+    PsiClass containingClass = method.getContainingClass();
     final String qualifiedName = containingClass.getQualifiedName();
+    if (checkTestNG) {
+      return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName());
+    }
     return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
-           JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
-           "org.testng.AssertJUnit".equals(qualifiedName);
+           JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName);
   }
 
-  public static boolean isMessageOnLastPosition(PsiClass containingClass) {
-    return isMessageOnLastPosition(containingClass, true);
-  }
-
-  public static boolean isMessageOnLastPosition(PsiClass containingClass, boolean checkTestNG) {
+  public static boolean isMessageOnLastPosition(PsiMethod method, boolean checkTestNG) {
+    final PsiClass containingClass = method.getContainingClass();
     final String qualifiedName = containingClass.getQualifiedName();
-    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
-           checkTestNG && "org.testng.Assert".equals(qualifiedName);
+    if (checkTestNG) {
+      return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName());
+    }
+    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName);
   }
 
-  public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression) {
-    final AssertHint assertHint = createAssertEqualsHint(expression);
+  public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression, boolean checkTestNG) {
+    final AssertHint assertHint = createAssertEqualsHint(expression, checkTestNG);
     if (assertHint == null) return null;
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     final int argIndex = assertHint.getArgIndex();

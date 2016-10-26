@@ -108,7 +108,9 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   public void caretPositionChanged(final CaretEvent e) {
-    updatePosition(e.getEditor());
+    Editor editor = e.getEditor();
+    // When multiple carets exist in editor, we don't show information about caret positions
+    if (editor.getCaretModel().getCaretCount() == 1) updatePosition(editor);
   }
 
   @Override

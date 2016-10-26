@@ -25,4 +25,9 @@ public class SimplifiableJUnitAssertionInspection extends SimplifiableAssertionI
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("simplifiable.junit.assertion.display.name");
   }
+
+  @Override
+  protected boolean checkTestNG() {
+    return false;
+  }
 }

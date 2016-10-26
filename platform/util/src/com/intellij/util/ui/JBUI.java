@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
@@ -165,7 +166,7 @@ public class JBUI {
   }
 
   public static <T extends JBIcon> T scale(T icon) {
-    return (T)icon.withJBUIScale(scale(1f));
+    return (T)icon.withPreScaled(false);
   }
 
   public static JBDimension emptySize() {
@@ -285,35 +286,138 @@ public class JBUI {
   }
 
   /**
-   * Supplies an Icon with JBUI scale factor to meet HiDPI.
+   * An Icon dynamically sticking to JBUI.scale to meet HiDPI.
+   *
+   * @author tav
    */
-  public interface JBIcon extends Icon {
-    float getJBUIScale();
-    JBIcon withJBUIScale(float jbuiScale);
-    int scaleVal(int value);
+  public static abstract class JBIcon implements Icon {
+    private float myInitialJBUIScale = scale(1f);
+
+    /**
+     * @return the scale factor aligning the icon size metrics to conform to JBUI.scale
+     */
+    private float getAligningJBUIScale() {
+      return (myInitialJBUIScale == scale(1f)) ? 1f : scale(1f) / myInitialJBUIScale;
+    }
+
+    /**
+     * @return whether the icon size metrics are pre-scaled or not
+     */
+    public boolean isPreScaled() {
+      return myInitialJBUIScale != 1f;
+    }
+
+    /**
+     * Sets the icon size metrics to {@code preScaled}
+     */
+    public void setPreScaled(boolean preScaled) {
+      myInitialJBUIScale = preScaled ? scale(1f) : 1f;
+    }
+
+    /**
+     * Sets the icon size metrics to {@code preScaled}
+     *
+     * @return the icon (this or new instance) with size metrics set to {@code preScaled}
+     */
+    public JBIcon withPreScaled(boolean preScaled) {
+      setPreScaled(preScaled);
+      return this;
+    }
+
+    /**
+     * Scales the value to conform to JBUI.scale
+     */
+    public int scaleVal(int value) {
+      return (int)scaleVal((float)value);
+    }
+
+    /**
+     * Scales the value to conform to JBUI.scale
+     */
+    public float scaleVal(float value) {
+      return value * getAligningJBUIScale();
+    }
   }
 
-  public static abstract class JBAbstractIcon implements JBIcon {
-    private float jbuiScale = 1f;
+  /**
+   * An Icon supporting both JBUI.scale & arbitrary scale factors.
+   *
+   * @author tav
+   */
+  public static abstract class ScalableJBIcon extends JBIcon implements ScalableIcon {
+    private float myScale = 1f;
 
-    @Override
-    public float getJBUIScale() {
-      return jbuiScale;
+    public enum Scale {
+      JBUI,       // JBIcon's scale
+      ARBITRARY,  // ScalableIcon's scale
+      EFFECTIVE   // effective scale
     }
 
-    protected void setJBUIScale(float jbuiScale) {
-      this.jbuiScale = jbuiScale;
+    public float getScale() {
+      return myScale;
     }
 
-    @Override
-    public JBIcon withJBUIScale(float jbuiScale) {
-      setJBUIScale(jbuiScale);
-      return this;
+    protected void setScale(float scale) {
+      myScale = scale;
     }
 
     @Override
     public int scaleVal(int value) {
-      return (int)(value * jbuiScale);
+      return scaleVal(value, Scale.EFFECTIVE);
+    }
+
+    public int scaleVal(int value, Scale type) {
+      switch (type) {
+        case JBUI:
+          return super.scaleVal(value);
+        case ARBITRARY:
+          return (int)(value * myScale);
+        case EFFECTIVE:
+        default:
+          return (int)super.scaleVal(value * myScale);
+      }
+    }
+
+    @Override
+    public Icon scale(float scale) {
+      setScale(scale);
+      return this;
+    }
+  }
+
+  /**
+   * A ScalableJBIcon validating JBUI.scale change on demand.
+   *
+   * @author tav
+   */
+  public static abstract class ValidatingScalableJBIcon extends ScalableJBIcon {
+    private float myCachedJBUIScale = JBUI.scale(1f);
+
+    /**
+     * @return cached JBUI.scale
+     */
+    public float getJBUIScale() {
+      return myCachedJBUIScale;
+    }
+
+    /**
+     * Validates cached JBUI.scale
+     *
+     * @return true if cached JBUI.scale was invalid (and the icon size metrics should be updated)
+     */
+    public boolean validateJBUIScale() {
+      if (!isJBUIScaleValid()) {
+        myCachedJBUIScale = JBUI.scale(1f);
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * @return true if cached JBUI.scale is valid
+     */
+    public boolean isJBUIScaleValid() {
+      return myCachedJBUIScale == JBUI.scale(1f);
     }
   }
 }

@@ -459,14 +459,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     myGradleHomePathField = new TextFieldWithBrowseButton();
 
-    myGradleHomePathField.addBrowseFolderListener(
-      "",
-      GradleBundle.message("gradle.settings.text.home.path"),
-      null,
-      GradleUtil.getGradleHomeFileChooserDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-      false
-    );
+    myGradleHomePathField.addBrowseFolderListener("", GradleBundle.message("gradle.settings.text.home.path"), null,
+                                                  GradleUtil.getGradleHomeFileChooserDescriptor(),
+                                                  TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {

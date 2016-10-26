@@ -591,7 +591,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       myConsoleView.attachToProcess(myProcessHandler);
       createContentDescriptorAndActions();
 
-
       // Run
       myProcessHandler.startNotify();
     });
@@ -638,6 +637,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final List<AnAction> actions = fillToolBarActions(toolbarActions, contentDescriptor);
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
+    getConsoleView().addConsoleFolding(false);
 
     showContentDescriptor(contentDescriptor);
   }

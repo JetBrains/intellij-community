@@ -32,6 +32,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebugSession;
@@ -405,7 +406,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       LayeredIcon newIcon = new LayeredIcon(2);
       newIcon.setIcon(icon, 0);
       newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, 10, 6);
-      myIcon = newIcon;
+      myIcon = JBUI.scale(newIcon);
     }
     else {
       myIcon = icon;

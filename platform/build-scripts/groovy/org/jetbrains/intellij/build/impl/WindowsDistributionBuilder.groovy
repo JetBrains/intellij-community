@@ -230,12 +230,7 @@ IDS_VM_OPTIONS=$vmOptions
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def dirs = [buildContext.paths.distAll, winDistPath]
-      if (jreDirectoryPaths != null) {
-        jreDirectoryPaths.each {
-          dirs += it
-        }
-      }
+      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {

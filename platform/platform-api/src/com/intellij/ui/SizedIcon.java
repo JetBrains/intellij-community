@@ -24,62 +24,43 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.JBAbstractIcon implements Icon, ScalableIcon {
+public class SizedIcon extends JBUI.ScalableJBIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
   private Icon myScaledDelegate;
-  private float myScale = 1f;
 
   public SizedIcon(Icon delegate, int width, int height) {
-    myDelegate = delegate;
+    myScaledDelegate = myDelegate = delegate;
     myWidth = width;
     myHeight = height;
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    int dx = scaleVal(myWidth) - delegate().getIconWidth();
-    int dy = scaleVal(myHeight) - delegate().getIconHeight();
+    int dx = scaleVal(myWidth) - myScaledDelegate.getIconWidth();
+    int dy = scaleVal(myHeight) - myScaledDelegate.getIconHeight();
     if (dx > 0 || dy > 0) {
-      delegate().paintIcon(c, g, x + dx/2, y + dy/2);
+      myScaledDelegate.paintIcon(c, g, x + dx/2, y + dy/2);
     }
     else {
-      delegate().paintIcon(c, g, x, y);
+      myScaledDelegate.paintIcon(c, g, x, y);
     }
-  }
-
-  public Icon delegate() {
-    return myScaledDelegate != null ? myScaledDelegate : myDelegate;
-  }
-
-  @Override
-  public int scaleVal(int n) {
-    return super.scaleVal(myScale == 1f ? n : (int) (n * myScale));
   }
 
   public int getIconWidth() {
-    if (delegate() instanceof ScalableIcon) {
-      return delegate().getIconWidth();
-    }
     return scaleVal(myWidth);
   }
 
   public int getIconHeight() {
-    if (delegate() instanceof ScalableIcon) {
-      return delegate().getIconHeight();
-    }
     return scaleVal(myHeight);
   }
 
   @Override
-  public Icon scale(float scaleFactor) {
-    if (scaleFactor == 1f) {
-      myScaledDelegate = null;
-    } else if (myDelegate instanceof ScalableIcon) {
-      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scaleFactor);
+  public Icon scale(float scale) {
+    if (myDelegate instanceof ScalableIcon) {
+      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scale);
     }
-    myScale = scaleFactor;
-    return this;
+    return super.scale(scale);
   }
 }

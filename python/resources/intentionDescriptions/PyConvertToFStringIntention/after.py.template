@@ -1,0 +1,2 @@
+f"Pi is {math.pi:03.5}"
+f'{"eggs"}'

@@ -64,6 +64,8 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io-1.4.jar", version: "1.4", license: "Apache 2.0",
                        url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     new LibraryLicense(name: "Apache Commons Lang 3", libraryName: "commons-lang3-3.2.1.jar", version: "3.2.1", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     new LibraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0",
@@ -397,6 +399,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x",
                        license: "link (commercial license)", url: "http://yourkit.com/",
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
+    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),

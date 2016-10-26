@@ -56,7 +56,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -262,48 +261,50 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @NotNull
-  private AsyncResult<EditorsSplitters> getActiveSplitters(boolean syncUsage) {
-    final boolean async = Registry.is("ide.windowSystem.asyncSplitters") && !syncUsage;
-
+  private AsyncResult<EditorsSplitters> getActiveSplittersAsync() {
     final AsyncResult<EditorsSplitters> result = new AsyncResult<>();
     final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-    Runnable run = () -> {
+    fm.doWhenFocusSettlesDown(() -> {
       if (myProject.isDisposed()) {
         result.setRejected();
         return;
       }
-
       Component focusOwner = fm.getFocusOwner();
-      if (focusOwner == null && !async) {
-        focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      }
-
-      if (focusOwner == null && !async) {
-        focusOwner = fm.getLastFocusedFor(fm.getLastFocusedFrame());
-      }
-
       DockContainer container = myDockManager.getContainerFor(focusOwner);
-      if (container == null && !async) {
-        focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-        container = myDockManager.getContainerFor(focusOwner);
-      }
-
       if (container instanceof DockableEditorTabbedContainer) {
         result.setDone(((DockableEditorTabbedContainer)container).getSplitters());
       }
       else {
         result.setDone(getMainSplitters());
       }
-    };
+    });
+    return result;
+  }
 
-    if (async) {
-      fm.doWhenFocusSettlesDown(run);
+  private EditorsSplitters getActiveSplittersSync() {
+    assertDispatchThread();
+
+    final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+    Component focusOwner = fm.getFocusOwner();
+    if (focusOwner == null) {
+      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    }
+    if (focusOwner == null) {
+      focusOwner = fm.getLastFocusedFor(fm.getLastFocusedFrame());
+    }
+
+    DockContainer container = myDockManager.getContainerFor(focusOwner);
+    if (container == null) {
+      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      container = myDockManager.getContainerFor(focusOwner);
+    }
+
+    if (container instanceof DockableEditorTabbedContainer) {
+      return ((DockableEditorTabbedContainer)container).getSplitters();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(run);
+      return getMainSplitters();
     }
-
-    return result;
   }
 
   private final Object myInitLock = new Object();
@@ -458,7 +459,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void unsplitWindow() {
-    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplittersSync().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplit(true);
     }
@@ -466,7 +467,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void unsplitAllWindow() {
-    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplittersSync().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplitAll();
     }
@@ -474,7 +475,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public int getWindowSplitCount() {
-    return getActiveSplitters(true).getResult().getSplitCount();
+    return getActiveSplittersSync().getSplitCount();
   }
 
   @Override
@@ -590,28 +591,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public VirtualFile getCurrentFile() {
-    return getActiveSplitters(true).getResult().getCurrentFile();
+    return getActiveSplittersSync().getCurrentFile();
   }
 
   @Override
   @NotNull
   public AsyncResult<EditorWindow> getActiveWindow() {
-    return _getActiveWindow(false);
-  }
-
-  @NotNull
-  private AsyncResult<EditorWindow> _getActiveWindow(boolean now) {
-    return getActiveSplitters(now).subResult(splitters -> splitters.getCurrentWindow());
+    return getActiveSplittersAsync().subResult(splitters -> splitters.getCurrentWindow());
   }
 
   @Override
   public EditorWindow getCurrentWindow() {
-    return _getActiveWindow(true).getResult();
+    if (!ApplicationManager.getApplication().isDispatchThread()) return null;
+    EditorsSplitters splitters = getActiveSplittersSync();
+    return splitters == null ? null : splitters.getCurrentWindow();
   }
 
   @Override
   public void setCurrentWindow(final EditorWindow window) {
-    getActiveSplitters(true).getResult().setCurrentWindow(window, true);
+    getActiveSplittersSync().setCurrentWindow(window, true);
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window, final boolean transferFocus) {
@@ -652,7 +650,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       public void run(EditorsSplitters splitters) {
         splitters.closeFile(file, moveFocus);
       }
-    }, closeAllCopies ? null : getActiveSplitters(true).getResult());
+    }, closeAllCopies ? null : getActiveSplittersSync());
   }
 
   //-------------------------------------- Open File ----------------------------------------
@@ -675,7 +673,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter) {
       Set<EditorsSplitters> all = getAllSplitters();
-      EditorsSplitters active = getActiveSplitters(true).getResult();
+      EditorsSplitters active = getActiveSplittersSync();
       if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
         wndToOpenIn = active.getCurrentWindow();
       } else {
@@ -1279,7 +1277,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public EditorsSplitters getSplitters() {
-    EditorsSplitters active = getActiveSplitters(true).getResult();
+    EditorsSplitters active = null;
+    if (ApplicationManager.getApplication().isDispatchThread()) active = getActiveSplittersSync();
     return active == null ? getMainSplitters() : active;
   }
 
@@ -1639,7 +1638,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   EditorComposite getLastSelected() {
-    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplittersSync().getCurrentWindow();
     if (currentWindow != null) {
       return currentWindow.getSelectedEditor();
     }

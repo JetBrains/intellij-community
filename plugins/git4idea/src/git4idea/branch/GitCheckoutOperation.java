@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.util.GitUIUtil.code;
+import static java.util.Arrays.stream;
 
 /**
  * Represents {@code git checkout} operation.
@@ -281,11 +282,11 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   private void refresh(GitRepository... repositories) {
+    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
+    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
+    stream(repositories).forEach(GitRepository::update);
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
-      // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
-      // but to avoid problems of the asynchronous refresh, let's force update the repository info.
-      repository.update();
     }
   }
 

@@ -331,4 +331,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testCsvRegisterDialect() {
     doMultiFileTest();
   }
+
+  // PY-20364
+  public void testActualBasestringExpectedUnionStrUnicode() {
+    doTest();
+  }
 }

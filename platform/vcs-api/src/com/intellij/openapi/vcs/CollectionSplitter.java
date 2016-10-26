@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @deprecated Use {@link JBIterable#from(Iterable)} and {@link JBIterable#partition(int, boolean)} directly.
+ * @deprecated Use {@link JBIterable#from(Iterable)} and {@link JBIterable#split(int, boolean)} directly.
  */
 @SuppressWarnings("unused") // Required for compatibility with external plugins.
 @Deprecated
@@ -20,6 +20,6 @@ public class CollectionSplitter<T> {
 
   @NotNull
   public List<List<T>> split(@NotNull Collection<T> in) {
-    return JBIterable.from(in).partition(myBunchSize, false).toList();
+    return JBIterable.from(in).split(myBunchSize, false).toList();
   }
 }

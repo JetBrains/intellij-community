@@ -35,11 +35,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
-    setAttributes(key, attributes, false);
-  }
-
-  public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes, boolean force) {
-    if (force || attributes == USE_INHERITED_MARKER || !attributes.equals(getAttributes(key))) {
+    if (attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
     }
   }

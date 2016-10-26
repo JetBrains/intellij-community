@@ -4,7 +4,7 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
 public class IpnbPyFileType extends PythonFileType {
-  public static PythonFileType INSTANCE = new IpnbPyFileType();
+  public static final PythonFileType INSTANCE = new IpnbPyFileType();
 
   protected IpnbPyFileType() {
     super(new IpnbPyLanguageDialect());

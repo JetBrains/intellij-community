@@ -7,7 +7,7 @@ PsiJavaFile:LambdaExpression9.java
         PsiReferenceParameterList
           <empty list>
     PsiJavaToken:RPARENTH(')')
-    PsiLambdaExpression:p -> null
+    PsiLambdaExpression
       PsiParameterList:p
         PsiParameter:p
           PsiModifierList:

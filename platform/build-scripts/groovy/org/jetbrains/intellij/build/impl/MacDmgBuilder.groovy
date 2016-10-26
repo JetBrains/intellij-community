@@ -75,7 +75,7 @@ class MacDmgBuilder {
   private void doSignBinaryFiles(String macDistPath) {
     ftpAction("mkdir") {}
     ftpAction("put", false, "777") {
-      ant.fileset(file: "${buildContext.paths.communityHome}/build/mac/signbin.sh")
+      ant.fileset(file: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts/signbin.sh")
     }
 
     String signedFilesDir = "$buildContext.paths.temp/signed-files"
@@ -133,7 +133,7 @@ class MacDmgBuilder {
     ant.delete(file: dmgImageCopy)
 
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "${buildContext.paths.communityHome}/build/mac") {
+      ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
         include(name: "makedmg.sh")
         include(name: "makedmg.pl")
       }
@@ -181,7 +181,7 @@ class MacDmgBuilder {
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "${buildContext.paths.communityHome}/build/mac") {
+      ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
         include(name: "signapp.sh")
       }
     }

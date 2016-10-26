@@ -397,14 +397,18 @@ class DistributionJARsBuilder {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<version>[\\d.]*</version>",
                                    replace: "<version>${buildNumber}</version>")
-    def sinceBuild = buildNumber.matches(/\d+\.\d+\.\d+/) ? buildNumber.substring(0, buildNumber.lastIndexOf('.')) : buildNumber;
-    def dotIndex = buildNumber.indexOf('.')
+    def sinceBuild
     def untilBuild
-    if (setExactNumberInUntilBuild) {
-      untilBuild = buildNumber
+    /* Use relaxed build numbers range for EAP/release branches, i.e. plugins for 163.1111.22 build will be marked as compatible with 163.1111.* builds.
+      Usually there are no API changes in EAP/release branches so it's convenient to be able to publish a single plugin for different IDEs built
+      from the same EAP/release branch. */
+    if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+\.\d+/)) {
+      sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+      untilBuild = sinceBuild + ".*"
     }
     else {
-      untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
+      sinceBuild = buildNumber
+      untilBuild = buildNumber
     }
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",

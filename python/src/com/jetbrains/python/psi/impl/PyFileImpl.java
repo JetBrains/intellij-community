@@ -215,22 +215,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public PyFunction findTopLevelFunction(String name) {
+  public PyFunction findTopLevelFunction(@NotNull String name) {
     return findByName(name, getTopLevelFunctions());
   }
 
   @Override
-  public PyClass findTopLevelClass(String name) {
+  public PyClass findTopLevelClass(@NotNull String name) {
     return findByName(name, getTopLevelClasses());
   }
 
   @Override
-  public PyTargetExpression findTopLevelAttribute(String name) {
+  public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
     return findByName(name, getTopLevelAttributes());
   }
 
   @Nullable
-  private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+  private static <T extends PsiNamedElement> T findByName(@NotNull String name, @NotNull List<T> namedElements) {
     for (T namedElement : namedElements) {
       if (name.equals(namedElement.getName())) {
         return namedElement;

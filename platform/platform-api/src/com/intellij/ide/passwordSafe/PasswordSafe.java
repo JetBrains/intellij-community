@@ -35,5 +35,5 @@ public abstract class PasswordSafe implements PasswordStorage {
   @NotNull
   public abstract Promise<Credentials> getAsync(@NotNull CredentialAttributes attributes);
 
-  public abstract boolean isPasswordStoredOnlyInMemory(@NotNull CredentialAttributes attributes);
+  public abstract boolean isPasswordStoredOnlyInMemory(@NotNull CredentialAttributes attributes, @NotNull Credentials credentials);
 }
