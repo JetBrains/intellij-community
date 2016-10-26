@@ -142,7 +142,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
 
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
-      addOutputPanel(outputPanel, outputCell, this, true);
+      addOutputPanel(outputPanel, outputCell, true);
     }
 
     return outputPanel;
@@ -207,33 +207,33 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   private void addOutputPanel(@NotNull final JComponent mainPanel,
-                              @NotNull final IpnbOutputCell outputCell, IpnbCodePanel ipnbCodePanel, boolean addPrompt) {
+                              @NotNull final IpnbOutputCell outputCell, boolean addPrompt) {
     final IpnbEditorUtil.PromptType promptType = addPrompt ? IpnbEditorUtil.PromptType.Out : IpnbEditorUtil.PromptType.None;
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     if (outputCell instanceof IpnbImageOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbImagePanel((IpnbImageOutputCell)outputCell, ipnbCodePanel));
+                     new IpnbImagePanel((IpnbImageOutputCell)outputCell, this));
     }
     else if (outputCell instanceof IpnbHtmlOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell, myParent.getIpnbFilePanel(), ipnbCodePanel));
+                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell, myParent.getIpnbFilePanel(), this));
     }
     else if (outputCell instanceof IpnbLatexOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell, myParent.getIpnbFilePanel(), ipnbCodePanel));
+                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell, myParent.getIpnbFilePanel(), this));
     }
     else if (outputCell instanceof IpnbErrorOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbErrorPanel((IpnbErrorOutputCell)outputCell, ipnbCodePanel));
+                     new IpnbErrorPanel((IpnbErrorOutputCell)outputCell, this));
     }
     else if (outputCell instanceof IpnbStreamOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.None,
-                     new IpnbStreamPanel((IpnbStreamOutputCell)outputCell, ipnbCodePanel));
+                     new IpnbStreamPanel((IpnbStreamOutputCell)outputCell, this));
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel<>(outputCell, myParent.getIpnbFilePanel(), ipnbCodePanel));
+                     new IpnbCodeOutputPanel<>(outputCell, myParent.getIpnbFilePanel(), this));
     }
     mainPanel.add(panel);
   }
