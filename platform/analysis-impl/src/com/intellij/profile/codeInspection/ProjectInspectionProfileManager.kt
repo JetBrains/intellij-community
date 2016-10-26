@@ -32,7 +32,6 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.profile.Profile
 import com.intellij.profile.ProfileEx
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
@@ -269,7 +268,7 @@ class ProjectInspectionProfileManager(val project: Project,
     return schemeManager.allSchemes
   }
 
-  @Synchronized override fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
+  @Synchronized fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = schemeManager.currentSchemeName
@@ -329,8 +328,8 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile? {
+  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
-    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
+    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent) as InspectionProfileImpl?
   }
 }

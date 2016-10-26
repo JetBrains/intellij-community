@@ -1345,7 +1345,6 @@ com/intellij/psi/filters/ElementFilter.class:/lib/openapi.jar
 com/intellij/profile/codeInspection/InspectionProfileManager.class:/lib/idea.jar
 com/intellij/profile/codeInspection/SeverityProvider.class:/lib/idea.jar
 com/intellij/profile/ApplicationProfileManager.class:/lib/openapi.jar
-com/intellij/profile/ProfileManager.class:/lib/openapi.jar
 com/intellij/codeInspection/InspectionProfile.class:/lib/openapi.jar
 com/intellij/profile/Profile.class:/lib/openapi.jar
 com/intellij/profile/codeInspection/JavaAwareInspectionProfileManager.class:/lib/idea.jar

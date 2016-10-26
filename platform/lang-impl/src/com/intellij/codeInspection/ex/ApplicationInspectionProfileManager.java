@@ -42,7 +42,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -272,12 +271,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   @NotNull
   public String getRootProfileName() {
     return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
-  }
-
-  @Override
-  @NotNull
-  public String[] getAvailableProfileNames() {
-    return ArrayUtil.toStringArray(mySchemeManager.getAllSchemeNames());
   }
 
   public static void onProfilesChanged() {
