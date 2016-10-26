@@ -585,12 +585,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       catch (AnalysisCanceledException ignored) {
         return;
       }
+      int startOffset = tb.getStartOffset(controlFlow);
+      int endOffset = tb.getEndOffset(controlFlow);
+      if(startOffset < 0 || endOffset < 0) return;
       final Collection<PsiStatement> exitPoints = ControlFlowUtil
-        .findExitPointsAndStatements(controlFlow, tb.getStartOffset(controlFlow), tb.getEndOffset(controlFlow),
-                                     new IntArrayList(), PsiContinueStatement.class,
+        .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
                                      PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
-      int startOffset = controlFlow.getStartOffset(body);
-      int endOffset = controlFlow.getEndOffset(body);
+      startOffset = controlFlow.getStartOffset(body);
+      endOffset = controlFlow.getEndOffset(body);
+      if(startOffset < 0 || endOffset < 0) return;
       PsiElement surrounder = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiClass.class);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
         .remove(variable -> PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class, PsiClass.class) != surrounder)
