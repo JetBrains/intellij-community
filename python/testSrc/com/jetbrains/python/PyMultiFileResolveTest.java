@@ -473,6 +473,11 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
   }
 
+  // PY-21088
+  public void testDontResolveToMissingNameInDynamicDunderAll() {
+    assertNull(doResolve());
+  }
+
   @NotNull
   private List<String> doMultiResolveAndGetFileUrls(@NotNull String currentFilePath) {
     myFixture.configureByFile(currentFilePath);
