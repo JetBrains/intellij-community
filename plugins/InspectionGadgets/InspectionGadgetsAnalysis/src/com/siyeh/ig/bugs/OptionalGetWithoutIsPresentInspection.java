@@ -30,6 +30,9 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -55,6 +58,8 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
 
   private static class OptionalGetWithoutIsPresentVisitor extends BaseInspectionVisitor {
 
+    private final List<PsiExpression> seen = new ArrayList<>();
+
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
@@ -71,6 +76,12 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       if (!TypeUtils.isOptional(type)) {
         return;
       }
+      for (PsiExpression checked : seen) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(qualifier, checked)) {
+          return;
+        }
+      }
+      seen.add(qualifier);
       PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
       if (context instanceof PsiMethod) {
         context = ((PsiMethod)context).getBody();
