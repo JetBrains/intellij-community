@@ -16,7 +16,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
@@ -363,7 +362,7 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends JBUI.ValidatingScalableJBIcon {
+  private static final class CachedImageIcon extends JBUI.AuxScalableJBIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -383,12 +382,12 @@ public final class IconLoader {
 
     @NotNull
     private synchronized ImageIcon getRealIcon() {
-      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || !isJBUIScaleValid() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || needUpdateJBUIScale() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
 
       if (!isValid()) {
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        validateJBUIScale();
+        updateJBUIScale();
         filter = IMAGE_FILTER;
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
@@ -433,7 +432,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS && isJBUIScaleValid() && filter == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
+      return dark == USE_DARK_ICONS && !needUpdateJBUIScale() && filter == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
     }
 
     @Override
@@ -526,7 +525,7 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon extends JBUI.ValidatingScalableJBIcon {
+  public abstract static class LazyIcon extends JBUI.AuxScalableJBIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
@@ -554,9 +553,9 @@ public final class IconLoader {
     }
 
     protected final synchronized Icon getOrComputeIcon() {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || !isJBUIScaleValid() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale() || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
         isDarkVariant = USE_DARK_ICONS;
-        validateJBUIScale();
+        updateJBUIScale();
         filter = IMAGE_FILTER;
         myWasComputed = true;
         numberOfPatchers = ourPatchers.size();
