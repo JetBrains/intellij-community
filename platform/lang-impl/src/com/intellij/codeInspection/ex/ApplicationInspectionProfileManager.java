@@ -205,9 +205,9 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   @Override
-  public void updateProfile(@NotNull Profile profile) {
+  public void updateProfile(@NotNull InspectionProfileImpl profile) {
     super.updateProfile(profile);
-    updateProfileImpl((InspectionProfileImpl)profile);
+    updateProfileImpl(profile);
   }
 
   private static void updateProfileImpl(@NotNull InspectionProfileImpl profile) {

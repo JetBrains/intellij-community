@@ -24,8 +24,8 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
@@ -82,14 +82,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile() {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileImpl.getBaseProfile());
   }
+
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base, null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), base);
   }
 
   public void testSameNameSharedProfile() throws Exception {
-    InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
+    BaseInspectionProfileManager profileManager = (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
     InspectionProfileImpl localProfile = createProfile();
     profileManager.updateProfile(localProfile);
 
@@ -290,7 +291,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
-      InspectionToolsConfigurable.importInspectionProfile(toImportElement, InspectionProfileManager.getInstance(), getProject(), null);
+      InspectionToolsConfigurable.importInspectionProfile(toImportElement,
+                                                          (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), getProject(), null);
 
     //check merged
     Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();
@@ -534,13 +536,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                  "</profile>", serialize(profile));
   }
 
-  private static String serialize(InspectionProfileImpl profile) throws WriteExternalException {
+  private static String serialize(InspectionProfileImpl profile) {
     return JDOMUtil.writeElement(profile.writeScheme());
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance(), null, null);
-    return new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance(), base, null);
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar);
+    return new InspectionProfileImpl("Foo", registrar, base);
   }
 
   public void testGlobalInspectionContext() throws Exception {
@@ -579,7 +581,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() throws Exception {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileImpl.getBaseProfile());
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.length > 0);

@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
@@ -1122,7 +1123,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     final InspectionProfileImpl selectedProfile = getProfile();
 
-    InspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    BaseInspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
     InspectionProfileImpl parentProfile = (InspectionProfileImpl)selectedProfile.getParentProfile();
 
     if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
