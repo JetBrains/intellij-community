@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -219,10 +220,11 @@ class FindInProjectTask {
       myProgress.setText(text);
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
 
-      PsiFile psiFile = ReadAction.compute(() -> findFile(virtualFile));
-      if (psiFile == null) return;
-
-      int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, info -> skipProjectFile || consumer.process(info));
+      Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
+      if (pair == null) return true;
+      PsiFile psiFile = pair.first;
+      VirtualFile sourceVirtualFile = pair.second;
+      int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> skipProjectFile || consumer.process(info));
 
       if (countInFile > 0 && skipProjectFile) {
         processPresentation.projectFileUsagesFound(() -> {
@@ -298,8 +300,9 @@ class FindInProjectTask {
               return;
             }
 
-            PsiFile psiFile = findFile(virtualFile);
-            VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
+            Pair.NonNull<PsiFile, VirtualFile> pair = findFile(virtualFile);
+            if (pair == null) return;
+            VirtualFile sourceVirtualFile = pair.second;
 
             if (sourceVirtualFile != null && !alreadySearched.contains(sourceVirtualFile)) {
               myFiles.add(sourceVirtualFile);
@@ -466,7 +469,7 @@ class FindInProjectTask {
     return resultFiles;
   }
 
-  private PsiFile findFile(@NotNull final VirtualFile virtualFile) {
+  private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull final VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
     if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
       PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
@@ -475,6 +478,11 @@ class FindInProjectTask {
         psiFile = null;
       }
     }
-    return psiFile;
+    VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
+    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null) {
+      return null;
+    }
+
+    return Pair.createNonNull(psiFile, sourceVirtualFile);
   }
 }
