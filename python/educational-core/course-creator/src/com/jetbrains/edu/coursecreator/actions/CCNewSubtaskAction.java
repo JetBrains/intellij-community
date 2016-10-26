@@ -62,8 +62,8 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     createTestsForNewSubtask(project, task);
     int num = task.getLastSubtaskIndex() + 1;
     createTaskDescriptionFile(project, taskDir, num);
-    task.setLastSubtaskIndex(num);
     StudySubtaskUtils.switchStep(project, task, num);
+    task.setLastSubtaskIndex(num);
   }
 
   private static void createTestsForNewSubtask(Project project, Task task) {
