@@ -37,7 +37,5 @@ public interface ProfileManager {
   @NotNull
   String[] getAvailableProfileNames();
 
-  void deleteProfile(@NotNull String name);
-
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 }
