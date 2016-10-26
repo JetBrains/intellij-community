@@ -15,22 +15,9 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * User: anna
  * Date: 09-Dec-2005
  */
 public interface ProfileManager {
-  Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
-
-  default Profile getProfile(@NotNull String name) {
-    return getProfile(name, true);
-  }
-
-  @NotNull
-  String[] getAvailableProfileNames();
-
-  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 }
