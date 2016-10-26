@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -87,6 +86,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
+
+import com.intellij.util.containers.Queue;
 
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
@@ -268,9 +269,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     return child;
   }
 
-  private static void copyUsedSeveritiesIfUndefined(final ModifiableModel selectedProfile, final ProfileManager profileManager) {
+  private static void copyUsedSeveritiesIfUndefined(InspectionProfileImpl selectedProfile, final ProfileManager profileManager) {
     final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getSeverityRegistrar();
-    final Set<HighlightSeverity> severities = ((InspectionProfileImpl)selectedProfile).getUsedSeverities();
+    final Set<HighlightSeverity> severities = selectedProfile.getUsedSeverities();
     for (Iterator<HighlightSeverity> iterator = severities.iterator(); iterator.hasNext();) {
       HighlightSeverity severity = iterator.next();
       if (registrar.isSeverityValid(severity.getName())) {
@@ -279,7 +280,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     if (!severities.isEmpty()) {
-      final SeverityRegistrar oppositeRegister = ((SeverityProvider)selectedProfile.getProfileManager()).getSeverityRegistrar();
+      final SeverityRegistrar oppositeRegister = selectedProfile.getProfileManager().getSeverityRegistrar();
       for (HighlightSeverity severity : severities) {
         final TextAttributesKey attributesKey = TextAttributesKey.find(severity.getName());
         final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
@@ -694,7 +695,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private JPopupMenu compoundPopup() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    final SeverityRegistrar severityRegistrar = ((SeverityProvider)myProfile.getProfileManager()).getOwnSeverityRegistrar();
+    final SeverityRegistrar severityRegistrar = myProfile.getProfileManager().getOwnSeverityRegistrar();
     for (HighlightSeverity severity : LevelChooserAction.getSeverities(severityRegistrar, includeDoNotShow())) {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
       group.add(new AnAction(renderSeverity(severity), renderSeverity(severity), level.getIcon()) {
@@ -834,7 +835,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
-          new LevelChooserAction(((SeverityProvider)myProfile.getProfileManager()).getOwnSeverityRegistrar(),
+          new LevelChooserAction(myProfile.getProfileManager().getOwnSeverityRegistrar(),
                                  includeDoNotShow(nodes)) {
             @Override
             protected void onChosen(final HighlightSeverity severity) {
@@ -1014,7 +1015,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return modified;
   }
 
-  public ModifiableModel getProfile() {
+  public InspectionProfileImpl getProfile() {
     return myProfile;
   }
 
@@ -1117,10 +1118,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!modified) {
       return;
     }
-    final ModifiableModel selectedProfile = getProfile();
+    final InspectionProfileImpl selectedProfile = getProfile();
 
-    ProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : InspectionProfileManager.getInstance();
-    InspectionProfile parentProfile = selectedProfile.getParentProfile();
+    InspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    InspectionProfileImpl parentProfile = (InspectionProfileImpl)selectedProfile.getParentProfile();
 
     if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
       parentProfile.getProfileManager().deleteProfile(parentProfile.getName());
@@ -1128,12 +1129,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (selectedProfile.getProfileManager() != profileManager) {
       copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
-    } else {
+    }
+    else {
       selectedProfile.getProfileManager().updateProfile(selectedProfile);
     }
 
     selectedProfile.commit();
-    myProfile = (InspectionProfileImpl)parentProfile.getModifiableModel();
+    myProfile = parentProfile.getModifiableModel();
     setSelectedProfileModified(false);
     myModified = false;
     myRoot.dropCache();

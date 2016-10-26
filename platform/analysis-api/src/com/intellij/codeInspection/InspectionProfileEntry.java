@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -317,7 +318,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @throws InvalidDataException if the loaded data was not valid.
    */
   @SuppressWarnings("deprecation")
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) {
     if (useNewSerializer()) {
       try {
         XmlSerializer.deserializeInto(this, node);
@@ -327,8 +328,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       }
     }
     else {
-      //noinspection UnnecessaryFullyQualifiedName
-      com.intellij.openapi.util.DefaultJDOMExternalizer.readExternal(this, node);
+      DefaultJDOMExternalizer.readExternal(this, node);
     }
   }
 
@@ -340,14 +340,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @param node to store settings to.
    * @throws WriteExternalException if no data should be saved for this component.
    */
-  @SuppressWarnings("deprecation")
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {
       XmlSerializer.serializeInto(this, node, getSerializationFilter());
     }
     else {
-      //noinspection UnnecessaryFullyQualifiedName
-      com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(this, node);
+      //noinspection deprecation
+      DefaultJDOMExternalizer.writeExternal(this, node);
     }
   }
 

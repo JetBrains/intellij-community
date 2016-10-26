@@ -108,7 +108,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups =
     ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
-  private volatile InspectionProfile myInspectionProfile;
+  private volatile InspectionProfileImpl myInspectionProfile;
   @NotNull
   private final AnalysisScope myScope;
   @NonNls
@@ -617,9 +617,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       if (reuseEditorFor(document)) {
         myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
-        myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> {
-          myPreviewEditor.getFoldingModel().clearFoldRegions();
-        });
+        myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> myPreviewEditor.getFoldingModel().clearFoldRegions());
         myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
@@ -805,7 +803,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private void addToolsSynchronously(Collection<Tools> tools) {
     if (isDisposed()) return;
     synchronized (myTreeStructureUpdateLock) {
-      InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
+      InspectionProfileImpl profile = myInspectionProfile;
       boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
       boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
@@ -1132,7 +1130,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
-    myInspectionProfile = (InspectionProfile)myInspectionProfile.getProfileManager().getProfile(name);
+    myInspectionProfile = (InspectionProfileImpl)myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   private class RerunAction extends AnAction {

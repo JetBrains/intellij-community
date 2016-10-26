@@ -15,9 +15,7 @@
  */
 package com.intellij.profile;
 
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.Disposable;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,10 +25,6 @@ import java.util.Collection;
  * Date: 09-Dec-2005
  */
 public interface ProfileManager {
-  default NamedScopesHolder getScopesManager() {
-    return null;
-  }
-
   @NotNull
   Collection<Profile> getProfiles();
 
@@ -48,7 +42,4 @@ public interface ProfileManager {
   void deleteProfile(@NotNull String name);
 
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
-
-  @NotNull
-  InspectionProfile getCurrentProfile();
 }

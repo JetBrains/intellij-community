@@ -85,7 +85,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   protected final InspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final List<SingleInspectionProfilePanel> myPanels = new ArrayList<>();
-  private final List<Profile> myDeletedProfiles = new ArrayList<>();
+  private final List<InspectionProfileImpl> myDeletedProfiles = new ArrayList<>();
   protected ProfilesChooser myProfiles;
   private JPanel myProfilePanelHolder;
   private AuxiliaryRightPanel myAuxiliaryRightPanel;
@@ -138,7 +138,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
     }
 
-    ProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
+    InspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
     InspectionProfileImpl inspectionProfile =
       new InspectionProfileImpl(profileDefaultName, InspectionToolRegistrar.getInstance(), profileManager);
 
@@ -377,7 +377,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
-                myProfiles.getProfilesComboBox().removeProfile((InspectionProfileImpl)existed.getProfile());
+                myProfiles.getProfilesComboBox().removeProfile(existed.getProfile());
                 myPanels.remove(existed);
               }
               final ModifiableModel model = profile.getModifiableModel();
@@ -503,7 +503,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   @Override
   public void apply() throws ConfigurationException {
     SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-    for (Profile profile : myDeletedProfiles) {
+    for (InspectionProfileImpl profile : myDeletedProfiles) {
       deleteProfile(profile);
     }
     myDeletedProfiles.clear();
@@ -518,7 +518,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   protected abstract void applyRootProfile(@NotNull String name, boolean isProjectLevel);
 
-  private void deleteProfile(@NotNull Profile profile) {
+  private void deleteProfile(@NotNull InspectionProfileImpl profile) {
     if (profile.getProfileManager() == myApplicationProfileManager) {
       myApplicationProfileManager.deleteProfile(profile.getName());
     }

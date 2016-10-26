@@ -186,7 +186,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
+  public InspectionProfileImpl loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()) {
       try {
@@ -239,9 +239,11 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   @Override
-  public Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent) {
-    Profile found = mySchemeManager.findSchemeByName(name);
-    if (found != null) return found;
+  public InspectionProfileImpl getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent) {
+    InspectionProfileImpl found = mySchemeManager.findSchemeByName(name);
+    if (found != null) {
+      return found;
+    }
     //profile was deleted
     if (returnRootProfileIfNamedIsAbsent) {
       return getCurrentProfile();

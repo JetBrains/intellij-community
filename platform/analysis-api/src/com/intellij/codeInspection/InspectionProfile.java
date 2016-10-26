@@ -35,7 +35,6 @@ import java.util.List;
  * Date: Dec 7, 2004
  */
 public interface InspectionProfile extends Profile {
-
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   /**

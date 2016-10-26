@@ -15,15 +15,21 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface InspectionProfileManager extends ProfileManager, SeverityProvider {
   String INSPECTION_DIR = "inspection";
+
+  default NamedScopesHolder getScopesManager() {
+    return null;
+  }
 
   @NotNull
   static InspectionProfileManager getInstance() {
@@ -46,4 +52,7 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
   default Profile getRootProfile() {
     return getCurrentProfile();
   }
+
+  @NotNull
+  InspectionProfile getCurrentProfile();
 }
