@@ -80,6 +80,8 @@
     </group>
 
     <group id="AnswerPlaceholderGroup">
+      <action id="CC.HideFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.CCHidePlaceholderFromPrevSubtasks"/>
+      <action id="CC.MakeVisibleFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.CCMakeVisibleForPrevSubtasks"/>
       <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCEditAnswerPlaceholder"/>
       <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
       <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
