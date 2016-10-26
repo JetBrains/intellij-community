@@ -79,6 +79,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
           alarm.cancelAllRequests();
           alarm.addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(IpnbFilePanel.this));
         }
+        mySynchronize = true;
       }
     };
     myDocument = myParent.getDocument();
@@ -469,7 +470,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private class MySynchronizeRequest implements Runnable {
 
     public void run() {
-      mySynchronize = false;
       final Project project = getProject();
       if (project.isDisposed()) {
         return;
