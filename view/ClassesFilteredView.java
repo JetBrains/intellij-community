@@ -114,7 +114,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         ReferenceType ref = myTable.getClassByName(name);
         if (ref != null && myConstructorTrackedClasses.containsKey(ref)) {
           ConstructorInstancesTracker removed = myConstructorTrackedClasses.remove(ref);
-          removed.dispose();
+          Disposer.dispose(removed);
           myTable.getRowSorter().allRowsChanged();
         }
       }

@@ -38,7 +38,6 @@ class StackFrameList extends JBList {
                  @NotNull GlobalSearchScope searchScope) {
     super();
 
-
     myStackFrames = new ArrayList<>(stack);
     myProject = project;
     myScope = searchScope;
@@ -120,7 +119,7 @@ class StackFrameList extends JBList {
 
   private class MyListModel extends AbstractListModel<StackFrameDescriptor> {
 
-    public void update(@NotNull List<StackFrameDescriptor> newFrame) {
+    void update(@NotNull List<StackFrameDescriptor> newFrame) {
       fireIntervalRemoved(this, 0, getSize());
       myStackFrames = newFrame;
       fireIntervalAdded(this, 0, getSize());

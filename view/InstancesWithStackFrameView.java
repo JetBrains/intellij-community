@@ -1,10 +1,13 @@
 package org.jetbrains.debugger.memory.view;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ObjectReference;
+import icons.MemoryViewIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
@@ -33,12 +36,15 @@ class InstancesWithStackFrameView {
     mySplitter.setFirstComponent(new JBScrollPane(tree));
 
     list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
-    LinkLabel<String> linkLabel = new LinkLabel<>("Enable tracking for calls of constructors", null,
-        (aSource, aLinkData) ->
-            InstancesTracker.getInstance(debugSession.getProject()).add(className, TrackingType.CREATION));
+    ActionLink actionLink = new ActionLink("Enable tracking for calls of constructors", MemoryViewIcons.CLASS_TRACKED, new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        InstancesTracker.getInstance(debugSession.getProject()).add(className, TrackingType.CREATION);
+      }
+    });
 
-    linkLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    linkLabel.setPaintUnderline(false);
+    actionLink.setHorizontalAlignment(SwingConstants.CENTER);
+    actionLink.setPaintUnderline(false);
 
     JComponent stackComponent = new JBScrollPane(list);
 
@@ -55,12 +61,12 @@ class InstancesWithStackFrameView {
       @Override
       public void classRemoved(@NotNull String name) {
         if (Objects.equals(name, className)) {
-          mySplitter.setSecondComponent(linkLabel);
+          mySplitter.setSecondComponent(actionLink);
         }
       }
     }, tree);
 
-    mySplitter.setSecondComponent(instancesTracker.isTracked(className) ? stackComponent : linkLabel);
+    mySplitter.setSecondComponent(instancesTracker.isTracked(className) ? stackComponent : actionLink);
 
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
