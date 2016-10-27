@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyUtil;
@@ -26,7 +28,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * User : ktisha
@@ -39,6 +43,19 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final String referencedName = element.getReferencedName();
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(realContext);
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(element.getProject());
+
+    // resolve to module __doc__
+    if (PyNames.DOC.equals(referencedName)) {
+      result.addAll(
+        Optional
+          .ofNullable(builtinCache.getObjectType())
+          .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element),
+                                          PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)))
+          .orElse(Collections.emptyList())
+      );
+    }
+
     // ...as a builtin symbol
     final PyFile bfile = builtinCache.getBuiltinsFile();
     if (bfile != null && !PyUtil.isClassPrivateName(referencedName)) {
@@ -47,7 +64,6 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
         resultElement = bfile; // resolve __builtins__ reference
       }
       if (resultElement != null) {
-        final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(element.getProject());
         result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, typeEvalContext), null));
       }
     }
