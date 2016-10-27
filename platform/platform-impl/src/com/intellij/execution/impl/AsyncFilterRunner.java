@@ -32,9 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +47,7 @@ class AsyncFilterRunner {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("console filters", 1);
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
+  private final Map<AtomicBoolean, Future<FilterResults>> myPendingFilterResults = new LinkedHashMap<>();
 
   AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
     myHyperlinks = hyperlinks;
@@ -71,11 +70,15 @@ class AsyncFilterRunner {
     Future<FilterResults> future = ourExecutor.submit(() -> {
       FilterResults results = computeWithWritePriority(bgComputation);
       if (!results.myResults.isEmpty()) {
-        ApplicationManager.getApplication().invokeLater(() -> results.applyHighlights(myHyperlinks), ModalityState.any(), o -> handled.get());
+        ApplicationManager.getApplication().invokeLater(() -> {
+          results.applyHighlights(myHyperlinks);
+          myPendingFilterResults.remove(handled);
+        }, ModalityState.any(), o -> handled.get());
       }
       return results;
     });
-    handleSynchronouslyIfQuick(handled, future);
+    myPendingFilterResults.put(handled, future);
+    handleSynchronouslyIfQuick(handled, future, 5);
   }
 
   @NotNull
@@ -91,15 +94,24 @@ class AsyncFilterRunner {
     return applyResults.get();
   }
 
-  private void handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future) {
+  private void handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, int timeout) {
     try {
-      future.get(5, TimeUnit.MILLISECONDS).applyHighlights(myHyperlinks);
+      future.get(timeout, TimeUnit.MILLISECONDS).applyHighlights(myHyperlinks);
       handled.set(true);
+      myPendingFilterResults.remove(handled);
     }
     catch (TimeoutException ignored) {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+  
+  public void waitForPendingFilters() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    while(!myPendingFilterResults.isEmpty()) {
+      Map.Entry<AtomicBoolean, Future<FilterResults>> next = myPendingFilterResults.entrySet().iterator().next();
+      handleSynchronouslyIfQuick(next.getKey(), next.getValue(), 1000);
     }
   }
 

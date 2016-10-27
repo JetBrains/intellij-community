@@ -110,6 +110,10 @@ public class EditorHyperlinkSupport {
     }
   }
 
+  public void waitForPendingFilters() {
+    myFilterRunner.waitForPendingFilters();
+  }
+  
   @Deprecated
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
     LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
