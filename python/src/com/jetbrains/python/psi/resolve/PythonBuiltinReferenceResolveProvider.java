@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,13 +37,17 @@ import java.util.Optional;
  * User : ktisha
  */
 public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
+
   @NotNull
   @Override
   public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
-    final List<RatedResolveResult> result = new ArrayList<>();
-    final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final String referencedName = element.getReferencedName();
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(realContext);
+    if (referencedName == null) {
+      return Collections.emptyList();
+    }
+
+    final List<RatedResolveResult> result = new ArrayList<>();
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(PyPsiUtils.getRealContext(element));
 
     // resolve to module __doc__
     if (PyNames.DOC.equals(referencedName)) {
@@ -56,16 +61,28 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
     }
 
     // ...as a builtin symbol
-    final PyFile bfile = builtinCache.getBuiltinsFile();
-    if (bfile != null && !PyUtil.isClassPrivateName(referencedName)) {
-      PsiElement resultElement = bfile.getElementNamed(referencedName);
-      if (resultElement == null && "__builtins__".equals(referencedName)) {
-        resultElement = bfile; // resolve __builtins__ reference
-      }
-      if (resultElement != null) {
-        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, context), null));
-      }
+    if (!PyUtil.isClassPrivateName(referencedName)) {
+      result.addAll(
+        Optional
+          .ofNullable(builtinCache.getBuiltinsFile())
+          .map(builtinsFile -> resolveNameInBuiltins(referencedName, builtinsFile))
+          .map(resultElement -> new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, context), null))
+          .map(Collections::singletonList)
+          .orElse(Collections.emptyList())
+      );
     }
+
     return result;
+  }
+
+  @Nullable
+  private static PsiElement resolveNameInBuiltins(@NotNull String referencedName, @NotNull PyFile builtinsFile) {
+    final PsiElement resultElement = builtinsFile.getElementNamed(referencedName);
+
+    if (resultElement == null && "__builtins__".equals(referencedName)) {
+      return builtinsFile; // resolve __builtins__ reference
+    }
+
+    return resultElement;
   }
 }
