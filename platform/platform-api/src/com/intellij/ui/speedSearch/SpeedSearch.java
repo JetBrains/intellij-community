@@ -17,13 +17,12 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 
 public class SpeedSearch {
-  private final static TIntHashSet ALLOWED_SPECIAL_SYMBOLS = new TIntHashSet(new int [] {' ', '*', '_', '-', '"', '\'', '/', '.', '$', '>', ':'});
+  private final static String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
 
   private String myString = "";
   private boolean myEnabled;
@@ -61,7 +60,7 @@ public class SpeedSearch {
     }
     else {
       final char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || ALLOWED_SPECIAL_SYMBOLS.contains(ch)) {
+      if (Character.isLetterOrDigit(ch) || ALLOWED_SPECIAL_SYMBOLS.indexOf(ch) != -1) {
         type(Character.toString(ch));
         e.consume();
       }
