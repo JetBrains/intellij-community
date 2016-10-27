@@ -17,7 +17,6 @@ package com.intellij.rt.execution.application;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -38,82 +37,80 @@ public class AppMain {
 
   private static native void triggerControlBreak();
 
-  private static boolean ourHasSecurityProblem = false;
+  private static final boolean ourHelperLibLoaded;
   static {
+    boolean libLoaded = false;
     try {
-      String binPath = System.getProperty(PROPERTY_BIN_PATH) + File.separator;
+      String libName = null;
       String osName = System.getProperty("os.name").toLowerCase(Locale.US);
       String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
-      String libPath = null;
       if (osName.startsWith("windows")) {
-        libPath = binPath + (arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
+        libName = (arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
       }
       else if (osName.startsWith("linux")) {
-        libPath = binPath + (arch.equals("amd64") ? "libbreakgen64.so" : "libbreakgen.so");
+        libName = (arch.equals("amd64") ? "libbreakgen64.so" : "libbreakgen.so");
       }
       else if (osName.startsWith("mac")) {
-        libPath = binPath + (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
+        libName = (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
       }
-      if (libPath != null) {
-        System.load(libPath);
+      if (libName != null) {
+        System.load(System.getProperty(PROPERTY_BIN_PATH) + File.separator + libName);
+        libLoaded = true;
       }
     }
-    catch (UnsatisfiedLinkError e) {
-      //Do nothing, unknown os or some other error => no ctrl-break is available
+    catch (Throwable t) {
+      System.out.println("Thread dumps in console not supported: failed to load a native helper (" + t.getMessage() + ')');
     }
-    catch (SecurityException e) {
-      ourHasSecurityProblem = true;
-      System.out.println("break in console is not supported due to security permissions: " + e.getMessage());
-    }
+    ourHelperLibLoaded = libLoaded;
   }
 
   public static void main(String[] args) throws Throwable {
-    if (!ourHasSecurityProblem) {
+    try {
       final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
-      Thread t = new Thread(
-        new Runnable() {
-          public void run() {
+      Thread t = new Thread("Monitor Ctrl-Break") {
+        public void run() {
+          try {
+            ServerSocket socket = new ServerSocket(portNumber);
             try {
-              ServerSocket socket = new ServerSocket(portNumber);
+              Socket client = socket.accept();
               try {
-                Socket client = socket.accept();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 try {
-                  BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                  try {
-                    while (true) {
-                      String msg = reader.readLine();
-                      if ("TERM".equals(msg)) {
-                        return;
-                      }
-                      else if ("BREAK".equals(msg)) {
+                  while (true) {
+                    String msg = reader.readLine();
+                    if ("TERM".equals(msg)) {
+                      return;
+                    }
+                    else if ("BREAK".equals(msg)) {
+                      if (ourHelperLibLoaded) {
                         triggerControlBreak();
                       }
-                      else if ("STOP".equals(msg)) {
-                        System.exit(1);
-                      }
                     }
-                  }
-                  finally {
-                    reader.close();
+                    else if ("STOP".equals(msg)) {
+                      System.exit(1);
+                    }
                   }
                 }
                 finally {
-                  client.close();
+                  reader.close();
                 }
               }
               finally {
-                socket.close();
+                client.close();
               }
             }
-            catch (IOException ignored) { }
-            catch (IllegalArgumentException ignored) { }
-            catch (SecurityException ignored) { }
+            finally {
+              socket.close();
+            }
           }
-        }, "Monitor Ctrl-Break");
-      try {
-        t.setDaemon(true);
-        t.start();
-      } catch (Exception ignored) { }
+          catch (Exception ignored) { }
+        }
+      };
+      t.setDaemon(true);
+      t.start();
+    }
+    catch (Throwable t) {
+      System.out.println("Thread dumps and \"soft exit\" not supported: failed to start a monitor thread (" + t.getMessage() + ')');
     }
 
     String mainClass = args[0];
