@@ -1,26 +1,30 @@
 package com.jetbrains.edu.learning;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.EditorNotifications;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Map;
 
 public class StudySubtaskUtils {
+  private static final Logger LOG = Logger.getInstance(StudySubtaskUtils.class);
+
   private StudySubtaskUtils() {
   }
 
@@ -58,11 +62,38 @@ public class StudySubtaskUtils {
         taskFile.setHighlightErrors(false);
       }
     }
+    transformTestFile(project, toSubtaskIndex, taskDir);
     task.setActiveSubtaskIndex(toSubtaskIndex);
-    update(project, task, taskDir);
+    updateUI(project, task, taskDir);
   }
 
-  private static void update(@NotNull Project project, @NotNull Task task, VirtualFile taskDir) {
+  private static void transformTestFile(@NotNull Project project, int toSubtaskIndex, VirtualFile taskDir) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
+    if (manager == null) {
+      return;
+    }
+    String defaultTestFileName = manager.getTestFileName();
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(defaultTestFileName);
+    String extension = FileUtilRt.getExtension(defaultTestFileName);
+    String subtaskTestFileName = nameWithoutExtension + EduNames.SUBTASK_MARKER + toSubtaskIndex;
+    VirtualFile subtaskTestFile = taskDir.findChild(subtaskTestFileName + ".txt");
+    if (subtaskTestFile != null) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          subtaskTestFile.rename(project, subtaskTestFileName + "." + extension);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
+    }
+  }
+
+  private static void updateUI(@NotNull Project project, @NotNull Task task, VirtualFile taskDir) {
     StudyCheckUtils.drawAllPlaceholders(project, task, taskDir);
     ProjectView.getInstance(project).refresh();
     StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);

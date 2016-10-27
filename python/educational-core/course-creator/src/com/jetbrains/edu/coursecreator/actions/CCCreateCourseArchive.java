@@ -14,10 +14,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
@@ -32,6 +34,8 @@ import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 public class CCCreateCourseArchive extends DumbAwareAction {
@@ -127,6 +131,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
             if (srcDir != null) {
               studentFileDir = srcDir;
             }
+            if (task.hasSubtasks()) {
+              transformSubtaskTestsToTextFiles(studentFileDir);
+            }
             for (String taskFile : task.getTaskFiles().keySet()) {
               VirtualFile answerFile = taskDir.findChild(taskFile);
               if (answerFile == null) {
@@ -134,9 +141,23 @@ public class CCCreateCourseArchive extends DumbAwareAction {
               }
               EduUtils.createStudentFile(this, project, answerFile, studentFileDir, task, 0);
             }
+          }
         }
       }
-    }
+
+      private void transformSubtaskTestsToTextFiles(VirtualFile studentFileDir) {
+        Condition<VirtualFile> isSubtaskTestFile =
+          file -> CCUtils.isTestsFile(project, file) && file.getName().contains(EduNames.SUBTASK_MARKER);
+        List<VirtualFile> subtaskTests = ContainerUtil.filter(Arrays.asList(studentFileDir.getChildren()), isSubtaskTestFile);
+        for (VirtualFile subtaskTest : subtaskTests) {
+          try {
+            subtaskTest.rename(this, subtaskTest.getNameWithoutExtension() + ".txt");
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      }
     });
   }
 
