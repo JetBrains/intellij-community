@@ -256,8 +256,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       zipFile.close();
     }
     catch (ZipException e) {
-      System.out.println("Corrupted file will be removed: " + zip.getPath());
       e.printStackTrace();
+      System.out.println("Corrupted file will be removed: " + zip.getPath());
+      FileUtil.delete(zip);
     }
   }
 
