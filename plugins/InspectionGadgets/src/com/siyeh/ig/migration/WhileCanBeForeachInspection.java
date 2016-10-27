@@ -138,7 +138,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       out.append(')');
 
       ForCanBeForeachInspection.replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, out);
-      final Query<PsiReference> query = ReferencesSearch.search(iterator, iterator.getUseScope());
+      final Query<PsiReference> query = ReferencesSearch.search(iterator);
       boolean deleteIterator = true;
       for (PsiReference usage : query) {
         final PsiElement element = usage.getElement();

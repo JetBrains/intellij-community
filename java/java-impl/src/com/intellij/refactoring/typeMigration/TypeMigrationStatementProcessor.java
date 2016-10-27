@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -577,7 +577,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
             final PsiExpression rExpression = assignment.getRExpression();
             if (rExpression == null) return null;
             assignment.replace(rExpression);
-            if (ReferencesSearch.search(var, var.getUseScope()).forEach(new CommonProcessors.FindFirstProcessor<>())) {
+            if (ReferencesSearch.search(var).forEach(new CommonProcessors.FindFirstProcessor<>())) {
               var.delete();
             }
           }

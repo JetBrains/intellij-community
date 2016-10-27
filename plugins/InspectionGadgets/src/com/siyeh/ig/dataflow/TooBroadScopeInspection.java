@@ -68,7 +68,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
       final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
       assert variable != null;
-      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Query<PsiReference> query = ReferencesSearch.search(variable);
       final Collection<PsiReference> referenceCollection = query.findAll();
       final PsiElement[] referenceElements = new PsiElement[referenceCollection.size()];
       int index = 0;

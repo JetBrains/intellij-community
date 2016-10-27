@@ -252,7 +252,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (variableScope == null) {
         return;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Query<PsiReference> query = ReferencesSearch.search(variable);
       final Collection<PsiReference> referencesCollection = query.findAll();
       final int size = referencesCollection.size();
       if (size == 0) {

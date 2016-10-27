@@ -849,7 +849,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return null;
     }
 
-    if (!(nextElement instanceof PsiReturnStatement) && !ReferencesSearch.search(collectionVariable, collectionVariable.getUseScope())
+    if (!(nextElement instanceof PsiReturnStatement) && !ReferencesSearch.search(collectionVariable)
       .forEach(ref ->
                  ref.getElement() == collectionVariable || PsiTreeUtil.isAncestor(statement, ref.getElement(), false) ||
                  PsiTreeUtil.isAncestor(toArrayCandidate, ref.getElement(), false)
@@ -1120,7 +1120,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiElement element = ((PsiReferenceExpression)lValue).resolve();
       if(!(element instanceof PsiLocalVariable)) return null;
       PsiLocalVariable var = (PsiLocalVariable)element;
-      if(!ReferencesSearch.search(var, var.getUseScope()).forEach(ref -> {
+      if(!ReferencesSearch.search(var).forEach(ref -> {
         return PsiTreeUtil.isAncestor(whileLoop, ref.getElement(), true);
       })) {
         return null;
