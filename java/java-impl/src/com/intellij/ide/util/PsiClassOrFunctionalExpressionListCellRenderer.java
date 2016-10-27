@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
@@ -45,8 +46,9 @@ public class PsiClassOrFunctionalExpressionListCellRenderer extends PsiElementLi
   @NotNull
   static String renderFunctionalExpression(@NotNull PsiFunctionalExpression expression) {
     final StubElement stub = ((StubBasedPsiElementBase<?>)expression).getGreenStub();
-    return stub instanceof FunctionalExpressionStub
-                       ? ((FunctionalExpressionStub)stub).getPresentableText()
-                       : PsiExpressionTrimRenderer.render(expression);
+    final String lambdaText = stub instanceof FunctionalExpressionStub
+                              ? ((FunctionalExpressionStub)stub).getPresentableText()
+                              : PsiExpressionTrimRenderer.render(expression);
+    return PsiBundle.message("class.context.display", lambdaText, ClassPresentationUtil.getContextName(expression, false));
   }
 }
