@@ -16,26 +16,81 @@
 package com.intellij.compiler;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.SkipSlowTestLocally;
 
 @SkipSlowTestLocally
-public class CompilerReferencesFindUsagesTest extends CompilerReferencesTestBase {
+public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
+  //TODO merge tests
+  private boolean myDefaultEnableState;
+  private CompilerTester myCompilerTester;
+
+  @Override
+  public void setUp() throws Exception {
+    myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
+    CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
+    super.setUp();
+    myCompilerTester = new CompilerTester(myModule);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
+      myCompilerTester.tearDown();
+    }
+    finally {
+      myCompilerTester = null;
+      super.tearDown();
+    }
+  }
+
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/compilerReferenceFindUsages/";
   }
 
-  public void testFindUsagesInInjectedCode() {
+  public void testLibMethodUsage() throws Exception {
+    configureByFile(getName() + "/Foo.java");
+    myCompilerTester.rebuild();
+    PsiMethod methodToSearch = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTIONS).findMethodsByName("emptyList", false)[0];
+    assertOneElement(MethodReferencesSearch.search(methodToSearch).findAll());
+  }
+
+  public void testLibClassUsage() throws Exception {
+    configureByFile(getName() + "/Foo.java");
+    myCompilerTester.rebuild();
+    PsiClass classForSearch = myJavaFacade.findClass("java.lang.System");
+    assertOneElement(ReferencesSearch.search(classForSearch).findAll());
+  }
+
+  public void testLibClassInJavaDocUsage() throws Exception {
+    configureByFile(getName() + "/Foo.java");
+    myCompilerTester.rebuild();
+    PsiClass classForSearch = myJavaFacade.findClass("java.lang.System");
+    assertOneElement(ReferencesSearch.search(classForSearch).findAll());
+  }
+
+  public void testCompileTimeConstFindUsages() throws Exception {
+    configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
+    PsiField classForSearch = findClass("Foo").findFieldByName("CONST", false);
+    PsiElement referenceBefore = assertOneElement(ReferencesSearch.search(classForSearch).findAll()).getElement();
+    myCompilerTester.rebuild();
+    PsiElement referenceAfter = assertOneElement(ReferencesSearch.search(classForSearch).findAll()).getElement();
+    assertTrue(referenceBefore == referenceAfter);
+  }
+
+  public void testFindUsagesInInjectedCode() throws Exception {
     new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
-    myFixture.configureByFile(getName() + "/Foo.java");
-    rebuildProject();
-    PsiClass classForSearch = myFixture.getJavaFacade().findClass("java.lang.System");
+    configureByFile(getName() + "/Foo.java");
+    myCompilerTester.rebuild();
+    PsiClass classForSearch = myJavaFacade.findClass("java.lang.System");
     PsiReference reference = assertOneElement(ReferencesSearch.search(classForSearch).findAll());
-    assertTrue(InjectedLanguageManager.getInstance(getProject()).isInjectedFragment(((PsiReferenceExpressionImpl)reference).getContainingFile()));
+    assertTrue(InjectedLanguageManager.getInstance(getProject()).isInjectedFragment(reference.getElement().getContainingFile()));
   }
 }

@@ -522,7 +522,8 @@ public class GitHistoryUtils {
       catch (Throwable t) {
         if (parseError.isNull()) {
           parseError.set(t);
-          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
+          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(builder.toString()) + "\"\n" +
+                    "Command " + handler.printableCommandLine(), t);
         }
       }
     }, 0);
@@ -537,23 +538,46 @@ public class GitHistoryUtils {
                                                  int bufferSize)
     throws VcsException {
     final StringBuilder buffer = new StringBuilder();
+    final Ref<Boolean> foundRecordEnd = Ref.create(false);
     final Ref<VcsException> ex = new Ref<>();
     final AtomicInteger records = new AtomicInteger();
     handler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         try {
+          // format of the record is <RECORD_START>.*<RECORD_END>.*
+          // then next record goes
+          // (rather inconveniently, after RECORD_END there is a list of modified files)
+          // so here I'm trying to find text between two RECORD_START symbols
+          // that simultaneously contains a RECORD_END
+          // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
+          // wont help with RECORD_END symbols in the message however (have not seen those yet)
+
           String tail = null;
-          int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
-          if (nextRecordStart == -1) {
-            buffer.append(line).append("\n");
+          if (!foundRecordEnd.get()) {
+            int recordEnd = line.indexOf(GitLogParser.RECORD_END);
+            if (recordEnd != -1) {
+              foundRecordEnd.set(true);
+              buffer.append(line.substring(0, recordEnd + 1));
+              line = line.substring(recordEnd + 1);
+            }
+            else {
+              buffer.append(line).append("\n");
+            }
           }
-          else if (nextRecordStart == 0) {
-            tail = line + "\n";
-          }
-          else {
-            buffer.append(line.substring(0, nextRecordStart));
-            tail = line.substring(nextRecordStart) + "\n";
+
+          if (foundRecordEnd.get()) {
+            int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
+            if (nextRecordStart == -1) {
+              buffer.append(line).append("\n");
+            }
+            else if (nextRecordStart == 0) {
+              tail = line + "\n";
+            }
+            else {
+              buffer.append(line.substring(0, nextRecordStart));
+              tail = line.substring(nextRecordStart) + "\n";
+            }
           }
 
           if (tail != null) {
@@ -562,6 +586,7 @@ public class GitHistoryUtils {
               buffer.setLength(0);
             }
             buffer.append(tail);
+            foundRecordEnd.set(false);
           }
         }
         catch (Exception e) {

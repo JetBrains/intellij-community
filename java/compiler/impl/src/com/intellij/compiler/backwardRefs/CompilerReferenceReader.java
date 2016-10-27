@@ -197,6 +197,12 @@ class CompilerReferenceReader {
         if (result.add(curClass)) {
           if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
             final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
+            if (definitionFiles == null) {
+              //diagnostic
+              String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
+              String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
+              LOG.error("Can't get definition files for :" + curHierarchyElement + " base class: " + baseHierarchyElement);
+            }
             if (definitionFiles.size() != 1) {
               return null;
             }
