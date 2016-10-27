@@ -223,6 +223,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   protected List<RatedResolveResult> resolveInner() {
+    final ResolveResultList overriddenRet = resolveByOverridingReferenceResolveProviders();
+    if (!overriddenRet.isEmpty()) {
+      return overriddenRet;
+    }
+
     final ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
@@ -232,27 +237,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
         ret.poke(myElement, getRate(myElement, myContext.getTypeEvalContext()));
         return ret;
-      }
-    }
-
-    // resolve implicit __class__ inside class function
-    if (myElement instanceof PyReferenceExpression &&
-        PyNames.__CLASS__.equals(referencedName) &&
-        LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
-      final PyFunction containingFunction = PsiTreeUtil.getParentOfType(myElement, PyFunction.class);
-
-      if (containingFunction != null) {
-        final PyClass containingClass = containingFunction.getContainingClass();
-
-        if (containingClass != null) {
-          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
-          PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
-
-          if (processor.getElements().isEmpty()) {
-            ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, containingClass));
-            return ret;
-          }
-        }
       }
     }
 
@@ -360,10 +344,27 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @NotNull
+  private ResolveResultList resolveByOverridingReferenceResolveProviders() {
+    final ResolveResultList results = new ResolveResultList();
+    final TypeEvalContext context = myContext.getTypeEvalContext();
+
+    Arrays
+      .stream(Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME))
+      .filter(PyOverridingReferenceResolveProvider.class::isInstance)
+      .map(provider -> provider.resolveName(myElement, context))
+      .forEach(results::addAll);
+
+    return results;
+  }
+
+  @NotNull
   private ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
     final TypeEvalContext context = myContext.getTypeEvalContext();
     for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
+      if (provider instanceof PyOverridingReferenceResolveProvider) {
+        continue;
+      }
       results.addAll(provider.resolveName(myElement, context));
     }
     return results;
