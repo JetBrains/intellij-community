@@ -40,6 +40,8 @@ class ProcessProxyImpl implements ProcessProxy {
   public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 
   private final ServerSocket mySocket;
+
+  private final Object myWriterLock = new Object();
   private Writer myWriter;
 
   public ProcessProxyImpl() throws IOException {
@@ -54,22 +56,28 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @Override
-  public synchronized void attach(@NotNull ProcessHandler processHandler) {
+  public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
+
     try {
       //noinspection SocketOpenedButNotSafelyClosed
-      myWriter = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
+      OutputStreamWriter writer = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
+      synchronized (myWriterLock) {
+        myWriter = writer;
+      }
     }
     catch (IOException e) {
       Logger.getInstance(ProcessProxy.class).warn(e);
     }
   }
 
-  private synchronized void writeLine(String s) {
+  private void writeLine(String s) {
     try {
-      myWriter.write(s);
-      myWriter.write('\n');
-      myWriter.flush();
+      synchronized (myWriterLock) {
+        myWriter.write(s);
+        myWriter.write('\n');
+        myWriter.flush();
+      }
     }
     catch (IOException e) {
       Logger.getInstance(ProcessProxy.class).warn(e);
@@ -77,8 +85,10 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @Override
-  public synchronized boolean canSendBreak() {
-    if (myWriter == null) return false;
+  public boolean canSendBreak() {
+    synchronized (myWriterLock) {
+      if (myWriter == null) return false;
+    }
     String libName = null;
     if (SystemInfo.isWindows) libName = "breakgen.dll";
     else if (SystemInfo.isMac) libName = "libbreakgen.jnilib";
@@ -87,8 +97,10 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @Override
-  public synchronized boolean canSendStop() {
-    return myWriter != null;
+  public boolean canSendStop() {
+    synchronized (myWriterLock) {
+      return myWriter != null;
+    }
   }
 
   @Override
@@ -102,10 +114,12 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @Override
-  public synchronized void destroy() {
+  public void destroy() {
     try {
-      if (myWriter != null) {
-        myWriter.close();
+      synchronized (myWriterLock) {
+        if (myWriter != null) {
+          myWriter.close();
+        }
       }
       mySocket.close();
     }
