@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public interface InspectionProfileManager extends SeverityProvider {
+public interface InspectionProfileManager {
   String INSPECTION_DIR = "inspection";
 
   @NotNull
@@ -69,4 +70,10 @@ public interface InspectionProfileManager extends SeverityProvider {
   }
 
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
+
+  @NotNull
+  SeverityRegistrar getSeverityRegistrar();
+
+  @NotNull
+  SeverityRegistrar getOwnSeverityRegistrar();
 }
