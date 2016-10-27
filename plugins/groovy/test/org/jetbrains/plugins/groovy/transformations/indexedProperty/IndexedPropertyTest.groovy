@@ -19,6 +19,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 @CompileStatic
@@ -91,6 +92,34 @@ class A {
     private <error descr="@IndexedProperty is applicable to properties only">@IndexedProperty</error> explicitVisibility 
 }
 '''
+      checkHighlighting()
+    }
+  }
+
+  void 'test indexed property unused'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> <warning descr="Property stringList is unused">stringList</warning>
+}
+new A()
+'''
+      enableInspections(GroovyUnusedDeclarationInspection)
+      checkHighlighting()
+    }
+  }
+
+  void 'test indexed property is used via generated method'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> strin<caret>gList
+}
+new A().getStringList(0)
+'''
+      enableInspections(GroovyUnusedDeclarationInspection)
       checkHighlighting()
     }
   }

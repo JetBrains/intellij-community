@@ -24,9 +24,11 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
 internal val indexedPropertyFqn = "groovy.transform.IndexedProperty"
 internal val indexedPropertyOriginInfo = "by @IndexedProperty"
+internal val indexedMethodKind = "groovy.transform.IndexedProperty.kind"
 
 internal fun GrField.getIndexedComponentType() = CachedValuesManager.getCachedValue(this) {
   Result.create(doGetIndexedComponentType(this), containingFile)
@@ -47,4 +49,8 @@ private fun doGetIndexedComponentType(field: GrField): PsiType? {
     }
     else -> null
   }
+}
+
+internal fun findIndexedPropertyMethods(field: GrField) = field.containingClass?.methods?.filter {
+  it is GrLightMethodBuilder && it.methodKind == indexedMethodKind && it.navigationElement == field
 }

@@ -40,6 +40,7 @@ class IndexedPropertyTransformationSupport : AstTransformationSupport {
         addParameter("index", PsiType.INT)
         navigationElement = field
         originInfo = indexedPropertyOriginInfo
+        methodKind = indexedMethodKind
       }
       context += context.memberBuilder.method(getSetterName(fieldName)) {
         addModifier(PUBLIC_MASK)
@@ -48,6 +49,7 @@ class IndexedPropertyTransformationSupport : AstTransformationSupport {
         addParameter("value", componentType)
         navigationElement = field
         originInfo = indexedPropertyOriginInfo
+        methodKind = indexedMethodKind
       }
     }
   }

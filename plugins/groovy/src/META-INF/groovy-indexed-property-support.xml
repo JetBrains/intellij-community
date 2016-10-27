@@ -7,4 +7,10 @@
         implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyAnnotationChecker"
     />
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <referencesSearch
+        implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyReferenceSearchExecutor"
+    />
+  </extensions>
 </idea-plugin>
