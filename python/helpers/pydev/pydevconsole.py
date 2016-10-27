@@ -362,9 +362,12 @@ def get_ipython_hidden_vars_dict():
         if IPYTHON and hasattr(__builtin__, 'interpreter'):
             pydev_interpreter = get_interpreter().interpreter
             if hasattr(pydev_interpreter, 'ipython') and hasattr(pydev_interpreter.ipython, 'user_ns_hidden'):
-                res_dict = dict([(key, val) for key, val in pydev_interpreter.ipython.user_ns_hidden.items()
-                            if key not in useful_ipython_vars])
-                return res_dict
+                try:
+                    user_hidden_dict = pydev_interpreter.ipython.user_ns_hidden
+                except:
+                    user_hidden_dict = dict([(key, val) for key, val in pydev_interpreter.ipython.user_ns.items()
+                                    if key in pydev_interpreter.ipython.user_ns_hidden])
+                return dict([(key, val) for key, val in user_hidden_dict.items() if key not in useful_ipython_vars])
         return None
     except Exception:
         traceback.print_exc()
