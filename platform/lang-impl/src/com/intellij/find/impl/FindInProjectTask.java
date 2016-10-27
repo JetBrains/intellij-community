@@ -221,7 +221,7 @@ class FindInProjectTask {
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
 
       Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
-      if (pair == null) return true;
+      if (pair == null) return;
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> skipProjectFile || consumer.process(info));
