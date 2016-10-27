@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <astTransformationSupport
+        implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyTransformationSupport"
+    />
+    <customAnnotationChecker
+        implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyAnnotationChecker"
+    />
+  </extensions>
+</idea-plugin>

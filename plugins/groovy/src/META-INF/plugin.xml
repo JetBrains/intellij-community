@@ -1799,5 +1799,6 @@
     </component>
   </project-components>
 
+  <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
