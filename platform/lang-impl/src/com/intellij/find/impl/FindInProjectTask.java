@@ -67,6 +67,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -245,15 +246,22 @@ class FindInProjectTask {
         }
       }
     };
-    forkJoin(virtualFiles, searchInFile);
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    forkJoin(virtualFiles, searchInFile, indicator != null ? indicator : new EmptyProgressIndicator());
   }
 
-  private static void forkJoin(@NotNull Collection<VirtualFile> virtualFiles, Consumer<VirtualFile> searchInFile) {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    List<Future<?>> futures = ContainerUtil.map(virtualFiles, file -> ourExecutor.submit(() -> {
-      ProgressIndicator wrapper = indicator == null ? new EmptyProgressIndicator() : ProgressWrapper.wrap(indicator);
-      ProgressManager.getInstance().runProcess(() -> searchInFile.consume(file), wrapper);
-    }));
+  private static void forkJoin(@NotNull Collection<VirtualFile> virtualFiles, Consumer<VirtualFile> searchInFile, ProgressIndicator indicator) {
+    List<Future<?>> futures = Collections.synchronizedList(new ArrayList<>());
+    for (VirtualFile file : virtualFiles) {
+      futures.add(ourExecutor.submit(() -> ProgressManager.getInstance().runProcess(() -> {
+        try {
+          searchInFile.consume(file);
+        }
+        catch (ProcessCanceledException e) {
+          futures.forEach(future -> future.cancel(false));
+        }
+      }, ProgressWrapper.wrap(indicator))));
+    }
     waitForFutures(futures);
   }
 
@@ -263,6 +271,9 @@ class FindInProjectTask {
         future.get();
       }
       catch (InterruptedException e) {
+        throw new ProcessCanceledException();
+      }
+      catch (CancellationException e) {
         throw new ProcessCanceledException();
       }
       catch (ExecutionException e) {
