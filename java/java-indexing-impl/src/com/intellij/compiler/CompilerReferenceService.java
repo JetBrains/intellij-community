@@ -41,16 +41,16 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
 
   @Nullable
-  public abstract <T extends PsiElement> CompilerDirectHierarchyInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                                            @NotNull GlobalSearchScope useScope,
-                                                                                            @NotNull GlobalSearchScope searchScope,
-                                                                                            @NotNull FileType searchFileType);
+  public abstract CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                  @NotNull GlobalSearchScope useScope,
+                                                                  @NotNull GlobalSearchScope searchScope,
+                                                                  @NotNull FileType searchFileType);
 
   @Nullable
-  public abstract <T extends PsiElement> CompilerDirectHierarchyInfo<T> getFunExpressions(@NotNull PsiNamedElement functionalInterface,
-                                                                                          @NotNull GlobalSearchScope useScope,
-                                                                                          @NotNull GlobalSearchScope searchScope,
-                                                                                          @NotNull FileType searchFileType);
+  public abstract CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
+                                                                @NotNull GlobalSearchScope useScope,
+                                                                @NotNull GlobalSearchScope searchScope,
+                                                                @NotNull FileType searchFileType);
 
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();

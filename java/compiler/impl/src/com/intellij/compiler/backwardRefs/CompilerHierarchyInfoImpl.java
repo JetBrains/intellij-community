@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.stream.Stream;
 
-class CompilerHierarchyInfoImpl<T extends PsiElement> implements CompilerDirectHierarchyInfo<T> {
+class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
   private final GlobalSearchScope myDirtyScope;
   private final GlobalSearchScope mySearchScope;
-  private final Couple<Map<VirtualFile, T[]>> myCandidatePerFile;
+  private final Couple<Map<VirtualFile, PsiElement[]>> myCandidatePerFile;
 
-  CompilerHierarchyInfoImpl(Couple<Map<VirtualFile, T[]>> candidatePerFile,
+  CompilerHierarchyInfoImpl(Couple<Map<VirtualFile, PsiElement[]>> candidatePerFile,
                             GlobalSearchScope dirtyScope,
                             GlobalSearchScope searchScope) {
     myCandidatePerFile = candidatePerFile;
@@ -40,13 +40,13 @@ class CompilerHierarchyInfoImpl<T extends PsiElement> implements CompilerDirectH
 
   @Override
   @NotNull
-  public Stream<T> getHierarchyChildren() {
+  public Stream<PsiElement> getHierarchyChildren() {
     return selectClassesInScope(myCandidatePerFile.getFirst(), mySearchScope);
   }
 
   @Override
   @NotNull
-  public Stream<T> getHierarchyChildCandidates() {
+  public Stream<PsiElement> getHierarchyChildCandidates() {
     return selectClassesInScope(myCandidatePerFile.getSecond(), mySearchScope);
   }
 

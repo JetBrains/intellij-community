@@ -79,13 +79,13 @@ class CompilerReferenceReader {
    * 2nd map: candidates. One need to check that these classes are really direct inheritors
    */
   @Nullable
-  <T extends PsiElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement baseClass,
-                                                                           @NotNull LightRef searchElement,
-                                                                           @NotNull GlobalSearchScope searchScope,
-                                                                           @NotNull GlobalSearchScope dirtyScope,
-                                                                           @NotNull Project project,
-                                                                           @NotNull FileType fileType,
-                                                                           @NotNull CompilerHierarchySearchType searchType) {
+  Couple<Map<VirtualFile, PsiElement[]>> getDirectInheritors(@NotNull PsiNamedElement baseClass,
+                                                             @NotNull LightRef searchElement,
+                                                             @NotNull GlobalSearchScope searchScope,
+                                                             @NotNull GlobalSearchScope dirtyScope,
+                                                             @NotNull Project project,
+                                                             @NotNull FileType fileType,
+                                                             @NotNull CompilerHierarchySearchType searchType) {
     Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates;
     synchronized (myHierarchyLock) {
       candidates = myIndex.getBackwardHierarchyMap().get(searchElement);
@@ -119,14 +119,14 @@ class CompilerReferenceReader {
 
     if (candidatesPerFile.isEmpty()) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
-    Map<VirtualFile, T[]> inheritors = new THashMap<>(candidatesPerFile.size());
-    Map<VirtualFile, T[]> inheritorCandidates = new THashMap<>();
+    Map<VirtualFile, PsiElement[]> inheritors = new THashMap<>(candidatesPerFile.size());
+    Map<VirtualFile, PsiElement[]> inheritorCandidates = new THashMap<>();
 
     final PsiManager psiManager = ReadAction.compute(() -> PsiManager.getInstance(project));
 
     candidatesPerFile.forEach((file, directInheritors) -> ReadAction.run(() -> {
       final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport) psiManager.findFile(file);
-      final T[] currInheritors = searchType.performSearchInFile(directInheritors, baseClass, myIndex.getByteSeqEum(), psiFile, adapter);
+      final PsiElement[] currInheritors = searchType.performSearchInFile(directInheritors, baseClass, myIndex.getByteSeqEum(), psiFile, adapter);
       if (currInheritors.length == directInheritors.size()) {
         inheritors.put(file, currInheritors);
       }

@@ -47,7 +47,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
@@ -76,7 +79,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     SearchScope scope = parameters.getScope();
 
-    CompilerDirectHierarchyInfo<PsiClass> info = performSearchUsingCompilerIndices(parameters, scope, project);
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, scope, project);
     if (info != null) {
       if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous(), false, baseClass)) return false;
       if (!processInheritorCandidates(info.getHierarchyChildCandidates(), consumer, parameters.includeAnonymous(), true, baseClass)) return false;
@@ -274,9 +277,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
   }
 
-  private static CompilerDirectHierarchyInfo<PsiClass> performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                                         @NotNull SearchScope useScope,
-                                                                                         @NotNull Project project) {
+  private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                                               @NotNull SearchScope useScope,
+                                                                               @NotNull Project project) {
     if (!(useScope instanceof GlobalSearchScope)) return null;
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
@@ -289,7 +292,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                         JavaFileType.INSTANCE);
   }
 
-  private static boolean processInheritorCandidates(@NotNull Stream<PsiClass> classStream,
+  private static boolean processInheritorCandidates(@NotNull Stream<PsiElement> classStream,
                                                     @NotNull Processor<PsiClass> consumer,
                                                     boolean acceptAnonymous,
                                                     boolean checkInheritance,
@@ -297,8 +300,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     if (!acceptAnonymous) {
       classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));
     }
-    return ContainerUtil.process(classStream.iterator(), c -> {
+    return ContainerUtil.process(classStream.iterator(), e -> {
       ProgressManager.checkCanceled();
+      PsiClass c = (PsiClass) e;
       if (checkInheritance && ReadAction.compute(() -> !c.isInheritor(baseClass, false))) return true;
       return consumer.process(c);
     });

@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -351,18 +351,18 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return true;
   }
 
-  private static CompilerDirectHierarchyInfo<PsiFunctionalExpression> performSearchUsingCompilerIndices(@NotNull SamDescriptor descriptor,
-                                                                                                        @NotNull GlobalSearchScope searchScope,
-                                                                                                        @NotNull CompilerReferenceService service) {
+  private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull SamDescriptor descriptor,
+                                                                               @NotNull GlobalSearchScope searchScope,
+                                                                               @NotNull CompilerReferenceService service) {
     return service.getFunExpressions(descriptor.samClass, descriptor.effectiveUseScope, searchScope, JavaFileType.INSTANCE);
   }
 
 
-  private static boolean processFunctionalExpressions(@Nullable CompilerDirectHierarchyInfo<PsiFunctionalExpression> funExprInfo,
+  private static boolean processFunctionalExpressions(@Nullable CompilerDirectHierarchyInfo funExprInfo,
                                                       @NotNull SamDescriptor descriptor,
                                                       @NotNull Processor<PsiFunctionalExpression> consumer) {
     if (funExprInfo != null) {
-      if (!ContainerUtil.process(funExprInfo.getHierarchyChildren().iterator(), consumer)) return false;
+      if (!ContainerUtil.process(funExprInfo.getHierarchyChildren().iterator(), fe -> consumer.process((PsiFunctionalExpression)fe))) return false;
       GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();
       descriptor.effectiveUseScope = descriptor.effectiveUseScope.intersectWith(dirtyScope);
     }

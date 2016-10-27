@@ -24,18 +24,18 @@ import java.util.stream.Stream;
 /**
  * represents search result for functional expressions or inheritance hierarchy of given interface/class
  */
-public interface CompilerDirectHierarchyInfo<T extends PsiElement> {
+public interface CompilerDirectHierarchyInfo {
   /**
    * Can be used as direct hierarchy children without explicit inheritance verification
    */
   @NotNull
-  Stream<T> getHierarchyChildren();
+  Stream<PsiElement> getHierarchyChildren();
 
   /**
    * Must be explicitly checked do they are really direct children in hierarchy of classes or functional expressions
    */
   @NotNull
-  Stream<T> getHierarchyChildCandidates();
+  Stream<PsiElement> getHierarchyChildCandidates();
 
   /**
    * A scope where compiler based index search was not performed

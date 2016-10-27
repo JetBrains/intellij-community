@@ -165,36 +165,36 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   @Override
-  public <T extends PsiElement> CompilerDirectHierarchyInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                                   @NotNull GlobalSearchScope useScope,
-                                                                                   @NotNull GlobalSearchScope searchScope,
-                                                                                   @NotNull FileType searchFileType) {
+  public CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                         @NotNull GlobalSearchScope useScope,
+                                                         @NotNull GlobalSearchScope searchScope,
+                                                         @NotNull FileType searchFileType) {
     return getHierarchyInfo(aClass, useScope, searchScope, searchFileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
   }
 
   @Nullable
   @Override
-  public <T extends PsiElement> CompilerDirectHierarchyInfo<T> getFunExpressions(@NotNull PsiNamedElement functionalInterface,
-                                                                                 @NotNull GlobalSearchScope useScope,
-                                                                                 @NotNull GlobalSearchScope searchScope,
-                                                                                 @NotNull FileType searchFileType) {
+  public CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
+                                                       @NotNull GlobalSearchScope useScope,
+                                                       @NotNull GlobalSearchScope searchScope,
+                                                       @NotNull FileType searchFileType) {
     return getHierarchyInfo(functionalInterface, useScope, searchScope, searchFileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
   }
 
   @Nullable
-  private <T extends PsiElement> CompilerDirectHierarchyInfo<T> getHierarchyInfo(@NotNull PsiNamedElement aClass,
-                                                                                 @NotNull GlobalSearchScope useScope,
-                                                                                 @NotNull GlobalSearchScope searchScope,
-                                                                                 @NotNull FileType searchFileType,
-                                                                                 @NotNull CompilerHierarchySearchType searchType) {
+  private CompilerDirectHierarchyInfo getHierarchyInfo(@NotNull PsiNamedElement aClass,
+                                                       @NotNull GlobalSearchScope useScope,
+                                                       @NotNull GlobalSearchScope searchScope,
+                                                       @NotNull FileType searchFileType,
+                                                       @NotNull CompilerHierarchySearchType searchType) {
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
-    Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
+    Couple<Map<VirtualFile, PsiElement[]>> directInheritorsAndCandidates =
       CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-        new ConcurrentFactoryMap<HierarchySearchKey, Couple<Map<VirtualFile, T[]>>>() {
+        new ConcurrentFactoryMap<HierarchySearchKey, Couple<Map<VirtualFile, PsiElement[]>>>() {
         @Nullable
         @Override
-        protected Couple<Map<VirtualFile, T[]>> create(HierarchySearchKey key) {
+        protected Couple<Map<VirtualFile, PsiElement[]>> create(HierarchySearchKey key) {
           return calculateDirectInheritors(aClass,
                                            useScope,
                                            key.mySearchFileType,
@@ -207,7 +207,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
       dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
     }
-    return new CompilerHierarchyInfoImpl<>(directInheritorsAndCandidates, dirtyScope, searchScope);
+    return new CompilerHierarchyInfoImpl(directInheritorsAndCandidates, dirtyScope, searchScope);
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
@@ -219,10 +219,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myReader != null && isEnabled();
   }
 
-  private <T extends PsiElement> Couple<Map<VirtualFile, T[]>> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                                         @NotNull GlobalSearchScope useScope,
-                                                                                         @NotNull FileType searchFileType,
-                                                                                         @NotNull CompilerHierarchySearchType searchType) {
+  private Couple<Map<VirtualFile, PsiElement[]>> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                           @NotNull GlobalSearchScope useScope,
+                                                                           @NotNull FileType searchFileType,
+                                                                           @NotNull CompilerHierarchySearchType searchType) {
 
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false);
     if (searchElementInfo == null) return null;

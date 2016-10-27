@@ -26,12 +26,12 @@ import java.util.Collection;
 enum CompilerHierarchySearchType {
   DIRECT_INHERITOR {
     @Override
-    <T extends PsiElement> T[] performSearchInFile(Collection<LightRef> definitions,
-                                                   PsiNamedElement baseElement,
-                                                   ByteArrayEnumerator nameEnumerator,
-                                                   PsiFileWithStubSupport file,
-                                                   LanguageLightRefAdapter adapter) {
-      return (T[])adapter.findDirectInheritorCandidatesInFile(definitions, nameEnumerator, file, baseElement);
+    PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+                                     PsiNamedElement baseElement,
+                                     ByteArrayEnumerator nameEnumerator,
+                                     PsiFileWithStubSupport file,
+                                     LanguageLightRefAdapter adapter) {
+      return adapter.findDirectInheritorCandidatesInFile(definitions, nameEnumerator, file, baseElement);
     }
 
     @Override
@@ -41,12 +41,12 @@ enum CompilerHierarchySearchType {
   },
   FUNCTIONAL_EXPRESSION {
     @Override
-    <T extends PsiElement> T[] performSearchInFile(Collection<LightRef> definitions,
-                                                   PsiNamedElement baseElement,
-                                                   ByteArrayEnumerator nameEnumerator,
-                                                   PsiFileWithStubSupport file,
-                                                   LanguageLightRefAdapter adapter) {
-      return (T[])adapter.findFunExpressionsInFile(definitions, file);
+    PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+                                     PsiNamedElement baseElement,
+                                     ByteArrayEnumerator nameEnumerator,
+                                     PsiFileWithStubSupport file,
+                                     LanguageLightRefAdapter adapter) {
+      return adapter.findFunExpressionsInFile(definitions, file);
     }
 
     @Override
@@ -55,11 +55,11 @@ enum CompilerHierarchySearchType {
     }
   };
 
-  abstract <T extends PsiElement> T[] performSearchInFile(Collection<LightRef> definitions,
-                                                          PsiNamedElement baseElement,
-                                                          ByteArrayEnumerator nameEnumerator,
-                                                          PsiFileWithStubSupport file,
-                                                          LanguageLightRefAdapter adapter);
+  abstract PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+                                            PsiNamedElement baseElement,
+                                            ByteArrayEnumerator nameEnumerator,
+                                            PsiFileWithStubSupport file,
+                                            LanguageLightRefAdapter adapter);
 
   abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter<?, ?> adapter);
 }
