@@ -21,7 +21,10 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+
+import java.io.IOException;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
@@ -34,15 +37,19 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
       if (mainClass != null) {
         try {
           ProcessProxyImpl proxy = new ProcessProxyImpl();
+
           JavaSdkUtil.addRtJar(javaParameters.getClassPath());
           ParametersList vmParametersList = javaParameters.getVMParametersList();
           vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, String.valueOf(proxy.getPortNumber()));
           vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BIN_PATH, PathManager.getBinPath());
+
           javaParameters.getProgramParametersList().prepend(mainClass);
           javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
           return proxy;
         }
-        catch (ProcessProxyImpl.NoMoreSocketsException ignored) { }
+        catch (IOException e) {
+          Logger.getInstance(ProcessProxy.class).warn(e);
+        }
       }
     }
 

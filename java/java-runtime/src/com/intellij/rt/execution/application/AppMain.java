@@ -21,7 +21,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Locale;
 
@@ -70,37 +69,31 @@ public class AppMain {
       Thread t = new Thread("Monitor Ctrl-Break") {
         public void run() {
           try {
-            ServerSocket socket = new ServerSocket(portNumber);
+            Socket client = new Socket("127.0.0.1", portNumber);
             try {
-              Socket client = socket.accept();
+              BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
               try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                try {
-                  while (true) {
-                    String msg = reader.readLine();
-                    if ("TERM".equals(msg)) {
-                      return;
-                    }
-                    else if ("BREAK".equals(msg)) {
-                      if (ourHelperLibLoaded) {
-                        triggerControlBreak();
-                      }
-                    }
-                    else if ("STOP".equals(msg)) {
-                      System.exit(1);
+                while (true) {
+                  String msg = reader.readLine();
+                  if ("TERM".equals(msg)) {
+                    return;
+                  }
+                  else if ("BREAK".equals(msg)) {
+                    if (ourHelperLibLoaded) {
+                      triggerControlBreak();
                     }
                   }
-                }
-                finally {
-                  reader.close();
+                  else if ("STOP".equals(msg)) {
+                    System.exit(1);
+                  }
                 }
               }
               finally {
-                client.close();
+                reader.close();
               }
             }
             finally {
-              socket.close();
+              client.close();
             }
           }
           catch (Exception ignored) { }

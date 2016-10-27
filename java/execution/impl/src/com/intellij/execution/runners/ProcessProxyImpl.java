@@ -17,14 +17,17 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.net.InetAddress;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  * @author ven
@@ -36,71 +39,56 @@ class ProcessProxyImpl implements ProcessProxy {
   public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 
-  private static final int SOCKET_NUMBER_START = 7532;
-  private static final int SOCKET_NUMBER = 100;
-  private static final boolean[] ourUsedSockets = new boolean[SOCKET_NUMBER];
+  private final ServerSocket mySocket;
+  private Writer myWriter;
 
-  private final int myPortNumber;
-  private PrintWriter myWriter;
-  private Socket mySocket;
-
-  public static class NoMoreSocketsException extends Exception { }
-
-  public ProcessProxyImpl() throws NoMoreSocketsException {
-    myPortNumber = findFreePort();
-    if (myPortNumber == -1) throw new NoMoreSocketsException();
-  }
-
-  private static int findFreePort() {
-    synchronized (ourUsedSockets) {
-      for (int j = 0; j < SOCKET_NUMBER; j++) {
-        if (ourUsedSockets[j]) continue;
-        try {
-          ServerSocket s = new ServerSocket(j + SOCKET_NUMBER_START);
-          s.close();
-          ourUsedSockets[j] = true;
-          return j + SOCKET_NUMBER_START;
-        }
-        catch (IOException ignore) { }
-      }
-    }
-    return -1;
+  public ProcessProxyImpl() throws IOException {
+    mySocket = new ServerSocket();
+    mySocket.bind(new InetSocketAddress("127.0.0.1", 0));
+    mySocket.setSoTimeout(10000);
   }
 
   @Override
   public int getPortNumber() {
-    return myPortNumber;
+    return mySocket.getLocalPort();
   }
 
   @Override
-  public void attach(@NotNull ProcessHandler processHandler) {
+  public synchronized void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
+    try {
+      //noinspection SocketOpenedButNotSafelyClosed
+      myWriter = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
+    }
+    catch (IOException e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
   }
 
-  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
   private synchronized void writeLine(String s) {
-    if (myWriter == null) {
-      try {
-        if (mySocket == null) {
-          mySocket = new Socket(InetAddress.getLoopbackAddress(), myPortNumber);
-        }
-        myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
-      }
-      catch (IOException e) {
-        return;
-      }
+    try {
+      myWriter.write(s);
+      myWriter.write('\n');
+      myWriter.flush();
     }
-    myWriter.println(s);
-    myWriter.flush();
+    catch (IOException e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
   }
 
   @Override
-  public boolean canSendBreak() {
+  public synchronized boolean canSendBreak() {
+    if (myWriter == null) return false;
     String libName = null;
     if (SystemInfo.isWindows) libName = "breakgen.dll";
     else if (SystemInfo.isMac) libName = "libbreakgen.jnilib";
     else if (SystemInfo.isLinux) libName = "libbreakgen.so";
     return libName != null && new File(PathManager.getBinPath(), libName).exists();
+  }
+
+  @Override
+  public synchronized boolean canSendStop() {
+    return myWriter != null;
   }
 
   @Override
@@ -115,9 +103,14 @@ class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public synchronized void destroy() {
-    if (myWriter != null) {
-      myWriter.close();
+    try {
+      if (myWriter != null) {
+        myWriter.close();
+      }
+      mySocket.close();
     }
-    ourUsedSockets[myPortNumber - SOCKET_NUMBER_START] = false;
+    catch (IOException e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
   }
 }
