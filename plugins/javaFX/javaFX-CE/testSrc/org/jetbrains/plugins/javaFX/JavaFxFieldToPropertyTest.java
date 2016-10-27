@@ -35,7 +35,9 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
   protected void setUpModule() {
     super.setUpModule();
     AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
-    ArtifactManager.getInstance(getProject()).addArtifact("fake-javafx", JavaFxApplicationArtifactType.getInstance(), null);
+    if (isArtifactNeeded()) {
+      ArtifactManager.getInstance(getProject()).addArtifact("fake-javafx", JavaFxApplicationArtifactType.getInstance(), null);
+    }
   }
 
   public void testIntFieldToProperty() throws Exception {
@@ -96,6 +98,10 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     final Editor editor = getEditor();
     final PsiFile file = getFile();
     return findIntentionAction(infos, actionName, editor, file);
+  }
+
+  protected boolean isArtifactNeeded() {
+    return true;
   }
 
   @NotNull

@@ -69,9 +69,9 @@ public class JavaFxModuleUtil {
   private static boolean hasJavaFxArtifacts(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(
       project, () -> {
-        final Collection<? extends Artifact> artifacts =
-          ArtifactManager.getInstance(project).getArtifactsByType(JavaFxApplicationArtifactType.getInstance());
-        return CachedValueProvider.Result.create(!artifacts.isEmpty(), ProjectRootManager.getInstance(project));
+        final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
+        final Collection<? extends Artifact> artifacts = artifactManager.getArtifactsByType(JavaFxApplicationArtifactType.getInstance());
+        return CachedValueProvider.Result.create(!artifacts.isEmpty(), artifactManager.getModificationTracker());
       });
   }
 
