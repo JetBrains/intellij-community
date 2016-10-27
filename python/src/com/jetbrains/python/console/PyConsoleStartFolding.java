@@ -27,11 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCommunicationListener, FoldingListener {
   private PythonConsoleView myConsoleView;
-  private boolean isFirstCommandWasExecuted = false;
+  private int myNumberOfCommandExecuted = 0;
+  private int myNumberOfCommandToStop = 1;
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
-  private int startLineOffset = 0;
+  private int myStartLineOffset = 0;
 
   public PyConsoleStartFolding(PythonConsoleView consoleView) {
     super();
@@ -39,7 +40,11 @@ public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCom
   }
 
   public void setStartLineOffset(int startLineOffset) {
-    this.startLineOffset = startLineOffset;
+    myStartLineOffset = startLineOffset;
+  }
+
+  public void setNumberOfCommandToStop(int numberOfCommandToStop) {
+    myNumberOfCommandToStop = numberOfCommandToStop;
   }
 
   @Override
@@ -52,11 +57,15 @@ public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCom
     if (doNotAddFoldingAgain || document.getTextLength() == 0) {
       return;
     }
+    if (myNumberOfCommandExecuted >= myNumberOfCommandToStop) {
+      document.removeDocumentListener(this);
+      return;
+    }
     FoldingModel foldingModel = myConsoleView.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
-      int start = startLineOffset;
+      int start = myStartLineOffset;
       String placeholderText = DEFAULT_FOLDING_MESSAGE;
-      int firstLine = document.getLineNumber(startLineOffset);
+      int firstLine = document.getLineNumber(myStartLineOffset);
       for (int line = firstLine; line < document.getLineCount(); line++) {
         String lineText = document.getText(DocumentUtil.getLineTextRange(document, line));
         if (lineText.startsWith("Python")) {
@@ -75,14 +84,11 @@ public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCom
         myStartFoldRegion = foldRegion;
       }
     });
-    if (isFirstCommandWasExecuted) {
-      document.removeDocumentListener(this);
-    }
   }
 
   @Override
   public void commandExecuted(boolean more) {
-    isFirstCommandWasExecuted = true;
+    myNumberOfCommandExecuted++;
   }
 
   @Override
