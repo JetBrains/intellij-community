@@ -293,6 +293,12 @@ public class JBUI {
   public static abstract class JBIcon implements Icon {
     private float myInitialJBUIScale = scale(1f);
 
+    protected JBIcon() {}
+
+    protected JBIcon(JBIcon icon) {
+      myInitialJBUIScale = icon.myInitialJBUIScale;
+    }
+
     /**
      * @return the scale factor aligning the icon size metrics to conform to up-to-date JBUI.scale
      */
@@ -347,6 +353,13 @@ public class JBUI {
   public static abstract class ScalableJBIcon extends JBIcon implements ScalableIcon {
     private float myScale = 1f;
 
+    protected ScalableJBIcon() {}
+
+    protected ScalableJBIcon(ScalableJBIcon icon) {
+      super(icon);
+      myScale = icon.myScale;
+    }
+
     public enum Scale {
       JBUI,       // JBIcon's scale
       ARBITRARY,  // ScalableIcon's scale
@@ -380,17 +393,54 @@ public class JBUI {
         case JBUI:
           return super.scaleVal(value);
         case ARBITRARY:
-          return (int)(value * myScale);
+          return value * myScale;
         case EFFECTIVE:
         default:
-          return (int)super.scaleVal(value * myScale);
+          return super.scaleVal(value * myScale);
       }
     }
 
     @Override
     public Icon scale(float scale) {
-      setScale(scale);
+      if (getScale() != scale) setScale(scale);
       return this;
+    }
+  }
+
+  public interface AuxJBUIScale {
+    /**
+     * Checks if cached JBUI.scale should be updated and updates it.
+     *
+     * @return true if cached JBUI.scale was updated
+     */
+    boolean updateJBUIScale();
+
+    /**
+     * @return true if cached JBUI.scale should be updated
+     */
+    boolean needUpdateJBUIScale();
+  }
+
+  /**
+   * A JBIcon caching JBUI.scale and allowing to lazily track its change.
+   *
+   * @author tav
+   */
+  public static abstract class AuxJBIcon extends JBIcon implements AuxJBUIScale {
+    private float myCachedJBUIScale = scale(1f);
+
+    @Override
+    public boolean updateJBUIScale() {
+      if (needUpdateJBUIScale()) {
+        myCachedJBUIScale = scale(1f);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean needUpdateJBUIScale() {
+      return myCachedJBUIScale != scale(1f);
     }
   }
 
@@ -399,23 +449,11 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class AuxScalableJBIcon extends ScalableJBIcon {
+  public static abstract class AuxScalableJBIcon extends ScalableJBIcon implements AuxJBUIScale {
     private float myCachedJBUIScale = JBUI.scale(1f);
 
-    /**
-     * @return cached JBUI.scale
-     */
-    protected float getJBUIScale() {
-      return myCachedJBUIScale;
-    }
-
-    /**
-     * Checks if cached JBUI.scale should be updated and updates it.
-     * Use {@link #scaleVal(int, Scale)} to update the icon size metrics.
-     *
-     * @return true if cached JBUI.scale was updated
-     */
-    protected boolean updateJBUIScale() {
+    @Override
+    public boolean updateJBUIScale() {
       if (needUpdateJBUIScale()) {
         myCachedJBUIScale = JBUI.scale(1f);
         return true;
@@ -423,11 +461,9 @@ public class JBUI {
       return false;
     }
 
-    /**
-     * @return true if cached JBUI.scale should be updated
-     */
-    protected boolean needUpdateJBUIScale() {
-      return myCachedJBUIScale == JBUI.scale(1f);
+    @Override
+    public boolean needUpdateJBUIScale() {
+      return myCachedJBUIScale != JBUI.scale(1f);
     }
   }
 }

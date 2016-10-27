@@ -362,7 +362,7 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends JBUI.AuxScalableJBIcon {
+  private static final class CachedImageIcon extends JBUI.AuxJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -457,18 +457,10 @@ public final class IconLoader {
 
     @Override
     public Icon scale(float scale) {
-      if (scale == 1f) {
-        return this;
-      }
-      super.scale(scale);
-
       if (!isValid()) getRealIcon(); // force state update & cache reset
 
       Icon icon = myScaledIconsCache.getScaledIcon(scale);
-      if (icon != null) {
-        return icon;
-      }
-      return this;
+      return (icon != null) ? icon : this;
     }
 
     private class MyScaledIconsCache {
@@ -589,8 +581,9 @@ public final class IconLoader {
       getOrComputeIcon();
       if (myIcon instanceof ScalableIcon) {
         myIcon = ((ScalableIcon)myIcon).scale(scale);
+        return super.scale(scale);
       }
-      return super.scale(scale);
+      return this;
     }
   }
 
