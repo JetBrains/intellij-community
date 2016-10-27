@@ -15,7 +15,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.siyeh.ig.junit.AssertsWithoutMessagesInspection;
+import com.siyeh.ig.testFrameworks.AssertsWithoutMessagesInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

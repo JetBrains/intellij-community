@@ -15,7 +15,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.siyeh.ig.junit.ConstantAssertArgumentInspectionBase;
+import com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspectionBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
