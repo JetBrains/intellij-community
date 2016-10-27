@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
@@ -29,13 +30,17 @@ import org.jetbrains.annotations.NotNull;
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
 
-  private ProviderType myProviderType = ProviderType.KEYCHAIN;
+  private ProviderType myProviderType = getDefaultProviderType();
 
   String keepassDb;
 
+  private static ProviderType getDefaultProviderType() {
+    return SystemInfo.isWindows ? ProviderType.KEEPASS : ProviderType.KEYCHAIN;
+  }
+
   @NotNull
   public ProviderType getProviderType() {
-    return myProviderType;
+    return SystemInfo.isWindows && myProviderType == ProviderType.KEYCHAIN ? ProviderType.KEEPASS : myProviderType;
   }
 
   public void setProviderType(@NotNull ProviderType value) {
@@ -51,6 +56,7 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
     }
   }
 
+  @Override
   @NotNull
   public State getState() {
     State s = new State();
@@ -61,13 +67,14 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
     return s;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
-    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.KEYCHAIN));
+    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, getDefaultProviderType()));
     keepassDb = StringUtil.nullize(state.keepassDb, true);
   }
 
   public static class State {
-    public ProviderType PROVIDER = ProviderType.KEYCHAIN;
+    public ProviderType PROVIDER = getDefaultProviderType();
 
     public String keepassDb;
   }
