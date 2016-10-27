@@ -346,7 +346,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     if (myKind != null) {
       element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
-      final Object state = myProperties.getState();
+      final Object state = myProperties != null ? myProperties.getState() : null;
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
         if (!JDOMUtil.isEmpty(propertiesElement)) {
