@@ -60,7 +60,7 @@ public class JavaParameterHintManager {
     if (expression instanceof PsiNewExpression) {
       return false;
     }
-    final PsiType returnType = method.getReturnType();
+    PsiType returnType = TypeConversionUtil.erasure(method.getReturnType());
     final PsiClass aClass = method.getContainingClass();
     final String calledMethodFqn = aClass != null ? aClass.getQualifiedName() : null;
     if (calledMethodFqn != null && returnType != null) {
