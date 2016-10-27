@@ -310,11 +310,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public int getWidth() {
       return myWidth;
     }
-
-    @NotNull
-    public MyComponent getTemplateComponent() {
-      return myTemplateComponent;
-    }
   }
 
   private class MyComponentWithFadeOut extends MyComponent {
