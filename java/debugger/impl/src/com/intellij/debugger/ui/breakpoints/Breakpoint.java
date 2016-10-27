@@ -105,14 +105,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
 
-  protected boolean shouldCreateRequest(final DebugProcessImpl debugProcess) {
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess, boolean forPreparedClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
       JavaDebugProcess process = debugProcess.getXdebugProcess();
       return process != null
              && debugProcess.isAttached()
              && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
-             && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+             && (forPreparedClass || debugProcess.getRequestsManager().findRequests(this).isEmpty());
     });
+  }
+
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
+    return shouldCreateRequest(debugProcess, false);
   }
 
   /**

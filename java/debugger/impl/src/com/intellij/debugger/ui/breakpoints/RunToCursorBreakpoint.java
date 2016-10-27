@@ -147,7 +147,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   }
 
   @Override
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
-    return debugProcess.isAttached() && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess, boolean forPreparedClass) {
+    return debugProcess.isAttached() && (forPreparedClass || debugProcess.getRequestsManager().findRequests(this).isEmpty());
   }
 }

@@ -294,12 +294,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   @Override
-  public void processClassPrepare(final DebugProcess debugProcess, final ReferenceType classType) {
-    if (!isEnabled() || !isValid()) {
-      return;
+  public void processClassPrepare(DebugProcess debugProcess, ReferenceType classType) {
+    DebugProcessImpl process = (DebugProcessImpl)debugProcess;
+    if (shouldCreateRequest(process, true)) {
+      createRequestForPreparedClass(process, classType);
+      updateUI();
     }
-    createRequestForPreparedClass((DebugProcessImpl)debugProcess, classType);
-    updateUI();
   }
 
   /**
