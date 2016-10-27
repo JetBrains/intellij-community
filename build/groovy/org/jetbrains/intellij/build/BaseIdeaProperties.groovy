@@ -128,7 +128,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     }
     context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
+      fileset(dir: "$context.paths.communityHome/build/dependencies/build/Kotlin")
     }
     context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
   }

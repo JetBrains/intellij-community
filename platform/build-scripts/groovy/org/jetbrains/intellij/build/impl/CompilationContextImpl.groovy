@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -68,6 +69,8 @@ class CompilationContextImpl implements CompilationContext {
 
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
+
+    setupDependencies(messages, communityHome)
     if (project.modules.isEmpty()) {
       loadProject(communityHome, projectHome, jdk8Home, project, global, messages)
     }
@@ -103,10 +106,10 @@ class CompilationContextImpl implements CompilationContext {
 
   private static void loadProject(String communityHome, String projectHome, String jdkHome, JpsProject project, JpsGlobal global,
                                   BuildMessages messages) {
-    def bundledKotlinPath = "$communityHome/build/kotlinc"
+    def bundledKotlinPath = "$communityHome/build/dependencies/build/Kotlin/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
       messages.error(
-        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
+        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
     }
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
 
@@ -116,6 +119,20 @@ class CompilationContextImpl implements CompilationContext {
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+  }
+
+  private static void setupDependencies(BuildMessages messages, String communityHome) {
+    messages.info("Setting up dependencies")
+    def workingDirectory = new File(communityHome, 'build/dependencies/')
+    def gradleScript = SystemInfo.isWindows ? "gradlew.bat" : "gradlew"
+    def process = new ProcessBuilder("${workingDirectory.absolutePath}/$gradleScript", 'cleanDownloadJre', 'setupDependencies')
+      .directory(workingDirectory)
+      .start()
+    process.consumeProcessOutputStream((OutputStream)System.out)
+    process.consumeProcessErrorStream((OutputStream)System.err)
+    if (process.waitFor() != 0) {
+      messages.error("Cannot setup dependencies")
+    }
   }
 
   void prepareForBuild() {
