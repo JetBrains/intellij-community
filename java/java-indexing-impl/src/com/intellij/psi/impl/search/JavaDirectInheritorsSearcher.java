@@ -297,14 +297,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     if (!acceptAnonymous) {
       classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));
     }
-
-    Iterator<PsiClass> it = classStream.iterator();
-    while (it.hasNext()) {
+    return ContainerUtil.process(classStream.iterator(), c -> {
       ProgressManager.checkCanceled();
-      PsiClass next = it.next();
-      if (checkInheritance && ReadAction.compute(() -> !next.isInheritor(baseClass, false))) continue;
-      if (!consumer.process(next)) return false;
-    }
-    return true;
+      if (checkInheritance && ReadAction.compute(() -> !c.isInheritor(baseClass, false))) return true;
+      return consumer.process(c);
+    });
   }
 }

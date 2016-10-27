@@ -362,13 +362,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                       @NotNull SamDescriptor descriptor,
                                                       @NotNull Processor<PsiFunctionalExpression> consumer) {
     if (funExprInfo != null) {
-      Iterator<PsiFunctionalExpression> it = funExprInfo.getHierarchyChildren().iterator();
-      while (it.hasNext()) {
-        PsiFunctionalExpression next = it.next();
-        if (!consumer.process(next)) {
-          return false;
-        }
-      }
+      if (!ContainerUtil.process(funExprInfo.getHierarchyChildren().iterator(), consumer)) return false;
       GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();
       descriptor.effectiveUseScope = descriptor.effectiveUseScope.intersectWith(dirtyScope);
     }
