@@ -23,17 +23,25 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 public class AssertHint {
   private final int myArgIndex;
+  private final boolean myMessageOnFirstPosition;
   private final PsiExpression myMessage;
   private final PsiMethod myMethod;
 
-  private AssertHint(int index, PsiExpression message, PsiMethod method) {
+  private AssertHint(int index, boolean messageOnFirstPosition, PsiExpression message, PsiMethod method) {
     myArgIndex = index;
+    myMessageOnFirstPosition = messageOnFirstPosition;
     myMessage = message;
     myMethod = method;
+  }
+
+  public boolean isMessageOnFirstPosition() {
+    return myMessageOnFirstPosition;
   }
 
   public int getArgIndex() {
@@ -108,7 +116,7 @@ public class AssertHint {
       }
     }
 
-    return new AssertHint(argumentIndex, message, method);
+    return new AssertHint(argumentIndex, messageOnFirstPosition, message, method);
   }
 
   public static boolean isMessageOnFirstPosition(PsiMethod method, boolean checkTestNG) {
@@ -119,7 +127,8 @@ public class AssertHint {
     }
     return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
-           JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName);
+           JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
+           JUnitCommonClassNames.ORG_JUNIT_ASSUME.equals(qualifiedName);
   }
 
   public static boolean isMessageOnLastPosition(PsiMethod method, boolean checkTestNG) {
@@ -128,7 +137,8 @@ public class AssertHint {
     if (checkTestNG) {
       return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName());
     }
-    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName);
+    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
+          JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }
 
   public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression, boolean checkTestNG) {
@@ -159,5 +169,24 @@ public class AssertHint {
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
                                            StringUtil.escapeXml(comparedTypeText),
                                            StringUtil.escapeXml(comparisonTypeText));
+  }
+
+  public static class JUnitCommonAssertNames {
+    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(8);
+
+    static {
+      COMMON_ASSERT_METHODS.put("assertArrayEquals", 2);
+      COMMON_ASSERT_METHODS.put("assertEquals", 2);
+      COMMON_ASSERT_METHODS.put("assertFalse", 1);
+      COMMON_ASSERT_METHODS.put("assumeFalse", 1);
+      COMMON_ASSERT_METHODS.put("assertNotNull", 1);
+      COMMON_ASSERT_METHODS.put("assertNotSame", 2);
+      COMMON_ASSERT_METHODS.put("assertNull", 1);
+      COMMON_ASSERT_METHODS.put("assertSame", 2);
+      COMMON_ASSERT_METHODS.put("assertThat", 2);
+      COMMON_ASSERT_METHODS.put("assertTrue", 1);
+      COMMON_ASSERT_METHODS.put("assumeTrue", 1);
+      COMMON_ASSERT_METHODS.put("fail", 0);
+    }
   }
 }

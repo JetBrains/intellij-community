@@ -16,32 +16,17 @@
 package com.siyeh.ig.junit;
 
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.testFrameworks.AssertHint;
 import com.siyeh.ig.testFrameworks.AssertsWithoutMessagesInspection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class JUnitAssertsWithoutMessagesInspection extends AssertsWithoutMessagesInspection {
-  @NonNls private static final Map<String, Integer> s_assertMethods = new HashMap<>(8);
-
-  static {
-    s_assertMethods.put("assertArrayEquals", 2);
-    s_assertMethods.put("assertEquals", 2);
-    s_assertMethods.put("assertFalse", 1);
-    s_assertMethods.put("assertNotNull", 1);
-    s_assertMethods.put("assertNotSame", 2);
-    s_assertMethods.put("assertNull", 1);
-    s_assertMethods.put("assertSame", 2);
-    s_assertMethods.put("assertThat", 2);
-    s_assertMethods.put("assertTrue", 1);
-    s_assertMethods.put("fail", 0);
-  }
 
   @Override
   protected Map<String, Integer> getAssertMethods() {
-    return s_assertMethods;
+    return AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS;
   }
 
   @Override

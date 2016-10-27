@@ -17,7 +17,10 @@ package com.siyeh.ig.junit;
 
 public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSERT = "org.junit.Assert";
+  public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";
   public static final String JUNIT_FRAMEWORK_ASSERT = "junit.framework.Assert";
   public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS = "org.junit.jupiter.api.Assertions";
+  public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";
+  public static final String ORG_HAMCREST_MATCHER_ASSERT = "org.hamcrest.MatcherAssert";
 }
