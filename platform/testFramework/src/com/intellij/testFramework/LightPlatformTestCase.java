@@ -420,9 +420,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
           FileDocumentManager manager = FileDocumentManager.getInstance();
-
-          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
-          manager.saveAllDocuments();
           if (manager instanceof FileDocumentManagerImpl) {
             ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
           }
@@ -439,12 +436,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ((HintManagerImpl)HintManager.getInstance()).cleanup();
       DocumentCommitThread.getInstance().clearQueue();
 
-      EdtTestUtil.runInEdtAndWait(() -> {
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
-        ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-
-        UIUtil.dispatchAllInvocationEvents();
-      });
+      ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
       TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
     }
@@ -456,11 +449,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       CompletionProgressIndicator.cleanupForNextTest();
     }
 
+    documentManager.clearUncommittedDocuments();
+
+    UIUtil.dispatchAllInvocationEvents();
+
     if (checkForEditors) {
       checkEditorsReleased(exceptions);
     }
-    documentManager.clearUncommittedDocuments();
-    
+
     if (ourTestCount++ % 100 == 0) {
       // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
       // so let's clear the cache every now and then to ensure it doesn't grow too large
