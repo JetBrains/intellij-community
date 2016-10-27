@@ -43,7 +43,6 @@ import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,17 +56,27 @@ import java.util.List;
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
-  @NonNls public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
+  public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
+
+  public static ProgramRunner getInstance() {
+    return RunnerRegistry.getInstance().findRunnerById(DEFAULT_JAVA_RUNNER_ID);
+  }
 
   @Override
-  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
+  @NotNull
+  public String getRunnerId() {
+    return DEFAULT_JAVA_RUNNER_ID;
+  }
+
+  @Override
+  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
            profile instanceof ModuleRunProfile &&
            !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }
 
   @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
     runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 
@@ -167,8 +176,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   protected static class ControlBreakAction extends LauncherBasedAction {
     public ControlBreakAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump,
-            processHandler);
+      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
 
@@ -181,8 +189,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     public void actionPerformed(@NotNull final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
-        final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
-                                                     new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
+        boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
+        WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
 
         proxy.sendBreak();
 
@@ -232,10 +240,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
 
-    private void showThreadDump(final String out, final List<ThreadState> threadStates) {
-      ApplicationManager.getApplication().invokeLater(() -> AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
-                                                                                                      new ThreadDumpConsoleFactory(myProject, threadStates) : null,
-                                       "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out), ModalityState.NON_MODAL);
+    private void showThreadDump(String out, List<ThreadState> states) {
+      AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(myProject, states) : null;
+      String title = "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis());
+      ApplicationManager.getApplication().invokeLater(
+        () -> AnalyzeStacktraceUtil.addConsole(myProject, factory, title, out), ModalityState.NON_MODAL);
     }
   }
 
@@ -251,15 +260,5 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         proxy.sendStop();
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getRunnerId() {
-    return DEFAULT_JAVA_RUNNER_ID;
-  }
-
-  public static ProgramRunner getInstance() {
-    return RunnerRegistry.getInstance().findRunnerById(DEFAULT_JAVA_RUNNER_ID);
   }
 }
