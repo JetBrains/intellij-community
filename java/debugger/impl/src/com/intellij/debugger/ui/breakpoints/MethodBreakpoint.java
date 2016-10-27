@@ -48,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
@@ -71,6 +72,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.MethodBreakpoint");
@@ -479,36 +481,37 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     int methodLine;
   }
 
-  private static boolean instanceOf(@Nullable Type type, @NotNull Type superType) {
+  private static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
     if (type == null) {
       return false;
     }
     if (superType.equals(type)) {
       return true;
     }
+    return supertypes(type).anyMatch(t -> instanceOf(t, superType));
+  }
+
+  private static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
     if (type instanceof InterfaceType) {
-      return ((InterfaceType)type).superinterfaces().stream().anyMatch(t -> instanceOf(t, superType));
+      return ((InterfaceType)type).superinterfaces().stream();
     } else if (type instanceof ClassType) {
-      if (((ClassType)type).interfaces().stream().anyMatch(t -> instanceOf(t, superType))) {
-        return true;
+      StreamEx<ReferenceType> res = StreamEx.of(((ClassType)type).interfaces());
+      ClassType superclass = ((ClassType)type).superclass();
+      if (superclass != null) {
+        res = res.append(superclass);
       }
-      return instanceOf(((ClassType)type).superclass(), superType);
+      return res;
     }
-    return false;
+    return StreamEx.empty();
   }
 
   private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer) {
-    List<? extends ReferenceType> inheritors = null;
-    if (classType instanceof InterfaceType) {
-      inheritors = ContainerUtil.concat(((InterfaceType)classType).subinterfaces(), ((InterfaceType)classType).implementors());
-    } else if (classType instanceof ClassType) {
-      inheritors = ((ClassType)classType).subclasses();
-    }
-    if (inheritors != null) {
-      inheritors.forEach(type -> {
-        consumer.accept(type);
-        processSubTypes(type, consumer);
-      });
-    }
+    MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
+    classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
+    subtypes(classType, inheritance).forEach(consumer);
+  }
+
+  private static Stream<ReferenceType> subtypes(ReferenceType type, MultiMap<ReferenceType, ReferenceType> inheritance) {
+    return StreamEx.of(type).append(StreamEx.of(inheritance.get(type)).flatMap(t -> subtypes(t, inheritance)));
   }
 }
