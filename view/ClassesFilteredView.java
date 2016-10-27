@@ -41,10 +41,7 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +49,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
+import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
 
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
@@ -157,6 +157,32 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, myTable);
 
+    myTable.addMouseMotionListener(new MouseMotionListener() {
+      @Override
+      public void mouseDragged(MouseEvent e) {
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        final int col = myTable.columnAtPoint(e.getPoint());
+        final int row = myTable.rowAtPoint(e.getPoint());
+        if (col == -1 || row == -1 || col != DIFF_COLUMN_INDEX) {
+          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          return;
+        }
+
+        final int modelRow = myTable.convertRowIndexToModel(row);
+
+        final ReferenceType ref = (ReferenceType) myTable.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
+        final ConstructorInstancesTracker tracker = myConstructorTrackedClasses.getOrDefault(ref, null);
+        if (tracker != null && tracker.isReady() && tracker.getCount() > 0) {
+          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
+      }
+    });
+
     myTable.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
@@ -202,7 +228,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     Function<MouseEvent, Boolean> isOpenNewInstancesClick = e -> {
       int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
       ReferenceType ref = myTable.getSelectedClass();
-      return column == ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX && ref != null && getStrategy(ref) != null;
+      return column == DIFF_COLUMN_INDEX && ref != null && getStrategy(ref) != null;
     };
 
     new DoubleClickListener() {

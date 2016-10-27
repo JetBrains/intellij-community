@@ -90,7 +90,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setDefaultRenderer(Long.class, new MyCountColumnRenderer());
     setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
-
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
       @Override
