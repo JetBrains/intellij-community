@@ -128,6 +128,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
 
     getSelectionModel().addListSelectionListener(new MyListSelectionListener());
+    getColumnModel().setColumnSelectionAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
@@ -656,6 +657,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private class StringCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBorder(null);
       if (value == null) {
         return;
       }

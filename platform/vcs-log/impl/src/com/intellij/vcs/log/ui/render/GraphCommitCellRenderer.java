@@ -168,9 +168,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     public void customize(@NotNull GraphCommitCell cell, boolean isSelected, boolean hasFocus, int row, int column) {
       clear();
-      setPaintFocusBorder(hasFocus && myGraphTable.getCellSelectionEnabled());
+      setPaintFocusBorder(false);
       acquireState(myGraphTable, isSelected, hasFocus, row, column);
       getCellState().updateRenderer(this);
+      setBorder(null);
 
       myGraphImage = getGraphImage(cell.getPrintElements());
 
