@@ -242,7 +242,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     TIntHashSet referentFileIds = getReferentFileIds(element);
     if (referentFileIds == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds).intersectWith(notScope(myDirtyModulesHolder.getDirtyScope())),
+    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(myDirtyModulesHolder.getDirtyScope())),
                                          myFileTypes.toArray(new FileType[myFileTypes.size()]));
   }
 
@@ -384,14 +384,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   private static class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
     private final TIntHashSet myReferentIds;
+    private final ProjectFileIndex myIndex;
 
-    private ScopeWithoutReferencesOnCompilation(TIntHashSet ids) {
+    private ScopeWithoutReferencesOnCompilation(TIntHashSet ids, ProjectFileIndex index) {
       myReferentIds = ids;
+      myIndex = index;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return !(file instanceof VirtualFileWithId) || !myReferentIds.contains(((VirtualFileWithId)file).getId());
+      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && !myReferentIds.contains(((VirtualFileWithId)file).getId());
     }
 
     @Override
