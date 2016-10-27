@@ -32,7 +32,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Function;
@@ -49,7 +48,9 @@ public class AddModuleWizard extends AbstractProjectWizard {
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
 
-  /** Import mode */
+  /**
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
+   */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, filePath);
     myImportProviders = importProviders;
@@ -57,7 +58,9 @@ public class AddModuleWizard extends AbstractProjectWizard {
     initModuleWizard(project, filePath);
   }
 
-  /** Import mode */
+  /**
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
+   */
   public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, dialogParent);
     myImportProviders = importProviders;
