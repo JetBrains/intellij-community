@@ -281,10 +281,10 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  public static boolean isSameProject(String path, @NotNull Project project) {
+  public static boolean isSameProject(String projectFilePath, @NotNull Project project) {
     IProjectStore projectStore = ProjectKt.getStateStore(project);
 
-    String toOpen = FileUtil.toSystemIndependentName(path);
+    String toOpen = FileUtil.toSystemIndependentName(projectFilePath);
     String existing = projectStore.getProjectFilePath();
 
     String existingBaseDir = projectStore.getProjectBasePath();
