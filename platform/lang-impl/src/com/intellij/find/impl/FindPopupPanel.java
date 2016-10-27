@@ -339,8 +339,8 @@ public class FindPopupPanel extends JBPanel {
     myReplaceComponent = new JTextArea();
     myReplaceComponent.setColumns(25);
     myReplaceComponent.setRows(1);
-    mySearchTextArea = new SearchTextArea(mySearchComponent, true);
-    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false);
+    mySearchTextArea = new SearchTextArea(mySearchComponent, true, false);
+    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false, false);
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
