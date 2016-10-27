@@ -111,8 +111,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
-      myLineHeight = myEditor.getLineHeight();
       if (myEditor == null) return;
+      myLineHeight = myEditor.getLineHeight();
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
