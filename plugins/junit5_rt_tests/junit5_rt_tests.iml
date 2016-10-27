@@ -22,5 +22,7 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="execution-impl" scope="TEST" />
     <orderEntry type="module" module-name="junit" scope="TEST" />
+    <orderEntry type="module" module-name="maven" scope="TEST" />
+    <orderEntry type="module" module-name="java-tests" scope="TEST" />
   </component>
 </module>

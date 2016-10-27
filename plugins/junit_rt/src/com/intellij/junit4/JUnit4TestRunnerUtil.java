@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,19 @@ import com.intellij.junit3.TestRunnerUtil;
 import junit.framework.TestCase;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.internal.builders.*;
+import org.junit.internal.AssumptionViolatedException;
+import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
+import org.junit.internal.builders.AnnotatedBuilder;
+import org.junit.internal.builders.IgnoredBuilder;
+import org.junit.internal.builders.JUnit4Builder;
 import org.junit.internal.requests.ClassRequest;
+import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized;
 import org.junit.runners.model.FrameworkMethod;
@@ -322,9 +328,35 @@ public class JUnit4TestRunnerUtil {
             protected JUnit4Builder junit4Builder() {
               return new JUnit4Builder() {
                 public Runner runnerForClass(Class testClass) throws Throwable {
+                  try {
+                    Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", new Class[]{FrameworkMethod.class});
+                    if (ignored != null) {
+                      return new BlockJUnit4ClassRunner(testClass) {
+                        protected boolean isIgnored(FrameworkMethod child) {
+                          return false;
+                        }
+                      };
+                    }
+                  }
+                  catch (NoSuchMethodException ignored) {}
+                  //older versions
                   return new BlockJUnit4ClassRunner(testClass) {
-                    protected boolean isIgnored(FrameworkMethod child) {
-                      return false;
+                    protected void runChild(FrameworkMethod method, RunNotifier notifier) {
+                      final Description description = describeChild(method);
+                      final EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
+                      eachNotifier.fireTestStarted();
+                      try {
+                        methodBlock(method).evaluate();
+                      }
+                      catch (AssumptionViolatedException e) {
+                        eachNotifier.addFailedAssumption(e);
+                      }
+                      catch (Throwable e) {
+                        eachNotifier.addFailure(e);
+                      }
+                      finally {
+                        eachNotifier.fireTestFinished();
+                      }
                     }
                   };
                 }
