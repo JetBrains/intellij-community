@@ -1,11 +1,9 @@
 package org.jetbrains.plugins.javaFX.codeInsight;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -109,17 +107,14 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
           final PsiFile file = element.getContainingFile();
           return file != null && file.isPhysical() ? file : null;
         });
-
-        TransactionGuard.submitTransaction(myProject, () ->
-          WriteCommandAction
-            .runWriteCommandAction(myProject, "Convert '" + myProperty.myFieldName + "' to JavaFX property", null,
-                                   this::replaceUsages, myFiles.toArray(PsiFile.EMPTY_ARRAY)));
       });
+      WriteCommandAction
+        .runWriteCommandAction(myProject, "Convert '" + myProperty.myFieldName + "' to JavaFX property", null,
+                               this::replaceOccurrences, myFiles.toArray(PsiFile.EMPTY_ARRAY));
     }
 
-    private void replaceUsages() {
+    private void replaceOccurrences() {
       final PsiField field = myProperty.myField;
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(myFiles)) return;
       field.normalizeDeclaration();
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
