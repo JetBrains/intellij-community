@@ -129,6 +129,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         PyConsoleStartFolding folding = createConsoleFolding();
         // in debug console we should add folding from the place where the folding was turned on
         folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+        folding.setNumberOfCommandToStop(2);
       }
       else {
         myInitialized.doWhenDone(this::createConsoleFolding);
