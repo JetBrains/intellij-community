@@ -209,7 +209,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
             fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({0}).sum()", false);
           } else {
-            if(PsiUtil.resolveClassInClassTypeOnly(methodCall.getType()) instanceof PsiTypeParameter) {
+            if(!(PsiUtil.resolveClassInClassTypeOnly(methodCall.getType()) instanceof PsiTypeParameter)) {
               String replacement = collectorToCollection(collectorCall);
               if (replacement != null) {
                 PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
