@@ -53,8 +53,11 @@ public class AppMain {
         libName = (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
       }
       if (libName != null) {
-        System.load(System.getProperty(PROPERTY_BIN_PATH) + File.separator + libName);
-        libLoaded = true;
+        File libFile = new File(System.getProperty(PROPERTY_BIN_PATH), libName);
+        if (libFile.isFile()) {
+          System.load(libFile.getAbsolutePath());
+          libLoaded = true;
+        }
       }
     }
     catch (Throwable t) {
