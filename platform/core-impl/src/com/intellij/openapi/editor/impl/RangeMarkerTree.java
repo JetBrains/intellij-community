@@ -373,10 +373,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
       collectNodesToRetarget(getRoot(), start, end, affected);
       if (affected.isEmpty()) return;
-
-      int shift = newBase - start;
+      // remove all first because findOrInsert can remove gced nodes which could interfere with not-yet-removed nodes
       for (IntervalNode<T> node : affected) {
         removeNode(node);
+      }
+      int shift = newBase - start;
+      for (IntervalNode<T> node : affected) {
         node.setLeft(null);
         node.setRight(null);
         node.setParent(null);
