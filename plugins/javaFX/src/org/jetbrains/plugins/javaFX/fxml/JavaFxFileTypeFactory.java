@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaFxFileTypeFactory extends FileTypeFactory {
   @NonNls public static final String FXML_EXTENSION = "fxml";
-  @NonNls private static final String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;
+  @NonNls static final String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;
 
   public static boolean isFxml(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
