@@ -77,8 +77,10 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         groups.clear();
-        final String[] groupsFromString = textField.getText().split("[, ]");
-        ContainerUtil.addAll(groups, groupsFromString);
+        String text = textField.getText();
+        if (!StringUtil.isEmptyOrSpaces(text)) {
+          ContainerUtil.addAll(groups, text.split("[, ]"));
+        }
       }
     });
     definedGroups.setComponent(textField);
