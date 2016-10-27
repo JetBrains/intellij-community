@@ -140,6 +140,7 @@ public class ID<K, V> {
     }
   }
 
+  @NotNull
   public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     final ID<K, V> found = findByName(name);
     return found != null ? found : new ID<K, V>(name);
