@@ -406,8 +406,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @Override
   @Nullable
-  public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-    final Tools toolList = getTools(shortName, element.getProject());
+  public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
+    final Tools toolList = getTools(shortName, element == null ? null : element.getProject());
     return toolList == null ? null : toolList.getInspectionTool(element);
   }
 
