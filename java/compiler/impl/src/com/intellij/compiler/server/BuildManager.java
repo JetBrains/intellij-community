@@ -106,7 +106,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -415,6 +416,20 @@ public class BuildManager implements Disposable {
       }
     }
     scheduleAutoMake();
+  }
+
+  public void clearState() {
+    final boolean cleared;
+    synchronized (myProjectDataMap) {
+      cleared = !myProjectDataMap.isEmpty();
+      for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
+        cancelPreloadedBuilds(entry.getKey());
+        entry.getValue().dropChanges();
+      }
+    }
+    if (cleared) {
+      scheduleAutoMake();
+    }
   }
 
   public boolean isProjectWatched(Project project) {

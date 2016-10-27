@@ -41,7 +41,10 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.codeInspection.*;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileProcessor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -67,9 +70,7 @@ import java.util.function.Function;
   },
   additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
-public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager,
-                                                                                                 SeverityProvider,
-                                                                                                 PersistentStateComponent<Element> {
+public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager, PersistentStateComponent<Element> {
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledInspectionProfile");
 
   private final InspectionToolRegistrar myRegistrar;

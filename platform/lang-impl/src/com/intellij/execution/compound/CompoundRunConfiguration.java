@@ -17,11 +17,14 @@ package com.intellij.execution.compound;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -32,9 +35,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
-public class CompoundRunConfiguration extends RunConfigurationBase implements WithoutOwnBeforeRunSteps, Cloneable {
+public class CompoundRunConfiguration extends RunConfigurationBase implements RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   static final Comparator<RunConfiguration> COMPARATOR = (o1, o2) -> {
     int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
     return (i != 0) ? i : o1.getName().compareTo(o2.getName());
@@ -138,5 +142,36 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
     clone.mySetToRun = new TreeSet<>(COMPARATOR);
     clone.mySetToRun.addAll(getSetToRun());
     return clone;
+  }
+
+
+  @Nullable
+  @Override
+  public Icon getExecutorIcon(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
+    if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()) && hasRunningSingletones()) {
+      return AllIcons.Actions.Restart;
+    }
+    return executor.getIcon();
+  }
+
+  protected boolean hasRunningSingletones() {
+    Project project = getProject();
+    if (project.isDisposed()) return false;
+    final ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+
+    return executionManager.getRunningDescriptors(s -> {
+      RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
+      for (RunConfiguration runConfiguration : mySetToRun) {
+        if (runConfiguration instanceof CompoundRunConfiguration && ((CompoundRunConfiguration)runConfiguration).hasRunningSingletones()) {
+          return true;
+        }
+        RunnerAndConfigurationSettings settings =
+          manager.findConfigurationByTypeAndName(runConfiguration.getType().getId(), runConfiguration.getName());
+        if (settings != null && settings.isSingleton() && runConfiguration.equals(s.getConfiguration())) {
+          return true;
+        }
+      }
+      return false;
+    }).size() > 0;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator.*
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.SkipInHeadlessEnvironment
 import junit.framework.TestCase
 import org.junit.Test
 import java.awt.Dialog
@@ -45,6 +46,7 @@ private class NumberedRunnable private constructor(private val myNumber: Int, pr
   }
 }
 
+@SkipInHeadlessEnvironment
 class RunnableActionsTest : PlatformTestCase() {
 
 

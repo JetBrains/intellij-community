@@ -1544,7 +1544,11 @@ if __name__ == '__main__':
         from _pydevd_bundle import pydevd_stackless
         pydevd_stackless.patch_stackless()
     except:
-        pass  # It's ok not having stackless there...
+        # It's ok not having stackless there...
+        try:
+            sys.exc_clear()  # the exception information should be cleaned in Python 2
+        except:
+            pass
 
     is_module = setup['module']
     patch_stdin(debugger)

@@ -193,7 +193,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     request.putProperty(REQUESTOR, requestor);
   }
 
-  private void registerRequest(Requestor requestor, EventRequest request) {
+  public void registerRequest(Requestor requestor, EventRequest request) {
     myRequestorToBelongedRequests.computeIfAbsent(requestor, r -> new HashSet<>()).add(request);
   }
 

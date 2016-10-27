@@ -16,7 +16,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.junit.SimplifiableAssertionInspection;
+import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

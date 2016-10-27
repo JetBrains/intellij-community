@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,8 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
+  private static final String DEBUG_RT_PATH = "idea.junit_rt.path";
+
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
@@ -135,7 +137,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    final String path = System.getProperty(DEBUG_RT_PATH);
+    javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
   }
 
   @Override

@@ -21,7 +21,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.siyeh.ig.junit.AssertHint;
+import com.siyeh.ig.testFrameworks.AssertHint;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -140,19 +140,18 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   public void processClassPrepare(DebugProcess process, ReferenceType refType) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)process;
-    if (!isEnabled()) {
-      return;
-    }
-    // trying to create a request
-    RequestManagerImpl manager = debugProcess.getRequestsManager();
-    manager.enableRequest(manager.createExceptionRequest(this, refType, isNotifyCaught(), isNotifyUncaught()));
+    if (shouldCreateRequest(debugProcess, true)) {
+      // trying to create a request
+      RequestManagerImpl manager = debugProcess.getRequestsManager();
+      manager.enableRequest(manager.createExceptionRequest(this, refType, isNotifyCaught(), isNotifyUncaught()));
 
-    if (LOG.isDebugEnabled()) {
-      if (refType != null) {
-        LOG.debug("Created exception request for reference type " + refType.name());
-      }
-      else {
-        LOG.debug("Created exception request for reference type null");
+      if (LOG.isDebugEnabled()) {
+        if (refType != null) {
+          LOG.debug("Created exception request for reference type " + refType.name());
+        }
+        else {
+          LOG.debug("Created exception request for reference type null");
+        }
       }
     }
   }

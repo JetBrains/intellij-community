@@ -1203,4 +1203,19 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
+  public void testMoveTextCrashes() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    Random random = new Random();
+    for(int i = 0; i < 10000; i++) {
+      int limit = doc.getTextLength() + 1;
+      int offset = random.nextInt(limit);
+      doc.createRangeMarker(offset, offset);
+      int startOffset = random.nextInt(limit);
+      int endOffset = random.nextInt(limit);
+      int targetOffset = random.nextInt(limit);
+      if (endOffset > startOffset && (targetOffset < startOffset || targetOffset > endOffset)) {
+        doc.moveText(startOffset, endOffset, targetOffset);
+      }
+    }
+  }
 }

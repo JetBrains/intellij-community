@@ -346,6 +346,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     if (myKind != null) {
       element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
+      LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
@@ -431,6 +432,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     LOG.assertTrue(isWritable());
     LOG.assertTrue(myKind == null || myKind == kind, "Library kind cannot be changed from " + myKind + " to " + kind);
     myKind = kind;
+    myProperties = kind.createDefaultProperties();
   }
 
   @Override

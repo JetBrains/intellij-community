@@ -58,6 +58,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> {
@@ -132,12 +132,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   private void createRequestForSubClasses(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType baseType) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    ClassPrepareRequest request = debugProcess.getRequestsManager().createClassPrepareRequest((debuggerProcess, referenceType) -> {
+    RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
+    ClassPrepareRequest request = requestsManager.createClassPrepareRequest((debuggerProcess, referenceType) -> {
       if (instanceOf(referenceType, baseType)) {
         createRequestForPreparedClassEmulated(debugProcess, referenceType, false);
       }
     }, null);
     if (request != null) {
+      requestsManager.registerRequest(this, request);
       request.enable();
     }
 
@@ -145,6 +147,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   private void createRequestForPreparedClassEmulated(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType, boolean base) {
+    if (!base && !shouldCreateRequest(debugProcess, true)) {
+      return;
+    }
     try {
       for (Method method : classType.methods()) {
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
@@ -420,13 +425,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   @Nullable
   static <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
-    Set<EventRequest> requests = debugProcess.getRequestsManager().findRequests(requestor);
-    for (EventRequest eventRequest : requests) {
-      if (eventRequest.getClass().equals(requestClass)) {
-        return (T)eventRequest;
-      }
-    }
-    return null;
+    return StreamEx.of(debugProcess.getRequestsManager().findRequests(requestor)).select(requestClass).findFirst().orElse(null);
   }
 
   @Override

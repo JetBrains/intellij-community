@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.testFrameworks.AssertsWithoutMessagesInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

@@ -162,7 +162,7 @@ public class FindInProjectUtil {
 
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
   @NotNull
-  public static Condition<String> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
+  public static Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
     if (filter == null) {
       return Conditions.alwaysTrue();
     }
@@ -175,7 +175,8 @@ public class FindInProjectUtil {
       mask = mask.trim();
       if (StringUtil.startsWith(mask, "!")) {
         negativePattern += (negativePattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
-      } else {
+      }
+      else {
         pattern += (pattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask) + ")";
       }
     }
@@ -184,11 +185,11 @@ public class FindInProjectUtil {
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
-    return new Condition<String>() {
+    return new Condition<CharSequence>() {
       final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
       final Pattern negativeRegExp = StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
       @Override
-      public boolean value(String input) {
+      public boolean value(CharSequence input) {
         return regExp.matcher(input).matches() && (negativeRegExp == null || !negativeRegExp.matcher(input).matches());
       }
     };
@@ -241,6 +242,7 @@ public class FindInProjectUtil {
 
   // returns number of hits
   static int processUsagesInFile(@NotNull final PsiFile psiFile,
+                                 @NotNull final VirtualFile virtualFile,
                                  @NotNull final FindModel findModel,
                                  @NotNull final Processor<UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
@@ -249,8 +251,6 @@ public class FindInProjectUtil {
       }
       return 1;
     }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
     final Document document = ApplicationManager.getApplication().runReadAction(
       (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);

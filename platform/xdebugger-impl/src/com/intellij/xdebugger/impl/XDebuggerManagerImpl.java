@@ -26,7 +26,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
@@ -52,7 +51,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -203,8 +201,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                               @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
-    XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, this, sessionName,
-                                                                                            icon, showToolWindowOnSuspendOnly));
+    XDebugSessionImpl session = startSession(contentToReuse, starter,
+      new XDebugSessionImpl(null, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
+
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
     }
@@ -218,16 +217,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                          @NotNull XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(process);
-
-    XDebugSessionData oldSessionData = null;
-    if (contentToReuse != null) {
-      JComponent component = contentToReuse.getComponent();
-      if (component != null) {
-        oldSessionData = XDebugSessionData.DATA_KEY.getData(DataManager.getInstance().getDataContext(component));
-      }
-    }
-
-    session.initSessionData(oldSessionData);
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
