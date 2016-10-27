@@ -1103,7 +1103,7 @@ public class AbstractTreeUi {
 
   boolean isToBuildChildrenInBackground(Object element) {
     AbstractTreeStructure structure = getTreeStructure();
-    return element != null && structure.isToBuildChildrenInBackground(element) && !structure.isAlwaysLeaf(element);
+    return element != null && structure.isToBuildChildrenInBackground(element);
   }
 
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
@@ -2689,8 +2689,6 @@ public class AbstractTreeUi {
           update(updateInfo.getDescriptor(), true);
         }
 
-        if (!updateInfo.isUpdateChildren()) return;
-
         Object element = getElementFromDescriptor(updateInfo.getDescriptor());
         if (element == null) {
           removeFromLoadedInBackground(oldElementFromDescriptor);
@@ -2700,7 +2698,7 @@ public class AbstractTreeUi {
 
         elementFromDescriptor.set(element);
 
-        Object[] loadedElements = getChildrenFor(getBuilder().getTreeStructureElement(updateInfo.getDescriptor()));
+        Object[] loadedElements = updateInfo.isUpdateChildren() ? getChildrenFor(element) : ArrayUtil.EMPTY_OBJECT_ARRAY;
 
         final LoadedChildren loaded = new LoadedChildren(loadedElements);
         for (final Object each : loadedElements) {
