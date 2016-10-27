@@ -139,7 +139,7 @@ public class StudyCheckUtils {
   private static VirtualFile getCopyWithAnswers(@NotNull final VirtualFile taskDir,
                                                 @NotNull final VirtualFile file,
                                                 @NotNull final TaskFile source,
-                                                @NotNull final TaskFile target) {
+                                                @NotNull TaskFile target) {
     VirtualFile copy = null;
     try {
 
@@ -147,7 +147,10 @@ public class StudyCheckUtils {
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
-        TaskFile.copy(source, target);
+        target = source.getTask().copy().getTaskFile(file.getName());
+        if (target == null) {
+          return copy;
+        }
         EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
         for (AnswerPlaceholder answerPlaceholder : target.getActivePlaceholders()) {

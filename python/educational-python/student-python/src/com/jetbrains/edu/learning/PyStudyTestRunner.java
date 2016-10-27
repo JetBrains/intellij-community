@@ -37,9 +37,9 @@ public class PyStudyTestRunner extends StudyTestRunner {
     }
 
     String testsFileName = manager.getTestFileName();
-    if (myTask.hasSubtasks()) {
+    if (myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != 0) {
       testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
-      int index = myTask.getActiveSubtaskIndex() + 1;
+      int index = myTask.getActiveSubtaskIndex();
       testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(manager.getTestFileName());
     }
     final File testRunner = new File(myTaskDir.getPath(), testsFileName);
