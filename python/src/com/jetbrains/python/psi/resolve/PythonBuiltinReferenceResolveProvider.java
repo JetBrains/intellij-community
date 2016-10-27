@@ -38,12 +38,11 @@ import java.util.Optional;
 public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
   @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element) {
+  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final List<RatedResolveResult> result = new ArrayList<>();
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final String referencedName = element.getReferencedName();
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(realContext);
-    final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(element.getProject());
 
     // resolve to module __doc__
     if (PyNames.DOC.equals(referencedName)) {
@@ -51,7 +50,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
         Optional
           .ofNullable(builtinCache.getObjectType())
           .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element),
-                                          PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)))
+                                          PyResolveContext.noImplicits().withTypeEvalContext(context)))
           .orElse(Collections.emptyList())
       );
     }
@@ -64,7 +63,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
         resultElement = bfile; // resolve __builtins__ reference
       }
       if (resultElement != null) {
-        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, typeEvalContext), null));
+        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, context), null));
       }
     }
     return result;

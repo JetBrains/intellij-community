@@ -362,8 +362,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @NotNull
   private ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
+    final TypeEvalContext context = myContext.getTypeEvalContext();
     for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
-      results.addAll(provider.resolveName(myElement));
+      results.addAll(provider.resolveName(myElement, context));
     }
     return results;
   }
