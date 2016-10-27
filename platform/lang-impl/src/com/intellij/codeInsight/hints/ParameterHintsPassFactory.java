@@ -58,6 +58,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
   @Nullable
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    if (editor.isOneLineMode()) return null;
     return new ParameterHintsPass(file, editor);
   }
 
