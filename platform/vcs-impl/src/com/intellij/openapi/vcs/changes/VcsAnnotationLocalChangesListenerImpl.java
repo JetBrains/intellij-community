@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void processFile(VcsRevisionNumber number, VirtualFile vf) {
     final Collection<FileAnnotation> annotations;
     synchronized (myLock) {
-      annotations = myFileAnnotationMap.get(vf);
+      annotations = ContainerUtil.newArrayList(myFileAnnotationMap.get(vf));
     }
     if (! annotations.isEmpty()) {
       if (number == null) {
