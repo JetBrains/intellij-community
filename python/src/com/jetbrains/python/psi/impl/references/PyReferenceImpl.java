@@ -223,21 +223,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   protected List<RatedResolveResult> resolveInner() {
-    final ResolveResultList overriddenRet = resolveByOverridingReferenceResolveProviders();
-    if (!overriddenRet.isEmpty()) {
-      return overriddenRet;
+    final ResolveResultList overriddenResult = resolveByOverridingReferenceResolveProviders();
+    if (!overriddenResult.isEmpty()) {
+      return overriddenResult;
     }
 
-    final ResolveResultList ret = new ResolveResultList();
-
     final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return ret;
+    if (referencedName == null) return Collections.emptyList();
 
-    if (myElement instanceof PyTargetExpression) {
-      if (PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
-        ret.poke(myElement, getRate(myElement, myContext.getTypeEvalContext()));
-        return ret;
-      }
+    if (myElement instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
+      return ResolveResultList.to(myElement);
     }
 
     // here we have an unqualified expr. it may be defined:
