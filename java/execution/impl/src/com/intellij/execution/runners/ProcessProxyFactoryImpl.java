@@ -22,9 +22,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.util.SystemInfo;
-
-import java.io.File;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
@@ -55,21 +52,6 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   @Override
   public ProcessProxy getAttachedProxy(ProcessHandler processHandler) {
     return processHandler != null ? processHandler.getUserData(ProcessProxyImpl.KEY) : null;
-  }
-
-  @Override
-  public boolean isBreakGenLibraryAvailable() {
-    String libName;
-    if (SystemInfo.isWindows) {
-      libName = "breakgen.dll";
-    }
-    else if (SystemInfo.isMac) {
-      libName = "libbreakgen.jnilib";
-    }
-    else {
-      libName = "libbreakgen.so";
-    }
-    return new File(PathManager.getBinPath(), libName).exists();
   }
 
   private static boolean useLauncher(JavaParameters parameters) {

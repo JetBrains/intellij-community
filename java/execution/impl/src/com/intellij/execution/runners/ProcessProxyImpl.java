@@ -16,13 +16,12 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -93,6 +92,15 @@ class ProcessProxyImpl implements ProcessProxy {
     }
     myWriter.println(s);
     myWriter.flush();
+  }
+
+  @Override
+  public boolean canSendBreak() {
+    String libName = null;
+    if (SystemInfo.isWindows) libName = "breakgen.dll";
+    else if (SystemInfo.isMac) libName = "libbreakgen.jnilib";
+    else if (SystemInfo.isLinux) libName = "libbreakgen.so";
+    return libName != null && new File(PathManager.getBinPath(), libName).exists();
   }
 
   @Override

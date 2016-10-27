@@ -149,54 +149,61 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     contentBuilder.addAction(new SoftExitAction(executionResult.getProcessHandler()));
   }
 
-  private abstract static class LauncherBasedAction extends AnAction {
+  private abstract static class ProxyBasedAction extends AnAction {
     protected final ProcessHandler myProcessHandler;
 
-    protected LauncherBasedAction(String text, String description, Icon icon, ProcessHandler processHandler) {
+    protected ProxyBasedAction(String text, String description, Icon icon, ProcessHandler processHandler) {
       super(text, description, icon);
       myProcessHandler = processHandler;
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent event) {
-      final Presentation presentation = event.getPresentation();
-      if (!isVisible()) {
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
-        return;
+    public final void update(@NotNull AnActionEvent event) {
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      boolean available = proxy != null && available(proxy);
+      Presentation presentation = event.getPresentation();
+      if (!available) {
+        presentation.setEnabledAndVisible(false);
       }
-      presentation.setVisible(true);
-      presentation.setEnabled(!myProcessHandler.isProcessTerminated());
+      else {
+        presentation.setVisible(true);
+        presentation.setEnabled(!myProcessHandler.isProcessTerminated());
+      }
     }
 
-    protected boolean isVisible() {
-      return ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler) != null;
+    @Override
+    public final void actionPerformed(@NotNull AnActionEvent e) {
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      if (proxy != null) {
+        perform(e, proxy);
+      }
     }
+
+    protected abstract boolean available(ProcessProxy proxy);
+
+    protected abstract void perform(AnActionEvent e, ProcessProxy proxy);
   }
 
-  protected static class ControlBreakAction extends LauncherBasedAction {
+  protected static class ControlBreakAction extends ProxyBasedAction {
     public ControlBreakAction(final ProcessHandler processHandler) {
       super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
 
     @Override
-    protected boolean isVisible() {
-      return super.isVisible() && ProcessProxyFactory.getInstance().isBreakGenLibraryAvailable();
+    protected boolean available(ProcessProxy proxy) {
+      return proxy.canSendBreak();
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
-      if (proxy != null) {
-        boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
-        WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
+    protected void perform(AnActionEvent e, ProcessProxy proxy) {
+      boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
+      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
 
-        proxy.sendBreak();
+      proxy.sendBreak();
 
-        if (wiseListener != null) {
-          wiseListener.after();
-        }
+      if (wiseListener != null) {
+        wiseListener.after();
       }
     }
   }
@@ -206,10 +213,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
 
-    public WiseDumpThreadsListener(final Project project, final ProcessHandler processHandler) {
+    public WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
       myProject = project;
       myProcessHandler = processHandler;
-
       myListener = new CapturingProcessAdapter();
       myProcessHandler.addProcessListener(myListener);
     }
@@ -248,17 +254,19 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
   }
 
-  protected static class SoftExitAction extends LauncherBasedAction {
+  protected static class SoftExitAction extends ProxyBasedAction {
     public SoftExitAction(final ProcessHandler processHandler) {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit, processHandler);
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
-      if (proxy != null) {
-        proxy.sendStop();
-      }
+    protected boolean available(ProcessProxy proxy) {
+      return proxy.canSendStop();
+    }
+
+    @Override
+    protected void perform(AnActionEvent e, ProcessProxy proxy) {
+      proxy.sendStop();
     }
   }
 }

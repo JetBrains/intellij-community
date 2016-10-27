@@ -23,8 +23,10 @@ public interface ProcessProxy {
 
   void attach(@NotNull ProcessHandler processHandler);
 
-  void sendBreak();
+  default boolean canSendBreak() { return true; }
+  default boolean canSendStop() { return true; }
 
+  void sendBreak();
   void sendStop();
 
   default void destroy() { }
