@@ -701,7 +701,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
-  public InspectionProfile getCurrentProfile() {
+  public InspectionProfileImpl getCurrentProfile() {
     return myInspectionProfile;
   }
 
@@ -1130,7 +1130,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
-    myInspectionProfile = (InspectionProfileImpl)myInspectionProfile.getProfileManager().getProfile(name);
+    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   private class RerunAction extends AnAction {

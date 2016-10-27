@@ -85,7 +85,7 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
   private void addRemoveTestsScope(Project project, boolean add) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getCurrentProfile();
+    final InspectionProfileImpl profile = profileManager.getCurrentProfile();
     final String shortName = myInspection.getShortName();
     final InspectionToolWrapper tool = profile.getInspectionTool(shortName, project);
     if (tool == null) {

@@ -16,7 +16,7 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ public interface InspectionProfileManager {
   String INSPECTION_DIR = "inspection";
 
   @NotNull
-  Collection<InspectionProfile> getProfiles();
+  Collection<InspectionProfileImpl> getProfiles();
 
   default NamedScopesHolder getScopesManager() {
     return null;
@@ -61,11 +61,11 @@ public interface InspectionProfileManager {
   }
 
   @NotNull
-  InspectionProfile getCurrentProfile();
+  InspectionProfileImpl getCurrentProfile();
 
-  InspectionProfile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
+  InspectionProfileImpl getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
-  default InspectionProfile getProfile(@NotNull String name) {
+  default InspectionProfileImpl getProfile(@NotNull String name) {
     return getProfile(name, true);
   }
 

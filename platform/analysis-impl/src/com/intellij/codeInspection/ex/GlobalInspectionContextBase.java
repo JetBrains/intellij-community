@@ -116,7 +116,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(myProject);
     InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
     if (profile == null) {
-      profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(currentProfile);
+      profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
       if (profile != null) {
         return profile;
       }

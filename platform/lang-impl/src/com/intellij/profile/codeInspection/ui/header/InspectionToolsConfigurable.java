@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -46,7 +45,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -380,9 +378,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                 myProfiles.getProfilesComboBox().removeProfile(existed.getProfile());
                 myPanels.remove(existed);
               }
-              final ModifiableModel model = profile.getModifiableModel();
+              InspectionProfileImpl model = profile.getModifiableModel();
               model.setModified(true);
-              addProfile((InspectionProfileImpl)model);
+              addProfile(model);
               selectProfile(model);
 
               //TODO myDeletedProfiles ? really need this
@@ -539,11 +537,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private void doReset() {
     myDeletedProfiles.clear();
     disposeUIResources();
-    final Collection<Profile> profiles = getProfiles();
+    final Collection<InspectionProfileImpl> profiles = getProfiles();
     final List<InspectionProfileImpl> modifiableProfiles = new ArrayList<>(profiles.size());
-    for (Profile profile : profiles) {
-      final ModifiableModel modifiableProfile = ((InspectionProfileImpl)profile).getModifiableModel();
-      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)modifiableProfile;
+    for (InspectionProfileImpl profile : profiles) {
+      InspectionProfileImpl modifiableProfile = profile.getModifiableModel();
+      final InspectionProfileImpl inspectionProfile = modifiableProfile;
       modifiableProfiles.add(inspectionProfile);
       final SingleInspectionProfilePanel panel = createPanel(inspectionProfile);
       myPanels.add(panel);
@@ -587,8 +585,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return inspectionProfile.getProfileManager() == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
 
-  protected Collection<Profile> getProfiles() {
-    final Collection<Profile> result = new ArrayList<>();
+  protected Collection<InspectionProfileImpl> getProfiles() {
+    final Collection<InspectionProfileImpl> result = new ArrayList<>();
     result.addAll(new TreeSet<>(myApplicationProfileManager.getProfiles()));
     result.addAll(myProjectProfileManager.getProfiles());
     return result;
@@ -607,8 +605,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @Override
-  public void selectProfile(Profile profile) {
-    myProfiles.getProfilesComboBox().selectProfile((InspectionProfileImpl)profile);
+  public void selectProfile(InspectionProfileImpl profile) {
+    myProfiles.getProfilesComboBox().selectProfile(profile);
   }
 
   private SingleInspectionProfilePanel getProfilePanel(InspectionProfileImpl profile) {
