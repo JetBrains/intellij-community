@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -26,7 +25,6 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -59,8 +57,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme,
-                                                                SerializableScheme {
+public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, SerializableScheme {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
   @NonNls static final String CLASS_TAG = "class";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
@@ -89,6 +86,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
   private BaseInspectionProfileManager myProfileManager;
+
+  private boolean myIsProjectLevel;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
@@ -138,6 +137,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     this(profileName, registrar, profileManager, getBaseProfile(), dataHolder);
+  }
+
+  @Override
+  @Transient
+  public boolean isProjectLevel() {
+    return myIsProjectLevel;
+  }
+
+  @Override
+  public void setProjectLevel(boolean isProjectLevel) {
+    myIsProjectLevel = isProjectLevel;
   }
 
   @NotNull
@@ -298,6 +308,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return result;
   }
 
+  @Override
   @NotNull
   public Element writeScheme() {
     if (myDataHolder != null) {
