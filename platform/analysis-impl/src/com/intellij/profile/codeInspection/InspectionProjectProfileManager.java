@@ -36,10 +36,10 @@ public abstract class InspectionProjectProfileManager implements InspectionProfi
   }
 
   /**
-   * @deprecated  use {@link #getCurrentProfile()} instead
+   * @deprecated use {@link #getCurrentProfile()} instead
    */
   @NotNull
-  public InspectionProfile getInspectionProfile(PsiElement element){
+  public InspectionProfile getInspectionProfile(PsiElement element) {
     return getCurrentProfile();
   }
 

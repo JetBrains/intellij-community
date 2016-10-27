@@ -50,8 +50,7 @@ public class InspectionNodeInfo extends JPanel {
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
-    InspectionProfileImpl currentProfile =
-      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final ToolsImpl tools = currentProfile.getTools(toolWrapper.getShortName(), project);
     boolean enabled = tools.isEnabled();
 

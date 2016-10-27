@@ -47,10 +47,11 @@ public class DarculaUIUtil {
     return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
   }
 
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
-    paintSearchFocusRing(g, bounds, -1);
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
+    paintSearchFocusRing(g, bounds, component, -1);
   }
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, int maxArcSize) {
+
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
     int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
       ColorUtil.toAlpha(getGlow(), 180 - correction),
@@ -72,6 +73,9 @@ public class DarculaUIUtil {
     if (maxArcSize>0) arcSize = Math.min(maxArcSize, arcSize);
     if (arcSize %2 == 1) arcSize--;
 
+
+    g.setColor(component.getBackground());
+    g.fillRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize - 4, arcSize - 4);
 
     g.setColor(colors[0]);
     g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);

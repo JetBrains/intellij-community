@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -256,7 +255,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(Profile profile) {
+      public void profileChanged(InspectionProfile profile) {
         if (profile == profileManager.getCurrentProfile()) {
           InspectionResultsView.this.profileChanged();
         }
@@ -701,7 +700,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
-  public InspectionProfile getCurrentProfile() {
+  public InspectionProfileImpl getCurrentProfile() {
     return myInspectionProfile;
   }
 
@@ -1130,7 +1129,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
-    myInspectionProfile = (InspectionProfileImpl)myInspectionProfile.getProfileManager().getProfile(name);
+    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   private class RerunAction extends AnAction {

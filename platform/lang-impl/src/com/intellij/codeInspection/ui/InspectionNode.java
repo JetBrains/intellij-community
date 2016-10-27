@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
@@ -29,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public class InspectionNode extends InspectionTreeNode {
   @NotNull private final InspectionProfileImpl myProfile;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfile profile) {
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfileImpl profile) {
     super(toolWrapper);
-    myProfile = (InspectionProfileImpl)profile;
+    myProfile = profile;
   }
 
   public String toString() {

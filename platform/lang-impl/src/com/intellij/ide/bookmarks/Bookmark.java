@@ -55,12 +55,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
@@ -362,9 +363,14 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
       final Font oldFont = g.getFont();
-      g.setFont(getBookmarkFont());
 
-      UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(x, y, width, height), Character.toString(myMnemonic));
+      Font font = getBookmarkFont();
+      g.setFont(font);
+      //
+      GlyphVector gv = font.createGlyphVector(((Graphics2D)g).getFontRenderContext(), new char[]{myMnemonic});
+      Rectangle2D bounds = gv.getVisualBounds();
+      ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
+                                      (float)(y + (height - bounds.getHeight())/2 - bounds.getY()));
       g.setFont(oldFont);
     }
 

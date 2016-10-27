@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.profile.Profile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SortedComboBoxModel;
@@ -50,7 +49,7 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     myComboModel = new SortedComboBoxModel<>(comparator);
     setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
-    setRenderer(new ListCellRenderer<Object>() {
+    setRenderer(new ListCellRenderer<InspectionProfileImpl>() {
       ListCellRendererWrapper<InspectionProfileImpl> baseRenderer = new ListCellRendererWrapper<InspectionProfileImpl>() {
         @Override
         public void customize(final JList list,
@@ -67,25 +66,24 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
 
       @Override
       public Component getListCellRendererComponent(JList list,
-                                                    Object o,
+                                                    InspectionProfileImpl o,
                                                     int index,
                                                     boolean isSelected,
                                                     boolean cellHasFocus) {
-        InspectionProfileImpl value = (InspectionProfileImpl)o;
         TitledSeparator separator = null;
         if (index != -1) {
-          if (!value.isProjectLevel()) {
-            if (value == myFirstGlobalProfile) {
+          if (!o.isProjectLevel()) {
+            if (o == myFirstGlobalProfile) {
               separator = new TitledSeparator(GLOBAL_LEVEL_SEPARATOR_TEXT);
             }
           }
           else {
-            if (value == myComboModel.get(0)) {
+            if (o == myComboModel.get(0)) {
               separator = new TitledSeparator(PROJECT_LEVEL_SEPARATOR_TEXT);
             }
           }
         }
-        Component renderedComponent = baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component renderedComponent = baseRenderer.getListCellRendererComponent(list, o, index, isSelected, cellHasFocus);
         if (separator == null) {
           return renderedComponent;
         }
@@ -119,10 +117,10 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     setSelectedItem(inspectionProfile);
   }
 
-  public void reset(final Collection<? extends Profile> profiles) {
+  public void reset(final Collection<InspectionProfileImpl> profiles) {
     myComboModel.clear();
-    for (Profile profile : profiles) {
-      myComboModel.add((InspectionProfileImpl)profile);
+    for (InspectionProfileImpl profile : profiles) {
+      myComboModel.add(profile);
     }
     findFirstGlobalProfile();
     setSelectedIndex(0);

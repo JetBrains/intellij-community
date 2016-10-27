@@ -44,6 +44,7 @@ public class AllIcons {
     public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.png"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.png"); // 16x16
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
+    public static final Icon Clear = IconLoader.getIcon("/actions/clear.png"); // 16x16
     public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
     public static final Icon Close = IconLoader.getIcon("/actions/close.png"); // 16x16
     public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.png"); // 16x16
@@ -113,6 +114,7 @@ public class AllIcons {
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); // 14x14
     public static final Icon New = IconLoader.getIcon("/actions/new.png"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.png"); // 16x16
+    public static final Icon NewLine = IconLoader.getIcon("/actions/searchNewLine.png"); // 16x16
     public static final Icon Nextfile = IconLoader.getIcon("/actions/nextfile.png"); // 16x16
     public static final Icon NextOccurence = IconLoader.getIcon("/actions/nextOccurence.png"); // 16x16
     public static final Icon Pause = IconLoader.getIcon("/actions/pause.png"); // 16x16

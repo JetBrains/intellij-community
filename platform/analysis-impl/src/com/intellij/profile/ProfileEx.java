@@ -15,9 +15,9 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 01-Dec-2005
  */
-public abstract class ProfileEx implements Profile {
+public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
   public static final String PROFILE = "profile";
@@ -34,8 +34,6 @@ public abstract class ProfileEx implements Profile {
 
   @NotNull
   protected String myName;
-
-  private boolean myIsProjectLevel;
 
   public ProfileEx(@NotNull String name) {
     this(name, SmartSerializer.skipEmptySerializer());
@@ -52,17 +50,6 @@ public abstract class ProfileEx implements Profile {
   @OptionTag("myName")
   public String getName() {
     return myName;
-  }
-
-  @Override
-  @Transient
-  public boolean isProjectLevel() {
-    return myIsProjectLevel;
-  }
-
-  @Override
-  public void setProjectLevel(boolean isProjectLevel) {
-    myIsProjectLevel = isProjectLevel;
   }
 
   @Override
@@ -88,8 +75,8 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public int compareTo(@NotNull Object o) {
-    if (o instanceof Profile) {
-      return getName().compareToIgnoreCase(((Profile)o).getName());
+    if (o instanceof ProfileEx) {
+      return getName().compareToIgnoreCase(((ProfileEx)o).getName());
     }
     return 0;
   }

@@ -243,16 +243,16 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (fileTypeMask == null)
       return;
 
-    final Condition<String> patternCondition = getFileTypeMaskPattern(fileTypeMask);
+    final Condition<CharSequence> patternCondition = getFileTypeMaskPattern(fileTypeMask);
     processor.addFileFilter(new VirtualFileFilter() {
         @Override
         public boolean accept(@NotNull VirtualFile file) {
-          return patternCondition.value(file.getName());
+          return patternCondition.value(file.getNameSequence());
         }
       });
   }
 
-  private static Condition<String> getFileTypeMaskPattern(@Nullable String mask) {
+  private static Condition<CharSequence> getFileTypeMaskPattern(@Nullable String mask) {
     try {
       return FindInProjectUtil.createFileMaskCondition(mask);
     } catch (PatternSyntaxException e) {

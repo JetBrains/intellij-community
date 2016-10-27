@@ -20,7 +20,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ import java.io.IOException;
  * User: anna
  * Date: 15-Feb-2006
  */
-public interface ModifiableModel extends Profile {
+public interface ModifiableModel extends InspectionProfile {
 
   InspectionProfile getParentProfile();
 
@@ -57,12 +56,6 @@ public interface ModifiableModel extends Profile {
   void resetToBase(@Nullable Project project);
 
   void resetToEmpty(Project project);
-
-  /**
-   * @return {@link com.intellij.codeInspection.ex.InspectionToolWrapper}
-   * @see #getUnwrappedTool(String, com.intellij.psi.PsiElement)
-   */
-  InspectionToolWrapper getInspectionTool(String shortName, PsiElement element);
 
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 

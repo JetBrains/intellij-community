@@ -27,7 +27,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -111,12 +110,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     myProject = project;
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
       @Override
-      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
+      public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
         dropAnnotationsCache();
       }
 
       @Override
-      public void profileChanged(Profile profile) {
+      public void profileChanged(InspectionProfile profile) {
         dropAnnotationsCache();
       }
     };

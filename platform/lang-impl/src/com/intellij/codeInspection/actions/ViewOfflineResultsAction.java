@@ -49,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -146,7 +145,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       final String profileName,
                                                       @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull String title) {
-    Profile profile;
+    InspectionProfileImpl profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
       if (profile == null) {
@@ -158,7 +157,7 @@ public class ViewOfflineResultsAction extends AnAction {
     }
     final InspectionProfileImpl inspectionProfile;
     if (profile != null) {
-      inspectionProfile = (InspectionProfileImpl)profile;
+      inspectionProfile = profile;
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
@@ -73,6 +74,15 @@ public class SearchTextField extends JPanel {
       public void processKeyEvent(final KeyEvent e) {
         if (preprocessEventForTextField(e)) return;
         super.processKeyEvent(e);
+      }
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        TextUI ui = getUI();
+        //noinspection unchecked
+        if (ui instanceof Condition && ((Condition)ui).value(e)) return;
+
+        super.processMouseEvent(e);
       }
 
       @Override

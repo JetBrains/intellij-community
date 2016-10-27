@@ -15,16 +15,21 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.InetAddress;
+import java.io.Writer;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  * @author ven
@@ -36,81 +41,114 @@ class ProcessProxyImpl implements ProcessProxy {
   public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 
-  private static final int SOCKET_NUMBER_START = 7532;
-  private static final int SOCKET_NUMBER = 100;
-  private static final boolean[] ourUsedSockets = new boolean[SOCKET_NUMBER];
+  private final ServerSocket mySocket;
 
-  private final int myPortNumber;
-  private PrintWriter myWriter;
-  private Socket mySocket;
+  private final Object myLock = new Object();
+  private Writer myWriter;
+  private int myPid;
 
-  public static class NoMoreSocketsException extends Exception { }
-
-  public ProcessProxyImpl() throws NoMoreSocketsException {
-    myPortNumber = findFreePort();
-    if (myPortNumber == -1) throw new NoMoreSocketsException();
-  }
-
-  private static int findFreePort() {
-    synchronized (ourUsedSockets) {
-      for (int j = 0; j < SOCKET_NUMBER; j++) {
-        if (ourUsedSockets[j]) continue;
-        try {
-          ServerSocket s = new ServerSocket(j + SOCKET_NUMBER_START);
-          s.close();
-          ourUsedSockets[j] = true;
-          return j + SOCKET_NUMBER_START;
-        }
-        catch (IOException ignore) { }
-      }
-    }
-    return -1;
+  public ProcessProxyImpl() throws IOException {
+    mySocket = new ServerSocket();
+    mySocket.bind(new InetSocketAddress("127.0.0.1", 0));
+    mySocket.setSoTimeout(10000);
   }
 
   @Override
   public int getPortNumber() {
-    return myPortNumber;
+    return mySocket.getLocalPort();
   }
 
   @Override
-  @SuppressWarnings("FinalizeDeclaration")
-  protected synchronized void finalize() throws Throwable {
-    if (myWriter != null) {
-      myWriter.close();
-    }
-    ourUsedSockets[myPortNumber - SOCKET_NUMBER_START] = false;
-    super.finalize();
-  }
-
-  @Override
-  public void attach(final ProcessHandler processHandler) {
+  public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
-  }
 
-  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
-  private synchronized void writeLine(String s) {
-    if (myWriter == null) {
-      try {
-        if (mySocket == null) {
-          mySocket = new Socket(InetAddress.getLoopbackAddress(), myPortNumber);
-        }
-        myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
+    try {
+      @SuppressWarnings("SocketOpenedButNotSafelyClosed") OutputStreamWriter writer = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
+
+      int pid = -1;
+      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
+        pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
       }
-      catch (IOException e) {
-        return;
+
+      synchronized (myLock) {
+        myWriter = writer;
+        myPid = pid;
       }
     }
-    myWriter.println(s);
-    myWriter.flush();
+    catch (Exception e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
+  }
+
+  private void writeLine(String s) {
+    try {
+      synchronized (myLock) {
+        myWriter.write(s);
+        myWriter.write('\n');
+        myWriter.flush();
+      }
+    }
+    catch (IOException e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
+  }
+
+  @Override
+  public boolean canSendBreak() {
+    if (SystemInfo.isWindows) {
+      synchronized (myLock) {
+        if (myWriter == null) return false;
+      }
+      return new File(PathManager.getBinPath(), "breakgen.dll").exists();
+    }
+
+    if (SystemInfo.isUnix) {
+      synchronized (myLock) {
+        return myPid > 0;
+      }
+    }
+
+    return false;
+  }
+
+  @Override
+  public boolean canSendStop() {
+    synchronized (myLock) {
+      return myWriter != null;
+    }
   }
 
   @Override
   public void sendBreak() {
-    writeLine("BREAK");
+    if (SystemInfo.isWindows) {
+      writeLine("BREAK");
+    }
+    else if (SystemInfo.isUnix) {
+      int pid;
+      synchronized (myLock) {
+        pid = myPid;
+      }
+      UnixProcessManager.sendSignal(pid, 3);  // SIGQUIT
+    }
   }
 
   @Override
   public void sendStop() {
     writeLine("STOP");
+  }
+
+  @Override
+  public void destroy() {
+    try {
+      synchronized (myLock) {
+        if (myWriter != null) {
+          myWriter.close();
+        }
+      }
+      mySocket.close();
+    }
+    catch (IOException e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
   }
 }

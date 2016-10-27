@@ -21,31 +21,50 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.util.SystemInfo;
 
 import java.io.File;
+import java.io.IOException;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
-  private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
+  private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
 
   @Override
   public ProcessProxy createCommandLineProxy(JavaCommandLine javaCmdLine) throws ExecutionException {
     JavaParameters javaParameters = javaCmdLine.getJavaParameters();
-    if (useLauncher(javaParameters)) {
-      String mainClass = javaParameters.getMainClass();
-      if (mainClass != null) {
+    String mainClass = javaParameters.getMainClass();
+
+    if (ourMayUseLauncher && mainClass != null) {
+      String moduleName = javaParameters.getModuleName();
+      String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+
+      if (moduleName == null || new File(rtJarPath).isFile()) {
         try {
           ProcessProxyImpl proxy = new ProcessProxyImpl();
-          JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-          ParametersList vmParametersList = javaParameters.getVMParametersList();
-          vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, String.valueOf(proxy.getPortNumber()));
-          vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BIN_PATH, PathManager.getBinPath());
-          javaParameters.getProgramParametersList().prepend(mainClass);
-          javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
+
+          String port = String.valueOf(proxy.getPortNumber());
+          String binPath = PathManager.getBinPath();
+
+          if (moduleName == null) {
+            JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+
+            ParametersList vmParametersList = javaParameters.getVMParametersList();
+            vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, port);
+            vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BIN_PATH, binPath);
+
+            javaParameters.getProgramParametersList().prepend(mainClass);
+            javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
+          }
+          else {
+            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
+          }
+
           return proxy;
         }
-        catch (ProcessProxyImpl.NoMoreSocketsException ignored) { }
+        catch (IOException e) {
+          Logger.getInstance(ProcessProxy.class).warn(e);
+        }
       }
     }
 
@@ -55,24 +74,5 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   @Override
   public ProcessProxy getAttachedProxy(ProcessHandler processHandler) {
     return processHandler != null ? processHandler.getUserData(ProcessProxyImpl.KEY) : null;
-  }
-
-  @Override
-  public boolean isBreakGenLibraryAvailable() {
-    String libName;
-    if (SystemInfo.isWindows) {
-      libName = "breakgen.dll";
-    }
-    else if (SystemInfo.isMac) {
-      libName = "libbreakgen.jnilib";
-    }
-    else {
-      libName = "libbreakgen.so";
-    }
-    return new File(PathManager.getBinPath(), libName).exists();
-  }
-
-  private static boolean useLauncher(JavaParameters parameters) {
-    return !Boolean.getBoolean(DONT_USE_LAUNCHER_PROPERTY) && parameters.getModuleName() == null;
   }
 }

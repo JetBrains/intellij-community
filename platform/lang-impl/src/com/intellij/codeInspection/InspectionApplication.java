@@ -36,7 +36,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -149,12 +148,12 @@ public class InspectionApplication {
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-      Profile inspectionProfile = loadInspectionProfile();
+      InspectionProfileImpl inspectionProfile = loadInspectionProfile();
       if (inspectionProfile == null) return;
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      im.createNewGlobalContext(true).setExternalProfile((InspectionProfileImpl)inspectionProfile);
+      im.createNewGlobalContext(true).setExternalProfile(inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -257,7 +256,7 @@ public class InspectionApplication {
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
                           myRunWithEditorSettings ? null : inspectionProfile.getName(),
-                          (InspectionProfile)inspectionProfile);
+                          inspectionProfile);
       inspectionsResults.add(new File(descriptionsFile));
       // convert report
       if (reportConverter != null) {
@@ -339,7 +338,7 @@ public class InspectionApplication {
         if (inspectionProfile != null) return inspectionProfile;
       }
 
-      inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       logError("Using default project profile");
     }
     return inspectionProfile;
@@ -356,16 +355,15 @@ public class InspectionApplication {
 
   @Nullable
   private InspectionProfileImpl loadProfileByName(final String profileName) {
-    InspectionProfileImpl inspectionProfile =
-      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
+    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded shared project profile \'" + profileName + "\'");
     }
     else {
       //check if ide profile is used for project
-      for (InspectionProfile profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
+      for (InspectionProfileImpl profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
-          inspectionProfile = (InspectionProfileImpl)profile;
+          inspectionProfile = profile;
           logMessageLn(1, "Loaded local profile \'" + profileName + "\'");
           break;
         }

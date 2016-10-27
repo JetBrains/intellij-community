@@ -18,19 +18,15 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.profile.ProfileEx;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -59,8 +55,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme,
-                                                                SerializableScheme {
+public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
   @NonNls static final String CLASS_TAG = "class";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
@@ -88,7 +83,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final Object myLock = new Object();
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
-  private BaseInspectionProfileManager myProfileManager;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
@@ -125,12 +119,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable InspectionProfileImpl baseProfile,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
-    super(profileName);
+    super(profileName, profileManager);
 
     myRegistrar = registrar;
     myBaseProfile = baseProfile;
     myDataHolder = dataHolder;
-    myProfileManager = profileManager;
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
@@ -175,16 +168,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
-  @Transient
-  public BaseInspectionProfileManager getProfileManager() {
-    return myProfileManager;
-  }
-
-  public void setProfileManager(@NotNull BaseInspectionProfileManager profileManager) {
-    myProfileManager = profileManager;
-  }
-
-  @NotNull
   public static InspectionProfileImpl getBaseProfile() {
     return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
@@ -195,7 +178,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public InspectionProfile getParentProfile() {
+  public InspectionProfileImpl getParentProfile() {
     return mySource;
   }
 
@@ -298,6 +281,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return result;
   }
 
+  @Override
   @NotNull
   public Element writeScheme() {
     if (myDataHolder != null) {
@@ -308,7 +292,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (isProjectLevel()) {
       element.setAttribute("version", "1.0");
     }
-    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
+    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)getProfileManager()).getProject())) {
       return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(element);
     }
     return element;
@@ -356,7 +340,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       inspectionElement.setAttribute(CLASS_TAG, toolName);
       try {
         toolList.writeExternal(inspectionElement);
-        //PathMacroManager.getInstance(getProfileManager().pro)
+        getPathMacroManager().collapsePaths(inspectionElement);
       }
       catch (WriteExternalException e) {
         LOG.error(e);
@@ -406,8 +390,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @Override
   @Nullable
-  public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-    final Tools toolList = getTools(shortName, element.getProject());
+  public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
+    final Tools toolList = getTools(shortName, element == null ? null : element.getProject());
     return toolList == null ? null : toolList.getInspectionTool(element);
   }
 
@@ -668,12 +652,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final Element element = myUninitializedSettings.remove(shortName);
     try {
       if (element != null) {
+        getPathMacroManager().expandPaths(element);
         toolsList.readExternal(element, getProfileManager(), dependencies);
       }
       else if (!myUninitializedSettings.containsKey(InspectionElementsMergerBase.getMergedMarkerName(shortName))) {
         final InspectionElementsMergerBase merger = getMerger(shortName);
         Element merged = merger == null ? null : merger.merge(myUninitializedSettings);
         if (merged != null) {
+          getPathMacroManager().expandPaths(merged);
           toolsList.readExternal(merged, getProfileManager(), dependencies);
         }
         else if (isProfileLocked()) {
@@ -854,7 +840,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myLockedProfile = model.myLockedProfile;
     myChangedToolNames = model.myChangedToolNames;
     myTools = model.myTools;
-    myProfileManager = model.getProfileManager();
+    setProfileManager(model.getProfileManager());
 
     InspectionProfileManager.getInstance().fireProfileChanged(model);
   }
@@ -878,7 +864,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     for (Element scopeElement : scopes.getChildren(SCOPE)) {
       final String profile = scopeElement.getAttributeValue(PROFILE);
-      InspectionProfileImpl inspectionProfile = profile == null ? null : (InspectionProfileImpl)getProfileManager().getProfile(profile);
+      InspectionProfileImpl inspectionProfile = profile == null ? null : getProfileManager().getProfile(profile);
       NamedScope scope = inspectionProfile == null ? null : getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
       if (scope == null) {
         continue;

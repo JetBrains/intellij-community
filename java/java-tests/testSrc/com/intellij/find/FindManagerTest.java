@@ -895,7 +895,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCreateFileMaskCondition() {
-    Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    Condition<CharSequence> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Bar.javac"));
     assertTrue(!condition.value("Foo.java"));

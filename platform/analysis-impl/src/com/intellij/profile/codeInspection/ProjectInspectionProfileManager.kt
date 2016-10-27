@@ -32,7 +32,6 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.profile.ProfileEx
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
@@ -263,7 +262,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   override fun getScopesManager() = scopeManager
 
-  @Synchronized override fun getProfiles(): Collection<InspectionProfile> {
+  @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
     return schemeManager.allSchemes
   }
@@ -297,7 +296,7 @@ class ProjectInspectionProfileManager(val project: Project,
     if (!state.useProjectProfile) {
       return (state.projectProfile?.let {
         applicationProfileManager.getProfile(it, false)
-      } ?: applicationProfileManager.currentProfile) as InspectionProfileImpl
+      } ?: applicationProfileManager.currentProfile)
     }
 
     var currentScheme = schemeManager.currentScheme
@@ -306,7 +305,7 @@ class ProjectInspectionProfileManager(val project: Project,
       if (currentScheme == null) {
         currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
                                               InspectionProfileImpl.getBaseProfile(), null)
-        currentScheme.copyFrom(applicationProfileManager.currentProfile as ProfileEx)
+        currentScheme.copyFrom(applicationProfileManager.currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
         schemeManager.addScheme(currentScheme)
@@ -330,6 +329,6 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
-    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent) as InspectionProfileImpl?
+    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
 }

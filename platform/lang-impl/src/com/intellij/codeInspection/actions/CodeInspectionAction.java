@@ -27,7 +27,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -158,7 +157,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     @Override
     protected void addProfile(InspectionProfileImpl model) {
       super.addProfile(model);
-      myProfilesCombo.addProfile((InspectionProfileImpl)model.getParentProfile());
+      myProfilesCombo.addProfile(model.getParentProfile());
     }
 
     @Override
@@ -178,12 +177,12 @@ public class CodeInspectionAction extends BaseAnalysisAction {
                               InspectionProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {
-    final InspectionProfile selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
-    List<Profile> profiles = new ArrayList<>();
+    InspectionProfileImpl selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
+    List<InspectionProfileImpl> profiles = new ArrayList<>();
     profiles.addAll(inspectionProfileManager.getProfiles());
     profiles.addAll(inspectionProjectProfileManager.getProfiles());
     profilesCombo.reset(profiles);
-    profilesCombo.selectProfile((InspectionProfileImpl)selectedProfile);
+    profilesCombo.selectProfile(selectedProfile);
   }
 
   private static class AdditionalPanel {
@@ -212,8 +211,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     @Override
     protected void doOKAction() {
       final Object o = ((ErrorsConfigurable)getConfigurable()).getSelectedObject();
-      if (o instanceof Profile) {
-        myManager.setProfile(((Profile)o).getName());
+      if (o instanceof InspectionProfile) {
+        myManager.setProfile(((InspectionProfile)o).getName());
       }
       super.doOKAction();
     }

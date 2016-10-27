@@ -1130,9 +1130,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, myMasterSide);
-    }
     else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return myEditor;
     }
