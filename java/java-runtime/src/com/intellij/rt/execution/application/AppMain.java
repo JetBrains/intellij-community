@@ -36,68 +36,79 @@ public class AppMain {
 
   private static native void triggerControlBreak();
 
-  private static final boolean ourHelperLibLoaded;
-  static {
-    boolean libLoaded = false;
-    try {
-      String osName = System.getProperty("os.name").toLowerCase(Locale.US);
-      if (osName.startsWith("windows")) {
-        String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
-        String libName = arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll";
-        File libFile = new File(System.getProperty(PROPERTY_BIN_PATH), libName);
-        if (libFile.isFile()) {
-          System.load(libFile.getAbsolutePath());
-          libLoaded = true;
-        }
+  private static boolean loadHelper(String binPath) {
+    String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+    if (osName.startsWith("windows")) {
+      String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
+      File libFile = new File(binPath, arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
+      if (libFile.isFile()) {
+        System.load(libFile.getAbsolutePath());
+        return true;
       }
     }
-    catch (Throwable t) {
-      System.out.println("Thread dumps in console not supported: failed to load a native helper (" + t.getMessage() + ')');
+
+    return false;
+  }
+
+  private static void startMonitor(final int portNumber, final boolean helperLibLoaded) {
+    Thread t = new Thread("Monitor Ctrl-Break") {
+      public void run() {
+        try {
+          Socket client = new Socket("127.0.0.1", portNumber);
+          try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
+            try {
+              while (true) {
+                String msg = reader.readLine();
+                if ("TERM".equals(msg)) {
+                  return;
+                }
+                else if ("BREAK".equals(msg)) {
+                  if (helperLibLoaded) {
+                    triggerControlBreak();
+                  }
+                }
+                else if ("STOP".equals(msg)) {
+                  System.exit(1);
+                }
+              }
+            }
+            finally {
+              reader.close();
+            }
+          }
+          finally {
+            client.close();
+          }
+        }
+        catch (Exception ignored) { }
+      }
+    };
+    t.setDaemon(true);
+    t.start();
+  }
+
+  public static void premain(String args) {
+    try {
+      int p = args.indexOf(':');
+      if (p < 0) throw new IllegalArgumentException("incorrect parameter: " + args);
+      boolean helperLibLoaded = loadHelper(args.substring(p + 1));
+      int portNumber = Integer.parseInt(args.substring(0, p));
+      startMonitor(portNumber, helperLibLoaded);
     }
-    ourHelperLibLoaded = libLoaded;
+    catch (Throwable t) {
+      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
+    }
   }
 
   public static void main(String[] args) throws Throwable {
     try {
-      final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
-      Thread t = new Thread("Monitor Ctrl-Break") {
-        public void run() {
-          try {
-            Socket client = new Socket("127.0.0.1", portNumber);
-            try {
-              BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
-              try {
-                while (true) {
-                  String msg = reader.readLine();
-                  if ("TERM".equals(msg)) {
-                    return;
-                  }
-                  else if ("BREAK".equals(msg)) {
-                    if (ourHelperLibLoaded) {
-                      triggerControlBreak();
-                    }
-                  }
-                  else if ("STOP".equals(msg)) {
-                    System.exit(1);
-                  }
-                }
-              }
-              finally {
-                reader.close();
-              }
-            }
-            finally {
-              client.close();
-            }
-          }
-          catch (Exception ignored) { }
-        }
-      };
-      t.setDaemon(true);
-      t.start();
+      boolean helperLibLoaded = loadHelper(System.getProperty(PROPERTY_BIN_PATH));
+      int portNumber = Integer.parseInt(System.getProperty(PROPERTY_PORT_NUMBER));
+      startMonitor(portNumber, helperLibLoaded);
     }
     catch (Throwable t) {
-      System.out.println("Thread dumps and \"soft exit\" not supported: failed to start a monitor thread (" + t.getMessage() + ')');
+      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
     }
 
     String mainClass = args[0];
