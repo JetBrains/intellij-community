@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,8 +47,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   }
 
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
-    final List<HighlightSeverity> severities =
-      LevelChooserAction.getSeverities(((SeverityProvider)inspectionProfile.getProfileManager()).getOwnSeverityRegistrar());
+    final List<HighlightSeverity> severities;
+    severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar());
     return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity, true, false)), onClose);
   }
 
