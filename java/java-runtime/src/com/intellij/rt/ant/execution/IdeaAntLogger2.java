@@ -24,6 +24,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.Stack;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
@@ -46,6 +47,9 @@ public final class IdeaAntLogger2 extends DefaultLogger {
    */
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
+  private final Thread myMainThread;
+  private final Stack myCallingTasks = new Stack();
+
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);
   private final Priority myTaskPriority = new StatePriority(Project.MSG_INFO);
@@ -59,6 +63,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
 
   public IdeaAntLogger2() {
     guardStreams();
+    myMainThread = Thread.currentThread();
   }
 
   public synchronized void setMessageOutputLevel(int level) {
@@ -87,12 +92,18 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void taskStarted(BuildEvent event) {
+    if (Thread.currentThread() == myMainThread) {
+      myCallingTasks.push(event.getTask().getTaskName());
+    }
     myTaskPriority.sendMessage(TASK, event.getPriority(), event.getTask().getTaskName());
   }
 
   public synchronized void taskFinished(BuildEvent event) {
     sendException(event, true);
     myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
+    if (Thread.currentThread() == myMainThread) {
+      myCallingTasks.pop();
+    }
   }
 
   public synchronized void messageLogged(BuildEvent event) {
@@ -133,14 +144,18 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     return true; // default value
   }
 
+  private boolean isInTryCatch() {
+    return myCallingTasks.contains("try");
+  }
+
   private boolean sendException(BuildEvent event, boolean isFailOnError) {
     Throwable exception = event.getException();
     if (exception != null) {
-      if (isFailOnError) {
+      if (isFailOnError && !isInTryCatch()) {
         myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
         return true;
       }
-      myMessagePriority.sendMessage(MESSAGE, Project.MSG_WARN, exception.getMessage());
+      myMessagePriority.sendMessage(MESSAGE, isInTryCatch() ? Project.MSG_VERBOSE : Project.MSG_WARN, exception.getMessage());
     }
     return false;
   }
