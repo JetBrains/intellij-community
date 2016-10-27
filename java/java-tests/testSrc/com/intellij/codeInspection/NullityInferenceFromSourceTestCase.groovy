@@ -73,6 +73,10 @@ String bar() { return "z"; }
     assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
   }
 
+  void "test string concatenation"() {
+    assert inferNullity(parse('String bar(String s1, String s2) { return s1 + s2; }; ')) == NOT_NULL
+  }
+
   void "test delegation to nullable means nothing"() {
     assert inferNullity(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
   }

@@ -117,17 +117,7 @@ class ContractInferenceInterpreter {
 
     IElementType type = expr.getTokenType();
     if (type == POLYADIC_EXPRESSION || type == BINARY_EXPRESSION) {
-      List<LighterASTNode> operands = getExpressionChildren(myTree, expr);
-      if (operands.size() == 2) {
-        boolean equality = firstChildOfType(myTree, expr, JavaTokenType.EQEQ) != null;
-        if (equality || firstChildOfType(myTree, expr, JavaTokenType.NE) != null) {
-          return asPreContracts(visitEqualityComparison(states, operands.get(0), operands.get(1), equality));
-        }
-      }
-      boolean logicalAnd = firstChildOfType(myTree, expr, JavaTokenType.ANDAND) != null;
-      if (logicalAnd || firstChildOfType(myTree, expr, JavaTokenType.OROR) != null) {
-        return asPreContracts(visitLogicalOperation(operands, logicalAnd, states));
-      }
+      return visitPolyadic(states, expr);
     }
 
     if (type == CONDITIONAL_EXPRESSION) {
@@ -187,6 +177,26 @@ class ContractInferenceInterpreter {
       return asPreContracts(result);
     }
 
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private List<PreContract> visitPolyadic(List<ValueConstraint[]> states, @NotNull LighterASTNode expr) {
+    if (firstChildOfType(myTree, expr, JavaTokenType.PLUS) != null) {
+      return asPreContracts(ContainerUtil.map(states, s -> new MethodContract(s, NOT_NULL_VALUE)));
+    }
+
+    List<LighterASTNode> operands = getExpressionChildren(myTree, expr);
+    if (operands.size() == 2) {
+      boolean equality = firstChildOfType(myTree, expr, JavaTokenType.EQEQ) != null;
+      if (equality || firstChildOfType(myTree, expr, JavaTokenType.NE) != null) {
+        return asPreContracts(visitEqualityComparison(states, operands.get(0), operands.get(1), equality));
+      }
+    }
+    boolean logicalAnd = firstChildOfType(myTree, expr, JavaTokenType.ANDAND) != null;
+    if (logicalAnd || firstChildOfType(myTree, expr, JavaTokenType.OROR) != null) {
+      return asPreContracts(visitLogicalOperation(operands, logicalAnd, states));
+    }
     return Collections.emptyList();
   }
 

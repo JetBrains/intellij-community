@@ -438,6 +438,24 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null']
   }
 
+  void "test string concatenation"() {
+    def c = inferContracts("""
+  public static String test(String s1, String s2) {
+    return s1 != null ? s1.trim()+s2.trim() : unknown();
+  }
+    """)
+    assert c == ['!null, _ -> !null']
+  }
+
+  void "test int addition"() {
+    def c = inferContracts("""
+  public static int test(int a, int b) {
+    return a + b;
+  }
+    """)
+    assert c == []
+  }
+
   void "test compare with string literal"() {
     def c = inferContracts("""
   String s(String s) {
