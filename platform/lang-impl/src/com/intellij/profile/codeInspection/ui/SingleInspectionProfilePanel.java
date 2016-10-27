@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -124,10 +123,10 @@ public class SingleInspectionProfilePanel extends JPanel {
   };
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
-                                      @NotNull ModifiableModel profile) {
+                                      @NotNull InspectionProfileImpl profile) {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
-    myProfile = (InspectionProfileImpl)profile;
+    myProfile = profile;
   }
 
   public Map<HighlightDisplayKey, ToolDescriptors> getInitialToolDescriptors() {
@@ -608,7 +607,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         if (!myIsInRestore) {
           InspectionProfileImpl selected = myProfile;
           if (selected != null) {
-            InspectionProfileImpl baseProfile = (InspectionProfileImpl)selected.getParentProfile();
+            InspectionProfileImpl baseProfile = selected.getParentProfile();
             if (baseProfile != null) {
               getExpandedNodes(baseProfile).setSelectionPaths(myTreeTable.getTree().getSelectionPaths());
             }
@@ -655,7 +654,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = myProfile;
-        final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
+        final InspectionProfileImpl parentProfile = selected.getParentProfile();
         if (parentProfile != null) {
           getExpandedNodes(parentProfile).saveVisibleState(myTreeTable.getTree());
         }
@@ -667,7 +666,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         InspectionProfileImpl selected = myProfile;
         if (selected != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
-          final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
+          final InspectionProfileImpl parentProfile = selected.getParentProfile();
           if (parentProfile != null) {
             getExpandedNodes(parentProfile).expandNode(node);
           }
@@ -1018,9 +1017,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     return myProfile;
   }
 
-  private void setProfile(final ModifiableModel modifiableModel) {
-    if (myProfile == modifiableModel) return;
-    myProfile = (InspectionProfileImpl)modifiableModel;
+  private void setProfile(InspectionProfileImpl modifiableModel) {
+    if (myProfile == modifiableModel) {
+      return;
+    }
+    myProfile = modifiableModel;
     initToolStates();
   }
 
@@ -1120,7 +1121,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final InspectionProfileImpl selectedProfile = getProfile();
 
     BaseInspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
-    InspectionProfileImpl parentProfile = (InspectionProfileImpl)selectedProfile.getParentProfile();
+    InspectionProfileImpl parentProfile = selectedProfile.getParentProfile();
 
     if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
       parentProfile.getProfileManager().deleteProfile(parentProfile.getName());

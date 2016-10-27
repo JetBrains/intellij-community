@@ -158,7 +158,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   }
 
   private static void enableVersions(@NotNull Project project, @NotNull PsiElement file, @NotNull List<LanguageLevel> versions) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final String shortName = getCompatibilityInspectionShortName();
     final InspectionToolWrapper tool = profile.getInspectionTool(shortName, project);
     if (tool != null) {
@@ -166,7 +166,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
         final PyCompatibilityInspection inspection = (PyCompatibilityInspection)model.getUnwrappedTool(shortName, file);
         inspection.ourVersions.addAll(ContainerUtil.map(versions, LanguageLevel::toString));
       });
-      EditInspectionToolsSettingsAction.editToolSettings(project, profile, true, shortName);
+      EditInspectionToolsSettingsAction.editToolSettings(project, profile, shortName);
     }
   }
 
@@ -231,7 +231,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   }
 
   private static void enableCompatibilityInspection(@NotNull Project project) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper tool = profile.getInspectionTool(getCompatibilityInspectionShortName(), project);
     if (tool != null) {
       // Partially copied from JSLinterInspection 
@@ -241,7 +241,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
         state.setEnabled(true);
       }
       profile.modifyProfile(model -> model.enableTool(tool.getShortName(), null, project));
-      EditInspectionToolsSettingsAction.editToolSettings(project, profile, true, getCompatibilityInspectionShortName());
+      EditInspectionToolsSettingsAction.editToolSettings(project, profile, getCompatibilityInspectionShortName());
     }
   }
   

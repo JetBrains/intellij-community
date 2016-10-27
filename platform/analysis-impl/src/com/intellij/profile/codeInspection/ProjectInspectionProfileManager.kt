@@ -263,7 +263,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   override fun getScopesManager() = scopeManager
 
-  @Synchronized override fun getProfiles(): Collection<InspectionProfile> {
+  @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
     return schemeManager.allSchemes
   }
@@ -297,7 +297,7 @@ class ProjectInspectionProfileManager(val project: Project,
     if (!state.useProjectProfile) {
       return (state.projectProfile?.let {
         applicationProfileManager.getProfile(it, false)
-      } ?: applicationProfileManager.currentProfile) as InspectionProfileImpl
+      } ?: applicationProfileManager.currentProfile)
     }
 
     var currentScheme = schemeManager.currentScheme
@@ -330,6 +330,6 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
-    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent) as InspectionProfileImpl?
+    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
 }

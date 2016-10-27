@@ -158,7 +158,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     @Override
     protected void addProfile(InspectionProfileImpl model) {
       super.addProfile(model);
-      myProfilesCombo.addProfile((InspectionProfileImpl)model.getParentProfile());
+      myProfilesCombo.addProfile(model.getParentProfile());
     }
 
     @Override
@@ -178,12 +178,12 @@ public class CodeInspectionAction extends BaseAnalysisAction {
                               InspectionProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {
-    final InspectionProfile selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
-    List<Profile> profiles = new ArrayList<>();
+    InspectionProfileImpl selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
+    List<InspectionProfileImpl> profiles = new ArrayList<>();
     profiles.addAll(inspectionProfileManager.getProfiles());
     profiles.addAll(inspectionProjectProfileManager.getProfiles());
     profilesCombo.reset(profiles);
-    profilesCombo.selectProfile((InspectionProfileImpl)selectedProfile);
+    profilesCombo.selectProfile(selectedProfile);
   }
 
   private static class AdditionalPanel {

@@ -90,7 +90,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   @Nullable
   private InspectionToolWrapper getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getCurrentProfile();
+    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     return inspectionProfile.getToolById(myId, file);
   }
 
@@ -99,8 +99,8 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     InspectionToolWrapper toolWrapper = getTool(project, file);
     if (toolWrapper == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getCurrentProfile();
-    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, toolWrapper.getShortName());
+    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, toolWrapper.getShortName());
   }
 
   @Override

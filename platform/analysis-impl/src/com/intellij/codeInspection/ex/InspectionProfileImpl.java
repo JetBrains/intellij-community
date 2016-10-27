@@ -195,7 +195,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public InspectionProfile getParentProfile() {
+  public InspectionProfileImpl getParentProfile() {
     return mySource;
   }
 
@@ -878,7 +878,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     for (Element scopeElement : scopes.getChildren(SCOPE)) {
       final String profile = scopeElement.getAttributeValue(PROFILE);
-      InspectionProfileImpl inspectionProfile = profile == null ? null : (InspectionProfileImpl)getProfileManager().getProfile(profile);
+      InspectionProfileImpl inspectionProfile = profile == null ? null : getProfileManager().getProfile(profile);
       NamedScope scope = inspectionProfile == null ? null : getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
       if (scope == null) {
         continue;
