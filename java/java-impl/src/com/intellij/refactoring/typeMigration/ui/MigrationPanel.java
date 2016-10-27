@@ -236,11 +236,9 @@ public class MigrationPanel extends JPanel implements Disposable {
     rerunButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         UsageViewManager.getInstance(myProject).closeContent(myContent);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          final TypeMigrationDialog.MultipleElements dialog =
-            new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
-          dialog.show();
-        });
+        final TypeMigrationDialog.MultipleElements dialog =
+          new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
+        dialog.show();
       }
     });
     panel.add(rerunButton, gc);
