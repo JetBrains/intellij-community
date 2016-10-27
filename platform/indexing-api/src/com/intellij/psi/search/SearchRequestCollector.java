@@ -80,21 +80,17 @@ public class SearchRequestCollector {
     Collection<PsiSearchRequest> requests = null;
     if (searchTarget != null && (searchScope instanceof GlobalSearchScope) && ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
       for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
-        //TODO
         final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
         if (optimizedCodeUsageSearchScope != null) {
           short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
-          ? (short)(searchContext ^ UsageSearchContext.IN_CODE)
-          : (UsageSearchContext.IN_COMMENTS |
-             UsageSearchContext.IN_STRINGS |
-             UsageSearchContext.IN_FOREIGN_LANGUAGES |
-             UsageSearchContext.IN_PLAIN_TEXT);
-          final GlobalSearchScope searchWithCodeUsageEffectiveScope =
-            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
-          final GlobalSearchScope searchWithoutCodeUsageEffectiveScope =
-            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
-          requests = ContainerUtil.list(new PsiSearchRequest(searchWithCodeUsageEffectiveScope, word, searchContext, caseSensitive, containerName, processor),
-                                        new PsiSearchRequest(searchWithoutCodeUsageEffectiveScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+                                          ? (UsageSearchContext.IN_COMMENTS |
+                                             UsageSearchContext.IN_STRINGS |
+                                             UsageSearchContext.IN_FOREIGN_LANGUAGES |
+                                             UsageSearchContext.IN_PLAIN_TEXT)
+                                          : (short)(searchContext ^ UsageSearchContext.IN_CODE);
+          final GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
+                                        new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
         }
       }
     }

@@ -36,22 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
-public class CompilerReferencesTest extends AbstractCompilerAwareTest {
-  private boolean myDefaultEnableState;
-
-  @Override
-  public void setUp() throws Exception {
-    myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
-    CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
-    super.setUp();
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
-    super.tearDown();
-  }
-
+public class CompilerReferencesTest extends CompilerReferencesTestBase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/bytecodeReferences/";
   }
