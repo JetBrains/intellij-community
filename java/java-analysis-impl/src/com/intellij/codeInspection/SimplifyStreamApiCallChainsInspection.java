@@ -209,8 +209,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
             fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({0}).sum()", false);
           } else {
-            PsiType type = methodCall.getType();
-            if(type instanceof PsiClassType && !(((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
+            if(PsiUtil.resolveClassInClassTypeOnly(methodCall.getType()) instanceof PsiTypeParameter) {
               String replacement = collectorToCollection(collectorCall);
               if (replacement != null) {
                 PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
@@ -282,9 +281,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     PsiParameter parameter = list.getParameters()[0];
     PsiTypeElement typeElement = parameter.getTypeElement();
     if(typeElement == null) return false;
-    PsiType type = typeElement.getType();
-    if(!(type instanceof PsiClassType)) return false;
-    PsiClass aClass = ((PsiClassType)type).resolve();
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
     if(aClass == null) return false;
     return CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName());
   }
@@ -781,8 +778,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if(!(element instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression collectCall = (PsiMethodCallExpression)element;
       PsiType type = collectCall.getType();
-      if(!(type instanceof PsiClassType)) return;
-      PsiClass resolvedType = ((PsiClassType)type).resolve();
+      PsiClass resolvedType = PsiUtil.resolveClassInClassTypeOnly(type);
       if(resolvedType == null || resolvedType instanceof PsiTypeParameter) return;
       PsiMethodCallExpression streamCall = getQualifierMethodCall(collectCall);
       if(streamCall == null) return;
