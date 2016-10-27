@@ -299,23 +299,13 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
         );
-        final AnAction action1 = myAction.getAction();
-        if (ActionUtil.lastUpdateAndCheckDumb(action1, event, false)) {
+        final AnAction menuItemAction = myAction.getAction();
+        if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(action1, myContext, event);
-          Component component1 = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
-          if (component1 != null && !isInTree(component1)) {
-            typeAhead.setDone();
-            return;
-          }
-
-          SimpleTimer.getInstance().setUp(() -> {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> fm.doWhenFocusSettlesDown(typeAhead.createSetDoneRunnable()));
-          }, Registry.intValue("actionSystem.typeAheadTimeAfterPopupAction"));
-
-          ActionUtil.performActionDumbAware(action1, event);
-          actionManager.queueActionPerformedEvent(action1, myContext, event);
+          actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
+          fm.doWhenFocusSettlesDown(() -> typeAhead.setDone());
+          ActionUtil.performActionDumbAware(menuItemAction, event);
+          actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
         }
         else {
           typeAhead.setDone();
