@@ -43,6 +43,7 @@ public class ApplyIntentionAction extends AnAction {
 
   public ApplyIntentionAction(final IntentionAction action, String text, Editor editor, PsiFile file) {
     super(text);
+    getTemplatePresentation().setText(text, false);
     myAction = action;
     myEditor = editor;
     myFile = file;
