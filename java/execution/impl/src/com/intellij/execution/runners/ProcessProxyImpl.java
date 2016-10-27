@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -73,17 +74,7 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   @Override
-  @SuppressWarnings("FinalizeDeclaration")
-  protected synchronized void finalize() throws Throwable {
-    if (myWriter != null) {
-      myWriter.close();
-    }
-    ourUsedSockets[myPortNumber - SOCKET_NUMBER_START] = false;
-    super.finalize();
-  }
-
-  @Override
-  public void attach(final ProcessHandler processHandler) {
+  public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
   }
 
@@ -112,5 +103,13 @@ class ProcessProxyImpl implements ProcessProxy {
   @Override
   public void sendStop() {
     writeLine("STOP");
+  }
+
+  @Override
+  public synchronized void destroy() {
+    if (myWriter != null) {
+      myWriter.close();
+    }
+    ourUsedSockets[myPortNumber - SOCKET_NUMBER_START] = false;
   }
 }

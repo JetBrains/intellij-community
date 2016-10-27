@@ -72,7 +72,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
@@ -80,11 +80,25 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
-      final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
+
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(env.getExecutor(), this);
-      if (proxy != null && executionResult != null) {
-        proxy.attach(executionResult.getProcessHandler());
+      if (proxy != null) {
+        ProcessHandler handler = executionResult != null ? executionResult.getProcessHandler() : null;
+        if (handler != null) {
+          proxy.attach(handler);
+          handler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void processTerminated(ProcessEvent event) {
+              proxy.destroy();
+            }
+          });
+        }
+        else {
+          proxy.destroy();
+        }
       }
+
       if (state instanceof JavaCommandLineState && !((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
         shouldAddDefaultActions = false;
       }
