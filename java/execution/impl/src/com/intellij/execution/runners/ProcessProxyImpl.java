@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -41,8 +43,9 @@ class ProcessProxyImpl implements ProcessProxy {
 
   private final ServerSocket mySocket;
 
-  private final Object myWriterLock = new Object();
+  private final Object myLock = new Object();
   private Writer myWriter;
+  private int myPid;
 
   public ProcessProxyImpl() throws IOException {
     mySocket = new ServerSocket();
@@ -60,20 +63,26 @@ class ProcessProxyImpl implements ProcessProxy {
     processHandler.putUserData(KEY, this);
 
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      OutputStreamWriter writer = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
-      synchronized (myWriterLock) {
+      @SuppressWarnings("SocketOpenedButNotSafelyClosed") OutputStreamWriter writer = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
+
+      int pid = -1;
+      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
+        pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
+      }
+
+      synchronized (myLock) {
         myWriter = writer;
+        myPid = pid;
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(ProcessProxy.class).warn(e);
     }
   }
 
   private void writeLine(String s) {
     try {
-      synchronized (myWriterLock) {
+      synchronized (myLock) {
         myWriter.write(s);
         myWriter.write('\n');
         myWriter.flush();
@@ -86,26 +95,41 @@ class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public boolean canSendBreak() {
-    synchronized (myWriterLock) {
-      if (myWriter == null) return false;
+    if (SystemInfo.isWindows) {
+      synchronized (myLock) {
+        if (myWriter == null) return false;
+      }
+      return new File(PathManager.getBinPath(), "breakgen.dll").exists();
     }
-    String libName = null;
-    if (SystemInfo.isWindows) libName = "breakgen.dll";
-    else if (SystemInfo.isMac) libName = "libbreakgen.jnilib";
-    else if (SystemInfo.isLinux) libName = "libbreakgen.so";
-    return libName != null && new File(PathManager.getBinPath(), libName).exists();
+
+    if (SystemInfo.isUnix) {
+      synchronized (myLock) {
+        return myPid > 0;
+      }
+    }
+
+    return false;
   }
 
   @Override
   public boolean canSendStop() {
-    synchronized (myWriterLock) {
+    synchronized (myLock) {
       return myWriter != null;
     }
   }
 
   @Override
   public void sendBreak() {
-    writeLine("BREAK");
+    if (SystemInfo.isWindows) {
+      writeLine("BREAK");
+    }
+    else if (SystemInfo.isUnix) {
+      int pid;
+      synchronized (myLock) {
+        pid = myPid;
+      }
+      UnixProcessManager.sendSignal(pid, 3);  // SIGQUIT
+    }
   }
 
   @Override
@@ -116,7 +140,7 @@ class ProcessProxyImpl implements ProcessProxy {
   @Override
   public void destroy() {
     try {
-      synchronized (myWriterLock) {
+      synchronized (myLock) {
         if (myWriter != null) {
           myWriter.close();
         }

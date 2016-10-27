@@ -40,19 +40,10 @@ public class AppMain {
   static {
     boolean libLoaded = false;
     try {
-      String libName = null;
       String osName = System.getProperty("os.name").toLowerCase(Locale.US);
-      String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
       if (osName.startsWith("windows")) {
-        libName = (arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
-      }
-      else if (osName.startsWith("linux")) {
-        libName = (arch.equals("amd64") ? "libbreakgen64.so" : "libbreakgen.so");
-      }
-      else if (osName.startsWith("mac")) {
-        libName = (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
-      }
-      if (libName != null) {
+        String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
+        String libName = arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll";
         File libFile = new File(System.getProperty(PROPERTY_BIN_PATH), libName);
         if (libFile.isFile()) {
           System.load(libFile.getAbsolutePath());
