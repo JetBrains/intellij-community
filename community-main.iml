@@ -137,5 +137,6 @@
     <orderEntry type="module" module-name="remote-servers-git-java" />
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="android-plugin" />
+    <orderEntry type="module" module-name="android" />
   </component>
 </module>

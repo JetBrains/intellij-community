@@ -842,6 +842,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         jar("android.jar") {
           noResources("android")
           noResources("android-plugin")
+          noResources("observable")
         }
         resources("android")
         resources("android-plugin")
