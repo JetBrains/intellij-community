@@ -1,0 +1,191 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+task setupJdks(dependsOn: ['downloadJre', 'setupJdk18', 'setupJdk16'])
+
+def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net' : 'https://dl.bintray.com/jetbrains/'
+
+def checkoutDir = intellijProjectDir()
+def jdkDir = "$checkoutDir/build/jdk"
+
+project.ext.platformToDirectory = [linux: 'linux', osx: 'mac', windows: 'win']
+project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "$jdkDir/1.8")}"
+project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
+
+task downloadJre {}
+
+jrePlatformsToDownload(targetOs).each { platform ->
+  archToDownload(platform).each { arch ->
+    task("downloadJbrex_${platform}_$arch") {
+      def outputDir = "$jdkDir/${platformToDirectory[platform]}"
+      def artifactName = "jbrex8${jdkBuild}_${platform}_$arch"
+      
+      inputs.property('build', jdkBuild)
+      outputs.file("$outputDir/${artifactName}.tar.gz")
+      doLast {
+        logger.info("Setting up JRE 1.8 to bundle for ${platform}_$arch (usin $jdkRepo repo)")
+        downloadJdk(jdkRepo, artifactName, outputDir)
+      }
+    }
+    downloadJre.dependsOn("downloadJbrex_${platform}_$arch")
+    cleanDownloadJre.dependsOn("cleanDownloadJbrex_${platform}_$arch")
+    
+    task("untarJbre_${platform}_$arch", type: Copy) {
+      def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
+      from tarTree(downloadOutputs.singleFile)
+      exclude "**/tools.jar"
+      into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name.replace("jbrex", "jbre") - '.tar.gz'}/" }
+    }
+    
+    task("tarJbre_${platform}_$arch", type: Tar) {
+      def untarOutputs = tasks["untarJbre_${platform}_$arch"].outputs.files
+      from untarOutputs
+      compression = Compression.GZIP
+      archiveName = "${untarOutputs.singleFile.name}.tar.gz"
+      destinationDir = untarOutputs.singleFile.parentFile
+    }
+    downloadJre.dependsOn("tarJbre_${platform}_$arch")
+    cleanDownloadJre.dependsOn("cleanTarJbre_${platform}_$arch")
+  }
+}
+
+task downloadJdk18 {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  def arch = !os.isWindows() || !os.nativePrefix.endsWith('x86') ? 'x64' : 'x86'
+  def platform = currentPlatformName()
+
+  def outputDir = "$jdkDir/${platformToDirectory[platform]}"
+  def artifactName = "jbsdk8${jdkBuild}_${platform}_$arch"
+
+  inputs.property('build', jdkBuild)
+  outputs.file("$outputDir/${artifactName}.tar.gz")
+  doLast {
+    logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
+    downloadJdk(jdkRepo, artifactName, outputDir)
+  }
+}
+
+task setupJdk18() {
+  def outputDir = jdk18OutputDir
+  def downloadOutputs = downloadJdk18.outputs.files
+
+  inputs.files(downloadOutputs)
+  inputs.property("jdk18OutputDir", outputDir)
+  outputs.dir(outputDir)
+  doLast {
+    logger.info("Setting up JDK 1.8 to compile")
+    unpackJdk(downloadOutputs.singleFile, outputDir)
+  }
+}
+
+def unpackJdk(jdkArchive, outputDir) {
+  logger.info("Unpacking $jdkArchive to ${outputDir}")
+  file(outputDir).deleteDir()
+  copy {
+    from tarTree(jdkArchive)
+    into outputDir
+  }
+  def jdkContents = file("${outputDir}/jdk/Contents")
+  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX() && jdkContents.exists()) {
+    copy {
+      from fileTree(jdkContents)
+      into outputDir
+    }
+    jdkContents.deleteDir()
+  }
+}
+
+def downloadJdk(jdkRepo, artifact, outputDir) {
+  logger.info("Downloading $artifact to $outputDir")
+  download {
+    src "$jdkRepo/intellij-jdk/${artifact}.tar.gz"
+    dest "$outputDir/${artifact}.tar.gz"
+    onlyIfNewer true
+  }
+}
+
+static def currentPlatformName() {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  if (os.isWindows()) {
+    "windows"
+  }
+  else if (os.isMacOsX()) {
+    "osx"
+  }
+  else {
+    "linux"
+  }
+}
+
+// see org.jetbrains.intellij.build.BuildOptions.targetOS
+static def jrePlatformsToDownload(targetOs) {
+  def jrePlatformToDownload = new HashSet<String>()
+  if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload.add('linux')
+  if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload.add('windows')
+  if (targetOs == 'all' || targetOs == 'mac') jrePlatformToDownload.add('osx')
+  jrePlatformToDownload
+}
+
+static def archToDownload(targetOs) {
+  targetOs == 'windows' ? ['x86', 'x64'] : ['x64']
+}
+
+// JDK 1.6
+repositories {
+  maven {
+    url 'http://repo.labs.intellij.net/java'
+  }
+}
+
+configurations {
+  jdk16
+}
+
+dependencies {
+  jdk16 "jetbrains:jre:${jdk16Version()}@tar.gz"
+}
+
+task setupJdk16(dependsOn: configurations.jdk16) {
+  if (!inJetBrainsNetwork) {
+    return
+  }
+
+  def jdkArchive = { configurations.jdk16.singleFile }
+  def outputDir = "$jdkDir/1.6"
+  inputs.file(jdkArchive)
+  outputs.dir(outputDir)
+
+  doLast {
+    logger.info("Setting up JDK 1.6 to compile")
+    unpackJdk(jdkArchive, outputDir)
+  }
+}
+
+def intellijProjectDir() {
+  def communityDir = project.file("../..")
+  communityDir.name == 'community' ? communityDir.parent : communityDir
+}
+
+static def jdk16Version() {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  if (os.isWindows()) {
+    def suffix = os.nativePrefix.endsWith('x86') ? "_i586" : "x64"
+    return "6.45:windows_$suffix"
+  }
+  else if (os.isMacOsX()) {
+    return '6.65:macosx_x64'
+  }
+  return '6.45:linux_x64'
+}
