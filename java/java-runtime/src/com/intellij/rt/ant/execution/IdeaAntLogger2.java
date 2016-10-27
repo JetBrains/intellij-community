@@ -48,7 +48,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
 
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);
-  private final Priority myTaskPriority = new StatePriority(Project.MSG_INFO);
+  private final Priority myTaskPriority = new StatePriority(Project.MSG_VERBOSE);
   private final Priority myAlwaysSend = new Priority() {
     public void setPriority(int level) {}
 
