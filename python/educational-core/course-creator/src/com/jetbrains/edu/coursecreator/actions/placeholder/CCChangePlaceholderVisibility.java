@@ -6,6 +6,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -43,9 +44,9 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
 
   private void setVisible(AnswerPlaceholder placeholder, boolean visible, CCState state) {
     placeholder.getActiveSubtaskInfo().setNeedInsertText(visible);
+    saveIndent(placeholder, state, !visible);
     int length = isVisible() ? placeholder.getTaskText().length() : 0;
     placeholder.setLength(length);
-    saveIndent(placeholder, state, !visible);
     StudyUtils.drawAllAnswerPlaceholders(state.getEditor(), state.getTaskFile());
   }
 
@@ -65,6 +66,14 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
     placeholder.setOffset(newOffset);
     int delta = offset - newOffset;
     placeholder.setPossibleAnswer(document.getText(TextRange.create(newOffset, newOffset + delta + placeholder.getRealLength())));
+    String oldTaskText = placeholder.getTaskText();
+    if (delta >= 0) {
+      placeholder.setTaskText(StringUtil.repeat(" ", delta) + oldTaskText);
+    }
+    else {
+      String newTaskText = oldTaskText.substring(Math.abs(delta));
+      placeholder.setTaskText(newTaskText);
+    }
   }
 
   protected abstract String getName();
