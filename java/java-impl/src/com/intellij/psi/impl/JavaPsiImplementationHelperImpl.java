@@ -131,6 +131,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     if (virtualFile == null) return PsiUtil.getLanguageLevel(myProject);
 
+    final LanguageLevel fileLevel = virtualFile.getUserData(LanguageLevel.KEY);
+    if (fileLevel != null) return fileLevel;
+
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
       final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
