@@ -92,6 +92,28 @@ class Fooo {
     onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
     onLineStartingWith("show").assertInlays("message->\"Hi\"")
   }
+  
+  fun `test no hints for generic builders`() {
+    setup("""
+class Foo {
+  void test() {
+    new IntStream().skip(10);
+    new Stream<Integer>().skip(10);
+  }
+}
+
+class IntStream {
+  public IntStream skip(int n) {}
+}
+
+class Stream<T> {
+  public Stream<T> skip(int n) {}
+}
+""")
+    
+    onLineStartingWith("new IntStream").assertNoInlays()
+    onLineStartingWith("new Stream").assertNoInlays()
+  }
 
   fun `test do not show hints on setters`() {
     setup("""class Groo {
