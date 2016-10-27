@@ -2715,7 +2715,7 @@ class dict(object):
         """
         pass
 
-    def values():
+    def values(self):
         """Return a copy of the dictionary's list of values.
 
         :rtype: list[V]
