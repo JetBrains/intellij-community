@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -90,21 +91,23 @@ class StackFrameList extends JBList {
             new OpenFileHyperlinkInfo(myProject, file, frame.line() - 1);
         OpenFileDescriptor descriptor = info.getDescriptor();
         if (descriptor != null) {
-          FileEditorManager manager = FileEditorManager.getInstance(myProject);
+          FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
           VirtualFile lastFile = myEditorState.myLastOpenedFile;
           if (myEditorState.myIsNeedToCloseLastOpenedFile && lastFile != null &&
               manager.isFileOpen(lastFile) && !lastFile.equals(descriptor.getFile())) {
-            manager.closeFile(myEditorState.myLastOpenedFile);
+            manager.closeFile(myEditorState.myLastOpenedFile, false, true);
           }
 
           descriptor.setScrollType(ScrollType.CENTER);
+          descriptor.setUseCurrentWindow(true);
 
           if (lastFile == null || !lastFile.equals(descriptor.getFile())) {
             myEditorState.myIsNeedToCloseLastOpenedFile = !manager.isFileOpen(descriptor.getFile());
           }
 
-          List<FileEditor> fileEditors = manager.openEditor(descriptor, focusOnEditor);
-          if (!fileEditors.isEmpty()) {
+          descriptor.navigateInEditor(myProject, focusOnEditor);
+          FileEditor[] editors = manager.getEditors(descriptor.getFile());
+          if (editors.length != 0) {
             myEditorState.myLastOpenedFile = descriptor.getFile();
           }
         }
