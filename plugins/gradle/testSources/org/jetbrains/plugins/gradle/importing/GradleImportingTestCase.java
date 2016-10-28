@@ -252,7 +252,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
     File zip = localDistribution.getZipFile();
     try {
-      if(zip.exists()) {
+      if (zip.exists()) {
         ZipFile zipFile = new ZipFile(zip);
         zipFile.close();
       }
@@ -261,7 +261,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       e.printStackTrace();
       System.out.println("Corrupted file will be removed: " + zip.getPath());
       FileUtil.delete(zip);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       e.printStackTrace();
     }
   }
