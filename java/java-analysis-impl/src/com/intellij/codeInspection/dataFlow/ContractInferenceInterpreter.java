@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,6 +55,7 @@ class ContractInferenceInterpreter {
     return paramList != null ? getChildrenOfType(myTree, paramList, PARAMETER) : Collections.emptyList();
   }
 
+  @NotNull
   List<PreContract> inferContracts() {
     LighterASTNode[] statements = getStatements(myBody);
     if (statements.length == 0) return Collections.emptyList();
@@ -153,7 +155,8 @@ class ContractInferenceInterpreter {
       return asPreContracts(toContracts(states, NOT_NULL_VALUE));
     }
     if (type == METHOD_CALL_EXPRESSION) {
-      return Collections.singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()), states));
+      return Collections.singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()),
+                                                              ContainerUtil.map(states, Arrays::asList)));
     }
 
     final ValueConstraint constraint = getLiteralConstraint(expr);

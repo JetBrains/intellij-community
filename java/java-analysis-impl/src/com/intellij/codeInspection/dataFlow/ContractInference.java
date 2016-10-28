@@ -16,11 +16,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -50,22 +47,17 @@ public class ContractInference {
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
-      TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
-      PsiCodeBlock body = method.getBody();
-      assert body != null;
-      ASTNode methodNode = method.getNode();
-      ASTNode bodyNode = body.getNode();
-      List<PreContract> preContracts = methodNode == null || bodyNode == null ? Collections.emptyList() :
-                                       new ContractInferenceInterpreter(tree, TreeBackedLighterAST.wrap(methodNode), TreeBackedLighterAST.wrap(bodyNode)).inferContracts();
-      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, body, preContracts));
+      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
+      List<PreContract> preContracts = data == null ? Collections.emptyList() : data.getContracts();
+      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, data, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
   @NotNull
-  private static List<MethodContract> postProcessContracts(@NotNull PsiMethod method, @NotNull PsiCodeBlock body, List<PreContract> rawContracts) {
-    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, body));
+  private static List<MethodContract> postProcessContracts(@NotNull PsiMethod method, MethodData data, List<PreContract> rawContracts) {
+    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
     if (contracts.isEmpty()) return Collections.emptyList();
     
     final PsiType returnType = method.getReturnType();
