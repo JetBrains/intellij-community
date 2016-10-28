@@ -88,4 +88,11 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     assertTrue(ref.getElement().getResolveScope().contains(file.getViewProvider().getVirtualFile()));
     assertInstanceOf(ref.resolve(), PsiMethod.class);
   }
+
+  public void testResolveMethodParamsFromNonPhysicalCodeBlock() {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    PsiMethod method = factory.createMethodFromText("void foo(Object o);", null);
+    PsiCodeBlock block = factory.createCodeBlockFromText("{ return o; }", method);
+    assertInstanceOf(block.findReferenceAt(block.getText().indexOf("o")).resolve(), PsiParameter.class);
+  }
 }

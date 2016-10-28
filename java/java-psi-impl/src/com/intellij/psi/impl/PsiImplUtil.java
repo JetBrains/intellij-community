@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -182,10 +183,11 @@ public class PsiImplUtil {
   public static boolean processDeclarationsInMethod(@NotNull final PsiMethod method,
                                                     @NotNull final PsiScopeProcessor processor,
                                                     @NotNull final ResolveState state,
-                                                    final PsiElement lastParent,
+                                                    PsiElement lastParent,
                                                     @NotNull final PsiElement place) {
-    final boolean fromBody = lastParent instanceof PsiCodeBlock;
-    final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+    if (lastParent instanceof DummyHolder) lastParent = lastParent.getFirstChild();
+    boolean fromBody = lastParent instanceof PsiCodeBlock;
+    PsiTypeParameterList typeParameterList = method.getTypeParameterList();
     return processDeclarationsInMethodLike(method, processor, state, place, fromBody, typeParameterList);
   }
 
