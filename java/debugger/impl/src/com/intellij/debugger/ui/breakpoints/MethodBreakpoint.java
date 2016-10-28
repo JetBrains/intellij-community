@@ -455,7 +455,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return false;
   }
 
-  private boolean isEmulated() {
+  public boolean isEmulated() {
     return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
   }
 
