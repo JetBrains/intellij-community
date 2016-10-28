@@ -51,7 +51,6 @@ cp -R "$DEV_IDEA_HOME/out/deploy/"* "$WORK_IDEA_HOME"
 
 OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then
-  cp -a "$DEV_IDEA_HOME/bin/linux/"*.so "$WORK_IDEA_HOME/bin"
   cp -a "$DEV_IDEA_HOME/bin/linux/"fsnotifier* "$WORK_IDEA_HOME/bin"
   cp -a "$DEV_IDEA_HOME/bin/linux/"*.py "$WORK_IDEA_HOME/bin"
 elif [ "$OS_TYPE" = "Darwin" ]; then
