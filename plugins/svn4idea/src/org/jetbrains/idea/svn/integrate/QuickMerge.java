@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ public class QuickMerge extends BackgroundTaskGroup {
 
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final QuickMergeInteraction myInteraction;
+  @NotNull private final Semaphore mySemaphore = new Semaphore();
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext.getProject(), mergeContext.getTitle());
@@ -67,6 +69,18 @@ public class QuickMerge extends BackgroundTaskGroup {
     }
   }
 
+  @Override
+  public void waitForTasksToFinish() {
+    super.waitForTasksToFinish();
+    mySemaphore.waitFor();
+  }
+
+  @Override
+  public void end() {
+    super.end();
+    mySemaphore.up();
+  }
+
   @CalledInAny
   public void end(@NotNull String message, boolean isError) {
     LOG.info((isError ? "Error: " : "Info: ") + message);
@@ -83,6 +97,7 @@ public class QuickMerge extends BackgroundTaskGroup {
   public void execute() {
     FileDocumentManager.getInstance().saveAllDocuments();
 
+    mySemaphore.down();
     runInEdt(() -> {
       if (areInSameHierarchy(createUrl(myMergeContext.getSourceUrl()), myMergeContext.getWcInfo().getUrl())) {
         end("Cannot merge from self", true);
@@ -177,7 +192,13 @@ public class QuickMerge extends BackgroundTaskGroup {
   private Task newIntegrateTask(@NotNull String title, @NotNull MergerFactory mergerFactory) {
     return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
                                        mergerFactory, parseUrl(myMergeContext.getSourceUrl()), title, false,
-                                       myMergeContext.getBranchName());
+                                       myMergeContext.getBranchName()) {
+      @Override
+      public void onFinished() {
+        super.onFinished();
+        mySemaphore.up();
+      }
+    };
   }
 
   private boolean hasSwitchedRoots() {
