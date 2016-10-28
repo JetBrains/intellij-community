@@ -289,23 +289,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       public void sessionPaused() {
         SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
-        commitAllTrackers();
         updateClassesAndCounts();
-        if (!myIsTrackersActivated) {
-          myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::enable);
-          myIsTrackersActivated = true;
-        }
       }
     };
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
       if (myLastSuspendContext != null) {
-        SwingUtilities.invokeLater(() -> {
-          myTable.setBusy(true);
-          myDebugProcess.getManagerThread()
-              .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
-        });
+        SwingUtilities.invokeLater(() -> myTable.setBusy(true));
+        myDebugProcess.getManagerThread()
+            .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
       }
     }, this);
 
@@ -403,7 +396,9 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
     if (myLastSuspendContext == null || !myLastSuspendContext.equals(getSuspendContext())) {
-      commitAllTrackers();
+      if(myIsTrackersActivated) {
+        commitAllTrackers();
+      }
       updateClassesAndCounts();
     }
   }
@@ -421,6 +416,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      if (!myIsTrackersActivated) {
+        myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::enable);
+        myIsTrackersActivated = true;
+      } else {
+        commitAllTrackers();
+      }
       final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
 
       if (classes.isEmpty()) {
