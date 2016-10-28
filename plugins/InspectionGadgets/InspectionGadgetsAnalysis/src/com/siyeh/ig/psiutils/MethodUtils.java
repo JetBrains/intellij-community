@@ -50,6 +50,15 @@ public class MethodUtils {
   }
 
   @Contract("null -> false")
+  public static boolean isCompareToIgnoreCase(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClassType stringType = TypeUtils.getStringType(method);
+    return methodMatches(method, "java.lang.String", PsiType.INT, "compareToIgnoreCase", stringType);
+  }
+
+  @Contract("null -> false")
   public static boolean isHashCode(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
@@ -75,6 +84,15 @@ public class MethodUtils {
     }
     final PsiClassType objectType = TypeUtils.getObjectType(method);
     return methodMatches(method, null, PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS, objectType);
+  }
+
+  @Contract("null -> false")
+  public static boolean isEqualsIgnoreCase(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClassType stringType = TypeUtils.getStringType(method);
+    return methodMatches(method, "java.lang.String", PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
   }
 
   /**
