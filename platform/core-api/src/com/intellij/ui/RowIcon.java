@@ -57,9 +57,9 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
 
   @Override
   public Icon scale(float scale) {
-    if (scale == 1f) return this;
+    if (scale == getScale()) return this;
 
-    setScale(scaleVal(scale, Scale.ARBITRARY));
+    setScale(scale);
     rescale();
     return this;
   }

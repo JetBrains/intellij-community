@@ -580,12 +580,12 @@ public final class IconLoader {
 
     @Override
     public Icon scale(float scale) {
-      if (scale == 1f) return this;
+      if (scale == getScale()) return this;
 
       getOrComputeIcon();
       if (myIcon instanceof ScalableIcon) {
-        setScale(scaleVal(scale, Scale.ARBITRARY));
-        myIcon = ((ScalableIcon)myIcon).scale(getScale());
+        setScale(scale);
+        myIcon = ((ScalableIcon)myIcon).scale(scale);
       }
       return this;
     }

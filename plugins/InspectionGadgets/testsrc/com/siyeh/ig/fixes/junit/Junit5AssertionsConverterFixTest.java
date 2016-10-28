@@ -58,7 +58,7 @@ public class Junit5AssertionsConverterFixTest extends IGQuickFixesTestCase {
                        "    public static void assertEquals(String message, Object expected, Object actual) {}" +
                        "    public static void assertEquals(Object expected, Object actual) {}" +
                        "    public static void fail(String message) {}" +
-                       "    public static <T> void assertThat(T actual, Matcher<? super T> matcher) {}" +
+                       "    public static <T> void assertThat(String reason, T actual, org.hamcrest.Matcher<? super T> matcher) {}" +
                        "}");
 
     myFixture.addClass("package org.junit.jupiter.api;\n" +

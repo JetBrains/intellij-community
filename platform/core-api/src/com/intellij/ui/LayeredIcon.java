@@ -271,9 +271,9 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
 
   @Override
   public Icon scale(float scale) {
-    if (scale == 1f) return this;
+    if (scale == getScale()) return this;
 
-    setScale(scaleVal(scale, Scale.ARBITRARY));
+    setScale(scale);
     if (myScaledIcons != null) Arrays.fill(myScaledIcons, null);
     return this;
   }

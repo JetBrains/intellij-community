@@ -28,20 +28,17 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
-import static com.intellij.psi.search.GlobalSearchScope.EMPTY_SCOPE;
 
 class DirtyModulesHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
-  private final Set<Module> myChangedModules = ContainerUtil.newHashSet();
+  private final Set<Module> myVFSChangedModules = ContainerUtil.newHashSet();
   private final Set<Module> myChangedModulesDuringCompilation = ContainerUtil.newHashSet();
   private final Object myLock = new Object();
 
@@ -65,30 +62,30 @@ class DirtyModulesHolder extends UserDataHolderBase {
     synchronized (myLock) {
       myCompilationPhase = false;
 
-      ContainerUtil.removeAll(myChangedModules, affectedModules);
-      Collections.addAll(myChangedModules, markAsDirty);
-      myChangedModules.addAll(myChangedModulesDuringCompilation);
+      ContainerUtil.removeAll(myVFSChangedModules, affectedModules);
+      Collections.addAll(myVFSChangedModules, markAsDirty);
+      myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
     }
   }
 
   GlobalSearchScope getDirtyScope() {
+    return CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () ->
+      CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+  }
+
+  private GlobalSearchScope calculateDirtyModules() {
     synchronized (myLock) {
-      final Set<Module> unCommittedModules = new SmartHashSet<>(0);
+      final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
       for (Document document : myFileDocManager.getUnsavedDocuments()) {
         final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
-        if (m != null && !myChangedModules.contains(m)) unCommittedModules.add(m);
+        if (m != null) dirtyModules.add(m);
       }
       for (Document document : ReadAction.compute(() -> myPsiDocManager.getUncommittedDocuments())) {
         final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
-        if (m != null && !myChangedModules.contains(m)) unCommittedModules.add(m);
+        if (m != null) dirtyModules.add(m);
       }
-      GlobalSearchScope dirtyCommittedScope = CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () ->
-        CachedValueProvider.Result.create(addModulesWithDependentToScope(myChangedModules, EMPTY_SCOPE), PsiModificationTracker.MODIFICATION_COUNT, myService));
-      if (unCommittedModules.isEmpty()) {
-        return dirtyCommittedScope;
-      }
-      return addModulesWithDependentToScope(unCommittedModules, dirtyCommittedScope);
+      return dirtyModules.stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
     }
   }
 
@@ -146,7 +143,7 @@ class DirtyModulesHolder extends UserDataHolderBase {
             if (myCompilationPhase) {
               myChangedModulesDuringCompilation.add(module);
             } else {
-              myChangedModules.add(module);
+              myVFSChangedModules.add(module);
             }
           }
         }
@@ -159,9 +156,5 @@ class DirtyModulesHolder extends UserDataHolderBase {
       return myService.getFileIndex().getModuleForFile(file);
     }
     return null;
-  }
-
-  private static GlobalSearchScope addModulesWithDependentToScope(Collection<Module> modules, GlobalSearchScope baseScope) {
-    return modules.stream().map(Module::getModuleWithDependentsScope).reduce(baseScope, (s1, s2) -> s1.union(s2));
   }
 }
