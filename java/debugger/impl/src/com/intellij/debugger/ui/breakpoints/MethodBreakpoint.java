@@ -155,7 +155,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     try {
       for (Method method : classType.methods()) {
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
-          List<Location> allLineLocations = method.allLineLocations();
+          List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
           if (!allLineLocations.isEmpty()) {
             if (isWatchEntry()) {
               createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);

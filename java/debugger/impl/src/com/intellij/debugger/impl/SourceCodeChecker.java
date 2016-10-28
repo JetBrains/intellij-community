@@ -91,13 +91,11 @@ public class SourceCodeChecker {
         catch (EvaluateException e) {
           LOG.info(e);
         }
-        catch (AbsentInformationException ignore) {
-        }
       }
     });
   }
 
-  private static ThreeState check(Location location, SourcePosition position, Project project) throws AbsentInformationException {
+  private static ThreeState check(Location location, SourcePosition position, Project project) {
     Method method = location.method();
     // for now skip constructors, bridges, lambdas etc.
     if (method.isConstructor() ||
@@ -108,7 +106,7 @@ public class SourceCodeChecker {
         LambdaMethodFilter.isLambdaName(method.name())) {
       return ThreeState.UNSURE;
     }
-    List<Location> locations = method.allLineLocations();
+    List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
     if (ContainerUtil.isEmpty(locations)) {
       return ThreeState.UNSURE;
     }

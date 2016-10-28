@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.sun.jdi.*;
@@ -26,7 +27,6 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -180,7 +180,7 @@ public class MethodBytecodeUtil {
       dos.writeInt(bytecodes.length);  // code_length
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
-      List<Location> locations = getMethodLocations(method);
+      List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
       if (!locations.isEmpty()) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
@@ -195,16 +195,6 @@ public class MethodBytecodeUtil {
         dos.writeShort(0); // attributes_count
       }
     });
-  }
-
-  @NotNull
-  private static List<Location> getMethodLocations(Method method) {
-    try {
-      return method.allLineLocations();
-    }
-    catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
-    }
   }
 
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");

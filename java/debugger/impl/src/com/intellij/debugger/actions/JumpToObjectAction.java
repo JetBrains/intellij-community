@@ -115,14 +115,9 @@ public class JumpToObjectAction extends DebuggerAction{
                 if (cls != null) {
                   Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
                   if (method != null) {
-                    try {
-                      Location loc = ContainerUtil.getFirstItem(method.allLineLocations());
-                      if (loc != null) {
-                        locationRef.set(loc);
-                      }
-                    }
-                    catch (AbsentInformationException e) {
-                      LOG.debug(e);
+                    Location loc = ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(method));
+                    if (loc != null) {
+                      locationRef.set(loc);
                     }
                   }
                 }
