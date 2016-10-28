@@ -252,13 +252,18 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
     File zip = localDistribution.getZipFile();
     try {
-      ZipFile zipFile = new ZipFile(zip);
-      zipFile.close();
+      if (zip.exists()) {
+        ZipFile zipFile = new ZipFile(zip);
+        zipFile.close();
+      }
     }
     catch (ZipException e) {
       e.printStackTrace();
       System.out.println("Corrupted file will be removed: " + zip.getPath());
       FileUtil.delete(zip);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
