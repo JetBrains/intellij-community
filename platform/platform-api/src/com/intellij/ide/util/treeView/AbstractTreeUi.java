@@ -3801,7 +3801,7 @@ public class AbstractTreeUi {
 
             if (!runSelection) {
               if (elements.length > 0) {
-                selectVisible(elements[0], onDone, true, true, scrollToVisible);
+                selectVisible(elements[0], onDone, false, false, scrollToVisible);
               }
               return;
             }
