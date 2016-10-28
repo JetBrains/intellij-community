@@ -82,7 +82,8 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
   private void doTest(String... fileNames) throws Exception {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
 
-    final IntentionAction intentionAction = getIntentionAction(fileNames);
+    configureByFiles(null, fileNames);
+    final IntentionAction intentionAction = getIntentionAction();
     assertNotNull(intentionAction);
 
     Editor editor = getEditor();
@@ -92,8 +93,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  protected IntentionAction getIntentionAction(String... fileNames) throws Exception {
-    configureByFiles(null, fileNames);
+  protected IntentionAction getIntentionAction() throws Exception {
     final List<HighlightInfo> infos = doHighlighting();
     final Editor editor = getEditor();
     final PsiFile file = getFile();
