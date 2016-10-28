@@ -39,12 +39,11 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       currentProvider = KeePassCredentialStore(memoryOnly = true)
     }
     else if (settings.providerType == ProviderType.KEEPASS) {
-
       val dbFile = settings.state.keepassDb?.let {
         LOG.catchAndLog { return@let Paths.get(it) }
         return@let null
       }
-      currentProvider = KeePassCredentialStore(memoryOnly = true, dbFile = dbFile)
+      currentProvider = KeePassCredentialStore(dbFile = dbFile)
     }
     else {
       currentProvider = createPersistentCredentialStore()
