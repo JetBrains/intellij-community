@@ -99,10 +99,9 @@ abstract class WindowsDistributionCustomizer {
   }
 
   /**
-   * Link to a JetBrains JRE64 which is used by windows installation.
-   * JRE64 will be install (optional) together with JRE x86 (not replace).
+   * Link to tar.gz archive of JetBrains JRE 64-bit for windows.
+   * The archive is used by windows installer to download and install JRE 64-bit.
+   * If the option is chosen by user JRE x86 and 64-bit will be install together.
    */
-  String linkToJRE64(BuildContext buildContext) {
-    return null
-  }
+  String getLinkToJre64() { return null }
 }

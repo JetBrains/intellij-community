@@ -80,10 +80,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       }
 
       @Override
-      String linkToJRE64(BuildContext buildContext) {
-        def versionString = buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-        return "https://download.jetbrains.com/idea/jre64-for-${versionString}.tar.gz"
-      }
+      String getLinkToJre64() { "https://download.jetbrains.com/idea" }
     }
   }
 

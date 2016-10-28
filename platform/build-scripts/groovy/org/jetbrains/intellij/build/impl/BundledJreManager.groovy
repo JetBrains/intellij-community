@@ -65,6 +65,18 @@ class BundledJreManager {
     return findJreArchive("mac")?.absolutePath
   }
 
+  /**
+   * Return path to a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
+   */
+  String findWinJreArchive() {
+    return findJreArchive("win")?.absolutePath
+  }
+
+  String archiveNameJre64(BuildContext buildContext) {
+    return "jre64-for-${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.tar.gz"
+  }
+
+
   @CompileDynamic
   private String extractJre(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
@@ -98,7 +110,7 @@ class BundledJreManager {
     return targetDir
   }
 
-  File findJreArchive(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+  private File findJreArchive(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     def jdkDir = new File(buildContext.paths.projectHome, "build/jdk/$osDirName")
     String suffix = arch == JvmArchitecture.x32 ? "_x86" : "_x64"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
