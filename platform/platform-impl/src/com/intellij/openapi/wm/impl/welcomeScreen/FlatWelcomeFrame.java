@@ -683,6 +683,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         return new AnAction(presentation.getText(),
                             presentation.getDescription(),
                             null) {
+
+          @Override
+          public boolean startInTransaction() {
+            return child.startInTransaction();
+          }
+
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
