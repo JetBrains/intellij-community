@@ -110,8 +110,9 @@ public class EditorHyperlinkSupport {
     }
   }
 
-  public void waitForPendingFilters() {
-    myFilterRunner.waitForPendingFilters();
+  @SuppressWarnings("SameParameterValue")
+  public void waitForPendingFilters(long timeoutMs) {
+    myFilterRunner.waitForPendingFilters(timeoutMs);
   }
   
   @Deprecated
