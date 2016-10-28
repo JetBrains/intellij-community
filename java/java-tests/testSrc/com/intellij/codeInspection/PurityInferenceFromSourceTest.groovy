@@ -16,6 +16,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.PurityInference
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -164,7 +165,10 @@ public Foo() {
 
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
-    assert expected == PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    def purity = PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    assert expected == purity
   }
 
 }

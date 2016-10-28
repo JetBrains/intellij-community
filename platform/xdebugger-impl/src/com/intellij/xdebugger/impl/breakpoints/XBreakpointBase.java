@@ -75,6 +75,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private XExpression myCondition;
   private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
+  private volatile boolean myDisposed;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
     myState = state;
@@ -311,7 +312,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myState.setDescription(StringUtil.nullize(description));
   }
 
-  public void dispose() {
+  public final void dispose() {
+    myDisposed = true;
+    doDispose();
+  }
+
+  protected void doDispose() {
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   @Override

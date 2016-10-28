@@ -23,4 +23,7 @@ public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";
   public static final String ORG_HAMCREST_MATCHER_ASSERT = "org.hamcrest.MatcherAssert";
+  public static final String ORG_JUNIT_TEST = "org.junit.Test";
+  public static final String ORG_JUNIT_RULE = "org.junit.Rule";
+  public static final String ORG_JUNIT_CLASS_RULE = "org.junit.ClassRule";
 }

@@ -113,7 +113,12 @@ public class BreakpointManager {
   private static boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
     if (breakpoint.isEnabled() &&
         (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
-      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING)
+      Breakpoint bpt = getJavaBreakpoint(breakpoint);
+      if (bpt instanceof MethodBreakpoint && ((MethodBreakpoint)bpt).isEmulated()) {
+        return false;
+      }
+      XDebugSessionImpl.NOTIFICATION_GROUP
+        .createNotification(DebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
         .notify(((XBreakpointBase)breakpoint).getProject());
       return true;
     }

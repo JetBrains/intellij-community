@@ -78,8 +78,9 @@ public class AssertHint {
     if (minimumParamCount == null) {
       return null;
     }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
+    if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE) || !resolveResult.isValidResult()) {
       return null;
     }
     final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);

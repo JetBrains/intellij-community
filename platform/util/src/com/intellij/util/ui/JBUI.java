@@ -166,7 +166,7 @@ public class JBUI {
   }
 
   public static <T extends JBIcon> T scale(T icon) {
-    return (T)icon.withPreScaled(false);
+    return (T)icon.withJBUIPreScaled(false);
   }
 
   public static JBDimension emptySize() {
@@ -309,14 +309,14 @@ public class JBUI {
     /**
      * @return whether the icon size metrics are pre-scaled or not
      */
-    protected boolean isPreScaled() {
+    protected boolean isJBUIPreScaled() {
       return myInitialJBUIScale != 1f;
     }
 
     /**
      * Sets the icon size metrics to {@code preScaled}
      */
-    protected void setPreScaled(boolean preScaled) {
+    protected void setJBUIPreScaled(boolean preScaled) {
       myInitialJBUIScale = preScaled ? scale(1f) : 1f;
     }
 
@@ -325,8 +325,8 @@ public class JBUI {
      *
      * @return the icon (this or new instance) with size metrics set to {@code preScaled}
      */
-    public JBIcon withPreScaled(boolean preScaled) {
-      setPreScaled(preScaled);
+    public JBIcon withJBUIPreScaled(boolean preScaled) {
+      setJBUIPreScaled(preScaled);
       return this;
     }
 
@@ -399,12 +399,44 @@ public class JBUI {
           return super.scaleVal(value * myScale);
       }
     }
+  }
 
+  /**
+   * A ScalableJBIcon providing an immutable caching implementation of the {@link #scale(float)} method.
+   *
+   * @author tav
+   * @author Aleksey Pivovarov
+   */
+  public static abstract class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
+    private CachingScalableJBIcon myScaledIconCache;
+
+    protected CachingScalableJBIcon() {}
+
+    protected CachingScalableJBIcon(CachingScalableJBIcon icon) {
+      super(icon);
+      myScaledIconCache = null;
+    }
+
+    /**
+     * @return a new scaled copy of this icon, or the cached instance of the provided scale
+     */
     @Override
     public Icon scale(float scale) {
-      if (getScale() != scale) setScale(scale);
-      return this;
+      if (scale == 1f)  return this;
+
+      scale = scaleVal(scale, Scale.ARBITRARY); // accumulate scale
+      if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
+        myScaledIconCache = copy();
+        myScaledIconCache.setScale(scale);
+      }
+      return myScaledIconCache;
     }
+
+    /**
+     * @return a deep copy of this icon instance
+     */
+    @NotNull
+    protected abstract T copy();
   }
 
   public interface AuxJBUIScale {

@@ -15,16 +15,23 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -32,14 +39,20 @@ import static com.intellij.psi.search.GlobalSearchScope.EMPTY_SCOPE;
 
 class DirtyModulesHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
+  private final FileDocumentManager myFileDocManager;
+  private final PsiDocumentManager myPsiDocManager;
   private final Set<Module> myChangedModules = ContainerUtil.newHashSet();
   private final Set<Module> myChangedModulesDuringCompilation = ContainerUtil.newHashSet();
   private final Object myLock = new Object();
 
   private boolean myCompilationPhase;
 
-  public DirtyModulesHolder(@NotNull CompilerReferenceServiceImpl service){
+  public DirtyModulesHolder(@NotNull CompilerReferenceServiceImpl service,
+                            FileDocumentManager fileDocumentManager,
+                            PsiDocumentManager psiDocumentManager){
     myService = service;
+    myFileDocManager = fileDocumentManager;
+    myPsiDocManager = psiDocumentManager;
   }
 
   void compilerActivityStarted() {
@@ -60,13 +73,23 @@ class DirtyModulesHolder extends UserDataHolderBase {
   }
 
   GlobalSearchScope getDirtyScope() {
-    return CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () -> {
-      synchronized (myLock) {
-        final GlobalSearchScope dirtyScope =
-          myChangedModules.stream().map(Module::getModuleWithDependentsScope).reduce(EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
-        return CachedValueProvider.Result.create(dirtyScope, PsiModificationTracker.MODIFICATION_COUNT, myService);
+    synchronized (myLock) {
+      final Set<Module> unCommittedModules = new SmartHashSet<>(0);
+      for (Document document : myFileDocManager.getUnsavedDocuments()) {
+        final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
+        if (m != null && !myChangedModules.contains(m)) unCommittedModules.add(m);
       }
-    });
+      for (Document document : ReadAction.compute(() -> myPsiDocManager.getUncommittedDocuments())) {
+        final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
+        if (m != null && !myChangedModules.contains(m)) unCommittedModules.add(m);
+      }
+      GlobalSearchScope dirtyCommittedScope = CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () ->
+        CachedValueProvider.Result.create(addModulesWithDependentToScope(myChangedModules, EMPTY_SCOPE), PsiModificationTracker.MODIFICATION_COUNT, myService));
+      if (unCommittedModules.isEmpty()) {
+        return dirtyCommittedScope;
+      }
+      return addModulesWithDependentToScope(unCommittedModules, dirtyCommittedScope);
+    }
   }
 
   boolean contains(VirtualFile file) {
@@ -117,20 +140,28 @@ class DirtyModulesHolder extends UserDataHolderBase {
       }
 
       void fileChanged(VirtualFile file) {
-        if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
-          final Module module = myService.getFileIndex().getModuleForFile(file);
-          if (module != null) {
-            synchronized (myLock) {
-              if (myCompilationPhase) {
-                myChangedModulesDuringCompilation.add(module);
-              } else {
-                myChangedModules.add(module);
-              }
+        final Module module = getModuleForSourceContentFile(file);
+        if (module != null) {
+          synchronized (myLock) {
+            if (myCompilationPhase) {
+              myChangedModulesDuringCompilation.add(module);
+            } else {
+              myChangedModules.add(module);
             }
           }
         }
       }
     }, myService.getProject());
+  }
 
+  private Module getModuleForSourceContentFile(VirtualFile file) {
+    if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
+      return myService.getFileIndex().getModuleForFile(file);
+    }
+    return null;
+  }
+
+  private static GlobalSearchScope addModulesWithDependentToScope(Collection<Module> modules, GlobalSearchScope baseScope) {
+    return modules.stream().map(Module::getModuleWithDependentsScope).reduce(baseScope, (s1, s2) -> s1.union(s2));
   }
 }

@@ -17,8 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -101,7 +99,7 @@ public class TestUtils {
   }
 
   public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
-    return method != null && AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
+    return method != null && AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, true);
   }
 
   public static boolean isAnnotatedTestMethod(@Nullable PsiMethod method) {

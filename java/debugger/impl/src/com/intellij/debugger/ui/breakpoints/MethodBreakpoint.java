@@ -156,33 +156,35 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       for (Method method : classType.methods()) {
         if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
           List<Location> allLineLocations = method.allLineLocations();
-          if (isWatchEntry()) {
-            createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
-          }
-          if (isWatchExit()) {
-            MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
-              int myLastLine = 0;
-              @Override
-              public void visitLineNumber(int line, Label start) {
-                myLastLine = line;
-              }
-
-              @Override
-              public void visitInsn(int opcode) {
-                switch (opcode) {
-                  case Opcodes.RETURN:
-                  case Opcodes.IRETURN:
-                  case Opcodes.FRETURN:
-                  case Opcodes.ARETURN:
-                  case Opcodes.LRETURN:
-                  case Opcodes.DRETURN:
-                  //case Opcodes.ATHROW:
-                    allLineLocations.stream()
-                      .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
+          if (!allLineLocations.isEmpty()) {
+            if (isWatchEntry()) {
+              createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
+            }
+            if (isWatchExit()) {
+              MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
+                int myLastLine = 0;
+                @Override
+                public void visitLineNumber(int line, Label start) {
+                  myLastLine = line;
                 }
-              }
-            });
+
+                @Override
+                public void visitInsn(int opcode) {
+                  switch (opcode) {
+                    case Opcodes.RETURN:
+                    case Opcodes.IRETURN:
+                    case Opcodes.FRETURN:
+                    case Opcodes.ARETURN:
+                    case Opcodes.LRETURN:
+                    case Opcodes.DRETURN:
+                    //case Opcodes.ATHROW:
+                      allLineLocations.stream()
+                        .filter(l -> l.lineNumber() == myLastLine)
+                        .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
+                  }
+                }
+              });
+            }
           }
           if (base) {
             // desired class found - now also track all new classes
@@ -453,7 +455,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return false;
   }
 
-  private boolean isEmulated() {
+  public boolean isEmulated() {
     return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
   }
 
@@ -508,10 +510,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer) {
     MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
     classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
-    subtypes(classType, inheritance).forEach(consumer);
-  }
-
-  private static Stream<ReferenceType> subtypes(ReferenceType type, MultiMap<ReferenceType, ReferenceType> inheritance) {
-    return StreamEx.of(type).append(StreamEx.of(inheritance.get(type)).flatMap(t -> subtypes(t, inheritance)));
+    StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).forEach(consumer);
   }
 }

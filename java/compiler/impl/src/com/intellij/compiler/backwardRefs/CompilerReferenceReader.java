@@ -66,7 +66,7 @@ class CompilerReferenceReader {
     final LightRef.NamedLightRef[] hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
     if (hierarchy == null) return null;
     for (LightRef.NamedLightRef aClass : hierarchy) {
-      final LightRef overriderUsage = aClass.override(aClass.getName());
+      final LightRef overriderUsage = ref.override(aClass.getName());
       addUsages(overriderUsage, set);
     }
     return set;

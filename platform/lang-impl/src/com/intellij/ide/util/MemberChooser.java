@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -680,6 +681,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (leadNode != null) {
       myTree.setLeadSelectionPath(new TreePath(((DefaultMutableTreeNode)leadNode).getPath()));
     }
+  }
+
+  @Override
+  public void show() {
+    TransactionGuard.getInstance().submitTransactionAndWait(super::show);
   }
 
   @Override

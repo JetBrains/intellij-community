@@ -194,7 +194,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean isToBuildChildrenInBackground(Object element) {
-      return true;
+      return Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackground");
     }
   }
 

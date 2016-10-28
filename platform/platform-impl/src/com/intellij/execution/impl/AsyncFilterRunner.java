@@ -94,25 +94,35 @@ class AsyncFilterRunner {
     return applyResults.get();
   }
 
-  private void handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, int timeout) {
+  private boolean handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, long timeout) {
     try {
       future.get(timeout, TimeUnit.MILLISECONDS).applyHighlights(myHyperlinks);
       handled.set(true);
       myPendingFilterResults.remove(handled);
+      return true;
     }
     catch (TimeoutException ignored) {
+      return false;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
   
-  public void waitForPendingFilters() {
+  public boolean waitForPendingFilters(long timeoutMs) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    
+    long started = System.currentTimeMillis();
     while(!myPendingFilterResults.isEmpty()) {
       Map.Entry<AtomicBoolean, Future<FilterResults>> next = myPendingFilterResults.entrySet().iterator().next();
-      handleSynchronouslyIfQuick(next.getKey(), next.getValue(), 1000);
+
+      timeoutMs -= System.currentTimeMillis() - started;
+      if (timeoutMs < 1) return false;
+      
+      if (!handleSynchronouslyIfQuick(next.getKey(), next.getValue(), timeoutMs)) return false;
     }
+    
+    return true;
   }
 
   @NotNull

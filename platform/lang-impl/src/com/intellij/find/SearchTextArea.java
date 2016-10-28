@@ -38,6 +38,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -239,11 +240,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private static ActionButton createButton(AnAction action) {
     Presentation presentation = action.getTemplatePresentation();
-    Icon icon = presentation.getIcon();
-    Dimension d = new Dimension(JBUI.scale(16), JBUI.scale(16));
-    if (icon != null) {
-      d = new Dimension(JBUI.scale(icon.getIconWidth()), JBUI.scale(icon.getIconHeight()));
-    }
+    Dimension d = new JBDimension(16, 16);
     ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, d) {
       @Override
       protected DataContext getDataContext() {
