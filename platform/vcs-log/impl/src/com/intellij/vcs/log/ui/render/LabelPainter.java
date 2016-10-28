@@ -99,10 +99,7 @@ public class LabelPainter implements ReferencePainter {
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
-      calculatePresentation(refGroups, metrics, myHeight, myGreyBackground != null ? myGreyBackground : myBackground, false);
-    if (presentation.second > availableWidth) {
-      presentation = calculatePresentation(refGroups, metrics, myHeight, myGreyBackground != null ? myGreyBackground : myBackground, true);
-    }
+      calculatePresentation(refGroups, metrics, myHeight, myGreyBackground != null ? myGreyBackground : myBackground, availableWidth);
 
     myLabels = presentation.first;
     myWidth = presentation.second;
@@ -113,7 +110,7 @@ public class LabelPainter implements ReferencePainter {
                                                                                     @NotNull FontMetrics fontMetrics,
                                                                                     int height,
                                                                                     @NotNull Color background,
-                                                                                    boolean shorten) {
+                                                                                    int availableWidth) {
     int width = LEFT_PADDING + RIGHT_PADDING;
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
@@ -123,18 +120,22 @@ public class LabelPainter implements ReferencePainter {
       if (group.isExpanded()) {
         for (VcsRef ref : group.getRefs()) {
           LabelIcon labelIcon = new LabelIcon(height, background, ref.getType().getBackgroundColor());
-          String text = shorten ? shortenRefName(ref.getName()) : ref.getName();
+          width += labelIcon.getIconWidth() + MIDDLE_PADDING;
+
+          String text = shortenRefName(ref.getName(), fontMetrics, availableWidth - width);
+          width += fontMetrics.stringWidth(text);
 
           labels.add(Pair.create(text, labelIcon));
-          width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
         }
       }
       else {
         LabelIcon labelIcon = new LabelIcon(height, background, getGroupColors(group));
-        String text = shorten ? shortenRefName(group.getName()) : group.getName();
+        width += labelIcon.getIconWidth() + MIDDLE_PADDING;
+
+        String text = shortenRefName(group.getName(), fontMetrics, availableWidth - width);
+        width += fontMetrics.stringWidth(text);
 
         labels.add(Pair.create(text, labelIcon));
-        width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
       }
     }
 
@@ -161,12 +162,22 @@ public class LabelPainter implements ReferencePainter {
   }
 
   @NotNull
-  private static String shortenRefName(@NotNull String refName) {
-    int textLength = refName.length();
-    if (textLength > MAX_LENGTH) {
+  private static String shortenRefName(@NotNull String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
+    if (fontMetrics.stringWidth(refName) > availableWidth && refName.length() > MAX_LENGTH) {
       int separatorIndex = refName.indexOf(SEPARATOR);
       if (separatorIndex > TWO_DOTS.length()) {
         refName = TWO_DOTS + refName.substring(separatorIndex);
+      }
+
+      if (fontMetrics.stringWidth(refName) <= availableWidth) return refName;
+
+      if (availableWidth > 0) {
+        for (int i = refName.length(); i > MAX_LENGTH; i--) {
+          String result = StringUtil.shortenTextWithEllipsis(refName, i, 0, THREE_DOTS);
+          if (fontMetrics.stringWidth(result) <= availableWidth) {
+            return result;
+          }
+        }
       }
       return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
     }
