@@ -444,9 +444,9 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  public boolean isBreakpointActive(final XBreakpoint<?> b) {
+  public boolean isBreakpointActive(@NotNull XBreakpoint<?> b) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b);
+    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase)b).isDisposed();
   }
 
   @Override

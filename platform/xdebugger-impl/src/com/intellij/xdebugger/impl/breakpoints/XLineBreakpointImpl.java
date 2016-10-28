@@ -61,7 +61,6 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   @Nullable private RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
-  private boolean myDisposed;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,
@@ -78,7 +77,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public void updateUI() {
-    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
@@ -209,9 +208,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Override
-  public void dispose() {
+  protected void doDispose() {
     removeHighlighter();
-    myDisposed = true;
   }
 
   private void removeHighlighter() {
