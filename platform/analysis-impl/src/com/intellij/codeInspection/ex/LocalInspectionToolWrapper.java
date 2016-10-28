@@ -27,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 
@@ -36,7 +35,6 @@ import java.util.Map;
  */
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
-  @TestOnly
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
     super(tool, ourEPMap.getValue().get(tool.getShortName()));
   }

@@ -2815,6 +2815,10 @@
                      key="junit5.assertions.converter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5AssertionsConverterInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5Converter" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.converter.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.junit.JUnit5ConverterInspection"/>
   </extensions>
 
 </idea-plugin>

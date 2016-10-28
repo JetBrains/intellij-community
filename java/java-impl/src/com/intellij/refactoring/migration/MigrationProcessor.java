@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringHelper;
@@ -42,10 +43,16 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   private final MigrationMap myMigrationMap;
   private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
   private PsiMigration myPsiMigration;
+  private final GlobalSearchScope mySearchScope;
 
   public MigrationProcessor(Project project, MigrationMap migrationMap) {
+    this(project, migrationMap, GlobalSearchScope.projectScope(project));
+  }
+
+  public MigrationProcessor(Project project, MigrationMap migrationMap, GlobalSearchScope scope) {
     super(project);
     myMigrationMap = migrationMap;
+    mySearchScope = scope;
     myPsiMigration = startMigration(project);
   }
 
@@ -88,10 +95,10 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         UsageInfo[] usages;
         if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          usages = MigrationUtil.findPackageUsages(myProject, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findPackageUsages(myProject, myPsiMigration, entry.getOldName(), mySearchScope);
         }
         else {
-          usages = MigrationUtil.findClassUsages(myProject, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findClassUsages(myProject, myPsiMigration, entry.getOldName(), mySearchScope);
         }
 
         for (UsageInfo usage : usages) {

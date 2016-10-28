@@ -35,6 +35,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnit5AssertionsConverterInspection extends BaseInspection {
+  private String myFrameworkName = "JUnit5";;
+
+  JUnit5AssertionsConverterInspection(String frameworkName) {
+    myFrameworkName = frameworkName;
+  }
+
+  public JUnit5AssertionsConverterInspection() {
+  }
 
   @Override
   @NotNull
@@ -61,7 +69,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     return new UseOfObsoleteAssertVisitor();
   }
 
-  private static class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
+  private class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -97,7 +105,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         if (file instanceof PsiClassOwner) {
           for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
             TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
-            if (testFramework != null && "JUnit5".equals(testFramework.getName())) {
+            if (testFramework != null && myFrameworkName.equals(testFramework.getName())) {
               String methodName = psiMethod.getName();
               registerMethodCallError(expression, name,
                                       getNewAssertClassName(methodName),
@@ -123,7 +131,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     }
   }
 
-  private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
+  static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     private final String myBaseClassName;
 
     public ReplaceObsoleteAssertsFix(String baseClassName) {
