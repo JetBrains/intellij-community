@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -211,8 +212,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    return isServiceEnabled() &&
-           !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
+    if (!isServiceEnabled()) return false;
+    PsiFile file = ReadAction.compute(() -> element.getContainingFile());
+    return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
   }
 
   private boolean isServiceEnabled() {
