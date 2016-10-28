@@ -108,10 +108,6 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       public void fileStatusesChanged() {
         updateCrumbs();
       }
-
-      @Override
-      public void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
-      }
     }, this);
 
     project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {

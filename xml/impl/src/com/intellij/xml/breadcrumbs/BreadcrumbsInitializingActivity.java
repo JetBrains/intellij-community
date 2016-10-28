@@ -46,7 +46,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       return;
     }
 
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener(project));
 
