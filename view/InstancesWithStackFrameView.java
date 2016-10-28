@@ -42,7 +42,7 @@ class InstancesWithStackFrameView {
     if (isArrayType(className)) {
       stackTraceLabel = new JBLabel(TEXT_FOR_ARRAYS, SwingConstants.CENTER);
     } else {
-      ActionLink actionLink = new ActionLink("Enable tracking for calls of constructors", MemoryViewIcons.CLASS_TRACKED, new AnAction() {
+      ActionLink actionLink = new ActionLink("Enable tracking for new instances", MemoryViewIcons.CLASS_TRACKED, new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           InstancesTracker.getInstance(debugSession.getProject()).add(className, TrackingType.CREATION);
@@ -54,6 +54,7 @@ class InstancesWithStackFrameView {
       stackTraceLabel = actionLink;
     }
 
+    mySplitter.setSplitterProportionKey("InstancesWithStackFrameView.SplitterKey");
 
     JComponent stackComponent = new JBScrollPane(list);
 
@@ -86,6 +87,9 @@ class InstancesWithStackFrameView {
         List<StackFrameDescriptor> stack = tracker.getStack(debugSession, ref);
         if (stack != null) {
           list.setFrame(stack);
+          if(mySplitter.getProportion() == 1.f) {
+            mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
+          }
           return;
         }
         list.setEmptyText(EMPTY_TEXT_WHEN_STACK_NOT_FOUND);
