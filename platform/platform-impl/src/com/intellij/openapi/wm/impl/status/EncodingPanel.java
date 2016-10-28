@@ -56,8 +56,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
@@ -147,13 +145,10 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     // should update to reflect encoding-from-content
-    EncodingManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
-          Document document = evt.getSource() instanceof Document ? (Document)evt.getSource() : null;
-          updateForDocument(document);
-        }
+    EncodingManager.getInstance().addPropertyChangeListener(evt -> {
+      if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
+        Document document = evt.getSource() instanceof Document ? (Document)evt.getSource() : null;
+        updateForDocument(document);
       }
     }, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
