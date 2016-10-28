@@ -55,6 +55,22 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/compilerReferenceFindUsages/";
   }
 
+  public void testMethodUsageInClassHierarchy() throws Exception {
+    configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
+    PsiMethod methodToSearch = findClass("Foo").findMethodsByName("someMethod", false)[0];
+    assertOneElement(MethodReferencesSearch.search(methodToSearch).findAll());
+    myCompilerTester.rebuild();
+    assertOneElement(MethodReferencesSearch.search(methodToSearch).findAll());
+  }
+
+  public void testMethodUsageInClassHierarchy2() throws Exception {
+    configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
+    PsiMethod methodToSearch = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE).findMethodsByName("run", false)[0];
+    assertOneElement(MethodReferencesSearch.search(methodToSearch).findAll());
+    myCompilerTester.rebuild();
+    assertOneElement(MethodReferencesSearch.search(methodToSearch).findAll());
+  }
+
   public void testLibMethodUsage() throws Exception {
     configureByFile(getName() + "/Foo.java");
     myCompilerTester.rebuild();
