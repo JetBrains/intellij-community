@@ -66,9 +66,9 @@ public class BackwardReferenceIndexWriter {
   }
 
   static void initialize(@NotNull final CompileContext context) {
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
-      final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-      final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
       boolean isRebuild = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context);
 
       if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context))) {
@@ -85,6 +85,8 @@ public class BackwardReferenceIndexWriter {
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
         ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir), isRebuild);
       }
+    } else {
+      CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
     }
   }
 
