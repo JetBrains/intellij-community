@@ -26,7 +26,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.rt.execution.application.AppMain;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
@@ -63,7 +62,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
           return proxy;
         }
-        catch (IOException e) {
+        catch (Exception e) {
           Logger.getInstance(ProcessProxy.class).warn(e);
         }
       }

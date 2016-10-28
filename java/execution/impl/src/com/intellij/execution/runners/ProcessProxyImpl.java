@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 
 /**
  * @author ven
@@ -37,19 +39,34 @@ import java.net.ServerSocket;
 class ProcessProxyImpl implements ProcessProxy {
   static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
 
-  private final ServerSocket mySocket;
+  private final AsynchronousServerSocketChannel myChannel;
+  private final int myPort;
+
   private final Object myLock = new Object();
-  private Writer myWriter;
+  private AsynchronousSocketChannel myConnection;
   private int myPid;
 
   ProcessProxyImpl() throws IOException {
-    mySocket = new ServerSocket();
-    mySocket.bind(new InetSocketAddress("127.0.0.1", 0));
-    mySocket.setSoTimeout(10000);
+    myChannel = AsynchronousServerSocketChannel.open()
+      .bind(new InetSocketAddress("127.0.0.1", 0))
+      .setOption(StandardSocketOptions.SO_REUSEADDR, true);
+    myPort = ((InetSocketAddress)myChannel.getLocalAddress()).getPort();
+
+    myChannel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
+      @Override
+      public void completed(AsynchronousSocketChannel channel, Void attachment) {
+        synchronized (myLock) {
+          myConnection = channel;
+        }
+      }
+
+      @Override
+      public void failed(Throwable t, Void attachment) { }
+    });
   }
 
   int getPortNumber() {
-    return mySocket.getLocalPort();
+    return myPort;
   }
 
   @Override
@@ -57,15 +74,11 @@ class ProcessProxyImpl implements ProcessProxy {
     processHandler.putUserData(KEY, this);
 
     try {
-      @SuppressWarnings("SocketOpenedButNotSafelyClosed") OutputStreamWriter writer = new OutputStreamWriter(mySocket.accept().getOutputStream(), "US-ASCII");
-
       int pid = -1;
       if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
         pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
       }
-
       synchronized (myLock) {
-        myWriter = writer;
         myPid = pid;
       }
     }
@@ -76,10 +89,9 @@ class ProcessProxyImpl implements ProcessProxy {
 
   private void writeLine(String s) {
     try {
+      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes("US-ASCII"));
       synchronized (myLock) {
-        myWriter.write(s);
-        myWriter.write('\n');
-        myWriter.flush();
+        myConnection.write(out);
       }
     }
     catch (IOException e) {
@@ -91,7 +103,7 @@ class ProcessProxyImpl implements ProcessProxy {
   public boolean canSendBreak() {
     if (SystemInfo.isWindows) {
       synchronized (myLock) {
-        if (myWriter == null) return false;
+        if (myConnection == null) return false;
       }
       return new File(PathManager.getBinPath(), "breakgen.dll").exists();
     }
@@ -108,7 +120,7 @@ class ProcessProxyImpl implements ProcessProxy {
   @Override
   public boolean canSendStop() {
     synchronized (myLock) {
-      return myWriter != null;
+      return myConnection != null;
     }
   }
 
@@ -135,11 +147,11 @@ class ProcessProxyImpl implements ProcessProxy {
   public void destroy() {
     try {
       synchronized (myLock) {
-        if (myWriter != null) {
-          myWriter.close();
+        if (myConnection != null) {
+          myConnection.close();
         }
       }
-      mySocket.close();
+      myChannel.close();
     }
     catch (IOException e) {
       Logger.getInstance(ProcessProxy.class).warn(e);
