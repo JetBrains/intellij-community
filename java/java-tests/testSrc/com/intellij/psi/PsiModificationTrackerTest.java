@@ -18,11 +18,14 @@ package com.intellij.psi;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -383,5 +386,18 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     setContentOnDisk(file, null, text, CharsetToolkit.UTF8_CHARSET);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return PsiManager.getInstance(getProject()).findFile(virtualFile);
+  }
+
+  public void testRootsChangeIncreasesCounts() {
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    long mc = tracker.getModificationCount();
+    long js = tracker.getJavaStructureModificationCount();
+    long ocb = tracker.getOutOfCodeBlockModificationCount();
+
+    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.INSTANCE, false, true));
+
+    assertTrue(mc != tracker.getModificationCount());
+    assertTrue(js != tracker.getJavaStructureModificationCount());
+    assertTrue(ocb != tracker.getOutOfCodeBlockModificationCount());
   }
 }
