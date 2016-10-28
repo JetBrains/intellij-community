@@ -363,18 +363,4 @@ public class MethodUtils {
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
   }
-
-  @Contract("null -> false")
-  public static boolean isCompareToCall(final @Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null ||
-      !HardcodedMethodConstants.COMPARE_TO.equals(methodCallExpression.getMethodExpression().getReferenceName())) {
-      return false;
-    }
-    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-    return isCompareTo(psiMethod);
-  }
 }
