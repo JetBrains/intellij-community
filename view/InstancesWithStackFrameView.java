@@ -3,6 +3,7 @@ package org.jetbrains.debugger.memory.view;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.xdebugger.XDebugSession;
@@ -24,6 +25,7 @@ class InstancesWithStackFrameView {
   private static final float DEFAULT_SPLITTER_PROPORTION = 0.7f;
   private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
   private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
+  private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
   private static final List<StackFrameDescriptor> EMPTY_FRAME = Collections.emptyList();
 
   private float myHidedProportion;
@@ -36,15 +38,22 @@ class InstancesWithStackFrameView {
     mySplitter.setFirstComponent(new JBScrollPane(tree));
 
     list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
-    ActionLink actionLink = new ActionLink("Enable tracking for calls of constructors", MemoryViewIcons.CLASS_TRACKED, new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        InstancesTracker.getInstance(debugSession.getProject()).add(className, TrackingType.CREATION);
-      }
-    });
+    JLabel stackTraceLabel;
+    if (isArrayType(className)) {
+      stackTraceLabel = new JBLabel(TEXT_FOR_ARRAYS, SwingConstants.CENTER);
+    } else {
+      ActionLink actionLink = new ActionLink("Enable tracking for calls of constructors", MemoryViewIcons.CLASS_TRACKED, new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          InstancesTracker.getInstance(debugSession.getProject()).add(className, TrackingType.CREATION);
+        }
+      });
 
-    actionLink.setHorizontalAlignment(SwingConstants.CENTER);
-    actionLink.setPaintUnderline(false);
+      actionLink.setHorizontalAlignment(SwingConstants.CENTER);
+      actionLink.setPaintUnderline(false);
+      stackTraceLabel = actionLink;
+    }
+
 
     JComponent stackComponent = new JBScrollPane(list);
 
@@ -61,12 +70,12 @@ class InstancesWithStackFrameView {
       @Override
       public void classRemoved(@NotNull String name) {
         if (Objects.equals(name, className)) {
-          mySplitter.setSecondComponent(actionLink);
+          mySplitter.setSecondComponent(stackTraceLabel);
         }
       }
     }, tree);
 
-    mySplitter.setSecondComponent(instancesTracker.isTracked(className) ? stackComponent : actionLink);
+    mySplitter.setSecondComponent(instancesTracker.isTracked(className) ? stackComponent : stackTraceLabel);
 
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
@@ -90,6 +99,10 @@ class InstancesWithStackFrameView {
 
   JComponent getComponent() {
     return mySplitter;
+  }
+
+  private static boolean isArrayType(@NotNull String className) {
+    return className.contains("[]");
   }
 
   @SuppressWarnings("unused")
