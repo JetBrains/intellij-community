@@ -399,6 +399,7 @@ def getProperties(String home, String buildNumber) {
                 module("blaze-common")
                 module("blaze-cpp")
                 module("blaze-java")
+                module("blaze-testing")
               }
               fileset(dir: "$home/../vendor/google3/blaze/base/lib") { include(name: "*.jar") }
             }
