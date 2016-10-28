@@ -114,17 +114,22 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
+  private MavenMergingUpdateQueue mySaveQueue;
+  private static final int SAVE_DELAY = 1000;
+
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
   }
 
   public MavenProjectsManager(Project project) {
     super(project);
-    myEmbeddersManager = new MavenEmbeddersManager(myProject);
+    myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), null);
   }
 
+  @Override
   public MavenProjectsManagerState getState() {
     if (isInitialized()) {
       applyTreeToState();
@@ -132,12 +137,19 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myState;
   }
 
+  @Override
   public void loadState(MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
       scheduleUpdateAllProjects(false);
     }
+  }
+
+  @Override
+  public void disposeComponent() {
+    super.disposeComponent();
+    Disposer.dispose(mySaveQueue);
   }
 
   public ModificationTracker getModificationTracker() {
@@ -324,14 +336,20 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
   }
 
+  @Override
   public void save() {
     if (myProjectsTree != null) {
-      try {
-        myProjectsTree.save(getProjectsTreeFile());
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
-      }
+      mySaveQueue.queue(new Update(MavenProjectsManager.this) {
+        @Override
+        public void run() {
+          try {
+            myProjectsTree.save(getProjectsTreeFile());
+          }
+          catch (IOException e) {
+            MavenLog.LOG.info(e);
+          }
+        }
+      });
     }
   }
 
@@ -507,6 +525,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       myFoldersResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
       myPostProcessor.stop();
+      mySaveQueue.flush();
 
       if (isUnitTestMode()) {
         FileUtil.delete(getProjectsTreesDir());
