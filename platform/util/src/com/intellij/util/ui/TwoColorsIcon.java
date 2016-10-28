@@ -51,6 +51,16 @@ public class TwoColorsIcon extends ColorIcon {
     mySecondColor = secondColor != null ? secondColor : Gray.TRANSPARENT;
   }
 
+  protected TwoColorsIcon(TwoColorsIcon icon) {
+    super(icon);
+    mySecondColor = icon.mySecondColor;
+  }
+
+  @Override
+  protected TwoColorsIcon copy() {
+    return new TwoColorsIcon(this);
+  }
+
   @Override
   public void paintIcon(final Component component, Graphics g, int x, int y) {
     Graphics2D g2d = (Graphics2D)g.create();

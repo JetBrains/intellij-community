@@ -457,6 +457,8 @@ public final class IconLoader {
 
     @Override
     public Icon scale(float scale) {
+      if (scale == 1f) return this;
+
       if (!isValid()) getRealIcon(); // force state update & cache reset
 
       Icon icon = myScaledIconsCache.getScaledIcon(scale);
@@ -578,10 +580,12 @@ public final class IconLoader {
 
     @Override
     public Icon scale(float scale) {
+      if (scale == 1f) return this;
+
       getOrComputeIcon();
       if (myIcon instanceof ScalableIcon) {
-        myIcon = ((ScalableIcon)myIcon).scale(scale);
-        return super.scale(scale);
+        setScale(scaleVal(scale, Scale.ARBITRARY));
+        myIcon = ((ScalableIcon)myIcon).scale(getScale());
       }
       return this;
     }

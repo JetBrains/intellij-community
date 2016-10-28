@@ -23,6 +23,11 @@ import javax.swing.*;
  */
 public interface ScalableIcon extends Icon {
   /**
+   * The method does either of the following:
+   * - creates/retrieves a scaled version of this icon and returns it.
+   * - scales this icon and returns it.
+   * The exact behavior is implementation dependant.
+   *
    * @param scaleFactor scale
    * @return scaled icon with width getIconWidth() * scaleFactor and height getIconHeight() * scaleFactor
    */
