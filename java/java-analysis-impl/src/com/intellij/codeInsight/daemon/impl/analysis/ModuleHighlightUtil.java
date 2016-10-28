@@ -393,7 +393,9 @@ public class ModuleHighlightUtil {
 
       if (!(PsiJavaModule.JAVA_BASE.equals(requiredName) || JavaModuleGraphUtil.reads(refModule, targetModule))) {
         String message = JavaErrorMessages.message("module.not.in.requirements", refModuleName, requiredName);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+        QuickFixAction.registerQuickFixAction(info, new AddRequiredModuleFix(refModule, requiredName));
+        return info;
       }
     }
 
