@@ -34,10 +34,10 @@ import java.util.Map;
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
-  public static final int CURRENT_VERSION = 3;
+  public static final int CURRENT_VERSION = 4;
   private StepicUser myUser = new StepicUser();
   private Course myCourse;
-  public int VERSION = 3;
+  public int VERSION = 4;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
