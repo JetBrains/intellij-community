@@ -21,6 +21,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -113,7 +114,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
       @Override
       public boolean process(PsiClass aClass) {
-        if (aClass.getContainingFile().getVirtualFile() == null || !aClass.isPhysical()) return true;
+        if (!isPhysical(aClass)) return true;
         if (isAnnotation && !aClass.isAnnotationType()) return true;
         if (innerMatcher != null) {
           if (aClass.getContainingClass() == null) return true;
@@ -123,5 +124,10 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
         return processor.process(aClass);
       }
     }, parameters.getSearchScope(), parameters.getIdFilter());
+  }
+
+  private static boolean isPhysical(PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    return file != null && file.getVirtualFile() != null && aClass.isPhysical();
   }
 }
