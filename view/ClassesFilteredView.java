@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
@@ -157,31 +156,9 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, myTable);
 
-    myTable.addMouseMotionListener(new MouseMotionListener() {
-      @Override
-      public void mouseDragged(MouseEvent e) {
-      }
-
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        final int col = myTable.columnAtPoint(e.getPoint());
-        final int row = myTable.rowAtPoint(e.getPoint());
-        if (col == -1 || row == -1 || col != DIFF_COLUMN_INDEX) {
-          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-          return;
-        }
-
-        final int modelRow = myTable.convertRowIndexToModel(row);
-
-        final ReferenceType ref = (ReferenceType) myTable.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
-        final ConstructorInstancesTracker tracker = myConstructorTrackedClasses.getOrDefault(ref, null);
-        if (tracker != null && tracker.isReady() && tracker.getCount() > 0) {
-          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else {
-          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-      }
-    });
+    myTable.addMouseMotionListener(new MyMouseMotionListener());
+    myTable.addMouseListener(new MyOpenNewInstancesListener());
+    new MyDoubleClickListener().installOn(myTable);
 
     myTable.addKeyListener(new KeyAdapter() {
       @Override
@@ -222,44 +199,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       protected void textChanged(DocumentEvent e) {
         myTable.setFilterPattern(myFilterTextField.getText());
-      }
-    });
-
-    Function<MouseEvent, Boolean> isOpenNewInstancesClick = e -> {
-      int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
-      ReferenceType ref = myTable.getSelectedClass();
-      return column == DIFF_COLUMN_INDEX && ref != null && getStrategy(ref) != null;
-    };
-
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(MouseEvent event) {
-        if (!isOpenNewInstancesClick.apply(event)) {
-          handleClassSelection(myTable.getSelectedClass());
-          return true;
-        }
-
-        return false;
-      }
-    }.installOn(myTable);
-
-    myTable.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() != 1 || !isOpenNewInstancesClick.apply(e) || e.getButton() != MouseEvent.BUTTON1) {
-          return;
-        }
-
-        ReferenceType ref = myTable.getSelectedClass();
-        TrackerForNewInstances strategy = ref == null ? null : getStrategy(ref);
-        final CreationPositionTracker tracker = CreationPositionTracker.getInstance(myDebugSession.getProject());
-        if (strategy != null && strategy.isReady() && strategy.getCount() > 0 && tracker != null) {
-          List<ObjectReference> newInstances = strategy.getNewInstances();
-          tracker.pinStacks(myDebugSession, ref);
-          InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
-          Disposer.register(instancesWindow.getDisposable(), () -> tracker.unpinStacks(myDebugSession, ref));
-          instancesWindow.show();
-        }
       }
     });
 
@@ -396,7 +335,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
     if (myLastSuspendContext == null || !myLastSuspendContext.equals(getSuspendContext())) {
-      if(myIsTrackersActivated) {
+      if (myIsTrackersActivated) {
         commitAllTrackers();
       }
       updateClassesAndCounts();
@@ -478,5 +417,67 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     protected boolean hasIconsOutsideOfTextField() {
       return false;
     }
+  }
+
+  private class MyOpenNewInstancesListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (e.getClickCount() != 1 || e.getButton() != MouseEvent.BUTTON1 || !isShowNewInstancesEvent(e)) {
+        return;
+      }
+
+      final CreationPositionTracker tracker = CreationPositionTracker.getInstance(myDebugSession.getProject());
+      ReferenceType ref = myTable.getSelectedClass();
+      TrackerForNewInstances strategy = ref == null ? null : getStrategy(ref);
+      if (strategy != null && tracker != null) {
+        List<ObjectReference> newInstances = strategy.getNewInstances();
+        tracker.pinStacks(myDebugSession, ref);
+        InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
+        Disposer.register(instancesWindow.getDisposable(), () -> tracker.unpinStacks(myDebugSession, ref));
+        instancesWindow.show();
+      }
+    }
+  }
+
+  private class MyDoubleClickListener extends DoubleClickListener {
+    @Override
+    protected boolean onDoubleClick(MouseEvent event) {
+      if (!isShowNewInstancesEvent(event)) {
+        handleClassSelection(myTable.getSelectedClass());
+        return true;
+      }
+
+      return false;
+    }
+  }
+
+  private class MyMouseMotionListener implements MouseMotionListener {
+    @Override
+    public void mouseDragged(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+      if (isShowNewInstancesEvent(e)) {
+        myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      } else {
+        myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      }
+    }
+  }
+
+  private boolean isShowNewInstancesEvent(@NotNull MouseEvent e) {
+    final int col = myTable.columnAtPoint(e.getPoint());
+    final int row = myTable.rowAtPoint(e.getPoint());
+    if (col == -1 || row == -1 || myTable.convertColumnIndexToModel(col) != DIFF_COLUMN_INDEX) {
+      return false;
+    }
+
+    final int modelRow = myTable.convertRowIndexToModel(row);
+
+    final ReferenceType ref = (ReferenceType) myTable.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
+    final ConstructorInstancesTracker tracker = myConstructorTrackedClasses.getOrDefault(ref, null);
+
+    return tracker != null && tracker.isReady() && tracker.getCount() > 0;
   }
 }
