@@ -135,6 +135,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
         return scheme.isEqualToBundled(bundledScheme);
       }
+
+      @Override
+      public void reloaded() {
+        initEditableDefaultSchemesCopies();
+        initEditableBundledSchemesCopies();
+      }
     }
     mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
 
