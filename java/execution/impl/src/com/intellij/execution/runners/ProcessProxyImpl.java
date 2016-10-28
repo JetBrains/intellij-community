@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -72,8 +73,7 @@ class ProcessProxyImpl implements ProcessProxy {
   @Override
   public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
-
-    try {
+    execute(() -> {
       int pid = -1;
       if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
         pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
@@ -81,22 +81,16 @@ class ProcessProxyImpl implements ProcessProxy {
       synchronized (myLock) {
         myPid = pid;
       }
-    }
-    catch (Exception e) {
-      Logger.getInstance(ProcessProxy.class).warn(e);
-    }
+    });
   }
 
   private void writeLine(String s) {
-    try {
+    execute(() -> {
       ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes("US-ASCII"));
       synchronized (myLock) {
         myConnection.write(out);
       }
-    }
-    catch (IOException e) {
-      Logger.getInstance(ProcessProxy.class).warn(e);
-    }
+    });
   }
 
   @Override
@@ -145,15 +139,21 @@ class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public void destroy() {
-    try {
+    execute(() -> {
       synchronized (myLock) {
         if (myConnection != null) {
           myConnection.close();
         }
       }
-      myChannel.close();
+    });
+    execute(myChannel::close);
+  }
+
+  private static void execute(ThrowableRunnable<Exception> block) {
+    try {
+      block.run();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(ProcessProxy.class).warn(e);
     }
   }
