@@ -63,7 +63,7 @@ class EditorColorSchemeTest {
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
     <scheme name="Foo" version="142" parent_scheme="Default">
       <option name="EDITOR_FONT_SIZE" value="12" />
-      <option name="EDITOR_FONT_NAME" value="Menlo" />
+      <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
     </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
   }
