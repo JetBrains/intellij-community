@@ -2,6 +2,9 @@
 
 
 from __future__ import unicode_literals
+import io
+import os
+import subprocess
 import sys
 
 
@@ -311,9 +314,42 @@ def popen(command, mode='r', bufsize=-1):
     :type command: string
     :type mode: string
     :type bufsize: int
-    :rtype: io.FileIO[bytes]
+    :rtype: os._wrap_close
     """
     pass
+
+
+class _wrap_close:
+    def __init__(self, stream, proc):
+        """
+        :type stream: io.TextIOWrapper[unicode]
+        :type proc: subprocess.Popen
+        """
+        pass
+
+    def close(self):
+        """
+        :rtype: int | None
+        """
+        pass
+
+    def __enter__(self):
+        """
+        :rtype: os._wrap_close
+        """
+        pass
+
+    def __exit__(self, *args):
+        pass
+
+    def __getattr__(self, name):
+        pass
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[unicode]
+        """
+        pass
 
 
 def tmpfile():
