@@ -35,14 +35,9 @@ import java.net.ServerSocket;
  * @author ven
  */
 class ProcessProxyImpl implements ProcessProxy {
-  public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
-
-  public static final String PROPERTY_BIN_PATH = "idea.launcher.bin.path";
-  public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+  static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
 
   private final ServerSocket mySocket;
-
   private final Object myLock = new Object();
   private Writer myWriter;
   private int myPid;
