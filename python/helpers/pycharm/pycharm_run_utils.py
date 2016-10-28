@@ -30,8 +30,15 @@ def adjust_django_sys_path():
 def import_system_module(name):
   if sys.platform == "cli":    # hack for the ironpython
       return __import__(name)
-  f, filename, desc = imp.find_module(name)
-  return imp.load_module('pycharm_' + name, f, filename, desc)
+  try:
+    f, filename, desc = imp.find_module(name)
+    return imp.load_module('pycharm_' + name, f, filename, desc)
+  except:
+    # Hack for python files in a zip file. Imp doesnt work correctly in it.
+    import importlib
+    mod = importlib.import_module(name)
+    mod.__name__ = 'pycharm_' + name
+    return mod
 
 def getModuleName(prefix, cnt):
   return prefix + "%" + str(cnt)
