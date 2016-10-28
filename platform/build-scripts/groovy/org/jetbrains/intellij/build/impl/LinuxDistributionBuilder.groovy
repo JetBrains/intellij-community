@@ -38,11 +38,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.unix"
     buildContext.messages.progress("Building distributions for Linux")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/linux") {
-        if (!buildContext.includeBreakGenLibraries()) {
-          exclude(name: "libbreakgen*")
-        }
-      }
+      fileset(dir: "$buildContext.paths.communityHome/bin/linux")
       if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
         fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
           include(name: "libyjpagent-linux*.so")
