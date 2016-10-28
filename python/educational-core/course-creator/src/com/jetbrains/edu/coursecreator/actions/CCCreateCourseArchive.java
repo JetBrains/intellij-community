@@ -107,6 +107,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
+        archiveFolder.refresh(false, true);
         Course courseCopy = course.copy();
         replaceAnswerFilesWithTaskFiles(courseCopy);
         generateJson(archiveFolder, courseCopy);
