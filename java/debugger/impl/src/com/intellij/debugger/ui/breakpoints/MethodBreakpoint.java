@@ -153,44 +153,50 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     try {
-      for (Method method : classType.methods()) {
-        if (getMethodName().equals(method.name()) && mySignature.getName(debugProcess).equals(method.signature())) {
-          List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-          if (!allLineLocations.isEmpty()) {
-            if (isWatchEntry()) {
-              createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
-            }
-            if (isWatchExit()) {
-              MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
-                int myLastLine = 0;
-                @Override
-                public void visitLineNumber(int line, Label start) {
-                  myLastLine = line;
-                }
+      Method method = MethodBytecodeUtil.getLambdaMethod(classType);
+      if (method == null) {
+        for (Method m : classType.methods()) {
+          if (getMethodName().equals(m.name()) && mySignature.getName(debugProcess).equals(m.signature())) {
+            method = m;
+            break;
+          }
+        }
+      }
+      if (method != null) {
+        List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
+        if (!allLineLocations.isEmpty()) {
+          if (isWatchEntry()) {
+            createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
+          }
+          if (isWatchExit()) {
+            MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
+              int myLastLine = 0;
+              @Override
+              public void visitLineNumber(int line, Label start) {
+                myLastLine = line;
+              }
 
-                @Override
-                public void visitInsn(int opcode) {
-                  switch (opcode) {
-                    case Opcodes.RETURN:
-                    case Opcodes.IRETURN:
-                    case Opcodes.FRETURN:
-                    case Opcodes.ARETURN:
-                    case Opcodes.LRETURN:
-                    case Opcodes.DRETURN:
-                    //case Opcodes.ATHROW:
-                      allLineLocations.stream()
-                        .filter(l -> l.lineNumber() == myLastLine)
-                        .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
-                  }
+              @Override
+              public void visitInsn(int opcode) {
+                switch (opcode) {
+                  case Opcodes.RETURN:
+                  case Opcodes.IRETURN:
+                  case Opcodes.FRETURN:
+                  case Opcodes.ARETURN:
+                  case Opcodes.LRETURN:
+                  case Opcodes.DRETURN:
+                  //case Opcodes.ATHROW:
+                    allLineLocations.stream()
+                      .filter(l -> l.lineNumber() == myLastLine)
+                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
                 }
-              });
-            }
+              }
+            });
           }
-          if (base) {
-            // desired class found - now also track all new classes
-            createRequestForSubClasses(debugProcess, classType);
-          }
-          break;
+        }
+        if (base) {
+          // desired class found - now also track all new classes
+          createRequestForSubClasses(debugProcess, classType);
         }
       }
     }
@@ -358,6 +364,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+    if (isEmulated()) {
+      return true;
+    }
     if (getMethodName() == null || mySignature == null) {
       return false;
     }

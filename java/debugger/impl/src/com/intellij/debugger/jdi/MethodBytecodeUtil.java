@@ -16,8 +16,10 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,5 +221,28 @@ public class MethodBytecodeUtil {
         // case RET:
         return OBJECT_TYPE;
     }
+  }
+
+  @Nullable
+  public static Method getLambdaMethod(ReferenceType clsType) {
+    Ref<Method> methodRef = Ref.create();
+    if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
+      List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
+      if (applicableMethods.size() == 1) {
+        visit(clsType, applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
+            if (cls != null) {
+              Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
+              if (method != null) {
+                methodRef.set(method);
+              }
+            }
+          }
+        });
+      }
+    }
+    return methodRef.get();
   }
 }
