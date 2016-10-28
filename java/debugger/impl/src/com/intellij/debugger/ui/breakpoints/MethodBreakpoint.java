@@ -510,10 +510,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer) {
     MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
     classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
-    subtypes(classType, inheritance).forEach(consumer);
-  }
-
-  private static Stream<ReferenceType> subtypes(ReferenceType type, MultiMap<ReferenceType, ReferenceType> inheritance) {
-    return StreamEx.of(type).append(StreamEx.of(inheritance.get(type)).flatMap(t -> subtypes(t, inheritance)));
+    StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).forEach(consumer);
   }
 }
