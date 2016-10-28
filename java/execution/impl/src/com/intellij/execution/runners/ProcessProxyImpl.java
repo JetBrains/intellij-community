@@ -47,14 +47,13 @@ class ProcessProxyImpl implements ProcessProxy {
   private Writer myWriter;
   private int myPid;
 
-  public ProcessProxyImpl() throws IOException {
+  ProcessProxyImpl() throws IOException {
     mySocket = new ServerSocket();
     mySocket.bind(new InetSocketAddress("127.0.0.1", 0));
     mySocket.setSoTimeout(10000);
   }
 
-  @Override
-  public int getPortNumber() {
+  int getPortNumber() {
     return mySocket.getLocalPort();
   }
 

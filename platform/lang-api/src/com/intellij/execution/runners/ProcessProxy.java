@@ -19,8 +19,6 @@ import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProcessProxy {
-  int getPortNumber();
-
   void attach(@NotNull ProcessHandler processHandler);
 
   default boolean canSendBreak() { return true; }
