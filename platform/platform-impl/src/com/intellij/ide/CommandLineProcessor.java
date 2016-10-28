@@ -74,7 +74,7 @@ public class CommandLineProcessor {
       // HACK: PlatformProjectOpenProcessor agrees to open anything
       provider = null;
     }
-    if (provider != null || ProjectKt.isValidProjectPath(name, true)) {
+    if (provider != null || ProjectKt.isValidProjectPath(name)) {
       final Project result = ProjectUtil.openOrImport(name, null, true);
       if (result == null) {
         Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot Open Project");
