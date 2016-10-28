@@ -319,7 +319,7 @@ def popen(command, mode='r', bufsize=-1):
     pass
 
 
-class _wrap_close:
+class _wrap_close(io.TextIOWrapper[unicode]):
     def __init__(self, stream, proc):
         """
         :type stream: io.TextIOWrapper[unicode]
@@ -340,9 +340,6 @@ class _wrap_close:
         pass
 
     def __exit__(self, *args):
-        pass
-
-    def __getattr__(self, name):
         pass
 
     def __iter__(self):
