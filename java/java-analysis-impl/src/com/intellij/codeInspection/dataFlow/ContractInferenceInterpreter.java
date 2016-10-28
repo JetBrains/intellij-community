@@ -37,6 +37,7 @@ import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildr
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.getChildrenOfType;
+import static java.util.Collections.singletonList;
 
 class ContractInferenceInterpreter {
   private final LighterAST myTree;
@@ -56,25 +57,25 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  List<PreContract> inferContracts() {
-    LighterASTNode[] statements = getStatements(myBody);
-    if (statements.length == 0) return Collections.emptyList();
+  List<PreContract> inferContracts(List<LighterASTNode> statements) {
+    if (statements.isEmpty()) return Collections.emptyList();
 
-    if (statements.length == 1) {
-      if (statements[0].getTokenType() == RETURN_STATEMENT) {
-        List<PreContract> result = handleDelegation(findExpressionChild(myTree, statements[0]), false);
+    if (statements.size() == 1) {
+      LighterASTNode statement = statements.get(0);
+      if (statement.getTokenType() == RETURN_STATEMENT) {
+        List<PreContract> result = handleDelegation(findExpressionChild(myTree, statement), false);
         if (result != null) {
           return result;
         }
       }
-      else if (statements[0].getTokenType() == EXPRESSION_STATEMENT) {
-        LighterASTNode expr = findExpressionChild(myTree, statements[0]);
+      else if (statement.getTokenType() == EXPRESSION_STATEMENT) {
+        LighterASTNode expr = findExpressionChild(myTree, statement);
         List<PreContract> result = expr != null && expr.getTokenType() == METHOD_CALL_EXPRESSION ? handleDelegation(expr, false) : null;
         if (result != null) return result;
       }
     }
 
-    return visitStatements(Collections.singletonList(MethodContract.createConstraintArray(getParameters().size())), statements);
+    return visitStatements(singletonList(MethodContract.createConstraintArray(getParameters().size())), statements);
   }
 
   @Nullable
@@ -83,10 +84,8 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  private LighterASTNode[] getStatements(@Nullable LighterASTNode codeBlock) {
-    return codeBlock == null
-           ? LighterASTNode.EMPTY_ARRAY
-           : getChildrenOfType(myTree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET).toArray(LighterASTNode.EMPTY_ARRAY);
+  static List<LighterASTNode> getStatements(@Nullable LighterASTNode codeBlock, LighterAST tree) {
+    return codeBlock == null ? Collections.emptyList() : getChildrenOfType(tree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET);
   }
 
   @Nullable
@@ -101,7 +100,7 @@ class ContractInferenceInterpreter {
     }
 
     if (expression.getTokenType() == METHOD_CALL_EXPRESSION) {
-      return Collections.singletonList(new DelegationContract(ExpressionRange.create(expression, myBody.getStartOffset()), negated));
+      return singletonList(new DelegationContract(ExpressionRange.create(expression, myBody.getStartOffset()), negated));
     }
 
     return null;
@@ -155,7 +154,7 @@ class ContractInferenceInterpreter {
       return asPreContracts(toContracts(states, NOT_NULL_VALUE));
     }
     if (type == METHOD_CALL_EXPRESSION) {
-      return Collections.singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()),
+      return singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()),
                                                               ContainerUtil.map(states, Arrays::asList)));
     }
 
@@ -300,24 +299,24 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  private List<PreContract> visitStatements(List<ValueConstraint[]> states, LighterASTNode... statements) {
+  private List<PreContract> visitStatements(List<ValueConstraint[]> states, List<LighterASTNode> statements) {
     CodeBlockContracts result = new CodeBlockContracts();
     for (LighterASTNode statement : statements) {
       IElementType type = statement.getTokenType();
       if (type == BLOCK_STATEMENT) {
-        result.addAll(visitStatements(states, getStatements(getCodeBlock(statement))));
+        result.addAll(visitStatements(states, getStatements(getCodeBlock(statement), myTree)));
       }
       else if (type == IF_STATEMENT) {
         List<PreContract> conditionResults = visitExpression(states, findExpressionChild(myTree, statement));
 
-        LighterASTNode[] thenElse = getStatements(statement);
-        if (thenElse.length > 0) {
-          result.addAll(visitStatements(antecedentsReturning(conditionResults, TRUE_VALUE), thenElse[0]));
+        List<LighterASTNode> thenElse = getStatements(statement, myTree);
+        if (thenElse.size() > 0) {
+          result.addAll(visitStatements(antecedentsReturning(conditionResults, TRUE_VALUE), singletonList(thenElse.get(0))));
         }
 
         List<ValueConstraint[]> falseStates = antecedentsReturning(conditionResults, FALSE_VALUE);
-        if (thenElse.length > 1) {
-          result.addAll(visitStatements(falseStates, thenElse[1]));
+        if (thenElse.size() > 1) {
+          result.addAll(visitStatements(falseStates, singletonList(thenElse.get(1))));
         } else {
           states = falseStates;
           continue;
@@ -342,7 +341,7 @@ class ContractInferenceInterpreter {
         continue;
       }
       else if (type == DO_WHILE_STATEMENT) {
-        result.addAll(visitStatements(states, getStatements(statement)));
+        result.addAll(visitStatements(states, getStatements(statement, myTree)));
       }
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'

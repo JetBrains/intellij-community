@@ -18,13 +18,11 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -57,50 +55,52 @@ public class PurityInference {
     });
   }
 
-  @Nullable
-  static PurityInferenceResult doInferPurity(LighterASTNode body, LighterAST tree) {
-    List<LighterASTNode> mutatedRefs = new ArrayList<>();
-    Ref<Boolean> hasReturns = Ref.create(false);
-    List<LighterASTNode> calls = new ArrayList<>();
-    new RecursiveLighterASTNodeWalkingVisitor(tree) {
-      @Override
-      public void visitNode(@NotNull LighterASTNode element) {
-        IElementType type = element.getTokenType();
-        if (type == CLASS || type == ANONYMOUS_CLASS || type == LAMBDA_EXPRESSION) return;
+  static class PurityInferenceVisitor {
+    private final LighterAST tree;
+    private final LighterASTNode body;
+    private List<LighterASTNode> mutatedRefs = new ArrayList<>();
+    private boolean hasReturns;
+    private List<LighterASTNode> calls = new ArrayList<>();
 
-        if (type == ASSIGNMENT_EXPRESSION) {
-          mutatedRefs.add(tree.getChildren(element).get(0));
-        }
-        else if (type == RETURN_STATEMENT && JavaLightTreeUtil.findExpressionChild(tree, element) != null) {
-          hasReturns.set(true);
-        }
-        else if ((type == PREFIX_EXPRESSION || type == POSTFIX_EXPRESSION) && isMutatingOperation(element)) {
-          ContainerUtil.addIfNotNull(mutatedRefs, JavaLightTreeUtil.findExpressionChild(tree, element));
-        }
-        else if (isCall(element, type)) {
-          calls.add(element);
-        }
+    PurityInferenceVisitor(LighterAST tree, LighterASTNode body) {
+      this.tree = tree;
+      this.body = body;
+    }
 
-        super.visitNode(element);
+    void visitNode(LighterASTNode element) {
+      IElementType type = element.getTokenType();
+      if (type == ASSIGNMENT_EXPRESSION) {
+        mutatedRefs.add(tree.getChildren(element).get(0));
       }
-
-      private boolean isCall(@NotNull LighterASTNode element, IElementType type) {
-        return type == NEW_EXPRESSION && LightTreeUtil.firstChildOfType(tree, element, EXPRESSION_LIST) != null ||
-               type == METHOD_CALL_EXPRESSION;
+      else if (type == RETURN_STATEMENT && JavaLightTreeUtil.findExpressionChild(tree, element) != null) {
+        hasReturns = true;
       }
-
-      private boolean isMutatingOperation(@NotNull LighterASTNode element) {
-        return LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.PLUSPLUS) != null ||
-               LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.MINUSMINUS) != null;
+      else if ((type == PREFIX_EXPRESSION || type == POSTFIX_EXPRESSION) && isMutatingOperation(element)) {
+        ContainerUtil.addIfNotNull(mutatedRefs, JavaLightTreeUtil.findExpressionChild(tree, element));
       }
+      else if (isCall(element, type)) {
+        calls.add(element);
+      }
+    }
 
-    }.visitNode(body);
+    private boolean isCall(@NotNull LighterASTNode element, IElementType type) {
+      return type == NEW_EXPRESSION && LightTreeUtil.firstChildOfType(tree, element, EXPRESSION_LIST) != null ||
+             type == METHOD_CALL_EXPRESSION;
+    }
 
-    if (calls.size() > 1 || !hasReturns.get()) return null;
-    
-    int bodyStart = body.getStartOffset();
-    return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),
-                                     calls.isEmpty() ? null : ExpressionRange.create(calls.get(0), bodyStart));
+    private boolean isMutatingOperation(@NotNull LighterASTNode element) {
+      return LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.PLUSPLUS) != null ||
+             LightTreeUtil.firstChildOfType(tree, element, JavaTokenType.MINUSMINUS) != null;
+    }
+
+    @Nullable
+    PurityInferenceResult getResult() {
+      if (calls.size() > 1 || !hasReturns) return null;
+
+      int bodyStart = body.getStartOffset();
+      return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),
+                                       calls.isEmpty() ? null : ExpressionRange.create(calls.get(0), bodyStart));
+    }
   }
 
 }

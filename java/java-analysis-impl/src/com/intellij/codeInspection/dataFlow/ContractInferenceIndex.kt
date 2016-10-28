@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.JavaElementType
+import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.search.GlobalSearchScope
@@ -78,11 +79,36 @@ class ContractInferenceIndex : FileBasedIndexExtension<Int, MethodData>(), PsiDe
 }
 
 private fun calcData(tree: LighterAST, method: LighterASTNode): MethodData? {
-  val body = LightTreeUtil.firstChildOfType(tree, method, JavaElementType.CODE_BLOCK) ?: return null
+  val body = LightTreeUtil.firstChildOfType(tree, method, CODE_BLOCK) ?: return null
+  val statements = ContractInferenceInterpreter.getStatements(body, tree)
 
-  val nullity = NullityInference.doInferNullity(tree, body)
-  val purity = PurityInference.doInferPurity(body, tree)
-  val contracts = ContractInferenceInterpreter(tree, method, body).inferContracts()
+  val contracts = ContractInferenceInterpreter(tree, method, body).inferContracts(statements)
+
+  val nullityVisitor = NullityInference.NullityInferenceVisitor(tree, body)
+  val purityVisitor = PurityInference.PurityInferenceVisitor(tree, body)
+  for (statement in statements) {
+    walkMethodBody(tree, statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
+  }
+
+  return createData(body, contracts, nullityVisitor.result, purityVisitor.result)
+}
+
+private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
+  object : RecursiveLighterASTNodeWalkingVisitor(tree) {
+    override fun visitNode(element: LighterASTNode) {
+      val type = element.tokenType
+      if (type === CLASS || type === ANONYMOUS_CLASS || type === LAMBDA_EXPRESSION) return
+
+      processor(element)
+      super.visitNode(element)
+    }
+  }.visitNode(root)
+}
+
+private fun createData(body: LighterASTNode,
+                       contracts: List<PreContract>,
+                       nullity: NullityInferenceResult?,
+                       purity: PurityInferenceResult?): MethodData? {
   if (nullity == null && purity == null && !contracts.isNotEmpty()) return null
 
   return MethodData(nullity, purity, contracts, body.startOffset, body.endOffset)
