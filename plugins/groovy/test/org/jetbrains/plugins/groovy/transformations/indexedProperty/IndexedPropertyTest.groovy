@@ -87,6 +87,7 @@ class A {
     @IndexedProperty List<String> stringList
     @IndexedProperty Double[] doubleArray
     @IndexedProperty long[] primitiveArray
+    @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Collection<Number>">Collection<Number></error> numberCollection
     @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Object">untyped</error>
     @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Integer">Integer</error> nonIndexable    
     private <error descr="@IndexedProperty is applicable to properties only">@IndexedProperty</error> explicitVisibility 
