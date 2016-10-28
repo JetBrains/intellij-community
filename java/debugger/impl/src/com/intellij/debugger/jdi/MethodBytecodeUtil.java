@@ -43,16 +43,16 @@ public class MethodBytecodeUtil {
   /**
    * Allows to use ASM MethodVisitor with jdi method bytecode
    */
-  public static void visit(ReferenceType classType, Method method, MethodVisitor methodVisitor) {
-    visit(classType, method, method.bytecodes(), methodVisitor);
+  public static void visit(Method method, MethodVisitor methodVisitor) {
+    visit(method, method.bytecodes(), methodVisitor);
   }
 
-  public static void visit(ReferenceType classType, Method method, long maxOffset, MethodVisitor methodVisitor) {
+  public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor) {
     // need to keep the size, otherwise labels array will not be initialized correctly
     byte[] originalBytecodes = method.bytecodes();
     byte[] bytecodes = new byte[originalBytecodes.length];
     System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(classType, method, bytecodes, methodVisitor);
+    visit(method, bytecodes, methodVisitor);
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
@@ -65,7 +65,8 @@ public class MethodBytecodeUtil {
     }
   }
 
-  private static void visit(ReferenceType type, Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+  private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+    ReferenceType type = method.declaringType();
     try {
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
         dos.writeInt(0xCAFEBABE); // magic
@@ -229,7 +230,7 @@ public class MethodBytecodeUtil {
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
-        visit(clsType, applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
+        visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));

@@ -169,7 +169,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
             createLocationBreakpointRequest(ContainerUtil.getFirstItem(allLineLocations), debugProcess);
           }
           if (isWatchExit()) {
-            MethodBytecodeUtil.visit(classType, method, new MethodVisitor(Opcodes.API_VERSION) {
+            MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
               int myLastLine = 0;
               @Override
               public void visitLineNumber(int line, Label start) {
