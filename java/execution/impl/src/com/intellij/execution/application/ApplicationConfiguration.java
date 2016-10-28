@@ -16,12 +16,15 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -283,6 +286,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       setupModulePath(params, module);
 
       return params;
+    }
+
+    @NotNull
+    @Override
+    protected OSProcessHandler startProcess() throws ExecutionException {
+      OSProcessHandler processHandler = super.startProcess();
+      if (processHandler instanceof KillableProcessHandler && DebuggerSettings.getInstance().KILL_PROCESS_IMMEDIATELY) {
+        ((KillableProcessHandler)processHandler).setShouldKillProcessSoftly(false);
+      }
+      return processHandler;
     }
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
