@@ -155,7 +155,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
   }
 
   private static void saveLocation(Rectangle location) {
-    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
+    Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 
