@@ -17,13 +17,15 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -74,63 +76,71 @@ class DirtyModulesHolder extends UserDataHolderBase {
   }
 
   void installVFSListener() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    PsiManager.getInstance(myService.getProject()).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
+        psiChanged(event.getFile(), event.getParent());
       }
 
       @Override
-      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-        processChange(event.getFile());
+      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
+        psiChanged(event.getFile(), event.getParent());
       }
 
       @Override
-      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
+      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
+        psiChanged(event.getFile(), event.getParent());
       }
 
       @Override
-      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
-          processChange(event.getFile());
+      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
+        final PsiFile file = event.getFile();
+        if (file != null) {
+          psiChanged(file, null);
+        }
+        else {
+          psiChanged(null, event.getOldParent());
+          psiChanged(null, event.getNewParent());
         }
       }
 
       @Override
-      public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
+        psiChanged(event.getFile(), event.getParent());
       }
 
       @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
+        if (PsiTreeChangeEvent.PROP_UNLOADED_PSI.equals(event.getPropertyName()) ||
+            PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName())) return;
+        psiChanged(event.getFile(), event.getParent());
       }
 
-      @Override
-      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
-      }
-
-      private void processChange(VirtualFile file) {
-        fileChanged(file);
-      }
-
-      void fileChanged(VirtualFile file) {
+      private void psiChanged(@Nullable PsiFile psiFile, @Nullable PsiElement parent) {
+        final VirtualFile file;
+        if (psiFile != null) {
+          file = psiFile.getVirtualFile();
+        }
+        else if (parent instanceof PsiFileSystemItem) {
+          file = ((PsiFileSystemItem)parent).getVirtualFile();
+        }
+        else {
+          return;
+        }
         if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
           final Module module = myService.getFileIndex().getModuleForFile(file);
           if (module != null) {
             synchronized (myLock) {
               if (myCompilationPhase) {
                 myChangedModulesDuringCompilation.add(module);
-              } else {
+              }
+              else {
                 myChangedModules.add(module);
               }
             }
           }
         }
       }
-    }, myService.getProject());
-
+    });
   }
 }
