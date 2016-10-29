@@ -67,7 +67,6 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Attribute;
@@ -91,7 +90,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final NewMappings myMappings;
   private final Project myProject;
-  private final MessageBus myMessageBus;
   private final MappingsToRoots myMappingsToRoots;
 
   private ContentManager myContentManager;
@@ -127,20 +125,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
-  private final MessageBusConnection myConnect;
   private final FileIndexFacade myExcludedIndex;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
   public ProjectLevelVcsManagerImpl(Project project,
                                     final FileStatusManager manager,
-                                    MessageBus messageBus,
                                     final FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
                                     DefaultVcsRootPolicy defaultVcsRootPolicy,
                                     VcsFileListenerContextHelper vcsFileListenerContextHelper) {
     myProject = project;
-    myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
@@ -164,12 +159,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
       });
     }
-    myMappings = new NewMappings(myProject, myMessageBus, this, manager);
+    myMappings = new NewMappings(myProject, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
-    myConnect = myMessageBus.connect();
     myVcsFileListenerContextHelper = vcsFileListenerContextHelper;
     VcsListener vcsListener = new VcsListener() {
       @Override
@@ -179,9 +173,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     };
     myExcludedIndex = excludedFileIndex;
-    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-    myConnect.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+    connection.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
       @Override
       public void consume(Set<String> strings) {
         myContentRevisionCache.clearCurrent(strings);
@@ -239,7 +234,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void disposeComponent() {
     releaseConsole();
     myMappings.disposeMe();
-    myConnect.disconnect();
     Disposer.dispose(myAnnotationLocalChangesListener);
     myContentManager = null;
 
@@ -632,7 +626,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void addVcsListener(VcsListener listener) {
-    final MessageBusConnection connection = myMessageBus.connect();
+    MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(VCS_CONFIGURATION_CHANGED, listener);
     myAdapters.put(listener, connection);
   }
@@ -710,7 +704,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void notifyDirectoryMappingChanged() {
-    myMessageBus.syncPublisher(VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    myProject.getMessageBus().syncPublisher(VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }
 
   public void readDirectoryMappings(final Element element) {

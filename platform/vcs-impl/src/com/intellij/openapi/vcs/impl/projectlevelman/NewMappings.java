@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,17 +53,16 @@ public class NewMappings {
   private FileWatchRequestsManager myFileWatchRequestsManager;
 
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
-  private final MessageBus myMessageBus;
   private final ProjectLevelVcsManager myVcsManager;
   private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
   private boolean myActivated;
 
-  public NewMappings(final Project project, final MessageBus messageBus, final ProjectLevelVcsManagerImpl vcsManager,
+  public NewMappings(Project project,
+                     ProjectLevelVcsManagerImpl vcsManager,
                      FileStatusManager fileStatusManager) {
     myProject = project;
-    myMessageBus = messageBus;
     myVcsManager = vcsManager;
     myFileStatusManager = fileStatusManager;
     myLock = new Object();
@@ -183,7 +181,7 @@ public class NewMappings {
 
   public void mappingsChanged() {
     if (myProject.isDisposed()) return;
-    myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    myProject.getMessageBus().syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
   }
