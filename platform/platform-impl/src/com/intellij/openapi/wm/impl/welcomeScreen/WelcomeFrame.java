@@ -113,8 +113,17 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(
       new WindowAdapter() {
+        @Override
         public void windowClosing(final WindowEvent e) {
-          frame.dispose();
+          if (frame instanceof Disposable) {
+            // dispose via Disposer if possible, as per the intended com.intellij.openapi.Disposable design;
+            // amongst all, this ensures the same object isn't disposed multiple times, which may be undesired
+            Disposer.dispose((Disposable)frame);
+          }
+          else {
+            // OK, this is the usual JFrame dispose() - can call directly
+            frame.dispose();
+          }
 
           if (ProjectManager.getInstance().getOpenProjects().length == 0) {
             ApplicationManagerEx.getApplicationEx().exit();
