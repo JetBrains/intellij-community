@@ -257,14 +257,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void projectOpened() {
-    addInitializationRequest(VcsInitObject.AFTER_COMMON, new Runnable() {
-      @Override
-      public void run() {
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
-          if (checkers.length != 0) {
-            VcsRootScanner.start(myProject, checkers);
-          }
+    addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+        if (checkers.length != 0) {
+          VcsRootScanner.start(myProject, checkers);
         }
       }
     });
@@ -306,17 +303,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
-      @Override
-      @Nullable
-      public AbstractVcs compute() {
-        if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        if (vFile != null) {
-          return getVcsFor(vFile);
-        }
-        return null;
+    return ApplicationManager.getApplication().runReadAction((Computable<AbstractVcs>)() -> {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      if (vFile != null) {
+        return getVcsFor(vFile);
       }
+      return null;
     });
   }
 
@@ -430,19 +423,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        // for default and disposed projects the ContentManager is not available.
-        if (myProject.isDisposed() || myProject.isDefault()) return;
-        final ContentManager contentManager = getContentManager();
-        if (contentManager == null) {
-          myPendingOutput.add(Pair.create(message, contentType));
-        }
-        else {
-          getOrCreateConsoleContent(contentManager);
-          printToConsole(message, contentType);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      // for default and disposed projects the ContentManager is not available.
+      if (myProject.isDisposed() || myProject.isDefault()) return;
+      final ContentManager contentManager = getContentManager();
+      if (contentManager == null) {
+        myPendingOutput.add(Pair.create(message, contentType));
+      }
+      else {
+        getOrCreateConsoleContent(contentManager);
+        printToConsole(message, contentType);
       }
     }, ModalityState.defaultModalityState());
   }
@@ -864,12 +854,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        myInitialization.add(vcsInitObject, runnable);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> myInitialization.add(vcsInitObject, runnable));
   }
 
   @Override
