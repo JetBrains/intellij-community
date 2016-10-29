@@ -550,11 +550,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return null;
   }
 
-  public boolean hasExplicitMapping(final FilePath f) {
-    VirtualFile vFile = ChangesUtil.findValidParentAccurately(f);
-    return vFile != null && hasExplicitMapping(vFile);
-  }
-
   public boolean hasExplicitMapping(final VirtualFile vFile) {
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(vFile);
     return mapping != null && !mapping.isDefaultMapping();
@@ -921,17 +916,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean isFileInBaseDir(final VirtualFile file) {
     VirtualFile parent = file.getParent();
     return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
-  }
-
-  // inner roots disclosed
-  public static List<VirtualFile> getRootsUnder(final List<VirtualFile> roots, final VirtualFile underWhat) {
-    final List<VirtualFile> result = new ArrayList<>(roots.size());
-    for (VirtualFile root : roots) {
-      if (VfsUtilCore.isAncestor(underWhat, root, false)) {
-        result.add(root);
-      }
-    }
-    return result;
   }
 
   @Override
