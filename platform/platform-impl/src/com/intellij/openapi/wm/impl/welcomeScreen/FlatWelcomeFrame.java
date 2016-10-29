@@ -57,7 +57,6 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -878,10 +877,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         selected.set(panel);
         main.add(selected.get());
 
-        JBTreeTraverser<Component> traverser = UIUtil.uiTraverser(panel);
-        JPanel first = traverser.traverse().filter(JPanel.class).filter((it) -> BOTTOM_PANEL.equals(it.getName())).first();
-        if (back != null && first != null) {
-          first.add(back, BorderLayout.WEST);
+        if (singleProjectGenerator && back != null) {
+          JPanel first = UIUtil.uiTraverser(panel).traverse().filter(JPanel.class).filter((it) -> BOTTOM_PANEL.equals(it.getName())).first();
+          if (first != null) {
+            first.add(back, BorderLayout.WEST);
+          }
         }
 
         for (JButton button : UIUtil.findComponentsOfType(main, JButton.class)) {
