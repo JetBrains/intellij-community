@@ -74,6 +74,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private boolean myInvalidated;
   private volatile boolean myAstLoaded;
   private volatile boolean myUseStrongRefs;
+  private volatile boolean mySwitchingToStrongRefs;
   private AstPathPsiMap myRefToPsi;
   private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<FileElement>();
   protected final PsiManagerEx myManager;
@@ -276,7 +277,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       StubBasedPsiElementBase psi = pair.first;
       AstPath path = pair.second;
       path.getNode().setPsi(psi);
-      myRefToPsi.cachePsi(path, psi);
+      associateAstPathWithPsi(path, psi);
       psi.setStubIndex(i + 1);
     }
   }
@@ -1131,6 +1132,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public final void beforeAstChange() {
     if (!useStrongRefs()) {
+      LOG.assertTrue(!mySwitchingToStrongRefs);
+      mySwitchingToStrongRefs = true;
       myRefToPsi.switchToStrongRefs();
 
       FileElement element = getTreeElement();
@@ -1141,6 +1144,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
 
       myUseStrongRefs = true;
+      mySwitchingToStrongRefs = false;
     }
   }
 
@@ -1155,8 +1159,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     synchronized (PsiLock.LOCK) {
       psi = myRefToPsi.getCachedPsi(path);
-      return psi != null ? psi : myRefToPsi.cachePsi(path, creator.create());
+      return psi != null ? psi : associateAstPathWithPsi(path, creator.create());
     }
+  }
+
+  @NotNull
+  private StubBasedPsiElementBase<?> associateAstPathWithPsi(@NotNull AstPath path, @NotNull StubBasedPsiElementBase<?> psi) {
+    LOG.assertTrue(!mySwitchingToStrongRefs);
+    return myRefToPsi.cachePsi(path, psi);
   }
 
   final AstPathPsiMap getRefToPsi() {
