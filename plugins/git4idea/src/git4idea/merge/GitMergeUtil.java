@@ -18,6 +18,7 @@ package git4idea.merge;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
@@ -143,12 +145,12 @@ public class GitMergeUtil {
     Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
       List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
-      UIUtil.invokeLaterIfNeeded(() -> {
+      GuiUtils.invokeLaterIfNeeded(() -> {
         GitVcs vcs = GitVcs.getInstance(project);
         if (vcs != null) {
           AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
         }
-      });
+      }, ModalityState.defaultModalityState());
     }
   }
 }
