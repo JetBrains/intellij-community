@@ -56,7 +56,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, showFiles);
 
-    FileChooser.chooseFiles(descriptor, project, VfsUtil.getUserHomeDir(), files -> {
+    FileChooser.chooseFiles(descriptor, project, getPathToSelect(), files -> {
       for (VirtualFile file : files) {
         if (!descriptor.isFileSelectable(file)) {
           String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
@@ -66,6 +66,11 @@ public class OpenFileAction extends AnAction implements DumbAware {
       }
       doOpenFile(project, files);
     });
+  }
+
+  @Nullable
+  protected VirtualFile getPathToSelect() {
+    return VfsUtil.getUserHomeDir();
   }
 
   @Override
