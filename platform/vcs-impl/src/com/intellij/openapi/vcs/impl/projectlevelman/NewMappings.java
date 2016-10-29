@@ -128,7 +128,6 @@ public class NewMappings {
     mappingsChanged();
   }
 
-  @Modification
   public void setMapping(final String path, final String activeVcsName) {
     LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName);
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
@@ -198,7 +197,6 @@ public class NewMappings {
     myFileWatchRequestsManager.ping();
   }
 
-  @Modification
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
     MySetMappingsPreProcessor setMappingsPreProcessor = new MySetMappingsPreProcessor(items);
@@ -304,13 +302,11 @@ public class NewMappings {
     return result;
   }
 
-  @Modification
   public void disposeMe() {
     LOG.debug("dispose me");
     clearImpl();
   }
 
-  @Modification
   public void clear() {
     LOG.debug("clear");
     clearImpl();
@@ -367,7 +363,6 @@ public class NewMappings {
     }
   }
 
-  @Modification
   public void removeDirectoryMapping(final VcsDirectoryMapping mapping) {
     LOG.debug("remove mapping: " + mapping.getDirectory());
 
@@ -565,7 +560,6 @@ public class NewMappings {
     }
   }
 
-  @Modification
   public void beingUnregistered(final String name) {
     synchronized (myLock) {
       keepActiveVcs(new Runnable() {
@@ -599,9 +593,6 @@ public class NewMappings {
         myItemsCopy = myItems;
       }
     }
-  }
-
-  private @interface Modification {
   }
 
   public List<VirtualFile> getDefaultRoots() {
