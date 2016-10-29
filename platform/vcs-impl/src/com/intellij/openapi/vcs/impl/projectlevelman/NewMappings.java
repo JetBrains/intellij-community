@@ -190,8 +190,6 @@ public class NewMappings {
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
-    MySetMappingsPreProcessor setMappingsPreProcessor = new MySetMappingsPreProcessor(items);
-    setMappingsPreProcessor.invoke();
 
     final List<VcsDirectoryMapping> itemsCopy;
     if (items.isEmpty()) {
@@ -554,28 +552,6 @@ public class NewMappings {
     }
 
     mappingsChanged();
-  }
-
-  private static class MySetMappingsPreProcessor {
-    private final List<VcsDirectoryMapping> myItems;
-    private List<VcsDirectoryMapping> myItemsCopy;
-
-    public MySetMappingsPreProcessor(final List<VcsDirectoryMapping> items) {
-      myItems = items;
-    }
-
-    public List<VcsDirectoryMapping> getItemsCopy() {
-      return myItemsCopy;
-    }
-
-    public void invoke() {
-      if (myItems.isEmpty()) {
-        myItemsCopy = Collections.singletonList(new VcsDirectoryMapping("", ""));
-      }
-      else {
-        myItemsCopy = myItems;
-      }
-    }
   }
 
   public List<VirtualFile> getDefaultRoots() {
