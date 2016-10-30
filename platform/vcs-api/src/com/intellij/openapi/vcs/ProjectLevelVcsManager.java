@@ -198,6 +198,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void addVcsListener(VcsListener listener);
 
   /**
@@ -207,6 +208,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
