@@ -120,6 +120,7 @@ public class VcsInitialization implements Disposable {
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         // dispose happens without prior project close (most likely light project case in tests)
         // get out of write action and wait there
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(this::waitForCompletion);
       }
       else {
