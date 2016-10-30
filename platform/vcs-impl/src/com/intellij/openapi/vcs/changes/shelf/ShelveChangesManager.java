@@ -378,13 +378,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private boolean dvcsUsedInProject() {
-    AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    for (AbstractVcs activeVcs : allActiveVcss) {
-      if (VcsType.distributed.equals(activeVcs.getType())) {
-        return true;
-      }
-    }
-    return false;
+    return Arrays.stream(ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()).
+           anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
   }
 
   public ShelvedChangeList importFilePatches(final String fileName, final List<FilePatch> patches, final PatchEP[] patchTransitExtensions)
