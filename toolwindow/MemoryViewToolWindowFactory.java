@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -16,7 +17,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -31,13 +31,16 @@ import org.jetbrains.debugger.memory.view.ClassesFilteredView;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware {
+  private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   public final static String TOOL_WINDOW_ID = "Memory View";
 
   private final JComponent myEmptyContent;
 
-  private final HashMap<XDebugSession, ClassesFilteredView> myMemoryViews = new HashMap<>();
+  private final Map<XDebugSession, ClassesFilteredView> myMemoryViews = new ConcurrentHashMap<>();
 
   @Nullable
   private ClassesFilteredView myCurrentView = null;
@@ -89,6 +92,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   }
 
   private void addNewSession(@NotNull XDebugSession session) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     ToolWindow toolWindow = getToolWindow(session.getProject());
     if (!myMemoryViews.containsKey(session)) {
       ClassesFilteredView newView = new ClassesFilteredView(session);
@@ -121,6 +125,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   }
 
   private void replaceToolWindowContent(@NotNull ToolWindow toolWindow, JComponent comp) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     JComponent toolWindowComp = toolWindow.getComponent();
     toolWindowComp.removeAll();
     toolWindowComp.add(comp);
@@ -174,11 +179,9 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
     @Override
     public void processStopped(@NotNull XDebugProcess xDebugProcess) {
-      SwingUtilities.invokeLater(() -> {
-        XDebugSession session = xDebugProcess.getSession();
-        removeSession(session);
-        updateView(session);
-      });
+      XDebugSession session = xDebugProcess.getSession();
+      removeSession(session);
+      SwingUtilities.invokeLater(() -> updateView(session));
     }
 
     private void updateView(@NotNull XDebugSession debugSession) {
