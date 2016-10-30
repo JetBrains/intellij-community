@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -34,7 +35,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
+import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,26 +82,41 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
+  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogIndex myIndex;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull FatalErrorConsumer fatalErrorsConsumer) {
+                    @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
-    myHashMap = createLogHashMap();
+    VcsLogProgress progress = new VcsLogProgress();
+    Disposer.register(this, progress);
+
+    VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+    if (invalidator.isValid()) {
+      myHashMap = createLogHashMap();
+      myIndex = new VcsLogPersistentIndex(myProject, myHashMap, progress, logProviders, myFatalErrorsConsumer, this);
+    }
+    else {
+      // this is not recoverable
+      // restart won't help here
+      // and can not shut down ide because of this
+      // so use memory storage (probably leading to out of memory at some point) + no index
+      String message = "Could not delete " + PersistentUtil.LOG_CACHE + "\nDelete it manually and restart IDEA.";
+      LOG.error(message);
+      myFatalErrorsConsumer.displayFatalErrorMessage(message);
+      myHashMap = new InMemoryStorage();
+      myIndex = new EmptyIndex();
+    }
+
     myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
-
-    VcsLogProgress progress = new VcsLogProgress();
-    Disposer.register(this, progress);
-    myIndex = new VcsLogPersistentIndex(myProject, myHashMap, progress, logProviders, myFatalErrorsConsumer, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);

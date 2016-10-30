@@ -402,6 +402,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
+  public void testMergedCallToSuspiciousStringMethodInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"StringCompareTo\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"StringEquals\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"StringEqualsIgnoreCase\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "</profile>" );
+  }
+
   public void testMergedMisspelledInspections() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +

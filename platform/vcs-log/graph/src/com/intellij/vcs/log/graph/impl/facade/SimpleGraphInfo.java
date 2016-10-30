@@ -82,12 +82,9 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
       CommitId commit = permanentCommitsInfo.getCommitId(nodeId);
       List<CommitId> parents = ContainerUtil.newSmartList();
       parents.addAll(ContainerUtil.mapNotNull(asLiteLinearGraph(linearGraph).getNodes(row, LiteLinearGraph.NodeFilter.DOWN),
-                                              new Function<Integer, CommitId>() {
-                                                @Override
-                                                public CommitId fun(Integer row) {
-                                                  if (row < start || row >= end) return null;
-                                                  return permanentCommitsInfo.getCommitId(linearGraph.getNodeId(row));
-                                                }
+                                              row1 -> {
+                                                if (row1 < start || row1 >= end) return null;
+                                                return permanentCommitsInfo.getCommitId(linearGraph.getNodeId(row1));
                                               }));
       graphCommits.add(new GraphCommitImpl<>(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
       commitsIdMap.add(commit);
@@ -110,12 +107,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
       }
     }
 
-    ContainerUtil.sort(headNodeIndexes, new Comparator<Integer>() {
-      @Override
-      public int compare(Integer o1, Integer o2) {
-        return layoutIndexes[o1] - layoutIndexes[o2];
-      }
-    });
+    ContainerUtil.sort(headNodeIndexes, Comparator.comparingInt(o -> layoutIndexes[o]));
     int[] starts = new int[headNodeIndexes.size()];
     for (int i = 0; i < starts.length; i++) {
       starts[i] = layoutIndexes[headNodeIndexes.get(i)];

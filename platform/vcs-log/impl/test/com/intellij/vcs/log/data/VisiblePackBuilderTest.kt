@@ -247,31 +247,5 @@ class VisiblePackBuilderTest {
     }
   }
 
-  class EmptyIndex : VcsLogIndex {
-    override fun isIndexed(root: VirtualFile): Boolean {
-      return false
-    }
-
-    override fun isIndexed(commit: Int): Boolean {
-      return false
-    }
-
-    override fun canFilter(filters: MutableList<VcsLogDetailsFilter>): Boolean {
-      return false
-    }
-
-    override fun scheduleIndex(full: Boolean) {
-    }
-
-    override fun markForIndexing(index: Int, root: VirtualFile) {
-    }
-
-    override fun filter(detailsFilters: MutableList<VcsLogDetailsFilter>): MutableSet<Int> {
-      throw UnsupportedOperationException()
-    }
-
-    override fun markCorrupted() {
-    }
-  }
 }
 

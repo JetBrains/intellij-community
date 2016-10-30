@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +55,11 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         if (body instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
           PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-          if (args.length == 1 && MethodUtils.isCompareToCall(methodCall)) {
+          if (args.length == 1 && MethodCallUtils.isCompareToCall(methodCall)) {
             PsiExpression left = methodCall.getMethodExpression().getQualifierExpression();
+            if (left == null) {
+              return;
+            }
             PsiExpression right = args[0];
             if (left instanceof PsiReferenceExpression && right instanceof PsiReferenceExpression) {
               PsiElement leftElement = ((PsiReferenceExpression)left).resolve();
@@ -163,7 +166,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       String methodName = null;
       if (body instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
-        if (MethodUtils.isCompareToCall(methodCall)) {
+        if (MethodCallUtils.isCompareToCall(methodCall)) {
           methodName = "comparing";
           keyExtractor = methodCall.getMethodExpression().getQualifierExpression();
           if (keyExtractor instanceof PsiReferenceExpression) {

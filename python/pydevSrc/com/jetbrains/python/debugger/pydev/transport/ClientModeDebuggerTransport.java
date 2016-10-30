@@ -69,7 +69,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @NotNull private final String myHost;
   private final int myPort;
 
-  @NotNull private State myState = State.INIT;
+  @NotNull private volatile State myState = State.INIT;
 
   @Nullable private Socket mySocket;
   @Nullable private DebuggerReader myDebuggerReader;
@@ -92,14 +92,13 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     catch (InterruptedException e) {
       throw new IOException(e);
     }
-    synchronized (mySocketObject) {
-      if (myState != State.INIT) {
-        throw new IllegalStateException(
-          "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
-      }
 
-      doConnect();
+    if (myState != State.INIT) {
+      throw new IllegalStateException(
+        "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
     }
+
+    doConnect();
   }
 
   private void doConnect() throws IOException {
@@ -115,72 +114,72 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           mySocket = null;
         }
       }
-
-      int i = 0;
-      boolean connected = false;
-      while (!connected && i < MAX_CONNECTION_TRIES) {
-        i++;
-        try {
-          Socket clientSocket = new Socket();
-          clientSocket.setSoTimeout(0);
-          clientSocket.connect(new InetSocketAddress(myHost, myPort));
-
-          try {
-            myDebuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
-          }
-          catch (IOException e) {
-            LOG.debug("Failed to create debugger reader", e);
-            throw e;
-          }
-
-          mySocket = clientSocket;
-          connected = true;
-        }
-        catch (ConnectException e) {
-          if (i < MAX_CONNECTION_TRIES) {
-            try {
-              Thread.sleep(SLEEP_TIME_BETWEEN_CONNECTION_TRIES);
-            }
-            catch (InterruptedException e1) {
-              throw new IOException(e1);
-            }
-          }
-        }
-      }
-
-      if (!connected) {
-        myState = State.DISCONNECTED;
-        throw new IOException("Failed to connect to debugging script");
-      }
-
-      myState = State.CONNECTED;
-      LOG.debug("Connected to Python debugger script on #" + i + " attempt");
-
-
-      try {
-        myDebugProcess.init();
-        myDebugger.run();
-      }
-      catch (PyDebuggerException e) {
-        myState = State.DISCONNECTED;
-        throw new IOException("Failed to send run command", e);
-      }
-
-      myScheduledExecutor.schedule(() -> {
-        synchronized (mySocketObject) {
-          if (myState == State.CONNECTED) {
-            try {
-              LOG.debug("Reconnecting...");
-              doConnect();
-            }
-            catch (IOException e) {
-              LOG.debug(e);
-              myDebugger.fireCommunicationError();
-            }
-          }
-        }
-      }, CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
     }
+
+    int i = 0;
+    boolean connected = false;
+    while (!connected && i < MAX_CONNECTION_TRIES) {
+      i++;
+      try {
+        Socket clientSocket = new Socket();
+        clientSocket.setSoTimeout(0);
+        clientSocket.connect(new InetSocketAddress(myHost, myPort));
+
+        try {
+          myDebuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
+        }
+        catch (IOException e) {
+          LOG.debug("Failed to create debugger reader", e);
+          throw e;
+        }
+
+        synchronized (mySocketObject) {
+          mySocket = clientSocket;
+        }
+        connected = true;
+      }
+      catch (ConnectException e) {
+        if (i < MAX_CONNECTION_TRIES) {
+          try {
+            Thread.sleep(SLEEP_TIME_BETWEEN_CONNECTION_TRIES);
+          }
+          catch (InterruptedException e1) {
+            throw new IOException(e1);
+          }
+        }
+      }
+    }
+
+    if (!connected) {
+      myState = State.DISCONNECTED;
+      throw new IOException("Failed to connect to debugging script");
+    }
+
+    myState = State.CONNECTED;
+    LOG.debug("Connected to Python debugger script on #" + i + " attempt");
+
+
+    try {
+      myDebugProcess.init();
+      myDebugger.run();
+    }
+    catch (PyDebuggerException e) {
+      myState = State.DISCONNECTED;
+      throw new IOException("Failed to send run command", e);
+    }
+
+    myScheduledExecutor.schedule(() -> {
+      if (myState == State.CONNECTED) {
+        try {
+          LOG.debug("Reconnecting...");
+          doConnect();
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+          myDebugger.fireCommunicationError();
+        }
+      }
+    }, CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -198,13 +197,13 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void close() {
-    synchronized (mySocketObject) {
-      try {
-        if (myDebuggerReader != null) {
-          myDebuggerReader.stop();
-        }
+    try {
+      if (myDebuggerReader != null) {
+        myDebuggerReader.stop();
       }
-      finally {
+    }
+    finally {
+      synchronized (mySocketObject) {
         if (mySocket != null) {
           try {
             mySocket.close();
@@ -218,10 +217,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public boolean isConnected() {
-    synchronized (mySocketObject) {
-      return myState == State.APPROVED;
-      //return myConnected && mySocket != null && !mySocket.isClosed();
-    }
+    return myState == State.APPROVED;
   }
 
   @Override
@@ -231,10 +227,8 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void messageReceived(@NotNull ProtocolFrame frame) {
-    synchronized (mySocketObject) {
-      if (myState == State.CONNECTED) {
-        myState = State.APPROVED;
-      }
+    if (myState == State.CONNECTED) {
+      myState = State.APPROVED;
     }
   }
 
@@ -266,10 +260,8 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     }
 
     protected void onCommunicationError() {
-      synchronized (mySocketObject) {
-        if (myState == State.APPROVED) {
-          getDebugger().fireCommunicationError();
-        }
+      if (myState == State.APPROVED) {
+        getDebugger().fireCommunicationError();
       }
     }
   }
