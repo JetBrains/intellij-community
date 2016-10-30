@@ -68,7 +68,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     Disposer.register(parentDisposable, this);
     myLoader =
       new SequentialLimitedLifoExecutor<>(this, MAX_LOADING_TASKS, task -> {
-        preLoadCommitData(task.myCommits, true);
+        preLoadCommitData(task.myCommits);
         notifyLoaded();
       });
   }
@@ -141,7 +141,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
           public void run(@NotNull final ProgressIndicator indicator) {
             indicator.checkCanceled();
             try {
-              TIntObjectHashMap<T> map = preLoadCommitData(toLoad, true);
+              TIntObjectHashMap<T> map = preLoadCommitData(toLoad);
               map.forEachValue(value -> {
                 result.add(value);
                 return true;
@@ -237,7 +237,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @NotNull
-  public TIntObjectHashMap<T> preLoadCommitData(@NotNull TIntHashSet commits, boolean saveInCache) throws VcsException {
+  public TIntObjectHashMap<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
     TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
     commits.forEach(commit -> {
@@ -256,7 +256,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
           int index = myHashMap.getCommitIndex(data.getId(), data.getRoot());
           result.put(index, data);
         }
-        if (saveInCache) saveInCache(result);
+        saveInCache(result);
       }
       else {
         LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
