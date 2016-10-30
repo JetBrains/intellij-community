@@ -282,8 +282,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean isFileInContent(final VirtualFile vf);
   public abstract boolean isIgnored(VirtualFile vf);
 
-  public abstract boolean dvcsUsedInProject();
-
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 }

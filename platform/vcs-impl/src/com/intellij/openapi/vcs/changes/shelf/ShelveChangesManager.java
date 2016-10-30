@@ -360,7 +360,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   private void baseRevisionsOfDvcsIntoContext(List<Change> textChanges, CommitContext commitContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (vcsManager.dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
+    if (dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
       final Set<Change> big = SelectFilesToAddTextsToPatchPanel.getBig(textChanges);
       final ArrayList<FilePath> toKeep = new ArrayList<>();
       for (Change change : textChanges) {
@@ -375,6 +375,16 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
       commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, toKeep);
     }
+  }
+
+  private boolean dvcsUsedInProject() {
+    AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    for (AbstractVcs activeVcs : allActiveVcss) {
+      if (VcsType.distributed.equals(activeVcs.getType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public ShelvedChangeList importFilePatches(final String fileName, final List<FilePatch> patches, final PatchEP[] patchTransitExtensions)

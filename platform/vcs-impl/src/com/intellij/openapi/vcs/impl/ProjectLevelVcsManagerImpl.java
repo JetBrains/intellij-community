@@ -874,17 +874,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
-  @Override
-  public boolean dvcsUsedInProject() {
-    AbstractVcs[] allActiveVcss = getAllActiveVcss();
-    for (AbstractVcs activeVcs : allActiveVcss) {
-      if (VcsType.distributed.equals(activeVcs.getType())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
     if (file != null && ProjectKt.isDirectoryBased(myProject)) {
       return ProjectKt.getStateStore(myProject).isProjectFile(file);
