@@ -74,12 +74,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private void notifyLoaded() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
-          loadingFinishedListener.run();
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
+        loadingFinishedListener.run();
       }
     });
   }
@@ -267,15 +264,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   public void saveInCache(@NotNull TIntObjectHashMap<T> details) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        details.forEachEntry((key, value) -> {
-          myCache.put(key, value);
-          return true;
-        });
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> details.forEachEntry((key, value) -> {
+      myCache.put(key, value);
+      return true;
+    }));
   }
 
   @NotNull
