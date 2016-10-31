@@ -394,6 +394,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   @Override
   public final JComponent getComponent() {
+    ensureContentInitialized();
     return myComponent;
   }
 
