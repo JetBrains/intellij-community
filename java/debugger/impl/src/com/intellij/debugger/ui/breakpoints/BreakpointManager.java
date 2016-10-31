@@ -307,12 +307,7 @@ public class BreakpointManager {
     for (Element element : parentNode.getChildren()) {
       myOriginalBreakpointsNodes.put(element.getName(), element.clone());
     }
-    if (myProject.isOpen()) {
-      doRead(parentNode);
-    }
-    else {
-      myStartupManager.registerPostStartupActivity(() -> doRead(parentNode));
-    }
+    myStartupManager.runWhenProjectIsInitialized(() -> doRead(parentNode));
   }
 
   private void doRead(@NotNull final Element parentNode) {
