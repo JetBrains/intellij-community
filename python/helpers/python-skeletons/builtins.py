@@ -805,7 +805,7 @@ class float(object):
         return 0.0
 
     @staticmethod
-    def fromhex(cls, string):
+    def fromhex(string):
         """Create a floating-point number from a hexadecimal string.
 
         :type string: str
