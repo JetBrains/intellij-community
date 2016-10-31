@@ -142,7 +142,7 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
         ((LeafElement)textToken).replaceWithText(name);
       }
       else if (declaration instanceof GrReferenceExpression) {
-        ((GrReferenceExpression)declaration).handleElementRenameSimple(name);
+        ((GrReferenceExpression)declaration).handleElementRename(name);
       }
     }
 
