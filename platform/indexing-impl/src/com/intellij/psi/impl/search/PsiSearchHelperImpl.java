@@ -235,6 +235,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
+        if (scopeElement instanceof PsiCompiledElement) {
+          // can't scan text of the element
+          return true;
+        }
+
         return scopeElement.isValid() &&
                processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher, progress), searcher);
       }
