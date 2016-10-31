@@ -39,7 +39,7 @@ enum CompilerHierarchySearchType {
     }
 
     @Override
-    Object[] convertIdToSearchableArray(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
+    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
       return lightRef.stream().map(r -> byteArrayEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
     }
   },
@@ -58,7 +58,7 @@ enum CompilerHierarchySearchType {
     }
 
     @Override
-    Object[] convertIdToSearchableArray(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
+    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
       return lightRef.stream().map(r -> ((LightRef.LightFunExprDef) r).getId()).toArray(Integer[]::new);
     }
   };
@@ -70,5 +70,5 @@ enum CompilerHierarchySearchType {
 
   abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter);
 
-  abstract Object[] convertIdToSearchableArray(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator);
+  abstract Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator);
 }

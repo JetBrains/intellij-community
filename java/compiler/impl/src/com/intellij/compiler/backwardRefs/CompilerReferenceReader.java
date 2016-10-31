@@ -105,7 +105,7 @@ class CompilerReferenceReader {
           }
         })
         .filter(Objects::nonNull)
-        .collect(groupingBy(x -> x.containingFile, mapping(x -> x.def, collectingAndThen(toList(), l -> searchType.convertIdToSearchableArray(l, myIndex.getByteSeqEum())))));
+        .collect(groupingBy(x -> x.containingFile, mapping(x -> x.def, collectingAndThen(toList(), l -> searchType.convertToIds(l, myIndex.getByteSeqEum())))));
     }
 
     return candidatesPerFile.isEmpty() ? Collections.emptyMap() : candidatesPerFile;
