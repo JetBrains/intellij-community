@@ -456,21 +456,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
     final String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
-    final GlobalSearchScope theSearchScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        if (originalElement != null && myManager.isInProject(originalElement) && initialScope.isSearchInLibraries()) {
-          return initialScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
-        }
-        return initialScope;
+    final GlobalSearchScope theSearchScope = ApplicationManager.getApplication().runReadAction((Computable<GlobalSearchScope>)() -> {
+      if (originalElement != null && myManager.isInProject(originalElement) && initialScope.isSearchInLibraries()) {
+        return initialScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
       }
+      return initialScope;
     });
-    PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-      @Override
-      public PsiFile[] compute() {
-        return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true);
-      }
-    });
+    PsiFile[] files = ApplicationManager.getApplication().runReadAction(
+      (Computable<PsiFile[]>)() -> CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true));
 
     final StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
@@ -479,12 +472,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
 
-      final SearchScope useScope = originalElement == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-        @Override
-        public SearchScope compute() {
-          return getUseScope(originalElement);
-        }
-      });
+      final SearchScope useScope = originalElement == null ? null : ApplicationManager.getApplication().runReadAction(
+        (Computable<SearchScope>)() -> getUseScope(originalElement));
 
       final int patternLength = qName.length();
       for (int i = 0; i < files.length; i++) {
@@ -492,20 +481,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         final PsiFile psiFile = files[i];
         if (psiFile instanceof PsiBinaryFile) continue;
 
-        final CharSequence text = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-          @Override
-          public CharSequence compute() {
-            return psiFile.getViewProvider().getContents();
-          }
-        });
+        final CharSequence text = ApplicationManager.getApplication().runReadAction(
+          (Computable<CharSequence>)() -> psiFile.getViewProvider().getContents());
 
         LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, index -> {
-          boolean isReferenceOK = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              PsiReference referenceAt = psiFile.findReferenceAt(index);
-              return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
-            }
+          boolean isReferenceOK = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+            PsiReference referenceAt = psiFile.findReferenceAt(index);
+            return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
           });
           if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
             cancelled.set(Boolean.TRUE);
@@ -970,21 +952,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                @NotNull GlobalSearchScope searchScope,
                                                @NotNull final Processor<UsageInfo> processor,
                                                @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelper helper = ApplicationManager.getApplication().runReadAction(new Computable<PsiSearchHelper>() {
-      @Override
-      public PsiSearchHelper compute() {
-        return SERVICE.getInstance(element.getProject());
-      }
-    });
+    PsiSearchHelper helper = ApplicationManager.getApplication().runReadAction(
+      (Computable<PsiSearchHelper>)() -> SERVICE.getInstance(element.getProject()));
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
       try {
-        UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
-          @Override
-          public UsageInfo compute() {
-            return factory.createUsageInfo(psiFile, startOffset, endOffset);
-          }
-        });
+        UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(
+          (Computable<UsageInfo>)() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
         return usageInfo == null || processor.process(usageInfo);
       }
       catch (ProcessCanceledException e) {
