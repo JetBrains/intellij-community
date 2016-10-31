@@ -90,7 +90,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     myProject = project;
     myRoot = root;
     myHandler = handler;
-    myHandlerNo = service.registerHandler(this);
+    myHandlerNo = service.registerHandler(this, project);
   }
 
   /**
