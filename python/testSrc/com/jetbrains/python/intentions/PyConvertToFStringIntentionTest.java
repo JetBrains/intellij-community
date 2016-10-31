@@ -46,6 +46,16 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testPercentOperatorDynamicPrecision() {
     doNegativeTest();
   }
+  
+  // PY-21243
+  public void testPercentOperatorFallbackResolveResultForNamedChunk() {
+    doNegativeTest();
+  }
+
+  // PY-21243
+  public void testPercentOperatorFallbackResolveResultForPositionalChunk() {
+    doNegativeTest();
+  }
 
   public void testPercentOperatorSingleExpression() {
     doTest();
