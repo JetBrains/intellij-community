@@ -8,7 +8,7 @@ def f(mode):
     elif mode == "b":
         return True
 
-<warning descr="Too few mapping keys">"{}{}"</warning>.format(f("i"))
-<warning descr="Too few mapping keys">"{}{}"</warning>.format(f("f"))
-<warning descr="Too few mapping keys">"{}{}"</warning>.format(f("s"))
-<warning descr="Too few mapping keys">"{}{}"</warning>.format(f("b"))
+<warning descr="Too few arguments for format string">"{}{}"</warning>.format(f("i"))
+<warning descr="Too few arguments for format string">"{}{}"</warning>.format(f("f"))
+<warning descr="Too few arguments for format string">"{}{}"</warning>.format(f("s"))
+<warning descr="Too few arguments for format string">"{}{}"</warning>.format(f("b"))

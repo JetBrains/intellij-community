@@ -1,2 +1,2 @@
-<warning descr="Too few mapping keys">"{} {}"</warning>.format(1)
-<warning descr="Too few mapping keys">'{}'</warning>.format()
+<warning descr="Too few arguments for format string">"{} {}"</warning>.format(1)
+<warning descr="Too few arguments for format string">'{}'</warning>.format()

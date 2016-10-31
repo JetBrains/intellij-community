@@ -4,7 +4,7 @@
 
 "{foo[a]}".format(foo=({"a": 1}))
 
-"{foo[3]}".format(foo=<warning descr="Too few arguments for format string">(1, 2, 3)</warning>)
-"{foo[3]}".format(foo=(<warning descr="Too few mapping keys">{1: 1}</warning>))
-"{foo[3]}".format(foo=<warning descr="Too few arguments for format string">([1, 2, 3])</warning>)
-"{foo[b]}".format(foo=(<warning descr="Too few mapping keys">{"a": 1}</warning>))
+<warning descr="Too few arguments for format string">"{foo[3]}"</warning>.format(foo=(1, 2, 3))
+<warning descr="Too few arguments for format string">"{foo[3]}"</warning>.format(foo=({1: 1}))
+<warning descr="Too few arguments for format string">"{foo[3]}"</warning>.format(foo=([1, 2, 3]))
+<warning descr="Too few arguments for format string">"{foo[b]}"</warning>.format(foo=({"a": 1}))

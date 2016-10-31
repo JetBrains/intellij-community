@@ -1,1 +1,1 @@
-print(<warning descr="Too few mapping keys">'{}'</warning>.format(foo='foo'))
+print(<warning descr="Too few arguments for format string">'{}'</warning>.format(foo='foo'))

@@ -3,4 +3,4 @@ def f():
 
 '{foo}'.format(**f())
 
-<warning descr="Too few mapping keys">"{}"</warning>.format()
+<warning descr="Too few arguments for format string">"{}"</warning>.format()

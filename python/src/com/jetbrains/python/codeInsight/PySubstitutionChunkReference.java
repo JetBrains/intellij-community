@@ -20,12 +20,14 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +36,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx{
+public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
   private final int myPosition;
   @NotNull private final PyStringFormatParser.SubstitutionChunk myChunk;
   private final boolean myIsPercent;
+  private final TypeEvalContext myTypeEvalContext;
 
   public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
                                       @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
@@ -45,8 +48,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     myChunk = chunk;
     myPosition = position;
     myIsPercent = chunk instanceof PyStringFormatParser.PercentSubstitutionChunk;
+
+    final PsiFile file = element.getContainingFile();
+    myTypeEvalContext = TypeEvalContext.codeAnalysis(file.getProject(), file);
   }
-  
+
   @Nullable
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(@NotNull final TypeEvalContext context) {
@@ -82,7 +88,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     if (argumentList == null || argumentList.getArguments().length == 0) {
       return null;
     }
-    return myChunk.getMappingKey() != null ? resolveKeywordFormat(argumentList) : resolvePositionalFormat(argumentList);
+    return myChunk.getMappingKey() != null ? resolveKeywordFormat(argumentList).get() : resolvePositionalFormat(argumentList);
   }
 
   @Nullable
@@ -99,7 +105,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
             firstStarArg = starArg;
           }
           // TODO: Support multiple *args for Python 3.5+
-          final Ref<PsiElement> resolvedRef = resolvePositionalStarExpression(starArg, n);
+          final Ref<PyExpression> resolvedRef = resolvePositionalStarExpression(starArg, n);
           if (resolvedRef != null) {
             final PsiElement resolved = resolvedRef.get();
             if (resolved != null) {
@@ -121,34 +127,252 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return notSureAboutStarArgs ? firstStarArg : null;
   }
 
-  @Nullable
-  private PsiElement resolveKeywordFormat(@NotNull PyArgumentList argumentList) {
-    final PyKeywordArgument keywordResult = argumentList.getKeywordArgument(myChunk.getMappingKey());
-    if (keywordResult != null) {
-      return keywordResult.getValueExpression();
+  @NotNull
+  private Ref<PyExpression> resolveKeywordFormat(@NotNull PyArgumentList argumentList) {
+    final Ref<PyExpression> valueExprRef = getKeyValueFromArguments(argumentList);
+    final String indexElement = ((PyStringFormatParser.NewStyleSubstitutionChunk)myChunk).getMappingKeyElementIndex();
+    if (valueExprRef != null && !valueExprRef.isNull() && indexElement != null) {
+      final PyExpression valueExpr = PyPsiUtils.flattenParens(valueExprRef.get());
+      assert valueExpr != null;
+      try {
+        final Integer index = Integer.valueOf(indexElement);
+        final Ref<PyExpression> resolvedRef = resolveNumericIndex(valueExpr, index);
+        if (resolvedRef != null) return resolvedRef;
+      }
+      catch (NumberFormatException e) {
+        final Ref<PyExpression> resolvedRef = resolveStringIndex(valueExpr, indexElement);
+        if (resolvedRef != null) return resolvedRef;
+      }
     }
-    else {
-      final List<PyStarArgument> keywordStarArgs = getStarArguments(argumentList, true);
-      boolean notSureAboutStarArgs = false;
+    // valueExprRef is null only if there's no corresponding keyword argument and no star arguments
+    return valueExprRef == null ? Ref.create() : valueExprRef;
+  }
+
+  @Nullable
+  private Ref<PyExpression> getKeyValueFromArguments(@NotNull PyArgumentList argumentList) {
+    final PyKeywordArgument valueFromKeywordArg = argumentList.getKeywordArgument(myChunk.getMappingKey());
+    final List<PyStarArgument> keywordStarArgs = getStarArguments(argumentList, true);
+
+    Ref<PyExpression> valueExprRef = null;
+    if (valueFromKeywordArg != null) {
+      valueExprRef = Ref.create(valueFromKeywordArg.getValueExpression());
+    }
+    else if (!keywordStarArgs.isEmpty()){
       for (PyStarArgument arg : keywordStarArgs) {
-        final Ref<PsiElement> resolvedRef = resolveKeywordStarExpression(arg);
-        if (resolvedRef != null) {
-          final PsiElement resolved = resolvedRef.get();
-          if (resolved != null) {
-            return resolved;
-          }
-        }
-        else {
-          notSureAboutStarArgs = true;
+        final Ref<PyExpression> resolvedRef = resolveKeywordStarExpression(arg);
+        if (resolvedRef != null && (valueExprRef == null || valueExprRef.get() == null)) {
+          valueExprRef = resolvedRef;
         }
       }
-      return notSureAboutStarArgs ? Iterables.getFirst(keywordStarArgs, null) : null;
+      if (valueExprRef == null) {
+        valueExprRef = Ref.create(Iterables.getFirst(keywordStarArgs, null));
+      }
     }
+    return valueExprRef;
+  }
+
+  @Nullable
+  private Ref<PyExpression> resolveStringIndex(@NotNull PyExpression valueExpr, @NotNull String indexElement) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+    if (valueExpr instanceof PyCallExpression) {
+      PyReturnStatement[] returnValues = getFunctionReturnValues((PyCallExpression)valueExpr, resolveContext, myTypeEvalContext);
+      for (PyReturnStatement value : returnValues) {
+        PyExpression returnValueExpr = PyPsiUtils.flattenParens(value.getExpression());
+        if (returnValueExpr instanceof PyDictLiteralExpression) {
+          Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)returnValueExpr, indexElement, resolveContext);
+          if (resolvedRef != null) return resolvedRef;
+        }
+        else if (returnValueExpr instanceof PyCallExpression) {
+          Ref<PyExpression> resolvedRef = resolveDictCall((PyCallExpression)returnValueExpr, indexElement, true);
+          if (resolvedRef != null) return resolvedRef;
+        }
+      }
+    }
+    else if (valueExpr instanceof PyDictLiteralExpression) {
+      Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)valueExpr, indexElement, resolveContext);
+      if (resolvedRef != null) return resolvedRef;
+    }
+    else if (valueExpr instanceof PyReferenceExpression) {
+      PsiElement element = ((PyReferenceExpression)valueExpr).followAssignmentsChain(resolveContext).getElement();
+
+      if (element != valueExpr && element instanceof PyExpression) {
+        return resolveStringIndex((PyExpression)element, indexElement);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Ref<PyExpression> resolveNumericIndex(@NotNull PyExpression valueExpr, @NotNull Integer index) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+    if (PyUtil.instanceOf(valueExpr, PyListLiteralExpression.class, PyTupleExpression.class, PyStringLiteralExpression.class)) {
+      Ref<PyExpression> elementRef = getElementByIndex(valueExpr, index);
+      if (elementRef != null) return elementRef;
+    }
+    else if (valueExpr instanceof PyDictLiteralExpression) {
+      return getElementFromDictLiteral((PyDictLiteralExpression)valueExpr, index, resolveContext);
+    }
+    else if (valueExpr instanceof PyCallExpression) {
+      PyReturnStatement[] returnValues = getFunctionReturnValues((PyCallExpression)valueExpr, resolveContext, myTypeEvalContext);
+      boolean allReturnValuesForSure = true;
+      for (PyReturnStatement value : returnValues) {
+        PyExpression returnValueExpr = PyPsiUtils.flattenParens(value.getExpression());
+        if (PyUtil.instanceOf(returnValueExpr, PyListLiteralExpression.class, PyDictLiteralExpression.class,
+                              PyTupleExpression.class, PyCallExpression.class)) {
+          Ref<PyExpression> resolvedRef = resolveNumericIndex(returnValueExpr, index);
+          if (resolvedRef != null && !resolvedRef.isNull()) {
+            return resolvedRef;
+          }
+          else if (resolvedRef == null){
+            allReturnValuesForSure = false;
+          }
+        }
+      }
+      return allReturnValuesForSure ? Ref.create() : null;
+    }
+    else if (valueExpr instanceof PyReferenceExpression) {
+      PsiElement element = ((PyReferenceExpression)valueExpr).followAssignmentsChain(resolveContext).getElement();
+
+      if (element != null && element != valueExpr && element instanceof PyExpression) {
+        //noinspection ConstantConditions
+        return resolveNumericIndex(PyPsiUtils.flattenParens((PyExpression)element), index);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression valueExpr,
+                                                      @NotNull Integer index,
+                                                      @NotNull PyResolveContext resolveContext) {
+    boolean allKeysForSure = true;
+    final PyKeyValueExpression[] elements = valueExpr.getElements();
+    for (PyKeyValueExpression element : elements) {
+      final PyNumericLiteralExpression key = PyUtil.as(element.getKey(), PyNumericLiteralExpression.class);
+      if (key != null && new Long(index).equals(key.getLongValue())) {
+        return Ref.create(element.getValue());
+      }
+      else if (!(element.getKey() instanceof PyLiteralExpression)) {
+        allKeysForSure = false;
+      }
+    }
+
+    PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(valueExpr, PyDoubleStarExpression.class);
+    if (starExpressions != null) {
+      for (PyDoubleStarExpression expression : starExpressions) {
+        PyExpression underStarExpr = PyPsiUtils.flattenParens(expression.getExpression());
+        if (underStarExpr != null) {
+          if (underStarExpr instanceof PyDictLiteralExpression) {
+            return getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, index, resolveContext);
+          }
+          else if (underStarExpr instanceof PyCallExpression) {
+            return getElementFromCallExpression((PyCallExpression)underStarExpr, index.toString(), resolveContext, true);
+          }
+        }
+      }
+    }
+    return allKeysForSure ? Ref.create() : null;
+  }
+
+  @Nullable
+  private  Ref<PyExpression> getElementFromCallExpression(@NotNull PyCallExpression valueExpr,
+                                                          @NotNull String key,
+                                                          @NotNull PyResolveContext resolveContext,
+                                                          boolean goDeep) {
+    PyReturnStatement[] returnValues = getFunctionReturnValues(valueExpr, resolveContext, myTypeEvalContext);
+    boolean allReturnValuesForSure = true;
+    final PyExpression callee = valueExpr.getCallee();
+    if (callee != null && "dict".equals(callee.getName())) {
+      return resolveDictCall(valueExpr, key, goDeep);
+    }
+
+    for (PyReturnStatement value : returnValues) {
+      PyExpression returnValueExpr = PyPsiUtils.flattenParens(value.getExpression());
+      if (returnValueExpr instanceof PyDictLiteralExpression) {
+        Ref<PyExpression> resolvedRef;
+        try {
+          final Integer index = Integer.getInteger(key);
+          resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)returnValueExpr, index, resolveContext);
+        }
+        catch (NumberFormatException e) {
+          resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)returnValueExpr, key, resolveContext);
+        }
+
+        if (resolvedRef != null && !resolvedRef.isNull()) {
+          return resolvedRef;
+        }
+        else if (resolvedRef == null){
+          allReturnValuesForSure = false;
+        }
+      }
+      else if (returnValueExpr instanceof PyCallExpression) {
+        if (goDeep) return getElementFromCallExpression(valueExpr, key, resolveContext, false);
+      }
+    }
+    return allReturnValuesForSure ? Ref.create() : null;
+  }
+
+  @Nullable
+  public static Ref<PyExpression> getElementByIndex(@NotNull PyExpression listTupleExpr, int index) {
+    boolean noElementsForSure = true;
+    int seenElementsNumber = 0;
+    PyExpression[] elements = getElementsFromListOrTuple(listTupleExpr);
+    for (PyExpression element : elements) {
+      if (element instanceof PyStarExpression) {
+        if (!LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON35)) continue;
+        final PyExpression underStarExpr = ((PyStarExpression)element).getExpression();
+        if (PyUtil.instanceOf(underStarExpr, PyListLiteralExpression.class, PyTupleExpression.class)) {
+          PyExpression[] subsequenсeElements = getElementsFromListOrTuple(underStarExpr);
+          int subsequenceElementIndex = index - seenElementsNumber;
+          if (subsequenceElementIndex < subsequenсeElements.length) {
+            return Ref.create(subsequenсeElements[subsequenceElementIndex]);
+          }
+          if (noElementsForSure) noElementsForSure = Arrays.stream(subsequenсeElements).anyMatch(it -> it instanceof PyStarExpression);
+          seenElementsNumber += subsequenсeElements.length;
+        }
+        else {
+          noElementsForSure = false;
+          break;
+        }
+      }
+      else {
+        if (index == seenElementsNumber) {
+          return Ref.create(element);
+        }
+        seenElementsNumber++;
+      }
+    }
+    return noElementsForSure ? Ref.create() : null;
+  }
+
+  public static PyExpression[] getElementsFromListOrTuple(@NotNull final PyExpression expression) {
+    if (expression instanceof PyListLiteralExpression) {
+      return ((PyListLiteralExpression)expression).getElements();
+    }
+    else if (expression instanceof PyTupleExpression) {
+      return ((PyTupleExpression)expression).getElements();
+    }
+    else if (expression instanceof PyStringLiteralExpression) {
+      String value = ((PyStringLiteralExpression)expression).getStringValue();
+      if (value != null) {
+        // Strings might be packed as well as dicts, so we need to resolve somehow to string element.
+        // But string element isn't PyExpression so I decided to resolve to PyStringLiteralExpression for
+        // every string element
+        PyExpression[] result = new PyExpression[value.length()];
+        for (int i = 0; i < value.length(); i++) {
+          result[i] = expression;
+        }
+        return result;
+      }
+    }
+
+    return PyExpression.EMPTY_ARRAY;
   }
 
   @NotNull
   private static List<PyStarArgument> getStarArguments(@NotNull PyArgumentList argumentList, boolean isKeyword) {
-    return Arrays.asList(argumentList.getArguments()).stream()
+    return Arrays.stream(argumentList.getArguments())
       .map(expression -> PyUtil.as(expression, PyStarArgument.class))
       .filter(argument -> argument != null && argument.isKeyword() == isKeyword).collect(Collectors.toList());
   }
@@ -162,16 +386,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         return null;
       }
       boolean isKeyWordSubstitution = myChunk.getMappingKey() != null;
-      return isKeyWordSubstitution ? resolveKeywordPercent(rightExpression) : resolvePositionalPercent(rightExpression);
+      return isKeyWordSubstitution ? resolveKeywordPercent(rightExpression, myChunk.getMappingKey()) : resolvePositionalPercent(rightExpression);
     }
     return null;
   }
 
   @Nullable
-  private PsiElement resolveKeywordPercent(@NotNull PyExpression expression) {
+  private PyExpression resolveKeywordPercent(@NotNull PyExpression expression, @NotNull String key) {
     final PyExpression containedExpr = PyPsiUtils.flattenParens(expression);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     if (containedExpr instanceof PyDictLiteralExpression) {
-      final Ref<PsiElement> resolvedRef = resolveDictLiteralExpression((PyDictLiteralExpression)containedExpr);
+      final Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)containedExpr, key, resolveContext);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
     }
     else if (PyUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class,
@@ -179,7 +404,10 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       return null;
     }
     else if (containedExpr instanceof PyCallExpression) {
-      return resolveDictCall((PyCallExpression)containedExpr);
+      if (myChunk.getMappingKey() != null) {
+        Ref<PyExpression> elementRef = resolveDictCall((PyCallExpression)containedExpr, myChunk.getMappingKey(), true);
+        if (elementRef != null) return elementRef.get();
+      }
     }
     return containedExpr;
   }
@@ -208,7 +436,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private PsiElement resolveNotNestedBinaryExpression(PyBinaryExpression containedExpression) {
+  private PsiElement resolveNotNestedBinaryExpression(@NotNull PyBinaryExpression containedExpression) {
     PyExpression left = containedExpression.getLeftExpression();
     PyExpression right = containedExpression.getRightExpression();
     if (left instanceof PyParenthesizedExpression) {
@@ -219,19 +447,16 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         if (leftTupleLength > myPosition) {
           return leftTupleElements[myPosition];
         }
-        if (right instanceof PyParenthesizedExpression) {
-          PyExpression rightTuple = PyPsiUtils.flattenParens(right);
-          if (rightTuple instanceof PyTupleExpression) {
-            PyExpression[] rightTupleElements = ((PyTupleExpression)rightTuple).getElements();
-            int rightLength = rightTupleElements.length;
-            if (leftTupleLength + rightLength > myPosition)
-              return rightTupleElements[myPosition - leftTupleLength];
-          }
+        if (right instanceof PyTupleExpression) {
+          PyExpression[] rightTupleElements = ((PyTupleExpression)right).getElements();
+          int rightLength = rightTupleElements.length;
+          if (leftTupleLength + rightLength > myPosition) return rightTupleElements[myPosition - leftTupleLength];
         }
       }
     }
     return containedExpression;
   }
+
 
   @Nullable
   private static PyArgumentList getArgumentList(final PsiElement original) {
@@ -240,55 +465,36 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private Ref<PsiElement> resolveKeywordStarExpression(@NotNull PyStarArgument starArgument) {
+  private Ref<PyExpression> resolveKeywordStarExpression(@NotNull PyStarArgument starArgument) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+    // TODO: support call, reference expressions here
     final PyDictLiteralExpression dictExpr = PsiTreeUtil.getChildOfType(starArgument, PyDictLiteralExpression.class);
-    return dictExpr != null ? resolveDictLiteralExpression(dictExpr) : null;
+    return dictExpr != null ? getElementFromDictLiteral(dictExpr, myChunk.getMappingKey(), resolveContext) : null;
   }
-  
+
   @Nullable
-  private Ref<PsiElement> resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
-    final PyExpression expr = PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
-                                                            PyStringLiteralExpression.class);
+  private Ref<PyExpression> resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
+    final PyExpression expr = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
+                                                            PyStringLiteralExpression.class));
     if (expr == null) {
       return Ref.create(starArgument);
     }
     final int position = (myChunk.getPosition() != null ? myChunk.getPosition() : myPosition) - argumentPosition;
-    final PyExpression[] elements;
-    if (expr instanceof PyListLiteralExpression) {
-      elements = ((PyListLiteralExpression)expr).getElements();
-    }
-    else if (expr instanceof PyParenthesizedExpression) {
-      final PyExpression expression = PyPsiUtils.flattenParens(expr);
-      final PyTupleExpression tupleExpr = PyUtil.as(expression, PyTupleExpression.class);
-      if (tupleExpr == null) {
-        return Ref.create(starArgument);
-      }
-      elements = tupleExpr.getElements();
-    }
-    else if (expr instanceof PyStringLiteralExpression) {
-      if (position < ((PyStringLiteralExpression)expr).getStringValue().length()) {
-        return Ref.create(expr);
-      }
-      return Ref.create();
-    }
-    else {
-      return null;
-    }
-    return position < elements.length ? Ref.create(elements[position]) : Ref.create();
+    return getElementByIndex(expr, position);
   }
 
   @Nullable
-  private Ref<PsiElement> resolveDictLiteralExpression(PyDictLiteralExpression expression) {
+  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression expression,
+                                                      @NotNull String mappingKey,
+                                                      @NotNull PyResolveContext resolveContext) {
     final PyKeyValueExpression[] keyValueExpressions = expression.getElements();
-    if (keyValueExpressions.length == 0) {
-      return Ref.create();
-    }
+
     boolean allKeysForSure = true;
     for (PyKeyValueExpression keyValueExpression : keyValueExpressions) {
       PyExpression keyExpression = keyValueExpression.getKey();
       if (keyExpression instanceof PyStringLiteralExpression) {
         final PyStringLiteralExpression key = (PyStringLiteralExpression)keyExpression;
-        if (key.getStringValue().equals(myChunk.getMappingKey())) {
+        if (key.getStringValue().equals(mappingKey)) {
           return Ref.create(keyValueExpression.getValue());
         }
       }
@@ -296,27 +502,78 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         allKeysForSure = false;
       }
     }
+
+    final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
+    PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(expression, PyDoubleStarExpression.class);
+    if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && starExpressions != null) {
+      for (PyDoubleStarExpression expr : starExpressions) {
+        PyExpression underStarExpr = PyPsiUtils.flattenParens(expr.getExpression());
+        if (underStarExpr != null) {
+          if (underStarExpr instanceof PyDictLiteralExpression) {
+            return getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, mappingKey, resolveContext);
+          }
+          else if (underStarExpr instanceof PyCallExpression) {
+            return getElementFromCallExpression((PyCallExpression)underStarExpr, mappingKey, resolveContext, true);
+          }
+        }
+      }
+    }
+
     return allKeysForSure ? Ref.create() : null;
   }
 
   @Nullable
-  private PsiElement resolveDictCall(@NotNull PyCallExpression expression) {
+  private Ref<PyExpression> resolveDictCall(@NotNull PyCallExpression expression, @NotNull String key, boolean goDeep) {
     final PyExpression callee = expression.getCallee();
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+    boolean allKeysForSure = true;
+    final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     if (callee != null) {
       final String name = callee.getName();
       if ("dict".equals(name)) {
+        final PyArgumentList argumentList = expression.getArgumentList();
         for (PyExpression arg : expression.getArguments()) {
+          if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && goDeep && arg instanceof PyStarExpression) {
+            PyExpression expr = ((PyStarExpression)arg).getExpression();
+            if (expr instanceof PyDictLiteralExpression) {
+              Ref<PyExpression> element = getElementFromDictLiteral((PyDictLiteralExpression)expr, key, resolveContext);
+              if (element != null) return element;
+            }
+            else if (expr instanceof PyCallExpression) {
+              Ref<PyExpression> element = resolveDictCall((PyCallExpression)expr, key, false);
+              if (element != null) return element;
+            }
+            else {
+              allKeysForSure = false;
+            }
+          }
           if (!(arg instanceof PyKeywordArgument)) {
-            return expression;
+            allKeysForSure = false;
           }
         }
-        final PyArgumentList argumentList = expression.getArgumentList();
         if (argumentList != null) {
-          return argumentList.getKeywordArgument(myChunk.getMappingKey());
+          PyKeywordArgument argument = argumentList.getKeywordArgument(key);
+          if (argument != null) {
+            return Ref.create(argument);
+          }
+          else {
+            return allKeysForSure ? Ref.create() : null;
+          }
         }
       }
     }
-    return expression;
+    return Ref.create(expression);
+  }
+
+  private static PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,
+                                                             @NotNull PyResolveContext resolveContext,
+                                                             @NotNull TypeEvalContext evalContext) {
+    final PyCallable callable = callExpression.resolveCalleeFunction(resolveContext);
+    if (callable instanceof PyFunction && evalContext.maySwitchToAST(callable)) {
+      PyStatementList statementList = ((PyFunction)callable).getStatementList();
+      return PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
+    }
+    return new PyReturnStatement[0];
   }
 
   @NotNull

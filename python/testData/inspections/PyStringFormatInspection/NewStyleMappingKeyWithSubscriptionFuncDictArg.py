@@ -2,11 +2,11 @@ def d():
     return {"a": 1}
 
 "{foo[a]}".format(foo=d())
-"{foo[b]}".format(foo=<warning descr="Too few mapping keys">d()</warning>)
+<warning descr="Too few arguments for format string">"{foo[b]}"</warning>.format(foo=d())
 
 
 def d_dict():
     return dict(a=1)
 
 "{foo[a]}".format(foo=d_dict())
-"{foo[b]}".format(foo=<warning descr="Too few mapping keys">d_dict()</warning>)
+<warning descr="Too few arguments for format string">"{foo[b]}"</warning>.format(foo=d_dict())

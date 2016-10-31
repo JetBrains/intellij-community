@@ -1,1 +1,1 @@
-print(<warning descr="Mapping key \"foo\" is unused">"{foo}"</warning>.format(**{}))
+print(<warning descr="Key 'foo' has no following argument">"{foo}"</warning>.format(**{}))

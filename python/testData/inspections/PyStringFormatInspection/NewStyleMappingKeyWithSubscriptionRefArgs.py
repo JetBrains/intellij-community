@@ -1,7 +1,7 @@
 list = [1, 2, 3]
 "{foo[1]}".format(foo=list)
-"{foo[3]}".format(foo=<warning descr="Too few arguments for format string">list</warning>)
+<warning descr="Too few arguments for format string">"{foo[3]}"</warning>.format(foo=list)
 
 tuple = (1, 2, 3)
 "{foo[1]}".format(foo=tuple)
-"{foo[3]}".format(foo=<warning descr="Too few arguments for format string">tuple</warning>)
+<warning descr="Too few arguments for format string">"{foo[3]}"</warning>.format(foo=tuple)
