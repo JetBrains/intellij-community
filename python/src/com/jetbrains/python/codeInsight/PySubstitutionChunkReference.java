@@ -321,14 +321,14 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     for (PyExpression element : elements) {
       if (element instanceof PyStarExpression) {
         if (!LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON35)) continue;
-        final PyExpression underStarExpr = ((PyStarExpression)element).getExpression();
+        final PyExpression underStarExpr = PyPsiUtils.flattenParens(((PyStarExpression)element).getExpression());
         if (PyUtil.instanceOf(underStarExpr, PyListLiteralExpression.class, PyTupleExpression.class)) {
           PyExpression[] subsequenсeElements = getElementsFromListOrTuple(underStarExpr);
           int subsequenceElementIndex = index - seenElementsNumber;
           if (subsequenceElementIndex < subsequenсeElements.length) {
             return Ref.create(subsequenсeElements[subsequenceElementIndex]);
           }
-          if (noElementsForSure) noElementsForSure = Arrays.stream(subsequenсeElements).anyMatch(it -> it instanceof PyStarExpression);
+          if (noElementsForSure) noElementsForSure = Arrays.stream(subsequenсeElements).noneMatch(it -> it instanceof PyStarExpression);
           seenElementsNumber += subsequenсeElements.length;
         }
         else {

@@ -65,6 +65,9 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  public void testPackedListInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
