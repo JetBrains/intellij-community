@@ -909,10 +909,9 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Nullable
   @Contract("null -> null; !null -> !null")
-  @SuppressWarnings("unchecked")
   public static <T> T[] copyOf(@Nullable T[] original) {
     if (original == null) return null;
-    return (T[]) Arrays.copyOf(original, original.length, original.getClass());
+    return Arrays.copyOf(original, original.length);
   }
 
   @Nullable
