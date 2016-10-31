@@ -16,7 +16,6 @@
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.intentions.PyConvertToFStringIntention;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -124,9 +123,13 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
     doTest();
   }
 
-  public void testExtractItemAndAttributeAccess() {
-    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0.foo.bar.baz}"), ".foo", ".bar", ".baz");
-    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{0[foo][.!:][}]}"), "[foo]", "[.!:]", "[}]");
-    assertSameElements(PyConvertToFStringIntention.extractItemsAndAttributes("{foo[bar].baz:}"), "[bar]", ".baz");
+  // PY-21244
+  public void testFormatMethodNestedFields() {
+    doTest();
+  }
+  
+  // PY-21244
+  public void testFormatMethodNestedFields2() {
+    doTest();
   }
 }
