@@ -17,9 +17,9 @@ package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.security.SecureRandom;
 import java.util.Map;
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * The service that generates editor script for
@@ -46,15 +45,11 @@ public class GitRebaseEditorService {
   /**
    * The handlers to use
    */
-  private final Map<Integer, GitRebaseEditorHandler> myHandlers = new THashMap<>();
+  private final Map<UUID, GitRebaseEditorHandler> myHandlers = ContainerUtil.newHashMap();
   /**
    * The lock for the handlers
    */
   private final Object myHandlersLock = new Object();
-  /**
-   * Random number generator
-   */
-  private static final Random oursRandom = new SecureRandom();
   /**
    * The prefix for rebase editors
    */
@@ -103,33 +98,22 @@ public class GitRebaseEditorService {
    * @param handler the handler to register
    * @return the handler identifier
    */
-  public int registerHandler(GitRebaseEditorHandler handler) {
+  @NotNull
+  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler) {
     addInternalHandler();
-    Integer rc = null;
     synchronized (myHandlersLock) {
-      for (int i = Integer.MAX_VALUE; i > 0; i--) {
-        int code = Math.abs(oursRandom.nextInt());
-        // note that code might still be negative at this point if it is Integer.MIN_VALUE.
-        if (code > 0 && !myHandlers.containsKey(code)) {
-          rc = code;
-          break;
-        }
-      }
-      if (rc == null) {
-        throw new IllegalStateException("There is a problem with random number allocation");
-      }
-      myHandlers.put(rc, handler);
+      UUID key = UUID.randomUUID();
+      myHandlers.put(key, handler);
+      return key;
     }
-    return rc;
   }
-
 
   /**
    * Unregister handler
    *
    * @param handlerNo the handler number.
    */
-  public void unregisterHandler(final int handlerNo) {
+  public void unregisterHandler(@NotNull UUID handlerNo) {
     synchronized (myHandlersLock) {
       if (myHandlers.remove(handlerNo) == null) {
         throw new IllegalStateException("The handler " + handlerNo + " has been already removed");
@@ -143,7 +127,7 @@ public class GitRebaseEditorService {
    * @param handlerNo the handler number.
    */
   @NotNull
-  GitRebaseEditorHandler getHandler(final int handlerNo) {
+  GitRebaseEditorHandler getHandler(@NotNull UUID handlerNo) {
     synchronized (myHandlersLock) {
       GitRebaseEditorHandler h = myHandlers.get(handlerNo);
       if (h == null) {
@@ -159,9 +143,9 @@ public class GitRebaseEditorService {
    * @param h        the handler to configure
    * @param editorNo the editor number
    */
-  public void configureHandler(GitLineHandler h, int editorNo) {
+  public void configureHandler(GitLineHandler h, @NotNull UUID editorNo) {
     h.setEnvironment(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
-    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editorNo));
+    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
   }
 
 
@@ -177,8 +161,8 @@ public class GitRebaseEditorService {
      * @return exit code
      */
     @SuppressWarnings({"UnusedDeclaration"})
-    public int editCommits(int handlerNo, String path) {
-      GitRebaseEditorHandler editor = getHandler(handlerNo);
+    public int editCommits(@NotNull String handlerNo, String path) {
+      GitRebaseEditorHandler editor = getHandler(UUID.fromString(handlerNo));
       return editor.editCommits(path);
     }
   }

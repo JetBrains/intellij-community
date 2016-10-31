@@ -163,7 +163,7 @@ public class GitRebaser {
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(rebaseEditorService, myProject, root, rh);
-    Integer rebaseEditorNo = editor.getHandlerNo();
+    UUID rebaseEditorNo = editor.getHandlerNo();
     rebaseEditorService.configureHandler(rh, rebaseEditorNo);
   }
 
@@ -196,7 +196,7 @@ public class GitRebaser {
 
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
     h.setStdoutSuppressed(false);
-    Integer rebaseEditorNo = null;
+    UUID rebaseEditorNo = null;
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     try {
       h.addParameters("-i", "-m", "-v");

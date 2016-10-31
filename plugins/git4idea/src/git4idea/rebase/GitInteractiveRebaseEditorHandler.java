@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
@@ -58,7 +59,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   /**
    * The handler number
    */
-  private final int myHandlerNo;
+  @NotNull private final UUID myHandlerNo;
   /**
    * If true, the handler has been closed
    */
@@ -197,7 +198,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   /**
    * @return the handler number
    */
-  public int getHandlerNo() {
+  @NotNull
+  public UUID getHandlerNo() {
     return myHandlerNo;
   }
 
