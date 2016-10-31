@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LayeredIcon;
@@ -79,7 +80,7 @@ public class ExecutionUtil {
     LOG.debug(e);
 
     String description = e.getMessage();
-    if (description == null) {
+    if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
       description = "Unknown error";
     }
