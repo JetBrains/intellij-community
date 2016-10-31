@@ -244,10 +244,12 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     String text = psi.getText();
     String fastPath = StringUtil.unescapeXml(text);
     if (!StringUtil.equals(fastPath, text)) return fastPath;
-    final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
-    final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
-    if (value != null) {
-      return getEntityValue(value);
+    if (psi.isValid()) {
+      final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
+      final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
+      if (value != null) {
+        return getEntityValue(value);
+      }
     }
     return null;
   }

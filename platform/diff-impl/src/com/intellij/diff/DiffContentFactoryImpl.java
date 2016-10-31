@@ -251,7 +251,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull byte[] content,
                                      @NotNull FilePath filePath) throws IOException {
     if (filePath.getFileType().isBinary()) {
-      return createBinary(project, content, filePath.getFileType(), filePath.getName());
+      return createBinaryImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile());
     }
 
     return createDocumentFromBytes(project, content, filePath);
@@ -264,7 +264,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull VirtualFile highlightFile) throws IOException {
     // TODO: check if FileType.UNKNOWN is actually a text ?
     if (highlightFile.getFileType().isBinary()) {
-      return createBinary(project, content, highlightFile.getFileType(), highlightFile.getName());
+      return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile);
     }
 
     return createDocumentFromBytes(project, content, highlightFile);
@@ -290,6 +290,15 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                   @NotNull byte[] content,
                                   @NotNull FileType type,
                                   @NotNull String fileName) throws IOException {
+    return createBinaryImpl(project, content, type, fileName, null);
+  }
+
+  @NotNull
+  private DiffContent createBinaryImpl(@Nullable Project project,
+                                       @NotNull byte[] content,
+                                       @NotNull FileType type,
+                                       @NotNull String fileName,
+                                       @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 
@@ -302,7 +311,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       file.setWritable(false);
     }
 
-    return create(project, file);
+    return new FileContentImpl(project, file, highlightFile);
   }
 
   @NotNull

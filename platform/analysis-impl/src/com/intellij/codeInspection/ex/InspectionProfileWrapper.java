@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,14 +42,14 @@ public class InspectionProfileWrapper {
    * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns
    * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<Function<InspectionProfile, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  public static final Key<Function<InspectionProfileImpl, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
 
-  protected final InspectionProfile myProfile;
+  protected final InspectionProfileImpl myProfile;
 
-  public InspectionProfileWrapper(@NotNull InspectionProfile profile) {
+  public InspectionProfileWrapper(@NotNull InspectionProfileImpl profile) {
     myProfile = profile;
   }
 
@@ -87,7 +86,7 @@ public class InspectionProfileWrapper {
   }
 
   @NotNull
-  public InspectionProfile getInspectionProfile() {
+  public InspectionProfileImpl getInspectionProfile() {
     return myProfile;
   }
 }

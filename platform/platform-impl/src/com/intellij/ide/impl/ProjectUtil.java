@@ -110,7 +110,7 @@ public class ProjectUtil {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
-    if (ProjectKt.isValidProjectPath(path, true)) {
+    if (ProjectKt.isValidProjectPath(path)) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 

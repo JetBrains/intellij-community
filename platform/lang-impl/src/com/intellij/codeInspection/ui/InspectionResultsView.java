@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -108,7 +107,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups =
     ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
-  private volatile InspectionProfile myInspectionProfile;
+  private volatile InspectionProfileImpl myInspectionProfile;
   @NotNull
   private final AnalysisScope myScope;
   @NonNls
@@ -256,7 +255,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(Profile profile) {
+      public void profileChanged(InspectionProfile profile) {
         if (profile == profileManager.getCurrentProfile()) {
           InspectionResultsView.this.profileChanged();
         }
@@ -617,9 +616,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       if (reuseEditorFor(document)) {
         myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
-        myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> {
-          myPreviewEditor.getFoldingModel().clearFoldRegions();
-        });
+        myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> myPreviewEditor.getFoldingModel().clearFoldRegions());
         myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
@@ -703,7 +700,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
-  public InspectionProfile getCurrentProfile() {
+  public InspectionProfileImpl getCurrentProfile() {
     return myInspectionProfile;
   }
 
@@ -805,7 +802,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private void addToolsSynchronously(Collection<Tools> tools) {
     if (isDisposed()) return;
     synchronized (myTreeStructureUpdateLock) {
-      InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
+      InspectionProfileImpl profile = myInspectionProfile;
       boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
       boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
@@ -1132,7 +1129,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
-    myInspectionProfile = (InspectionProfile)myInspectionProfile.getProfileManager().getProfile(name);
+    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   private class RerunAction extends AnAction {

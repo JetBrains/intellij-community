@@ -13,30 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile;
+package com.intellij.openapi.editor.colors
 
-import com.intellij.openapi.options.Scheme;
-import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NotNull;
+import java.util.regex.Pattern
 
-/**
- * User: anna
- * Date: 20-Nov-2005
- */
-public interface Profile extends Comparable, Scheme {
-  @Transient
-  boolean isProjectLevel();
+fun removeSchemeMetaInfo(result: String): String {
+  val matcher = Pattern.compile("\\s+<metaInfo>.*</metaInfo>", Pattern.DOTALL).matcher(result)
+  if (!matcher.find()) {
+    return result
+  }
 
-  void setProjectLevel(boolean isProjectLevel);
-
-  void setName(@NotNull String name);
-
-  @Override
-  @NotNull
-  String getName();
-
-  void setProfileManager(@NotNull ProfileManager profileManager);
-
-  @NotNull
-  ProfileManager getProfileManager();
+  val builder = StringBuffer()
+  matcher.appendReplacement(builder, "")
+  matcher.appendTail(builder)
+  return builder.toString()
 }

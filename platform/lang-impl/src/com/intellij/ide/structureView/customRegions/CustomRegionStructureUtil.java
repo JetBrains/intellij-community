@@ -64,17 +64,15 @@ public class CustomRegionStructureUtil {
   }
 
   private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
-    Iterator<PsiComment> iterator = SyntaxTraverser.psiTraverser(rootElement)
-      .regard(element -> !isInsideRanges(element, ranges))
-      .filter(PsiComment.class)
-      .filter(comment -> !comment.textContains('\n'))
+    Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
+      .regard(element -> isCustomRegionCommentCandidate(element) && !isInsideRanges(element, ranges))
       .iterator();
 
     List<CustomRegionTreeElement> customRegions = ContainerUtil.newSmartList();
     CustomRegionTreeElement currRegionElement = null;
     CustomFoldingProvider provider = null;
     while (iterator.hasNext()) {
-      PsiComment child = iterator.next();
+      PsiElement child = iterator.next();
       if (provider == null) provider = getProvider(child);
       if (provider != null) {
         String commentText = child.getText();
@@ -107,10 +105,15 @@ public class CustomRegionStructureUtil {
 
   private static boolean isInsideRanges(@NotNull PsiElement element, @NotNull Set<TextRange> ranges) {
     for (TextRange range : ranges) {
-      if (range.contains(element.getTextRange().getStartOffset()) || range.contains(element.getTextRange().getEndOffset())) {
+      TextRange elementRange = element.getTextRange();
+      if (range.contains(elementRange.getStartOffset()) || range.contains(elementRange.getEndOffset())) {
         return true;
       }
     }
     return false;
+  }
+  
+  private static boolean isCustomRegionCommentCandidate(@NotNull PsiElement element) {
+    return element instanceof PsiComment && !element.textContains('\n');
   }
 }

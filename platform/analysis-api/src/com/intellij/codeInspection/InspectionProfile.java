@@ -22,9 +22,9 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,14 +34,26 @@ import java.util.List;
  * User: anna
  * Date: Dec 7, 2004
  */
-public interface InspectionProfile extends Profile {
+public interface InspectionProfile extends Comparable {
+  @Transient
+  boolean isProjectLevel();
+
+  void setProjectLevel(boolean isProjectLevel);
+
+  void setName(@NotNull String name);
+
+  @NotNull
+  String getName();
 
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   /**
    * If you need to modify tool's settings, please use {@link #modifyToolSettings}
+   *
+   * @return {@link com.intellij.codeInspection.ex.InspectionToolWrapper}
+   * @see #getUnwrappedTool(String, com.intellij.psi.PsiElement)
    */
-  InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
+  InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element);
 
   @Nullable
   InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project);

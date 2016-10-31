@@ -16,18 +16,12 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +30,6 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class LightJavaModule extends LightElement implements PsiJavaModule {
@@ -143,20 +135,18 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   @NotNull
-  public static LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
-    Project project = manager.getProject();
-    CachedValuesManager cache = CachedValuesManager.getManager(project);
-    return cache.getParameterizedCachedValue(project, KEY, new ParameterizedCachedValueProvider<LightJavaModule, Pair<PsiManager, VirtualFile>>() {
+  public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
+    final PsiDirectory directory = manager.findDirectory(jarRoot);
+    assert directory != null : jarRoot;
+    return CachedValuesManager.getCachedValue(directory, new CachedValueProvider<LightJavaModule>() {
       @Nullable
       @Override
-      public Result<LightJavaModule> compute(Pair<PsiManager, VirtualFile> p) {
-        LightJavaModule module = new LightJavaModule(p.first, p.second);
-        return Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootModificationTracker.getInstance(p.first.getProject()));
+      public Result<LightJavaModule> compute() {
+        LightJavaModule module = new LightJavaModule(manager, jarRoot);
+        return Result.create(module, directory);
       }
-    }, false, pair(manager, jarRoot));
+    });
   }
-
-  private static final Key<ParameterizedCachedValue<LightJavaModule, Pair<PsiManager, VirtualFile>>> KEY = Key.create("java.light.module");
 
   /**
    * Implements a name deriving for  automatic modules as described in ModuleFinder.of(Path...) method documentation.

@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
@@ -89,54 +90,79 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
                                            @Nullable CompileStatusNotification compileNotification,
                                            @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
+    if (ContainerUtil.isEmpty(buildTasks)) return;
+    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
 
-
-    if (!ContainerUtil.isEmpty(buildTasks)) {
-      List<Module> modules = new SmartList<>();
-
-      Boolean isIncrementalBuild = null;
-      Boolean includeDependentModules = null;
-      Boolean includeRuntimeDependencies = null;
-
-      for (ProjectTask buildProjectTask : buildTasks) {
-        ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
-        assertModuleBuildSettings(moduleBuildTask, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-        modules.add(moduleBuildTask.getModule());
-        if (!moduleBuildTask.isIncrementalBuild()) {
-          isIncrementalBuild = false;
-        }
-        if (moduleBuildTask.isIncludeDependentModules()) {
-          includeDependentModules = true;
-        }
-        if (moduleBuildTask.isIncludeRuntimeDependencies()) {
-          includeRuntimeDependencies = true;
-        }
-      }
-      CompilerManager compilerManager = CompilerManager.getInstance(project);
-      CompileScope scope = createScope(
-        compilerManager, context, modules, includeDependentModules != null, includeRuntimeDependencies != null);
-      if (isIncrementalBuild == null) {
-        compilerManager.make(scope, compileNotification);
-      }
-      else {
-        compilerManager.compile(scope, compileNotification);
-      }
+    CompilerManager compilerManager = CompilerManager.getInstance(project);
+    CompileScope scope = createScope(compilerManager, context,
+                                     modulesBuildSettings.modules,
+                                     modulesBuildSettings.includeDependentModules,
+                                     modulesBuildSettings.includeRuntimeDependencies);
+    if (modulesBuildSettings.isIncrementalBuild) {
+      compilerManager.make(scope, compileNotification);
+    }
+    else {
+      compilerManager.compile(scope, compileNotification);
     }
   }
 
-  private static void assertModuleBuildSettings(ModuleBuildTask moduleBuildTask,
-                                                Boolean isIncrementalBuild,
-                                                Boolean includeDependentModules,
-                                                Boolean includeRuntimeDependencies) {
-    if (isIncrementalBuild != null && moduleBuildTask.isIncrementalBuild()) {
-      LOG.warn("Incremental build setting for the module '" + moduleBuildTask.getModule().getName() + "' will be ignored");
+  private static class ModulesBuildSettings {
+    final boolean isIncrementalBuild;
+    final boolean includeDependentModules;
+    final boolean includeRuntimeDependencies;
+    final Collection<Module> modules;
+
+    public ModulesBuildSettings(boolean isIncrementalBuild,
+                                boolean includeDependentModules,
+                                boolean includeRuntimeDependencies,
+                                Collection<Module> modules) {
+      this.isIncrementalBuild = isIncrementalBuild;
+      this.includeDependentModules = includeDependentModules;
+      this.includeRuntimeDependencies = includeRuntimeDependencies;
+      this.modules = modules;
     }
-    if (includeDependentModules != null && !moduleBuildTask.isIncludeDependentModules()) {
-      LOG.warn("'Module '" + moduleBuildTask.getModule().getName() + "' will be built along with dependent modules");
+  }
+
+  private static ModulesBuildSettings assembleModulesBuildSettings(Collection<? extends ProjectTask> buildTasks) {
+    Collection<Module> modules = new SmartList<>();
+    Collection<ModuleBuildTask> incrementalTasks = ContainerUtil.newSmartList();
+    Collection<ModuleBuildTask> excludeDependentTasks = ContainerUtil.newSmartList();
+    Collection<ModuleBuildTask> excludeRuntimeTasks = ContainerUtil.newSmartList();
+
+    for (ProjectTask buildProjectTask : buildTasks) {
+      ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
+      modules.add(moduleBuildTask.getModule());
+
+      if (moduleBuildTask.isIncrementalBuild()) {
+        incrementalTasks.add(moduleBuildTask);
+      }
+      if (!moduleBuildTask.isIncludeDependentModules()) {
+        excludeDependentTasks.add(moduleBuildTask);
+      }
+      if (!moduleBuildTask.isIncludeRuntimeDependencies()) {
+        excludeRuntimeTasks.add(moduleBuildTask);
+      }
     }
-    if (includeRuntimeDependencies != null && !moduleBuildTask.isIncludeRuntimeDependencies()) {
-      LOG.warn("'Module '" + moduleBuildTask.getModule().getName() + "' will be built along with runtime dependencies");
+
+    boolean isIncrementalBuild = incrementalTasks.size() == buildTasks.size();
+    boolean includeDependentModules = excludeDependentTasks.size() != buildTasks.size();
+    boolean includeRuntimeDependencies = excludeRuntimeTasks.size() != buildTasks.size();
+
+    if (!isIncrementalBuild && !incrementalTasks.isEmpty()) {
+      assertModuleBuildSettingsConsistent(incrementalTasks, "will be built ignoring incremental build setting");
     }
+    if (includeDependentModules && !excludeDependentTasks.isEmpty()) {
+      assertModuleBuildSettingsConsistent(excludeDependentTasks, "will be built along with dependent modules");
+    }
+    if (includeRuntimeDependencies && !excludeRuntimeTasks.isEmpty()) {
+      assertModuleBuildSettingsConsistent(excludeRuntimeTasks, "will be built along with runtime dependencies");
+    }
+    return new ModulesBuildSettings(isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, modules);
+  }
+
+  private static void assertModuleBuildSettingsConsistent(Collection<ModuleBuildTask> moduleBuildTasks, String warnMsg) {
+    String moduleNames = StringUtil.join(moduleBuildTasks, task -> task.getModule().getName(), ", ");
+    LOG.warn("Module" + (moduleBuildTasks.size() > 1 ? "s": "") + " : '" + moduleNames + "' " + warnMsg);
   }
 
   private static CompileScope createScope(CompilerManager compilerManager,

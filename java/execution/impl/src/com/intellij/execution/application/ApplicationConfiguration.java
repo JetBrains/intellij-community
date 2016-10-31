@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -299,7 +300,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
           PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
           if (mainModule != null) {
             params.setModuleName(mainModule.getModuleName());
-            params.getModulePath().addAll(params.getClassPath().getPathList());
+            PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
+            modulePath.addAll(classPath.getPathList());
+            classPath.clear();
           }
         }
       }

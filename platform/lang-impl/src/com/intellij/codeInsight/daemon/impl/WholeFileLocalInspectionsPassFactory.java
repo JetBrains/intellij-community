@@ -22,6 +22,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -30,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -72,12 +72,12 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   public void projectOpened() {
     final ProfileChangeAdapter myProfilesListener = new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(Profile profile) {
+      public void profileChanged(InspectionProfile profile) {
         myFileToolsCache.clear();
       }
 
       @Override
-      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
+      public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
         myFileToolsCache.clear();
       }
     };

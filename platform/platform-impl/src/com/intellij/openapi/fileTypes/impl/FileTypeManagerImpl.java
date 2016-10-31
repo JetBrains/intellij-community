@@ -98,7 +98,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
 
   // must be sorted
-  private static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
+  private static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
   static {
     List<String> strings = StringUtil.split(DEFAULT_IGNORED, ";");
     for (int i = 0; i < strings.size(); i++) {

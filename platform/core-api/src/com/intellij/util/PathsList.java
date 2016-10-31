@@ -77,6 +77,12 @@ public class PathsList  {
     myPathSet.remove(path);
   }
 
+  public void clear() {
+    myPath.clear();
+    myPathTail.clear();
+    myPathSet.clear();
+  }
+
   public void add(VirtualFile file) {
     add(LOCAL_PATH.fun(file));
   }

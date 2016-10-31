@@ -36,7 +36,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -149,13 +148,12 @@ public class InspectionApplication {
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-      Profile inspectionProfile = loadInspectionProfile();
+      InspectionProfileImpl inspectionProfile = loadInspectionProfile();
       if (inspectionProfile == null) return;
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
-      inspectionContext.setExternalProfile((InspectionProfile)inspectionProfile);
+      im.createNewGlobalContext(true).setExternalProfile(inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -214,7 +212,7 @@ public class InspectionApplication {
           gracefulExit();
           return;
         }
-        inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        im.createNewGlobalContext(true).launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
         logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
         if (!myErrorCodeRequired) {
           closeProject();
@@ -258,12 +256,12 @@ public class InspectionApplication {
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
                           myRunWithEditorSettings ? null : inspectionProfile.getName(),
-                          (InspectionProfile)inspectionProfile);
+                          inspectionProfile);
       inspectionsResults.add(new File(descriptionsFile));
       // convert report
       if (reportConverter != null) {
         try {
-          reportConverter.convert(resultsDataPath, myOutPath, inspectionContext.getTools(), inspectionsResults);
+          reportConverter.convert(resultsDataPath, myOutPath, im.createNewGlobalContext(true).getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
           logError("\n" + e.getMessage());
@@ -307,8 +305,8 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private Profile loadInspectionProfile() throws IOException, JDOMException {
-    Profile inspectionProfile = null;
+  private InspectionProfileImpl loadInspectionProfile() throws IOException, JDOMException {
+    InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
     if (myProfileName != null) {
@@ -347,8 +345,8 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private Profile loadProfileByPath(final String profilePath) throws IOException, JDOMException {
-    Profile inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
+  private InspectionProfileImpl loadProfileByPath(final String profilePath) throws IOException, JDOMException {
+    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + profilePath + "\'");
     }
@@ -356,15 +354,14 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private Profile loadProfileByName(final String profileName) {
-    Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
+  private InspectionProfileImpl loadProfileByName(final String profileName) {
+    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded shared project profile \'" + profileName + "\'");
     }
     else {
       //check if ide profile is used for project
-      final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
-      for (Profile profile : profiles) {
+      for (InspectionProfileImpl profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
           logMessageLn(1, "Loaded local profile \'" + profileName + "\'");

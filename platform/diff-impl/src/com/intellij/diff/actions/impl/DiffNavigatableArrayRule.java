@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.diff.actions.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.pom.Navigatable;
 
-/**
- * @author mike
- */
-public interface FileStatusListener {
-  /**
-   * Indicates that some file statuses were change. On this event client should recalculate all statuses
-   * it's dependent on.
-   */
-  default void fileStatusesChanged() {
-  }
+public class DiffNavigatableArrayRule implements GetDataRule {
+  public Object getData(DataProvider dataProvider) {
+    final Navigatable element = DiffDataKeys.NAVIGATABLE.getData(dataProvider);
+    if (element == null) {
+      return null;
+    }
 
-  default void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+    return new Navigatable[]{element};
   }
 }
+

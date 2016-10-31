@@ -354,7 +354,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void disableInspections(@NotNull InspectionProfileEntry... inspections) {
-    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
+    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     for (InspectionProfileEntry inspection : inspections) {
       profile.disableTool(inspection.getShortName(), getProject());
     }

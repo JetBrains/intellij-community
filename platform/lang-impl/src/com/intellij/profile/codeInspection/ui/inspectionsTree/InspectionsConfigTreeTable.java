@@ -300,6 +300,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         .stream()
         .map(key -> mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject()))
         .flatMap(tools -> tools.isEnabled() ? tools.getTools().stream().map(ScopeToolState::isEnabled) : Stream.of(false))
+        .distinct()
         .collect(MoreCollectors.onlyOne()).orElse(null);
     }
 

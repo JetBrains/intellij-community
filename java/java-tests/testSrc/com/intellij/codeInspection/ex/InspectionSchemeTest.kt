@@ -52,7 +52,7 @@ class InspectionSchemeTest {
     profileManager.initProfiles()
 
     assertThat(profileManager.profiles).hasSize(1)
-    val scheme = profileManager.profiles.first() as InspectionProfileImpl
+    val scheme = profileManager.profiles.first()
     assertThat(scheme.name).isEqualTo("Bar")
 
     runInInitMode { scheme.initInspectionTools(null) }

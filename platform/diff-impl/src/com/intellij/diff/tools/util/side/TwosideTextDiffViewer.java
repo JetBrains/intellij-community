@@ -36,7 +36,6 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -44,8 +43,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -353,16 +350,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    EditorEx editor = getCurrentEditor();
-
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return editor;
-    }
-    else if (CommonDataKeys.EDITOR.is(dataId)) {
-      return editor;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return editor.getVirtualFile();
+      return getCurrentEditor();
     }
     return super.getData(dataId);
   }

@@ -44,12 +44,7 @@ fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
 }
 
-@JvmOverloads
-fun isValidProjectPath(path: String, fastCheckIpr: Boolean = false): Boolean {
-  if (fastCheckIpr && path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-    return true
-  }
-
+fun isValidProjectPath(path: String): Boolean {
   val file = try {
     Paths.get(path)
   }
@@ -58,7 +53,7 @@ fun isValidProjectPath(path: String, fastCheckIpr: Boolean = false): Boolean {
   }
 
   val attributes = file.basicAttributesIfExists() ?: return false
-  return !attributes.isDirectory /* ipr */ || file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
+  return if (attributes.isDirectory) file.resolve(Project.DIRECTORY_STORE_FOLDER).exists() else path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
 }
 
 fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {

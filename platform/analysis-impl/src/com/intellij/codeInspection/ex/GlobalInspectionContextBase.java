@@ -33,9 +33,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -74,7 +74,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
-  private InspectionProfile myExternalProfile;
+  private InspectionProfileImpl myExternalProfile;
 
   protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
@@ -107,23 +107,28 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return (T)myExtensions.get(key);
   }
 
-  public InspectionProfile getCurrentProfile() {
-    if (myExternalProfile != null) return myExternalProfile;
+  public InspectionProfileImpl getCurrentProfile() {
+    if (myExternalProfile != null) {
+      return myExternalProfile;
+    }
+
     String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
-    final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    Profile profile = inspectionProfileManager.getProfile(currentProfile, false);
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(myProject);
+    InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
     if (profile == null) {
       profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
-      if (profile != null) return (InspectionProfile)profile;
+      if (profile != null) {
+        return profile;
+      }
 
-      final String[] availableProfileNames = inspectionProfileManager.getAvailableProfileNames();
+      final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
         //can't be
         return null;
       }
-      profile = inspectionProfileManager.getProfile(availableProfileNames[0]);
+      profile = profileManager.getProfile(availableProfileNames[0], true);
     }
-    return (InspectionProfile)profile;
+    return profile;
   }
 
   @Override
@@ -197,12 +202,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = ApplicationManager.getApplication().runReadAction(new Computable<RefManagerImpl>() {
-        @Override
-        public RefManagerImpl compute() {
-          return new RefManagerImpl(myProject, myCurrentScope, GlobalInspectionContextBase.this);
-        }
-      });
+      myRefManager = ApplicationManager.getApplication().runReadAction(
+        (Computable<RefManagerImpl>)() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
     return myRefManager;
   }
@@ -326,7 +327,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected List<Tools> getUsedTools() {
-    InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
+    InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<>();
     for (Tools tool : tools) {
@@ -462,7 +463,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return totalTotal == 0 ? 1 : 1.0f * totalDone / totalTotal;
   }
 
-  public void setExternalProfile(InspectionProfile profile) {
+  public void setExternalProfile(InspectionProfileImpl profile) {
     myExternalProfile = profile;
   }
 

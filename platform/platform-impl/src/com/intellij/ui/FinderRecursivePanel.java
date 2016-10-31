@@ -438,20 +438,24 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    */
   public void updateSelectedPath(Object... pathToSelect) {
     if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
-    FinderRecursivePanel panel = this;
-    for (int i = 0; i < pathToSelect.length; i++) {
-      Object selectedValue = pathToSelect[i];
-      panel.setSelectedValue(selectedValue);
-      if (i < pathToSelect.length - 1) {
-        final JComponent component = panel.getSecondComponent();
-        assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
-        panel = (FinderRecursivePanel)component;
+
+    try {
+      FinderRecursivePanel panel = this;
+      for (int i = 0; i < pathToSelect.length; i++) {
+        Object selectedValue = pathToSelect[i];
+        panel.setSelectedValue(selectedValue);
+        if (i < pathToSelect.length - 1) {
+          final JComponent component = panel.getSecondComponent();
+          assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
+          panel = (FinderRecursivePanel)component;
+        }
       }
+
+      IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
     }
-
-    IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
-
-    myUpdateSelectedPathModeActive.set(false);
+    finally {
+      myUpdateSelectedPathModeActive.set(false);
+    }
   }
 
   private void setSelectedValue(final Object value) {

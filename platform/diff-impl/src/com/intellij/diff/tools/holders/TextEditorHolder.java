@@ -20,6 +20,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -44,6 +45,13 @@ public class TextEditorHolder extends EditorHolder {
       if (project != null && !project.isDisposed() && Registry.is("diff.pass.rich.editor.context")) {
         final Object o = FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (o != null) return o;
+      }
+
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return editor;
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return editor.getVirtualFile();
       }
       return null;
     });

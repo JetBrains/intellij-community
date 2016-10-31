@@ -226,9 +226,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
   @NotNull
   private DiffRequest createRequest(@Nullable Project project,
-                                           @NotNull Change change,
-                                           @NotNull UserDataHolder context,
-                                           @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+                                    @NotNull Change change,
+                                    @NotNull UserDataHolder context,
+                                    @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
     if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
       // FIXME: This part is ugly as a VCS merge subsystem itself.
 
@@ -388,7 +388,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         if (content == null) {
           throw new DiffRequestProducerException("Can't get binary revision content");
         }
-        return contentFactory.createBinary(project, content, filePath.getFileType(), filePath.getName());
+        return contentFactory.createFromBytes(project, content, filePath);
       }
 
       if (revision instanceof ByteBackedContentRevision) {

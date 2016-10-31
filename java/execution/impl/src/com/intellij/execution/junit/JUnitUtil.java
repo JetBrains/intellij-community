@@ -37,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -217,11 +215,11 @@ public class JUnitUtil {
     if (module != null) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
         ProgressManager.checkCanceled();
-        if (isMetaAnnotated(method, TEST5_ANNOTATIONS, module)) return true;
+        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) return true;
       }
 
       for (PsiClass aClass : psiClass.getInnerClasses()) {
-        if (isMetaAnnotated(aClass, JUNIT5_NESTED, module)) return true;
+        if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) return true;
       }
     }
 
@@ -254,25 +252,9 @@ public class JUnitUtil {
       return true;
     }
 
-    Module module = ModuleUtilCore.findModuleForPsiElement(method);
-    return module != null && isMetaAnnotated(method, TEST5_ANNOTATIONS, module);
+    return MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
   }
 
-  private static boolean isMetaAnnotated(PsiModifierListOwner owner, final Collection<String> metaAnnotations, final Module module) {
-    for (String annotation : metaAnnotations) {
-      if (isMetaAnnotated(owner, annotation, module)) return true;
-    }
-    return false;
-  }
-
-  private static boolean isMetaAnnotated(PsiModifierListOwner owner, String annotation, Module module) {
-    Collection<PsiClass> annotations = MetaAnnotationUtil.getAnnotationTypesWithChildren(module, annotation, true);
-    Stream<String> qualifiedNames = annotations.stream().map(psiClass -> psiClass.getQualifiedName());
-    if (AnnotationUtil.isAnnotated(owner, qualifiedNames.collect(Collectors.toSet()), false)) {
-      return true;
-    }
-    return false;
-  }
 
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {

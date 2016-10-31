@@ -286,7 +286,8 @@ public abstract class MvcFramework {
   }
 
   public PathsList getApplicationClassPath(Module module) {
-    final List<VirtualFile> classPath = OrderEnumerator.orderEntries(module).recursively().withoutSdk().getPathsList().getVirtualFiles();
+    final List<VirtualFile> classPath = ContainerUtil.newArrayList();
+    classPath.addAll(OrderEnumerator.orderEntries(module).recursively().withoutSdk().getPathsList().getVirtualFiles());
 
     retainOnlyJarsAndDirectories(classPath);
 

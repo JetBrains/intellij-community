@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -56,9 +55,9 @@ public class InspectionProfileConvertor {
   @NonNls private static final String DEFAULT_XML = "Default.xml";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls public static final String LEVEL_ATT = "level";
-  private final SeverityProvider myManager;
+  private final InspectionProfileManager myManager;
 
-  public InspectionProfileConvertor(@NotNull SeverityProvider manager) {
+  public InspectionProfileConvertor(@NotNull InspectionProfileManager manager) {
     myManager = manager;
     renameOldDefaultsProfile();
   }
@@ -91,7 +90,7 @@ public class InspectionProfileConvertor {
 
   public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfile editorProfile) {
     if (retrieveOldSettings(element)) {
-      ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
+      InspectionProfileImpl editorProfileModel = (InspectionProfileImpl)editorProfile.getModifiableModel();
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
     }
@@ -123,7 +122,7 @@ public class InspectionProfileConvertor {
     }
   }
 
-  protected void fillErrorLevels(final ModifiableModel profile) {
+  protected void fillErrorLevels(final InspectionProfileImpl profile) {
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     LOG.assertTrue(toolWrappers != null, "Profile was not correctly init");
     //fill error levels

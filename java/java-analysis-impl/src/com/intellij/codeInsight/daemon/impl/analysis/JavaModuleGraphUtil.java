@@ -57,7 +57,7 @@ public class JavaModuleGraphUtil {
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(exportsMap(source), source.getContainingFile()));
     Set<String> targets = exports.get(packageName);
     return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
   }
