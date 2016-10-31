@@ -842,7 +842,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, isCurrentInTab, isCurrentInTab, pin, i);
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i);
           if (isCurrentInTab) {
             focusedFile = virtualFile;
           }
@@ -862,6 +862,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
       if (focusedFile != null) {
         getManager().addSelectionRecord(focusedFile, window);
+        VirtualFile finalFocusedFile = focusedFile;
+        UIUtil.invokeLaterIfNeeded(()->{
+          EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
+          if (editor != null) {
+            window.setEditor(editor, true, true);
+          }
+        });
       }
       return window.myPanel;
     }
