@@ -22,17 +22,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMigration;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
   private PsiMigration myPsiMigration;
   private final GlobalSearchScope mySearchScope;
+  private ArrayList<SmartPsiElementPointer<PsiElement>> myRefsToShorten;
 
   public MigrationProcessor(Project project, MigrationMap migrationMap) {
     this(project, migrationMap, GlobalSearchScope.projectScope(project));
@@ -142,21 +145,22 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 
+    myRefsToShorten = new ArrayList<>();
     try {
+      boolean sameShortNames = false;
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
-        if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          MigrationUtil.doPackageMigration(myProject, psiMigration, entry.getNewName(), usages);
-        }
-        if (entry.getType() == MigrationMapEntry.CLASS) {
-          MigrationUtil.doClassMigration(myProject, psiMigration, entry.getNewName(), usages);
+        String newName = entry.getNewName();
+        PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
+                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName);
+        MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
+        if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
+          sameShortNames = true;
         }
       }
 
-      for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-        Object preparedData = helper.prepareOperation(usages);
-        //noinspection unchecked
-        helper.performOperation(myProject, preparedData);
+      if (!sameShortNames) {
+        myRefsToShorten.clear();
       }
     }
     finally {
@@ -165,6 +169,17 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
+
+  @Override
+  protected void performPsiSpoilingRefactoring() {
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
+    for (SmartPsiElementPointer<PsiElement> pointer : myRefsToShorten) {
+      PsiElement element = pointer.getElement();
+      if (element != null) {
+        styleManager.shortenClassReferences(element);
+      }
+    }
+  }
 
   protected String getCommandName() {
     return REFACTORING_NAME;
