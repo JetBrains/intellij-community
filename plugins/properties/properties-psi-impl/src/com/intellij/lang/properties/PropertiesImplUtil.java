@@ -93,7 +93,6 @@ public class PropertiesImplUtil extends PropertiesUtil {
       .of(ReadAction.compute(() -> baseDirectory.getFiles()))
       .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension))
       .filter(PropertiesImplUtil::isPropertiesFile)
-      .filter(Objects::nonNull)
       .filter(f -> Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
