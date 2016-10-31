@@ -26,11 +26,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import com.sun.tools.jdi.TargetVM;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -329,6 +331,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     catch (UnsupportedOperationException e) {
       LOG.info(e);
+    }
+
+    // Memory leak workaround, see IDEA-163334
+    TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+    if (target != null) {
+      Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
+      if (controller != null) {
+        controller.stop();
+      }
     }
   }
 
