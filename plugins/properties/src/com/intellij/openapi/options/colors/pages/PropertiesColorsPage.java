@@ -41,30 +41,36 @@ public class PropertiesColorsPage implements ColorSettingsPage {
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("properties.options.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Properties;
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new PropertiesHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return "# Comment on keys and values\n" +
@@ -74,6 +80,7 @@ public class PropertiesColorsPage implements ColorSettingsPage {
       ;
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }

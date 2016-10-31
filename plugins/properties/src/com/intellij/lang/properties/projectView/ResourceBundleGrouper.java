@@ -42,6 +42,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof ResourceBundleNode) return children;
@@ -114,6 +115,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     });
   }
 
+  @Override
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
     if (selected == null) return null;
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {

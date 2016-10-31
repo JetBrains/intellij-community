@@ -86,6 +86,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       refillActionGroup();
     }
 
+    @Override
     public final void update(AnActionEvent e) {
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
@@ -121,6 +122,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
       }
 
+      @Override
       public final void actionPerformed(AnActionEvent e) {
         String[] strings = ArrayUtil.toStringArray(myPredefinedSeparators);
         String current = getCurrentSeparator();

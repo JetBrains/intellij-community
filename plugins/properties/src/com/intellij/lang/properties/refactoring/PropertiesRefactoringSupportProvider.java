@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PropertiesRefactoringSupportProvider extends RefactoringSupportProvider {
+  @Override
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return true;
   }

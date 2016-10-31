@@ -36,10 +36,12 @@ import java.util.List;
  * @author yole
  */
 public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
+  @Override
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PropertiesFile;
   }
 
+  @Override
   public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete, @NotNull final List<UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
     List<PsiElement> elements = new ArrayList<>();
@@ -53,23 +55,28 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), elements);
   }
 
+  @Override
   public Collection<PsiElement> getElementsToSearch(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete) {
     return Collections.singletonList(element);
   }
 
+  @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     return null;
   }
 
+  @Override
   public Collection<String> findConflicts(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete) {
     return null;
   }
 
+  @Override
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
     return usages;
   }
 
+  @Override
   public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
   }
 
