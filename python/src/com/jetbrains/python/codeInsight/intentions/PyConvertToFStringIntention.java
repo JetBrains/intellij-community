@@ -113,6 +113,15 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         assert callExpression != null;
         valuesSource = callExpression.getArgumentList();
       }
+      
+      if (percentOperator) {
+        for (int i = 0; i < substitutions.size(); i++) {
+          final SubstitutionChunk chunk = substitutions.get(i);
+          if ((chunk.getMappingKey() != null || substitutions.size() > 1) && references[i].resolve() == valuesSource) {
+            return false;
+          }
+        }
+      }
 
       return Arrays.stream(references)
         .map(PyConvertToFStringIntention::getActualReplacementExpression)
