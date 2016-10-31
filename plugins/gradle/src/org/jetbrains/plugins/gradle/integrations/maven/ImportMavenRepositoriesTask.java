@@ -81,7 +81,7 @@ public class ImportMavenRepositoriesTask extends ReadTask {
 
   public ImportMavenRepositoriesTask(Project project) {
     myProject = project;
-    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "http://repo1.maven.org/maven2/", null, null, null);
+    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "https://repo1.maven.org/maven2/", null, null, null);
   }
 
   @Override
