@@ -397,9 +397,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
-
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
-        manager.saveAllDocuments();
         if (manager instanceof FileDocumentManagerImpl) {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
@@ -417,13 +414,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> DocumentCommitThread.getInstance().clearQueue()).
       append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
-      append(() -> UIUtil.dispatchAllInvocationEvents()).
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
+      append(() -> UIUtil.dispatchAllInvocationEvents()).
       append(() -> {
         if (checkForEditors) {
           checkEditorsReleased();
@@ -458,7 +455,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  public static PsiDocumentManagerImpl clearUncommittedDocuments(@NotNull Project project) {
+  public static void clearUncommittedDocuments(@NotNull Project project) {
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
     documentManager.clearUncommittedDocuments();
 
@@ -467,7 +464,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommittedDocuments();
     }
-    return documentManager;
   }
 
   public static void checkEditorsReleased() {
