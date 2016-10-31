@@ -734,6 +734,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-21224
+  public void testSixWithMetaclass() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

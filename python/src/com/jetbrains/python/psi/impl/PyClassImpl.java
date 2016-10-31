@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,24 +236,72 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @NotNull
-  public static PyExpression unfoldClass(@NotNull PyExpression expression) {
-    if (expression instanceof PyCallExpression) {
-      PyCallExpression call = (PyCallExpression)expression;
-      final PyExpression callee = call.getCallee();
-      final PyExpression[] arguments = call.getArguments();
-      if (callee != null && "with_metaclass".equals(callee.getName()) && arguments.length > 1) {
-        final PyExpression secondArgument = arguments[1];
-        if (secondArgument != null) {
-          return secondArgument;
-        }
+  public static List<PyExpression> getUnfoldedSuperClassExpressions(@NotNull PyClass pyClass) {
+    return StreamEx
+      .of(pyClass.getSuperClassExpressions())
+      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
+      .flatCollection(PyClassImpl::unfoldSuperClassExpression)
+      .toList();
+  }
+
+  @NotNull
+  private static List<PyExpression> unfoldSuperClassExpression(@NotNull PyExpression expression) {
+    if (isSixWithMetaclassCall(expression)) {
+      final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
+      if (arguments.length > 1) {
+        return ContainerUtil.newArrayList(arguments, 1, arguments.length);
+      }
+      else {
+        return Collections.emptyList();
       }
     }
     // Heuristic: unfold Foo[Bar] to Foo for subscription expressions for superclasses
     else if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
-      return subscriptionExpr.getOperand();
+      return Collections.singletonList(subscriptionExpr.getOperand());
     }
-    return expression;
+
+    return Collections.singletonList(expression);
+  }
+
+  private static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
+    if (expression instanceof PyCallExpression){
+      final PyCallExpression call = (PyCallExpression)expression;
+      final PyExpression callee = call.getCallee();
+      if (callee != null && "with_metaclass".equals(callee.getName())) {
+        // SUPPORTED CASES:
+
+        // import six
+        // six.with_metaclass(...)
+
+        // from six import metaclass
+        // with_metaclass(...)
+        return true;
+      }
+
+      if (callee instanceof PyReferenceExpression) {
+        // SUPPORTED CASES:
+
+        // from six import with_metaclass as w_m
+        // w_m(...)
+
+        final boolean importedWithMetaclass = StreamEx
+          .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
+          .select(PyImportElement.class)
+          .map(PyImportElement::getImportedQName)
+          .nonNull()
+          .map(QualifiedName::getLastComponent)
+          .nonNull()
+          .findAny("with_metaclass"::equals)
+          .isPresent();
+
+        if (importedWithMetaclass) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @NotNull
@@ -1294,12 +1343,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private void fillSuperClassesSwitchingToAst(@NotNull TypeEvalContext context, List<PyClassLikeType> result) {
-    for (PyExpression expression : getSuperClassExpressions()) {
-      context.getType(expression);
-      expression = unfoldClass(expression);
-      if (expression instanceof PyKeywordArgument) {
-        continue;
-      }
+    for (PyExpression expression : getUnfoldedSuperClassExpressions(this)) {
       final PyType type = context.getType(expression);
       PyClassLikeType classLikeType = null;
       if (type instanceof PyClassLikeType) {
@@ -1401,6 +1445,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return attribute.findAssignedValue();
       }
     }
+
+    for (PyExpression expression : getSuperClassExpressions()) {
+      if (isSixWithMetaclassCall(expression)) {
+        final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
+        if (arguments.length != 0) {
+          return arguments[0];
+        }
+      }
+    }
+
     return null;
   }
 
