@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.GET_PREFIX;
-
 /**
  * @author ven
  */
@@ -129,14 +127,8 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     if (another == this) return true;
     if (!(another instanceof GrAccessorMethod)) return false;
 
-    GrAccessorMethod anotherAccessor = (GrAccessorMethod)another;
-    if (isSetter()) {
-      if (!anotherAccessor.isSetter()) return false;
-    }
-    else {
-      if (getName().startsWith(GET_PREFIX) != anotherAccessor.getName().startsWith(GET_PREFIX)) return false;
-    }
-    return getManager().areElementsEquivalent(myProperty, anotherAccessor.getProperty());
+    if (!((GrAccessorMethod)another).getName().equals(getName())) return false;
+    return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
   }
 
   @NotNull
