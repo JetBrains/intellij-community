@@ -72,7 +72,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @NotNull private volatile State myState = State.INIT;
 
   @Nullable private Socket mySocket;
-  @Nullable private DebuggerReader myDebuggerReader;
+  @Nullable private volatile DebuggerReader myDebuggerReader;
 
   public ClientModeDebuggerTransport(@NotNull IPyDebugProcess debugProcess,
                                      @NotNull RemoteDebugger debugger,
@@ -198,8 +198,9 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Override
   public void close() {
     try {
-      if (myDebuggerReader != null) {
-        myDebuggerReader.stop();
+      DebuggerReader debuggerReader = myDebuggerReader;
+      if (debuggerReader != null) {
+        debuggerReader.stop();
       }
     }
     finally {
