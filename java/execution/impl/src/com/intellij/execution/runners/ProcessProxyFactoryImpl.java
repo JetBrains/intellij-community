@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMain;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
       if (moduleName == null || new File(rtJarPath).isFile()) {
         try {
-          ProcessProxyImpl proxy = new ProcessProxyImpl();
+          ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
 
           String port = String.valueOf(proxy.getPortNumber());
           String binPath = PathManager.getBinPath();

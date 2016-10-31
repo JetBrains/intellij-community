@@ -30,9 +30,11 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ven
@@ -40,20 +42,21 @@ import java.nio.channels.CompletionHandler;
 class ProcessProxyImpl implements ProcessProxy {
   static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
 
-  private final AsynchronousServerSocketChannel myChannel;
+  private final AsynchronousChannelGroup myGroup;
   private final int myPort;
 
   private final Object myLock = new Object();
   private AsynchronousSocketChannel myConnection;
   private int myPid;
 
-  ProcessProxyImpl() throws IOException {
-    myChannel = AsynchronousServerSocketChannel.open()
+  ProcessProxyImpl(String mainClass) throws IOException {
+    myGroup = AsynchronousChannelGroup.withFixedThreadPool(1, r -> new Thread(r, "Process Proxy: " + mainClass));
+    AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open(myGroup)
       .bind(new InetSocketAddress("127.0.0.1", 0))
       .setOption(StandardSocketOptions.SO_REUSEADDR, true);
-    myPort = ((InetSocketAddress)myChannel.getLocalAddress()).getPort();
+    myPort = ((InetSocketAddress)channel.getLocalAddress()).getPort();
 
-    myChannel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
+    channel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
       @Override
       public void completed(AsynchronousSocketChannel channel, Void attachment) {
         synchronized (myLock) {
@@ -146,7 +149,10 @@ class ProcessProxyImpl implements ProcessProxy {
         }
       }
     });
-    execute(myChannel::close);
+    execute(() -> {
+      myGroup.shutdownNow();
+      myGroup.awaitTermination(1, TimeUnit.SECONDS);
+    });
   }
 
   private static void execute(ThrowableRunnable<Exception> block) {
