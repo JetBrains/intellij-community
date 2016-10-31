@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0)
 project(breakgen)
 
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
+
 add_library(breakgen SHARED AppMain.c)
 
 if (CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
