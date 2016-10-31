@@ -281,7 +281,9 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  public static boolean isSameProject(String projectFilePath, @NotNull Project project) {
+  public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
+    if (projectFilePath == null) return false;
+
     IProjectStore projectStore = ProjectKt.getStateStore(project);
     String existingBaseDirPath = projectStore.getProjectBasePath();
     if (existingBaseDirPath == null) {
