@@ -17,6 +17,10 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -107,10 +111,22 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
       }
     }
     finally {
-      myPsiMigration.finish();
-      myPsiMigration = null;
+      Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode()) {
+        finishFindMigration();
+      }
+      else {
+        //invalidating resolve caches without write action could lead to situations when somebody with read action resolves reference and gets ResolveResult
+        //then here, in another read actions, all caches are invalidated but those resolve result is used without additional checks inside that read action - but it's already invalid
+        application.invokeLater(() -> WriteAction.run(() -> finishFindMigration()), ModalityState.NON_MODAL);
+      }
     }
     return usagesVector.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private void finishFindMigration() {
+    myPsiMigration.finish();
+    myPsiMigration = null;
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
