@@ -247,6 +247,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
 
   private void showErrorNotification(@Nullable String notificationText) {
+    Project project = myFrame.getProject();
+    if (project == null) {
+      return;
+    }
+
     Notification notification = new Notification("", AllIcons.Ide.FatalError, notificationText == null ? ERROR_TITLE : "", null,
                                                  notificationText == null ? "" : notificationText, NotificationType.ERROR, null);
 
@@ -269,9 +274,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     layoutData.fadeoutTime = 5000;
     layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
     layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);
-
-    Project project = myFrame.getProject();
-    assert project != null;
 
     Balloon balloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     layout.add(balloon);
