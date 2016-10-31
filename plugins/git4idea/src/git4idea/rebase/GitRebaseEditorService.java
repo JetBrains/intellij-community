@@ -16,7 +16,9 @@
 package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -99,11 +101,17 @@ public class GitRebaseEditorService {
    * @return the handler identifier
    */
   @NotNull
-  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler) {
+  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler, @NotNull Disposable parentDisposable) {
     addInternalHandler();
     synchronized (myHandlersLock) {
       UUID key = UUID.randomUUID();
       myHandlers.put(key, handler);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          myHandlers.remove(key);
+        }
+      });
       return key;
     }
   }
