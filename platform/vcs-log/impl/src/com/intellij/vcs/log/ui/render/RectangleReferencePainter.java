@@ -26,9 +26,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.paint.PaintParameters;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RectangleReferencePainter implements ReferencePainter {
-  @NotNull
-  private List<Pair<String, Color>> myLabels = ContainerUtil.newArrayList();
+  @NotNull private final VcsLogData myLogData;
+  @NotNull private List<Pair<String, Color>> myLabels = ContainerUtil.newArrayList();
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
 
@@ -49,17 +49,22 @@ public class RectangleReferencePainter implements ReferencePainter {
     }
   };
 
+  public RectangleReferencePainter(@NotNull VcsLogData data) {
+    myLogData = data;
+  }
+
   @Override
   public void customizePainter(@NotNull JComponent component,
                                @NotNull Collection<VcsRef> references,
-                               @Nullable VcsLogRefManager manager,
                                @NotNull Color background,
-                               @NotNull Color foreground) {
+                               @NotNull Color foreground,
+                               int availableWidth) {
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + RectanglePainter.TOP_TEXT_PADDING + RectanglePainter.BOTTOM_TEXT_PADDING;
     myWidth = 2 * PaintParameters.LABEL_PADDING;
 
     myLabels = ContainerUtil.newArrayList();
+    VcsLogRefManager manager = ReferencePainter.getRefManager(myLogData, references);
     if (manager == null) return;
 
     List<VcsRef> sorted = ContainerUtil.sorted(references, manager.getLabelsOrderComparator());

@@ -33,6 +33,7 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,8 +45,8 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,8 +65,9 @@ public class LabelPainter implements ReferencePainter {
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
 
-  @NotNull
-  private List<Pair<String, LabelIcon>> myLabels = ContainerUtil.newArrayList();
+  @NotNull private final VcsLogData myLogData;
+
+  @NotNull private List<Pair<String, LabelIcon>> myLabels = ContainerUtil.newArrayList();
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
   @NotNull
@@ -73,40 +75,73 @@ public class LabelPainter implements ReferencePainter {
   @NotNull
   private Color myForeground = UIUtil.getTableForeground();
 
+  public LabelPainter(@NotNull VcsLogData data) {
+    myLogData = data;
+  }
+
   public void customizePainter(@NotNull JComponent component,
                                @NotNull Collection<VcsRef> references,
-                               @Nullable VcsLogRefManager manager,
                                @NotNull Color background,
-                               @NotNull Color foreground) {
+                               @NotNull Color foreground,
+                               int availableWidth) {
     myBackground = background;
     myForeground = foreground;
 
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
-    myWidth = GRADIENT_WIDTH + RIGHT_PADDING;
 
-    myLabels = ContainerUtil.newArrayList();
-    if (manager == null) return;
+    VcsLogRefManager manager = ReferencePainter.getRefManager(myLogData, references);
+    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
+    Pair<List<Pair<String, LabelIcon>>, Integer> presentation = calculatePresentation(refGroups, metrics, myHeight, myBackground, false);
+    if (presentation.second - GRADIENT_WIDTH > availableWidth) {
+      presentation = calculatePresentation(refGroups, metrics, myHeight, myBackground, true);
+    }
 
-    for (RefGroup group : manager.groupForTable(references)) {
+    myLabels = presentation.first;
+    myWidth = presentation.second;
+  }
+
+  @NotNull
+  public static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
+                                                                                   @NotNull FontMetrics fontMetrics,
+                                                                                   int height,
+                                                                                   @NotNull Color background,
+                                                                                   boolean shorten) {
+    int width = GRADIENT_WIDTH + RIGHT_PADDING;
+
+    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
+    if (refGroups.isEmpty()) return Pair.create(labels, width);
+
+    for (RefGroup group : refGroups) {
       if (group.isExpanded()) {
         for (VcsRef ref : group.getRefs()) {
-          LabelIcon labelIcon = new LabelIcon(myHeight, myBackground, ref.getType().getBackgroundColor());
-          String text = shortenRefName(ref.getName());
+          LabelIcon labelIcon = new LabelIcon(height, background, ref.getType().getBackgroundColor());
+          String text = shorten ? shortenRefName(ref.getName()) : ref.getName();
 
-          myLabels.add(Pair.create(text, labelIcon));
-          myWidth += labelIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+          labels.add(Pair.create(text, labelIcon));
+          width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
         }
       }
       else {
+        LabelIcon labelIcon = new LabelIcon(height, background, getGroupColors(group));
+        String text = shorten ? shortenRefName(group.getName()) : group.getName();
 
-        LabelIcon labelIcon = new LabelIcon(myHeight, myBackground, getGroupColors(group));
-        String text = shortenRefName(group.getName());
-
-        myLabels.add(Pair.create(text, labelIcon));
-        myWidth += labelIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+        labels.add(Pair.create(text, labelIcon));
+        width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
       }
     }
+
+    return Pair.create(labels, width);
+  }
+
+  public static int calculateWidth(@NotNull VcsLogData logData,
+                                   @NotNull Collection<VcsRef> references,
+                                   @NotNull JComponent component,
+                                   int height, boolean shorten) {
+    VcsLogRefManager manager = ReferencePainter.getRefManager(logData, references);
+    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
+    return calculatePresentation(refGroups, component.getFontMetrics(RectanglePainter.getFont()), height, JBColor.white/*bg color does not affect width*/,
+                                 shorten).second;
   }
 
   @NotNull
@@ -123,7 +158,7 @@ public class LabelPainter implements ReferencePainter {
   }
 
   @NotNull
-  public Color[] getGroupColors(@NotNull RefGroup group) {
+  public static Color[] getGroupColors(@NotNull RefGroup group) {
     MultiMap<VcsRefType, VcsRef> referencesByType = ContainerUtil.groupBy(group.getRefs(), VcsRef::getType);
     Color[] colors;
     if (referencesByType.size() == 1) {
@@ -153,7 +188,7 @@ public class LabelPainter implements ReferencePainter {
     g2.setFont(getReferenceFont());
     g2.setStroke(new BasicStroke(1.5f));
 
-    x = paintFadeOut(g2, x, y, myWidth, height);
+    x = paintFadeOut(g2, x, y, myWidth, height, myBackground);
 
     FontMetrics fontMetrics = g2.getFontMetrics();
     for (Pair<String, LabelIcon> label : myLabels) {
@@ -171,14 +206,16 @@ public class LabelPainter implements ReferencePainter {
     config.restore();
   }
 
-  public int paintFadeOut(@NotNull Graphics2D g2, int x, int y, int width, int height) {
-    g2.setPaint(
-      new GradientPaint(x, y, new Color(myBackground.getRed(), myBackground.getGreen(), myBackground.getBlue(), 0), x + GRADIENT_WIDTH, y,
-                        myBackground));
+  public static int paintFadeOut(@NotNull Graphics2D g2, int x, int y, int width, int height, @NotNull Color background) {
+    //noinspection UseJBColor
+    g2.setPaint(new GradientPaint(x, y,
+                                  new Color(background.getRed(), background.getGreen(), background.getBlue(), 0),
+                                  x + GRADIENT_WIDTH, y,
+                                  background));
     g2.fill(new Rectangle(x, y, GRADIENT_WIDTH, height));
     x += GRADIENT_WIDTH;
 
-    g2.setColor(myBackground);
+    g2.setColor(background);
     g2.fillRect(x, y, width - GRADIENT_WIDTH, height);
     return x;
   }

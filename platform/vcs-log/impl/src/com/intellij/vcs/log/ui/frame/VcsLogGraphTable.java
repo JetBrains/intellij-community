@@ -128,6 +128,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
 
     getSelectionModel().addListSelectionListener(new MyListSelectionListener());
+    getColumnModel().setColumnSelectionAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
@@ -186,7 +187,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         for (int row = 0; row < maxRowsToCheck; row++) {
           String value = getModel().getValueAt(row, i).toString();
           Font font = tableFont;
-          VcsLogHighlighter.TextStyle style = getStyle(row, i, value, false, false).getTextStyle();
+          VcsLogHighlighter.TextStyle style = getStyle(row, i, false, false).getTextStyle();
           if (BOLD.equals(style)) {
             font = tableFont.deriveFont(Font.BOLD);
           }
@@ -336,13 +337,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myHighlighters.clear();
   }
 
+  @NotNull
   public SimpleTextAttributes applyHighlighters(@NotNull Component rendererComponent,
                                                 int row,
                                                 int column,
-                                                String text,
                                                 boolean hasFocus,
                                                 final boolean selected) {
-    VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, text, hasFocus, selected);
+    VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, hasFocus, selected);
 
     assert style.getBackground() != null && style.getForeground() != null && style.getTextStyle() != null;
 
@@ -359,14 +360,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
-    Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+  public VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
+    Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, "", selected, hasFocus, row, column);
     return VcsCommitStyleFactory
       .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
-    VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, text, hasFocus, selected);
+  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
+    VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
     if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
@@ -428,6 +429,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange) {
     myController.handleGraphAnswer(answer, dataCouldChange, null, null);
+  }
+
+  public void showTooltip(int row) {
+    myController.showTooltip(row);
   }
 
   static class Selection {
@@ -549,7 +554,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
     int lastRow = getRowCount() - 1;
     if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.setColor(getStyle(lastRow, GraphTableModel.COMMIT_COLUMN, hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myUi.isMultipleRoots()) {
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
@@ -561,7 +566,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
   }
@@ -626,7 +631,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
 
       myColor = color;
-      Color background = ((VcsLogGraphTable)table).getStyle(row, column, text, hasFocus, isSelected).getBackground();
+      Color background = ((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground();
       assert background != null;
       myBorderColor = background;
       setForeground(UIUtil.getTableForeground(false));
@@ -652,10 +657,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private class StringCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBorder(null);
       if (value == null) {
         return;
       }
-      append(value.toString(), applyHighlighters(this, row, column, value.toString(), hasFocus, selected));
+      append(value.toString(), applyHighlighters(this, row, column, hasFocus, selected));
     }
 
     public int getHorizontalTextPadding() {

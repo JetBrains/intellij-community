@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -41,7 +40,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
@@ -64,6 +62,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class GitShowExternalLogAction extends DumbAwareAction {
+  private static final String EXTERNAL = "EXTERNAL";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -121,11 +120,16 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
-    return new MyContentComponent(manager.createLogPanel(tabName), roots, () -> {
+    return new MyContentComponent(manager.createLogPanel(calcLogId(roots), tabName), roots, () -> {
       for (VirtualFile root : roots) {
         repositoryManager.removeExternalRepository(root);
       }
     });
+  }
+
+  @NotNull
+  private static String calcLogId(@NotNull List<VirtualFile> roots) {
+    return EXTERNAL + " " + StringUtil.join(roots, VirtualFile::getPath, File.pathSeparator);
   }
 
   @NotNull

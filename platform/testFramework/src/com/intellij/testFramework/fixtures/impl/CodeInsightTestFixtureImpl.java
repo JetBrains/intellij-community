@@ -135,9 +135,8 @@ import java.util.*;
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
   private static final Function<IntentionAction, String> INTENTION_NAME_FUN = intentionAction -> "\"" + intentionAction.getText() + "\"";
 
-  private static final String START_FOLD = "<fold\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>";
-  private static final String END_FOLD = "</fold>";
   private static final String RAINBOW = "rainbow";
+  private static final String FOLD = "fold";
 
   private final IdeaProjectTestFixture myProjectFixture;
   private final TempDirTestFixture myTempDirFixture;
@@ -1635,52 +1634,34 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
-
-    final FoldingModel model = myEditor.getFoldingModel();
-    final FoldRegion[] foldingRegions = model.getAllFoldRegions();
-    final List<Border> borders = new LinkedList<>();
-
-    for (FoldRegion region : foldingRegions) {
-      borders.add(new Border(Border.LEFT, region.getStartOffset(), region.getPlaceholderText(), region.isExpanded()));
-      borders.add(new Border(Border.RIGHT, region.getEndOffset(), "", region.isExpanded()));
-    }
-    Collections.sort(borders);
-
-    StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
-    for (Border border : borders) {
-      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? "<fold text=\'" + border.getText() + "\'" +
-                                                                         (withCollapseStatus ? " expand=\'" +
-                                                                                                    border.isExpanded() +
-                                                                                                    "\'" : "") +
-                                                                          ">" : END_FOLD);
-    }
-
-    return result.toString();
+    return getTagsFromSegments(myEditor.getDocument().getText(),
+                               Arrays.asList(myEditor.getFoldingModel().getAllFoldRegions()),
+                               FOLD,
+                               foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
+                                             + (withCollapseStatus ? (" expand=\'" + foldRegion.isExpanded() + "\'") : ""));
   }
 
   @NotNull
-  public String getHighlightingDescription(@NotNull List<HighlightInfo> highlighting, @NotNull String tagName, boolean withColor) {
+  public static <T extends Segment> String getTagsFromSegments(@NotNull String text,
+                                                               @NotNull Collection<T> segments,
+                                                               @NotNull String tagName,
+                                                               @Nullable Function<T, String> attrCalculator) {
     final List<Border> borders = new LinkedList<>();
-    for (HighlightInfo region : highlighting) {
-      TextAttributes attributes = region.getTextAttributes(null, null);
-      borders.add(new Border(Border.LEFT, region.getStartOffset(),
-                             attributes == null ? "null"
-                                                : attributes.getForegroundColor() == null
-                                                  ? "null"
-                                                  : Integer.toHexString(attributes.getForegroundColor().getRGB()),
-                             false));
-      borders.add(new Border(Border.RIGHT, region.getEndOffset(), "", false));
+    for (T region : segments) {
+      String attr = attrCalculator == null ? null : attrCalculator.fun(region);
+      borders.add(new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(),attr));
+      borders.add(new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), ""));
     }
     Collections.sort(borders);
 
-    StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
-    for (Border border : borders) {
+    StringBuilder result = new StringBuilder(text);
+    for (CodeInsightTestFixtureImpl.Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
-      if (border.isSide() == Border.LEFT) {
+      if (border.isLeftBorder()) {
         info.append(tagName);
-        if (withColor) {
-          info.append(" color=\'").append(border.myText).append('\'');
+        if (border.myText != null) {
+          info.append(' ').append(border.myText);
         }
       }
       else {
@@ -1689,7 +1670,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       info.append('>');
       result.insert(border.getOffset(), info);
     }
-
     return result.toString();
   }
 
@@ -1704,7 +1684,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Assert.assertNotNull(expectedContent);
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
-    final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
+    final String cleanContent = expectedContent.replaceAll("<" + FOLD + "\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>", "")
+                                               .replace("</" + FOLD + ">", "");
     if (destinationFileName == null) {
       configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
     }
@@ -1744,9 +1725,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOn);
       configureByText(fileName, text.replaceAll("<" + RAINBOW + "(\\scolor=\'[^\']*\')?>", "").replace("</" + RAINBOW + ">", ""));
 
-      Assert.assertEquals(text, getHighlightingDescription(ContainerUtil.filter(doHighlighting(),
-                                                           info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT), RAINBOW,
-                                                           withColor));
+      List<HighlightInfo> highlighting = ContainerUtil.filter(doHighlighting(),
+                                                           info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT);
+      Assert.assertEquals(text, getTagsFromSegments(myEditor.getDocument().getText(), highlighting, RAINBOW, highlightInfo -> {
+        if (!withColor) {
+          return null;
+        }
+        TextAttributes attributes = highlightInfo.getTextAttributes(null, null);
+        String color = attributes == null ? "null"
+                                          : attributes.getForegroundColor() == null
+                                            ? "null"
+                                            : Integer.toHexString(attributes.getForegroundColor().getRGB());
+        return "color=\'" + color + "\'";
+      }));
     }
     finally {
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
@@ -1847,26 +1838,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static class Border implements Comparable<Border> {
-    private static final boolean LEFT = true;
-    private static final boolean RIGHT = false;
-    private final boolean mySide;
+    private final boolean myIsLeftBorder;
     private final int myOffset;
     private final String myText;
-    private final boolean myIsExpanded;
 
-    private Border(boolean side, int offset, String text, boolean isExpanded) {
-      mySide = side;
+    private Border(boolean isLeftBorder, int offset, String text) {
+      myIsLeftBorder = isLeftBorder;
       myOffset = offset;
       myText = text;
-      myIsExpanded = isExpanded;
     }
 
-    public boolean isExpanded() {
-      return myIsExpanded;
-    }
-
-    public boolean isSide() {
-      return mySide;
+    public boolean isLeftBorder() {
+      return myIsLeftBorder;
     }
 
     public int getOffset() {

@@ -141,10 +141,12 @@ public class ImportModuleAction extends AnAction {
     }
 
     final VirtualFile file = files[0];
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(file.getPath(), p)) {
-        ProjectUtil.focusProjectWindow(p, false);
-        return null;
+    if (project == null) { // wizard will create a new project
+      for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+        if (ProjectUtil.isSameProject(file.getPath(), p)) {
+          ProjectUtil.focusProjectWindow(p, false);
+          return null;
+        }
       }
     }
     PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
