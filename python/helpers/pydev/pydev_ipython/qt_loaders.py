@@ -251,7 +251,7 @@ def load_qt(api_options):
 
         if api not in loaders:
             raise RuntimeError(
-                "Invalid Qt API %r, valid values are: %r, %r, %r, %r" %
+                "Invalid Qt API %r, valid values are: %r, %r, %r, %r, %r" %
                 (api, QT_API_PYSIDE, QT_API_PYQT,
                  QT_API_PYQTv1, QT_API_PYQT_DEFAULT, QT_API_PYQT5))
 

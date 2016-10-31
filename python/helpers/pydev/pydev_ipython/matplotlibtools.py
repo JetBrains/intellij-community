@@ -48,7 +48,6 @@ def find_gui_and_backend():
     # In this case, we need to find what the appropriate gui selection call
     # should be for IPython, so we can activate inputhook accordingly
     gui = backend2gui.get(backend, None)
-    print("gui", gui)
     return gui, backend
 
 
