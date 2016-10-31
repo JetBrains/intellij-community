@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -85,11 +87,11 @@ public class VcsInitialization implements Disposable {
       list = myList;
       myInitStarted = true; // list would not be modified starting from this point
       Future<?> future = myFuture;
-      if (future != null && future.isCancelled() || ProgressManager.getGlobalProgressIndicator().isCanceled()) {
+      if (future != null && future.isCancelled() || ProgressIndicatorProvider.getGlobalProgressIndicator().isCanceled()) {
         return;
       }
     }
-    Collections.sort(list, (o1, o2) -> o1.getFirst().getOrder() - o2.getFirst().getOrder());
+    Collections.sort(list, Comparator.comparingInt(o -> o.getFirst().getOrder()));
     for (Pair<VcsInitObject, Runnable> pair : list) {
       ProgressManager.checkCanceled();
       pair.getSecond().run();
@@ -120,6 +122,7 @@ public class VcsInitialization implements Disposable {
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         // dispose happens without prior project close (most likely light project case in tests)
         // get out of write action and wait there
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(this::waitForCompletion);
       }
       else {
@@ -135,7 +138,8 @@ public class VcsInitialization implements Disposable {
       TimeoutUtil.sleep(10);
     }
     if (myIndicator.isRunning()) {
-      LOG.error("Failed to wait for completion of VCS initialization for project "+myProject, new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
+      LOG.error("Failed to wait for completion of VCS initialization for project "+ myProject,
+                new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
     }
   }
 }

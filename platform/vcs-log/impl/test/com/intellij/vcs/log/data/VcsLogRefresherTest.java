@@ -33,6 +33,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -194,7 +195,17 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myLogData = new VcsLogData(myProject, myLogProviders, (source, exception) -> LOG.error(exception));
+    myLogData = new VcsLogData(myProject, myLogProviders, new FatalErrorHandler() {
+      @Override
+      public void consume(@Nullable Object source, @NotNull Exception exception) {
+        LOG.error(exception);
+      }
+
+      @Override
+      public void displayFatalErrorMessage(@NotNull String message) {
+        LOG.error(message);
+      }
+    });
     Disposer.register(myProject, myLogData);
     return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
                                    new VcsLogProgress(),

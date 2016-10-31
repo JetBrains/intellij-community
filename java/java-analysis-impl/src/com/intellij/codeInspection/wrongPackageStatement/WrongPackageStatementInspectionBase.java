@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +69,9 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<>();
         if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
-          availableFixes.add(new AdjustPackageNameFix(packageName));
+          if (isValidPackageName(packageName, file.getProject())) {
+            availableFixes.add(new AdjustPackageNameFix(packageName));
+          }
           String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();
           addMoveToPackageFix(file, packName, availableFixes);
         }
@@ -84,6 +89,15 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
       }
     }
     return null;
+  }
+
+  private static boolean isValidPackageName(String packageName, final Project project) {
+    PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
+    Iterable<String> shortNames = StringUtil.tokenize(packageName, ".");
+    for (String shortName : shortNames) {
+      if (!factory.isValidPackageName(shortName)) return false;
+    }
+    return true;
   }
 
   protected void addMoveToPackageFix(PsiFile file, String packName, List<LocalQuickFix> availableFixes) {

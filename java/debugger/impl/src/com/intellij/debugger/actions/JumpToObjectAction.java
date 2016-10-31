@@ -34,11 +34,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
@@ -98,40 +93,19 @@ public class JumpToObjectAction extends DebuggerAction{
     }
 
     try {
-      if(type instanceof ArrayType) {
+      if (type instanceof ArrayType) {
         type = ((ArrayType)type).componentType();
       }
-      if(type instanceof ClassType) {
-        final ClassType clsType = (ClassType)type;
-        Location lambdaLocation = null;
-        if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
-          List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
-          if (applicableMethods.size() == 1) {
-            AtomicReference<Location> locationRef = new AtomicReference<>();
-            MethodBytecodeUtil.visit(clsType, applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
-              @Override
-              public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
-                if (cls != null) {
-                  Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
-                  if (method != null) {
-                    try {
-                      Location loc = ContainerUtil.getFirstItem(method.allLineLocations());
-                      if (loc != null) {
-                        locationRef.set(loc);
-                      }
-                    }
-                    catch (AbsentInformationException e) {
-                      LOG.debug(e);
-                    }
-                  }
-                }
-              }
-            });
-            lambdaLocation = locationRef.get();
-          }
+      if (type instanceof ClassType) {
+        ClassType clsType = (ClassType)type;
+
+        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType);
+        Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
+
+        if (location == null) {
+          location = ContainerUtil.getFirstItem(clsType.allLineLocations());
         }
-        final Location location = lambdaLocation != null ? lambdaLocation : ContainerUtil.getFirstItem(clsType.allLineLocations());
+
         if (location != null) {
           SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {

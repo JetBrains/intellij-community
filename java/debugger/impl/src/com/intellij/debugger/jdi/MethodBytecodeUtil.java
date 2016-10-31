@@ -15,8 +15,11 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +29,6 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,16 +43,16 @@ public class MethodBytecodeUtil {
   /**
    * Allows to use ASM MethodVisitor with jdi method bytecode
    */
-  public static void visit(ReferenceType classType, Method method, MethodVisitor methodVisitor) {
-    visit(classType, method, method.bytecodes(), methodVisitor);
+  public static void visit(Method method, MethodVisitor methodVisitor) {
+    visit(method, method.bytecodes(), methodVisitor);
   }
 
-  public static void visit(ReferenceType classType, Method method, long maxOffset, MethodVisitor methodVisitor) {
+  public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor) {
     // need to keep the size, otherwise labels array will not be initialized correctly
     byte[] originalBytecodes = method.bytecodes();
     byte[] bytecodes = new byte[originalBytecodes.length];
     System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(classType, method, bytecodes, methodVisitor);
+    visit(method, bytecodes, methodVisitor);
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
@@ -63,7 +65,8 @@ public class MethodBytecodeUtil {
     }
   }
 
-  private static void visit(ReferenceType type, Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+  private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+    ReferenceType type = method.declaringType();
     try {
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
         dos.writeInt(0xCAFEBABE); // magic
@@ -180,7 +183,7 @@ public class MethodBytecodeUtil {
       dos.writeInt(bytecodes.length);  // code_length
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
-      List<Location> locations = getMethodLocations(method);
+      List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
       if (!locations.isEmpty()) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
@@ -195,16 +198,6 @@ public class MethodBytecodeUtil {
         dos.writeShort(0); // attributes_count
       }
     });
-  }
-
-  @NotNull
-  private static List<Location> getMethodLocations(Method method) {
-    try {
-      return method.allLineLocations();
-    }
-    catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
-    }
   }
 
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
@@ -229,5 +222,28 @@ public class MethodBytecodeUtil {
         // case RET:
         return OBJECT_TYPE;
     }
+  }
+
+  @Nullable
+  public static Method getLambdaMethod(ReferenceType clsType) {
+    Ref<Method> methodRef = Ref.create();
+    if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
+      List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
+      if (applicableMethods.size() == 1) {
+        visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
+            if (cls != null) {
+              Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
+              if (method != null) {
+                methodRef.set(method);
+              }
+            }
+          }
+        });
+      }
+    }
+    return methodRef.get();
   }
 }

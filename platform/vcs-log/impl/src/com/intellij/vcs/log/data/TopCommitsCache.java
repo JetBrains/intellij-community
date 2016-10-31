@@ -45,10 +45,14 @@ public class TopCommitsCache {
     Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
 
     List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    boolean isBroken = false;
     while (it.hasNext()) {
       VcsCommitMetadata detail = it.next();
       int index = getIndex(detail);
-      if (index == VcsLogStorageImpl.NO_INDEX) continue; // means some error happened (and reported) earlier, nothing we can do here
+      if (index == VcsLogStorageImpl.NO_INDEX) {
+        isBroken = true;
+        continue; // means some error happened (and reported) earlier, nothing we can do here
+      }
       if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
         result.add(detail);
         myCache.put(index, detail);
@@ -57,7 +61,7 @@ public class TopCommitsCache {
         myCache.remove(index);
       }
     }
-    assert result.size() == myCache.size() : result.size() + " details to store, yet " + myCache.size() + " indexes in cache.";
+    assert result.size() == myCache.size() || isBroken : result.size() + " details to store, yet " + myCache.size() + " indexes in cache.";
     mySortedDetails = result;
   }
 

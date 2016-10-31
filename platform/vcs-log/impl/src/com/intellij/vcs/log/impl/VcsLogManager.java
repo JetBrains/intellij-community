@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
@@ -78,7 +79,7 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsConsumer());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
     myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
 
@@ -205,40 +206,45 @@ public class VcsLogManager implements Disposable {
     disposeLog();
   }
 
-  private class MyFatalErrorsConsumer implements FatalErrorConsumer {
-    private boolean myIsBroken = false;
+  private class MyFatalErrorsHandler implements FatalErrorHandler {
+    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
     public void consume(@Nullable Object source, @NotNull final Exception e) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myIsBroken) {
-          myIsBroken = true;
-          processErrorFirstTime(source, e);
-        }
-        else {
-          LOG.debug(e);
-        }
-      });
+      if (myIsBroken.compareAndSet(false, true)) {
+        processError(source, e);
+      }
+      else {
+        LOG.debug(e);
+      }
     }
 
-    protected void processErrorFirstTime(@Nullable Object source, @NotNull Exception e) {
+    protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        String message = "Fatal error, VCS Log recreated: " + e.getMessage();
-        if (isLogVisible()) {
-          LOG.info(e);
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
-        }
-        else {
-          LOG.error(message, e);
-        }
-        myRecreateMainLogHandler.run();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String message = "Fatal error, VCS Log re-created: " + e.getMessage();
+          if (isLogVisible()) {
+            LOG.info(e);
+            displayFatalErrorMessage(message);
+          }
+          else {
+            LOG.error(message, e);
+          }
+          myRecreateMainLogHandler.run();
+        });
       }
       else {
         LOG.error(e);
       }
+
       if (source instanceof VcsLogStorage) {
         myLogData.getIndex().markCorrupted();
       }
+    }
+
+    @Override
+    public void displayFatalErrorMessage(@NotNull String message) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }
 }

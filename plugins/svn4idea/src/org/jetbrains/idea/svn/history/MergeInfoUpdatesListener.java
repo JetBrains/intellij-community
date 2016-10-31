@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
@@ -33,6 +32,8 @@ import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 public class MergeInfoUpdatesListener {
   private final static int DELAY = 300;
@@ -77,7 +78,7 @@ public class MergeInfoUpdatesListener {
 
       myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadConsumer);
 
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
+      myConnection.subscribe(VCS_CONFIGURATION_CHANGED, new VcsListener() {
         public void directoryMappingChanged() {
           callReloadMergeInfo();
         }

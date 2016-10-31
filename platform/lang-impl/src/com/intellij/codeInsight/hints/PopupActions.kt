@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -98,14 +99,30 @@ class ToggleInlineHintsAction : AnAction() {
   }
   
   override fun update(e: AnActionEvent) {
-    if (InlayParameterHintsExtension.hasAnyExtensions()) {
-      e.presentation.isEnabledAndVisible = true
-      val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-      e.presentation.text = if (isShow) disableText else enableText
+    if (!InlayParameterHintsExtension.hasAnyExtensions()) {
+      e.presentation.isEnabledAndVisible = false
+      return
     }
-    else {
-      e.presentation.isEnabledAndVisible = false      
+    
+    val isHintsShownNow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
+    e.presentation.text = if (isHintsShownNow) disableText else enableText
+    e.presentation.isEnabledAndVisible = true
+    
+    if (isInMainEditorPopup(e)) {
+      val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+      val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+      val caretOffset = editor.caretModel.offset
+      e.presentation.isEnabledAndVisible = !isHintsShownNow && isPossibleHintNearOffset(file, caretOffset)
     }
+  }
+
+  private fun isInMainEditorPopup(e: AnActionEvent): Boolean {
+    if (e.place != ActionPlaces.EDITOR_POPUP) return false
+    
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return false
+    val offset = editor.caretModel.offset
+    
+    return !editor.inlayModel.hasInlineElementAt(offset)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -156,4 +173,19 @@ private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
   ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, pattern)
 
   refreshAllOpenEditors()
+}
+
+fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
+  val hintProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return false
+
+  var element = file.findElementAt(offset)
+  for (i in 0..3) {
+    if (element == null) return false
+
+    val hints = hintProvider.getParameterHints(element)
+    if (hints.isNotEmpty()) return true
+    element = element.parent
+  }
+
+  return false
 }

@@ -31,7 +31,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
@@ -58,7 +58,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   public VcsLogPathsIndex(@NotNull String logId,
                           @NotNull Set<VirtualFile> roots,
-                          @NotNull FatalErrorConsumer fatalErrorConsumer,
+                          @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
     super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
           new NullableIntKeyDescriptor(), disposableParent);
@@ -67,7 +67,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
                                                             VcsLogPersistentIndex.getVersion());
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> {
-      fatalErrorConsumer.consume(this, e);
+      fatalErrorHandler.consume(this, e);
       markCorrupted();
     });
   }

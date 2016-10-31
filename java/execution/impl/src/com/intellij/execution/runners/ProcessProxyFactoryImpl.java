@@ -23,9 +23,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.rt.execution.application.AppMain;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
@@ -50,11 +50,11 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
             JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
             ParametersList vmParametersList = javaParameters.getVMParametersList();
-            vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, port);
-            vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BIN_PATH, binPath);
+            vmParametersList.defineProperty(AppMain.LAUNCHER_PORT_NUMBER, port);
+            vmParametersList.defineProperty(AppMain.LAUNCHER_BIN_PATH, binPath);
 
             javaParameters.getProgramParametersList().prepend(mainClass);
-            javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
+            javaParameters.setMainClass(AppMain.class.getName());
           }
           else {
             javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
@@ -62,7 +62,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
           return proxy;
         }
-        catch (IOException e) {
+        catch (Exception e) {
           Logger.getInstance(ProcessProxy.class).warn(e);
         }
       }
@@ -73,6 +73,6 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
   @Override
   public ProcessProxy getAttachedProxy(ProcessHandler processHandler) {
-    return processHandler != null ? processHandler.getUserData(ProcessProxyImpl.KEY) : null;
+    return ProcessProxyImpl.KEY.get(processHandler);
   }
 }

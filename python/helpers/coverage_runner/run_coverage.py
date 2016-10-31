@@ -37,8 +37,7 @@ if run_cov:
 
 argv = []
 for arg in sys.argv:
-    if arg.startswith('-m'):
-        argv.append('-m')
+    if arg.startswith('-m') and arg[2:]:
         argv.append(arg[2:])
     else:
         argv.append(arg)

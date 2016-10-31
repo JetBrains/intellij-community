@@ -69,7 +69,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
-      if (LambdaMethodFilter.isLambdaName(name)) {
+      if (DebuggerUtilsEx.isLambdaName(name)) {
         SourcePosition position = process.getPositionManager().getSourcePosition(location);
         return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
           PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);

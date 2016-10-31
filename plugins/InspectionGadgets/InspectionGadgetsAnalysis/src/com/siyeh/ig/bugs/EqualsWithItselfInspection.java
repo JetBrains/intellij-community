@@ -16,7 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.siyeh.InspectionGadgetsBundle;import com.siyeh.ig.BaseInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -52,7 +53,10 @@ public class EqualsWithItselfInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isEqualsCall(expression)) {
+      if (!MethodCallUtils.isEqualsCall(expression) &&
+          !MethodCallUtils.isEqualsIgnoreCaseCall(expression) &&
+          !MethodCallUtils.isCompareToCall(expression) &&
+          !MethodCallUtils.isCompareToIgnoreCaseCall(expression)) {
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();

@@ -306,6 +306,7 @@
     
     <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
       <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ParameterNameHints"/>
     </action>
     
     <!-- Analyze -->

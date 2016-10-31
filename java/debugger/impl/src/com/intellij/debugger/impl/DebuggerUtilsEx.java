@@ -591,6 +591,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
+  @NotNull
+  public static List<Location> allLineLocations(Method method) {
+    try {
+      return method.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return Collections.emptyList();
+    }
+  }
+
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
     if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
       return vm.mirrorOf(value);
@@ -791,6 +801,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static String getLambdaBaseClassName(String typeName) {
     return StringUtil.substringBefore(typeName, "$$Lambda$");
+  }
+
+  public static boolean isLambdaName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

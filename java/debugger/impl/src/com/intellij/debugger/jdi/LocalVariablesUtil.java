@@ -288,7 +288,7 @@ public class LocalVariablesUtil {
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = getFirstLocalsSlot(method);
         final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
-        MethodBytecodeUtil.visit(location.declaringType(), method, location.codeIndex(),
+        MethodBytecodeUtil.visit(method, location.codeIndex(),
           new MethodVisitor(Opcodes.API_VERSION) {
            @Override
            public void visitVarInsn(int opcode, int slot) {
