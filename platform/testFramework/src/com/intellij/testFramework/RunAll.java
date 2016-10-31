@@ -22,7 +22,6 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,16 +32,18 @@ import java.util.List;
 public class RunAll implements Runnable {
   private final List<ThrowableRunnable<?>> myActions;
 
+  @SafeVarargs
   public RunAll(ThrowableRunnable<Throwable>... actions) {
-    this(Arrays.asList(actions));
+    this(ContainerUtil.newArrayList(actions));
   }
 
   private RunAll(List<ThrowableRunnable<?>> actions) {
     myActions = actions;
   }
 
+  @SafeVarargs
   @Contract(pure=true)
-  public RunAll append(ThrowableRunnable<Throwable>... actions) {
+  public final RunAll append(ThrowableRunnable<Throwable>... actions) {
     return new RunAll(ContainerUtil.concat(myActions, ContainerUtil.newArrayList(actions)));
   }
 
