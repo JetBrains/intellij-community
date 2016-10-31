@@ -32,8 +32,8 @@ import java.util.Set;
 /**
  * An interface to provide connection between compact internal representation of indexed elements and PSI
  */
-public interface LanguageLightRefAdapter<Clazz extends PsiElement, FunExpr extends PsiElement> {
-  LanguageLightRefAdapter<?, ?>[] INSTANCES = new LanguageLightRefAdapter[]{new JavaLightUsageAdapter()};
+public interface LanguageLightRefAdapter  {
+  LanguageLightRefAdapter[] INSTANCES = new LanguageLightRefAdapter[]{new JavaLightUsageAdapter()};
 
   @NotNull
   Set<FileType> getFileTypes();
@@ -77,16 +77,16 @@ public interface LanguageLightRefAdapter<Clazz extends PsiElement, FunExpr exten
    * found elements really inheritors.
    */
   @NotNull
-  Clazz[] findDirectInheritorCandidatesInFile(@NotNull Collection<LightRef.LightClassHierarchyElementDef> internalNames,
-                                              @NotNull ByteArrayEnumerator byteArrayEnumerator,
-                                              @NotNull PsiFileWithStubSupport file,
-                                              @NotNull PsiNamedElement superClass);
+  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull Collection<LightRef.LightClassHierarchyElementDef> internalNames,
+                                                   @NotNull ByteArrayEnumerator byteArrayEnumerator,
+                                                   @NotNull PsiFileWithStubSupport file,
+                                                   @NotNull PsiNamedElement superClass);
 
   /**
    * @param indices - ordinal-numbers (corresponding to compiler tree index visitor) of required functional expressions.
    * @return functional expressions for given functional type. Should return
    */
   @NotNull
-  FunExpr[] findFunExpressionsInFile(@NotNull Collection<LightRef.LightFunExprDef> indices,
-                                     @NotNull PsiFileWithStubSupport file);
+  PsiElement[] findFunExpressionsInFile(@NotNull Collection<LightRef.LightFunExprDef> indices,
+                                        @NotNull PsiFileWithStubSupport file);
 }

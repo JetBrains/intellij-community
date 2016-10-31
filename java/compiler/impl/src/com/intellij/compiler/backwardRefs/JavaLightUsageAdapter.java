@@ -39,7 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class JavaLightUsageAdapter implements LanguageLightRefAdapter<PsiClass, PsiFunctionalExpression> {
+public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @NotNull
   @Override
   public Set<FileType> getFileTypes() {

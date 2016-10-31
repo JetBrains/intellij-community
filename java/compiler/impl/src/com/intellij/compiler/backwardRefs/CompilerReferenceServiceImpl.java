@@ -281,7 +281,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       if (place == null || (place == ElementPlace.SRC && myDirtyModulesHolder.contains(file))) {
         return null;
       }
-      final LanguageLightRefAdapter<?, ?> adapter = findAdapterForFileType(file.getFileType());
+      final LanguageLightRefAdapter adapter = findAdapterForFileType(file.getFileType());
       if (adapter == null) return null;
       final LightRef ref = ReadAction.compute(() -> adapter.asLightUsage(psiElement, myReader.getNameEnumerator()));
       if (ref == null) return null;
