@@ -179,12 +179,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @NotNull
   public String[] getSchemeNames() {
     List<MyColorScheme> schemes = new ArrayList<>(mySchemes.values());
-    Collections.sort(schemes, (o1, o2) -> {
-      if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
-      if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
-
-      return o1.getName().compareToIgnoreCase(o2.getName());
-    });
+    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
 
     List<String> names = new ArrayList<>(schemes.size());
     for (MyColorScheme scheme : schemes) {
