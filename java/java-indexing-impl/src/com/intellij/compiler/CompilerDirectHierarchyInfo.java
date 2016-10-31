@@ -32,12 +32,6 @@ public interface CompilerDirectHierarchyInfo {
   Stream<PsiElement> getHierarchyChildren();
 
   /**
-   * Must be explicitly checked do they are really direct children in hierarchy of classes or functional expressions
-   */
-  @NotNull
-  Stream<PsiElement> getHierarchyChildCandidates();
-
-  /**
    * A scope where compiler based index search was not performed
    */
   @NotNull

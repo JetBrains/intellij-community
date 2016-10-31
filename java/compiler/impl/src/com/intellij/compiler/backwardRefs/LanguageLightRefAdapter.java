@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -77,8 +76,7 @@ public interface LanguageLightRefAdapter  {
    * found elements really inheritors.
    */
   @NotNull
-  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull Collection<LightRef.LightClassHierarchyElementDef> internalNames,
-                                                   @NotNull ByteArrayEnumerator byteArrayEnumerator,
+  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull String[] internalNames,
                                                    @NotNull PsiFileWithStubSupport file,
                                                    @NotNull PsiNamedElement superClass);
 
@@ -87,6 +85,8 @@ public interface LanguageLightRefAdapter  {
    * @return functional expressions for given functional type. Should return
    */
   @NotNull
-  PsiElement[] findFunExpressionsInFile(@NotNull Collection<LightRef.LightFunExprDef> indices,
+  PsiElement[] findFunExpressionsInFile(@NotNull Integer[] indices,
                                         @NotNull PsiFileWithStubSupport file);
+
+  boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass);
 }

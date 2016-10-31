@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -70,23 +71,27 @@ class DirtyModulesHolder extends UserDataHolderBase {
   }
 
   GlobalSearchScope getDirtyScope() {
-    return CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () ->
-      CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+    final Project project = myService.getProject();
+    synchronized (myLock) {
+      if (myCompilationPhase) {
+        return GlobalSearchScope.allScope(project);
+      }
+      return ReadAction.compute(() -> CachedValuesManager.getManager(project).getCachedValue(this, () ->
+        CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService)));
+    }
   }
 
   private GlobalSearchScope calculateDirtyModules() {
-    synchronized (myLock) {
-      final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
-      for (Document document : myFileDocManager.getUnsavedDocuments()) {
-        final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
-        if (m != null) dirtyModules.add(m);
-      }
-      for (Document document : ReadAction.compute(() -> myPsiDocManager.getUncommittedDocuments())) {
-        final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
-        if (m != null) dirtyModules.add(m);
-      }
-      return dirtyModules.stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+    final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
+    for (Document document : myFileDocManager.getUnsavedDocuments()) {
+      final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
+      if (m != null) dirtyModules.add(m);
     }
+    for (Document document : myPsiDocManager.getUncommittedDocuments()) {
+      final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
+      if (m != null) dirtyModules.add(m);
+    }
+    return dirtyModules.stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
   }
 
   boolean contains(VirtualFile file) {

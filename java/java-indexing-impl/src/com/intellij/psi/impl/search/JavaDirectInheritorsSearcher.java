@@ -81,8 +81,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, scope, project);
     if (info != null) {
-      if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous(), false, baseClass)) return false;
-      if (!processInheritorCandidates(info.getHierarchyChildCandidates(), consumer, parameters.includeAnonymous(), true, baseClass)) return false;
+      if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous())) return false;
       scope = scope.intersectWith(info.getDirtyScope());
       useScope = useScope.intersectWith(info.getDirtyScope());
     }
@@ -294,16 +293,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   private static boolean processInheritorCandidates(@NotNull Stream<PsiElement> classStream,
                                                     @NotNull Processor<PsiClass> consumer,
-                                                    boolean acceptAnonymous,
-                                                    boolean checkInheritance,
-                                                    PsiClass baseClass) {
+                                                    boolean acceptAnonymous) {
     if (!acceptAnonymous) {
       classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));
     }
     return ContainerUtil.process(classStream.iterator(), e -> {
       ProgressManager.checkCanceled();
       PsiClass c = (PsiClass) e;
-      if (checkInheritance && ReadAction.compute(() -> !c.isInheritor(baseClass, false))) return true;
       return consumer.process(c);
     });
   }

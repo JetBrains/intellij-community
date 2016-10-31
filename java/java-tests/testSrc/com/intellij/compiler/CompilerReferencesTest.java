@@ -16,7 +16,6 @@
 package com.intellij.compiler;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,9 +103,6 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
         assertOneOf(inheritor.getName(), "FooImpl", "FooImpl2", "FooInsideMethodImpl");
       }
     }
-
-    Collection<PsiClass> candidates = directInheritorInfo.getHierarchyChildCandidates().map(PsiClass.class::cast).collect(Collectors.toList());
-    assertEmpty(candidates);
   }
 
   public void testHierarchyOfLibClass() {
