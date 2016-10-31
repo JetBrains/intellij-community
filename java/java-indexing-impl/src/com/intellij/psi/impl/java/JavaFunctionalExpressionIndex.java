@@ -270,7 +270,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   }
 
   @Nullable
-  public static String getCalledMethodName(LighterAST tree, LighterASTNode call) {
+  private static String getCalledMethodName(LighterAST tree, LighterASTNode call) {
     if (call.getTokenType() == NEW_EXPRESSION) {
       LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, JAVA_CODE_REFERENCE);
