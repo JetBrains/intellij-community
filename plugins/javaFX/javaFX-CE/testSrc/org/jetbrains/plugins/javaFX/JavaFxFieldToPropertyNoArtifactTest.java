@@ -17,7 +17,7 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
   public void testArtifactPresenceFieldToProperty() throws Exception {
     configureByFiles(null, getTestName(false) + ".java");
     final IntentionAction intentionAction = getIntentionAction();
-    // no artifact, no fxml, no javafx.* imports: the intention shoudn't be available
+    // no artifact, no fxml, no javafx.* imports: the intention shouldn't be available
     assertNull(intentionAction);
   }
 
@@ -29,7 +29,7 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
     final Ref<VirtualFile> fileRef = new Ref<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        VirtualFile file = sourceRootDir.createChildData(JavaFxFieldToPropertyNoArtifactTest.this, "sample.fxml");
+        VirtualFile file = sourceRootDir.createChildData(this, "sample.fxml");
         VfsUtil.saveText(file, "<?import javafx.scene.layout.VBox?>\n<VBox/>");
         fileRef.set(file);
       }
@@ -43,7 +43,7 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        fileRef.get().delete(JavaFxFieldToPropertyNoArtifactTest.this);
+        fileRef.get().delete(this);
       }
       catch (IOException e) {
         fail(e.toString());
