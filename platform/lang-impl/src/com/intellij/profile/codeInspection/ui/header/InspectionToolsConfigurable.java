@@ -144,7 +144,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     inspectionProfile.setName(profileDefaultName);
     inspectionProfile.initInspectionTools(project);
     inspectionProfile.setModified(true);
-    inspectionProfile.setProjectLevel(profileManager == myProjectProfileManager);
+    inspectionProfile.setProjectLevel(isProjectLevel);
 
     final InspectionProfileImpl modifiableModel = inspectionProfile.getModifiableModel();
     modifiableModel.setModified(true);
