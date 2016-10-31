@@ -94,11 +94,27 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testFormatMethodItemAccess() {
     doTest();
   }
-
+  
+  // PY-21245
   public void testFormatMethodIndexContainsHostAlternativeQuote() {
     doTest();
   }
   
+  // PY-21245
+  public void testFormatMethodIndexContainsQuoteOfMultilineHost() {
+    doTest();    
+  }
+  
+  // PY-21245
+  public void testFormatMethodIndexContainsAlternativeQuoteOfMultilineHost() {
+    doTest();    
+  }
+
+  // PY-21245
+  public void testFormatMethodIndexContainsBothTypesOfQuotesInsideMultilineHost() {
+    doTest();
+  }
+
   public void testFormatMethodIndexContainsBackslash() {
     doTest();
   }

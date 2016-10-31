@@ -355,7 +355,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     if (adjusted == null) return false;
 
     newStringText.append(adjusted.getText());
-    final String quotedAttrsAndItems = quoteItemsInFragments(field, stringInfo.getSingleQuote());
+    final String quotedAttrsAndItems = quoteItemsInFragments(field, stringInfo);
     if (quotedAttrsAndItems == null) return false;
 
     newStringText.append(quotedAttrsAndItems);
@@ -396,7 +396,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
   }
 
   @Nullable
-  private static String quoteItemsInFragments(@NotNull PyNewStyleStringFormatParser.Field field, char hostStringQuote) {
+  private static String quoteItemsInFragments(@NotNull PyNewStyleStringFormatParser.Field field, @NotNull StringNodeInfo hostStringInfo) {
     List<String> escaped = new ArrayList<>();
     for (String part : field.getAttributesAndLookups()) {
       if (part.startsWith(".")) {
@@ -411,11 +411,17 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           escaped.add(part);
           continue;
         }
-        final char quote = flipQuote(hostStringQuote);
-        if (indexText.indexOf(hostStringQuote) >= 0 || indexText.indexOf(quote) >= 0) {
-          return null;
+        final char originalQuote = hostStringInfo.getSingleQuote();
+        char targetQuote = flipQuote(originalQuote);
+        // there are no escapes inside the fragment, so the lookup key cannot contain 
+        // the host string quote unless it's a multiline string literal
+        if (indexText.indexOf(targetQuote) >= 0) {
+          if (!hostStringInfo.isTripleQuoted() || indexText.indexOf(originalQuote) >= 0) {
+            return null;
+          }
+          targetQuote = originalQuote;
         }
-        escaped.add("[" + quote + indexText + quote + "]");
+        escaped.add("[" + targetQuote + indexText + targetQuote + "]");
       }
     }
     return StringUtil.join(escaped, "");
