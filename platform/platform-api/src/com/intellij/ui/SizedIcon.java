@@ -31,23 +31,9 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon {
   private Icon myScaledDelegate;
 
   public SizedIcon(Icon delegate, int width, int height) {
-    this(delegate, width, height, false);
-  }
-
-  /**
-   * @param delegate the delegate icon
-   * @param width this icon width
-   * @param height this icon height
-   * @param inDelegateScale whether to align this icon scale with the delegate icon scale
-   */
-  public SizedIcon(Icon delegate, int width, int height, boolean inDelegateScale) {
-    float scale = 1f;
-    if (inDelegateScale && delegate instanceof ScalableIcon) {
-      setScale(scale = ((ScalableIcon)delegate).getScale());
-    }
     myScaledDelegate = myDelegate = delegate;
-    myWidth = (int)(width / scale);
-    myHeight = (int)(height / scale);
+    myWidth = width;
+    myHeight = height;
   }
 
   protected SizedIcon(SizedIcon icon) {

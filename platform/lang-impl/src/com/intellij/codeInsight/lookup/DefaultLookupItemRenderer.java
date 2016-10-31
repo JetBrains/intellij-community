@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
@@ -48,10 +49,9 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   @Nullable
   public static Icon getRawIcon(final LookupElement item, boolean real) {
     Icon icon = _getRawIcon(item, real);
-    // align SAMPLE_ICON.getIconHeight() with the 'icon' scale
-    int sampleIconHeight = ScalableJBIcon.scaleVal(icon, SAMPLE_ICON.getIconHeight(), Scale.ARBITRARY);
-    if (icon != null && icon.getIconHeight() > sampleIconHeight) {
-      return new SizedIcon(icon, icon.getIconWidth(), sampleIconHeight, true);
+    if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
+    if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
+      return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
     }
     return icon;
   }

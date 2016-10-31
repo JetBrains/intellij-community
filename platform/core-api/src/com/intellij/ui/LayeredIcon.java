@@ -81,7 +81,6 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     }
     for (Icon icon : myIcons) {
       if (icon != null && !(icon instanceof ScalableIcon)) {
-        setScale(1f);
         return myScaledIcons = myIcons;
       }
     }
@@ -221,13 +220,14 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     if (updateJBUIScale()) updateSize();
-    int i = 0;
-    for (Icon icon : myScaledIcons()) {
+    Icon[] icons = myScaledIcons();
+    if (icons == null) return;
+    for (int i = 0; i < icons.length; i++) {
+      Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
       int xOffset = x + scaleVal(myXShift + myHShifts[i], Scale.ARBITRARY);
       int yOffset = y + scaleVal(myYShift + myVShifts[i], Scale.ARBITRARY);
       icon.paintIcon(c, g, xOffset, yOffset);
-      i++;
     }
   }
 

@@ -291,7 +291,7 @@ public class JBUI {
    * @author tav
    */
   public static abstract class JBIcon implements Icon {
-    private float myInitialJBUIScale = scale(1f);
+    private float myInitialJBUIScale = currentJBUIScale();
 
     protected JBIcon() {}
 
@@ -299,11 +299,17 @@ public class JBUI {
       myInitialJBUIScale = icon.myInitialJBUIScale;
     }
 
+    static float currentJBUIScale() {
+      // We don't JBUI-scale images on Retina, see comments in ImageLoader.loadFromUrl(..)
+      // So, make icons JBUI-scale conformant.
+      return UIUtil.isRetina() ? 1f : scale(1f);
+    }
+
     /**
      * @return the scale factor aligning the icon size metrics to conform to up-to-date JBUI.scale
      */
     private float getAligningScale() {
-      return scale(1f) / myInitialJBUIScale;
+      return currentJBUIScale() / myInitialJBUIScale;
     }
 
     /**
@@ -317,7 +323,7 @@ public class JBUI {
      * Sets the icon size metrics to {@code preScaled}
      */
     protected void setJBUIPreScaled(boolean preScaled) {
-      myInitialJBUIScale = preScaled ? scale(1f) : 1f;
+      myInitialJBUIScale = preScaled ? currentJBUIScale() : 1f;
     }
 
     /**
@@ -499,7 +505,7 @@ public class JBUI {
    * @author tav
    */
   public static abstract class AuxScalableJBIcon extends CachingScalableJBIcon implements AuxJBUIScale {
-    private float myCachedJBUIScale = JBUI.scale(1f);
+    private float myCachedJBUIScale = currentJBUIScale();
 
     protected AuxScalableJBIcon() {}
 
@@ -510,7 +516,7 @@ public class JBUI {
     @Override
     public boolean updateJBUIScale() {
       if (needUpdateJBUIScale()) {
-        myCachedJBUIScale = JBUI.scale(1f);
+        myCachedJBUIScale = currentJBUIScale();
         return true;
       }
       return false;
@@ -518,7 +524,7 @@ public class JBUI {
 
     @Override
     public boolean needUpdateJBUIScale() {
-      return myCachedJBUIScale != JBUI.scale(1f);
+      return myCachedJBUIScale != currentJBUIScale();
     }
   }
 }

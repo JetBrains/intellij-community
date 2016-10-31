@@ -78,7 +78,6 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
     }
     for (Icon icon : myIcons) {
       if (icon != null && !(icon instanceof ScalableIcon)) {
-        setScale(1f);
         return myScaledIcons = myIcons;
       }
     }

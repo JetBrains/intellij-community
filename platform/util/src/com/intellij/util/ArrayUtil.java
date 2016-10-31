@@ -908,18 +908,22 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
+  @SuppressWarnings("unchecked")
   public static <T> T[] copyOf(@Nullable T[] original) {
     if (original == null) return null;
     return (T[]) Arrays.copyOf(original, original.length, original.getClass());
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
   public static boolean[] copyOf(@Nullable boolean[] original) {
     if (original == null) return null;
     return Arrays.copyOf(original, original.length);
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
   public static int[] copyOf(@Nullable int[] original) {
     if (original == null) return null;
     return Arrays.copyOf(original, original.length);
