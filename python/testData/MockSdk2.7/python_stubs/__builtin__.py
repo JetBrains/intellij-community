@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module __builtin__
 # from (built-in)
-# by generator 1.138
+# by generator 1.145
 from __future__ import print_function
 """
 Built-in functions, exceptions, and other objects.
@@ -2930,7 +2930,8 @@ class float(object):
         """ Return self, the complex conjugate of any float. """
         pass
 
-    def fromhex(self, string): # real signature unknown; restored from __doc__
+    @staticmethod # known case
+    def fromhex(string): # real signature unknown; restored from __doc__
         """
         float.fromhex(string) -> float
         
