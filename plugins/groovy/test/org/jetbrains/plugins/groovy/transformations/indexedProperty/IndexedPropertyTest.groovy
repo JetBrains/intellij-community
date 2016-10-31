@@ -124,4 +124,36 @@ new A().getStringList(0)
       checkHighlighting()
     }
   }
+
+  void 'test indexed property rename'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> strin<caret>gList
+}
+def a = new A()
+a.stringList
+a.getStringList()
+a.stringList = []
+a.setStringList([])
+a.getStringList(0)
+a.setStringList(0, "") 
+'''
+      renameElementAtCaret 'newName'
+      checkResult '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> newName
+}
+def a = new A()
+a.newName
+a.getNewName()
+a.newName = []
+a.setNewName([])
+a.getNewName(0)
+a.setNewName(0, "") 
+'''
+    }
+  }
 }
