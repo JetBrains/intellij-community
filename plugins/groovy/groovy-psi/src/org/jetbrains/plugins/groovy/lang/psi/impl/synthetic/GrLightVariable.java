@@ -111,6 +111,9 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
+    if (another instanceof GrLightVariable) {
+      return myDeclarations.equals(((GrLightVariable)another).getDeclarations());
+    }
     return myDeclarations.contains(another) || super.isEquivalentTo(another);
   }
 
