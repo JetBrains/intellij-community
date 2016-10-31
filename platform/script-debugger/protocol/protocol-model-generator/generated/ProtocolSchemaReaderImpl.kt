@@ -15,18 +15,18 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     private var _domains: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Domain>? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "version" -> version = M1(reader, null)
           "domains" -> _domains = readObjectArray(reader, FM2())
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -42,18 +42,18 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     private var _minor: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "major" -> _major = reader.nextString()
           "minor" -> _minor = reader.nextString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -69,28 +69,30 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
   private class M2(reader: JsonReaderEx, preReadName: String?) : org.jetbrains.jsonProtocol.ProtocolMetaModel.Domain {
     override var description: String? = null
     override var events: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Event>? = null
+    override var experimental = false
     override var hidden = false
     override var types: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType>? = null
     private var _commands: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Command>? = null
     private var _domain: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
-          "description" -> description = reader.nextString()
+      loop@ while (_n != null) {
+        when (_n) {
+          "description" -> description = reader.nextNullableString()
           "events" -> events = readObjectArray(reader, FM5())
+          "experimental" -> experimental = reader.nextBoolean()
           "hidden" -> hidden = reader.nextBoolean()
           "types" -> types = readObjectArray(reader, FM6())
           "commands" -> _commands = readObjectArray(reader, FM3())
           "domain" -> _domain = reader.nextString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -100,7 +102,7 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
 
     override fun domain() = _domain!!
 
-    override fun equals(other: Any?): Boolean = other is M2 && hidden == other.hidden && description == other.description && _domain == other._domain && events == other.events && types == other.types && _commands == other._commands
+    override fun equals(other: Any?): Boolean = other is M2 && experimental == other.experimental && hidden == other.hidden && description == other.description && _domain == other._domain && events == other.events && types == other.types && _commands == other._commands
   }
 
   private class M3(reader: JsonReaderEx, preReadName: String?) : org.jetbrains.jsonProtocol.ProtocolMetaModel.Command {
@@ -112,22 +114,22 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     private var _name: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "async" -> async = reader.nextBoolean()
-          "description" -> description = reader.nextString()
+          "description" -> description = reader.nextNullableString()
           "hidden" -> hidden = reader.nextBoolean()
           "parameters" -> parameters = readObjectArray(reader, FM4())
           "returns" -> returns = readObjectArray(reader, FM4())
           "name" -> _name = reader.nextString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -151,26 +153,26 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     override var type: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
-          "default" -> default = reader.nextString()
+      loop@ while (_n != null) {
+        when (_n) {
+          "default" -> default = readRawString(reader)
           "hidden" -> hidden = reader.nextBoolean()
           "optional" -> optional = reader.nextBoolean()
-          "shortName" -> shortName = reader.nextString()
+          "shortName" -> shortName = reader.nextNullableString()
           "name" -> _name = reader.nextString()
-          "\$ref" -> ref = reader.nextString()
-          "description" -> description = reader.nextString()
+          "\$ref" -> ref = reader.nextNullableString()
+          "description" -> description = reader.nextNullableString()
           "enum" -> enum = nextList(reader)
           "items" -> items = M7(reader, null)
-          "type" -> type = reader.nextString()
+          "type" -> type = reader.nextNullableString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -189,21 +191,21 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     private var _name: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
-          "description" -> description = reader.nextString()
+      loop@ while (_n != null) {
+        when (_n) {
+          "description" -> description = reader.nextNullableString()
           "hidden" -> hidden = reader.nextBoolean()
           "optionalData" -> optionalData = reader.nextBoolean()
           "parameters" -> parameters = readObjectArray(reader, FM4())
           "name" -> _name = reader.nextString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -224,23 +226,23 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     override var type: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "hidden" -> hidden = reader.nextBoolean()
           "id" -> _id = reader.nextString()
           "properties" -> properties = readObjectArray(reader, FM8())
-          "description" -> description = reader.nextString()
+          "description" -> description = reader.nextNullableString()
           "enum" -> enum = nextList(reader)
           "items" -> items = M7(reader, null)
-          "type" -> type = reader.nextString()
+          "type" -> type = reader.nextNullableString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -261,23 +263,23 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     override var ref: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "optional" -> optional = reader.nextBoolean()
           "properties" -> properties = readObjectArray(reader, FM8())
-          "description" -> description = reader.nextString()
+          "description" -> description = reader.nextNullableString()
           "enum" -> enum = nextList(reader)
           "items" -> items = M7(reader, null)
-          "type" -> type = reader.nextString()
-          "\$ref" -> ref = reader.nextString()
+          "type" -> type = reader.nextNullableString()
+          "\$ref" -> ref = reader.nextNullableString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
@@ -298,25 +300,25 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     override var type: String? = null
 
     init {
-      var name = preReadName
-      if (name == null && reader.hasNext() && reader.beginObject().hasNext()) {
-        name = reader.nextName()
+      var _n = preReadName
+      if (_n == null && reader.hasNext() && reader.beginObject().hasNext()) {
+        _n = reader.nextName()
       }
 
-      loop@ while (name != null) {
-        when (name) {
+      loop@ while (_n != null) {
+        when (_n) {
           "hidden" -> hidden = reader.nextBoolean()
           "name" -> _name = reader.nextString()
           "optional" -> optional = reader.nextBoolean()
-          "shortName" -> shortName = reader.nextString()
-          "\$ref" -> ref = reader.nextString()
-          "description" -> description = reader.nextString()
+          "shortName" -> shortName = reader.nextNullableString()
+          "\$ref" -> ref = reader.nextNullableString()
+          "description" -> description = reader.nextNullableString()
           "enum" -> enum = nextList(reader)
           "items" -> items = M7(reader, null)
-          "type" -> type = reader.nextString()
+          "type" -> type = reader.nextNullableString()
           else -> reader.skipValue()
         }
-        name = reader.nextNameOrNull()
+        _n = reader.nextNameOrNull()
       }
 
       reader.endObject()
