@@ -372,6 +372,8 @@ public class SimpleEditorPreview implements PreviewPanel {
           }
           rainbowMarkup.add(rainbowTemp);
           rainbowMarkup.add(rainbowAnchor);
+          rainbowMarkup.add(d);
+          rainbowMarkup.add(rainbowAnchor);
           rainbowMarkup.add(rainbowTemp);
         }
         else {
