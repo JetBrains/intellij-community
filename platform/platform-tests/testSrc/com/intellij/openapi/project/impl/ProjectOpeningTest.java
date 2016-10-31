@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,6 +30,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY;
 
@@ -84,6 +86,31 @@ public class ProjectOpeningTest extends PlatformTestCase {
   }
 
   */
+
+  public void testIsSameProjectForDirectoryBasedProject() throws IOException {
+    File projectDir = createTempDir("project");
+    Project dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.getAbsolutePath());
+    disposeOnTearDown(dirBasedProject);
+
+    assertTrue(ProjectUtil.isSameProject(projectDir.getAbsolutePath(), dirBasedProject));
+    assertFalse(ProjectUtil.isSameProject(createTempDir("project2").getAbsolutePath(), dirBasedProject));
+    File iprFilePath = new File(projectDir, "project.ipr");
+    assertTrue(ProjectUtil.isSameProject(iprFilePath.getAbsolutePath(), dirBasedProject));
+    File miscXmlFilePath = new File(projectDir, ".idea/misc.xml");
+    assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.getAbsolutePath(), dirBasedProject));
+  }
+
+  public void testIsSameProjectForFileBasedProject() throws IOException {
+    File projectDir = createTempDir("project");
+    File iprFilePath = new File(projectDir, "project.ipr");
+    Project fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.getName(), iprFilePath.getAbsolutePath());
+    disposeOnTearDown(fileBasedProject);
+
+    assertTrue(ProjectUtil.isSameProject(projectDir.getAbsolutePath(), fileBasedProject));
+    assertFalse(ProjectUtil.isSameProject(createTempDir("project2").getAbsolutePath(), fileBasedProject));
+    File iprFilePath2 = new File(projectDir, "project2.ipr");
+    assertFalse(ProjectUtil.isSameProject(iprFilePath2.getAbsolutePath(), fileBasedProject));
+  }
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
