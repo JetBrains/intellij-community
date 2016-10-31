@@ -44,13 +44,17 @@ echo "Building help indices for $HELP_DIR"
 hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 
 for f in ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.jnilib ; do
-  b="$(basename "$f" .jnilib)"
-  ln -sf "$b.jnilib" "$(dirname "$f")/$b.dylib"
+  if [ -f "$f" ]; then
+    b="$(basename "$f" .jnilib)"
+    ln -sf "$b.jnilib" "$(dirname "$f")/$b.dylib"
+  fi
 done
 
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt; do
-  echo "Moving $f"
-  mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
+for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
+  if [ -f "$f" ]; then
+    echo "Moving $f"
+    mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
+  fi
 done
 
 # Make sure *.p12 is imported into local KeyChain
