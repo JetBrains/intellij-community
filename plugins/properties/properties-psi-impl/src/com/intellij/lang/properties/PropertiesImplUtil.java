@@ -20,10 +20,9 @@ import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomTarget;
@@ -68,11 +67,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
 
     final String baseName = manager.getBaseName(containingFile);
-    final PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-      @Nullable
-      public PsiDirectory compute() {
-        return containingFile.getContainingDirectory();
-      }});
+    final PsiDirectory directory = ReadAction.compute(() -> containingFile.getContainingDirectory());
     if (directory == null) return ResourceBundleWithCachedFiles.EMPTY;
     final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, directory);
     return bundle == null
@@ -90,12 +85,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
                                                                  @NotNull final PsiDirectory baseDirectory) {
     PropertiesFile defaultPropertiesFile = null;
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
-    final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-      @Override
-      public PsiFile[] compute() {
-        return baseDirectory.getFiles();
-      }
-    });
+    final PsiFile[] psiFiles = ReadAction.compute(() -> baseDirectory.getFiles());
     final List<PropertiesFile> bundleFiles = new ArrayList<>(1);
     for (final PsiFile psiFile : psiFiles) {
       final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
@@ -153,18 +143,15 @@ public class PropertiesImplUtil extends PropertiesUtil {
     final ArrayList<IProperty> properties =
       new ArrayList<>(PropertyKeyIndex.getInstance().get(key, project, scope));
     final Set<VirtualFile> files = new HashSet<>();
-    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, new FileBasedIndex.ValueProcessor<String>() {
-      @Override
-      public boolean process(VirtualFile file, String value) {
-        if (files.add(file)) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
-          if (propertiesFile != null) {
-            properties.addAll(propertiesFile.findPropertiesByKey(key));
-          }
+    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, (file, value) -> {
+      if (files.add(file)) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
+        if (propertiesFile != null) {
+          properties.addAll(propertiesFile.findPropertiesByKey(key));
         }
-        return false;
       }
+      return false;
     }, scope);
     return properties;
   }
