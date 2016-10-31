@@ -178,6 +178,7 @@ public class AssertHint {
     static {
       COMMON_ASSERT_METHODS.put("assertArrayEquals", 2);
       COMMON_ASSERT_METHODS.put("assertEquals", 2);
+      COMMON_ASSERT_METHODS.put("assertNotEquals", 2);
       COMMON_ASSERT_METHODS.put("assertFalse", 1);
       COMMON_ASSERT_METHODS.put("assumeFalse", 1);
       COMMON_ASSERT_METHODS.put("assertNotNull", 1);
