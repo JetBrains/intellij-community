@@ -36,6 +36,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -152,7 +154,7 @@ public class PsiImplUtil {
       }
     }
 
-    
+
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (oldParent instanceof GrStringInjection) {
       if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
@@ -165,7 +167,7 @@ public class PsiImplUtil {
         return ((GrExpression)statements[0]).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       }
     }
-    
+
     if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
@@ -173,7 +175,7 @@ public class PsiImplUtil {
       final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       return (GrExpression)replaced;
     }
-    
+
     //check priorities    
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression addedParenth = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
@@ -1021,5 +1023,31 @@ public class PsiImplUtil {
     return new GroovyResolveResultImpl(baseMethod, result.getCurrentFileResolveContext(), result.getSpreadState(),
                                        substitutor, result.isAccessible(), result.isStaticsOK(),
                                        result.isInvokedOnProperty(), result.isValidResult());
+  }
+
+  @NotNull
+  static GrVariableDeclaration[] getAnnotatedScriptDesclarations(@NotNull GroovyFile file) {
+    if (!file.isScript()) return GrVariableDeclaration.EMPTY_ARRAY;
+    List<GrVariableDeclaration> result = ContainerUtil.newArrayList();
+    file.accept(new GroovyRecursiveElementVisitor() {
+
+      @Override
+      public void visitVariableDeclaration(@NotNull GrVariableDeclaration declaration) {
+        if (declaration.getModifierList().getAnnotations().length > 0) {
+          result.add(declaration);
+        }
+      }
+
+      @Override
+      public void visitMethod(@NotNull GrMethod method) {
+        //skip methods
+      }
+
+      @Override
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
+        //skip type defs
+      }
+    });
+    return result.toArray(GrVariableDeclaration.EMPTY_ARRAY);
   }
 }
