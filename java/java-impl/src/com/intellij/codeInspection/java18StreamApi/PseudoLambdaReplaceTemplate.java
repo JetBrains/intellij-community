@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.util.*;
-import com.intellij.util.Function;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Batkovich
@@ -490,7 +492,7 @@ public class PseudoLambdaReplaceTemplate {
     }
 
     final PsiType psiType = expression.getType();
-    if (psiType != null) {
+    if (psiType != null && !LambdaUtil.notInferredType(psiType)) {
       return AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(expression, psiType);
     }
     return null;
