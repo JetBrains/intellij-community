@@ -24,27 +24,69 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.ScalableJBIcon {
+public class SizedIcon extends JBUI.CachingScalableJBIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
   private Icon myScaledDelegate;
 
   public SizedIcon(Icon delegate, int width, int height) {
+    this(delegate, width, height, false);
+  }
+
+  /**
+   * @param delegate the delegate icon
+   * @param width this icon width
+   * @param height this icon height
+   * @param inDelegateScale whether to align this icon scale with the delegate icon scale
+   */
+  public SizedIcon(Icon delegate, int width, int height, boolean inDelegateScale) {
+    float scale = 1f;
+    if (inDelegateScale && delegate instanceof ScalableIcon) {
+      setScale(scale = ((ScalableIcon)delegate).getScale());
+    }
     myScaledDelegate = myDelegate = delegate;
-    myWidth = width;
-    myHeight = height;
+    myWidth = (int)(width / scale);
+    myHeight = (int)(height / scale);
+  }
+
+  protected SizedIcon(SizedIcon icon) {
+    super(icon);
+    myWidth = icon.myWidth;
+    myHeight = icon.myHeight;
+    myDelegate = icon.myDelegate;
+    myScaledDelegate = null;
+  }
+
+  @Override
+  protected SizedIcon copy() {
+    return new SizedIcon(this);
+  }
+
+  private Icon myScaledIcon() {
+    if (myScaledDelegate != null) {
+      return myScaledDelegate;
+    }
+    if (getScale() == 1f) {
+      return myScaledDelegate = myDelegate;
+    }
+    if (!(myDelegate instanceof ScalableIcon)) {
+      setScale(1f);
+      return myScaledDelegate = myDelegate;
+    }
+    return myScaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    int dx = scaleVal(myWidth) - myScaledDelegate.getIconWidth();
-    int dy = scaleVal(myHeight) - myScaledDelegate.getIconHeight();
+    Icon icon = myScaledIcon();
+    int dx = scaleVal(myWidth) - icon.getIconWidth();
+    int dy = scaleVal(myHeight) - icon.getIconHeight();
     if (dx > 0 || dy > 0) {
-      myScaledDelegate.paintIcon(c, g, x + dx/2, y + dy/2);
+      icon.paintIcon(c, g, x + dx / 2, y + dy / 2);
     }
     else {
-      myScaledDelegate.paintIcon(c, g, x, y);
+      icon.paintIcon(c, g, x, y);
     }
   }
 
@@ -54,16 +96,5 @@ public class SizedIcon extends JBUI.ScalableJBIcon {
 
   public int getIconHeight() {
     return scaleVal(myHeight);
-  }
-
-  @Override
-  public Icon scale(float scale) {
-    if (scale == getScale()) return this;
-
-    if (myDelegate instanceof ScalableIcon) {
-      setScale(scale);
-      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scale);
-    }
-    return this;
   }
 }

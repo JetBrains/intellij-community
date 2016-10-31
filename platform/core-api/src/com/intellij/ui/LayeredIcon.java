@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,46 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     for (int i = 0; i < icons.length; i++) {
       setIcon(icons[i], i);
     }
+  }
+
+  protected LayeredIcon(LayeredIcon icon) {
+    super(icon);
+    myIcons = ArrayUtil.copyOf(icon.myIcons);
+    myScaledIcons = null;
+    myDisabledLayers = ArrayUtil.copyOf(icon.myDisabledLayers);
+    myHShifts = ArrayUtil.copyOf(icon.myHShifts);
+    myVShifts = ArrayUtil.copyOf(icon.myVShifts);
+    myXShift = icon.myXShift;
+    myYShift = icon.myYShift;
+    myWidth = icon.myWidth;
+    myHeight = icon.myHeight;
+  }
+
+  @Override
+  protected LayeredIcon copy() {
+    return new LayeredIcon(this);
+  }
+
+  private Icon[] myScaledIcons() {
+    if (myScaledIcons != null) {
+      return myScaledIcons;
+    }
+    if (getScale() == 1f) {
+      return myScaledIcons = myIcons;
+    }
+    for (Icon icon : myIcons) {
+      if (icon != null && !(icon instanceof ScalableIcon)) {
+        setScale(1f);
+        return myScaledIcons = myIcons;
+      }
+    }
+    myScaledIcons = new Icon[myIcons.length];
+    for (int i = 0; i < myIcons.length; i++) {
+      if (myIcons[i] != null) {
+        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
+      }
+    }
+    return myScaledIcons;
   }
 
   @Override
@@ -105,6 +146,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
       ((LayeredIcon)icon).checkIHaventIconInsideMe(this);
     }
     myIcons[layer] = icon;
+    myScaledIcons = null;
     myHShifts[layer] = scaleVal(hShift, Scale.JBUI);
     myVShifts[layer] = scaleVal(vShift, Scale.JBUI);
     updateSize();
@@ -179,31 +221,14 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     if (updateJBUIScale()) updateSize();
-    for (int i = 0; i < myIcons.length; i++) {
-      Icon icon = getOrScale(i);
+    int i = 0;
+    for (Icon icon : myScaledIcons()) {
       if (icon == null || myDisabledLayers[i]) continue;
       int xOffset = x + scaleVal(myXShift + myHShifts[i], Scale.ARBITRARY);
       int yOffset = y + scaleVal(myYShift + myVShifts[i], Scale.ARBITRARY);
       icon.paintIcon(c, g, xOffset, yOffset);
+      i++;
     }
-  }
-
-  private Icon getOrScale(int i) {
-    if (getScale() == 1f) {
-      return myIcons[i];
-    }
-    if (myScaledIcons == null) {
-      myScaledIcons = new Icon[myIcons.length];
-    }
-
-    Icon icon = myScaledIcons[i];
-    if (icon == null && myIcons[i] != null) {
-      icon = myIcons[i];
-      if (icon instanceof ScalableIcon) {
-        icon = myScaledIcons[i] = ((ScalableIcon)icon).scale(getScale());
-      }
-    }
-    return icon;
   }
 
   public boolean isLayerEnabled(int layer) {
@@ -267,14 +292,5 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   @Override
   public String toString() {
     return "Layered icon. myIcons=" + Arrays.asList(myIcons);
-  }
-
-  @Override
-  public Icon scale(float scale) {
-    if (scale == getScale()) return this;
-
-    setScale(scale);
-    if (myScaledIcons != null) Arrays.fill(myScaledIcons, null);
-    return this;
   }
 }

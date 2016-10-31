@@ -456,6 +456,11 @@ public final class IconLoader {
     }
 
     @Override
+    public float getScale() {
+      return 1f;
+    }
+
+    @Override
     public Icon scale(float scale) {
       if (scale == 1f) return this;
 
@@ -519,7 +524,7 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon extends JBUI.AuxScalableJBIcon {
+  public abstract static class LazyIcon extends JBUI.AuxJBIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
@@ -576,18 +581,6 @@ public final class IconLoader {
         }
       }
       return icon;
-    }
-
-    @Override
-    public Icon scale(float scale) {
-      if (scale == getScale()) return this;
-
-      getOrComputeIcon();
-      if (myIcon instanceof ScalableIcon) {
-        setScale(scale);
-        myIcon = ((ScalableIcon)myIcon).scale(scale);
-      }
-      return this;
     }
   }
 

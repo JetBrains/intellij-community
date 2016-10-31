@@ -366,6 +366,7 @@ public class JBUI {
       EFFECTIVE   // effective scale
     }
 
+    @Override
     public float getScale() {
       return myScale;
     }
@@ -399,6 +400,23 @@ public class JBUI {
           return super.scaleVal(value * myScale);
       }
     }
+
+    /**
+     * Scales the value in the icon's scale.
+     */
+    public static int scaleVal(Icon icon, int value, Scale type) {
+      return (int)scaleVal(icon, (float)value, type);
+    }
+
+    /**
+     * Scales the value in the icon's scale.
+     */
+    public static float scaleVal(Icon icon, float value, Scale type) {
+      if (icon instanceof ScalableJBIcon) {
+        return ((ScalableJBIcon)icon).scaleVal(value, type);
+      }
+      return value;
+    }
   }
 
   /**
@@ -422,9 +440,8 @@ public class JBUI {
      */
     @Override
     public Icon scale(float scale) {
-      if (scale == 1f)  return this;
+      if (scale == getScale()) return this;
 
-      scale = scaleVal(scale, Scale.ARBITRARY); // accumulate scale
       if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
         myScaledIconCache = copy();
         myScaledIconCache.setScale(scale);
@@ -433,7 +450,7 @@ public class JBUI {
     }
 
     /**
-     * @return a deep copy of this icon instance
+     * @return a copy of this icon instance
      */
     @NotNull
     protected abstract T copy();
@@ -481,8 +498,14 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class AuxScalableJBIcon extends ScalableJBIcon implements AuxJBUIScale {
+  public static abstract class AuxScalableJBIcon extends CachingScalableJBIcon implements AuxJBUIScale {
     private float myCachedJBUIScale = JBUI.scale(1f);
+
+    protected AuxScalableJBIcon() {}
+
+    protected AuxScalableJBIcon(AuxScalableJBIcon icon) {
+      super(icon);
+    }
 
     @Override
     public boolean updateJBUIScale() {

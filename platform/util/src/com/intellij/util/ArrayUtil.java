@@ -907,6 +907,24 @@ public class ArrayUtil extends ArrayUtilRt {
     }
   }
 
+  @Nullable
+  public static <T> T[] copyOf(@Nullable T[] original) {
+    if (original == null) return null;
+    return (T[]) Arrays.copyOf(original, original.length, original.getClass());
+  }
+
+  @Nullable
+  public static boolean[] copyOf(@Nullable boolean[] original) {
+    if (original == null) return null;
+    return Arrays.copyOf(original, original.length);
+  }
+
+  @Nullable
+  public static int[] copyOf(@Nullable int[] original) {
+    if (original == null) return null;
+    return Arrays.copyOf(original, original.length);
+  }
+
   @NotNull
   public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
