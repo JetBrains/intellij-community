@@ -81,7 +81,7 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    private void setEndIndex(int endIndex) {
+    protected void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
     }
 
@@ -98,7 +98,7 @@ public class PyStringFormatParser {
       return myMappingKey;
     }
 
-    private void setMappingKey(@Nullable String mappingKey) {
+    protected void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
 
@@ -150,7 +150,7 @@ public class PyStringFormatParser {
       return myPosition;
     }
 
-    private void setPosition(@Nullable Integer position) {
+    protected void setPosition(@Nullable Integer position) {
       myPosition = position;
     }
   }
