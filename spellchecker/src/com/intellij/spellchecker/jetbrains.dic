@@ -56,6 +56,7 @@ builtin
 bzip
 calc
 callee
+callouts
 camelcase
 cancelable
 cancellable
@@ -499,6 +500,7 @@ reindexing
 renderer
 replacer
 repo
+repos
 resetlogs
 resizable
 resize
@@ -518,6 +520,7 @@ rvalues
 savepoint
 scala
 schemas
+screenshots
 scriptlet
 scriptlets
 securefile
@@ -597,6 +600,8 @@ subexpression
 subexpressions
 sublicense
 sublist
+submenu
+submenus
 submodule
 submodules
 subpackage
@@ -605,6 +610,7 @@ subpartition
 subpartitions
 subst
 substring
+substrings
 subtag
 subtree
 subtrees
