@@ -201,7 +201,7 @@ public abstract class GotoActionBase extends AnAction {
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,
                         ChooseByNameFactory.getInstance(project)
-                          .createChooseByName(model, itemProvider, mayRequestOpenInCurrentWindow, start),
+                          .createChooseByName(model, itemProvider, mayRequestOpenInCurrentWindow, start, e),
                         allowMultipleSelection);
   }
 

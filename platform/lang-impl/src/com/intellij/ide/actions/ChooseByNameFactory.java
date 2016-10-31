@@ -17,9 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -31,7 +33,8 @@ public abstract class ChooseByNameFactory {
   }
 
   public abstract ChooseByNameViewModel createChooseByName(ChooseByNameModel model,
-                                              ChooseByNameItemProvider itemProvider,
-                                              boolean mayRequestOpenInCurrentWindow,
-                                              Pair<String, Integer> start);
+                                                           ChooseByNameItemProvider itemProvider,
+                                                           boolean mayRequestOpenInCurrentWindow,
+                                                           Pair<String, Integer> start,
+                                                           @Nullable AnActionEvent e);
   }
