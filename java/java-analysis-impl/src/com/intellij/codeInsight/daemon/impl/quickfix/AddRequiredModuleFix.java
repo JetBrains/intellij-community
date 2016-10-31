@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,27 +86,15 @@ public class AddRequiredModuleFix implements IntentionAction {
 
   @Nullable
   private static PsiElement findAddingPlace(@NotNull PsiJavaModule module) {
-    PsiElement addingPlace = null;
-    for (PsiRequiresStatement requires : module.getRequires()) {
-      addingPlace = requires;
-    }
-    if (addingPlace != null) {
-      return addingPlace;
-    }
-    for (PsiExportsStatement exports : module.getExports()) {
-      addingPlace = exports;
-    }
-    if (addingPlace != null) {
-      return addingPlace;
-    }
-    return getLBrace(module);
+    PsiElement addingPlace = ContainerUtil.iterateAndGetLastItem(module.getRequires());
+    return addingPlace != null ? addingPlace : getLBrace(module);
   }
 
   @Nullable
   private static PsiElement getLBrace(@NotNull PsiJavaModule module) {
     PsiJavaModuleReferenceElement nameElement = module.getNameElement();
     for (PsiElement element = nameElement.getNextSibling(); element != null; element = element.getNextSibling()) {
-      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LBRACE) {
+      if (PsiUtil.isJavaToken(element, JavaTokenType.LBRACE)) {
         return element;
       }
     }

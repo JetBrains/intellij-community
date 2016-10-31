@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 
@@ -23,6 +24,8 @@ import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.Mod
  * @author Pavel.Dolgov
  */
 class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+  val messageM2 = QuickFixBundle.message("module.info.add.requires.name", "M2")!!
+
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { exports pkgA; }", M2)
@@ -36,7 +39,7 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         "public class B { A a; }", MAIN)
     myFixture.configureFromExistingVirtualFile(editedFile)
 
-    val action = myFixture.findSingleIntention("Add 'M2' as required module")
+    val action = myFixture.findSingleIntention(messageM2)
     assertNotNull(action)
     myFixture.launchAction(action)
 
@@ -51,7 +54,7 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         "public class B { A a; }", M3)
     myFixture.configureFromExistingVirtualFile(editedFile)
 
-    val actions = myFixture.filterAvailableIntentions("Add 'M2' as required module")
+    val actions = myFixture.filterAvailableIntentions(messageM2)
     assertEmpty(actions)
   }
 
