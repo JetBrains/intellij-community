@@ -293,26 +293,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private boolean mySorted;
 
     private synchronized boolean add(@NotNull PointerReference reference) {
-      if (reference.file.getUserData(reference.key) != this) {
+      if (!isActual(reference.file, reference.key)) {
         // this pointer list has been removed by another thread; clients should get/create an up-to-date list and try adding to it
         return false;
       }
 
-      if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
-        int newCapacity = (nextAvailableIndex >= references.length ? references.length : size) * 3 / 2 + 1;
-        final PointerReference[] newReferences = new PointerReference[newCapacity];
-
-        final int[] o = {0};
-        processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
-          @Override
-          public boolean process(SmartPsiElementPointerImpl pointer) {
-            storePointerReference(newReferences, o[0]++, pointer.pointerReference);
-            return true;
-          }
-        });
-        references = newReferences;
-        size = nextAvailableIndex = o[0];
+      if (needsExpansion() || isTooSparse()) {
+        resize();
+        assert isActual(reference.file, reference.key);
       }
+
       assert references[nextAvailableIndex] == null : references[nextAvailableIndex];
       storePointerReference(references, nextAvailableIndex++, reference);
       size++;
@@ -320,10 +310,37 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return true;
     }
 
+    private boolean isActual(VirtualFile file, Key<FilePointersList> key) {
+      return file.getUserData(key) == this;
+    }
+
+    private boolean needsExpansion() {
+      return nextAvailableIndex >= references.length;
+    }
+
+    private boolean isTooSparse() {
+      return nextAvailableIndex > size * 2;
+    }
+
+    private void resize() {
+      PointerReference[] newReferences = new PointerReference[size * 3 / 2 + 1];
+      int index = 0;
+      // don't use processAlivePointers/removeReference since it can unregister the whole pointer list, and we're not prepared to that
+      for (PointerReference ref : references) {
+        if (ref != null) {
+          storePointerReference(newReferences, index++, ref);
+        }
+      }
+      assert index == size : index + " != " + size;
+      references = newReferences;
+      nextAvailableIndex = index;
+    }
+
     private synchronized void removeReference(@NotNull PointerReference reference) {
       int index = reference.index;
       if (index < 0) return;
 
+      assert isActual(reference.file, reference.key);
       assert references[index] == reference : "At " + index + " expected " + reference + ", found " + references[index];
       references[index].index = -1;
       references[index] = null;
@@ -337,6 +354,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         PointerReference ref = references[i];
         if (ref == null) continue;
 
+        assert isActual(ref.file, ref.key);
         SmartPsiElementPointerImpl pointer = ref.get();
         if (pointer == null) {
           removeReference(ref);
@@ -394,7 +412,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return infos;
     }
 
-    int getSize() {
+    @TestOnly
+    synchronized int getSize() {
       return size;
     }
 
