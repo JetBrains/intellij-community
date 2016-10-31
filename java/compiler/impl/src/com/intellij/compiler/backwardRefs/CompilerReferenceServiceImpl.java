@@ -216,7 +216,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   private boolean isServiceEnabledFor(PsiElement element) {
     if (!isServiceEnabled()) return false;
     PsiFile file = ReadAction.compute(() -> element.getContainingFile());
-    return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
+    return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(file);
   }
 
   private boolean isServiceEnabled() {
