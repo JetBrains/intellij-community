@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,6 +30,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.PythonFormattedStringReferenceProvider;
+import com.jetbrains.python.inspections.PyNewStyleStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.ConstantChunk;
 import com.jetbrains.python.inspections.PyStringFormatParser.FormatStringChunk;
@@ -303,63 +303,102 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     // TODO get rid of duplication with #convertPercentOperatorFormatting
     final String stringText = pyString.getText();
     final StringNodeInfo stringInfo = new StringNodeInfo(pyString.getStringNodes().get(0));
-    final StringBuilder result = new StringBuilder();
-    result.append("f");
-    result.append(stringInfo.getPrefix().replaceAll("[uU]", ""));
-    result.append(stringInfo.getQuote());
-    final List<FormatStringChunk> chunks = PyStringFormatParser.parseNewStyleFormat(stringText);
+    final StringBuilder newStringText = new StringBuilder();
+    newStringText.append("f");
+    newStringText.append(stringInfo.getPrefix().replaceAll("[uU]", ""));
+    newStringText.append(stringInfo.getQuote());
+
+    final PyNewStyleStringFormatParser.ParseResult parseResult = PyNewStyleStringFormatParser.parse(stringText);
+    
     final TextRange contentRange = stringInfo.getContentRange();
-    int subsChunkPosition = 0;
-    for (FormatStringChunk chunk : chunks) {
-      if (chunk instanceof ConstantChunk) {
-        final TextRange rangeWithoutQuotes = chunk.getTextRange().intersection(contentRange);
-        assert rangeWithoutQuotes != null;
-        result.append(rangeWithoutQuotes.substring(stringText));
-      }
-      else {
-        final SubstitutionChunk subsChunk = (SubstitutionChunk)chunk;
-
-        result.append("{");
-        final PySubstitutionChunkReference reference = new PySubstitutionChunkReference(pyString, subsChunk, subsChunkPosition, false);
-        final PyExpression resolveResult = getActualReplacementExpression(reference);
-        assert resolveResult != null;
-
-        final PsiElement adjusted = adjustQuotesInside(resolveResult, pyString);
-        if (adjusted == null) return;
-
-        // Replaces name
-        result.append(adjusted.getText());
-
-        final String wholeFragment = subsChunk.getTextRange().substring(stringText);
-
-        final String escapedItemOrAttr = quoteItemsInFragments(wholeFragment, stringInfo.getSingleQuote());
-        if (escapedItemOrAttr == null) return;
-        result.append(escapedItemOrAttr);
-
-        final int formatOrConversionCharStart = StringUtil.indexOfAny(wholeFragment, "!:");
-        if (formatOrConversionCharStart >= 0) {
-          final String formatAndConversionChar = wholeFragment.substring(formatOrConversionCharStart, wholeFragment.length() - 1);
-          result.append(formatAndConversionChar);
-        }
-
-        result.append("}");
-        subsChunkPosition++;
+    int offset = contentRange.getStartOffset();
+    for (PyNewStyleStringFormatParser.Field field : parseResult.getFields()) {
+      // Preceding literal text
+      newStringText.append(stringText.substring(offset, field.getLeftBraceOffset()));
+      offset = field.getFieldEnd();
+      
+      if (!processField(field, pyString, newStringText, true)) {
+        return;
       }
     }
-    result.append(stringInfo.getQuote());
+    if (offset < contentRange.getEndOffset()) {
+      newStringText.append(stringText.substring(offset, contentRange.getEndOffset()));
+    }
+
+    newStringText.append(stringInfo.getQuote());
 
     final PyCallExpression expressionToReplace = PsiTreeUtil.getParentOfType(pyString, PyCallExpression.class);
     assert expressionToReplace != null;
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(pyString.getProject());
-    final PyExpression fString = generator.createExpressionFromText(LanguageLevel.PYTHON36, result.toString());
+    final PyExpression fString = generator.createExpressionFromText(LanguageLevel.PYTHON36, newStringText.toString());
     expressionToReplace.replace(fString);
   }
 
+  private static boolean processField(@NotNull PyNewStyleStringFormatParser.Field field,
+                                      @NotNull PyStringLiteralExpression pyString,
+                                      @NotNull StringBuilder newStringText, 
+                                      boolean withNestedFields) {
+    
+    String stringText = pyString.getText(); 
+    StringNodeInfo stringInfo = new StringNodeInfo(pyString.getStringNodes().get(0));
+    
+    // Actual format field
+    newStringText.append("{");
+    // Isn't supposed to be used by PySubstitutionChunkReference if explicit name or index is given
+    final int autoNumber = field.getAutoPosition() == null ? 0 : field.getAutoPosition();
+    final PySubstitutionChunkReference reference = new PySubstitutionChunkReference(pyString, field, autoNumber, false);
+    final PyExpression resolveResult = getActualReplacementExpression(reference);
+    if (resolveResult == null) return false;
+
+    final PsiElement adjusted = adjustQuotesInside(resolveResult, pyString);
+    if (adjusted == null) return false;
+
+    newStringText.append(adjusted.getText());
+    final String quotedAttrsAndItems = quoteItemsInFragments(field, stringInfo.getSingleQuote());
+    if (quotedAttrsAndItems == null) return false;
+
+    newStringText.append(quotedAttrsAndItems);
+
+    // Conversion is copied as is if it's present
+    final String conversion = field.getConversion();
+    if (conversion != null) {
+      newStringText.append(conversion);
+    }
+
+    // Format spec is copied if present handling nested fields
+    final TextRange specRange = field.getFormatSpecRange();
+    if (specRange != null) {
+      if (withNestedFields) {
+        int specOffset = specRange.getStartOffset();
+        for (PyNewStyleStringFormatParser.Field nestedField : field.getNestedFields()) {
+          // Copy text of the format spec between nested fragments
+          newStringText.append(stringText.substring(specOffset, nestedField.getLeftBraceOffset()));
+          specOffset = nestedField.getFieldEnd();
+          
+          // recursively format nested field
+          if (!processField(nestedField, pyString, newStringText, false)) {
+            return false;
+          }
+        }
+        if (specOffset < specRange.getEndOffset()) {
+          newStringText.append(stringText.substring(specOffset, specRange.getEndOffset()));
+        }
+      }
+      else {
+        // Fields nested deeper that twice append as is
+        newStringText.append(field.getFormatSpec());
+      }
+    }
+
+    newStringText.append("}");
+    return true;
+  }
+
   @Nullable
-  private static String quoteItemsInFragments(@NotNull String reference, char hostStringQuote) {
+  private static String quoteItemsInFragments(@NotNull PyNewStyleStringFormatParser.Field field, char hostStringQuote) {
     List<String> escaped = new ArrayList<>();
-    for (String part : extractItemsAndAttributes(reference)) {
+    for (String part : field.getAttributesAndLookups()) {
       if (part.startsWith(".")) {
         escaped.add(part);
       }
@@ -384,44 +423,5 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
 
   private static char flipQuote(char quote) {
     return quote == '"' ? '\'' : '"';
-  }
-
-  // TODO move this into PyStringFormatParser
-  // For e.g. {0[foo].bar[!:]!r:something} returns: [foo], .bar, [!:]
-  @VisibleForTesting
-  @NotNull
-  public static List<String> extractItemsAndAttributes(@NotNull String chunkText) {
-    List<String> result = new ArrayList<>();
-
-    boolean insideItem = false;
-    boolean insideAttribute = false;
-    int fragmentStart = 0;
-
-    int offset = 1;
-    while (offset < chunkText.length() - 1) {
-      final char c = chunkText.charAt(offset);
-      if (insideItem) {
-        if (c == ']') {
-          insideItem = false;
-          result.add(chunkText.substring(fragmentStart, offset + 1));
-        }
-      }
-      else if (c == '!' || c == ':' || c == '}') {
-        break;
-      }
-      else if (c == '.' || c == '[') {
-        if (insideAttribute) {
-          result.add(chunkText.substring(fragmentStart, offset));
-        }
-        insideAttribute = c == '.';
-        insideItem = c == '[';
-        fragmentStart = offset;
-      }
-      offset++;
-    }
-    if (insideAttribute) {
-      result.add(chunkText.substring(fragmentStart, offset));
-    }
-    return result;
   }
 }
