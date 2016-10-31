@@ -134,7 +134,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       if (!anotherAccessor.isSetter()) return false;
     }
     else {
-      if (!getName().startsWith(GET_PREFIX) == anotherAccessor.getName().startsWith(GET_PREFIX)) return false;
+      if (getName().startsWith(GET_PREFIX) != anotherAccessor.getName().startsWith(GET_PREFIX)) return false;
     }
     return getManager().areElementsEquivalent(myProperty, anotherAccessor.getProperty());
   }
