@@ -16,7 +16,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,12 +30,18 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
+
+  public static final String SCALE_FACTOR_PROPERTY = "JBUI.scale";
+
+  private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   /**
    * A default system scale factor.
@@ -47,6 +52,21 @@ public class JBUI {
 
   static {
     setScaleFactor(SYSTEM_DEF_SCALE);
+  }
+
+  /**
+   * Adds property change listener. Supported properties:
+   * {@link #SCALE_FACTOR_PROPERTY}
+   */
+  public static void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    PCS.addPropertyChangeListener(propertyName, listener);
+  }
+
+  /**
+   * @see #addPropertyChangeListener(String, PropertyChangeListener)
+   */
+  public static void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    PCS.removePropertyChangeListener(propertyName, listener);
   }
 
   private static float getSystemDefScale() {
@@ -70,10 +90,14 @@ public class JBUI {
     return size / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
+  private static void setScaleFactorProperty(float scale) {
+    PCS.firePropertyChange(SCALE_FACTOR_PROPERTY, scaleFactor, scaleFactor = scale);
+    LOG.info("UI scale factor: " + scaleFactor);
+  }
+
   public static void setScaleFactor(float scale) {
     if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      scaleFactor = 1.0f;
-      LOG.info("UI scale factor: 1.0");
+      setScaleFactorProperty(1.0f);
       return;
     }
 
@@ -90,10 +114,7 @@ public class JBUI {
     if (scaleFactor == scale) {
       return;
     }
-    LOG.info("UI scale factor: " + scale);
-
-    scaleFactor = scale;
-    IconLoader.setScale(scale);
+    setScaleFactorProperty(scale);
   }
 
   public static int scale(int i) {
@@ -117,10 +138,10 @@ public class JBUI {
   public static JBDimension size(Dimension size) {
     if (size instanceof JBDimension) {
       final JBDimension jbSize = (JBDimension)size;
-      if (jbSize.originalScale == scale(1f)) {
+      if (jbSize.myJBUIScale == scale(1f)) {
         return jbSize;
       }
-      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.originalScale), (int)(jbSize.height / jbSize.originalScale));
+      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.myJBUIScale), (int)(jbSize.height / jbSize.myJBUIScale));
       return size instanceof UIResource ? newSize.asUIResource() : newSize;
     }
     return new JBDimension(size.width, size.height);

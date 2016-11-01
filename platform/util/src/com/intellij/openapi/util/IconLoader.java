@@ -38,6 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -58,10 +60,20 @@ public final class IconLoader {
 
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
-  private static float SCALE = JBUI.scale(1f);
+  private static float myJBUIScale = 1f;
   private static ImageFilter IMAGE_FILTER;
 
   static {
+    JBUI.addPropertyChangeListener(JBUI.SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent e) {
+        float scale = (Float)e.getNewValue();
+        if (scale != myJBUIScale) {
+          myJBUIScale = scale;
+          clearCache();
+        }
+      }
+    });
     installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
   }
 
@@ -89,13 +101,6 @@ public final class IconLoader {
   public static void setUseDarkIcons(boolean useDarkIcons) {
     USE_DARK_ICONS = useDarkIcons;
     clearCache();
-  }
-
-  public static void setScale(float scale) {
-    if (scale != SCALE) {
-      SCALE = scale;
-      clearCache();
-    }
   }
 
   public static void setFilter(ImageFilter filter) {
@@ -349,7 +354,7 @@ public final class IconLoader {
 
   /**
    * Gets a snapshot of the icon, immune to changes made by these calls:
-   * {@link IconLoader#setScale(float)}, {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
+   * {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
    *
    * @param icon the source icon
    * @return the icon snapshot
