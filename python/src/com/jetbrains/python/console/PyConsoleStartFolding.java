@@ -49,10 +49,10 @@ public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCom
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    addFolding();
+    addFolding(event);
   }
 
-  private void addFolding() {
+  private void addFolding(DocumentEvent event) {
     Document document = myConsoleView.getEditor().getDocument();
     if (doNotAddFoldingAgain || document.getTextLength() == 0) {
       return;
@@ -64,21 +64,31 @@ public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCom
     FoldingModel foldingModel = myConsoleView.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
       int start = myStartLineOffset;
+      int finish = document.getTextLength() - 1;
       String placeholderText = DEFAULT_FOLDING_MESSAGE;
       int firstLine = document.getLineNumber(myStartLineOffset);
       for (int line = firstLine; line < document.getLineCount(); line++) {
         String lineText = document.getText(DocumentUtil.getLineTextRange(document, line));
         if (lineText.startsWith("Python")) {
+          if (start == myStartLineOffset) {
+            start = document.getLineStartOffset(line);
+          }
           placeholderText = lineText;
-          start = document.getLineStartOffset(line);
           break;
         }
+        if (lineText.startsWith("PyDev console")) {
+          start = document.getLineStartOffset(line);
+        }
       }
-
+      String newFragment = event.getNewFragment().toString();
+      if (newFragment.startsWith("In[") || newFragment.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) {
+        finish = event.getOffset() - 1;
+        doNotAddFoldingAgain = true;
+      }
       if (myStartFoldRegion != null) {
         foldingModel.removeFoldRegion(myStartFoldRegion);
       }
-      FoldRegion foldRegion = foldingModel.addFoldRegion(start, document.getTextLength() - 1, placeholderText);
+      FoldRegion foldRegion = foldingModel.addFoldRegion(start, finish, placeholderText);
       if (foldRegion != null) {
         foldRegion.setExpanded(false);
         myStartFoldRegion = foldRegion;
