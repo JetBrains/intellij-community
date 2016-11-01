@@ -327,7 +327,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.mozilla.org/MPL/"),
     new LibraryLicense(name: "Saxon-9HE", version: "9", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/",
                        licenseUrl: "http://www.mozilla.org/MPL/"),
-    new LibraryLicense(name: "SceneBuilderKit", version: "8.1.1", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/",
+    new LibraryLicense(name: "SceneBuilderKit", version: "8.2.0", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/",
                        licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html"),
     new LibraryLicense(name: "Sequence", libraryName: "sequence-library.jar", version: "bundled with SVNKit",
                        license: "BSD (see LICENSE.txt in sequence-library.jar)", url: "http://www.syntevo.com"),
