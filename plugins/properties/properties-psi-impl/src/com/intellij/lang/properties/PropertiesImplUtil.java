@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomTarget;
@@ -90,7 +91,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
                                                                 @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
-      .of(ReadAction.compute(() -> baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY))
+      .of(ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {
+        @Override
+        public PsiFile[] compute() throws RuntimeException {
+          return baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY;
+        }
+      }))
       .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension))
       .filter(PropertiesImplUtil::isPropertiesFile)
       .filter(f -> Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
