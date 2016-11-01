@@ -17,37 +17,49 @@ package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.EditorTextFieldProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
+  public JPanel myConfigurable;
+  private EditorTextField myEditorTextField;
 
-  private final Project myProject;
   private final Set<String> myDefaultBlackList;
   private final Language myLanguage;
+  private final String myNewPreselectedItem;
+  private final Project myProject;
 
-  public ParameterNameHintsConfigurable(@NotNull Project project, 
+  public ParameterNameHintsConfigurable(@NotNull Project project,
                                         @NotNull Set<String> defaultBlackList,
                                         @NotNull Language language) {
+    this(project, defaultBlackList, language, null);
+  }
+
+  public ParameterNameHintsConfigurable(@NotNull Project project,
+                                        @NotNull Set<String> defaultBlackList,
+                                        @NotNull Language language,
+                                        @Nullable String newPreselectedPattern) {
     super(project);
     myProject = project;
-    myDefaultBlackList = defaultBlackList;
     myLanguage = language;
+    myDefaultBlackList = defaultBlackList;
+    myNewPreselectedItem = newPreselectedPattern;
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
   }
@@ -84,18 +96,11 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     return myConfigurable;
   }
 
-  public JPanel myConfigurable;
-  private EditorTextField myEditorTextField;
-
   private void createUIComponents() {
-    EditorTextFieldProvider service = ServiceManager.getService(myProject, EditorTextFieldProvider.class);
-    myEditorTextField = service.getEditorField(PlainTextLanguage.INSTANCE, myProject, ContainerUtil.emptyIterable());
-
     Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(myLanguage);
     Set<String> blacklist = diff.applyOn(myDefaultBlackList);
-
-    String text = StringUtil.join(blacklist, "\n");
-    myEditorTextField.setText(text);
+    
+    myEditorTextField = createEditor(blacklist, myNewPreselectedItem);
     myEditorTextField.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -103,7 +108,40 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       }
     });
   }
-  
-  
-  
+
+  private EditorTextField createEditor(@NotNull Set<String> blacklist, @Nullable String newPreselectedItem) {
+    String text = StringUtil.join(blacklist, "\n");
+    
+    final TextRange range;
+    if (newPreselectedItem != null) {
+      text += "\n";
+      
+      final int startOffset = text.length();
+      text += newPreselectedItem;
+      range = new TextRange(startOffset, text.length());
+    }
+    else {
+      range = null;
+    }
+
+    return createEditorField(text, range);
+  }
+
+  @NotNull
+  private EditorTextField createEditorField(@NotNull String text, @Nullable TextRange rangeToSelect) {
+    Document document = EditorFactory.getInstance().createDocument(text);
+    EditorTextField field = new EditorTextField(document, myProject, FileTypes.PLAIN_TEXT, false, false);
+    field.setPreferredSize(new Dimension(200, 350));
+    field.addSettingsProvider(editor -> {
+      editor.setVerticalScrollbarVisible(true);
+      editor.setHorizontalScrollbarVisible(true);
+      editor.getSettings().setAdditionalLinesCount(2);
+      if (rangeToSelect != null) {
+        editor.getCaretModel().moveToOffset(rangeToSelect.getStartOffset());
+        editor.getScrollingModel().scrollVertically(document.getTextLength() - 1);
+        editor.getSelectionModel().setSelection(rangeToSelect.getStartOffset(), rangeToSelect.getEndOffset());
+      }
+    });
+    return field;
+  }
 }
