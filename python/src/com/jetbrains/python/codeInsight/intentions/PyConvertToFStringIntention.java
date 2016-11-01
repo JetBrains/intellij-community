@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -85,22 +86,21 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         return false;
       }
 
-      final List<FormatStringChunk> chunks = percentOperator ? PyStringFormatParser.parsePercentFormat(stringText)
-                                                             : PyStringFormatParser.parseNewStyleFormat(stringText);
-      final List<SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(chunks);
-
-      // TODO handle dynamic format spec in both formatting styles
-      final boolean hasDynamicFormatting;
+      final List<SubstitutionChunk> substitutions;
       if (percentOperator) {
-        hasDynamicFormatting = substitutions.stream().anyMatch(s -> "*".equals(s.getWidth()) || "*".equals(s.getPrecision()));
+        final List<FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(stringText);
+        substitutions = PyStringFormatParser.filterSubstitutions(chunks);
       }
       else {
-        hasDynamicFormatting = false;
+        substitutions = new ArrayList<>(PyNewStyleStringFormatParser.parse(stringText).getFields());
       }
-      if (hasDynamicFormatting) return false;
 
-      final PySubstitutionChunkReference[] references =
-        PythonFormattedStringReferenceProvider.getReferencesFromChunks(pyString, substitutions, percentOperator);
+      // TODO handle dynamic width and precision in old-style/"percent" formatting
+      if (percentOperator && substitutions.stream().anyMatch(s -> "*".equals(s.getWidth()) || "*".equals(s.getPrecision()))) {
+        return false;
+      }
+
+      final PySubstitutionChunkReference[] references = createChunkReferences(substitutions, pyString, percentOperator);
 
       final PsiElement valuesSource;
       if (percentOperator) {
@@ -132,6 +132,20 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
                              expressionCanBeInlined(pyString, element));
     }
     return false;
+  }
+
+  @NotNull
+  private static PySubstitutionChunkReference[] createChunkReferences(@NotNull List<SubstitutionChunk> substitutions,
+                                                                      @NotNull PyStringLiteralExpression pyString,
+                                                                      boolean percentOperator) {
+    if (percentOperator) {
+      return PythonFormattedStringReferenceProvider.getReferencesFromChunks(pyString, substitutions, true);
+    }
+    return substitutions.stream()
+      .filter(PyNewStyleStringFormatParser.Field.class::isInstance)
+      .map(PyNewStyleStringFormatParser.Field.class::cast)
+      .map(field -> new PySubstitutionChunkReference(pyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0), false))
+      .toArray(PySubstitutionChunkReference[]::new);
   }
 
   private static boolean expressionCanBeInlined(@NotNull PyStringLiteralExpression host, @NotNull PyExpression target) {
