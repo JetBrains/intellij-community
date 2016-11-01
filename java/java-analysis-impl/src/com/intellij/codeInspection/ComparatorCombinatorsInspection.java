@@ -27,8 +27,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -109,7 +111,9 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
     };
   }
 
-  private static boolean areEquivalent(PsiParameter[] parameters, PsiExpression left, PsiExpression right) {
+  @Contract("_, null, _ -> false; _, !null, null -> false")
+  private static boolean areEquivalent(@NotNull PsiParameter[] parameters, @Nullable PsiExpression left, @Nullable PsiExpression right) {
+    if (left == null || right == null) return false;
     if (!PsiTreeUtil.processElements(left, e -> !(e instanceof PsiReferenceExpression) ||
                                                 ((PsiReferenceExpression)e).resolve() != parameters[1]) ||
         !PsiTreeUtil.processElements(right, e -> !(e instanceof PsiReferenceExpression) ||
