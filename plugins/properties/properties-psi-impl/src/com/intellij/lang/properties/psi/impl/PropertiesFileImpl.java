@@ -26,7 +26,6 @@ import com.intellij.lang.properties.psi.PropertiesList;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -193,7 +192,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private Stream<IProperty> propertiesByKey(@NotNull String key) {
-    final String escapedKey = StringUtil.escapeProperty(key, true);
-    return getProperties().stream().filter(p -> escapedKey.equals(p.getKey()));
+    return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
   }
 }
