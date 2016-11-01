@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -172,8 +173,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   public static boolean checkModifierProperty(@NotNull GrModifierList modifierList, @GrModifier.GrModifierConstant @NotNull String modifier) {
     final PsiElement owner = modifierList.getParent();
-    if (owner instanceof GrVariableDeclaration && owner.getParent() instanceof GrTypeDefinitionBody) {
-      PsiElement pParent = owner.getParent().getParent();
+    PsiElement parent = PsiTreeUtil.getStubOrPsiParent(owner);
+    if (owner instanceof GrVariableDeclaration && parent instanceof GrTypeDefinitionBody) {
+      PsiElement pParent = parent.getParent();
       if (!modifierList.hasExplicitVisibilityModifiers()) { //properties are backed by private fields
         if (!(pParent instanceof GrTypeDefinition && GrTraitUtil.isInterface((GrTypeDefinition)pParent))) {
           if (modifier.equals(GrModifier.PRIVATE)) return true;
@@ -194,11 +196,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
     }
 
-    if (owner instanceof GrMethod && owner.getParent() instanceof GrTypeDefinitionBody) {
-      PsiElement parent = owner.getParent().getParent();
-      if (parent instanceof GrTypeDefinition && ((GrTypeDefinition)parent).isInterface()) {
+    if (owner instanceof GrMethod && parent instanceof GrTypeDefinitionBody) {
+      PsiElement pParent = parent.getParent();
+      if (pParent instanceof GrTypeDefinition && ((GrTypeDefinition)pParent).isInterface()) {
         if (GrModifier.ABSTRACT.equals(modifier)) return true;
-        if (!((GrTypeDefinition)parent).isTrait() && GrModifier.PUBLIC.equals(modifier)) return true;
+        if (!((GrTypeDefinition)pParent).isTrait() && GrModifier.PUBLIC.equals(modifier)) return true;
       }
     }
 
@@ -208,7 +210,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
     if (modifier.equals(GrModifier.PUBLIC)) {
       if (owner instanceof GrPackageDefinition) return false;
-      if (owner instanceof GrVariableDeclaration && !(owner.getParent() instanceof GrTypeDefinitionBody) || owner instanceof GrVariable) {
+      if (owner instanceof GrVariableDeclaration && !(parent instanceof GrTypeDefinitionBody) || owner instanceof GrVariable) {
         return false;
       }
       //groovy type definitions and methods are public by default

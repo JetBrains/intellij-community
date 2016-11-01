@@ -17,15 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 /**
@@ -35,9 +31,6 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
   private final @NotNull String[] myAnnotations;
   private final StringRef myName;
   private final boolean isScript;
-  private final @NotNull String[] myDeclarationStrings;
-
-  private SoftReference<GrVariableDeclaration[]> myDeclarations;
 
   public GrFileStub(GroovyFile file) {
     super(file);
@@ -50,19 +43,13 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     else {
       myAnnotations = ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    myDeclarationStrings = ContainerUtil.map(
-      file.getAnnotatedScriptDeclarations(),
-      declaration -> declaration.getText(),
-      ArrayUtil.EMPTY_STRING_ARRAY
-    );
   }
 
-  public GrFileStub(StringRef name, boolean isScript, @NotNull String[] annotations, @NotNull String[] declarationStrings) {
+  public GrFileStub(StringRef name, boolean isScript, @NotNull String[] annotations) {
     super(null);
     myName = name;
     this.isScript = isScript;
     myAnnotations = annotations;
-    myDeclarationStrings = declarationStrings;
   }
 
   @NotNull
@@ -82,29 +69,5 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
   @NotNull
   public String[] getAnnotations() {
     return myAnnotations;
-  }
-
-  @NotNull
-  public String[] getDeclarationStrings() {
-    return myDeclarationStrings;
-  }
-
-  @NotNull
-  public GrVariableDeclaration[] getAnnotatedScriptDeclarations() {
-    String[] declarationStrings = getDeclarationStrings();
-    if (declarationStrings.length == 0) return GrVariableDeclaration.EMPTY_ARRAY;
-
-    GrVariableDeclaration[] declarations = SoftReference.dereference(myDeclarations);
-    if (declarations == null) {
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-      GroovyFile psi = getPsi();
-      declarations = ContainerUtil.map(
-        declarationStrings,
-        declarationString -> factory.createVariableDeclarationFromText(declarationString, psi),
-        GrVariableDeclaration.EMPTY_ARRAY
-      );
-      myDeclarations = new SoftReference<>(declarations);
-    }
-    return declarations;
   }
 }
