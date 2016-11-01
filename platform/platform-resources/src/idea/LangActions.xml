@@ -300,8 +300,7 @@
     </group>
     
     <group id="ParameterNameHints" popup="true">
-      <action id="BlacklistCurrentMethodAction" class="com.intellij.codeInsight.hints.BlacklistCurrentMethodAction"/>
-      <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
+      <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
     </group>
     
     <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">

@@ -40,34 +40,30 @@ import com.intellij.psi.util.PsiTreeUtil
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)  
 
-class ShowParameterHintsSettings : AnAction() {
+class ShowSettingsWithAddedPattern : AnAction() {
   init {
-    val presentation = templatePresentation
-    presentation.text = CodeInsightBundle.message("inlay.hints.show.settings").capitalize()
-    presentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
+    templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
+  }
+
+  override fun update(e: AnActionEvent) {
+    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+    val info = getMethodInfoAtOffset(editor, file) ?: return
+
+    val name = info.getMethodName()
+    e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-    val dialog = ParameterNameHintsConfigurable(project, hintExtension.defaultBlackList, file.language)
-    dialog.show()
-  }
-}
-
-class BlacklistCurrentMethodAction : AnAction() {
-  init {
-    val presentation = templatePresentation
-    presentation.text = CodeInsightBundle.message("inlay.hints.blacklist.method").capitalize()
-    presentation.description = CodeInsightBundle.message("inlay.hints.blacklist.method.description")
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+
+    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+    val info = getMethodInfoAtOffset(editor, file) ?: return
+    val dialog = ParameterNameHintsConfigurable(project, hintExtension.defaultBlackList, file.language, info.toPattern())
     
-    addMethodAtCaretToBlackList(editor, file)
+    dialog.show()
   }
 }
 
@@ -160,18 +156,19 @@ private fun refreshAllOpenEditors() {
   }
 }
 
-private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+private fun getMethodInfoAtOffset(editor: Editor, file: PsiFile): MethodInfo? {
   val offset = editor.caretModel.offset
-
   val element = file.findElementAt(offset)
-  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+  
+  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
+  
+  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return null
+  return hintsProvider.getMethodInfo(method)
+}
 
-  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
-  val info = hintsProvider.getMethodInfo(method) ?: return
-
-  val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, pattern)
-
+private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+  val info = getMethodInfoAtOffset(editor, file) ?: return
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
   refreshAllOpenEditors()
 }
 
@@ -189,3 +186,5 @@ fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
 
   return false
 }
+
+fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'

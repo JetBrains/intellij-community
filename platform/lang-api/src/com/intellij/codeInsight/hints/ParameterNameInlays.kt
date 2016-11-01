@@ -17,4 +17,11 @@ package com.intellij.codeInsight.hints
 
 class InlayInfo(val text: String, val offset: Int)
 
-class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>)
+open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>) {
+  
+  open fun getMethodName(): String {
+    val start = fullyQualifiedName.lastIndexOf('.') + 1
+    return fullyQualifiedName.substring(start)
+  }
+  
+}
