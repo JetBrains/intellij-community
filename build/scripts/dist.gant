@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -52,6 +52,7 @@ target('update-from-sources': 'Update locally installed distribution from compil
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
   options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
+  options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   new IdeaCommunityBuilder(home, binding, options, projectHome).buildUnpackedDistribution(deploy)
