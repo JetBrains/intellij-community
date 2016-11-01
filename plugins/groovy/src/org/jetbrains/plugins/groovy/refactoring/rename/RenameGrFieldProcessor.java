@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.refactoring.rename.RenameHelperKt.getNewNameFromTransformations;
+import static org.jetbrains.plugins.groovy.refactoring.rename.RenameHelperKt.isQualificationNeeded;
 
 /**
  * @author ilyas
@@ -100,13 +101,16 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
 
     field.setName(newName);
 
+    PsiManager manager = psiElement.getManager();
     for (GrReferenceExpression expression : handled.keySet()) {
       PsiElement oldResolved = handled.get(expression);
       if (oldResolved == null) continue;
       PsiElement resolved = expression.resolve();
       if (resolved == null) continue;
-      if (expression.getManager().areElementsEquivalent(oldResolved, resolved)) continue;
-      qualify(field, expression);
+      if (manager.areElementsEquivalent(oldResolved, resolved)) continue;
+      if (oldResolved.equals(field) || isQualificationNeeded(manager, oldResolved, resolved)) {
+        qualify(field, expression);
+      }
     }
 
     if (listener != null) {

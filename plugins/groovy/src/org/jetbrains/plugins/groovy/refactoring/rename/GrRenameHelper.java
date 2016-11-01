@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,5 +49,16 @@ public interface GrRenameHelper {
    * @see DefaultRenameHelper
    */
   @Nullable
-  String getNewMemberName(@NotNull PsiMember member, @NotNull String newOriginalName);
+  default String getNewMemberName(@NotNull PsiMember member, @NotNull String newOriginalName) {
+    return null;
+  }
+
+  /**
+   * @param manager
+   * @param before element to which the reference resolved before rename
+   * @param after  element to which the reference resolves after rename
+   */
+  default boolean isQualificationNeeded(@NotNull PsiManager manager, @NotNull PsiElement before, @NotNull PsiElement after) {
+    return false;
+  }
 }

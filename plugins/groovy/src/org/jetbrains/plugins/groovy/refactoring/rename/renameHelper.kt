@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
 
 fun PsiElement?.getNewNameFromTransformations(newName: String) = (this as? PsiMember)?.let {
@@ -29,4 +30,8 @@ private fun doGetNewNameFromTransformations(member: PsiMember, newName: String):
     if (newMemberName != null) return newMemberName
   }
   return null
+}
+
+fun isQualificationNeeded(manager: PsiManager, before: PsiElement, after: PsiElement) = GrRenameHelper.EP_NAME.extensions.any {
+  it.isQualificationNeeded(manager, before, after)
 }

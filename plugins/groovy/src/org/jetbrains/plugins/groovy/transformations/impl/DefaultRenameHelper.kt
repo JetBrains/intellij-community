@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.transformations.impl
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getAccessorName
@@ -31,5 +33,11 @@ class DefaultRenameHelper : GrRenameHelper {
     else {
       getAccessorName(if (member.name.startsWith("is")) "is" else "get", newOriginalName)
     }
+  }
+
+  override fun isQualificationNeeded(manager: PsiManager,
+                                     before: PsiElement,
+                                     after: PsiElement): Boolean {
+    return before is GrAccessorMethod && (after !is GrAccessorMethod || !manager.areElementsEquivalent(before.property, after.property))
   }
 }
