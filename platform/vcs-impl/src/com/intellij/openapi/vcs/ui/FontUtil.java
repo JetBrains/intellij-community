@@ -39,7 +39,7 @@ public class FontUtil {
     if (start == -1) return input;
 
     Font font = null;
-    StringBuilder result = new StringBuilder();
+    StringBuilder result = new StringBuilder(input.substring(0, start));
     for (int i = start; i < input.length(); i++) {
       char c = input.charAt(i);
       if (baseFont.canDisplay(c)) {
