@@ -179,9 +179,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers, @Nullable String initializer, @Nullable PsiType type, String... identifiers);
 
   @NotNull
-  public abstract GrVariableDeclaration createVariableDeclarationFromText(@NotNull String text, @Nullable PsiElement context);
-
-  @NotNull
   public abstract GrEnumConstant createEnumConstantFromText(@NotNull String text);
 
   @NotNull

@@ -298,13 +298,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrVariableDeclaration createVariableDeclarationFromText(@NotNull String text, @Nullable PsiElement context) {
-    final GroovyFile file = createGroovyFileChecked(text, false, context);
-    return ((GrVariableDeclaration)file.getTopStatements()[0]);
-  }
-
-  @NotNull
-  @Override
   public GrEnumConstant createEnumConstantFromText(@NotNull String text) {
     GroovyFile file = createGroovyFileChecked("enum E{" + text + "}");
     final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];

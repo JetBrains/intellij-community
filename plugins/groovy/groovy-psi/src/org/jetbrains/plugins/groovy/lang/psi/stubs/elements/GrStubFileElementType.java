@@ -106,8 +106,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   public GrFileStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
-    String[] annotations = GrStubUtils.readStringArray(dataStream);
-    return new GrFileStub(name, isScript, annotations);
+    return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));
   }
 
   @Override
