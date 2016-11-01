@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -333,8 +334,12 @@ public class ProjectUtil {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
+    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    if (PlatformUtils.isCLion()) {
+      productName = ApplicationNamesInfo.getInstance().getProductName();
+    }
     //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
+    return userHome.replace('/', File.separatorChar) + File.separator + productName +
            "Projects";
   }
 }
