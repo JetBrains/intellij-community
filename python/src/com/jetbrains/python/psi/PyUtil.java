@@ -931,9 +931,13 @@ public class PyUtil {
   public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
-      if (file != null) {
-        return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
+      final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
+      if (initStub != null) {
+        return initStub;
+      }
+      final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);
+      if (initFile != null) {
+        return initFile; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
       else {
         return null;
@@ -1007,6 +1011,9 @@ public class PyUtil {
         return true;
       }
     }
+    if (directory.findFile(PyNames.INIT_DOT_PYI) != null) {
+      return true;
+    }
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
@@ -1025,7 +1032,7 @@ public class PyUtil {
         return true;
       }
     }
-    return PyNames.INIT_DOT_PY.equals(file.getName());
+    return PyNames.INIT_DOT_PY.equals(file.getName()) || PyNames.INIT_DOT_PYI.equals(name);
   }
 
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {

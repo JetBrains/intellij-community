@@ -1002,11 +1002,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  // PY-12425
-  public void testInstanceFromProvidedCallAttr() {
-    doMultiFileTest();
-  }
-
   // PY-18684
   public void testRPowSignature() {
     doTest();

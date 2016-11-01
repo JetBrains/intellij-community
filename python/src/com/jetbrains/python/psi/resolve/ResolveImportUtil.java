@@ -397,13 +397,12 @@ public class ResolveImportUtil {
     }
 
     if (!isFileOnly) {
-      // not a subdir, not a file; could be a name in parent/__init__.py
-      final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-      if (initPy == containingFile) {
+      final PsiElement packageElement = PyUtil.getPackageElement(dir, containingFile);
+      if (packageElement == containingFile) {
         return Collections.emptyList(); // don't dive into the file we're in
       }
-      if (initPy instanceof PyFile) {
-        return ((PyFile)initPy).multiResolveName(referencedName);
+      if (packageElement instanceof PyFile) {
+        return ((PyFile)packageElement).multiResolveName(referencedName);
       }
     }
     return Collections.emptyList();
@@ -411,7 +410,10 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiFile findPyFileInDir(PsiDirectory dir, String referencedName) {
-    PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
+    PsiFile file = dir.findFile(referencedName + PyNames.DOT_PYI);
+    if (file == null) {
+      file = dir.findFile(referencedName + PyNames.DOT_PY);
+    }
     if (file == null) {
       final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(PythonFileType.INSTANCE);
       for (FileNameMatcher association : associations) {

@@ -48,6 +48,12 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
+  // TODO: Enable when the issue with the visibility of imports in Python stubs is fixed
+  @SuppressWarnings("unused")
+  public void _testHiddenPyiImports() {
+    doPyTest(PyUnresolvedReferencesInspection.class);
+  }
+
   public void testUnresolvedClassAttributes() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
