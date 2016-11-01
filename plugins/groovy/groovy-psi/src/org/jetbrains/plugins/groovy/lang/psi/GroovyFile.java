@@ -47,5 +47,5 @@ public interface GroovyFile extends GroovyFileBase {
   PsiType getInferredScriptReturnType();
 
   @NotNull
-  GrVariableDeclaration[] getAnnotatedScriptDeclarations();
+  GrVariableDeclaration[] getScriptDeclarations(boolean topLevel);
 }

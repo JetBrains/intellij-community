@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableDeclarationStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -55,14 +55,16 @@ import java.util.List;
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> implements GrVariableDeclaration, StubBasedPsiElement<EmptyStub> {
+public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDeclarationStub>
+  implements GrVariableDeclaration, StubBasedPsiElement<GrVariableDeclarationStub> {
+
   private static final Logger LOG = Logger.getInstance(GrVariableDeclarationImpl.class);
 
   public GrVariableDeclarationImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrVariableDeclarationImpl(EmptyStub stub) {
+  public GrVariableDeclarationImpl(@NotNull GrVariableDeclarationStub stub) {
     super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
   }
 
@@ -159,6 +161,10 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   @Override
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
+    GrVariableDeclarationStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeElement();
+    }
     if (isTuple()) return null;
     return findChildByClass(GrTypeElement.class);
   }

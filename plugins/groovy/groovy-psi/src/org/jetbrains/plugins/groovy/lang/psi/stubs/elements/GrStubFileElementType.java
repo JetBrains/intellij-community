@@ -23,7 +23,6 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -41,7 +40,7 @@ import java.io.IOException;
  * @author ilyas
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
-  public static final int STUB_VERSION = 33;
+  public static final int STUB_VERSION = 35;
 
   public GrStubFileElementType(Language language) {
     super(language);
@@ -100,9 +99,6 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
-    if (stub.isScript()) {
-      GrStubUtils.writeStringArray(dataStream, stub.getDeclarationStrings());
-    }
   }
 
   @NotNull
@@ -111,14 +107,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
     String[] annotations = GrStubUtils.readStringArray(dataStream);
-    String[] declarationStrings;
-    if (isScript) {
-      declarationStrings = GrStubUtils.readStringArray(dataStream);
-    }
-    else {
-      declarationStrings = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-    return new GrFileStub(name, isScript, annotations, declarationStrings);
+    return new GrFileStub(name, isScript, annotations);
   }
 
   @Override

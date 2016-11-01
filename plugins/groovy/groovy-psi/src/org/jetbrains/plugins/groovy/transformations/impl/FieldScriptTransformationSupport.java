@@ -34,7 +34,7 @@ public class FieldScriptTransformationSupport implements AstTransformationSuppor
     if (!hasNameInFile(scriptClass.getContainingFile(), "Field")) {
       return;
     }
-    for (GrVariableDeclaration declaration : scriptClass.getContainingFile().getAnnotatedScriptDeclarations()) {
+    for (GrVariableDeclaration declaration : scriptClass.getContainingFile().getScriptDeclarations(true)) {
       if (declaration.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
         for (GrVariable variable : declaration.getVariables()) {
           context.addField(new GrScriptField(variable, scriptClass));

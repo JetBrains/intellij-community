@@ -33,6 +33,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
+  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newHashSet();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
 
@@ -90,6 +91,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
       myNodeByIdMap.clear();
       myRunningTestNodes.clear();
+      myRunningSuiteNodes.clear();
 
       fireOnTestingFinished(myTestsRootProxy);
     });
@@ -349,6 +351,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         }
       }
       myRunningTestNodes.clear();
+      myRunningSuiteNodes.clear();
       myNodeByIdMap.clear();
     });
   }
@@ -360,6 +363,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
       if (proxy.isSuite()) {
+        myRunningSuiteNodes.add(node);
         fireOnSuiteStarted(proxy);
       } else {
         myRunningTestNodes.add(lowestNode);
@@ -372,14 +376,18 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private void terminateNode(@NotNull Node node, @NotNull State terminateState) {
     node.setState(terminateState, this);
     myRunningTestNodes.remove(node);
+    myRunningSuiteNodes.remove(node);
   }
 
   @NotNull
   private Node findActiveNode() {
-    if (myRunningTestNodes.isEmpty()) {
-      return myTestsRootNode;
+    if (!myRunningTestNodes.isEmpty()) {
+      return myRunningTestNodes.iterator().next();
     }
-    return myRunningTestNodes.iterator().next();
+    if (!myRunningSuiteNodes.isEmpty()) {
+      return myRunningSuiteNodes.iterator().next();
+    }
+    return myTestsRootNode;
   }
 
   @Override

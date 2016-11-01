@@ -537,12 +537,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @NotNull
   @Override
-  public GrVariableDeclaration[] getAnnotatedScriptDeclarations() {
-    StubElement<?> stub = getStub();
-    if (stub instanceof GrFileStub) {
-      return ((GrFileStub)stub).getAnnotatedScriptDeclarations();
-    }
-    return PsiImplUtil.getAnnotatedScriptDesclarations(this);
+  public GrVariableDeclaration[] getScriptDeclarations(boolean topLevel) {
+    return PsiImplUtilKt.getScriptDeclarations(this, topLevel);
   }
 
   @Override
