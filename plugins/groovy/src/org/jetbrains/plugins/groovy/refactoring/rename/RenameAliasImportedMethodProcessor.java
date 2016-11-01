@@ -130,7 +130,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
       for (UsageInfo usage : propertyAccess) {
         final PsiReference ref = usage.getReference();
         if (ref != null) {
-          ((GrReferenceExpression)ref).handleElementRename(propertyName);
+          ref.handleElementRename(propertyName);
         }
       }
     }
