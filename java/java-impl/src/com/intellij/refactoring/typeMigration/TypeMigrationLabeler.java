@@ -504,18 +504,18 @@ public class TypeMigrationLabeler {
     else if (expr instanceof PsiNewExpression) {
       if (originalType.getArrayDimensions() == migrationType.getArrayDimensions()) {
         if (migrationType.getArrayDimensions() > 0) {
-          final PsiType elemenType = ((PsiArrayType)migrationType).getComponentType();
+          final PsiType elementType = ((PsiArrayType)migrationType).getComponentType();
 
           final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)expr).getArrayInitializer();
 
           if (arrayInitializer != null) {
             final PsiExpression[] initializers = arrayInitializer.getInitializers();
             for (int i = initializers.length - 1; i >= 0; i--) {
-              migrateExpressionType(initializers[i], elemenType, place, alreadyProcessed, true);
+              migrateExpressionType(initializers[i], elementType, place, alreadyProcessed, true);
             }
           }
 
-          if (isGenericsArrayType(elemenType)){
+          if (isGenericsArrayType(elementType)){
             markFailedConversion(Pair.create(originalType, migrationType), expr);
             return;
           }
