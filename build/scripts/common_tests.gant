@@ -157,6 +157,7 @@ target("coverage_report": "Generate coverage report") {
         fileset(dir: "${home}/../vendor/google3/blaze/plugin-dev/src")
         fileset(dir: "${home}/../vendor/google3/blaze/google3/base/src")
         fileset(dir: "${home}/../vendor/google3/blaze/google3/aswb/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/testing/src")
         fileset(dir: "${home}/../vendor/google/android-ndk/src/")
       }
     }
