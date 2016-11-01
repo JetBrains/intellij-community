@@ -50,6 +50,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -181,6 +182,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myInfoLabel.setText(info);
   }
 
+  private static Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
+  private static Color disabledBorderColor = Gray._83;
+
   @Override
   public void paint(Graphics graphics) {
     Graphics2D g = (Graphics2D)graphics.create();
@@ -191,18 +195,25 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       if (r.height % 2 == 1) r.height--;
       int arcSize = Math.min(25, r.height-1);
       boolean hasFocus = myTextArea.hasFocus();
-      g.setColor(myTextArea.isEnabled() ? Gray._196 : Gray._83);
-
+      Color borderColor = myTextArea.isEnabled() ? enabledBorderColor : disabledBorderColor;
       if (SystemInfo.isMac && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderAquaLookAndFeel())) {
+        g.setColor(borderColor);
         MacIntelliJTextFieldUI.paintAquaSearchFocusRing(g, r, myTextArea);
       }
       else {
-        JBInsets.removeFrom(r, new Insets(3, 3, 3, 3));
-        if (hasFocus) {
+        JBInsets.removeFrom(r, new JBInsets(3, 3, 3, 3));
+        if (hasFocus && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
           DarculaUIUtil.paintSearchFocusRing(g, r, myTextArea, arcSize+6);
         }
         else {
-          g.drawRoundRect(r.x, r.y, r.width, r.height, arcSize, arcSize);
+          Shape shape = UIUtil.isUnderWindowsLookAndFeel()
+                        ? new Rectangle(r.x, r.y, r.width, r.height)
+                        : new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, arcSize, arcSize);
+          g.setColor(borderColor);
+          g.setColor(myTextArea.getBackground());
+          g.fill(shape);
+          g.setColor(borderColor);
+          g.draw(shape);
         }
       }
     }
