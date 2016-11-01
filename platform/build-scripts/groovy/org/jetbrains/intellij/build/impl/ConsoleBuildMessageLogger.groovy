@@ -19,14 +19,15 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.LogMessage
 
-import java.util.function.Function
-
+import java.util.function.BiFunction
 /**
  * @author nik
  */
 @CompileStatic
 class ConsoleBuildMessageLogger extends BuildMessageLogger {
-  public static final Function<String, BuildMessageLogger> FACTORY = { String taskName -> new ConsoleBuildMessageLogger(taskName) } as Function<String, BuildMessageLogger>
+  public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger logger ->
+    new ConsoleBuildMessageLogger(taskName)
+  } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
   private final String parallelTaskId
   private int indent
   private static final PrintStream out = BuildUtils.realSystemOut

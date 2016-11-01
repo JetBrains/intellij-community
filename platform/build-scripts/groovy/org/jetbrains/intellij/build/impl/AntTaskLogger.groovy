@@ -30,6 +30,12 @@ class AntTaskLogger implements BuildListener {
   BuildMessages defaultHandler
   private final Map<Thread, BuildMessages> threadHandlers = [:]
   private final Map<RuntimeConfigurable, BuildMessages> taskHandlers = [:]
+  private final Project antProject
+  private final ThreadLocal<Boolean> processMessages = ThreadLocal.withInitial { true }
+
+  AntTaskLogger(Project antProject) {
+    this.antProject = antProject
+  }
 
   void registerThreadHandler(Thread thread, BuildMessages messages) {
     threadHandlers[thread] = messages
@@ -41,7 +47,7 @@ class AntTaskLogger implements BuildListener {
 
   @Override
   void messageLogged(BuildEvent event) {
-    if (event.priority > Project.MSG_INFO) return
+    if (!processMessages.get() || event.priority > Project.MSG_INFO) return
 
     String message
     if (event.task != null) {
@@ -63,6 +69,16 @@ class AntTaskLogger implements BuildListener {
       case Project.MSG_INFO:
         handler.info(message)
         break
+    }
+  }
+
+  void logMessageToOtherLoggers(String message, int level) {
+    try {
+      processMessages.set(false)
+      antProject.log(message, level)
+    }
+    finally {
+      processMessages.set(true)
     }
   }
 
