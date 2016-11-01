@@ -33,7 +33,7 @@ class PyCharmMacDistributionCustomizer extends MacDistributionCustomizer {
   }
 
   @Override
-  Map<String, String> customIdeaProperties(ApplicationInfoProperties applicationInfo) {
+  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
     ["ide.mac.useNativeClipboard": "false"]
   }
 }

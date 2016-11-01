@@ -60,7 +60,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     if (buildContext.productProperties.toolsJarRequired) {
       customIdeaProperties["idea.jre.check"] = "true"
     }
-    customIdeaProperties.putAll(customizer.customIdeaProperties(buildContext.applicationInfo))
+    customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
@@ -237,8 +237,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return buildContext.messages.block("Build zip archive for Mac OS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      String zipRoot = "${customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      String zipRoot = "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
       buildContext.messages.progress("Building zip archive for Mac OS")
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {

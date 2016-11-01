@@ -189,7 +189,7 @@ class DistributionJARsBuilder {
     }
 
     if (productProperties.buildSourcesArchive) {
-      def archiveName = "${productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
       BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }

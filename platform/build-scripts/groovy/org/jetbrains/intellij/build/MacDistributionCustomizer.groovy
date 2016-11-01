@@ -117,7 +117,7 @@ abstract class MacDistributionCustomizer {
    * @param buildNumber current build number
    * @return application bundle directory name
    */
-  String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
     String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
     "$applicationInfo.productName${suffix}.app"
   }
@@ -127,7 +127,7 @@ abstract class MacDistributionCustomizer {
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  Map<String, String> customIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

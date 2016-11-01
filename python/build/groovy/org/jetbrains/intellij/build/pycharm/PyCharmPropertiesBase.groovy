@@ -48,7 +48,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
   }
 
   @Override
-  String environmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
+  String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
     "PYCHARM"
   }
 }

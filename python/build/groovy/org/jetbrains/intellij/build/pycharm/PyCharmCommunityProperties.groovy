@@ -46,12 +46,12 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String systemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
     "PyCharmCE${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
   @Override
-  String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+  String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "pycharmPC-$buildNumber"
   }
 
@@ -64,7 +64,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
+      String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Community Edition"
       }
 
@@ -83,7 +83,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
       }
       @Override
-      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
 
@@ -105,7 +105,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
         "PyCharm CE${suffix}.app"
       }
@@ -113,7 +113,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String outputDirectoryName(ApplicationInfoProperties applicationInfo) {
+  String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) {
     "pycharm-ce"
   }
 }
