@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.transformations.RenameHelperKt.getNewNameFromTransformations;
+import static org.jetbrains.plugins.groovy.refactoring.rename.RenameHelperKt.getNewNameFromTransformations;
 
 /**
  * @author ilyas

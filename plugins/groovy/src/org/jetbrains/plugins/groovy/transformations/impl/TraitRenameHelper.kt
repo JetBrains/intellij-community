@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.transformations.impl
 import com.intellij.psi.PsiMember
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
-import org.jetbrains.plugins.groovy.transformations.AstTransformationRenameHelper
+import org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper
 
-class TraitRenameHelper : AstTransformationRenameHelper {
+class TraitRenameHelper : GrRenameHelper {
 
   override fun getNewMemberName(member: PsiMember, newOriginalName: String): String? {
     if (member !is GrTraitField) return null

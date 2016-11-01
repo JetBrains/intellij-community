@@ -17,10 +17,10 @@ package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.psi.PsiMember
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.transformations.AstTransformationRenameHelper
+import org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper
 import org.jetbrains.plugins.groovy.transformations.indexedProperty.indexedMethodKind
 
-class IndexedPropertyRenameHelper : AstTransformationRenameHelper {
+class IndexedPropertyRenameHelper : GrRenameHelper {
 
   override fun getNewMemberName(member: PsiMember, newName: String): String? {
     if (member !is GrLightMethodBuilder || member.methodKind != indexedMethodKind) return null

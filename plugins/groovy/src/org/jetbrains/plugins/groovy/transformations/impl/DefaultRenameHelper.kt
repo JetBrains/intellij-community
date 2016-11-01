@@ -19,9 +19,9 @@ import com.intellij.psi.PsiMember
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getAccessorName
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getSetterName
-import org.jetbrains.plugins.groovy.transformations.AstTransformationRenameHelper
+import org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper
 
-class DefaultRenameHelper : AstTransformationRenameHelper {
+class DefaultRenameHelper : GrRenameHelper {
 
   override fun getNewMemberName(member: PsiMember, newOriginalName: String): String? {
     if (member !is GrAccessorMethod) return null

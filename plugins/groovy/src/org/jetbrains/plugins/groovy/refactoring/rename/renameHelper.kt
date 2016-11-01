@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.transformations
+package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -24,7 +24,7 @@ fun PsiElement?.getNewNameFromTransformations(newName: String) = (this as? PsiMe
 
 private fun doGetNewNameFromTransformations(member: PsiMember, newName: String): String? {
   @Suppress("LoopToCallChain")
-  for (helper in AstTransformationRenameHelper.EP_NAME.extensions) {
+  for (helper in GrRenameHelper.EP_NAME.extensions) {
     val newMemberName = helper.getNewMemberName(member, newName)
     if (newMemberName != null) return newMemberName
   }

@@ -32,7 +32,7 @@
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
-    <extensionPoint name="astTransformationRenameHelper" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationRenameHelper"/>
+    <extensionPoint name="renameHelper" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
@@ -133,14 +133,14 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport"/>
     <astTransformationSupport id="defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
-    <astTransformationRenameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
+    <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
     <astTransformationSupport id="delegateSupport" order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
     <astTransformationSupport id="traitSupport" order="last"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
-    <astTransformationRenameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
+    <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
