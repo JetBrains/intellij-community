@@ -78,6 +78,11 @@ public class Patches {
   public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 
   /**
+   * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
+   */
+  public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = true;
+
+  /**
    * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
    * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.

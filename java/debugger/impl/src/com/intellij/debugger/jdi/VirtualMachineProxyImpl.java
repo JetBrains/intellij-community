@@ -19,6 +19,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.Patches;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -333,12 +334,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       LOG.info(e);
     }
 
-    // Memory leak workaround, see IDEA-163334
-    TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
-    if (target != null) {
-      Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
-      if (controller != null) {
-        controller.stop();
+    if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
+      // Memory leak workaround, see IDEA-163334
+      TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+      if (target != null) {
+        Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
+        if (controller != null) {
+          controller.stop();
+        }
       }
     }
   }
