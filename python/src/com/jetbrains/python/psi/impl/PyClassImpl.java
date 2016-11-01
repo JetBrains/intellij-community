@@ -1455,7 +1455,56 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
 
+    final PyDecoratorList decoratorList = getDecoratorList();
+    if (decoratorList != null) {
+      for (PyDecorator decorator : decoratorList.getDecorators()) {
+        if (isSixAddMetaclass(decorator)) {
+          final PyExpression[] arguments = decorator.getArguments();
+          if (arguments.length != 0) {
+            return arguments[0];
+          }
+        }
+      }
+    }
+
     return null;
+  }
+
+  private static boolean isSixAddMetaclass(@NotNull PyDecorator decorator) {
+    final PyExpression callee = decorator.getCallee();
+    if (callee != null && "add_metaclass".equals(callee.getName())) {
+      // SUPPORTED CASES:
+
+      // import six
+      // six.add_metaclass(...)
+
+      // from six import add_metaclass
+      // add_metaclass(...)
+      return true;
+    }
+
+    if (callee instanceof PyReferenceExpression) {
+      // SUPPORTED CASES:
+
+      // from six import add_metaclass as a_m
+      // a_m(...)
+
+      final boolean importedAddMetaclass = StreamEx
+        .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
+        .select(PyImportElement.class)
+        .map(PyImportElement::getImportedQName)
+        .nonNull()
+        .map(QualifiedName::getLastComponent)
+        .nonNull()
+        .findAny("add_metaclass"::equals)
+        .isPresent();
+
+      if (importedAddMetaclass) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @NotNull
