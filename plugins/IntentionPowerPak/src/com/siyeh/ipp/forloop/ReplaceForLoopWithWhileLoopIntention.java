@@ -34,11 +34,7 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
     if (forStatement == null) {
       return;
     }
-    final PsiStatement initialization = forStatement.getInitialization();
-    if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {
-      final PsiElement parent = forStatement.getParent();
-      parent.addBefore(initialization, forStatement);
-    }
+    PsiStatement initialization = forStatement.getInitialization();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
     final PsiExpression forCondition = forStatement.getCondition();
@@ -87,7 +83,26 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
         newBody.addBefore(updateStatement, newBody.getLastChild());
       }
     }
-    forStatement.replace(whileStatement);
+    if (initialization == null || initialization instanceof PsiEmptyStatement) {
+      return;
+    }
+    initialization = (PsiStatement)initialization.copy();
+    PsiElement newElement = forStatement.replace(whileStatement);
+    PsiElement parent = newElement.getParent();
+    while (parent instanceof PsiLabeledStatement) {
+      newElement = parent;
+      parent = newElement.getParent();
+    }
+    if (parent instanceof PsiCodeBlock) {
+      parent.addBefore(initialization, newElement);
+    }
+    else {
+      final PsiStatement newBlockStatement = factory.createStatementFromText("{}", newElement);
+      final PsiElement codeBlock = newBlockStatement.getFirstChild();
+      codeBlock.add(initialization);
+      codeBlock.add(newElement);
+      newElement.replace(newBlockStatement);
+    }
   }
 
   private static class UpdateInserter extends JavaRecursiveElementWalkingVisitor {
