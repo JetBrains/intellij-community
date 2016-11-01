@@ -111,7 +111,7 @@ abstract class FunctionHelper {
 
   /**
    * Renames references to the variable oldName in given expression into newName
-   * @param expression
+   * @param expression an expression to search-and-replace references inside
    * @param oldName old name
    * @param newName new name
    * @param context context

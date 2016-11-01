@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
+import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -51,7 +52,7 @@ class StreamVariable {
     }
 
     @Override
-    void register(StreamToLoopInspection.StreamToLoopReplacementContext context) {
+    void register(StreamToLoopReplacementContext context) {
     }
 
     @Override
@@ -104,12 +105,12 @@ class StreamVariable {
   }
 
   /**
-   * Register variable within {@link com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext}.
+   * Register variable within {@link StreamToLoopReplacementContext}.
    * Must be called once after all name candidates are registered. Now variable gets an actual name.
    *
    * @param context context to use
    */
-  void register(StreamToLoopInspection.StreamToLoopReplacementContext context) {
+  void register(StreamToLoopReplacementContext context) {
     LOG.assertTrue(myName == null);
     List<String> variants = StreamEx.of(myBestCandidates).append(myOtherCandidates).distinct().toList();
     if (variants.isEmpty()) variants.add("val");

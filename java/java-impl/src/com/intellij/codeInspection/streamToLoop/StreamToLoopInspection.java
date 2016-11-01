@@ -106,7 +106,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       cur = parent;
       parent = cur.getParent();
     }
-    if(parent instanceof PsiExportsStatement || parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
+    if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
       if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
@@ -362,7 +362,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public String registerVarName(Collection<String> variants) {
-      // TODO: avoid introducing conflicts with nested scopes (variables declared in lambdas, nested lambdas)
       if(variants.isEmpty()) {
         return registerVarName(Collections.singleton("val"));
       }
