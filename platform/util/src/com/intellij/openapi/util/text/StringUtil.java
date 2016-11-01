@@ -2472,7 +2472,7 @@ public class StringUtil extends StringUtilRt {
    * Escape property name or key in property file. Unicode characters are escaped as well.
    *
    * @param input an input to escape
-   * @param isKey if true, the rules for key escaping are applied. All spaces are escaped in that case.
+   * @param isKey if true, the rules for key escaping are applied. The leading space is escaped in that case.
    * @return an escaped string
    */
   @NotNull
@@ -2483,7 +2483,7 @@ public class StringUtil extends StringUtilRt {
       final char ch = input.charAt(i);
       switch (ch) {
         case ' ':
-          if (isKey) {
+          if (isKey && i == 0) {
             // only the leading space has to be escaped
             escaped.append('\\');
           }
