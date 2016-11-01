@@ -478,6 +478,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
+    buildContext.paths.distAll = targetDirectory
     def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     jarsBuilder.buildJARs()
     layoutShared()
@@ -505,9 +506,6 @@ idea.fatal.error.notification=disabled
     }
     def osSpecificDistPath = builder.copyFilesForOsDistribution()
 */
-    buildContext.ant.copy(todir: targetDirectory) {
-      fileset(dir: buildContext.paths.distAll)
-    }
   }
 
   private abstract static class BuildTaskRunnable<V> {
