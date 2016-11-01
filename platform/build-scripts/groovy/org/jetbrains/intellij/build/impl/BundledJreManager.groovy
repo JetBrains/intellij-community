@@ -66,10 +66,10 @@ class BundledJreManager {
   }
 
   /**
-   * Return path to a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
+   * Return a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
    */
-  String findWinJreArchive() {
-    return findJreArchive("win")?.absolutePath
+  File findWinJreArchive() {
+    return findJreArchive("win")
   }
 
   String archiveNameJre64(BuildContext buildContext) {

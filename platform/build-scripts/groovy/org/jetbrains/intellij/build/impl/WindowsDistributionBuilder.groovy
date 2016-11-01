@@ -84,21 +84,22 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath];
 
-    if (customizer.buildZipArchive) {
-      if (customizer.getLinkToJre64() != null && arch != JvmArchitecture.x64) {
-        File archive = buildContext.bundledJreManager.findJreArchive("win")
-        if (archive != null) {
-          buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
-          //prepare JRE64 folder for win archive
-          def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
-          if (! new File("${jreDirectoryPath64}/jre64").exists()) {
-            buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
-              fileset(dir: "${jreDirectoryPath64}/jre")
-            }
+    if (customizer.getBaseDownloadUrlForJre64() != null && arch != JvmArchitecture.x64) {
+      File archive = buildContext.bundledJreManager.findWinJreArchive()
+      if (archive != null && archive.exists()) {
+        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
+        //prepare JRE64 folder for win archive
+        def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
+        if (! new File("${jreDirectoryPath64}/jre64").exists()) {
+          buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
+            fileset(dir: "${jreDirectoryPath64}/jre")
           }
-          jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
         }
+        jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
       }
+    }
+
+    if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 

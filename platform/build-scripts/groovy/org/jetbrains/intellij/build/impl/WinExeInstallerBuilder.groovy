@@ -131,8 +131,8 @@ class WinExeInstallerBuilder {
 
     def extensionsList = customizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToJre64 = customizer.getLinkToJre64() != null ?
-                      "${customizer.getLinkToJre64()}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}" :
+    def linkToJre64 = customizer.getBaseDownloadUrlForJre64() != null ?
+                      "${customizer.getBaseDownloadUrlForJre64()}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}" :
                       null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"

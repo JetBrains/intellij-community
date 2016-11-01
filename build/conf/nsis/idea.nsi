@@ -297,6 +297,25 @@ done:
   Pop $0
 FunctionEnd
 
+Function downloadJre64
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field 4" "State"
+  ${If} $R0 == 1
+    inetc::get ${LINK_TO_JRE64} "$TEMP\jre64.tar.gz" /END
+    Pop $0
+    ${If} $0 == "OK"
+      untgz::extract "-d" "$INSTDIR\jre64" "$TEMP\jre64.tar.gz"
+      StrCmp $R0 "success" removeTempJre64
+      DetailPrint "Failed to extract jre64.tar.gz"
+      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre64.tar.gz"
+removeTempJre64:
+      IfFileExists "$TEMP\jre64.tar.gz" 0 done
+      Delete "$TEMP\jre64.tar.gz"
+    ${Else}
+      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE64} download is failed: $0"
+    ${EndIf}
+  ${EndIf}
+done:
+FunctionEnd
 
 ;------------------------------------------------------------------------------
 ; Variables
@@ -690,7 +709,12 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
 
-; create shortcuts
+  ;download and install JRE 64
+  StrCmp "${LINK_TO_JRE64}" "null" shortcuts 0
+  Call downloadJre64
+
+shortcuts:
+  ;create shortcuts
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
   StrCmp $R2 1 "" exe_64
   StrCpy $runProductAfterInstall "32"
