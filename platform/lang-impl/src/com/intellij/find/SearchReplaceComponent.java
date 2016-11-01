@@ -445,7 +445,26 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                 KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                                 NEW_LINE_KEYSTROKE,
                                 WHEN_FOCUSED);
-      wrapper.setContent(textArea);
+
+    textComponent.registerKeyboardAction(e -> {
+      if (isMultiline(textComponent)) {
+        if (textComponent.isEditable() && textComponent.isEnabled()) {
+          textComponent.replaceSelection("\t");
+        }
+        else {
+          UIManager.getLookAndFeel().provideErrorFeedback(textComponent);
+        }
+      }
+      else {
+        textComponent.transferFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), WHEN_FOCUSED);
+
+    textComponent.registerKeyboardAction(e -> {
+      textComponent.transferFocusBackward();
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), WHEN_FOCUSED);
+
+    wrapper.setContent(textArea);
 
     UIUtil.addUndoRedoActions(textComponent);
     Utils.setSmallerFont(textComponent);
@@ -489,6 +508,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private static void adjustRows(@NotNull JTextArea area) {
     area.setRows(Math.max(2, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
+  }
+
+  private static boolean isMultiline(@NotNull JTextComponent component) {
+    return component.getText().contains("\n");
   }
 
 
