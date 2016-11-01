@@ -83,6 +83,12 @@ public class Patches {
   public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = true;
 
   /**
+   * NPE from com.sun.jdi.ReferenceType#constantPool()
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6822627">JDK-6822627</a>
+   */
+  public static final boolean JDK_BUG_ID_6822627 = true;
+
+  /**
    * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
    * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.

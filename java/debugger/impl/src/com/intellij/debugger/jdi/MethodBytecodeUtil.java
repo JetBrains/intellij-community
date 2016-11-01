@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.Patches;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
@@ -56,11 +57,16 @@ public class MethodBytecodeUtil {
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
-    try {
-      return type.constantPool();
+    if (Patches.JDK_BUG_ID_6822627) {
+      try {
+        return type.constantPool();
+      }
+      catch (NullPointerException e) { // workaround for JDK bug 6822627
+        ReflectionUtil.resetField(type, "constantPoolInfoGotten");
+        return type.constantPool();
+      }
     }
-    catch (NullPointerException e) { // workaround for JDK bug 6822627
-      ReflectionUtil.resetField(type, "constantPoolInfoGotten");
+    else {
       return type.constantPool();
     }
   }
