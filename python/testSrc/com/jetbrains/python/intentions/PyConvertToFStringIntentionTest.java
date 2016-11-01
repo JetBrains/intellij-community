@@ -163,4 +163,9 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testFormatMethodNestedFields3() {
     doTest();
   }
+
+  // PY-21244
+  public void testFormatMethodParentFieldUnresolved() {
+    doNegativeTest();
+  }
 }
