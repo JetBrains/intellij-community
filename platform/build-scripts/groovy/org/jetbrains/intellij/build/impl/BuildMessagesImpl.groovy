@@ -28,15 +28,14 @@ import org.jetbrains.jps.gant.DefaultBuildInfoPrinter
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 
-import java.util.function.Function
-
+import java.util.function.BiFunction
 /**
  * @author nik
  */
 @CompileStatic
 class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
-  private final Function<String, BuildMessageLogger> loggerFactory
+  private final BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory
   private final AntTaskLogger antTaskLogger
   private final BuildMessagesImpl parentInstance
   private final List<BuildMessagesImpl> forkedInstances = []
@@ -52,9 +51,9 @@ class BuildMessagesImpl implements BuildMessages {
     BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
     builder.buildInfoPrinter = buildInfoPrinter
     disableAntLogging(antProject)
-    Function<String, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
-    def antTaskLogger = new AntTaskLogger()
-    def messages = new BuildMessagesImpl(loggerFactory.apply(null), loggerFactory, antTaskLogger, null)
+    BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
+    def antTaskLogger = new AntTaskLogger(antProject)
+    def messages = new BuildMessagesImpl(loggerFactory.apply(null, antTaskLogger), loggerFactory, antTaskLogger, null)
     antTaskLogger.defaultHandler = messages
     antProject.addBuildListener(antTaskLogger)
     antProject.addReference(key, messages)
@@ -72,7 +71,7 @@ class BuildMessagesImpl implements BuildMessages {
     }
   }
 
-  private BuildMessagesImpl(BuildMessageLogger logger, Function<String, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger,
+  private BuildMessagesImpl(BuildMessageLogger logger, BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger,
                             BuildMessagesImpl parentInstance) {
     this.logger = logger
     this.loggerFactory = loggerFactory
@@ -141,7 +140,7 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   BuildMessages forkForParallelTask(String suggestedTaskName) {
     String taskName = taskNameGenerator.generateUniqueName(suggestedTaskName)
-    def forked = new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger, this)
+    def forked = new BuildMessagesImpl(loggerFactory.apply(taskName, antTaskLogger), loggerFactory, antTaskLogger, this)
     forkedInstances << forked
     return forked
   }
