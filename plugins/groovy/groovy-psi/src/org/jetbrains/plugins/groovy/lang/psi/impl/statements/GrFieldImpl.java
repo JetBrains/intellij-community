@@ -24,7 +24,6 @@ import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
@@ -43,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
@@ -75,21 +73,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitField(this);
-  }
-
-  @Override
-  public GrTypeElement getTypeElementGroovy() {
-    final GrFieldStub stub = getStub();
-    if (stub != null) {
-      final String typeText = stub.getTypeText();
-      if (typeText == null) {
-        return null;
-      }
-
-      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
-    }
-
-    return super.getTypeElementGroovy();
   }
 
   public String toString() {
@@ -201,16 +184,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
       return ResolveScopeManager.getElementUseScope(this); //maximal scope
     }
     return PsiImplUtil.getMemberUseScope(this);
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    final GrFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
-    }
-    return super.getName();
   }
 
   @Override

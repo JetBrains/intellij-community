@@ -15,48 +15,28 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.psi.stubs.NamedStub;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author peter
  */
-public class GrParameterStub extends StubBase<GrParameter> implements NamedStub<GrParameter> {
-  private final StringRef myName;
-  private final String[] myAnnotations;
-  private final String myTypeText;
+public class GrParameterStub extends GrVariableStubBase<GrParameter> {
+
   private final int myFlags;
 
   public GrParameterStub(StubElement parent,
-                         StringRef name,
-                         final String[] annotations,
-                         String typeText, 
+                         @NotNull StringRef name,
+                         @NotNull final String[] annotations,
+                         @Nullable String typeText,
                          int flags) {
-    super(parent, GroovyElementTypes.PARAMETER);
-    myName = name;
-    myAnnotations = annotations;
-    myTypeText = typeText;
+    super(parent, GroovyElementTypes.PARAMETER, name, annotations, typeText);
     myFlags = flags;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return StringRef.toString(myName);
-  }
-
-  public String[] getAnnotations() {
-    return myAnnotations;
-  }
-
-  public String getTypeText() {
-    return myTypeText;
   }
 
   public int getFlags() {
