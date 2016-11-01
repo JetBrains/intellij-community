@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportResolver
+import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 
@@ -178,8 +179,13 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
 private fun findFirstResults(results: List<PsiElement>) =
     if (results.all(::isNamespacePackage))
       results
-    else
-      listOfNotNull(results.firstOrNull { !isNamespacePackage(it) })
+    else {
+      val stubFile = results.firstOrNull { it is PyiFile }
+      if (stubFile != null)
+        listOf(stubFile)
+      else
+        listOfNotNull(results.firstOrNull { !isNamespacePackage(it) })
+    }
 
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
