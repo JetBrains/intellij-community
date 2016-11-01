@@ -178,8 +178,8 @@ public class PyStringFormatParserTest extends UsefulTestCase {
     final List<Field> topLevelFields = result.getFields();
     assertSize(2, topLevelFields);
     assertSize(5, result.getAllFields());
-    assertSameElements(result.getAllFields().stream().map(f -> f.getDepth()).toArray(), 1, 2, 3, 4, 1);
-    assertSameElements(result.getAllFields().stream().map(f -> f.getAutoPosition()).toArray(), 0, 1, 2, 3, 4);
+    assertOrderedEquals(result.getAllFields().stream().map(f -> f.getDepth()).toArray(), 1, 2, 3, 4, 1);
+    assertOrderedEquals(result.getAllFields().stream().map(f -> f.getAutoPosition()).toArray(), 0, 1, 2, 3, 4);
   }
 
   public void testNewStyleAttrAndLookups() {
@@ -195,40 +195,40 @@ public class PyStringFormatParserTest extends UsefulTestCase {
 
     field = doParseAndGetFirstField("u'{foo.bar.baz}'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), ".bar", ".baz");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".bar", ".baz");
 
     field = doParseAndGetFirstField("u'{foo[bar][baz]}'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), "[bar]", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[bar]", "[baz]");
 
     field = doParseAndGetFirstField("u'{foo.bar[baz]}'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".bar", "[baz]");
 
     field = doParseAndGetFirstField("u'{foo.bar[baz}'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".bar");
 
     field = doParseAndGetFirstField("u'{foo[{bar[baz]}'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), "[{bar[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[{bar[baz]");
 
     field = doParseAndGetFirstField("u'{foo[{} {0} {bar.baz}]'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), "[{} {0} {bar.baz}]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[{} {0} {bar.baz}]");
 
     field = doParseAndGetFirstField("u'{foo[bar]baz'");
     assertEquals("foo", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), "[bar]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[bar]");
 
     field = doParseAndGetFirstField("'{0[foo][.!:][}]}'");
     assertEquals("0", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", "[.!:]", "[}]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", "[.!:]", "[}]");
 
     field = doParseAndGetFirstField("'{.foo.bar}'");
     assertEmpty(field.getFirstName());
     assertEquals(TextRange.create(2, 2), field.getFirstNameRange());
-    assertSameElements(field.getAttributesAndLookups(), ".foo", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".foo", ".bar");
 
     field = doParseAndGetFirstField("'{}'");
     assertEmpty(field.getFirstName());
@@ -261,68 +261,68 @@ public class PyStringFormatParserTest extends UsefulTestCase {
     assertEmpty(field.getAttributesAndLookups());
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     // do not recover unfinished lookups
     field = doParseAndGetFirstField("'{0[foo].bar[ba}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar[ba!}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar[ba:}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar[ba'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar[ba");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     // do not recover illegal attributes
     field = doParseAndGetFirstField("'{0[foo].bar[baz]quux}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]quux!}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]quux:}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]quux'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0[foo].bar[baz]quux");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar", "[baz]");
 
     field = doParseAndGetFirstField("'{0..}'");
     assertEquals("0", field.getFirstName());
-    assertSameElements(field.getAttributesAndLookups(), ".", ".");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".", ".");
 
     // recover attributes
     field = doParseAndGetFirstField("'{0[foo].}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".");
 
     field = doParseAndGetFirstField("'{0[foo].'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".");
 
     field = doParseAndGetFirstField("'{0[foo].");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".");
 
     field = doParseAndGetFirstField("'{0[foo].bar}'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar'");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
 
     field = doParseAndGetFirstField("'{0[foo].bar");
-    assertSameElements(field.getAttributesAndLookups(), "[foo]", ".bar");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
   }
 
   public void testAutoPosition() {
@@ -361,12 +361,12 @@ public class PyStringFormatParserTest extends UsefulTestCase {
 
   public void testNewStyleNamedUnicodeEscapeInLookup() {
     final Field field = doParseAndGetFirstField("'{foo[\\N{ESCAPE WITH ]}]}'");
-    assertSameElements(field.getAttributesAndLookups(), "[\\N{ESCAPE WITH ]}]");
+    assertOrderedEquals(field.getAttributesAndLookups(), "[\\N{ESCAPE WITH ]}]");
   }
 
   public void testNewStyleNamedUnicodeEscapeInAttribute() {
     final Field field = doParseAndGetFirstField("'{foo.b\\N{ESCAPE WITH [}.b\\N{ESCAPE WITH .}}'");
-    assertSameElements(field.getAttributesAndLookups(), ".b\\N{ESCAPE WITH [}", ".b\\N{ESCAPE WITH .}");
+    assertOrderedEquals(field.getAttributesAndLookups(), ".b\\N{ESCAPE WITH [}", ".b\\N{ESCAPE WITH .}");
   }
 
   public void testNewStyleUnclosedLookupEndsWithRightBrace() {
