@@ -97,7 +97,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
@@ -141,9 +141,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
-    def tarRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+    def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
-    def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
+    def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     if (jreDirectoryPath != null) {

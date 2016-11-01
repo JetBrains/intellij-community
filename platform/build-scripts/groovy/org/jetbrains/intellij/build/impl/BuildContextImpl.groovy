@@ -87,13 +87,13 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources()
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
-    String buildOutputRoot = options.outputRootPath ?: "$projectHome/out/${productProperties.outputDirectoryName(applicationInfo)}"
+    String buildOutputRoot = options.outputRootPath ?: "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$productProperties.productCode-$buildNumber"
-    systemSelector = productProperties.systemSelector(applicationInfo)
+    systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }

@@ -75,7 +75,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the root directory in Windows .zip archive
    */
-  String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
+  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
 
   /**
    * Override this method to copy additional files to Windows distribution of the product.
@@ -87,14 +87,14 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be shown in Windows Installer and used in Registry keys
    */
-  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
+  String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
 
   /**
    * The returned name will be used to create links on Desktop
    */
-  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + fullNameIncludingEdition(applicationInfo) }
+  String getFullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + getFullNameIncludingEdition(applicationInfo) }
 
-  String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
+  String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null
   }
 }

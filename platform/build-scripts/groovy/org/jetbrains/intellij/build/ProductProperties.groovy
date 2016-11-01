@@ -74,7 +74,7 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  String systemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
     "${applicationInfo.productName}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
@@ -129,7 +129,7 @@ abstract class ProductProperties {
   /**
    * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
    */
-  abstract String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber)
+  abstract String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
   /**
    * @return instance of the class containing properties specific for Windows distribution or {@code null} if the product doesn't have Windows distribution
@@ -189,7 +189,7 @@ abstract class ProductProperties {
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
    * (&lt;PRODUCT&gt;_JDK variable), *.vmoptions file (&lt;PRODUCT&gt;_VM_OPTIONS variable), idea.properties file (&lt;PRODUCT&gt;_PROPERTIES variable)
    */
-  String environmentVariableBaseName(ApplicationInfoProperties applicationInfo) { applicationInfo.upperCaseProductName }
+  String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) { applicationInfo.upperCaseProductName }
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.
@@ -202,5 +202,5 @@ abstract class ProductProperties {
    * @return name of sub-directory under projectHome/out where build artifacts will be placed, must be unique among all products built from
    * the same sources
    */
-  String outputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
+  String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
 }
