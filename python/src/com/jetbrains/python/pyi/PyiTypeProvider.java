@@ -191,7 +191,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return overloads;
   }
 
-  private static boolean isOverload(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public static boolean isOverload(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyDecoratable) {
       final PyDecoratable decorated = (PyDecoratable)callable;
       final ImmutableSet<PyKnownDecoratorUtil.KnownDecorator> decorators =

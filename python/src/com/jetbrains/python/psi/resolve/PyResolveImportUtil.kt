@@ -47,6 +47,8 @@ import com.jetbrains.python.sdk.PythonSdkType
 /**
  * Python resolve utilities for qualified names.
  *
+ * TODO: Merge with ResolveImportUtil, maybe make these functions the methods of PyQualifiedNameResolveContext.
+ *
  * @author vlan
  */
 
