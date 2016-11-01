@@ -434,6 +434,11 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
+    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+      myFn.suggestVariableName(inVar, 0);
+    }
+
+    @Override
     void registerUsedNames(Consumer<String> usedNameConsumer) {
       myFn.registerUsedNames(usedNameConsumer);
     }

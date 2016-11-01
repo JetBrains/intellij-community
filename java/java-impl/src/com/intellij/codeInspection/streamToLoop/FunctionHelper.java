@@ -50,6 +50,15 @@ abstract class FunctionHelper {
   abstract PsiExpression getExpression();
 
   /**
+   * Try to perform "light" transformation. Works only for single-argument SAM. The function helper decides by itself
+   * how to name the SAM argument and returns it. After this method invocation normal transform cannot be performed.
+   *
+   * @return SAM argument name or null if function helper refused to perform a transformation.
+   * @param type
+   */
+  abstract String tryLightTransform(PsiType type);
+
+  /**
    * Perform an adaptation of current function helper to the replacement context with given parameter names.
    * Must be called exactly once prior using getExpression() or getText()
    *
@@ -164,6 +173,30 @@ abstract class FunctionHelper {
     }
 
     @Override
+    String tryLightTransform(PsiType type) {
+      if(myMethodRef.isConstructor()) return null;
+      PsiElement element = myMethodRef.resolve();
+      if(!(element instanceof PsiMethod)) return null;
+      PsiMethod method = (PsiMethod)element;
+      String var = "x";
+      PsiLambdaExpression lambda;
+      PsiClass aClass = method.getContainingClass();
+      if(aClass == null) return null;
+      if(method.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+        if(method.getParameterList().getParametersCount() != 1) return null;
+        lambda = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(myMethodRef.getProject())
+          .createExpressionFromText("(" + type.getCanonicalText() + " " + var + ")->" +
+                                    aClass.getQualifiedName() + "." + method.getName() + "(" + var + ")", myMethodRef);
+      } else {
+        lambda =
+          (PsiLambdaExpression)JavaPsiFacade.getElementFactory(myMethodRef.getProject()).createExpressionFromText(
+            "(" + type.getCanonicalText() + " " + var + ")->" + var + "." + myMethodRef.getReferenceName() + "()", myMethodRef);
+      }
+      myExpression = (PsiExpression)lambda.getBody();
+      return var;
+    }
+
+    @Override
     PsiExpression getExpression() {
       LOG.assertTrue(myExpression != null);
       return myExpression;
@@ -241,6 +274,11 @@ abstract class FunctionHelper {
     }
 
     @Override
+    String tryLightTransform(PsiType type) {
+      return null;
+    }
+
+    @Override
     PsiExpression getExpression() {
       LOG.assertTrue(myExpression != null);
       return myExpression;
@@ -275,6 +313,12 @@ abstract class FunctionHelper {
     LambdaFunctionHelper(PsiExpression body, String[] parameters) {
       myParameters = parameters;
       myBody = body;
+    }
+
+    @Override
+    String tryLightTransform(PsiType type) {
+      LOG.assertTrue(myParameters.length == 1);
+      return myParameters[0];
     }
 
     PsiExpression getExpression() {

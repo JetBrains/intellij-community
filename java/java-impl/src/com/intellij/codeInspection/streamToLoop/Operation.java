@@ -18,6 +18,7 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ abstract class Operation {
   public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
 
   @Nullable
-  static Operation createIntermediate(String name, PsiExpression[] args, StreamVariable outVar) {
+  static Operation createIntermediate(String name, PsiExpression[] args, StreamVariable outVar, PsiType inType) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
@@ -74,7 +75,7 @@ abstract class Operation {
     }
     if ((name.equals("flatMap") || name.equals("flatMapToInt") || name.equals("flatMapToLong") || name.equals("flatMapToDouble")) &&
         args.length == 1) {
-      return FlatMapOperation.from(outVar, args[0]);
+      return FlatMapOperation.from(outVar, args[0], inType);
     }
     if ((name.equals("map") ||
          name.equals("mapToInt") ||
@@ -172,11 +173,13 @@ abstract class Operation {
   }
 
   static class FlatMapOperation extends Operation {
-    private final @Nullable String myOriginalName;
+    private String myVarName;
+    private final FunctionHelper myFn;
     private final List<StreamToLoopInspection.OperationRecord> myRecords;
 
-    private FlatMapOperation(@Nullable String name, List<StreamToLoopInspection.OperationRecord> records) {
-      myOriginalName = name;
+    private FlatMapOperation(String varName, FunctionHelper fn, List<StreamToLoopInspection.OperationRecord> records) {
+      myVarName = varName;
+      myFn = fn;
       myRecords = records;
     }
 
@@ -192,9 +195,7 @@ abstract class Operation {
 
     @Override
     public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      if(myOriginalName != null) {
-        inVar.addBestNameCandidate(myOriginalName);
-      }
+      myFn.suggestVariableName(inVar, 0);
     }
 
     @Override
@@ -209,11 +210,10 @@ abstract class Operation {
 
     @Override
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      if(myOriginalName != null && !myOriginalName.equals(inVar.getName())) {
-        rename(myOriginalName, inVar.getName(), context);
+      if(!myVarName.equals(inVar.getName())) {
+        rename(myVarName, inVar.getName(), context);
       }
-      StreamToLoopReplacementContext
-        innerContext = new StreamToLoopReplacementContext(context, myRecords);
+      StreamToLoopReplacementContext innerContext = new StreamToLoopReplacementContext(context, myRecords);
       String replacement = code;
       for(StreamToLoopInspection.OperationRecord or : StreamEx.ofReversed(myRecords)) {
         replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, innerContext);
@@ -222,15 +222,17 @@ abstract class Operation {
     }
 
     @Nullable
-    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg) {
+    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType) {
       FunctionHelper fn = FunctionHelper.create(arg, 1, true);
       if(fn == null) return null;
+      String varName = fn.tryLightTransform(inType);
+      if(varName == null) return null;
       PsiExpression body = fn.getExpression();
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
       List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
-      return new FlatMapOperation(fn.getParameterName(0), records);
+      return new FlatMapOperation(varName, fn, records);
     }
   }
 

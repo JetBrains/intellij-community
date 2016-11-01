@@ -131,10 +131,13 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     PsiType callType = call.getType();
     if(callType == null) return null;
     if(InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
-      Operation op = Operation.createIntermediate(name, args, outVar);
-      if (op != null) return op;
-      op = TerminalOperation.createTerminal(name, args, callType, className, call.getParent() instanceof PsiExpressionStatement);
-      if(op != null) return op;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if(qualifier != null) {
+        Operation op = Operation.createIntermediate(name, args, outVar, getStreamElementType(qualifier.getType()));
+        if (op != null) return op;
+        op = TerminalOperation.createTerminal(name, args, callType, className, call.getParent() instanceof PsiExpressionStatement);
+        if (op != null) return op;
+      }
     }
     return SourceOperation.createSource(call);
   }
