@@ -146,8 +146,8 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     }
     myIcons[layer] = icon;
     myScaledIcons = null;
-    myHShifts[layer] = scaleVal(hShift, Scale.JBUI);
-    myVShifts[layer] = scaleVal(vShift, Scale.JBUI);
+    myHShifts[layer] = hShift;
+    myVShifts[layer] = vShift;
     updateSize();
   }
 
@@ -225,8 +225,8 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = x + scaleVal(myXShift + myHShifts[i], Scale.ARBITRARY);
-      int yOffset = y + scaleVal(myYShift + myVShifts[i], Scale.ARBITRARY);
+      int xOffset = x + scaleVal(myXShift + myHShifts(i), Scale.ARBITRARY);
+      int yOffset = y + scaleVal(myYShift + myVShifts(i), Scale.ARBITRARY);
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -255,6 +255,14 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     return scaleVal(myHeight, Scale.ARBITRARY);
   }
 
+  private int myHShifts(int i) {
+    return scaleVal(myHShifts[i], Scale.JBUI);
+  }
+
+  private int myVShifts(int i) {
+    return scaleVal(myVShifts[i], Scale.JBUI);
+  }
+
   protected void updateSize() {
     int minX = Integer.MAX_VALUE;
     int maxX = Integer.MIN_VALUE;
@@ -265,8 +273,8 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
       Icon icon = myIcons[i];
       if (icon == null) continue;
       hasNotNullIcons = true;
-      int hShift = myHShifts[i];
-      int vShift = myVShifts[i];
+      int hShift = myHShifts(i);
+      int vShift = myVShifts(i);
       minX = Math.min(minX, hShift);
       maxX = Math.max(maxX, hShift + icon.getIconWidth());
       minY = Math.min(minY, vShift);
