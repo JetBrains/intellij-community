@@ -61,10 +61,8 @@ public class InspectionResultsViewUtil {
       if (containingFile != null) {
         final VirtualFile file = containingFile.getVirtualFile();
         final Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null && document.getLineCount() > lineNumber - 1) {
-          return new OpenFileDescriptor(containingElement.getProject(),
-                                        file,
-                                        document.getLineStartOffset(lineNumber - 1));
+        if (document != null && document.getLineCount() > lineNumber) {
+          return new OpenFileDescriptor(containingElement.getProject(), file, lineNumber, 0);
         }
       }
     }

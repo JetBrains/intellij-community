@@ -266,7 +266,7 @@ public class RefManagerImpl extends RefManager {
         lineElement.addContent(String.valueOf(range != null ? document.getLineNumber(range.getStartOffset()) + 1 : -1));
       }
       else {
-        lineElement.addContent(String.valueOf(actualLine));
+        lineElement.addContent(String.valueOf(actualLine + 1));
       }
 
       problem.addContent(fileElement);
