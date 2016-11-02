@@ -140,5 +140,25 @@ class PasswordSafeTest {
       assertThat.isEqualTo(newCredentials.password)
     }
   }
+
+  @Test
+  fun `credentials with empty username`() {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      return
+    }
+
+    val settings = PasswordSafeSettings()
+    settings.providerType = ProviderType.KEYCHAIN
+    val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
+
+    val id = "test PasswordSafeTest.credentials with empty username"
+    val attributes = CredentialAttributes(id, null, null, true)
+
+    val credentials = Credentials(null, "passphrase")
+    ps.set(attributes, credentials)
+    val saved = ps.get(attributes)!!
+    assertThat(saved.password).isEqualTo(credentials.password)
+    assertThat(saved.userName).isNullOrEmpty()
+  }
 }
 
