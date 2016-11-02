@@ -5,7 +5,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IFileElementType;
 import com.jetbrains.python.PythonParserDefinition;
-import com.jetbrains.python.lexer.PythonIndentingLexer;
+import com.jetbrains.python.console.parsing.PythonConsoleLexer;
 import org.jetbrains.annotations.NotNull;
 
 public class IpnbPyParserDefinition extends PythonParserDefinition {
@@ -13,7 +13,7 @@ public class IpnbPyParserDefinition extends PythonParserDefinition {
 
   @NotNull
   public Lexer createLexer(Project project) {
-    return new PythonIndentingLexer();
+    return new PythonConsoleLexer();
   }
 
   @NotNull
