@@ -26,6 +26,7 @@ import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -187,11 +188,9 @@ public class CompileDriver {
     return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
   }
 
-  @Nullable
-  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
-    throws Exception {
-    final CompileScope scope = compileContext.getCompileScope();
-    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext,
+                                                    CompileScope scope,
+                                                    Collection<String> paths) {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     final boolean forceBuild = !compileContext.isMake();
     List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
@@ -205,10 +204,29 @@ public class CompileDriver {
       scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
     }
     if (paths.isEmpty()) {
-      for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
-        scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
-      }
+      scopes = mergeScopesFromProviders(scope, scopes, forceBuild);
     }
+    return scopes;
+  }
+
+  private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
+                                                              List<TargetTypeBuildScope> scopes,
+                                                              boolean forceBuild) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+      List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
+        () -> myProject.isDisposed() ? Collections.emptyList()
+                                     : provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+      scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
+    }
+    return scopes;
+  }
+
+  @Nullable
+  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+    throws Exception {
+    final CompileScope scope = compileContext.getCompileScope();
+    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+    List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
 
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
