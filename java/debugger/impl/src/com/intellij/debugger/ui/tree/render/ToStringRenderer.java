@@ -46,7 +46,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
-    setEnabled(true);
+    super("unnamed", true);
   }
 
   @Override
