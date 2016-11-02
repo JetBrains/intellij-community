@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -52,7 +53,10 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
     ProviderType oldValue = myProviderType;
     if (value != oldValue) {
       myProviderType = value;
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).typeChanged(oldValue, value);
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.getMessageBus().syncPublisher(TOPIC).typeChanged(oldValue, value);
+      }
     }
   }
 

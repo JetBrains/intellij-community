@@ -16,6 +16,7 @@
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.ArrayUtilRt
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
@@ -82,7 +83,7 @@ internal class KeyChainCredentialStore() : CredentialStore {
       attributeList.count = 1
       attribute.write()
       attributeList.attr = attribute.pointer
-      checkForError("save (update)", library.SecKeychainItemModifyContent(pointer, attributeList, password?.size ?: 0, password))
+      checkForError("save (update)", library.SecKeychainItemModifyContent(pointer, attributeList, password?.size ?: 0, password ?: ArrayUtilRt.EMPTY_BYTE_ARRAY))
       library.CFRelease(pointer)
     }
 
