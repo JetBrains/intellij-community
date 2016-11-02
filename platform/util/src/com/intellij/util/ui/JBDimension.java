@@ -22,7 +22,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBDimension extends Dimension {
-  public float myJBUIScale = JBUI.scale(1f);
+  float myJBUIScale = JBUI.scale(1f);
 
   public JBDimension(int width, int height) {
     super(scale(width), scale(height));
