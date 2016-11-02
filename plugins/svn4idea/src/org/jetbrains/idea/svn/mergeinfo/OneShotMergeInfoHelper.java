@@ -65,8 +65,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     myPartiallyMerged = newHashMap();
     myMergeInfoLock = new Object();
     // TODO: Rewrite without AreaMap usage
-    myMergeInfoMap =
-      AreaMap.create((parentUrl, childUrl) -> ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl)));
+    myMergeInfoMap = new AreaMap<>();
   }
 
   @Override
@@ -120,7 +119,10 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       InfoProcessor processor = new InfoProcessor(sourceRelativePath, myMergeContext.getRepositoryRelativeSourcePath(), revisionNumber);
 
       synchronized (myMergeInfoLock) {
-        myMergeInfoMap.getSimiliar(toKey(sourceRelativePath), processor);
+        myMergeInfoMap.getSimiliar(
+          toKey(sourceRelativePath),
+          (parentUrl, childUrl) -> ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl)),
+          processor);
       }
 
       result = MergeCheckResult.getInstance(processor.isMerged());
