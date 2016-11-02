@@ -35,14 +35,20 @@ import javax.swing.*;
  */
 public abstract class NodeRendererImpl implements NodeRenderer{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.NodeRendererImpl");
-  protected BasicRendererProperties myProperties = new BasicRendererProperties();
+  protected BasicRendererProperties myProperties;
 
   protected NodeRendererImpl() {
     this("unnamed");
   }
 
   protected NodeRendererImpl(@NotNull String presentableName) {
+    this(presentableName, false);
+  }
+
+  protected NodeRendererImpl(@NotNull String presentableName, boolean enabledDefaultValue) {
+    myProperties = new BasicRendererProperties(enabledDefaultValue);
     myProperties.setName(presentableName);
+    myProperties.setEnabled(enabledDefaultValue);
   }
 
   @Override

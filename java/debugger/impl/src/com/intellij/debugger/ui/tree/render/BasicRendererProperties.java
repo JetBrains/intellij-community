@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public final class BasicRendererProperties implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BasicRendererProperties");
@@ -34,6 +35,12 @@ public final class BasicRendererProperties implements Cloneable {
 
   private static final @NonNls String SHOW_TYPE_OPTION = "SHOW_TYPE";
   private boolean myShowType = true;
+
+  private final boolean myEnabledDefaultValue;
+
+  public BasicRendererProperties(boolean enabledDefaultValue) {
+    myEnabledDefaultValue = enabledDefaultValue;
+  }
 
   public String getName() {
     return myName;
@@ -94,13 +101,11 @@ public final class BasicRendererProperties implements Cloneable {
     }
   }
 
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     if (myName != null) {
       JDOMExternalizerUtil.writeField(element, NAME_OPTION, myName);
     }
-    if (myEnabled) {
-      // default is false
-      //noinspection ConstantConditions
+    if (myEnabled != myEnabledDefaultValue) {
       JDOMExternalizerUtil.writeField(element, ENABLED_OPTION, Boolean.toString(myEnabled));
     }
     if (myClassName != null) {
