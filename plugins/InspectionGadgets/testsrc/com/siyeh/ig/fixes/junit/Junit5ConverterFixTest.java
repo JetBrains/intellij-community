@@ -25,6 +25,10 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
     doTest();
   }
 
+  public void testExpectedOnTestAnnotation() throws Exception {
+    assertQuickfixNotAvailable();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

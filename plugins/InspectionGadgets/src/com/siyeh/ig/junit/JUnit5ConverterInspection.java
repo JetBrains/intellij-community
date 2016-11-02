@@ -102,6 +102,11 @@ public class JUnit5ConverterInspection extends BaseInspection {
           if (AnnotationUtil.isAnnotated(method, ruleAnnotations)) {
             return;
           }
+
+          PsiAnnotation testAnnotation = AnnotationUtil.findAnnotation(method, true, JUnitCommonClassNames.ORG_JUNIT_TEST);
+          if (testAnnotation != null && testAnnotation.getParameterList().getAttributes().length > 0) {
+            return;
+          }
         }
 
         registerClassError(aClass);
