@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -116,6 +119,19 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
     if (restart) {
       DaemonCodeAnalyzer.getInstance(project).restart();
+    }
+  }
+
+  @Override
+  protected void performFixesInBatch(@NotNull Project project,
+                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull GlobalInspectionContextImpl context,
+                                     Set<PsiElement> ignoredElements) {
+    if (myFix instanceof BatchQuickFix) {
+      applyFix(project, context, descriptors, ignoredElements);
+    }
+    else {
+      super.performFixesInBatch(project, descriptors, context, ignoredElements);
     }
   }
 

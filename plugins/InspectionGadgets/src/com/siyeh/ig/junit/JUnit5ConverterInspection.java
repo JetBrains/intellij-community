@@ -17,10 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionEngine;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
@@ -38,6 +35,7 @@ import com.intellij.refactoring.migration.MigrationProcessor;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,9 +45,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JUnit5ConverterInspection extends BaseInspection {
   private static final List<String> ruleAnnotations = Arrays.asList(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE);
@@ -111,7 +109,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
     };
   }
 
-  private static class MigrateToJUnit5 extends InspectionGadgetsFix {
+  private static class MigrateToJUnit5 extends InspectionGadgetsFix implements BatchQuickFix {
     @Nls
     @NotNull
     @Override
@@ -126,7 +124,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
         MigrationManager manager = RefactoringManager.getInstance(project).getMigrateManager();
         MigrationMap migrationMap = manager.findMigrationMap("JUnit (4.x -> 5.0)");
         if (migrationMap != null) {
-          new MyJUnit5MigrationProcessor(project, migrationMap, psiClass.getContainingFile()).run();
+          new MyJUnit5MigrationProcessor(project, migrationMap, Collections.singleton(psiClass.getContainingFile())).run();
         }
       }
     }
@@ -136,15 +134,32 @@ public class JUnit5ConverterInspection extends BaseInspection {
       return false;
     }
 
+    @Override
+    public void applyFix(@NotNull Project project,
+                         @NotNull CommonProblemDescriptor[] descriptors,
+                         @NotNull List psiElementsToIgnore,
+                         @Nullable Runnable refreshViews) {
+      Set<PsiFile> files = Arrays.stream(descriptors).map(descriptor -> ((ProblemDescriptor)descriptor).getPsiElement())
+        .filter(Objects::nonNull)
+        .map(element -> element.getContainingFile()).collect(Collectors.toSet());
+      if (!files.isEmpty()) {
+        MigrationManager manager = RefactoringManager.getInstance(project).getMigrateManager();
+        MigrationMap migrationMap = manager.findMigrationMap("JUnit (4.x -> 5.0)");
+        if (migrationMap != null) {
+          new MyJUnit5MigrationProcessor(project, migrationMap, files).run();
+        }
+      }
+    }
+
     private static class MyJUnit5MigrationProcessor extends MigrationProcessor {
 
       private final Project myProject;
-      private final PsiFile myFile;
+      private final Set<PsiFile> myFiles;
 
-      public MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, PsiFile file) {
-        super(project, migrationMap, GlobalSearchScope.fileScope(file));
+      public MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<PsiFile> files) {
+        super(project, migrationMap, GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files, file -> file.getVirtualFile())));
         myProject = project;
-        myFile = file;
+        myFiles = files;
       }
 
       @NotNull
@@ -154,7 +169,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
         InspectionManager inspectionManager = InspectionManager.getInstance(myProject);
         GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext(false);
         LocalInspectionToolWrapper assertionsConverter = new LocalInspectionToolWrapper(new JUnit5AssertionsConverterInspection("JUnit4"));
-        UsageInfo[] descriptors = InspectionEngine.runInspectionOnFile(myFile, assertionsConverter, globalContext).stream().map(descriptor -> new MyDescriptionBasedUsageInfo(descriptor)).toArray(UsageInfo[]::new);
+
+        Stream<ProblemDescriptor> stream = myFiles.stream().flatMap(file -> InspectionEngine.runInspectionOnFile(file, assertionsConverter, globalContext).stream());
+        UsageInfo[] descriptors = stream.map(descriptor -> new MyDescriptionBasedUsageInfo(descriptor)).toArray(UsageInfo[]::new);
         return ArrayUtil.mergeArrays(usages, descriptors);
       }
 
