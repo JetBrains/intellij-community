@@ -20,9 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.PairFunction;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,6 +191,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public <T extends Iterator<E>> T typedIterator() {
     return (T) iterator();
+  }
+
+  public boolean processEach(@NotNull Processor<E> processor) {
+    return ContainerUtil.process(this, processor);
+  }
+
+  public void consumeEach(@NotNull Consumer<E> consumer) {
+    for (E e : this) {
+      consumer.consume(e);
+    }
   }
 
   /**
@@ -667,9 +675,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
     @NotNull
     static <T> T copy(@NotNull T o) {
-      if (!(o instanceof Stateful)) {
-        return o;
-      }
+      if (!(o instanceof Stateful)) return o;
       return (T)((Stateful)o).clone();
     }
 
