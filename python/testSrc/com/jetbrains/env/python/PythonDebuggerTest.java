@@ -46,8 +46,8 @@ import static org.junit.Assert.assertNull;
 
 public class PythonDebuggerTest extends PyEnvTestCase {
   private class BreakpointStopAndEvalTask extends PyDebuggerTask {
-    public BreakpointStopAndEvalTask() {
-      super("/debug", "test1.py");
+    public BreakpointStopAndEvalTask(String scriptName) {
+      super("/debug", scriptName);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testBreakpointStopAndEval() throws Exception {
-    runPythonTest(new BreakpointStopAndEvalTask());
+    runPythonTest(new BreakpointStopAndEvalTask("test1.py"));
   }
 
   @Test
@@ -1136,14 +1136,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Staging
   @Test
   public void testModuleInterpreterOption() throws Exception {
-    runPythonTest(new BreakpointStopAndEvalTask() {
+    runPythonTest(new BreakpointStopAndEvalTask("test1") {
       @Override
       public void before() throws Exception {
-        super.before();
+        toggleBreakpoint(getFilePath("test1.py"), 3);
+        setScriptName("test1");
 
-        PythonEnvUtil.addToPythonPath(myRunConfiguration.getEnvs(), new File(getFilePath(getScriptName())).getParent());
-
-        myRunConfiguration.setInterpreterOptions("-m runner");
+        myRunConfiguration.setInterpreterOptions("-m");
       }
     });
   }
