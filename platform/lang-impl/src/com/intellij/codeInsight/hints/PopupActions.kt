@@ -60,9 +60,10 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
-    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+    val language = file.language.baseLanguage ?: file.language
+    InlayParameterHintsExtension.forLanguage(language) ?: return
     val info = getMethodInfoAtOffset(editor, file) ?: return
-    val dialog = ParameterNameHintsConfigurable(project, hintExtension.defaultBlackList, file.language, info.toPattern())
+    val dialog = ParameterNameHintsConfigurable(project, language, info.toPattern())
     
     dialog.show()
   }
