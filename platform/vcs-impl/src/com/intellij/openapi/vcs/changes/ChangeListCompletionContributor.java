@@ -35,7 +35,7 @@ public class ChangeListCompletionContributor extends CompletionContributor imple
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     final PsiFile file = parameters.getOriginalFile();
-    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
     if (document == null) return;
     ComboBox comboBox = document.getUserData(COMBO_BOX_KEY);
     if (comboBox == null) return;
