@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 package com.intellij.index
+
+import com.intellij.lang.FCTSBackedLighterAST
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.GCUtil
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 /**
  * @author peter
  */
@@ -170,4 +176,36 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       for(future in futuresToWait) future.get()
     }
   }
+
+  void "test concurrent light AST access during uncommitted document indexing"() {
+    def clazz = myFixture.addClass('class Bar { void foo(Object o) {}}')
+
+    def text = " foo(null);";
+    for (i in 0..20) {
+      text = "new Runnable() { void run() {\n " + text + "\n}}.run();"
+    }
+    text = "class Foo {{ " + text * 200 + "}}"
+
+    def file = myFixture.addFileToProject('a.java', text)
+    def document = file.viewProvider.document
+    for (i in 1..5) {
+      WriteCommandAction.runWriteCommandAction project, {
+        document.insertString(document.text.indexOf('null') + 1, ' ')
+        document.insertString(document.text.indexOf('(null') + 1, ' ')
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      assert file.node.lighterAST instanceof FCTSBackedLighterAST
+      List<Future> futures = []
+      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
+        assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
+      } }
+      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
+        assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+      } }
+      futures.each { it.get() }
+    }
+  }
+
 }

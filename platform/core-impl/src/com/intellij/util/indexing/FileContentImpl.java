@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
 import com.intellij.openapi.editor.Document;
@@ -85,10 +86,24 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       lighterAST = getPsiFileForPsiDependentIndex().getNode().getLighterAST();
-      assert lighterAST != null;
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
     return lighterAST;
+  }
+
+  /**
+   * Expand the AST to ensure {@link com.intellij.lang.FCTSBackedLighterAST} won't be used, because it's not thread-safe,
+   * but unsaved documents may be indexed in many concurrent threads
+   */
+  void ensureThreadSafeLighterAST() {
+    ensureParsed(getPsiFile().getNode());
+    ensureParsed(getPsiFileForPsiDependentIndex().getNode());
+  }
+
+  private static void ensureParsed(@Nullable FileASTNode node) {
+    if (node != null) {
+      node.getFirstChildNode();
+    }
   }
 
   public PsiFile createFileFromText(@NotNull CharSequence text) {
@@ -232,6 +247,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     myHash = hash;
   }
 
+  @NotNull
   public PsiFile getPsiFileForPsiDependentIndex() {
     Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
     PsiFile psi = null;
