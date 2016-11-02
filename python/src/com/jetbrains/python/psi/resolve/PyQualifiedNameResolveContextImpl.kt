@@ -30,7 +30,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
                                              private val withoutRoots : Boolean = false,
                                              private val withoutForeign: Boolean = false,
                                              private val withMembers : Boolean = false,
-                                             private val withPlainDirectories : Boolean = false) : PyQualifiedNameResolveContext {
+                                             private val withPlainDirectories : Boolean = false,
+                                             private val withoutStubs: Boolean = false) : PyQualifiedNameResolveContext {
   override fun getFoothold() = foothold
 
   override fun getRelativeLevel() = relativeLevel
@@ -51,6 +52,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun getWithPlainDirectories() = withPlainDirectories
 
+  override fun getWithoutStubs() = withoutStubs
+
   override fun getEffectiveSdk() = if (visitAllModules) PydevConsoleRunner.getConsoleSdk(foothold) else sdk
 
   override fun isValid() = footholdFile?.isValid ?: true
@@ -64,6 +67,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
   override fun copyWithRelative(relativeLevel : Int) = copy(relativeLevel = relativeLevel)
 
   override fun copyWithoutRoots() = copy(withoutRoots = true)
+
+  override fun copyWithoutStubs() = copy(withoutStubs = true)
 
   override fun getContainingDirectory(): PsiDirectory? {
     val file = footholdFile ?: return null

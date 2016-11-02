@@ -42,7 +42,19 @@ public class PyiUtil {
     if (file instanceof PyFile && !(file instanceof PyiFile)) {
       final PyiFile pythonStubFile = getPythonStubFile((PyFile)file);
       if (pythonStubFile != null) {
-        return findStubInFile(element, pythonStubFile);
+        return findSimilarElement(element, pythonStubFile);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement getOriginalElement(@NotNull PyElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file instanceof PyiFile) {
+      final PyFile originalFile = getOriginalFile((PyiFile)file);
+      if (originalFile != null) {
+        return findSimilarElement(element, originalFile);
       }
     }
     return null;
@@ -62,7 +74,20 @@ public class PyiUtil {
   }
 
   @Nullable
-  private static PsiElement findStubInFile(@NotNull PyElement element, @NotNull PyiFile file) {
+  private static PyFile getOriginalFile(@NotNull PyiFile file) {
+    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
+    if (name == null) {
+      return null;
+    }
+    final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file).copyWithoutStubs();
+    return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
+                       .stream()
+                       .findFirst()
+                       .orElse(null), PyFile.class);
+  }
+
+  @Nullable
+  private static PsiElement findSimilarElement(@NotNull PyElement element, @NotNull PyFile file) {
     if (element instanceof PyFile) {
       return file;
     }
@@ -70,7 +95,7 @@ public class PyiUtil {
     final String name = element.getName();
     if (owner != null && name != null) {
       assert owner != element;
-      final PsiElement originalOwner = findStubInFile(owner, file);
+      final PsiElement originalOwner = findSimilarElement(owner, file);
       if (originalOwner instanceof PyClass) {
         final PyClass classOwner = (PyClass)originalOwner;
         final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
