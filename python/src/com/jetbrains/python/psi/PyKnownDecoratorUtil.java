@@ -22,6 +22,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.Convertor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,34 +124,41 @@ public class PyKnownDecoratorUtil {
     if (decoratorList == null) {
       return Collections.emptyList();
     }
-    final List<KnownDecorator> result = new ArrayList<>();
-    final boolean allowResolve = context.maySwitchToAST((PsiElement)element);
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final QualifiedName qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName == null) {
-        continue;
+
+    return StreamEx
+      .of(decoratorList.getDecorators())
+      .map(decorator -> asKnownDecorator(decorator, context))
+      .nonNull()
+      .toList();
+  }
+
+  @Nullable
+  public static KnownDecorator asKnownDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+    final QualifiedName qualifiedName = decorator.getQualifiedName();
+    if (qualifiedName == null) {
+      return null;
+    }
+
+    if (context.maySwitchToAST(decorator)) {
+      PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
+      if (resolved instanceof PyFunction && PyNames.INIT.equals(resolved.getName())) {
+        resolved = ((PyFunction)resolved).getContainingClass();
       }
 
-      final KnownDecorator knownDecorator = ourByShortName.get(qualifiedName.getLastComponent());
-      if (knownDecorator != null) {
-        if (allowResolve) {
-          PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
-          if (resolved instanceof PyFunction && PyNames.INIT.equals(resolved.getName())) {
-            resolved = ((PyFunction)resolved).getContainingClass();
-          }
-          if (resolved != null && resolved.getQualifiedName() != null) {
-            final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
-            if (resolvedName.equals(knownDecorator.getQualifiedName())) {
-              result.add(knownDecorator);
-            }
-          }
-        }
-        else {
-          result.add(knownDecorator);
+      if (resolved != null && resolved.getQualifiedName() != null) {
+        final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
+        final KnownDecorator knownDecorator = ourByShortName.get(resolvedName.getLastComponent());
+
+        if (knownDecorator != null && resolvedName.equals(knownDecorator.getQualifiedName())) {
+          return knownDecorator;
         }
       }
     }
-    return result;
+    else {
+      return ourByShortName.get(qualifiedName.getLastComponent());
+    }
+
+    return null;
   }
 
   @Nullable

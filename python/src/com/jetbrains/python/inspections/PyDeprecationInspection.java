@@ -89,7 +89,7 @@ public class PyDeprecationInspection extends PyInspection {
       if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON33) && decoratorList != null) {
         Arrays
           .stream(decoratorList.getDecorators())
-          .filter(decorator -> KnownDecorator.ABC_ABSTRACTPROPERTY.getQualifiedName().equals(decorator.getQualifiedName()))
+          .filter(decorator -> PyKnownDecoratorUtil.asKnownDecorator(decorator, myTypeEvalContext) == KnownDecorator.ABC_ABSTRACTPROPERTY)
           .forEach(
             decorator -> {
               final QualifiedName abcAbsPropertyQName = KnownDecorator.ABC_ABSTRACTPROPERTY.getQualifiedName();
