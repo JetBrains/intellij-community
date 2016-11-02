@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -30,15 +31,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,26 +51,22 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private EditorTextField myEditorTextField;
   private ComboBox<Language> myCurrentLanguageCombo;
 
-  private final Set<String> myDefaultBlackList;
-  private final Language myLanguage;
+  private final Language myInitiallySelectedLanguage;
   private final String myNewPreselectedItem;
   private final Project myProject;
 
-  public ParameterNameHintsConfigurable(@NotNull Project project,
-                                        @NotNull Set<String> defaultBlackList,
-                                        @NotNull Language language) {
-    this(project, defaultBlackList, language, null);
-  }
+  private final Map<Language, String> myBlackLists;
 
   public ParameterNameHintsConfigurable(@NotNull Project project,
-                                        @NotNull Set<String> defaultBlackList,
-                                        @NotNull Language language,
+                                        @NotNull Language selectedLanguage,
                                         @Nullable String newPreselectedPattern) {
     super(project);
     myProject = project;
-    myLanguage = language;
-    myDefaultBlackList = defaultBlackList;
+    myInitiallySelectedLanguage = selectedLanguage;
+
     myNewPreselectedItem = newPreselectedPattern;
+    myBlackLists = ContainerUtil.newHashMap();
+    
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
   }
@@ -87,14 +87,27 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
 
+    Language language = (Language)myCurrentLanguageCombo.getModel().getSelectedItem();
+    myBlackLists.put(language, myEditorTextField.getText());
+
+    myBlackLists.entrySet().forEach((entry) -> {
+      Language lang = entry.getKey();
+      String text = entry.getValue();
+      storeBlackListDiff(lang, text);
+    });
+  }
+
+  private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
     Set<String> updatedBlackList = StringUtil
-      .split(myEditorTextField.getText(), "\n")
+      .split(text, "\n")
       .stream()
       .filter((e) -> !e.trim().isEmpty())
       .collect(Collectors.toSet());
-    
-    Diff diff = Diff.Builder.build(myDefaultBlackList, updatedBlackList);
-    ParameterNameHintsSettings.getInstance().setBlackListDiff(myLanguage, diff);
+
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    Set<String> defaultBlackList = provider.getDefaultBlackList();
+    Diff diff = Diff.Builder.build(defaultBlackList, updatedBlackList);
+    ParameterNameHintsSettings.getInstance().setBlackListDiff(language, diff);
   }
 
   @Nullable
@@ -104,34 +117,77 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(myLanguage);
-    Set<String> blacklist = diff.applyOn(myDefaultBlackList);
-    
-    myEditorTextField = createEditor(blacklist, myNewPreselectedItem);
+    List<Language> languages = getBaseLanguagesWithProviders();
+
+    Language selected = myInitiallySelectedLanguage;
+    if (selected == null) {
+      selected = languages.get(0);
+    }
+
+    String text = getLanguageBlackList(selected);
+    myEditorTextField = createEditor(text, myNewPreselectedItem);
     myEditorTextField.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         updateOkEnabled();
       }
     });
-    
-    Collection<Language> allLanguages = Language.getRegisteredLanguages();
-    JBIterable<Language> languagesWithHintsSupport = JBIterable.from(allLanguages)
-      .filter((lang) -> !InlayParameterHintsExtension.INSTANCE.forKey(lang).isEmpty());
 
-    ListComboBoxModel<Language> model = new ListComboBoxModel<>(languagesWithHintsSupport.toList());
+    initLanguageCombo(languages, selected);
+  }
+
+  private void initLanguageCombo(List<Language> languages, Language selected) {
+    ListComboBoxModel<Language> model = new ListComboBoxModel<>(languages);
+    
     myCurrentLanguageCombo = new ComboBox<>(model);
+    myCurrentLanguageCombo.setSelectedItem(selected);
     myCurrentLanguageCombo.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
         setText(value.getDisplayName());
       }
     });
+
+    myCurrentLanguageCombo.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        Language language = (Language)e.getItem();
+        if (e.getStateChange() == ItemEvent.DESELECTED) {
+          myBlackLists.put(language, myEditorTextField.getText());
+        }
+        else if (e.getStateChange() == ItemEvent.SELECTED) {
+          String text = myBlackLists.get(language);
+          if (text == null) {
+            text = getLanguageBlackList(language);
+          }
+          myEditorTextField.setText(text);
+        }
+      }
+    });
   }
 
-  private EditorTextField createEditor(@NotNull Set<String> blacklist, @Nullable String newPreselectedItem) {
-    String text = StringUtil.join(blacklist, "\n");
-    
+  @NotNull
+  private static String getLanguageBlackList(@NotNull Language language) {
+    InlayParameterHintsProvider hintsProvider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (hintsProvider == null) {
+      return "";
+    }
+    Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(language);
+    Set<String> blackList = diff.applyOn(hintsProvider.getDefaultBlackList());
+    return StringUtil.join(blackList, "\n");
+  }
+
+  @NotNull
+  private static List<Language> getBaseLanguagesWithProviders() {
+    return Language.getRegisteredLanguages()
+      .stream()
+      .filter(lang -> lang.getBaseLanguage() == null)
+      .filter(lang -> InlayParameterHintsExtension.INSTANCE.forLanguage(lang) != null)
+      .sorted(Comparator.comparingInt(l -> l.getDisplayName().length()))
+      .collect(Collectors.toList());
+  }
+
+  private EditorTextField createEditor(@NotNull String text, @Nullable String newPreselectedItem) {
     final TextRange range;
     if (newPreselectedItem != null) {
       text += "\n";
