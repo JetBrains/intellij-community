@@ -35,7 +35,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
   @NotNull
   @Override
   public String getID() {
-    return "SyntheticMethodCall";
+    return "SyntheticAccessorCall";
   }
 
   @Nullable
