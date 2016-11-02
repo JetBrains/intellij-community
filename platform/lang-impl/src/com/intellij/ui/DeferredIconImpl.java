@@ -51,7 +51,7 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon implements D
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   @NotNull
-  private volatile Icon myDelegateIcon;
+  private final Icon myDelegateIcon;
   private volatile Icon myScaledDelegateIcon;
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled;

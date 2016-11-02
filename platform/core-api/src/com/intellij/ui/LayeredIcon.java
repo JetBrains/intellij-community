@@ -72,6 +72,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     return new LayeredIcon(this);
   }
 
+  @NotNull
   private Icon[] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;
@@ -221,7 +222,6 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     if (updateJBUIScale()) updateSize();
     Icon[] icons = myScaledIcons();
-    if (icons == null) return;
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;

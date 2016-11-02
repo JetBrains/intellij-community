@@ -57,7 +57,6 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon {
       return myScaledDelegate = myDelegate;
     }
     if (!(myDelegate instanceof ScalableIcon)) {
-      setScale(1f);
       return myScaledDelegate = myDelegate;
     }
     return myScaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
