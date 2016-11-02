@@ -6,6 +6,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.UsefulTestCase
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
