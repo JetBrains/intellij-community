@@ -6,7 +6,6 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.UsefulTestCase
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -86,9 +85,9 @@ class PasswordSafeTest {
   }
 
   @Test
-  fun `overwrite credentials`() {
+  fun `overwrite credentials - KeePass`() {
     val settings = PasswordSafeSettings()
-    settings.providerType = ProviderType.KEYCHAIN
+    settings.providerType = ProviderType.KEEPASS
     val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
 
     val booleans = booleanArrayOf(true, false)
@@ -145,9 +144,9 @@ class PasswordSafeTest {
   }
 
   @Test
-  fun `credentials with empty username`() {
+  fun `credentials with empty username - KeePass`() {
     val settings = PasswordSafeSettings()
-    settings.providerType = ProviderType.KEYCHAIN
+    settings.providerType = ProviderType.KEEPASS
     val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
 
     val id = "test PasswordSafeTest.credentials with empty username"
