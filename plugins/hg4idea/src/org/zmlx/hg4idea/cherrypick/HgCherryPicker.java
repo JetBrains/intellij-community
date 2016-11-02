@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
@@ -65,14 +64,7 @@ public class HgCherryPicker extends VcsCherryPicker {
       HgUtil.getRepositoryManager(myProject), commits);
     for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
       processGrafting(entry.getKey(), ContainerUtil.map(entry.getValue(),
-                                                        new Function<VcsFullCommitDetails, String>() {
-                                                          @Override
-                                                          public String fun(
-                                                            VcsFullCommitDetails commitDetails) {
-                                                            return commitDetails.getId()
-                                                              .asString();
-                                                          }
-                                                        }));
+                                                        commitDetails -> commitDetails.getId().asString()));
     }
   }
 
