@@ -50,7 +50,7 @@ class Y {
         //noinspection PrivateMemberAccessBetweenOuterAndInnerClass
         System.out.println(X.s);
 
-        //noinspection SyntheticMethodCall
+        //noinspection SyntheticAccessorCall
         System.out.println(X.s);
     }
 
