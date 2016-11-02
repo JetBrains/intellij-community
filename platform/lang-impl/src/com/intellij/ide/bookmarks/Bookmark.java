@@ -329,9 +329,15 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  static class MnemonicIcon implements Icon {
+  static class MnemonicIcon extends JBUI.CachingScalableJBIcon<MnemonicIcon> {
     private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;
+
+    @NotNull
+    @Override
+    protected MnemonicIcon copy() {
+      return new MnemonicIcon(myMnemonic);
+    }
 
     @NotNull
     static MnemonicIcon getIcon(char mnemonic) {
@@ -367,8 +373,13 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       final Font oldFont = g.getFont();
 
       Font font = getBookmarkFont();
+      FontMetrics fm = g.getFontMetrics(font);
+      float fontSizeUnit = fm.getHeight() / font.getSize();
+      float fontPrefHeight = height * 0.8f;
+      float fontPrefSize = fontPrefHeight / fontSizeUnit;
+      font = font.deriveFont(fontPrefSize);
+
       g.setFont(font);
-      //
       GlyphVector gv = font.createGlyphVector(((Graphics2D)g).getFontRenderContext(), new char[]{myMnemonic});
       Rectangle2D bounds = gv.getVisualBounds();
       ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
@@ -378,12 +389,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return DEFAULT_ICON.getIconWidth();
+      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.ARBITRARY);
     }
 
     @Override
     public int getIconHeight() {
-      return DEFAULT_ICON.getIconHeight();
+      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.ARBITRARY);
     }
 
     @Override
@@ -402,7 +413,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
   }
 
-  private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon implements RetrievableIcon {
+  private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon<MyCheckedIcon> implements RetrievableIcon {
     @Nullable
     @Override
     public Icon retrieveIcon() {
