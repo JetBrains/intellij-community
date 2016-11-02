@@ -23,10 +23,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -34,9 +31,11 @@ import org.zmlx.hg4idea.command.HgGraftCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -105,18 +104,8 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
-    if (commits.isEmpty()) {
-      return false;
-    }
-
-    for (VirtualFile root: commits.keySet()) {
-      HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-      if (repository == null) {
-        return false;
-      }
-    }
-
-    return true;
+  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+    HgRepositoryManager hgRepositoryManager = HgUtil.getRepositoryManager(myProject);
+    return roots.stream().allMatch(r -> hgRepositoryManager.getRepositoryForRoot(r) != null);
   }
 }
