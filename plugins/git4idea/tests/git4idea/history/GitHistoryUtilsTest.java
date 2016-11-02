@@ -406,6 +406,28 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     assertEquals(message, lastCommit.getFullMessage());
   }
 
+  @Test
+  public void testLoadingDetailsWithoutChanges() throws Exception {
+    List<String> expected = ContainerUtil.newArrayList();
+
+    String messageFile = "message.txt";
+    touch(messageFile, "");
+
+    int commitCount = 100;
+    for (int i = 0; i < commitCount; i++) {
+      touch("file.txt", "content number " + i);
+      add();
+      git("commit --allow-empty-message -F " + messageFile);
+      expected.add(last());
+    }
+    expected = ContainerUtil.reverse(expected);
+
+    List<String> actualMessages =
+      GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+
+    assertEquals(expected, actualMessages);
+  }
+
   private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {
     assertEquals("Incorrect number of commits in history", myRevisions.size(), actualRevisions.size());
     for (int i = 0; i < actualRevisions.size(); i++) {

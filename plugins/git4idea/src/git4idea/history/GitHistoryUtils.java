@@ -593,7 +593,7 @@ public class GitHistoryUtils {
                 output.setLength(0);
               }
               output.append(tail);
-              foundRecordEnd.set(false);
+              foundRecordEnd.set(tail.contains(GitLogParser.RECORD_END));
             }
           }
           catch (Exception e) {
