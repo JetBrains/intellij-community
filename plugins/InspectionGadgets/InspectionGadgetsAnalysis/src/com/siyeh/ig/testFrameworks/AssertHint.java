@@ -173,7 +173,7 @@ public class AssertHint {
   }
 
   public static class JUnitCommonAssertNames {
-    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(8);
+    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(13);
 
     static {
       COMMON_ASSERT_METHODS.put("assertArrayEquals", 2);
