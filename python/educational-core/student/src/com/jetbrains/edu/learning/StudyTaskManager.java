@@ -140,8 +140,10 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToSecondVersion(state);
         case 2:
           state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
+        case 3:
+          state = StudySerializationUtils.Xml.convertToForthVersion(state);
           //uncomment for future versions
-          //case 3:
+          //case 4:
           //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
       }
       XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
