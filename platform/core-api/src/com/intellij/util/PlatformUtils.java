@@ -37,6 +37,7 @@ public class PlatformUtils {
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
+  public static final String GOIDE_PREFIX = "GoIDE";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -109,6 +110,10 @@ public class PlatformUtils {
 
   public static boolean isRider() {
     return is(RIDER_PREFIX);
+  }
+
+  public static boolean isGoIde() {
+    return is(GOIDE_PREFIX);
   }
 
   public static boolean isCommunityEdition() {
