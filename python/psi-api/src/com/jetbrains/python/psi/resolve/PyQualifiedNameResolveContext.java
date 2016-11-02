@@ -42,6 +42,7 @@ public interface PyQualifiedNameResolveContext {
   Project getProject();
   boolean getWithoutRoots();
   boolean getWithoutForeign();
+  boolean getWithoutStubs();
   @NotNull
   PsiManager getPsiManager();
   boolean getWithMembers();
@@ -66,4 +67,6 @@ public interface PyQualifiedNameResolveContext {
   PyQualifiedNameResolveContext copyWithRelative(int relativeLevel);
   @NotNull
   PyQualifiedNameResolveContext copyWithoutRoots();
+  @NotNull
+  PyQualifiedNameResolveContext copyWithoutStubs();
 }

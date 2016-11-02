@@ -69,9 +69,10 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
 
   val cache = findCache(context)
   val mayCache = cache != null && !context.withoutRoots && !context.withoutForeign && !foundRelativeImport
+  val key = if (context.withoutStubs) QualifiedName.fromDottedString("without-stubs.$name") else name
 
   if (mayCache) {
-    val cachedResults = cache?.get(name)
+    val cachedResults = cache?.get(key)
     if (cachedResults != null) {
       return listOf(listOfNotNull(relativeResult), cachedResults).flatten()
     }
@@ -84,7 +85,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val results = if (name.componentCount > 0) findFirstResults(allResults) else allResults
 
   if (mayCache) {
-    cache?.put(name, results)
+    cache?.put(key, results)
   }
 
   return results
@@ -116,7 +117,7 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
     if (component == null) null
     // TODO: Switch to multi-resolve in this API
     else ResolveImportUtil.resolveChild(seeker, component, context.footholdFile, !context.withMembers,
-                                        !context.withPlainDirectories)
+                                        !context.withPlainDirectories, context.withoutStubs)
   }
 }
 
