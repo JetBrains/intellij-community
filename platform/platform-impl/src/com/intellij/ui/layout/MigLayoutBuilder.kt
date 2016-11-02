@@ -242,8 +242,8 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
     rightIndex = components.size
   }
 
-  override fun createRow(label: String): Row {
-    val row = builder.newRow(Label(label), indented = true)
+  override fun createRow(label: String?): Row {
+    val row = builder.newRow(label?.let { Label(it) }, indented = true)
     if (_subRows == null) {
       _subRows = SmartList()
     }
