@@ -1461,6 +1461,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = float.fromhex(\"0.5\")");
   }
 
+  // PY-13159
+  public void testAbsAbstractProperty() {
+    doTest("str",
+           "import abc\n" +
+           "class D:\n" +
+           "    @abc.abstractproperty\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
     doTest("Any",
