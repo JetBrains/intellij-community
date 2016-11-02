@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
@@ -370,21 +371,18 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
-      final Font oldFont = g.getFont();
 
-      Font font = getBookmarkFont();
-      FontMetrics fm = g.getFontMetrics(font);
-      float fontSizeUnit = fm.getHeight() / font.getSize();
-      float fontPrefHeight = height * 0.8f;
-      float fontPrefSize = fontPrefHeight / fontSizeUnit;
-      font = font.deriveFont(fontPrefSize);
+      float startingFontSize = 40f;  // large font for smaller rounding error
+      Font font = getBookmarkFont().deriveFont(startingFontSize);
+      FontRenderContext fontRenderContext = ((Graphics2D)g).getFontRenderContext();
+      char[] character = {myMnemonic};
+      double height40 = font.createGlyphVector(fontRenderContext, character).getVisualBounds().getHeight();
+      font = font.deriveFont((float)(startingFontSize * height / height40 * 0.7));
 
-      g.setFont(font);
-      GlyphVector gv = font.createGlyphVector(((Graphics2D)g).getFontRenderContext(), new char[]{myMnemonic});
+      GlyphVector gv = font.createGlyphVector(fontRenderContext, character);
       Rectangle2D bounds = gv.getVisualBounds();
       ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
                                       (float)(y + (height - bounds.getHeight())/2 - bounds.getY()));
-      g.setFont(oldFont);
     }
 
     @Override
