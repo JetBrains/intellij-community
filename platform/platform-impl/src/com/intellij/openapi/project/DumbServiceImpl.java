@@ -186,7 +186,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                               @Nullable TransactionId contextTransaction,
                               @NotNull Throwable trace,
                               @Nullable DumbModePermission schedulerPermission) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed() && shouldStartModalProgress(schedulerPermission, trace)) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed() && !isDumb() && shouldStartModalProgress(schedulerPermission, trace)) {
       runTaskSynchronously(task);
       return;
     }
