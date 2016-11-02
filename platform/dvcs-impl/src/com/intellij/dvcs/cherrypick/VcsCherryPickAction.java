@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -113,12 +112,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
   @NotNull
   private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
-    return StringUtil.join(pickers, new Function<VcsCherryPicker, String>() {
-      @Override
-      public String fun(VcsCherryPicker picker) {
-        return picker.getActionTitle();
-      }
-    }, "/");
+    return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/");
   }
 
   @NotNull
@@ -126,12 +120,8 @@ public class VcsCherryPickAction extends DumbAwareAction {
     if (project != null) {
       final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
       AbstractVcs[] vcss = projectLevelVcsManager.getAllActiveVcss();
-      return ContainerUtil.mapNotNull(vcss, new Function<AbstractVcs, VcsCherryPicker>() {
-        @Override
-        public VcsCherryPicker fun(AbstractVcs vcs) {
-          return vcs != null ? VcsCherryPickManager.getInstance(project).getCherryPickerFor(vcs.getKeyInstanceMethod()) : null;
-        }
-      });
+      return ContainerUtil.mapNotNull(vcss, vcs -> vcs != null ? VcsCherryPickManager.getInstance(project)
+        .getCherryPickerFor(vcs.getKeyInstanceMethod()) : null);
     }
     return ContainerUtil.emptyList();
   }
