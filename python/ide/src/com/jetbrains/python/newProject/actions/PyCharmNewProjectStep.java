@@ -57,9 +57,9 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    protected ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator emptyProjectGenerator,
+    protected ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
                                                                         @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
-      return new ProjectSpecificSettingsStep(emptyProjectGenerator, callback);
+      return new ProjectSpecificSettingsStep(projectGenerator, callback);
     }
 
     @NotNull
