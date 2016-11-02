@@ -296,7 +296,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     projectManagerEx.openTestProject(ourProject);
     if (reusedProject) {
-      DumbService.getInstance(ourProject).queueTask(new UnindexedFilesUpdater(ourProject, false));
+      DumbService.getInstance(ourProject).queueTask(new UnindexedFilesUpdater(ourProject));
     }
 
     MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);

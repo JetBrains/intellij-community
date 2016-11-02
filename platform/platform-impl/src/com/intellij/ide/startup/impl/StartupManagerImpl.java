@@ -74,6 +74,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
+  private boolean myInitialRefreshScheduled;
 
   public StartupManagerImpl(Project project) {
     myProject = project;
@@ -202,8 +203,9 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void scheduleInitialVfsRefresh() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed()) return;
+      if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
+      myInitialRefreshScheduled = true;
       markContentRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
