@@ -18,12 +18,14 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,9 @@ public class SchemeImportUtil {
       .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
         @Override
         public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          return file.isDirectory() || extensions.contains(file.getExtension());
+          return 
+            (file.isDirectory() || extensions.contains(file.getExtension())) && 
+            (showHiddenFiles || !FileElement.isFileHidden(file));
         }
 
         @Override
