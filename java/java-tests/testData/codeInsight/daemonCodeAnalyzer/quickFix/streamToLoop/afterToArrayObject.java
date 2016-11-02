@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Main {
   private static Object[] test(int[] numbers) {
-      List<Object> list = new ArrayList<>();
+      List<Integer> list = new ArrayList<>();
       for (int number : numbers) {
           Integer integer = number;
           list.add(integer);

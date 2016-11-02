@@ -20,8 +20,10 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -87,7 +89,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   private static boolean isSupportedCodeLocation(PsiMethodCallExpression call) {
     PsiElement cur = call;
     PsiElement parent = cur.getParent();
-    while(parent instanceof PsiExpression) {
+    while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
       // TODO: support in single expression lambdas
       if(parent instanceof PsiLambdaExpression) {
         return false;
@@ -133,9 +135,10 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     if(InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if(qualifier != null) {
-        Operation op = Operation.createIntermediate(name, args, outVar, getStreamElementType(qualifier.getType()));
+        PsiType elementType = getStreamElementType(qualifier.getType());
+        Operation op = Operation.createIntermediate(name, args, outVar, elementType);
         if (op != null) return op;
-        op = TerminalOperation.createTerminal(name, args, callType, className, call.getParent() instanceof PsiExpressionStatement);
+        op = TerminalOperation.createTerminal(name, args, elementType, callType, call.getParent() instanceof PsiExpressionStatement);
         if (op != null) return op;
       }
     }
@@ -232,11 +235,12 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         }
       }
       catch (Exception ex) {
+        String text = terminalCall.getText();
         if(temporaryStreamPlaceholder.isPhysical()) {
           // Just in case if something went wrong: at least try to restore the original stream code
-          temporaryStreamPlaceholder.replace(factory.createExpressionFromText(terminalCall.getText(), temporaryStreamPlaceholder));
+          temporaryStreamPlaceholder.replace(factory.createExpressionFromText(text, temporaryStreamPlaceholder));
         }
-        throw ex;
+        throw new RuntimeException("Error converting Stream to loop: "+text, ex);
       }
     }
 
@@ -380,9 +384,9 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private boolean isUsed(String varName) {
-      if(myUsedNames.contains(varName)) return true;
-      // TODO: cleaner solution
-      return !varName.equals(JavaCodeStyleManager.getInstance(myStatement.getProject()).suggestUniqueVariableName(varName, myStatement, true));
+      return myUsedNames.contains(varName) || JavaLexer.isKeyword(varName, LanguageLevel.HIGHEST) ||
+             // TODO: cleaner solution
+             !varName.equals(JavaCodeStyleManager.getInstance(myStatement.getProject()).suggestUniqueVariableName(varName, myStatement, true));
     }
 
     public String declare(String desiredName, String type, String initializer) {

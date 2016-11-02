@@ -63,7 +63,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   @Nullable
-  static TerminalOperation createTerminal(String name, PsiExpression[] args, PsiType callType, String className, boolean isVoid) {
+  static TerminalOperation createTerminal(String name, PsiExpression[] args, PsiType elementType, PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
         FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
@@ -75,23 +75,22 @@ abstract class TerminalOperation extends Operation {
       return new AccumulatedTerminalOperation("count", "long", "0", "{acc}++;");
     }
     if(name.equals("sum") && args.length == 0) {
-      return new AccumulatedTerminalOperation("sum", callType.getCanonicalText(), "0", "{acc}+={item};");
+      return new AccumulatedTerminalOperation("sum", resultType.getCanonicalText(), "0", "{acc}+={item};");
     }
     if(name.equals("average") && args.length == 0) {
-      if(className.equals(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
+      if(elementType.equals(PsiType.DOUBLE)) {
         return new AverageTerminalOperation(true);
       }
-      else if(className.equals(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) ||
-              className.equals(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) {
+      else if(elementType.equals(PsiType.INT) || elementType.equals(PsiType.LONG)) {
         return new AverageTerminalOperation(false);
       }
     }
     if(name.equals("summaryStatistics") && args.length == 0) {
-      return new AccumulatedTerminalOperation("stat", callType.getCanonicalText(), "new " + callType.getCanonicalText() + "()",
+      return new AccumulatedTerminalOperation("stat", resultType.getCanonicalText(), "new " + resultType.getCanonicalText() + "()",
                                               "{acc}.accept({item});");
     }
     if((name.equals("findFirst") || name.equals("findAny")) && args.length == 0) {
-      return new FindTerminalOperation(callType.getCanonicalText());
+      return new FindTerminalOperation(resultType.getCanonicalText());
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
@@ -101,11 +100,11 @@ abstract class TerminalOperation extends Operation {
       if(args.length == 2 || args.length == 3) {
         FunctionHelper fn = FunctionHelper.create(args[1], 2, true);
         if(fn != null) {
-          return new ReduceTerminalOperation(args[0], fn, callType.getCanonicalText());
+          return new ReduceTerminalOperation(args[0], fn, resultType.getCanonicalText());
         }
       }
       if(args.length == 1) {
-        PsiType optionalElementType = getOptionalElementType(callType);
+        PsiType optionalElementType = getOptionalElementType(resultType);
         FunctionHelper fn = FunctionHelper.create(args[0], 2, true);
         if(fn != null && optionalElementType != null) {
           return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
@@ -113,8 +112,8 @@ abstract class TerminalOperation extends Operation {
       }
     }
     if(name.equals("toArray") && args.length < 2) {
-      if(!(callType instanceof PsiArrayType)) return null;
-      PsiType componentType = ((PsiArrayType)callType).getComponentType();
+      if(!(resultType instanceof PsiArrayType)) return null;
+      PsiType componentType = ((PsiArrayType)resultType).getComponentType();
       if (componentType instanceof PsiPrimitiveType) {
         if(args.length == 0) return new ToPrimitiveArrayTerminalOperation(componentType.getCanonicalText());
       }
@@ -130,7 +129,7 @@ abstract class TerminalOperation extends Operation {
           if(!(type instanceof PsiArrayType)) return null;
           arr = "new "+type.getCanonicalText().replaceFirst("\\[]", "[0]");
         }
-        return new AccumulatedTerminalOperation("list", CommonClassNames.JAVA_UTIL_LIST + "<" + componentType.getCanonicalText() + ">",
+        return new AccumulatedTerminalOperation("list", CommonClassNames.JAVA_UTIL_LIST + "<" + elementType.getCanonicalText() + ">",
                                                 "new "+ CommonClassNames.JAVA_UTIL_ARRAY_LIST+"<>()", "{acc}.add({item});",
                                                 "{acc}.toArray("+arr+")");
       }
@@ -144,25 +143,25 @@ abstract class TerminalOperation extends Operation {
         PsiClass collectorClass = collector.getContainingClass();
         if(collectorClass != null && CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS.equals(collectorClass.getQualifiedName())) {
           if(collector.getName().equals("toList") && collectorArgs.length == 0) {
-            return AccumulatedTerminalOperation.toCollection(callType, CommonClassNames.JAVA_UTIL_ARRAY_LIST, "list");
+            return AccumulatedTerminalOperation.toCollection(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST, "list");
           }
           if(collector.getName().equals("toSet") && collectorArgs.length == 0) {
-            return AccumulatedTerminalOperation.toCollection(callType, CommonClassNames.JAVA_UTIL_HASH_SET, "set");
+            return AccumulatedTerminalOperation.toCollection(resultType, CommonClassNames.JAVA_UTIL_HASH_SET, "set");
           }
           if(collector.getName().equals("toCollection") && collectorArgs.length == 1) {
             FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 0, true);
             if(fn != null) {
-              return new ToCollectionTerminalOperation(fn, callType);
+              return new ToCollectionTerminalOperation(fn, resultType);
             }
           }
           if(collector.getName().equals("reducing") && collectorArgs.length == 2) {
             FunctionHelper fn = FunctionHelper.create(collectorArgs[1], 2, true);
             if(fn != null) {
-              return new ReduceTerminalOperation(collectorArgs[0], fn, callType.getCanonicalText());
+              return new ReduceTerminalOperation(collectorArgs[0], fn, resultType.getCanonicalText());
             }
           }
           if(collector.getName().equals("reducing") && collectorArgs.length == 1) {
-            PsiType optionalElementType = getOptionalElementType(callType);
+            PsiType optionalElementType = getOptionalElementType(resultType);
             FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 2, true);
             if(fn != null && optionalElementType != null) {
               return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
@@ -355,7 +354,14 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       myFn.transform(context, inVar.getName());
-      String expression = myNegatePredicate ? BoolUtils.getNegatedExpressionText(myFn.getExpression()) : myFn.getText();
+      String expression;
+      if (myNegatePredicate) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression("(" + inVar.getDeclaration() + ")->" + myFn.getText());
+        expression = BoolUtils.getNegatedExpressionText((PsiExpression)lambda.getBody());
+      }
+      else {
+        expression = myFn.getText();
+      }
       return "if(" + expression + ") {\n" +
              context.assignAndBreak(myName, PsiType.BOOLEAN.getCanonicalText(), String.valueOf(!myDefaultValue), String.valueOf(myDefaultValue)) +
              "}\n";
