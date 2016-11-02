@@ -88,6 +88,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       List<Matcher> matchers = blackList
         .stream()
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
+        .filter((e) -> e != null)
         .collect(Collectors.toList());
 
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
