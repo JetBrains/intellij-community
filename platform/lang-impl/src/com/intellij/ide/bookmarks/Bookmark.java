@@ -375,11 +375,10 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       float startingFontSize = 40f;  // large font for smaller rounding error
       Font font = getBookmarkFont().deriveFont(startingFontSize);
       FontRenderContext fontRenderContext = ((Graphics2D)g).getFontRenderContext();
-      char[] character = {myMnemonic};
-      double height40 = font.createGlyphVector(fontRenderContext, character).getVisualBounds().getHeight();
+      double height40 = font.createGlyphVector(fontRenderContext, new char[]{'A'}).getVisualBounds().getHeight();
       font = font.deriveFont((float)(startingFontSize * height / height40 * 0.7));
 
-      GlyphVector gv = font.createGlyphVector(fontRenderContext, character);
+      GlyphVector gv = font.createGlyphVector(fontRenderContext, new char[]{myMnemonic});
       Rectangle2D bounds = gv.getVisualBounds();
       ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
                                       (float)(y + (height - bounds.getHeight())/2 - bounds.getY()));
