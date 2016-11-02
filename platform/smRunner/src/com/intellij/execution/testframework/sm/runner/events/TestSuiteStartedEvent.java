@@ -21,6 +21,16 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
 
+  public TestSuiteStartedEvent(@Nullable String name,
+                               @Nullable String id,
+                               @Nullable String parentId,
+                               @Nullable String locationUrl,
+                               @Nullable String nodeType,
+                               @Nullable String nodeArgs,
+                               boolean running) {
+    super(name, id, parentId, locationUrl, nodeType, nodeArgs, running);
+  }
+
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,
                                @Nullable String locationUrl) {
     super(suiteStarted.getSuiteName(),

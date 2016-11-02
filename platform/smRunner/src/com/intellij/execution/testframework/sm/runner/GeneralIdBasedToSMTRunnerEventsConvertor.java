@@ -128,7 +128,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return;
     }
 
-    if (!validateNodeId(startedNodeEvent)) {
+    String nodeId = validateAndGetNodeId(startedNodeEvent);
+    if (nodeId == null) {
       return;
     }
 
@@ -142,7 +143,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         childProxy.setPreferredPrinter(printer);
       }
     }
-    node = new Node(startedNodeEvent.getId(), parentNode, childProxy);
+    node = new Node(nodeId, parentNode, childProxy);
     myNodeByIdMap.put(startedNodeEvent.getId(), node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
@@ -209,7 +210,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private Node findNodeToTerminate(@NotNull TreeNodeEvent treeNodeEvent) {
     Node node = findNode(treeNodeEvent);
     if (node == null) {
-      logProblem("Trying to finish not existent node: " + treeNodeEvent);
+      logProblem("Trying to finish nonexistent node: " + treeNodeEvent);
       return null;
     }
     return node;
@@ -313,21 +314,19 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(() -> fireOnTestsCountInSuite(count));
   }
 
-  private boolean validateNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
+  @Nullable
+  private String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
     String nodeId = treeNodeEvent.getId();
     if (nodeId == null || nodeId.equals(TreeNodeEvent.ROOT_NODE_ID)) {
-      logProblem("Node id should be initialized: " + treeNodeEvent + ".", true);
-      return false;
+      logProblem((nodeId == null ? "Missing" : "Illegal") + " nodeId: " + treeNodeEvent, true);
     }
-    return true;
+    return nodeId;
   }
 
   @Nullable
   private Node findNode(@NotNull TreeNodeEvent treeNodeEvent) {
-    if (!validateNodeId(treeNodeEvent)) {
-      return null;
-    }
-    return myNodeByIdMap.get(treeNodeEvent.getId());
+    String nodeId = validateAndGetNodeId(treeNodeEvent);
+    return nodeId != null ? myNodeByIdMap.get(nodeId) : null;
   }
 
   @Nullable
@@ -412,14 +411,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     private final SMTestProxy myProxy;
     private State myState;
 
-    Node(@Nullable String id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
+    Node(@NotNull String id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
       myId = id;
       myParentNode = parentNode;
       myProxy = proxy;
       myState = State.NOT_RUNNING;
     }
 
-    @Nullable
+    @NotNull
     public String getId() {
       return myId;
     }
@@ -467,7 +466,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     @Override
     public int hashCode() {
-      return myId != null ? myId.hashCode() : -1;
+      return myId.hashCode();
     }
 
     @Override
