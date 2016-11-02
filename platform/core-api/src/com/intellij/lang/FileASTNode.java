@@ -17,7 +17,6 @@ package com.intellij.lang;
 
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Top-level node in AST, corresponds to PsiFile.
@@ -30,6 +29,9 @@ public interface FileASTNode extends ASTNode {
 
   boolean isParsed();
 
-  @Nullable
+  /**
+   * @return a lighter AST object for this tree. The result is not guaranteed to be thread-safe, and not cached inside.
+   */
+  @NotNull
   LighterAST getLighterAST();
 }
