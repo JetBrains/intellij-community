@@ -1,5 +1,6 @@
 package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.Assertions.assertThat
@@ -80,6 +81,63 @@ class PasswordSafeTest {
     }
     finally {
       ps.set(attributes, null)
+    }
+  }
+
+  @Test
+  fun `overwrite credentials`() {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      return
+    }
+
+    val settings = PasswordSafeSettings()
+    settings.providerType = ProviderType.KEYCHAIN
+    val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
+
+    val booleans = booleanArrayOf(true, false)
+    for (old in booleans) {
+      for (new in booleans) {
+        for (rewriteNull in booleans) {
+          checkCredentialsRewritten(ps, old, new, rewriteNull)
+        }
+      }
+    }
+  }
+
+  fun checkCredentialsRewritten(passwordSafe: PasswordSafe,
+                                isMemoryOnlyOld: Boolean,
+                                isMemoryOnlyNew: Boolean,
+                                rewriteWithNull: Boolean) {
+    val id = "test checkCredentialsRewritten $isMemoryOnlyOld $isMemoryOnlyNew $rewriteWithNull"
+    val attributesMemoryOnly = CredentialAttributes(id, null, null, true)
+    val attributesSaved = CredentialAttributes(id, null, null, false)
+
+    val description = "Parameters isMemoryOnlyOld=$isMemoryOnlyOld isMemoryOnlyNew=$isMemoryOnlyNew rewriteWithNull=$rewriteWithNull"
+    val oldPassword = "oldPassword"
+    val newPassword = if (rewriteWithNull) null else "newPassword"
+    val oldCredentials = Credentials("oldName", oldPassword)
+    val newCredentials = Credentials("newName", newPassword)
+
+    passwordSafe.set(if (isMemoryOnlyOld) attributesMemoryOnly else attributesSaved, oldCredentials)
+    passwordSafe.set(if (isMemoryOnlyNew) attributesMemoryOnly else attributesSaved, newCredentials)
+
+    checkCredentials(description, attributesMemoryOnly, newCredentials, passwordSafe, rewriteWithNull)
+    checkCredentials(description, attributesSaved, newCredentials, passwordSafe, rewriteWithNull)
+  }
+
+  private fun checkCredentials(description: String,
+                               attributes: CredentialAttributes,
+                               newCredentials: Credentials,
+                               passwordSafe: PasswordSafe,
+                               rewriteWithNull: Boolean) {
+    val resultMemoryOnly = passwordSafe.get(attributes)!!
+    assertThat(resultMemoryOnly.userName).`as`(description).isEqualTo(newCredentials.userName)
+    val assertThat = assertThat(resultMemoryOnly.password).`as`(description)
+    if (rewriteWithNull) {
+      assertThat.isNullOrEmpty()
+    }
+    else {
+      assertThat.isEqualTo(newCredentials.password)
     }
   }
 }
