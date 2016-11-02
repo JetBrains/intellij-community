@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
@@ -87,12 +88,9 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
 
   protected void buildIndicesForFileRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     if (file.isDirectory()) {
-      final ContentIterator iterator = new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-          buildIndicesForFile(fileOrDir, contentChange);
-          return true;
-        }
+      final ContentIterator iterator = fileOrDir -> {
+        buildIndicesForFile(fileOrDir, contentChange);
+        return true;
       };
 
       iterateIndexableFiles(file, iterator);
@@ -193,6 +191,7 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
   }
 
   private void updateChange(int fileId, VirtualFile file, short mask) {
+    if (DebugAssertions.DEBUG) assert ApplicationManager.getApplication().isWriteAccessAllowed();
     ChangeInfo changeInfo = myChangeInfos.get(fileId);
     if (changeInfo == null) myChangeInfos.put(fileId, new ChangeInfo(file, mask));
     else changeInfo.changeOperation(mask);
@@ -202,9 +201,7 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
 
   @TestOnly
   public void iterateChanges(Processor<ChangeInfo> changeInfoProcessor) {
-    for(ChangeInfo info: myChangeInfos.values()) {
-      if (!changeInfoProcessor.process(info)) return;
-    }
+    ContainerUtil.process(myChangeInfos.values(), changeInfoProcessor);
     myChangeInfos.clear();
   }
 }
