@@ -27,6 +27,7 @@ import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizerUtil {
+
   private static final String VALUE_ATTR_NAME = "value";
 
   public static void writeField(@NotNull Element root, @NotNull @NonNls String fieldName, String value) {
@@ -44,7 +45,7 @@ public class JDOMExternalizerUtil {
 
   @Nullable
   public static String readField(@NotNull Element parent, @NotNull @NonNls String fieldName) {
-    for (Element element : JDOMUtil.getChildren(parent, "option")) {
+    for (Element element : parent.getChildren("option")) {
       String childName = element.getAttributeValue("name");
       if (Comparing.strEqual(childName, fieldName)) {
         return element.getAttributeValue("value");
@@ -54,7 +55,7 @@ public class JDOMExternalizerUtil {
   }
 
   public static Element getOption(@NotNull Element parent, @NotNull @NonNls String fieldName) {
-    for (Element element : JDOMUtil.getChildren(parent, "option")) {
+    for (Element element : parent.getChildren("option")) {
       String childName = element.getAttributeValue("name");
       if (Comparing.strEqual(childName, fieldName)) {
         return element;
