@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
@@ -97,6 +98,15 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }, 10, ModalityState.stateForComponent(this));
 
     UIUtil.requestFocus(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectEx.ProjectSaved.TOPIC,
+                                                                            new ProjectEx.ProjectSaved() {
+                                                                              @Override
+                                                                              public void saved(@NotNull Project project) {
+                                                                                CommandProcessor.getInstance().runUndoTransparentAction(
+                                                                                  () -> ApplicationManager.getApplication()
+                                                                                    .runWriteAction(() -> saveToFile(false)));
+                                                                              }
+                                                                            });
   }
 
   public void dispose() {
@@ -391,8 +401,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final String oldText = myDocument.getText();
     final String newText = IpnbParser.newDocumentText(this);
     if (newText == null) return;
-    if (oldText.equals(newText)) {
+    if (oldText.equals(newText) && mySynchronize) {
       new Alarm().addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(this));
+      mySynchronize = false;
       return;
     }
     try {
