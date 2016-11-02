@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +44,15 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   protected final int width;
   protected final int height;
   private boolean myUseCache;
+
+  static {
+    JBUI.addPropertyChangeListener(JBUI.SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        cache.clear();
+      }
+    });
+  }
 
   /**
    * Creates an icon of the provided size.
