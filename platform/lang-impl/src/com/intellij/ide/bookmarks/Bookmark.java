@@ -53,8 +53,10 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -400,26 +402,32 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
   }
 
-  private static class MyCheckedIcon implements Icon, RetrievableIcon {
+  private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon implements RetrievableIcon {
     @Nullable
     @Override
     public Icon retrieveIcon() {
-      return PlatformIcons.CHECK_ICON;
+      return IconUtil.scale(PlatformIcons.CHECK_ICON, getScale(), true);
     }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      (darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack).paintIcon(c, g, x, y);
+      IconUtil.scale((darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack), getScale(), true).paintIcon(c, g, x, y);
     }
 
     @Override
     public int getIconWidth() {
-      return PlatformIcons.CHECK_ICON.getIconWidth();
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.ARBITRARY);
     }
 
     @Override
     public int getIconHeight() {
-      return PlatformIcons.CHECK_ICON.getIconHeight();
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.ARBITRARY);
+    }
+
+    @NotNull
+    @Override
+    protected MyCheckedIcon copy() {
+      return new MyCheckedIcon();
     }
   }
 
