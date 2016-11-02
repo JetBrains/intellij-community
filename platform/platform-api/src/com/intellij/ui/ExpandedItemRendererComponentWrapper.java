@@ -25,6 +25,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
+  JComponent owner;
+
   /**
    * @deprecated use {@link #wrap(Component)}} instead to create an instance
    */
@@ -40,6 +42,10 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
       @Override
       public void layoutContainer(Container parent) {
         Dimension size = parent.getSize();
+        if (owner != null) {
+          Rectangle visible = owner.getVisibleRect();
+          size.width = visible.x + visible.width;
+        }
         Insets i = parent.getInsets();
         Dimension pref = rendererComponent.getPreferredSize();
         rendererComponent.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
