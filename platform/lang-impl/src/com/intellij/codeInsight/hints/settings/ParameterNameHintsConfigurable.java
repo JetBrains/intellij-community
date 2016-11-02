@@ -40,10 +40,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
@@ -102,7 +100,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .split(text, "\n")
       .stream()
       .filter((e) -> !e.trim().isEmpty())
-      .collect(Collectors.toSet());
+      .collect(Collectors.toCollection(LinkedHashSet::new));
 
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     Set<String> defaultBlackList = provider.getDefaultBlackList();
