@@ -8,6 +8,12 @@ import java.util.*
 
 private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
 
+inline fun macTest(task: () -> Unit) {
+  if (SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY) {
+    task()
+  }
+}
+
 internal class CredentialStoreTest {
   @Test
   fun linux() {
@@ -20,11 +26,7 @@ internal class CredentialStoreTest {
 
   @Test
   fun mac() {
-    if (!SystemInfo.isMacIntel64 || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
-    }
-
-    doTest(KeyChainCredentialStore())
+    macTest { doTest(KeyChainCredentialStore()) }
   }
 
   @Test
@@ -34,16 +36,12 @@ internal class CredentialStoreTest {
 
   @Test
   fun `mac - testEmptyAccountName`() {
-    if (isMacSupported()) {
-      testEmptyAccountName(KeyChainCredentialStore())
-    }
+    macTest { testEmptyAccountName(KeyChainCredentialStore()) }
   }
 
   @Test
   fun `mac - changedAccountName`() {
-    if (isMacSupported()) {
-      testChangedAccountName(KeyChainCredentialStore())
-    }
+    macTest { testChangedAccountName(KeyChainCredentialStore()) }
   }
 
   @Test
@@ -72,9 +70,7 @@ internal class CredentialStoreTest {
 
   @Test
   fun `Keychain - memoryOnlyPassword`() {
-    if (isMacSupported()) {
-      memoryOnlyPassword(KeyChainCredentialStore())
-    }
+    macTest { memoryOnlyPassword(KeyChainCredentialStore()) }
   }
 
   @Test
@@ -84,7 +80,6 @@ internal class CredentialStoreTest {
     }
   }
 
-  private fun isMacSupported() = SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY
 
   private fun memoryOnlyPassword(store: CredentialStore) {
     val pass = randomString()
@@ -158,4 +153,4 @@ internal class CredentialStoreTest {
   }
 }
 
-private fun randomString() = UUID.randomUUID().toString()
+internal fun randomString() = UUID.randomUUID().toString()

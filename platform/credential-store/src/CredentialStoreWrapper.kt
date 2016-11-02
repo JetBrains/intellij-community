@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
-import com.intellij.util.containers.ContainerUtil
 
 private val nullCredentials = Credentials("\u0000", OneTimeString("\u0000"))
 
@@ -39,7 +38,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
   private val queueProcessor = QueueProcessor<() -> Unit>({ it() })
 
-  private val postponedCredentials = ContainerUtil.newConcurrentMap<CredentialAttributes, Credentials>()
+  private val postponedCredentials = KeePassCredentialStore(memoryOnly = true)
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     postponedCredentials.get(attributes)?.let {
@@ -102,7 +101,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
         LOG.error(e)
       }
 
-      postponedCredentials.remove(attributes)
+      postponedCredentials.set(attributes, null)
     }
 
     LOG.catchAndLog {
@@ -110,7 +109,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
         fallbackStore.value.set(attributes, credentials)
       }
       else {
-        postponedCredentials.put(attributes, credentials ?: nullCredentials)
+        postponedCredentials.set(attributes, credentials ?: nullCredentials)
         queueProcessor.add { doSave() }
       }
     }
