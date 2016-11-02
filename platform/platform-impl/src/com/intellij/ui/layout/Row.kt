@@ -125,7 +125,14 @@ abstract class Row() {
     return row
   }
 
-  protected abstract fun createRow(label: String): Row
+
+  inline fun row(init: Row.() -> Unit): Row {
+    val row = createRow(null)
+    row.init()
+    return row
+  }
+
+  protected abstract fun createRow(label: String?): Row
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: JLabel? = null, init: Row.() -> Unit) {
