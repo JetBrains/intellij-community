@@ -58,7 +58,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -351,7 +350,6 @@ public class FindUsagesManager {
       }
       try {
         for (final PsiElement element : elements) {
-          ApplicationManager.getApplication().runReadAction(() -> PsiUtilCore.ensureValid(element));
           handler.processElementUsages(element, usageInfoProcessor, optionsClone);
           for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
             try {
