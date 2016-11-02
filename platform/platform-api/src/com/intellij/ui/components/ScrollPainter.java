@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
 
@@ -28,6 +29,15 @@ import java.awt.image.*;
  * @author Sergey.Malenkov
  */
 class ScrollPainter extends RegionPainter.Alpha {
+  private static final Color x0D = gray("mac.scroll.thumb.darcula.border", 0x0D);
+  private static final Color xA6 = gray("mac.scroll.thumb.darcula.color", 0xA6);
+
+  private static Color gray(String key, int defaultValue) {
+    return new JBColor(() -> {
+      int value = Registry.intValue(key, defaultValue);
+      return value <= 0 ? Gray._0 : value >= 255 ? Gray._255 : Gray.get(value);
+    });
+  }
 
   static final class Track {
     static final RegionPainter<Float> DARCULA = new ScrollPainter(0, .0f, .1f, Gray.x80, null);
@@ -56,11 +66,11 @@ class ScrollPainter extends RegionPainter.Alpha {
                                                               new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
 
     static final class Mac {
-      static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, Gray.xA6, Gray.x0D);
+      static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, xA6, x0D);
       static final RegionPainter<Float> DEFAULT = Thumb.Mac.DEFAULT;
 
       static final class Overlay {
-        static final RegionPainter<Float> DARCULA = new Round(1, 0f, .55f, Gray.xA6, Gray.x0D);
+        static final RegionPainter<Float> DARCULA = new Round(1, 0f, .55f, xA6, x0D);
         static final RegionPainter<Float> DEFAULT = Thumb.Mac.Overlay.DEFAULT;
       }
     }
