@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints.settings;
 
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -23,15 +24,20 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.containers.JBIterable;
+import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +45,7 @@ import java.util.stream.Collectors;
 public class ParameterNameHintsConfigurable extends DialogWrapper {
   public JPanel myConfigurable;
   private EditorTextField myEditorTextField;
+  private ComboBox<Language> myCurrentLanguageCombo;
 
   private final Set<String> myDefaultBlackList;
   private final Language myLanguage;
@@ -105,6 +112,19 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       @Override
       public void documentChanged(DocumentEvent e) {
         updateOkEnabled();
+      }
+    });
+    
+    Collection<Language> allLanguages = Language.getRegisteredLanguages();
+    JBIterable<Language> languagesWithHintsSupport = JBIterable.from(allLanguages)
+      .filter((lang) -> !InlayParameterHintsExtension.INSTANCE.forKey(lang).isEmpty());
+
+    ListComboBoxModel<Language> model = new ListComboBoxModel<>(languagesWithHintsSupport.toList());
+    myCurrentLanguageCombo = new ComboBox<>(model);
+    myCurrentLanguageCombo.setRenderer(new ListCellRendererWrapper<Language>() {
+      @Override
+      public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
+        setText(value.getDisplayName());
       }
     });
   }
