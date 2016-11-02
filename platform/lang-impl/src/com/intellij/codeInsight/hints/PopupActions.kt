@@ -43,6 +43,7 @@ private fun String.capitalize() = StringUtil.capitalizeWords(this, true)
 class ShowSettingsWithAddedPattern : AnAction() {
   init {
     templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
+    templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
 
   override fun update(e: AnActionEvent) {
