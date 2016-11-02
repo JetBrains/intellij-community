@@ -152,7 +152,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
-        memoryViewManagerState.isShowWithInstancesOnly, this);
+        memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly, this);
     myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, myTable);
 
@@ -205,6 +205,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     final MemoryViewManagerListener memoryViewManagerListener = state -> {
       myTable.setFilteringByDiffNonZero(state.isShowWithDiffOnly);
       myTable.setFilteringByInstanceExists(state.isShowWithInstancesOnly);
+      myTable.setFilteringByTrackingState(state.isShowTrackedOnly);
     };
 
     MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);

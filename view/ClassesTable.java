@@ -55,7 +55,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private final ReferenceCountProvider myCountProvider;
 
   private boolean myOnlyWithDiff;
-
+  private boolean myOnlyTracked;
   private boolean myOnlyWithInstances;
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
@@ -63,12 +63,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
 
   ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances,
-               @NotNull ClassesFilteredView parent) {
+               boolean onlyTracked, @NotNull ClassesFilteredView parent) {
     setModel(myModel);
 
     myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
+    myOnlyTracked = onlyTracked;
     myInstancesTracker = InstancesTracker.getInstance(myDebugSession.getProject());
     myParent = parent;
 
@@ -97,8 +98,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         int ix = entry.getIdentifier();
         ReferenceType ref = myElems.get(ix);
         DiffValue diff = myCounts.getOrDefault(ref, myUnknownValue);
-        return !(myOnlyWithDiff && diff.diff() == 0 || myOnlyWithInstances && !diff.hasInstance())
-            && myMatcher.matches(ref.name());
+
+        boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
+            || myOnlyWithInstances && !diff.hasInstance()
+            || myOnlyTracked && myParent.getStrategy(ref) == null;
+        return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
       }
     });
 
@@ -185,6 +189,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   void setFilteringByDiffNonZero(boolean value) {
     if (myOnlyWithDiff != value) {
       myOnlyWithDiff = value;
+      getRowSorter().allRowsChanged();
+    }
+  }
+
+  void setFilteringByTrackingState(boolean value) {
+    if (myOnlyTracked != value) {
+      myOnlyTracked = value;
       getRowSorter().allRowsChanged();
     }
   }

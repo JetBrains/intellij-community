@@ -6,7 +6,7 @@ abstract class ShowInstancesAction extends ClassesActionBase {
   @Override
   public void update(AnActionEvent e) {
     boolean enabled = isEnabled(e);
-    if(enabled) {
+    if (enabled) {
       e.getPresentation().setText(String.format("%s (%d)", getLabel(), getInstancesCount(e)));
     }
   }

@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -79,6 +80,8 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     ActionGroup group = new DefaultActionGroup(
         ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithInstances"),
         ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithDiff"),
+        ActionManager.getInstance().getAction("MemoryView.ShowOnlyTracked"),
+        Separator.getInstance(),
         ActionManager.getInstance().getAction("MemoryView.EnableTrackingWithClosedWindow")
     );
     ((ToolWindowEx) toolWindow).setAdditionalGearActions(group);

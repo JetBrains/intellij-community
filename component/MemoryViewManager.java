@@ -53,12 +53,23 @@ public class MemoryViewManager extends ApplicationComponent.Adapter
     }
   }
 
+  public void setShowTrackedOnly(boolean value) {
+    if (myState.isShowTrackedOnly != value) {
+      myState.isShowTrackedOnly = value;
+      fireStateChanged();
+    }
+  }
+
   public boolean isNeedShowDiffOnly() {
     return myState.isShowWithDiffOnly;
   }
 
   public boolean isNeedShowInstancesOnly() {
     return myState.isShowWithInstancesOnly;
+  }
+
+  public boolean isNeedShowTrackedOnly() {
+    return myState.isShowTrackedOnly;
   }
 
   public void addMemoryViewManagerListener(MemoryViewManagerListener listener, @NotNull Disposable parentDisposable) {
