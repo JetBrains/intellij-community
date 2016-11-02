@@ -17,16 +17,15 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBaseContentRevision;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -36,23 +35,14 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/22/12
- * Time: 10:28 AM
- */
-public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVcsContentRevision, PropertyRevision {
-  private final FilePath myPath;
+public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements MarkerVcsContentRevision, PropertyRevision {
   private final VcsRevisionNumber myNumber;
-  private final Project myProject;
   private final SVNURL myUrl;
   private List<PropertyData> myContent;
 
-  public SvnLazyPropertyContentRevision(FilePath path, VcsRevisionNumber number, Project project, SVNURL url) {
-    myPath = path;
+  public SvnLazyPropertyContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, VcsRevisionNumber number, SVNURL url) {
+    super(vcs, file);
     myNumber = number;
-    myProject = project;
     myUrl = url;
   }
 
@@ -71,23 +61,20 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
   }
 
   private List<PropertyData> loadContent() throws VcsException {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final Ref<List<PropertyData>> ref = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ref.set(AbstractShowPropertiesDiffAction.getPropertyList(vcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-        }
+    final Runnable runnable = () -> {
+      try {
+        ref.set(AbstractShowPropertiesDiffAction.getPropertyList(myVcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
+      }
+      catch (VcsException e) {
+        exceptionRef.set(e);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      final boolean completed = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true, myProject);
+      boolean completed = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true,
+                                             myVcs.getProject());
       if (!completed) {
         throw new VcsException("Properties load for revision " + getRevisionNumber().asString() + " was canceled.");
       }
@@ -97,12 +84,6 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
     }
     if (!exceptionRef.isNull()) throw exceptionRef.get();
     return ref.get();
-  }
-
-  @NotNull
-  @Override
-  public FilePath getFile() {
-    return myPath;
   }
 
   @NotNull

@@ -17,7 +17,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -36,13 +35,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author yole
-*/
-public class SvnContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
+public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
 
-  @NotNull private final SvnVcs myVcs;
-  @NotNull protected final FilePath myFile;
   @NotNull private final SVNRevision myRevision;
   /**
    * this flag is necessary since SVN would not do remote request only if constant SVNRevision.BASE
@@ -51,10 +45,9 @@ public class SvnContentRevision implements ByteBackedContentRevision, MarkerVcsC
   private final boolean myUseBaseRevision;
 
   protected SvnContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision, boolean useBaseRevision) {
-    myVcs = vcs;
+    super(vcs, file);
     myRevision = revision;
     myUseBaseRevision = useBaseRevision;
-    myFile = file;
   }
 
   @NotNull
@@ -104,13 +97,7 @@ public class SvnContentRevision implements ByteBackedContentRevision, MarkerVcsC
                                                             }).getSecond();
       } else {
         return ContentRevisionCache.getOrLoadAsBytes(myVcs.getProject(), myFile, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
-                                                     ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                                                     new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                       @Override
-                                                       public byte[] compute() throws VcsException, IOException {
-                                                         return getUpToDateBinaryContent();
-                                                       }
-                                                     });
+                                                     ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, () -> getUpToDateBinaryContent());
       }
     }
     catch (IOException e) {
@@ -126,11 +113,6 @@ public class SvnContentRevision implements ByteBackedContentRevision, MarkerVcsC
     }
     return SvnUtil.getFileContents(myVcs, SvnTarget.fromFile(file), myUseBaseRevision ? SVNRevision.BASE : myRevision,
                                    SVNRevision.UNDEFINED);
-  }
-
-  @NotNull
-  public FilePath getFile() {
-    return myFile;
   }
 
   @NotNull
