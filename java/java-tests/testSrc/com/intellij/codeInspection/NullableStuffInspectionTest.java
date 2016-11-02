@@ -69,6 +69,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullCustomException() throws Exception{ doTest(); }
 
   public void testNotNullFieldNotInitialized() throws Exception{ doTest(); }
+  public void testNotNullFieldInitializedInLambda() { doTest(); }
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
   public void testNotNullFieldNotInitializedSetting() {
     myInspection.REQUIRE_NOTNULL_FIELDS_INITIALIZED = false;
