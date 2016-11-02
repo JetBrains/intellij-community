@@ -75,7 +75,7 @@ public class Patches {
    * Support default methods in JDI
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
-  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_45");
 
   /**
    * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
