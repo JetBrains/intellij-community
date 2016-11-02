@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -71,7 +72,6 @@ public class StudySerializationUtils {
     public static final String MY_LINE = "myLine";
     public static final String MY_START = "myStart";
     public static final String MY_LENGTH = "myLength";
-    public static final String HINTS = "hints";
     public static final String HINT = "hint";
     public static final String AUTHOR_TITLED = "Author";
     public static final String FIRST_NAME = "first_name";
@@ -82,6 +82,13 @@ public class StudySerializationUtils {
     public static final String TASK_WINDOWS = "taskWindows";
     public static final String RESOURCE_PATH = "resourcePath";
     public static final String COURSE_DIRECTORY = "courseDirectory";
+    public static final String SUBTASK_INFO = "AnswerPlaceholderSubtaskInfo";
+    public static final String SUBTASK_INFOS = "subtaskInfos";
+    public static final String ADDITIONAL_HINTS = "additionalHints";
+    public static final String POSSIBLE_ANSWER = "possibleAnswer";
+    public static final String SELECTED = "selected";
+    public static final String TASK_TEXT = "taskText";
+    public static final String PLACEHOLDER_TEXT = "placeholderText";
 
     private Xml() {
     }
@@ -199,6 +206,31 @@ public class StudySerializationUtils {
       return state;
     }
 
+    public static Element convertToForthVersion(Element state) throws StudyUnrecognizedFormatException {
+      Element taskManagerElement = state.getChild(MAIN_ELEMENT);
+      Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
+          for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
+            Element taskFileElement = entry.getValue();
+            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
+              Element valueElement = new Element(SUBTASK_INFO);
+              addChildMap(placeholder, SUBTASK_INFOS, Collections.singletonMap(String.valueOf(0), valueElement));
+              for (String childName : ContainerUtil
+                .list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
+                Element child = getChildWithName(placeholder, childName);
+                valueElement.addContent(child.clone());
+              }
+              renameElement(getChildWithName(valueElement, TASK_TEXT), PLACEHOLDER_TEXT);
+            }
+          }
+        }
+      }
+
+      return state;
+    }
+
     public static String addStatus(XMLOutputter outputter,
                                    Map<String, String> placeholderTextToStatus,
                                    String taskStatus,
@@ -270,6 +302,20 @@ public class StudySerializationUtils {
         listElement.addContent(element);
       }
       return addChildWithName(parent, name, listElement);
+    }
+
+    public static Element addChildMap(Element parent, String name, Map<String, Element> value) {
+      Element mapElement = new Element(MAP);
+      for (Map.Entry<String, Element> entry : value.entrySet()) {
+        Element entryElement = new Element("entry");
+        mapElement.addContent(entryElement);
+        String key = entry.getKey();
+        entryElement.setAttribute("key", key);
+        Element valueElement = new Element("value");
+        valueElement.addContent(entry.getValue());
+        entryElement.addContent(valueElement);
+      }
+      return addChildWithName(parent, name, mapElement);
     }
 
     public static List<Element> getChildList(Element parent, String name) throws StudyUnrecognizedFormatException {
