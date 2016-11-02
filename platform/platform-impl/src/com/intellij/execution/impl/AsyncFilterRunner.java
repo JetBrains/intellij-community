@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
@@ -89,7 +88,7 @@ class AsyncFilterRunner {
       applyResults.set(bgComputation.compute());
     };
     while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(computeInReadAction)) {
-      TimeoutUtil.sleep(10);
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
     return applyResults.get();
   }
