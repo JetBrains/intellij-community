@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +30,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -107,8 +107,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
           for (int idx = 0; idx < parameters.size(); idx++) {
             LighterASTNode parameter = parameters.get(idx);
             if (parameter.getTokenType() == JavaElementType.LITERAL_EXPRESSION) {
-              final CharSequence literal = ((LighterASTTokenNode) lighterAst.getChildren(parameter).get(0)).getText();
-              if (StringUtil.equals(literal, PsiKeyword.NULL)) {
+              final LighterASTNode literalTextNode = LightTreeUtil.firstChildOfType(lighterAst, parameter, TokenSet.ANY);
+              if (literalTextNode != null && StringUtil.equals(RecordUtil.intern(lighterAst.getCharTable(), literalTextNode), PsiKeyword.NULL)) {
                 if (indices == null) {
                   indices = new IntArrayList(1);
                 }
