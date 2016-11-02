@@ -88,7 +88,7 @@ class PasswordSafeTest {
   fun `overwrite credentials - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
+    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath()))
 
     val booleans = booleanArrayOf(true, false)
     for (old in booleans) {
@@ -147,7 +147,7 @@ class PasswordSafeTest {
   fun `credentials with empty username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
+    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath()))
 
     val id = "test PasswordSafeTest.credentials with empty username"
     val attributes = CredentialAttributes(id, null, null, true)
