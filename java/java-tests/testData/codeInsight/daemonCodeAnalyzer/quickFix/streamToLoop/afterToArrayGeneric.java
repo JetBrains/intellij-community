@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Main {
   private static List<?>[] test(int[] numbers) {
-      List<List<?>> list = new ArrayList<>();
+      List<List<Integer>> list = new ArrayList<>();
       for (int number : numbers) {
           Integer n = number;
           List<Integer> integers = Collections.singletonList(n);

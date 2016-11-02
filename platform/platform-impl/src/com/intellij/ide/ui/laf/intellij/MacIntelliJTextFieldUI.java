@@ -220,7 +220,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     g.setStroke(new BasicStroke(.5f));
     g.draw(getShape(r, 4, false));
 
-    if (true || c.hasFocus()) {
+    if (c.hasFocus()) {
       Color graphiteColor = new Color(0x6f6f72);
       Color blueColor = ColorUtil.brighter(new Color(0x006de2), 3);
       g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .3));

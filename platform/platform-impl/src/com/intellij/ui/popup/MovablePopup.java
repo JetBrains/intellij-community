@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
+import java.awt.event.HierarchyListener;
 
 /**
  * @author Sergey Malenkov
  */
 public class MovablePopup {
-  private static final Object CACHE = new Object();
+  private final HierarchyListener myListener = event -> setVisible(false);
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -161,11 +161,7 @@ public class MovablePopup {
       Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
         if (myHeavyWeight) {
-          Window view = pop(owner);
-          if (view == null) {
-            view = new JWindow(owner);
-            view.setType(Window.Type.POPUP);
-          }
+          Window view = HeavyWeightPopupCache.create(owner);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
@@ -193,6 +189,7 @@ public class MovablePopup {
         myView.setBounds(myViewBounds);
         myView.setVisible(true);
         myViewBounds = null;
+        myOwner.addHierarchyListener(myListener);
       }
     }
   }
@@ -206,6 +203,7 @@ public class MovablePopup {
 
   private void disposeAndUpdate(boolean update) {
     if (myView != null) {
+      myOwner.removeHierarchyListener(myListener);
       boolean visible = myView.isVisible();
       myView.setVisible(false);
       Container container = myContent.getParent();
@@ -214,10 +212,7 @@ public class MovablePopup {
       }
       if (myView instanceof Window) {
         myViewBounds = myView.getBounds();
-        Window window = (Window)myView;
-        if (!push(UIUtil.getWindow(myOwner), window)) {
-          window.dispose();
-        }
+        HeavyWeightPopupCache.dispose((Window)myView);
       }
       else {
         Container parent = myView.getParent();
@@ -269,36 +264,5 @@ public class MovablePopup {
       return container.getRootPane();
     }
     return null;
-  }
-
-  private static Window pop(Window owner) {
-    JRootPane root = getRootPane(owner);
-    if (root != null) {
-      synchronized (CACHE) {
-        @SuppressWarnings("unchecked")
-        ArrayDeque<Window> cache = (ArrayDeque<Window>)root.getClientProperty(CACHE);
-        if (cache != null && !cache.isEmpty()) {
-          return cache.pop();
-        }
-      }
-    }
-    return null;
-  }
-
-  private static boolean push(Window owner, Window window) {
-    JRootPane root = getRootPane(owner);
-    if (root != null) {
-      synchronized (CACHE) {
-        @SuppressWarnings("unchecked")
-        ArrayDeque<Window> cache = (ArrayDeque<Window>)root.getClientProperty(CACHE);
-        if (cache == null) {
-          cache = new ArrayDeque<>();
-          root.putClientProperty(CACHE, cache);
-        }
-        cache.push(window);
-        return true;
-      }
-    }
-    return false;
   }
 }

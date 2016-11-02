@@ -450,8 +450,4 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       return 31 * mySearchType.hashCode() + mySearchFileType.hashCode();
     }
   }
-
-  private static class RawSearchResult {
-
-  }
 }
