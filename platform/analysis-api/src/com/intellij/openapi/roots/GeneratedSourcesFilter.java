@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,8 @@ public abstract class GeneratedSourcesFilter {
   public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
-    return Arrays.stream(EP_NAME.getExtensions()).anyMatch(filter -> filter.isGeneratedSource(file, project));
+    return ReadAction.compute(() -> !project.isDisposed() &&
+                                    Arrays.stream(EP_NAME.getExtensions()).anyMatch(filter -> filter.isGeneratedSource(file, project)));
   }
 
   public abstract boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project);
