@@ -94,6 +94,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final DebugProcessImpl myDebugProcess;
   private final GlobalSearchScope mySearchScope;
   private Sdk myAlternativeJre;
+  private Sdk myRunJre;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
@@ -127,6 +128,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void setAlternativeJre(Sdk sdk) {
     myAlternativeJre = sdk;
     Extensions.findExtension(PsiElementFinder.EP_NAME, getProject(), AlternativeJreClassFinder.class).clearCache();
+  }
+
+  public Sdk getRunJre() {
+    return myRunJre;
   }
 
   public boolean isModifiedClassesScanRequired() {
@@ -220,6 +225,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     ValueLookupManager.getInstance(getProject()).startListening();
     mySearchScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
+    myRunJre = environment.getRunJre();
   }
 
   @NotNull

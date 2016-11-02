@@ -42,6 +42,11 @@ public interface DebugEnvironment {
     return null;
   }
 
+  @Nullable
+  default Sdk getRunJre() {
+    return null;
+  }
+
   boolean isRemote();
 
   RemoteConnection getRemoteConnection();

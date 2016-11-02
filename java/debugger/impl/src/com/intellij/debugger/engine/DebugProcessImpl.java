@@ -56,7 +56,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -608,15 +607,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ));
     }
     if (getSession().getAlternativeJre() == null) {
-      Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-      if ((projectSdk == null || projectSdk.getSdkType() instanceof JavaSdkType) && !versionMatch(projectSdk, version)) {
+      Sdk runjre = getSession().getRunJre();
+      if ((runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
                                    version,
-                                   projectSdk != null ? projectSdk.getVersionString() : "unknown",
+                                   runjre != null ? runjre.getVersionString() : "unknown",
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
           getSession().setAlternativeJre(sdk);
