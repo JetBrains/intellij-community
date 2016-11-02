@@ -16,10 +16,13 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -139,32 +142,85 @@ public class DirectoryEntry extends Entry {
       result.add(new Difference(false, this, e));
     }
 
-    addCreatedChildrenDifferences(e, result);
-    addDeletedChildrenDifferences(e, result);
-    addModifiedChildrenDifferences(e, result);
-  }
+    // most often we have the same children, so try processing it directly
+    int commonIndex = 0;
+    final int myChildrenSize = myChildren.size();
+    final int rightChildrenSize = e.myChildren.size();
 
-  private void addCreatedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
+    for(int size = Math.min(myChildrenSize, rightChildrenSize); commonIndex < size; ++commonIndex) {
+      Entry childEntry = myChildren.get(commonIndex);
+      Entry rightChildEntry = e.myChildren.get(commonIndex);
+
+      if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
+        childEntry.collectDifferencesWith(rightChildEntry, result);
+      } else {
+        break;
+      }
+    }
+
+    if (commonIndex == myChildrenSize && commonIndex == rightChildrenSize) return;
+
+    TIntObjectHashMap<Entry> uniqueNameIdToMyChildEntries = new TIntObjectHashMap<>(myChildrenSize - commonIndex);
+    for (int i = commonIndex; i < myChildrenSize; ++i) {
+      Entry childEntry = myChildren.get(i);
+      uniqueNameIdToMyChildEntries.put(childEntry.getNameId(), childEntry);
+    }
+
+    TIntObjectHashMap<Entry> uniqueNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
+    TIntObjectHashMap<Entry> myNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
+
+    for(int i = commonIndex; i < rightChildrenSize; ++i) {
+      Entry rightChildEntry = e.myChildren.get(i);
+      int rightChildEntryNameId = rightChildEntry.getNameId();
+      Entry myChildEntry = uniqueNameIdToMyChildEntries.get(rightChildEntryNameId);
+
+      if (myChildEntry != null && myChildEntry.isDirectory() == rightChildEntry.isDirectory()) {
+        uniqueNameIdToMyChildEntries.remove(rightChildEntryNameId);
+        myNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
+      } else {
+        uniqueNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
+      }
+    }
+
+    if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
+      TIntArrayList uniqueChildNameIdsToRemove = new TIntArrayList();
+      TIntArrayList uniqueRightChildNameIdsToRemove = new TIntArrayList();
+
+      uniqueNameIdToMyChildEntries.forEachValue(myChildEntry -> {
+        uniqueNameIdToRightChildEntries.forEachValue(rightChildEntry -> {
+          if (rightChildEntry.nameEquals(myChildEntry.getName()) && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
+            uniqueChildNameIdsToRemove.add(myChildEntry.getNameId());
+            uniqueRightChildNameIdsToRemove.add(rightChildEntry.getNameId());
+            myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
+            return false;
+          }
+          return true;
+        });
+        return true;
+      });
+
+      uniqueChildNameIdsToRemove.forEach(value -> {
+        uniqueNameIdToMyChildEntries.remove(value);
+        return true;
+      });
+      uniqueRightChildNameIdsToRemove.forEach(value -> {
+        uniqueNameIdToRightChildEntries.remove(value);
+        return true;
+      });
+    }
+
     for (Entry child : e.myChildren) {
-      if (findDirectChild(child.getName(), child.isDirectory()) == null) {
+      if (uniqueNameIdToRightChildEntries.containsKey(child.getNameId())) {
         child.collectCreatedDifferences(result);
       }
     }
-  }
 
-  private void addDeletedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : myChildren) {
-      if (e.findDirectChild(child.getName(), child.isDirectory()) == null) {
+      if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
         child.collectDeletedDifferences(result);
-      }
-    }
-  }
-
-  private void addModifiedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
-    for (Entry myChild : myChildren) {
-      Entry itsChild = e.findDirectChild(myChild.getName(), myChild.isDirectory());
-      if (itsChild != null) {
-        myChild.collectDifferencesWith(itsChild, result);
+      } else {
+        Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
+        if (itsChild != null) child.collectDifferencesWith(itsChild, result);
       }
     }
   }
