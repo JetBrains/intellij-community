@@ -789,12 +789,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  @Nullable
-  public VcsEventsListenerManager getVcsEventsListenerManager() {
-    return null;
-  }
-
-  @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
       myMappings.mappingsChanged();
