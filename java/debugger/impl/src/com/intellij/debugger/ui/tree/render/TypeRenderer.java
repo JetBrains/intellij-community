@@ -44,6 +44,7 @@ public abstract class TypeRenderer implements Renderer {
     myProperties.setClassName(className);
   }
 
+  @Override
   public Renderer clone() {
     try {
       final TypeRenderer cloned = (TypeRenderer)super.clone();
@@ -56,20 +57,24 @@ public abstract class TypeRenderer implements Renderer {
     return null;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return DebuggerUtils.instanceOf(type, getClassName());
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myProperties.readExternal(element);
   }
 
   protected CachedEvaluator createCachedEvaluator() {
     return new CachedEvaluator() {
+      @Override
       protected String getClassName() {
         return TypeRenderer.this.getClassName();
       }
