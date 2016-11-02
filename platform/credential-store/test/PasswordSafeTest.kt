@@ -87,10 +87,6 @@ class PasswordSafeTest {
 
   @Test
   fun `overwrite credentials`() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
-    }
-
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEYCHAIN
     val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
@@ -119,11 +115,17 @@ class PasswordSafeTest {
     val oldCredentials = Credentials("oldName", oldPassword)
     val newCredentials = Credentials("newName", newPassword)
 
-    passwordSafe.set(if (isMemoryOnlyOld) attributesMemoryOnly else attributesSaved, oldCredentials)
-    passwordSafe.set(if (isMemoryOnlyNew) attributesMemoryOnly else attributesSaved, newCredentials)
+    try {
+      passwordSafe.set(if (isMemoryOnlyOld) attributesMemoryOnly else attributesSaved, oldCredentials)
+      passwordSafe.set(if (isMemoryOnlyNew) attributesMemoryOnly else attributesSaved, newCredentials)
 
-    checkCredentials(description, attributesMemoryOnly, newCredentials, passwordSafe, rewriteWithNull)
-    checkCredentials(description, attributesSaved, newCredentials, passwordSafe, rewriteWithNull)
+      checkCredentials(description, attributesMemoryOnly, newCredentials, passwordSafe, rewriteWithNull)
+      checkCredentials(description, attributesSaved, newCredentials, passwordSafe, rewriteWithNull)
+    }
+    finally {
+      passwordSafe.set(attributesMemoryOnly, null)
+      passwordSafe.set(attributesSaved, null)
+    }
   }
 
   private fun checkCredentials(description: String,
@@ -144,10 +146,6 @@ class PasswordSafeTest {
 
   @Test
   fun `credentials with empty username`() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
-    }
-
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEYCHAIN
     val ps = PasswordSafeImpl(settings, KeyChainCredentialStore())
@@ -155,11 +153,16 @@ class PasswordSafeTest {
     val id = "test PasswordSafeTest.credentials with empty username"
     val attributes = CredentialAttributes(id, null, null, true)
 
-    val credentials = Credentials(null, "passphrase")
-    ps.set(attributes, credentials)
-    val saved = ps.get(attributes)!!
-    assertThat(saved.password).isEqualTo(credentials.password)
-    assertThat(saved.userName).isNullOrEmpty()
+    try {
+      val credentials = Credentials(null, "passphrase")
+      ps.set(attributes, credentials)
+      val saved = ps.get(attributes)!!
+      assertThat(saved.password).isEqualTo(credentials.password)
+      assertThat(saved.userName).isNullOrEmpty()
+    }
+    finally {
+      ps.set(attributes, null)
+    }
   }
 }
 
