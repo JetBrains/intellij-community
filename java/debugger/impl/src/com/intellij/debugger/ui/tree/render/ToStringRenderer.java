@@ -55,7 +55,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   @Override
-  public @NonNls String getName() {
+  public String getName() {
     return "toString";
   }
 
@@ -162,8 +162,8 @@ public class ToStringRenderer extends NodeRendererImpl {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) {
     super.readExternal(element);
-    final String value = JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS");
-    USE_CLASS_FILTERS = "true".equalsIgnoreCase(value);
+
+    USE_CLASS_FILTERS = "true".equalsIgnoreCase(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
     myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
@@ -172,7 +172,9 @@ public class ToStringRenderer extends NodeRendererImpl {
   public void writeExternal(Element element) {
     super.writeExternal(element);
 
-    JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", USE_CLASS_FILTERS? "true" : "false");
+    if (USE_CLASS_FILTERS) {
+      JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
+    }
     DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
   }
 
@@ -181,7 +183,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   public void setClassFilters(ClassFilter[] classFilters) {
-    myClassFilters = classFilters != null? classFilters : ClassFilter.EMPTY_ARRAY;
+    myClassFilters = classFilters != null ? classFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   private boolean isFiltered(Type t) {
