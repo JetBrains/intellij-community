@@ -24,12 +24,17 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
   @Override
   protected JComponent createViewPanel() {
     final List<String> text = myCell.getText();
+    return createColoredPanel(text);
+  }
+
+  @NotNull
+  public static JComponent createColoredPanel(List<String> text) {
     if (text == null) return new JLabel();
     ColorPane ansiColoredPane = new ColorPane();
     final Font font = ansiColoredPane.getFont();
     final Font newFont = new Font(font.getName(), font.getStyle(), EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
     ansiColoredPane.setFont(newFont);
-    ansiColoredPane.appendANSI(StringUtil.join(text, ""));
+    ansiColoredPane.appendANSI(StringUtil.join(text, "\n"));
     ansiColoredPane.setBackground(IpnbEditorUtil.getBackground());
     ansiColoredPane.setEditable(false);
     return ansiColoredPane;
@@ -110,35 +115,43 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
     }
 
     public static Color getANSIColor(String ANSIColor) {
-      if (ANSIColor.equals("\u001B[30m") || ANSIColor.equals("\u001B[0;30m") || ANSIColor.equals("\u001B[1;30m")) {
+      if (ANSIColor.equals("\u001B[30m") || ANSIColor.equals("\u001B[0;30m") || ANSIColor.equals("\u001B[1;30m")
+          || ANSIColor.equals("\u001B[01;30m")) {
         return JBColor.BLACK;
       }
-      else if (ANSIColor.equals("\u001B[31m") || ANSIColor.equals("\u001B[0;31m") || ANSIColor.equals("\u001B[1;31m")) {
+      else if (ANSIColor.equals("\u001B[31m") || ANSIColor.equals("\u001B[0;31m") || ANSIColor.equals("\u001B[1;31m")
+               || ANSIColor.equals("\u001B[01;31m")) {
         return D_Red;
       }
-      else if (ANSIColor.equals("\u001B[32m") || ANSIColor.equals("\u001B[0;32m") || ANSIColor.equals("\u001B[1;32m")) {
+      else if (ANSIColor.equals("\u001B[32m") || ANSIColor.equals("\u001B[0;32m") || ANSIColor.equals("\u001B[1;32m")
+               || ANSIColor.equals("\u001B[01;32m")) {
         return D_Green;
       }
-      else if (ANSIColor.equals("\u001B[33m") || ANSIColor.equals("\u001B[0;33m") || ANSIColor.equals("\u001B[1;33m")) {
+      else if (ANSIColor.equals("\u001B[33m") || ANSIColor.equals("\u001B[0;33m") || ANSIColor.equals("\u001B[1;33m")
+               || ANSIColor.equals("\u001B[01;33m")) {
         return D_Yellow;
       }
-      else if (ANSIColor.equals("\u001B[34m") || ANSIColor.equals("\u001B[0;34m") || ANSIColor.equals("\u001B[1;34m")) {
+      else if (ANSIColor.equals("\u001B[34m") || ANSIColor.equals("\u001B[0;34m") || ANSIColor.equals("\u001B[1;34m")
+               || ANSIColor.equals("\u001B[01;34m")) {
         return JBColor.BLUE;
       }
-      else if (ANSIColor.equals("\u001B[35m") || ANSIColor.equals("\u001B[0;35m") || ANSIColor.equals("\u001B[1;35m")) {
+      else if (ANSIColor.equals("\u001B[35m") || ANSIColor.equals("\u001B[0;35m") || ANSIColor.equals("\u001B[1;35m")
+               || ANSIColor.equals("\u001B[01;35m")) {
         return D_Magenta;
       }
-      else if (ANSIColor.equals("\u001B[36m") || ANSIColor.equals("\u001B[0;36m") || ANSIColor.equals("\u001B[1;36m")) {
+      else if (ANSIColor.equals("\u001B[36m") || ANSIColor.equals("\u001B[0;36m") || ANSIColor.equals("\u001B[1;36m")
+               || ANSIColor.equals("\u001B[01;36m")) {
         return D_Cyan;
       }
-      else if (ANSIColor.equals("\u001B[37m") || ANSIColor.equals("\u001B[0;37m") || ANSIColor.equals("\u001B[1;37m")) {
+      else if (ANSIColor.equals("\u001B[37m") || ANSIColor.equals("\u001B[0;37m") || ANSIColor.equals("\u001B[1;37m")
+               || ANSIColor.equals("\u001B[01;37m")) {
         return JBColor.WHITE;
       }
       else if (ANSIColor.equals("\u001B[0m")) {
         return cReset;
       }
       else {
-        return JBColor.WHITE;
+        return JBColor.BLACK;
       }
     }
   }
