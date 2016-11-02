@@ -72,19 +72,24 @@ public final class BasicRendererProperties implements Cloneable {
     myClassName = null;
     for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
-      if (NAME_OPTION.equals(optionName)) {
-        myName = option.getAttributeValue("value");
-      }
-      else if (ENABLED_OPTION.equals(optionName)) {
-        // default is false
-        myEnabled = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-      else if (CLASSNAME_OPTION.equals(optionName)) {
-        myClassName = option.getAttributeValue("value");
-      }
-      else if (SHOW_TYPE_OPTION.equals(optionName)) {
-        // default is true
-        myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
+      switch (optionName) {
+        case NAME_OPTION:
+          myName = option.getAttributeValue("value");
+          break;
+        case ENABLED_OPTION:
+          // default is false
+          String value = option.getAttributeValue("value");
+          if (value != null) {
+            myEnabled = Boolean.parseBoolean(value);
+          }
+          break;
+        case CLASSNAME_OPTION:
+          myClassName = option.getAttributeValue("value");
+          break;
+        case SHOW_TYPE_OPTION:
+          // default is true
+          myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
+          break;
       }
     }
   }
