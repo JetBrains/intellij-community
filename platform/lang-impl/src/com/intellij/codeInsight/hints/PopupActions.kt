@@ -56,15 +56,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
     val language = file.language.baseLanguage ?: file.language
     InlayParameterHintsExtension.forLanguage(language) ?: return
-    val info = getMethodInfoAtOffset(editor, file) ?: return
-    val dialog = ParameterNameHintsConfigurable(project, language, info.toPattern())
     
+    val info = getMethodInfoAtOffset(editor, file) ?: return
+    val dialog = ParameterNameHintsConfigurable(language, info.toPattern())
     dialog.show()
   }
 }
