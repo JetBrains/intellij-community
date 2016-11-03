@@ -832,7 +832,9 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String pluralize(@NotNull String word) {
-    return Pluralizer.PLURALIZER.plural(word);
+    String plural = Pluralizer.PLURALIZER.plural(word);
+    return equalsIgnoreCase(plural, word) && !endsWithIgnoreCase(plural, "es") ?
+           Pluralizer.restoreCase(word, word + "s") : plural;
   }
 
   @NotNull
@@ -1645,13 +1647,17 @@ public class StringUtil extends StringUtilRt {
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns <code>null</code> if failed to match appropriate heuristic.
    *
-   * @param name english word in plural form
+   * @param word english word in plural form
    * @return name in singular form or <code>null</code> if failed to find one.
    */
   @Nullable
   @Contract(pure = true)
   public static String unpluralize(@NotNull String word) {
-    return Pluralizer.PLURALIZER.singular(word);
+    String singular = Pluralizer.PLURALIZER.singular(word);
+    if (equalsIgnoreCase(singular, word)) {
+      singular = nullize(trimEnd(singular, "s", true));
+    }
+    return equalsIgnoreCase(singular, word) ? null : singular;
   }
 
   @Contract(pure = true)
