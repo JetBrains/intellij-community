@@ -80,7 +80,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
     """
 
     overrides(BaseInterpreterInterface.create_std_in)
-    def create_std_in(self):
+    def create_std_in(self, *args, **kwargs):
         try:
             if not self.__buffer_output:
                 return sys.stdin
