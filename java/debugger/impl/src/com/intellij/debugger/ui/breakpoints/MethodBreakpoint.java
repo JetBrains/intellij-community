@@ -156,6 +156,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       Method method = MethodBytecodeUtil.getLambdaMethod(classType);
       if (method == null) {
         for (Method m : classType.methods()) {
+          if (!base && m.isAbstract()) {
+            continue;
+          }
           if (getMethodName().equals(m.name()) && mySignature.getName(debugProcess).equals(m.signature())) {
             method = m;
             break;
@@ -163,6 +166,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
       if (method != null) {
+        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method);
+        if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
+          method = target;
+        }
+
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
         if (!allLineLocations.isEmpty()) {
           if (isWatchEntry()) {

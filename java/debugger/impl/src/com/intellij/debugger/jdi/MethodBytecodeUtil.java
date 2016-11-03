@@ -22,6 +22,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -241,14 +242,28 @@ public class MethodBytecodeUtil {
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
             if (cls != null) {
-              Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
-              if (method != null) {
-                methodRef.set(method);
-              }
+              cls.methodsByName(name).stream().findFirst().ifPresent(methodRef::set);
             }
           }
         });
       }
+    }
+    return methodRef.get();
+  }
+
+  @Nullable
+  public static Method getBridgeTargetMethod(Method method) {
+    Ref<Method> methodRef = Ref.create();
+    if (method.isBridge()) {
+      visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+          ReferenceType cls = ContainerUtil.getFirstItem(method.virtualMachine().classesByName(owner));
+          if (cls != null) {
+            StreamEx.of(cls.methodsByName(name)).without(method).findFirst().ifPresent(methodRef::set);
+          }
+        }
+      });
     }
     return methodRef.get();
   }
