@@ -26,6 +26,7 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>stream.collect(Collectors.summingInt())</code> &rarr; <code>stream.mapToInt().sum()</code></li>
   <li><code>stream.collect(Collectors.summingLong())</code> &rarr; <code>stream.mapToLong().sum()</code></li>
   <li><code>stream.collect(Collectors.summingDouble())</code> &rarr; <code>stream.mapToDouble().sum()</code></li>
+  <li><code>stream.mapToObj(x -> x)</code> &rarr; <code>stream.boxed()</code></li>
   <li><code>!stream.anyMatch()</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.anyMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
   <li><code>!stream.noneMatch()</code> &rarr; <code>stream.anyMatch()</code></li>

@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ abstract class SourceOperation extends Operation {
         PsiType type = args[0].getType();
         if(type instanceof PsiArrayType) {
           PsiType componentType = ((PsiArrayType)type).getComponentType();
-          if(StreamToLoopInspection.getStreamElementType(callType).isAssignableFrom(componentType)) {
+          if(StreamApiUtil.getStreamElementType(callType).isAssignableFrom(componentType)) {
             return new ForEachSource(args[0]);
           }
         }

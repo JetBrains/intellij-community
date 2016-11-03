@@ -32,6 +32,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -136,7 +137,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
        !method.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if(qualifier != null) {
-        PsiType elementType = getStreamElementType(qualifier.getType());
+        PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
         if(elementType == null || ((elementType instanceof PsiClassType) && ((PsiClassType)elementType).isRaw())) {
           // Raw type in any stream step is not supported
           return null;
@@ -172,7 +173,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if(!(qualifier instanceof PsiMethodCallExpression)) return null;
       currentCall = (PsiMethodCallExpression)qualifier;
       if(op.changesVariable()) {
-        PsiType type = getStreamElementType(currentCall.getType());
+        PsiType type = StreamApiUtil.getStreamElementType(currentCall.getType());
         if(type == null) return null;
         lastVar = new StreamVariable(type);
       }
@@ -290,28 +291,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       allOperations(operations).map(or -> or.myOperation).forEach(op -> op.registerUsedNames(context::addUsedVar));
       allOperations(operations).map(or -> or.myInVar).distinct().forEach(var -> var.register(context));
     }
-  }
-
-  @Contract("null -> null")
-  static PsiType getStreamElementType(PsiType type) {
-    if(!(type instanceof PsiClassType)) return null;
-    PsiClass aClass = ((PsiClassType)type).resolve();
-    if(InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) {
-      return PsiType.INT;
-    }
-    if(InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) {
-      return PsiType.LONG;
-    }
-    if(InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
-      return PsiType.DOUBLE;
-    }
-    PsiType[] parameters = ((PsiClassType)type).getParameters();
-    if(parameters.length != 1) return null;
-    PsiType streamType = parameters[0];
-    if(streamType instanceof PsiCapturedWildcardType) {
-      streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
-    }
-    return streamType;
   }
 
   static class StreamToLoopReplacementContext {
