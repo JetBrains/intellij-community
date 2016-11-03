@@ -22,6 +22,7 @@ import org.jdom.output.XMLOutputter;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -223,6 +224,13 @@ public class StudySerializationUtils {
                 valueElement.addContent(child.clone());
               }
               renameElement(getChildWithName(valueElement, TASK_TEXT), PLACEHOLDER_TEXT);
+              List<Element> additionalHints = ContainerUtil.map(getChildList(valueElement, ADDITIONAL_HINTS), Element::clone);
+              Element hint = getChildWithName(valueElement, HINT);
+              Element firstHint = new Element(OPTION).setAttribute(VALUE, hint.getAttributeValue(VALUE));
+              List<Element> newHints = new ArrayList<>();
+              newHints.add(firstHint);
+              newHints.addAll(additionalHints);
+              addChildList(valueElement, "hints", newHints);
             }
           }
         }
