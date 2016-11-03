@@ -56,11 +56,10 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     myDetailsPanel = new DetailsPanel();
     myDetailsPanel.loading();
     myDetailsPanel.layout();
-    
-    myDetailsLoader = new GenericDetailsLoader<>(ticket -> {
-      final Loader loader = new Loader(project, loadingTitle, myTicket.copy());
-      loader.runSteadily(backgroundable -> myQueue.run(backgroundable));
-    }, (ticket, t) -> acceptData(t));
+
+    myDetailsLoader = new GenericDetailsLoader<>(
+      ticket -> myQueue.run(new Loader(project, loadingTitle, myTicket.copy())),
+      (ticket, t) -> acceptData(t));
   }
 
   @Override
@@ -125,7 +124,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     }
 
     @Override
-    protected void doInAwtIfFail(Exception e) {
+    protected void doInAwtIfFail(@NotNull Exception e) {
       final Exception cause;
       if (e instanceof RuntimeException && e.getCause() != null) {
         cause = (Exception) e.getCause();
