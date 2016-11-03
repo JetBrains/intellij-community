@@ -37,9 +37,11 @@ public class SaveAllAction extends AnAction implements DumbAware {
   }
   
   private static void stripSpacesFromCaretLines(@NotNull Editor editor) {
-    Document document = editor.getDocument();
-    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    final boolean inChangedLinesOnly = !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(settings.getStripTrailingSpaces());
-    TrailingSpacesStripper.strip(document, inChangedLinesOnly, false);
+    final String stripSpacesSetting = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+    if (!EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripSpacesSetting)) {
+      Document document = editor.getDocument();
+      final boolean inChangedLinesOnly = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED.equals(stripSpacesSetting);
+      TrailingSpacesStripper.strip(document, inChangedLinesOnly, false);
+    }
   }
 }
