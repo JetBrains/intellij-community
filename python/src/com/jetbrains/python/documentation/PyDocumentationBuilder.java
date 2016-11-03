@@ -110,7 +110,16 @@ public class PyDocumentationBuilder {
     if (elementDefinition != null) {
       final ASTNode node = elementDefinition.getNode();
       if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
-        buildForKeyword(elementDefinition.getText());
+        String documentationName = elementDefinition.getText();
+        if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
+          final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);
+          if (statement != null) documentationName = "try";
+        }
+        else if (node.getElementType() == PyTokenTypes.IN_KEYWORD) {
+          final PyForStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyForStatement.class);
+          if (statement != null) documentationName = "for";
+        }
+        buildForKeyword(documentationName);
       }
     }
     final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, false);
