@@ -311,6 +311,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
+
     final File targetFile = new File(getTempDirPath() + "/" + targetPath);
     try {
       FileUtil.copyDir(fromFile, targetFile);
@@ -1082,12 +1083,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void checkResult(@NotNull final String text) {
+  public void checkResult(@NotNull String text) {
     checkResult(text, false);
   }
 
   @Override
-  public void checkResult(@NotNull final String text, final boolean stripTrailingSpaces) {
+  public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
@@ -1099,42 +1100,41 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void checkResultByFile(@NotNull final String expectedFile) {
+  public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
+    new WriteCommandAction(getProject()) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiFile psiFile = getFileToCheck(filePath);
+        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
+      }
+    }.execute();
+  }
+
+  @Override
+  public void checkResultByFile(@NotNull String expectedFile) {
     checkResultByFile(expectedFile, false);
   }
 
   @Override
-  public void checkResultByFile(@NotNull final String expectedFile, final boolean ignoreTrailingWhitespaces) {
+  public void checkResultByFile(@NotNull String expectedFile, boolean ignoreTrailingWhitespaces) {
     assertInitialized();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces));
   }
 
   @Override
-  public void checkResultByFile(@NotNull final String filePath, @NotNull final String expectedFile, final boolean ignoreTrailingWhitespaces) {
+  public void checkResultByFile(@NotNull String filePath, @NotNull String expectedFile, boolean ignoreTrailingWhitespaces) {
     assertInitialized();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> checkResultByFile(expectedFile, getFileToCheck(filePath), ignoreTrailingWhitespaces));
+  }
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      final String path = filePath.replace(File.separatorChar, '/');
-      final VirtualFile copy = findFileInTempDir(path);
-      if (copy == null) {
-        throw new IllegalArgumentException("could not find results file " + path);
-      }
-      final PsiFile psiFile = myPsiManager.findFile(copy);
-      assertNotNull(copy.getPath(), psiFile);
-      try {
-        checkResultByFile(expectedFile, psiFile, ignoreTrailingWhitespaces);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+  private PsiFile getFileToCheck(String filePath) {
+    String path = filePath.replace(File.separatorChar, '/');
+    VirtualFile copy = findFileInTempDir(path);
+    assertNotNull("could not find results file " + path, copy);
+    PsiFile psiFile = myPsiManager.findFile(copy);
+    assertNotNull(copy.getPath(), psiFile);
+    return psiFile;
   }
 
   @Override
@@ -1502,30 +1502,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
-  private void checkResultByFile(@NotNull String expectedFile,
-                                 @NotNull PsiFile originalFile,
-                                 boolean stripTrailingSpaces) throws IOException {
+  private void checkResultByFile(@NotNull String expectedFile, @NotNull PsiFile originalFile, boolean stripTrailingSpaces) {
     if (!stripTrailingSpaces) {
       EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     }
+
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    final String fileText = originalFile.getText();
-    final String path = getTestDataPath() + "/" + expectedFile;
-
-    /*final VirtualFile result = LocalFileSystem.getInstance().findFileByPath(path);
-    final int caret = myEditor.getCaretModel().getOffset();
-    final String newText = myFile == originalFile ? fileText.substring(0, caret) + "<caret>" + fileText.substring(caret) : fileText;
-    VfsUtil.saveText(result, newText);*/
-
-    VirtualFile virtualFile = originalFile.getVirtualFile();
-    String charset = virtualFile == null? null : virtualFile.getCharset().name();
+    String fileText = originalFile.getText();
+    String path = getTestDataPath() + "/" + expectedFile;
+    String charset = Optional.ofNullable(originalFile.getVirtualFile()).map(f -> f.getCharset().name()).orElse(null);
     checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, charset), fileText);
-
   }
 
   private void checkResult(@NotNull String expectedFile,
-                           final boolean stripTrailingSpaces,
+                           boolean stripTrailingSpaces,
                            @NotNull SelectionAndCaretMarkupLoader loader,
                            @NotNull String actualText) {
     assertInitialized();
@@ -1600,17 +1591,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (CodeInsightTestFixtureImpl.Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
-      if (border.isLeftBorder()) {
+      if (border.isLeftBorder) {
         info.append(tagName);
-        if (border.myText != null) {
-          info.append(' ').append(border.myText);
+        if (border.text != null) {
+          info.append(' ').append(border.text);
         }
       }
       else {
         info.append('/').append(tagName);
       }
       info.append('>');
-      result.insert(border.getOffset(), info);
+      result.insert(border.offset, info);
     }
     return result.toString();
   }
@@ -1758,54 +1749,45 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     @NotNull
-    private static SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), path);
+    private static SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) {
+      return fromIoSource(() -> FileUtil.loadFile(new File(path), charset), path);
     }
 
     @NotNull
-    static SelectionAndCaretMarkupLoader fromFile(@NotNull VirtualFile file) {
-      final String text;
+    private static SelectionAndCaretMarkupLoader fromFile(@NotNull VirtualFile file) {
+      return fromIoSource(() -> VfsUtilCore.loadText(file), file.getPath());
+    }
+
+    @NotNull
+    private static SelectionAndCaretMarkupLoader fromIoSource(@NotNull ThrowableComputable<String, IOException> source, String path) {
       try {
-        text = VfsUtilCore.loadText(file);
+        return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(source.compute()), path);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(text), file.getPath());
     }
 
     @NotNull
-    static SelectionAndCaretMarkupLoader fromText(@NotNull String text) {
+    private static SelectionAndCaretMarkupLoader fromText(@NotNull String text) {
       return new SelectionAndCaretMarkupLoader(text, null);
     }
   }
 
   private static class Border implements Comparable<Border> {
-    private final boolean myIsLeftBorder;
-    private final int myOffset;
-    private final String myText;
+    private final boolean isLeftBorder;
+    private final int offset;
+    private final String text;
 
     private Border(boolean isLeftBorder, int offset, String text) {
-      myIsLeftBorder = isLeftBorder;
-      myOffset = offset;
-      myText = text;
-    }
-
-    public boolean isLeftBorder() {
-      return myIsLeftBorder;
-    }
-
-    public int getOffset() {
-      return myOffset;
-    }
-
-    public String getText() {
-      return myText;
+      this.isLeftBorder = isLeftBorder;
+      this.offset = offset;
+      this.text = text;
     }
 
     @Override
     public int compareTo(@NotNull Border o) {
-      return getOffset() < o.getOffset() ? 1 : -1;
+      return offset < o.offset ? 1 : -1;
     }
   }
 

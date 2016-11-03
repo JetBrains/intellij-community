@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,7 @@ import java.util.List;
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
-
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
-
   String ERROR_MARKER = "error";
   String WARNING_MARKER = "warning";
   String WEAK_WARNING_MARKER = "weak_warning";
@@ -465,6 +463,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void checkResult(@NotNull String text);
 
   void checkResult(@NotNull String text, boolean stripTrailingSpaces);
+
+  void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces);
 
   Document getDocument(@NotNull PsiFile file);
 
