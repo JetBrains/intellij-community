@@ -17,42 +17,24 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.util.PairConsumer;
 
-/**
- * @author irengrig
- *         Date: 6/29/11
- *         Time: 11:51 PM
- */
 public class ValueConsumer<Id, Data> {
   private Id myId;
   private Id mySetId;
   private final PairConsumer<Id, Data> myConsumer;
-  private PairConsumer<Id, Data> myCacheConsumer;
 
   protected ValueConsumer(PairConsumer<Id, Data> consumer) {
     myConsumer = consumer;
   }
 
-  public void setCacheConsumer(PairConsumer<Id, Data> cacheConsumer) {
-    myCacheConsumer = cacheConsumer;
-  }
-
-  public void consume(final Id id, final Data data) {
-    if (id.equals(mySetId) || ! id.equals(myId)) {
-      if (myCacheConsumer != null) {
-        myCacheConsumer.consume(id, data);
-      }
-      return;
+  public void consume(Id id, Data data) {
+    if (!id.equals(mySetId) && id.equals(myId)) {
+      mySetId = id;
+      myConsumer.consume(id, data);
     }
-    mySetId = id;
-    myConsumer.consume(id, data);
   }
 
   public void setId(Id id) {
     myId = id;
-    mySetId = null;
-  }
-
-  public void reset() {
     mySetId = null;
   }
 }

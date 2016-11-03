@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.GenericDetailsLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -146,12 +145,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     @Override
     protected void doInAwtIfSuccess() {
       if (myDisposed) return;
-      try {
-        myDetailsLoader.take(myTicketCopy, myT);
-      }
-      catch (Details.AlreadyDisposedException e) {
-        // t is not disposable
-      }
+      myDetailsLoader.take(myTicketCopy, myT);
     }
 
     @Override
