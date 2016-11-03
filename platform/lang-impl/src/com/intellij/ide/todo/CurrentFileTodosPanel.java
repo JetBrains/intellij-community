@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
@@ -59,7 +58,6 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
 
     if (file != null && getSelectedFile() == file) return;
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)myTodoTreeBuilder;
     builder.setFile(file);
     if (myTodoTreeBuilder.isUpdatable()) {
