@@ -517,8 +517,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer) {
+    long start = 0;
+    if (LOG.isDebugEnabled()) {
+      start = System.currentTimeMillis();
+    }
     MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
     classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
     StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).forEach(consumer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Processing all classes took: " + String.valueOf(System.currentTimeMillis() - start) + "ms");
+    }
   }
 }
