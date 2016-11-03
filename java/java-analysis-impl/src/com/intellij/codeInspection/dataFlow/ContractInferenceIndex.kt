@@ -97,7 +97,7 @@ private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (L
   object : RecursiveLighterASTNodeWalkingVisitor(tree) {
     override fun visitNode(element: LighterASTNode) {
       val type = element.tokenType
-      if (type === CLASS || type === ANONYMOUS_CLASS || type === LAMBDA_EXPRESSION) return
+      if (type === CLASS || type === FIELD || type == METHOD || type == ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
 
       processor(element)
       super.visitNode(element)
