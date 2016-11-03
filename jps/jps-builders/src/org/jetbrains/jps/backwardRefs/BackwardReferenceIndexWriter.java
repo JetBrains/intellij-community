@@ -96,7 +96,7 @@ public class BackwardReferenceIndexWriter {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
       }
       else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        throw new BuildDataCorruptedException(new IOException("backward reference index should be updated to actual version"));
+        throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
