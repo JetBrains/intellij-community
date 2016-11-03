@@ -15,38 +15,13 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
-@State(
-  name="JavaCodeFoldingSettings",
-  storages= {
-    @Storage("editor.codeinsight.xml")}
-)
-public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettingsBase implements PersistentStateComponent<JavaCodeFoldingSettingsImpl>,
-                                                                                    ExportableComponent {
-
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("code.folding.settings");
-  }
-
+@State(name = "JavaCodeFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
+public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettingsBase implements PersistentStateComponent<JavaCodeFoldingSettingsImpl> {
   @Override
   public JavaCodeFoldingSettingsImpl getState() {
     return this;

@@ -25,14 +25,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ExportableApplicationComponent
+import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import gnu.trove.THashSet
 import java.util.function.Function
 
-class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : ExportableApplicationComponent {
+class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : ApplicationComponent {
   private val mySchemeManager: SchemeManager<QuickList>
 
   init {
@@ -47,7 +47,7 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
             dataHolder.updateDigest(item)
             return item
           }
-        })
+        }, presentableName = IdeBundle.message("quick.lists.presentable.name"))
   }
 
   companion object {
@@ -55,10 +55,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
     val instance: QuickListsManager
       get() = ApplicationManager.getApplication().getComponent(QuickListsManager::class.java)
   }
-
-  override fun getExportFiles() = arrayOf(mySchemeManager.rootDirectory)
-
-  override fun getPresentableName() = IdeBundle.message("quick.lists.presentable.name")!!
 
   override fun getComponentName() = "QuickListsManager"
 
