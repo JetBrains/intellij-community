@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -54,6 +55,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   protected CharSequence myContentAsText;
   protected final long myStamp;
   protected byte[] myHash;
+  private boolean myLighterASTShouldBeThreadSafe;
 
   @Override
   public Project getProject() {
@@ -85,7 +87,8 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   public @NotNull LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
-      lighterAST = getPsiFileForPsiDependentIndex().getNode().getLighterAST();
+      FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
+      lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
     return lighterAST;
@@ -96,14 +99,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
    * but unsaved documents may be indexed in many concurrent threads
    */
   void ensureThreadSafeLighterAST() {
-    ensureParsed(getPsiFile().getNode());
-    ensureParsed(getPsiFileForPsiDependentIndex().getNode());
-  }
-
-  private static void ensureParsed(@Nullable FileASTNode node) {
-    if (node != null) {
-      node.getFirstChildNode();
-    }
+    myLighterASTShouldBeThreadSafe = true;
   }
 
   public PsiFile createFileFromText(@NotNull CharSequence text) {
