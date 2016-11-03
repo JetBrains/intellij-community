@@ -276,7 +276,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private class NewLineAction extends DumbAwareAction {
     public NewLineAction() {
-      super(null, "New line (" + KeymapUtil.getKeystrokeText(SearchReplaceComponent.NEW_LINE_KEYSTROKE) + ")", AllIcons.Actions.NewLine);
+      super(null, "New line (" + KeymapUtil.getKeystrokeText(SearchReplaceComponent.NEW_LINE_KEYSTROKE) + ")", AllIcons.Actions.SearchNewLine);
     }
 
     @Override
