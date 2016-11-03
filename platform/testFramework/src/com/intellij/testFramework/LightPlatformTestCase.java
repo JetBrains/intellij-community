@@ -268,7 +268,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
       ourApplication.setDataProvider(this);
-      LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+      LightProjectDescriptor descriptor = getProjectDescriptor();
       doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
@@ -279,6 +279,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
       filePointerManager.storePointers();
     });
+  }
+
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
   }
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
