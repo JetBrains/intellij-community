@@ -35,6 +35,7 @@ class Foo {
   Foo() {}
   Foo(a, b, c) {}
   void simple(a) {}
+  void simple(a, b) {}
   void defaultArgs(a, b = 1,c) {}
   void mapArgs(Map m, a) {}
   void varArgs(a, def... b) {}
@@ -115,5 +116,11 @@ enum Baz {
 
   void 'test no DGM inlays'() {
     testInlays '[].each {}', [:]
+  }
+
+  void 'test closure arguments'() {
+    testInlays 'new Foo().simple {}', [:]
+    testInlays 'new Foo().simple({})', [17: 'a']
+    testInlays 'new Foo().simple null, {}', [17: 'a', 23: 'b']
   }
 }

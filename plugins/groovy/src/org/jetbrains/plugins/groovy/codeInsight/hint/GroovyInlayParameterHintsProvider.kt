@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ArgInfo
 
 class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
@@ -41,18 +42,23 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     val signature = GrClosureSignatureUtil.createSignature(this) ?: return null
     val infos = GrClosureSignatureUtil.mapParametersToArguments(signature, this) ?: return null
     val original = signature.parameters.zip(infos)
-
-    // leave only parameters with names
-    val map = original.mapNotNull {
-      it.first.name?.let { name -> name to it.second }
-    }.toMap()
+    val closureArgument = closureArguments.singleOrNull()
 
     // leave only regular arguments and varargs
-    val nonNamedArguments = map.filterValues {
-      !it.isMultiArg || it.args.none { it is GrNamedArgument }
+    fun ArgInfo<PsiElement>.shouldShowHint(): Boolean {
+      if (isMultiArg) return args.none { it is GrNamedArgument } //  do not show named arguments
+      if (closureArgument == null) return true
+      return closureArgument !in args // do not show closure argument
     }
 
-    return nonNamedArguments.mapNotNull {
+    // leave only parameters with names
+    val filtered = original.mapNotNull {
+      val (parameter, info) = it
+      val name = parameter.name
+      if (name != null && info.shouldShowHint()) name to it.second else null
+    }
+
+    return filtered.mapNotNull {
       val (name, info) = it
       info.args.firstOrNull()?.let { arg ->
         val inlayText = if (info.isMultiArg) "...$name" else name
