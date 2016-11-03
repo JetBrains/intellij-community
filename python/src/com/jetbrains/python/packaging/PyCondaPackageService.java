@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -30,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -41,6 +43,7 @@ import java.util.*;
 
 @State(name = "PyCondaPackageService", storages = @Storage("conda_packages.xml"))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
+  private static final Logger LOG = Logger.getInstance(PyCondaManagementService.class);
   public Map<String, String> CONDA_PACKAGES = ContainerUtil.newConcurrentMap();
   public Map<String, List<String>> PACKAGES_TO_RELEASES = new HashMap<>();
   public Set<String> CONDA_CHANNELS = ContainerUtil.newConcurrentSet();
@@ -170,11 +173,19 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   public void updatePackagesCache() {
     final String condaPython = getCondaPython();
-    if (condaPython == null) return;
+    if (condaPython == null) {
+      LOG.warn("Could not find conda python interpreter");
+      return;
+    }
     final String path = PythonHelpersLocator.getHelperPath("conda_packaging_tool.py");
     final String runDirectory = new File(condaPython).getParent();
-    final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, new String[]{condaPython, path, "listall"});
-    if (output.getExitCode() != 0) return;
+    final String[] command = {condaPython, path, "listall"};
+    final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, command);
+    if (output.getExitCode() != 0) {
+      LOG.warn("Failed to get list of conda packages");
+      LOG.warn(StringUtil.join(command, " "));
+      return;
+    }
     final List<String> lines = output.getStdoutLines();
     for (String line : lines) {
       final List<String> split = StringUtil.split(line, "\t");
