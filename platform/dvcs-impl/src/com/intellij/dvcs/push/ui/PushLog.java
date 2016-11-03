@@ -53,10 +53,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static java.util.stream.Collectors.toCollection;
 
 public class PushLog extends JPanel implements DataProvider {
 
@@ -414,12 +415,14 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private List<CommitNode> getSelectedCommitNodes() {
+    List<DefaultMutableTreeNode> selectedNodes = getSelectedTreeNodes();
+    return selectedNodes.isEmpty() ? Collections.emptyList() : collectSelectedCommitNodes(selectedNodes);
+  }
+
+  @NotNull
+  private List<DefaultMutableTreeNode> getSelectedTreeNodes() {
     int[] rows = myTree.getSelectionRows();
-    if (rows != null && rows.length != 0) {
-      List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(rows));
-      return collectSelectedCommitNodes(selectedNodes);
-    }
-    return ContainerUtil.emptyList();
+    return (rows != null && rows.length != 0) ? getNodesForRows(getSortedRows(rows)) : emptyList();
   }
 
   @NotNull
@@ -453,7 +456,21 @@ public class PushLog extends JPanel implements DataProvider {
       startSyncEditing();
       return true;
     }
+    if (CheckboxTreeHelper.isToggleEvent(e, myTree) && pressed) {
+      toggleRepositoriesFromCommits();
+      return true;
+    }
     return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
+  private void toggleRepositoriesFromCommits() {
+    LinkedHashSet<CheckedTreeNode> checkedNodes =
+      getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
+        .map(CheckedTreeNode.class::cast).collect(toCollection(LinkedHashSet::new));
+    if (checkedNodes.isEmpty()) return;
+    // use new state from first lead node;
+    boolean newState = !checkedNodes.iterator().next().isChecked();
+    checkedNodes.forEach(n -> myTree.setNodeState(n, newState));
   }
 
   @Nullable

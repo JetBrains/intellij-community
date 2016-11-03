@@ -162,7 +162,7 @@ public class CheckboxTreeHelper {
     });
   }
 
-  private static boolean isToggleEvent(KeyEvent e, JComponent mainComponent) {
+  public static boolean isToggleEvent(KeyEvent e, JComponent mainComponent) {
     return e.getKeyCode() == KeyEvent.VK_SPACE && SpeedSearchSupply.getSupply(mainComponent) == null;
   }
 
