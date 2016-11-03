@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.junit;
 
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.JUnit5ConverterInspection;
@@ -23,6 +25,12 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() {
     doTest();
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    super.tuneFixture(builder);
+    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
   public void testExpectedOnTestAnnotation() throws Exception {
