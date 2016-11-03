@@ -1486,8 +1486,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     try {
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
       // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
-      // todo this assumption isn't correct for vfs events happened between content loading and indexing itself
-      // proper fix will when events handling will be out of direct execution by EDT
+      if (content.getTimeStamp() != file.getTimeStamp()) {
+        content = new com.intellij.ide.caches.FileContent(file);
+      }
       if (!file.isValid() || isTooLarge(file)) {
         removeDataFromIndicesForFile(fileId);
         if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
