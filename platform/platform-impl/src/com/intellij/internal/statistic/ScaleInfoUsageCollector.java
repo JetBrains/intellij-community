@@ -49,12 +49,12 @@ public class ScaleInfoUsageCollector extends UsagesCollector {
     }
 
     String os = OS.isWindows() ? "Windows" : OS.isLinux() ? "Linux" : OS.isMacOSX() ? "Mac" : "Unknown OS";
-    return Collections.singleton(new UsageDescriptor(os + " screen scale " + scale, 1));
+    return Collections.singleton(new UsageDescriptor(os + " " + scale, 1));
   }
 
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("user.jdk");
+    return GroupDescriptor.create("user.ui.screen.scale");
   }
 }
