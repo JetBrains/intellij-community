@@ -125,7 +125,7 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<String> getBuildProcessApplicationClasspath(boolean isLauncherUsed) {
+  public static List<String> getBuildProcessApplicationClasspath() {
     final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
@@ -147,10 +147,6 @@ public class ClasspathBootstrap {
     
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
-    if (!isLauncherUsed) {
-      appendJavaCompilerClasspath(cp);
-    }
-
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
@@ -161,15 +157,17 @@ public class ClasspathBootstrap {
     return ContainerUtil.newArrayList(cp);
   }
 
-  public static void appendJavaCompilerClasspath(Collection<String> cp) {
+  public static void appendJavaCompilerClasspath(Collection<String> cp, boolean includeEcj) {
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
 
-    File file = EclipseCompilerTool.findEcjJarFile();
-    if (file != null) {
-      cp.add(file.getAbsolutePath());
+    if (includeEcj) {
+      File file = EclipseCompilerTool.findEcjJarFile();
+      if (file != null) {
+        cp.add(file.getAbsolutePath());
+      }
     }
   }
 
