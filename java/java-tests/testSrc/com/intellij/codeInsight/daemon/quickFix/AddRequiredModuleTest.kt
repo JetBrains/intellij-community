@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix
 
-import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
@@ -44,7 +43,7 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.launchAction(action)
 
     myFixture.checkHighlighting()  // error is gone
-    myFixture.checkResultByFile("module-info.java", getTestName(false) + "_after.java", false)
+    myFixture.checkResult("module-info.java", "module MAIN {\n    requires M2;\n}", false)
   }
 
   fun testNoIdeaModuleDependency() {
@@ -57,6 +56,4 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val actions = myFixture.filterAvailableIntentions(messageM2)
     assertEmpty(actions)
   }
-
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/addRequiredModule"
 }
