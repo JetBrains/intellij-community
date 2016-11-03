@@ -74,7 +74,7 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
 }
 
-class InlayAssert(private val file: PsiFile, private val inlays: List<Inlay>) {
+class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
 
   fun assertNoInlays() {
     assertThat(inlays).hasSize(0)
