@@ -16,7 +16,8 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.diff.DiffManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,19 +25,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.vcs.changes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
@@ -58,62 +55,41 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.exists;
+
 public abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
   protected AbstractShowPropertiesDiffAction(String name) {
     super(name);
   }
 
-  protected abstract DataKey<Change[]> getChangesKey();
-  @Nullable
-  protected abstract SVNRevision getBeforeRevisionValue(final Change change, final SvnVcs vcs) throws SVNException;
-  @Nullable
-  protected abstract SVNRevision getAfterRevisionValue(final Change change, final SvnVcs vcs) throws SVNException;
-
   @Override
-  public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
-    final Change[] data = VcsDataKeys.CHANGES.getData(dataContext);
-    boolean showAction = checkThatChangesAreUnderSvn(data);
-    presentation.setVisible(data != null && showAction);
-    presentation.setEnabled(showAction);
+  public void update(@NotNull AnActionEvent e) {
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    boolean showAction = checkThatChangesAreUnderSvn(changes);
+
+    e.getPresentation().setVisible(changes != null && showAction);
+    e.getPresentation().setEnabled(showAction);
   }
 
   private static boolean checkThatChangesAreUnderSvn(@Nullable Change[] changes) {
-    boolean result = false;
-
-    if (changes != null) {
-      result = ContainerUtil.or(changes, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return isUnderSvn(change.getBeforeRevision()) || isUnderSvn(change.getAfterRevision());
-        }
-      });
-    }
-
-    return result;
+    return changes != null && exists(changes, change -> isUnderSvn(change.getBeforeRevision()) || isUnderSvn(change.getAfterRevision()));
   }
 
   private static boolean isUnderSvn(@Nullable ContentRevision revision) {
     return revision instanceof MarkerVcsContentRevision && SvnVcs.getKey().equals(((MarkerVcsContentRevision)revision).getVcsKey());
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final Change[] changes = e.getData(getChangesKey());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Change[] changes = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
 
-    if (! checkThatChangesAreUnderSvn(changes)) {
-      return;
+    if (checkThatChangesAreUnderSvn(changes)) {
+      new CalculateAndShow(e.getProject(), changes[0], e.getPresentation().getText()).queue();
     }
-
-    final Change change = changes[0];
-
-    final CalculateAndShow worker = new CalculateAndShow(project, change, e.getPresentation().getText());
-    ProgressManager.getInstance().run(worker);
   }
 
-  private class CalculateAndShow extends Task.Backgroundable {
+  private static class CalculateAndShow extends Task.Backgroundable {
     private final Change myChange;
     private List<PropertyData> myBeforeContent;
     private List<PropertyData> myAfterContent;
@@ -132,8 +108,8 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
       final SvnVcs vcs = SvnVcs.getInstance(myProject);
 
       try {
-        myBeforeRevisionValue = getBeforeRevisionValue(myChange, vcs);
-        myAfterRevision = getAfterRevisionValue(myChange, vcs);
+        myBeforeRevisionValue = getBeforeRevisionValue(myChange);
+        myAfterRevision = getAfterRevisionValue(myChange);
 
         myBeforeContent = getPropertyList(vcs, myChange.getBeforeRevision(), myBeforeRevisionValue);
         indicator.checkCanceled();
@@ -168,6 +144,31 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
         }
         DiffManager.getInstance().showDiff(myProject, diffRequest);
       }
+    }
+  }
+
+  @NotNull
+  private static SVNRevision getBeforeRevisionValue(@NotNull Change change) throws SVNException {
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    if (beforeRevision != null) {
+      return ((SvnRevisionNumber)beforeRevision.getRevisionNumber()).getRevision();
+    }
+    else {
+      return SVNRevision.create(((SvnRevisionNumber)notNull(change.getAfterRevision()).getRevisionNumber()).getRevision().getNumber() - 1);
+    }
+  }
+
+  @NotNull
+  private static SVNRevision getAfterRevisionValue(@NotNull Change change) throws SVNException {
+    ContentRevision afterRevision = change.getAfterRevision();
+    if (afterRevision != null) {
+      // CurrentContentRevision will be here, for instance, if invoked from changes dialog for "Compare with Branch" action
+      return afterRevision instanceof CurrentContentRevision
+             ? SVNRevision.WORKING
+             : ((SvnRevisionNumber)afterRevision.getRevisionNumber()).getRevision();
+    }
+    else {
+      return SVNRevision.create(((SvnRevisionNumber)notNull(change.getBeforeRevision()).getRevisionNumber()).getRevision().getNumber() + 1);
     }
   }
 
@@ -296,11 +297,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   public static String toSortedStringPresentation(@NotNull List<PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
-    Collections.sort(lines, new Comparator<PropertyData>() {
-      public int compare(final PropertyData o1, final PropertyData o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(lines, Comparator.comparing(PropertyData::getName));
 
     for (PropertyData line : lines) {
       addPropertyPresentation(line, sb);
