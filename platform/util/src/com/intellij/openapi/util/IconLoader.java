@@ -383,14 +383,20 @@ public final class IconLoader {
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
 
-    private CachedImageIcon(@NotNull URL url, @NotNull ImageFilter[] filters) {
-      myUrl = url;
-      dark = USE_DARK_ICONS;
-      myFilters = filters;
+    private CachedImageIcon(@NotNull CachedImageIcon icon) {
+      myRealIcon = null; // to be computed
+      myOriginalPath = icon.myOriginalPath;
+      myClassLoader = icon.myClassLoader;
+      myUrl = icon.myUrl;
+      dark = icon.dark;
+      numberOfPatchers = icon.numberOfPatchers;
+      myFilters = icon.myFilters;
     }
 
     public CachedImageIcon(@NotNull URL url) {
-      this(url, new ImageFilter[] {IMAGE_FILTER});
+      myUrl = url;
+      dark = USE_DARK_ICONS;
+      myFilters = new ImageFilter[] {IMAGE_FILTER};
     }
 
     private void setGlobalFilter(ImageFilter globalFilter) {
@@ -492,7 +498,9 @@ public final class IconLoader {
     }
 
     private Icon asDisabledIcon() {
-      return new CachedImageIcon(myUrl, new ImageFilter[] {getGlobalFilter(), UIUtil.getGrayFilter()});
+      CachedImageIcon icon = new CachedImageIcon(this);
+      icon.myFilters = new ImageFilter[] {getGlobalFilter(), UIUtil.getGrayFilter()};
+      return icon;
     }
 
     private class MyScaledIconsCache {
