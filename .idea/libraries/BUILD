@@ -967,7 +967,7 @@ java_library(
 )
 
 java_library(
-    name = "profiler-grpc-java",
+    name = "studio-profiler-grpc-1.0-jarjar",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
