@@ -21,10 +21,11 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringManager;
 import com.intellij.refactoring.migration.MigrationManager;
 import com.intellij.refactoring.migration.MigrationMap;
@@ -64,7 +65,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(file)) return false;
+    if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return false;
     if (JavaPsiFacade.getInstance(file.getProject()).findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, file.getResolveScope()) == null) {
       return false;
     }
