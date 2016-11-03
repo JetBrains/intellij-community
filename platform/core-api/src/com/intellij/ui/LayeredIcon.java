@@ -97,10 +97,6 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
   @Override
   public LayeredIcon withJBUIPreScaled(boolean preScaled) {
     super.withJBUIPreScaled(preScaled);
-    for (int i = 0; i < myIcons.length; i++) {
-      myHShifts[i] = scaleVal(myHShifts[i], Scale.JBUI);
-      myVShifts[i] = scaleVal(myVShifts[i], Scale.JBUI);
-    }
     updateSize();
     return this;
   }
