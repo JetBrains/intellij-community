@@ -20,8 +20,9 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TIntArrayList;
+import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class DirectoryEntry extends Entry {
     myChildren = new ArrayList<>(3);
   }
 
-  public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
+  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
     int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<>(count);
@@ -146,8 +147,9 @@ public class DirectoryEntry extends Entry {
     int commonIndex = 0;
     final int myChildrenSize = myChildren.size();
     final int rightChildrenSize = e.myChildren.size();
+    final int minChildrenSize = Math.min(myChildrenSize, rightChildrenSize);
 
-    for(int size = Math.min(myChildrenSize, rightChildrenSize); commonIndex < size; ++commonIndex) {
+    while(commonIndex < minChildrenSize) {
       Entry childEntry = myChildren.get(commonIndex);
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
@@ -156,6 +158,7 @@ public class DirectoryEntry extends Entry {
       } else {
         break;
       }
+      ++commonIndex;
     }
 
     if (commonIndex == myChildrenSize && commonIndex == rightChildrenSize) return;
@@ -183,28 +186,20 @@ public class DirectoryEntry extends Entry {
     }
 
     if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
-      TIntArrayList uniqueChildNameIdsToRemove = new TIntArrayList();
-      TIntArrayList uniqueRightChildNameIdsToRemove = new TIntArrayList();
+      THashMap<String, Entry> nameToEntryMap = new THashMap<>(uniqueNameIdToMyChildEntries.size(), FileUtil.PATH_HASHING_STRATEGY);
 
       uniqueNameIdToMyChildEntries.forEachValue(myChildEntry -> {
-        uniqueNameIdToRightChildEntries.forEachValue(rightChildEntry -> {
-          if (rightChildEntry.nameEquals(myChildEntry.getName()) && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
-            uniqueChildNameIdsToRemove.add(myChildEntry.getNameId());
-            uniqueRightChildNameIdsToRemove.add(rightChildEntry.getNameId());
-            myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
-            return false;
-          }
-          return true;
-        });
+        nameToEntryMap.put(myChildEntry.getName(), myChildEntry);
         return true;
       });
 
-      uniqueChildNameIdsToRemove.forEach(value -> {
-        uniqueNameIdToMyChildEntries.remove(value);
-        return true;
-      });
-      uniqueRightChildNameIdsToRemove.forEach(value -> {
-        uniqueNameIdToRightChildEntries.remove(value);
+      uniqueNameIdToRightChildEntries.forEachValue(rightChildEntry -> {
+        Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
+        if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
+          myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
+          uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
+          uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
+        }
         return true;
       });
     }
