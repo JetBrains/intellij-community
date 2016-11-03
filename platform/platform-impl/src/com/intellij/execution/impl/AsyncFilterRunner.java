@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -133,6 +134,7 @@ class AsyncFilterRunner {
     return () -> {
       List<Filter.Result> results = new ArrayList<>();
       for (LineHighlighter task : tasks) {
+        ProgressManager.checkCanceled();
         if (!marker.isValid()) return FilterResults.EMPTY;
         ContainerUtil.addIfNotNull(results, task.compute());
       }
