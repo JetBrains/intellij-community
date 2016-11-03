@@ -565,15 +565,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         });
       }
 
-      @Override
-      protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
-        recordFileScheduledForIndexing(((VirtualFileWithId)file).id, file, contentChange)
+      protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+        recordFileScheduledForInvalidation(((VirtualFileWithId)file).id, file, contentChange);
       }
 
       @Override
-      protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
-        recordFileScheduledForInvalidation(((VirtualFileWithId)file).id, file, contentChange);
-        return true
+      protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
+        recordFileScheduledForIndexing(((VirtualFileWithId)file).id, file, contentChange)
       }
     }
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(

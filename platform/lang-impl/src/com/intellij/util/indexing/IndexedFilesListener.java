@@ -16,21 +16,36 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public abstract class IndexedFilesListener extends VirtualFileAdapter implements BulkFileListener {
+  private final ManagingFS myManagingFS = ManagingFS.getInstance();
+  @Nullable private final String myConfigPath;
+  @Nullable private final String myLogPath;
+
+  public IndexedFilesListener() {
+    myConfigPath = calcConfigPath(PathManager.getConfigPath());
+    myLogPath = calcConfigPath(PathManager.getLogPath());
+  }
+
   @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     buildIndicesForFileRecursively(event.getFile(), false);
@@ -100,9 +115,25 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
     }
   }
 
+  protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+    if (isUnderConfigOrSystem(file)) {
+      return false;
+    }
+    if (file.isDirectory()) {
+      doInvalidateIndicesForFile(file, contentChange);
+      if (!FileBasedIndexImpl.isMock(file) && !myManagingFS.wereChildrenAccessed(file)) {
+        return false;
+      }
+    }
+    else {
+      doInvalidateIndicesForFile(file, contentChange);
+    }
+    return true;
+  }
+
   protected abstract void iterateIndexableFiles(VirtualFile file, ContentIterator iterator);
   protected abstract void buildIndicesForFile(VirtualFile file, boolean contentChange);
-  protected abstract boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange);
+  protected abstract void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange);
 
   protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
@@ -130,6 +161,24 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
     for (VFileEvent event : events) {
       BulkVirtualFileListenerAdapter.fireAfter(this, event);
     }
+  }
+
+  @Nullable
+  private static String calcConfigPath(@NotNull String path) {
+    try {
+      final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
+      return _path.endsWith("/") ? _path : _path + "/";
+    }
+    catch (IOException e) {
+      FileBasedIndexImpl.LOG.info(e);
+      return null;
+    }
+  }
+
+  private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
+    final String filePath = file.getPath();
+    return myConfigPath != null && FileUtil.startsWith(filePath, myConfigPath) ||
+           myLogPath != null && FileUtil.startsWith(filePath, myLogPath);
   }
 
   static final short  ADD_TO_INDICES = 1;
@@ -191,7 +240,7 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
   }
 
   private void updateChange(int fileId, VirtualFile file, short mask) {
-    if (DebugAssertions.DEBUG) assert ApplicationManager.getApplication().isWriteAccessAllowed();
+    if (DebugAssertions.DEBUG) assert ApplicationManager.getApplication().isDispatchThread();
     ChangeInfo changeInfo = myChangeInfos.get(fileId);
     if (changeInfo == null) myChangeInfos.put(fileId, new ChangeInfo(file, mask));
     else changeInfo.changeOperation(mask);
