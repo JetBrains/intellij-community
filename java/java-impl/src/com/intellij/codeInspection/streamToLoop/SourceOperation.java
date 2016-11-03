@@ -122,9 +122,9 @@ abstract class SourceOperation extends Operation {
       if(myQualifier instanceof PsiReferenceExpression) {
         String name = ((PsiReferenceExpression)myQualifier).getReferenceName();
         if(name != null) {
-          name = StringUtil.unpluralize(name);
-          if(name != null) {
-            outVar.addOtherNameCandidate(name);
+          String singularName = StringUtil.unpluralize(name);
+          if(singularName != null && !name.equals(singularName)) {
+            outVar.addOtherNameCandidate(singularName);
           }
         }
       }
