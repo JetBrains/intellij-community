@@ -205,6 +205,58 @@ public class Py3CompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-19702
+  public void testMetaclassAttributeOnDefinition() {
+    final List<String> suggested = doTestByText("class Meta(type):\n" +
+                                                "    def __init__(self, what, bases, dict):\n" +
+                                                "        self.meta_attr = \"attr\"\n" +
+                                                "        super().__init__(what, bases, dict)\n" +
+                                                "class A(metaclass=Meta):\n" +
+                                                "    pass\n" +
+                                                "print(A.<caret>)");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "meta_attr");
+  }
+
+  // PY-19702
+  public void testMetaclassAttributeOnInstance() {
+    final List<String> suggested = doTestByText("class Meta(type):\n" +
+                                                "    def __init__(self, what, bases, dict):\n" +
+                                                "        self.meta_attr = \"attr\"\n" +
+                                                "        super().__init__(what, bases, dict)\n" +
+                                                "class A(metaclass=Meta):\n" +
+                                                "    pass\n" +
+                                                "print(A().<caret>)");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "meta_attr");
+  }
+
+  public void testMetaclassMethodOnDefinition() {
+    final List<String> suggested = doTestByText("class Meta(type):\n" +
+                                                "    def meta_method(cls):\n" +
+                                                "        pass\n" +
+                                                "class A(metaclass=Meta):\n" +
+                                                "    pass\n" +
+                                                "print(A.<caret>)");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "meta_method");
+  }
+
+  public void testMetaclassMethodOnInstance() {
+    final List<String> suggested = doTestByText("class Meta(type):\n" +
+                                                "    def meta_method(cls):\n" +
+                                                "        pass\n" +
+                                                "class A(metaclass=Meta):\n" +
+                                                "    pass\n" +
+                                                "print(A().<caret>)");
+
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "meta_method");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
