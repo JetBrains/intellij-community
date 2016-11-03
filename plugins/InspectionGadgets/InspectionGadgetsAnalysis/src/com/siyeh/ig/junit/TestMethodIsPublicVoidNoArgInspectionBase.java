@@ -77,7 +77,10 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
       if (!TestUtils.isJUnit3TestMethod(method) && !TestUtils.isJUnit4TestMethod(method)) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, true)) {
+        return;
+      }
       final PsiParameterList parameterList = method.getParameterList();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         registerMethodError(method, Problem.STATIC, method);
@@ -97,6 +100,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
           return;
         }
       }
+      final PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
         registerMethodError(method, Problem.NOT_PUBLIC_VOID, method);
       }
