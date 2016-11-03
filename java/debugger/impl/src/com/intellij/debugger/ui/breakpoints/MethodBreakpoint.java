@@ -527,7 +527,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
     MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
     classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
-    StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).forEach(consumer);
+    StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).forEach(consumer);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing all classes took: " + String.valueOf(System.currentTimeMillis() - start) + "ms");
