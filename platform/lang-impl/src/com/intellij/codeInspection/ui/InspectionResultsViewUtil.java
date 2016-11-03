@@ -59,6 +59,14 @@ public class InspectionResultsViewUtil {
     final int lineNumber = node.getLineNumber();
     if (lineNumber != -1) {
       final PsiFile containingFile = containingElement.getContainingFile();
+
+      // If an inspection result points to a file that has been deleted (a binary file that is such as
+      // an icon), the above code will walk up to the surrounding directly, and calling getContainingFile
+      // on a PsiDirectory yields null.
+      if (containingFile == null) {
+        return null;
+      }
+
       final VirtualFile file = containingFile.getVirtualFile();
       PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments();
       final Document document = FileDocumentManager.getInstance().getDocument(file);
