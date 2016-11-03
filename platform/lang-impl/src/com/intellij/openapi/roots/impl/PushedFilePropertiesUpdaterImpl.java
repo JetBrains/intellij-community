@@ -326,7 +326,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
         //noinspection unchecked
         pusher = pushers[i];
-        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
+        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
           continue;
         }
         findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i] : null);
