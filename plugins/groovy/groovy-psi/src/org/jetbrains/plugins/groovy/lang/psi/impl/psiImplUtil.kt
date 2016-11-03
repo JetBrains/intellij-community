@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -44,28 +46,46 @@ internal fun GroovyFileImpl.getScriptDeclarations(topLevelOnly: Boolean): Array<
 private val key = Key.create<ParameterizedCachedValue<Array<GrVariableDeclaration>, Boolean>>("groovy.variable.declarations")
 
 private fun GroovyFileImpl.collectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
-  val provider = { it: Boolean ->
-    Result.create(doCollectScriptDeclarations(it), this)
+  return if (topLevelOnly) {
+    CachedValuesManager.getCachedValue(this) {
+      Result.create(doCollectScriptBodyDeclarations(), this)
+    }
   }
-  return CachedValuesManager.getManager(project).getParameterizedCachedValue(this, key, provider, false, topLevelOnly)
+  else {
+    CachedValuesManager.getCachedValue(this) {
+      Result.create(doCollectScriptDeclarations(), this)
+    }
+  }
 }
 
-private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
+private fun GroovyFile.doCollectScriptBodyDeclarations(): Array<GrVariableDeclaration> {
   val result = mutableListOf<GrVariableDeclaration>()
-  accept(object : GroovyRecursiveElementVisitor() {
-    var withinMethod = false
-
-    override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) = Unit
-
-    override fun visitMethod(method: GrMethod) {
-      withinMethod = true
-      super.visitMethod(method)
-      withinMethod = false
+  accept(object : PsiRecursiveElementWalkingVisitor() {
+    override fun visitElement(element: PsiElement?) {
+      if (element is GrVariableDeclaration) {
+        if (element.modifierList.rawAnnotations.isNotEmpty()) {
+          result.add(element)
+        }
+      }
+      if (element !is GrMethod && element !is GrTypeDefinition) { // do no go into method and classes
+        super.visitElement(element)
+      }
     }
+  })
+  return result.toTypedArray()
+}
 
-    override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
-      if (!withinMethod || !topLevelOnly) {
-        result.add(variableDeclaration)
+private fun GroovyFileImpl.doCollectScriptDeclarations(): Array<GrVariableDeclaration> {
+  val result = mutableListOf<GrVariableDeclaration>()
+  accept(object : PsiRecursiveElementWalkingVisitor() {
+    override fun visitElement(element: PsiElement?) {
+      if (element is GrVariableDeclaration) {
+        if (element.modifierList.rawAnnotations.isNotEmpty()) {
+          result.add(element)
+        }
+      }
+      if (element !is GrTypeDefinition) { //  do not go into classes
+        super.visitElement(element)
       }
     }
   })
