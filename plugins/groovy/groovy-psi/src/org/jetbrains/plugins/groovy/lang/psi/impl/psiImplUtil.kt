@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-internal fun GroovyFileImpl.getScriptDeclarations(topLevel: Boolean): Array<out GrVariableDeclaration> {
-  val tree = stubTree ?: return collectScriptDeclarations(topLevel)
-  return if (topLevel) {
+internal fun GroovyFileImpl.getScriptDeclarations(topLevelOnly: Boolean): Array<out GrVariableDeclaration> {
+  val tree = stubTree ?: return collectScriptDeclarations(topLevelOnly)
+  return if (topLevelOnly) {
     val root: StubElement<*> = tree.root
     root.getChildrenByType(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.EMPTY_ARRAY)
   }
@@ -43,14 +43,14 @@ internal fun GroovyFileImpl.getScriptDeclarations(topLevel: Boolean): Array<out 
 
 private val key = Key.create<ParameterizedCachedValue<Array<GrVariableDeclaration>, Boolean>>("groovy.variable.declarations")
 
-private fun GroovyFileImpl.collectScriptDeclarations(topLevel: Boolean): Array<GrVariableDeclaration> {
+private fun GroovyFileImpl.collectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
   val provider = { it: Boolean ->
     Result.create(doCollectScriptDeclarations(it), this)
   }
-  return CachedValuesManager.getManager(project).getParameterizedCachedValue(this, key, provider, false, topLevel)
+  return CachedValuesManager.getManager(project).getParameterizedCachedValue(this, key, provider, false, topLevelOnly)
 }
 
-private fun GroovyFileImpl.doCollectScriptDeclarations(topLevel: Boolean): Array<GrVariableDeclaration> {
+private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
   val result = mutableListOf<GrVariableDeclaration>()
   accept(object : GroovyRecursiveElementVisitor() {
     var withinMethod = false
@@ -64,7 +64,7 @@ private fun GroovyFileImpl.doCollectScriptDeclarations(topLevel: Boolean): Array
     }
 
     override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
-      if (!withinMethod || !topLevel) {
+      if (!withinMethod || !topLevelOnly) {
         result.add(variableDeclaration)
       }
     }

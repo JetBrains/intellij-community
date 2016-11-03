@@ -537,8 +537,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @NotNull
   @Override
-  public GrVariableDeclaration[] getScriptDeclarations(boolean topLevel) {
-    return PsiImplUtilKt.getScriptDeclarations(this, topLevel);
+  public GrVariableDeclaration[] getScriptDeclarations(boolean topLevelOnly) {
+    return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
   }
 
   @Override

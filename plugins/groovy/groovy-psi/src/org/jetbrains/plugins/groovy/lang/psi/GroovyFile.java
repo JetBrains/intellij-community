@@ -46,6 +46,27 @@ public interface GroovyFile extends GroovyFileBase {
   @Nullable
   PsiType getInferredScriptReturnType();
 
+  /**
+   * Top level script variable declarations are declarations within script body.
+   * <pre>
+   *   def a // top level
+   *   if (condition) {
+   *     def b // top level
+   *   }
+   *   def foo() {
+   *     def c // script declaration, but not in script body.
+   *   }
+   *   class SomeClass {
+   *     def var() {
+   *       def d // not script declaration, it appears within SomeClass
+   *     }
+   *   }
+   * </pre>
+   * @param topLevelOnly whether script body declarations are needed only
+   * @return script variable declarations which have at least one annotation.
+   * @see org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport
+   * @see org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport
+   */
   @NotNull
-  GrVariableDeclaration[] getScriptDeclarations(boolean topLevel);
+  GrVariableDeclaration[] getScriptDeclarations(boolean topLevelOnly);
 }
