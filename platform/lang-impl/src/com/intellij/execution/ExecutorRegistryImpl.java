@@ -259,7 +259,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       List<RunContentDescriptor> runningDescriptors =
-        executionManager.getRunningDescriptors(s -> s.getConfiguration() == selectedConfiguration.getConfiguration());
+        executionManager.getRunningDescriptors(s -> s != null && s.getConfiguration() == selectedConfiguration.getConfiguration());
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
         RunContentDescriptor contentDescriptor =
           executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
