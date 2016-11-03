@@ -28,7 +28,10 @@ public class CCEditAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
     CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder.getTaskText(), answerPlaceholder.getHints());
     dlg.setTitle("Edit Answer Placeholder");
-    dlg.show();
+    if (dlg.showAndGet()) {
+      answerPlaceholder.setTaskText(dlg.getTaskText());
+      answerPlaceholder.setHints(dlg.getHints());
+    }
   }
 
   @Override
