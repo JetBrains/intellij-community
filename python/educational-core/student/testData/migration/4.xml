@@ -78,6 +78,12 @@
                                               <option name="selected" value="false"/>
                                               <option name="status" value="Solved"/>
                                               <option name="placeholderText" value="test text"/>
+                                              <option name="hints">
+                                                <list>
+                                                  <option value="hint 1"/>
+                                                  <option value="hint 2"/>
+                                                </list>
+                                              </option>
                                             </AnswerPlaceholderSubtaskInfo>
                                           </value>
                                         </entry>
