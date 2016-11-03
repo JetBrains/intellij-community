@@ -190,7 +190,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
 
     try {
       TargetElementUtil util = TargetElementUtil.getInstance();
-      return util.findTargetElement(editor, util.getReferenceSearchFlags(), caret.getOffset());
+      return util.findTargetElement(editor, util.getDefinitionSearchFlags(), caret.getOffset());
     }
     catch (IndexNotReadyException e) {
       return null;
