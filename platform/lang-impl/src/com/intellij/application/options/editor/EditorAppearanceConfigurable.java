@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -64,7 +65,11 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
   private JCheckBox myShowBreadcrumbsCheckBox;
+
+  private JPanel myParameterHintsSettingsPanel;
   private JBCheckBox myShowParameterNameHints;
+  private JButton myConfigureParameterHintsButton;
+  
   //private JCheckBox myUseLCDRendering;
 
   public EditorAppearanceConfigurable() {
@@ -77,9 +82,21 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     
     myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
     myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
-    myShowParameterNameHints.setVisible(InlayParameterHintsExtension.INSTANCE.hasAnyExtensions());
+
+    initInlaysPanel();
   }
-  
+
+  private void initInlaysPanel() {
+    boolean isInlayProvidersAvailable = InlayParameterHintsExtension.INSTANCE.hasAnyExtensions();
+    myParameterHintsSettingsPanel.setVisible(isInlayProvidersAvailable);
+    if (!isInlayProvidersAvailable) return;
+
+    myConfigureParameterHintsButton.addActionListener(e -> {
+      ParameterNameHintsConfigurable configurable = new ParameterNameHintsConfigurable();
+      configurable.show();
+    });
+  }
+
   private void applyNameHintsSettings() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());

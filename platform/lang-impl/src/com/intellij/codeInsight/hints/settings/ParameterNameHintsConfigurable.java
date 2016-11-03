@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
@@ -51,20 +50,21 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private final Language myInitiallySelectedLanguage;
   private final String myNewPreselectedItem;
-  private final Project myProject;
 
   private final Map<Language, String> myBlackLists;
 
-  public ParameterNameHintsConfigurable(@NotNull Project project,
-                                        @NotNull Language selectedLanguage,
+  public ParameterNameHintsConfigurable() {
+    this(null, null);
+  }
+  
+  public ParameterNameHintsConfigurable(@Nullable Language selectedLanguage,
                                         @Nullable String newPreselectedPattern) {
-    super(project);
-    myProject = project;
+    super(null);
     myInitiallySelectedLanguage = selectedLanguage;
 
     myNewPreselectedItem = newPreselectedPattern;
     myBlackLists = ContainerUtil.newHashMap();
-    
+
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
   }
@@ -185,7 +185,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .collect(Collectors.toList());
   }
 
-  private EditorTextField createEditor(@NotNull String text, @Nullable String newPreselectedItem) {
+  private static EditorTextField createEditor(@NotNull String text, @Nullable String newPreselectedItem) {
     final TextRange range;
     if (newPreselectedItem != null) {
       text += "\n";
@@ -202,9 +202,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   @NotNull
-  private EditorTextField createEditorField(@NotNull String text, @Nullable TextRange rangeToSelect) {
+  private static EditorTextField createEditorField(@NotNull String text, @Nullable TextRange rangeToSelect) {
     Document document = EditorFactory.getInstance().createDocument(text);
-    EditorTextField field = new EditorTextField(document, myProject, FileTypes.PLAIN_TEXT, false, false);
+    EditorTextField field = new EditorTextField(document, null, FileTypes.PLAIN_TEXT, false, false);
     field.setPreferredSize(new Dimension(200, 350));
     field.addSettingsProvider(editor -> {
       editor.setVerticalScrollbarVisible(true);

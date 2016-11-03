@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="15" column-count="21" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="707" height="451"/>
+      <xy x="20" y="20" width="717" height="451"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -148,14 +148,32 @@
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.breadcrumbs"/>
         </properties>
       </component>
-      <component id="b82cd" class="com.intellij.ui.components.JBCheckBox" binding="myShowParameterNameHints">
+      <grid id="9ac3d" binding="myParameterHintsSettingsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="12" column="0" row-span="1" col-span="21" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.parameter.name.hints"/>
-        </properties>
-      </component>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="7342b" class="com.intellij.ui.components.JBCheckBox" binding="myShowParameterNameHints">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.parameter.name.hints"/>
+            </properties>
+          </component>
+          <component id="38e6a" class="javax.swing.JButton" binding="myConfigureParameterHintsButton">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="5" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Configure..."/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>
