@@ -327,22 +327,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     }
   }
 
-  @TestOnly
-  @Nullable
-  public Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
-    FileBasedIndex fileIndex = FileBasedIndex.getInstance();
-    final TIntHashSet ids = getReferentFileIds(element);
-    if (ids == null) return null;
-    Set<VirtualFile> fileSet = new THashSet<>();
-    ids.forEach(id -> {
-      final VirtualFile vFile = fileIndex.findFileById(myProject, id);
-      assert vFile != null;
-      fileSet.add(vFile);
-      return true;
-    });
-    return fileSet;
-  }
-
   ProjectFileIndex getFileIndex() {
     return myProjectFileIndex;
   }
@@ -449,5 +433,27 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     public int hashCode() {
       return 31 * mySearchType.hashCode() + mySearchFileType.hashCode();
     }
+  }
+
+  @TestOnly
+  @Nullable
+  public Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
+    FileBasedIndex fileIndex = FileBasedIndex.getInstance();
+    final TIntHashSet ids = getReferentFileIds(element);
+    if (ids == null) return null;
+    Set<VirtualFile> fileSet = new THashSet<>();
+    ids.forEach(id -> {
+      final VirtualFile vFile = fileIndex.findFileById(myProject, id);
+      assert vFile != null;
+      fileSet.add(vFile);
+      return true;
+    });
+    return fileSet;
+  }
+
+  @TestOnly
+  @NotNull
+  public DirtyModulesHolder getDirtyModulesHolder() {
+    return myDirtyModulesHolder;
   }
 }

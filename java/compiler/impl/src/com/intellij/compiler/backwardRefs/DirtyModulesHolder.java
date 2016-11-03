@@ -31,11 +31,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.Set;
 
-class DirtyModulesHolder extends UserDataHolderBase {
+public class DirtyModulesHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -82,6 +83,11 @@ class DirtyModulesHolder extends UserDataHolderBase {
   }
 
   private GlobalSearchScope calculateDirtyModules() {
+    return getAllDirtyModules().stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+  }
+
+  @NotNull
+  private Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
@@ -91,7 +97,7 @@ class DirtyModulesHolder extends UserDataHolderBase {
       final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
       if (m != null) dirtyModules.add(m);
     }
-    return dirtyModules.stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+    return dirtyModules;
   }
 
   boolean contains(VirtualFile file) {
@@ -161,5 +167,13 @@ class DirtyModulesHolder extends UserDataHolderBase {
       return myService.getFileIndex().getModuleForFile(file);
     }
     return null;
+  }
+
+  @TestOnly
+  @NotNull
+  public Set<Module> getAllDirtyModulesForTest() {
+    synchronized (myLock) {
+      return getAllDirtyModules();
+    }
   }
 }

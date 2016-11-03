@@ -40,6 +40,12 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/bytecodeReferences/";
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    installCompiler();
+  }
+
   public void testIsNotReady() {
     myFixture.configureByFile(getName() + "/Foo.java");
     assertNull(getReferentFilesForElementUnderCaret());
