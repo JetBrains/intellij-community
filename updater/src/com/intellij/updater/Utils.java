@@ -214,6 +214,12 @@ public class Utils {
   }
 
   protected static boolean isSymlink(File file) throws IOException {
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      // Windows doesn't support symlinks for non-admin users, and so they aren't used in patches,
+      // which is convenient since this mechanism doesn't work for determining symlinkness on windows anyway
+      // (e.g. paths with more than 8 characters may be truncated in one version but not the other).
+      return false;
+    }
     return !file.getAbsolutePath().equalsIgnoreCase(file.getCanonicalPath());
   }
 
