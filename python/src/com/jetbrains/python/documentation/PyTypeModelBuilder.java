@@ -20,7 +20,7 @@ import com.google.common.collect.Maps;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
