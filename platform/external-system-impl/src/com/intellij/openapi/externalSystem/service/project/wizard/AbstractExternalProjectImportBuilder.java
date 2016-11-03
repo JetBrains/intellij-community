@@ -17,7 +17,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
@@ -205,15 +204,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         final Module[] committedModules = ModuleManager.getInstance(project).getModules();
         if (ContainerUtil.list(committedModules).containsAll(modules)) {
           resolveDependenciesTask.run();
-        }
-        else {
-          ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
-            Collections.singleton(projectSettings.getExternalProjectPath()));
-          ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
-            projectSettings.getExternalProjectPath());
-
-          ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
-            myExternalSystemId, projectSettings.getExternalProjectPath());
         }
       });
     }

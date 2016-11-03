@@ -86,6 +86,7 @@ public class InferenceSession {
   private List<String> myErrorMessages;
   
   private boolean myErased;
+  private boolean myCheckApplicabilityPhase = true;
 
   public final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
@@ -374,6 +375,7 @@ public class InferenceSession {
       return;
     }
 
+    myCheckApplicabilityPhase = false;
     if (properties != null && !properties.isApplicabilityCheck()) {
       final PsiMethod method = properties.getMethod();
       if (parent instanceof PsiCallExpression && PsiPolyExpressionUtil.isMethodCallPolyExpression((PsiExpression)parent, method)) {
@@ -1667,6 +1669,12 @@ public class InferenceSession {
     }
 
     return null;
+  }
+
+  public void setErasedDuringApplicabilityCheck() {
+    if (myCheckApplicabilityPhase) {
+      myErased = true;
+    }
   }
 
   public void setErased() {

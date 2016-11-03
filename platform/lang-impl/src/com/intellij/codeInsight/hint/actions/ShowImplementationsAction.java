@@ -199,7 +199,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  static ImplementationSearcher createImplementationsSearcher() {
+  ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -212,6 +212,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       @Override
       protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
         return ShowImplementationsAction.filterElements(targetElements);
+      }
+
+      @Override
+      protected boolean isSearchDeep() {
+        return ShowImplementationsAction.this.isSearchDeep();
       }
     };
   }
@@ -399,7 +404,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return PsiUtilCore.toPsiElementArray(unique);
   }
 
-  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
+  protected boolean isSearchDeep() {
+    return false;
+  }
+
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
     private final String myCaption;
     private final Editor myEditor;
     @NotNull
@@ -441,6 +450,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       super.run(indicator);
       final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
         new ImplementationSearcher.BackgroundableImplementationSearcher() {
+          @Override
+          protected boolean isSearchDeep() {
+            return ShowImplementationsAction.this.isSearchDeep();
+          }
+
           @Override
           protected void processElement(PsiElement element) {
             if (!updateComponent(element, null)) {

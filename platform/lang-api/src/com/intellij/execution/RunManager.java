@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,12 +179,12 @@ public abstract class RunManager {
    * {@link #addConfiguration(RunnerAndConfigurationSettings, boolean)} if you want the configuration to be persisted in the project.
    *
    * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)
-   * @param type the type of the configuration to create.
+   * @param factory the factory instance.
    * @return the configuration settings object.
    * @see RunManager#suggestUniqueName(String, Collection)
    */
   @NotNull
-  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);
+  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory);
 
   /**
    * Creates a configuration settings object based on a specified {@link RunConfiguration}. Note that you need to call

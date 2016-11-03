@@ -323,6 +323,7 @@ public class Test {
     System.out.println("A");
     System.out.print("A");
     
+    list.add("sss");
     list.get(1);
     list.set(1, "sss");
     
