@@ -123,6 +123,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     myClipboardHandler.resetContent();
   }
 
+  private static boolean isWClipboardProblemLogged = false;
   @Nullable
   private static Clipboard getClipboard() {
     try {
@@ -130,7 +131,10 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
     catch (Exception e) {
-      LOG.warn(e);
+      if (!isWClipboardProblemLogged) {
+        isWClipboardProblemLogged = true;
+        LOG.warn(e);
+      }
       return null;
     }
   }
