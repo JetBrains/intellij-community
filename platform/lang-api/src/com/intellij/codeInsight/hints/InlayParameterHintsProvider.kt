@@ -20,7 +20,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
-object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.parameterHintsProvider")
+object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
 
 @ApiStatus.Experimental
 interface InlayParameterHintsProvider {
