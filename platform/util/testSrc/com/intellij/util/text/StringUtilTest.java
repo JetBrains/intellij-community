@@ -98,7 +98,9 @@ public class StringUtilTest {
 
   @Test
   public void testUnPluralize() {
-    assertEquals("s", StringUtil.unpluralize("s"));
+    assertEquals("plurals", StringUtil.unpluralize("pluralss"));
+    assertEquals("I", StringUtil.unpluralize("Is"));
+    assertEquals(null, StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
     assertEquals("Index", StringUtil.unpluralize("Indices"));
     assertEquals("fix", StringUtil.unpluralize("fixes"));

@@ -63,7 +63,7 @@ class Pluralizer {
    * Pass in a word token to produce a function that can replicate the case on
    * another word.
    */
-  private static String restoreCase(String word, String result) {
+  static String restoreCase(String word, String result) {
     if (word == null || result == null || word == result) return result;
     char[] chars = result.toCharArray();
     boolean prevUp = false;
@@ -173,20 +173,20 @@ class Pluralizer {
      */
     JBIterable.of(new String[][]{
       // Pronouns.
-      {"I", "we"},
-      {"me", "us"},
-      {"he", "they"},
-      {"she", "they"},
-      {"them", "them"},
-      {"myself", "ourselves"},
-      {"yourself", "yourselves"},
-      {"itself", "themselves"},
-      {"herself", "themselves"},
-      {"himself", "themselves"},
-      {"themself", "themselves"},
-      {"is", "are"},
-      {"was", "were"},
-      {"has", "have"},
+      //{"I", "we"},
+      //{"me", "us"},
+      //{"he", "they"},
+      //{"she", "they"},
+      //{"them", "them"},
+      //{"myself", "ourselves"},
+      //{"yourself", "yourselves"},
+      //{"itself", "themselves"},
+      //{"herself", "themselves"},
+      //{"himself", "themselves"},
+      //{"themself", "themselves"},
+      //{"is", "are"},
+      //{"was", "were"},
+      //{"has", "have"},
       {"this", "these"},
       {"that", "those"},
       // Words ending in with a consonant and `o`.
