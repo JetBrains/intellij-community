@@ -272,7 +272,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   @Override
   @NotNull
   public String getName() {
-    T stub = getStub();
+    T stub = getGreenStub();
     if (stub != null) {
       String name = stub.getName();
       if (name != null) {
@@ -292,7 +292,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   @Nullable
   public GrModifierList getModifierList() {
     final GrVariableDeclaration variableDeclaration = getDeclaration();
-    if (variableDeclaration!=null) return variableDeclaration.getModifierList();
+    if (variableDeclaration != null) return variableDeclaration.getModifierList();
     return null;
   }
 
@@ -304,7 +304,11 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
 
   @Nullable
   private GrVariableDeclaration getDeclaration() {
-    return getStubOrPsiParentOfType(GrVariableDeclaration.class);
+    PsiElement parent = getParent();
+    if (parent instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)parent);
+    }
+    return null;
   }
 
   @Override
