@@ -19,9 +19,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
-import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
@@ -35,7 +33,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.io.IOException;
 
-public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
+public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
   @NotNull private final SVNRevision myRevision;
   /**
@@ -123,10 +121,5 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
   @NonNls
   public String toString() {
     return myFile.getPath();
-  }
-
-  @Override
-  public VcsKey getVcsKey() {
-    return SvnVcs.getKey();
   }
 }

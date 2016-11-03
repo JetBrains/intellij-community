@@ -20,8 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +35,7 @@ import java.util.List;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.toSortedStringPresentation;
 
-public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements MarkerVcsContentRevision, PropertyRevision {
+public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements PropertyRevision {
   private final VcsRevisionNumber myNumber;
   private final SVNURL myUrl;
   private List<PropertyData> myContent;
@@ -92,10 +90,5 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myNumber;
-  }
-
-  @Override
-  public VcsKey getVcsKey() {
-    return SvnVcs.getKey();
   }
 }

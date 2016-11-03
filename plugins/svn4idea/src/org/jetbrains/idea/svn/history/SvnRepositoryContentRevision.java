@@ -28,9 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
-import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.vcsUtil.VcsUtil;
@@ -47,7 +45,7 @@ import java.io.OutputStream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class SvnRepositoryContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
+public class SvnRepositoryContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
   @NotNull private final String myPath;
   private final long myRevision;
@@ -188,11 +186,6 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
 
   public String getRelativePath(@NotNull String repositoryUrl) {
     return SvnUtil.getRelativePath(repositoryUrl, myPath);
-  }
-
-  @Override
-  public VcsKey getVcsKey() {
-    return SvnVcs.getKey();
   }
 
   @NotNull
