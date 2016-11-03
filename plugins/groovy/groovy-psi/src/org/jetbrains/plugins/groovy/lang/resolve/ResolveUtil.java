@@ -863,7 +863,22 @@ public class ResolveUtil {
   }
 
   public static boolean isScriptField(GrVariable var) {
-    return findScriptField(var) != null;
+    GrModifierList list = var.getModifierList();
+    if (list == null) return false;
+
+    PsiFile containingFile = var.getContainingFile();
+    if (!(containingFile instanceof GroovyFile) || !((GroovyFile)containingFile).isScript()) return false;
+
+    GrMember member = PsiTreeUtil.getParentOfType(var, GrTypeDefinition.class, GrMethod.class);
+    if (member != null) return false;
+
+    for (GrAnnotation annotation : list.getAnnotations()) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null) continue;
+      if (qualifiedName.equals(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD)) return true;
+    }
+
+    return false;
   }
 
   @Nullable
