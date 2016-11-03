@@ -18,6 +18,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -54,6 +55,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
     List<ResultItem> resultItems = null;
     for (int i = 0; i < count; i++) {
+      ProgressManager.checkCanceled();
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
         long t0 = System.currentTimeMillis();
