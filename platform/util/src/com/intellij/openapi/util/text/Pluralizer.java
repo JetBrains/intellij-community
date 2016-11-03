@@ -203,7 +203,7 @@ class Pluralizer {
       {"stoma", "stomata"},
       {"dogma", "dogmata"},
       {"lemma", "lemmata"},
-      {"schema", "schemata"},
+      //{"schema", "schemata"},
       {"anathema", "anathemata"},
       // Other irregular rules.
       {"ox", "oxen"},

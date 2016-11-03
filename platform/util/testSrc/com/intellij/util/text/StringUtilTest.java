@@ -127,6 +127,7 @@ public class StringUtilTest {
     assertEquals("VaLuES", StringUtil.pluralize("VaLuE"));
     assertEquals("PLANS", StringUtil.pluralize("PLAN"));
     assertEquals("stackTraceLineExes", StringUtil.pluralize("stackTraceLineEx"));
+    assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
   }
 
   @Test
