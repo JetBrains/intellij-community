@@ -2,7 +2,7 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id
+from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id, xrange
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
@@ -20,6 +20,7 @@ from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, quote, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
+SENTINEL_VALUE = []
 
 # -------------------------------------------------------------------------- defining true and false for earlier versions
 
@@ -368,7 +369,7 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
         del frame
 
 
-def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=None):
+def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SENTINEL_VALUE):
     '''Changes some attribute in a given frame.
     '''
     frame = find_frame(thread_id, frame_id)
@@ -378,7 +379,7 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=Non
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if dbg.plugin and not value:
+        if dbg.plugin and value is not SENTINEL_VALUE:
             result = dbg.plugin.change_variable(frame, attr, expression)
             if result:
                 return result
@@ -386,20 +387,20 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=Non
         if attr[:7] == "Globals":
             attr = attr[8:]
             if attr in frame.f_globals:
-                if value is None:
+                if value is SENTINEL_VALUE:
                     value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
-                if value is None:
+                if value is SENTINEL_VALUE:
                     value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
             # default way (only works for changing it in the topmost frame)
-            if value is None:
+            if value is SENTINEL_VALUE:
                 value = eval(expression, frame.f_globals, frame.f_locals)
             result = value
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
@@ -539,6 +540,15 @@ def array_to_meta_xml(array, name, format):
     return array, xml, rows, cols, format
 
 
+def array_default_format(type):
+    if type == 'f':
+        return '.5f'
+    elif type == 'i' or type == 'u':
+        return 'd'
+    else:
+        return 's'
+
+
 def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     """
     :type df: pandas.core.frame.DataFrame
@@ -581,13 +591,6 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
     rows, cols = df.shape
 
-    def default_format(type):
-        if type == 'f':
-            return '.5f'
-        elif type == 'i' or type == 'u':
-            return 'd'
-        else:
-            return 's'
 
     xml += "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     format = format.replace('%', '')
@@ -597,7 +600,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     for col in range(cols):
         dtype = df.dtypes.iloc[col].kind
-        fmt = format if (dtype == 'f' and format) else default_format(dtype)
+        fmt = format if (dtype == 'f' and format) else array_default_format(dtype)
         col_formats.append('%' + fmt)
         bounds = col_bounds[col]
 
