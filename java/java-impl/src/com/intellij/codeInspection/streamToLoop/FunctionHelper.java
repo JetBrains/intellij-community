@@ -103,11 +103,13 @@ abstract class FunctionHelper {
       return new LambdaFunctionHelper(body, parameters);
     }
     if (expression instanceof PsiMethodReferenceExpression) {
-      PsiType functionalInterfaceType = ((PsiMethodReferenceExpression)expression).getFunctionalInterfaceType();
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      if (methodRef.resolve() == null) return null;
+      PsiType functionalInterfaceType = methodRef.getFunctionalInterfaceType();
       PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
       if (interfaceMethod == null) return null;
       if (interfaceMethod.getParameterList().getParametersCount() != paramCount) return null;
-      return new MethodReferenceFunctionHelper(functionalInterfaceType, (PsiMethodReferenceExpression)expression);
+      return new MethodReferenceFunctionHelper(functionalInterfaceType, methodRef);
     }
     if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSimpleExpression(expression)) {
       PsiType functionalInterfaceType = expression.getType();

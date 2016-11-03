@@ -63,7 +63,8 @@ abstract class TerminalOperation extends Operation {
   }
 
   @Nullable
-  static TerminalOperation createTerminal(String name, PsiExpression[] args, PsiType elementType, PsiType resultType, boolean isVoid) {
+  static TerminalOperation createTerminal(@NotNull String name, @NotNull PsiExpression[] args,
+                                          @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
         FunctionHelper fn = FunctionHelper.create(args[0], 1, true);

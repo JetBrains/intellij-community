@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -52,7 +53,8 @@ abstract class Operation {
   public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
 
   @Nullable
-  static Operation createIntermediate(String name, PsiExpression[] args, StreamVariable outVar, PsiType inType) {
+  static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
+                                      @NotNull StreamVariable outVar, @NotNull PsiType inType) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
