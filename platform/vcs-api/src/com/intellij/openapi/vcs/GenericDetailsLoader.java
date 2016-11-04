@@ -23,8 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class GenericDetailsLoader<Id, Data> implements Details<Id, Data> {
   private final Consumer<Id> myLoader;
-  private final ValueConsumer<Id, Data> myValueConsumer;
+  private final PairConsumer<Id, Data> myValueConsumer;
   private Id myCurrentlySelected;
+  private Id mySetId;
 
   /**
    * @param loader - is called in AWT. Should call {@link #take} with data when ready. Also in AWT
@@ -32,15 +33,14 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id, Data> {
    */
   public GenericDetailsLoader(Consumer<Id> loader, PairConsumer<Id, Data> valueConsumer) {
     myLoader = loader;
-    myValueConsumer = new ValueConsumer<>(valueConsumer);
+    myValueConsumer = valueConsumer;
   }
 
   @CalledInAwt
   public void updateSelection(@Nullable Id id, boolean force) {
-    myValueConsumer.setId(id);
-
     Id previousId = myCurrentlySelected;
     myCurrentlySelected = id;
+    mySetId = null;
     if (force || !Comparing.equal(id, previousId)) {
       myLoader.consume(id);
     }
@@ -49,7 +49,10 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id, Data> {
   @CalledInAwt
   @Override
   public void take(Id id, Data data) {
-    myValueConsumer.consume(id, data);
+    if (!id.equals(mySetId) && id.equals(myCurrentlySelected)) {
+      mySetId = id;
+      myValueConsumer.consume(id, data);
+    }
   }
 
   @CalledInAwt
