@@ -65,7 +65,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "class A implements I, J<I> { }\n" +
            "class B<K, V extends X> extends a/*skip*/.A { class I { } }\n" +
            "@java.lang.Deprecated interface I { }\n" +
-           "/** @deprecated just don't use */ @interface N { }",
+           "/** @deprecated just don't use */ @interface N { }\n" +
+           "/** {@code @deprecated}? nope. */ class X { }",
 
            "PsiJavaFileStub [p]\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
@@ -96,6 +97,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "  CLASS:PsiClassStub[name=X fqn=p.X]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
