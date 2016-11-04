@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -157,25 +158,27 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
     PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    final PsiMethod method = psiParameter != null ? (PsiMethod)psiParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
-    LOG.assertTrue(method != null);
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      final PsiMethod method = psiParameter != null ? (PsiMethod)psiParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
+      LOG.assertTrue(method != null);
 
-    final HashSet<String> usedNames = new HashSet<>();
-    final Iterable<PsiParameter> parameters = selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive);
-    final MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
-    for (PsiParameter parameter : parameters) {
-      types.putValue(parameter.getType(), parameter);
-    }
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
-    for (PsiParameter selected : parameters) {
-      try {
-        settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
-        processParameter(project, selected, usedNames);
-      } finally {
-        settings.PREFER_LONGER_NAMES = preferLongerNames;
+      final HashSet<String> usedNames = new HashSet<>();
+      final Iterable<PsiParameter> parameters = selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive);
+      final MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
+      for (PsiParameter parameter : parameters) {
+        types.putValue(parameter.getType(), parameter);
       }
-    }
+      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+      final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
+      for (PsiParameter selected : parameters) {
+        try {
+          settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
+          processParameter(project, selected, usedNames);
+        } finally {
+          settings.PREFER_LONGER_NAMES = preferLongerNames;
+        }
+      }
+    });
   }
 
   @NotNull
