@@ -637,7 +637,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
 
     PsiAnnotation notNullAnno = NullableNotNullManager.getInstance(method.getProject()).getNotNullAnnotation(method, true);
-    if (notNullAnno == null && !SUGGEST_NULLABLE_ANNOTATIONS) return;
+    if (notNullAnno == null && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway

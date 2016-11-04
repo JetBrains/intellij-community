@@ -71,6 +71,13 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testDontSuggestToMakeLambdaNullable() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void testLambdaParametersWithDefaultNullability() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
