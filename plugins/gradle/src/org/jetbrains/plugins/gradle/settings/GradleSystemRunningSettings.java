@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(name = "GradleSystemRunningSettings", storages = @Storage("gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
-
   private boolean myUseGradleAwareMake;
   @NotNull private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
 
@@ -77,7 +76,7 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
   }
 
   public static class MyState {
-    public PreferredTestRunner preferredTestRunner;
+    public PreferredTestRunner preferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
     public boolean useGradleAwareMake;
   }
 
