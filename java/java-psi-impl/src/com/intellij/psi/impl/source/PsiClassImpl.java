@@ -557,7 +557,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Nullable
-  private static PsiElement calcBasesResolveContext(PsiElement scope,
+  private static PsiElement calcBasesResolveContext(@NotNull PsiElement scope,
                                                     String baseClassName,
                                                     boolean isInitialClass,
                                                     final PsiElement defaultResolveContext) {
@@ -591,7 +591,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return calcBasesResolveContext(psi, baseClassName, false, defaultResolveContext);
     }
     if (psi instanceof PsiMember) {
-      return calcBasesResolveContext(((PsiMember)psi).getContainingClass(), baseClassName, false, defaultResolveContext);
+      PsiClass containingClass = ((PsiMember)psi).getContainingClass();
+      return containingClass != null ? calcBasesResolveContext(containingClass, baseClassName, false, defaultResolveContext) : psi;
     }
     LOG.error(parentStub);
     return psi;
