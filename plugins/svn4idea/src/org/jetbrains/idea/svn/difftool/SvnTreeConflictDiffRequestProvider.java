@@ -102,7 +102,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
 
       myQueue = new BackgroundTaskQueue(myContext.getProject(), "Loading change details");
 
-      // We don't need to listen on File/Document, because panel always will be the same for a single change (@see myDelegate.isStillValid())
+      // We don't need to listen on File/Document, because panel always will be the same for a single change.
       // And if Change will change - we'll create new DiffRequest and DiffViewer
       myDelegate =
         new TreeConflictRefreshablePanel(myContext.getProject(), "Loading tree conflict details", myQueue, myRequest.getChange());

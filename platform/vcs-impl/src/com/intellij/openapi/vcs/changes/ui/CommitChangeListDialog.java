@@ -1046,30 +1046,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
         return new RefreshablePanel() {
           @Override
-          public boolean refreshDataSynch() {
-            return false;
-          }
-
-          @Override
-          public void dataChanged() {
-          }
-
-          @Override
           public void refresh() {
           }
 
           @Override
           public JPanel getPanel() {
             return panel;
-          }
-
-          @Override
-          public void away() {
-          }
-
-          @Override
-          public boolean isStillValid(Object o) {
-            return false;
           }
 
           @Override

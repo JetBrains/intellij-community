@@ -91,17 +91,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     myRightRevisionsList = new TLongArrayList();
   }
 
-  @Override
-  public boolean isStillValid(final Change change) {
-    return change.isTreeConflict() && change instanceof ConflictedSvnChange &&
-           descriptionsEqual(((ConflictedSvnChange)change).getBeforeDescription(), myChange.getBeforeDescription());
-  }
-
-  @Override
-  public boolean refreshDataSynch() {
-    return true;
-  }
-
   public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
     if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
@@ -429,10 +418,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   @Override
   protected void disposeImpl() {
     Disposer.dispose(myChildDisposables);
-  }
-
-  @Override
-  public void away() {
   }
 
   private interface ConflictSidePresentation extends Disposable {

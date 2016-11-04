@@ -40,7 +40,7 @@ import javax.swing.*;
  * @author Irina.Chernushina
  * @since 7.09.2011
  */
-public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Change> {
+public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
 
   @NotNull private final Project myProject;
@@ -60,18 +60,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     myDetailsPanel = new DetailsPanel();
     myDetailsPanel.loading();
     myDetailsPanel.layout();
-  }
-
-  @Override
-  public boolean refreshDataSynch() {
-    return false;
-  }
-
-  @CalledInAwt
-  @Override
-  public void dataChanged() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myTicket.increment();
   }
 
   @CalledInAwt
@@ -113,11 +101,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
   @Override
   public JPanel getPanel() {
     return myDetailsPanel.getPanel();
-  }
-
-  @Override
-  public boolean isStillValid(Change data) {
-    return true;
   }
 
   private class Loader extends ModalityIgnorantBackgroundableTask {
