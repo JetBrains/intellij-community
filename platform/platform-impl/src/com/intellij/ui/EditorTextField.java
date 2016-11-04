@@ -404,7 +404,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
-    SwingUtilities.invokeLater(() -> releaseEditor(editor));
+    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor));
     myEditor = null;
   }
 
