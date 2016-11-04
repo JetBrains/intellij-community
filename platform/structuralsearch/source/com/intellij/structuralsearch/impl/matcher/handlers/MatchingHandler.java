@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -33,7 +48,8 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  public boolean match(PsiElement patternNode,PsiElement matchedNode, int start, int end, MatchContext context) {
+  @Override
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
     return match(patternNode,matchedNode,context);
   }
 
@@ -43,15 +59,16 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
+  @Override
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
       return matchedNode == null;
     }
 
-    return canMatch(patternNode, matchedNode);
+    return canMatch(patternNode, matchedNode, context);
   }
 
-  public boolean canMatch(final PsiElement patternNode, final PsiElement matchedNode) {
+  public boolean canMatch(final PsiElement patternNode, final PsiElement matchedNode, MatchContext context) {
     if (filter!=null) {
       return filter.accepts(matchedNode);
     } else {
