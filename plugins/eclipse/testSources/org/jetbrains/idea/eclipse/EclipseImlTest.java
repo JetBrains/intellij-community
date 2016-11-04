@@ -29,6 +29,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -81,7 +82,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
       .newModule(new File(path) + File.separator + EclipseProjectFinder
-        .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId()));
+        .findProjectName(path) + ModuleManagerImpl.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
