@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,9 +110,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public String extractSignature(PsiElement element, @NotNull ChangeInfo initialChangeInfo) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method) && method == initialChangeInfo.getMethod()) {
-      final PsiCodeBlock body = method.getBody();
-      final TextRange signatureRange = new TextRange(0, body != null ? body.getStartOffsetInParent() : method.getTextLength());
-      return signatureRange.substring(method.getText());
+      final TextRange signatureRange = getSignatureRange(method);
+      return signatureRange.shiftRight(-signatureRange.getStartOffset()).substring(method.getText());
     } else if (element instanceof PsiIdentifier && element.getParent() instanceof PsiNamedElement) {
       return element.getText();
     }
@@ -142,24 +140,14 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
     final TextRange textRange = element.getTextRange();
-    final PsiModifierList psiModifierList = method.getModifierList();
-    if (psiModifierList instanceof LightModifierList) return false;
-    if (body != null) {
-      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= psiModifierList.getTextRange().getEndOffset();
-    }
-    return textRange.getStartOffset() >= psiModifierList.getTextRange().getEndOffset() &&
-           textRange.getEndOffset() <= method.getTextRange().getEndOffset();
+    return getSignatureRange(method).contains(textRange);
   }
 
   public static TextRange getSignatureRange(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body != null) {
-      return new TextRange(method.getTextRange().getStartOffset(), body.getTextOffset());
-    }
-    return new TextRange(method.getTextRange().getStartOffset(),
-                         method.getTextRange().getEndOffset());
+    int endOffset = method.getThrowsList().getTextRange().getEndOffset();
+    int startOffset = method.getTextRange().getStartOffset();
+    return new TextRange(startOffset, endOffset);
   }
 
   @Override
