@@ -27,6 +27,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -91,7 +92,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   public IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application, final IdeFrame frame) {
     if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
-      setWindowDecorationStyle(FRAME);
+      try {
+        setWindowDecorationStyle(FRAME);
+      }
+      catch (Exception e) {
+        Logger.getInstance(IdeRootPane.class).error(e);
+      }
     }
     myActionManager = actionManager;
 
