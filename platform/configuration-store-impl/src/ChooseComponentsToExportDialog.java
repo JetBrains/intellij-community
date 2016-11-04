@@ -67,12 +67,12 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     myShowFilePath = showFilePath;
     Map<ExportableItem, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<>();
     for (List<ExportableItem> list : fileToComponents.values()) {
-      for (ExportableItem component : list) {
-        if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
+      for (ExportableItem item : list) {
+        if (!addToExistingListElement(item, componentToContainingListElement, fileToComponents)) {
           ComponentElementProperties componentElementProperties = new ComponentElementProperties();
-          componentElementProperties.addComponent(component);
+          componentElementProperties.items.add(item);
 
-          componentToContainingListElement.put(component, componentElementProperties);
+          componentToContainingListElement.put(item, componentElementProperties);
         }
       }
     }
@@ -81,7 +81,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
       myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }
-    myChooser.sort((o1, o2) -> o1.toString().compareTo(o2.toString()));
+    myChooser.sort(Comparator.comparing(ComponentElementProperties::toString));
 
     final ActionListener browseAction = new ActionListener() {
       @Override
@@ -136,27 +136,27 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private static boolean addToExistingListElement(@NotNull ExportableItem component,
-                                                  @NotNull Map<ExportableItem, ComponentElementProperties> componentToContainingListElement,
-                                                  @NotNull Map<Path, List<ExportableItem>> fileToComponents) {
-    Path file = null;
-    for (Path exportFile : component.getFiles()) {
-      List<ExportableItem> list = fileToComponents.get(exportFile);
-      if (!ContainerUtil.isEmpty(list)) {
-        for (ExportableItem tiedComponent : list) {
-          if (tiedComponent == component) {
-            continue;
-          }
+  private static boolean addToExistingListElement(@NotNull ExportableItem item,
+                                                  @NotNull Map<ExportableItem, ComponentElementProperties> itemToContainingListElement,
+                                                  @NotNull Map<Path, List<ExportableItem>> fileToItem) {
+    List<ExportableItem> list = fileToItem.get(item.getFile());
+    if (ContainerUtil.isEmpty(list)) {
+      return false;
+    }
 
-          final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
-          if (elementProperties != null && exportFile != file) {
-            LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
-            // found
-            elementProperties.addComponent(component);
-            componentToContainingListElement.put(component, elementProperties);
-            file = exportFile;
-          }
-        }
+    Path file = null;
+    for (ExportableItem tiedItem : list) {
+      if (tiedItem == item) {
+        continue;
+      }
+
+      final ComponentElementProperties elementProperties = itemToContainingListElement.get(tiedItem);
+      if (elementProperties != null && item.getFile() != file) {
+        LOG.assertTrue(file == null, "Component " + item + " serialize itself into " + file + " and " + item.getFile());
+        // found
+        elementProperties.items.add(item);
+        itemToContainingListElement.put(item, elementProperties);
+        file = item.getFile();
       }
     }
     return file != null;
@@ -229,17 +229,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   Set<ExportableItem> getExportableComponents() {
     Set<ExportableItem> components = new THashSet<>();
     for (ComponentElementProperties elementProperties : myChooser.getMarkedElements()) {
-      components.addAll(elementProperties.myComponents);
+      components.addAll(elementProperties.items);
     }
     return components;
   }
 
   private static class ComponentElementProperties implements ElementsChooser.ElementProperties {
-    private final Set<ExportableItem> myComponents = new HashSet<>();
-
-    private boolean addComponent(ExportableItem component) {
-      return myComponents.add(component);
-    }
+    private final Set<ExportableItem> items = new THashSet<>();
 
     @Override
     @Nullable
@@ -255,7 +251,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     public String toString() {
       Set<String> names = new LinkedHashSet<>();
-      for (ExportableItem component : myComponents) {
+      for (ExportableItem component : items) {
         names.add(component.getPresentableName());
       }
       return StringUtil.join(ArrayUtil.toStringArray(names), ", ");

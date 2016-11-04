@@ -128,16 +128,16 @@ internal class ApplicationStoreTest {
     assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
-      val file = item.files.first()
+      val file = item.file
       assertThat(map.get(file)).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
-    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml")), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml")), "Live templates", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "filetypes.xml"), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(rootConfigPath, "filetypes"), "File types (schemes)", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "customization.xml"), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "templates.xml"), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(rootConfigPath, "templates"), "Live templates (schemes)", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {
@@ -175,7 +175,7 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(listOf(componentFile), ""))), additionalFile.to(listOf(ExportableItem(listOf(additionalFile), ""))))
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(componentFile, ""))), additionalFile.to(listOf(ExportableItem(additionalFile, " (schemes)"))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)
