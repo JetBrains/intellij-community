@@ -31,9 +31,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -78,14 +80,23 @@ public class ImportMavenRepositoriesTask extends ReadTask {
   private final MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
+  private final DumbService myDumbService;
 
   public ImportMavenRepositoriesTask(Project project) {
     myProject = project;
+    myDumbService = DumbService.getInstance(myProject);
     mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "https://repo1.maven.org/maven2/", null, null, null);
   }
 
   @Override
-  public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+  public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+    return myDumbService.runReadActionInSmartMode(() -> {
+      performTask();
+      return null;
+    });
+  }
+
+  private void performTask() {
     if(myProject.isDisposed()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
