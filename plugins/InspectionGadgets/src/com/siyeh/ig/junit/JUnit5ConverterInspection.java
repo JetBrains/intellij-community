@@ -23,17 +23,23 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringManager;
 import com.intellij.refactoring.migration.MigrationManager;
 import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.migration.MigrationProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -89,30 +95,35 @@ public class JUnit5ConverterInspection extends BaseInspection {
           return;
         }
 
-        if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, true)) {
-          return;
-        }
-
-        for (PsiField field : aClass.getAllFields()) {
-          if (AnnotationUtil.isAnnotated(field, ruleAnnotations)) {
-            return;
-          }
-        }
-
-        for (PsiMethod method : aClass.getMethods()) {
-          if (AnnotationUtil.isAnnotated(method, ruleAnnotations)) {
-            return;
-          }
-
-          PsiAnnotation testAnnotation = AnnotationUtil.findAnnotation(method, true, JUnitCommonClassNames.ORG_JUNIT_TEST);
-          if (testAnnotation != null && testAnnotation.getParameterList().getAttributes().length > 0) {
-            return;
-          }
-        }
+        if (!canBeConvertedToJUnit5(aClass)) return;
 
         registerClassError(aClass);
       }
     };
+  }
+
+  protected static boolean canBeConvertedToJUnit5(PsiClass aClass) {
+    if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, true)) {
+      return false;
+    }
+
+    for (PsiField field : aClass.getAllFields()) {
+      if (AnnotationUtil.isAnnotated(field, ruleAnnotations)) {
+        return false;
+      }
+    }
+
+    for (PsiMethod method : aClass.getMethods()) {
+      if (AnnotationUtil.isAnnotated(method, ruleAnnotations)) {
+        return false;
+      }
+
+      PsiAnnotation testAnnotation = AnnotationUtil.findAnnotation(method, true, JUnitCommonClassNames.ORG_JUNIT_TEST);
+      if (testAnnotation != null && testAnnotation.getParameterList().getAttributes().length > 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static class MigrateToJUnit5 extends InspectionGadgetsFix implements BatchQuickFix {
@@ -164,8 +175,32 @@ public class JUnit5ConverterInspection extends BaseInspection {
 
       public MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<PsiFile> files) {
         super(project, migrationMap, GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files, file -> file.getVirtualFile())));
+        setPrepareSuccessfulSwingThreadCallback(EmptyRunnable.INSTANCE);
         myProject = project;
         myFiles = files;
+      }
+
+      @Override
+      protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+        final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+        for (PsiFile file : myFiles) {
+          for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
+            Set<PsiClass> inheritors = new HashSet<>();
+            ClassInheritorsSearch.search(psiClass).forEach(inheritor -> {
+              if (!canBeConvertedToJUnit5(inheritor)) {
+                inheritors.add(inheritor);
+                return false;
+              }
+              return true;
+            });
+            if (!inheritors.isEmpty()) {
+              conflicts.putValue(psiClass, "Class " + RefactoringUIUtil.getDescription(psiClass, true) + " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
+                                           StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+            }
+          }
+        }
+        setPreviewUsages(true);
+        return showConflicts(conflicts, refUsages.get());
       }
 
       @NotNull
