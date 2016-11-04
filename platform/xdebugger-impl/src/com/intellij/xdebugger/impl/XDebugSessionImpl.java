@@ -774,20 +774,21 @@ public class XDebugSessionImpl implements XDebugSession {
 
     updateExecutionPosition();
 
-    if (myShowTabOnSuspend.compareAndSet(true, false)) {
+    final boolean showOnSuspend = myShowTabOnSuspend.compareAndSet(true, false);
+    if (showOnSuspend || attract) {
       AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-        initSessionTab(null);
-        showSessionTab();
-      });
-    }
+        if (showOnSuspend) {
+          initSessionTab(null);
+          showSessionTab();
+        }
 
-    myDispatcher.getMulticaster().sessionPaused();
-
-    // user attractions should only be made if event happens independently (e.g. program paused/suspended)
-    // and should not be made when user steps in the code
-    if (attract) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (mySessionTab != null) {
+        // user attractions should only be made if event happens independently (e.g. program paused/suspended)
+        // and should not be made when user steps in the code
+        if (attract) {
+          if (mySessionTab == null) {
+            LOG.warn("Can not request focus because Session Tab is not initialized yet");
+            return;
+          }
 
           if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
             mySessionTab.toFront(true, this::updateExecutionPosition);
@@ -803,6 +804,8 @@ public class XDebugSessionImpl implements XDebugSession {
         }
       });
     }
+
+    myDispatcher.getMulticaster().sessionPaused();
   }
 
   @Override
