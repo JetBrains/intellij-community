@@ -294,7 +294,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       val nameFile = nameFile
       if (nameFile.exists()) {
         try {
-          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+          nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
             lastSavedProjectName = it
             return it
           }
