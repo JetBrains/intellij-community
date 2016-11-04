@@ -21,8 +21,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -64,8 +68,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
-
-@State(name = "ScratchFileService", storages = @Storage("scratches.xml"))
+@State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
 public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>{
 
   private static final RootType NULL_TYPE = new RootType("", null) {};
