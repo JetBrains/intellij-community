@@ -168,6 +168,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     FindUsagesInFileAction.updateFindUsagesAction(e);
 
