@@ -26,6 +26,7 @@ import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,10 +112,15 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   }
 
   private boolean isDeprecated() {
-    final PsiElement element = getPsiElement();
-    return element instanceof PsiDocCommentOwner
-           && element.isValid()
-           && ((PsiDocCommentOwner)element).isDeprecated();
+    try {
+      final PsiElement element = getPsiElement();
+      return element instanceof PsiDocCommentOwner
+             && element.isValid()
+             && ((PsiDocCommentOwner)element).isDeprecated();
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 
   @Override
