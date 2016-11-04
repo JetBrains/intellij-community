@@ -25,8 +25,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
-public class UnsafeReturnStatementVisitorInspection extends InternalInspection {
+public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase {
 
   private static final String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
   private static final String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();

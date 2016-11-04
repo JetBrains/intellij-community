@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +41,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -53,6 +56,30 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     return DevKitBundle.message("inspections.group.name");
   }
 
+  @NotNull
+  @Override
+  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
+  }
+
+  protected boolean isAllowed(ProblemsHolder holder) {
+    if (PsiUtil.isIdeaProject(holder.getProject())) {
+      return true;
+    }
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
+    if (PluginModuleType.isPluginModuleOrDependency(module)) {
+      return true;
+    }
+
+    // always run in tests
+    return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
   @Nullable
   protected static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
     final Project project = psiClass.getProject();
@@ -62,7 +89,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
 
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
 
     if (module == null) return null;
 
@@ -200,7 +227,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     private void addType(PsiClass clazz) {
       if (myTypes == null) {
         //noinspection unchecked
-        myTypes = ContainerUtil.<PsiClass>newIdentityTroveSet(2);
+        myTypes = ContainerUtil.newIdentityTroveSet(2);
       }
       myTypes.add(clazz);
     }
