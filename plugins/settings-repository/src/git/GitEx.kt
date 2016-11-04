@@ -17,27 +17,15 @@ package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
-import org.eclipse.jgit.api.CommitCommand
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
-import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.FetchResult
-import org.eclipse.jgit.transport.RemoteConfig
-import org.eclipse.jgit.transport.Transport
-import org.eclipse.jgit.treewalk.FileTreeIterator
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.IcsCredentialsStore
-import org.jetbrains.settingsRepository.LOG
 import java.io.InputStream
 import java.nio.file.Path
 
@@ -209,15 +197,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
     return master
   }
 
-  for (r in result.advertisedRefs) {
-    if (!r.name.startsWith(Constants.R_HEADS)) {
-      continue
-    }
-    if (r.objectId == idHead.objectId) {
-      return r
-    }
-  }
-  return null
+  return result.advertisedRefs.firstOrNull { it.name.startsWith(Constants.R_HEADS) && it.objectId == idHead.objectId }
 }
 
 fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
@@ -348,11 +328,7 @@ fun Repository.getAheadCommitsCount(): Int {
 
   walk.revFilter = RevFilter.ALL
 
-  var num = 0
-  for (c in walk) {
-    num++
-  }
-  return num
+  return walk.count()
 }
 
 inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
