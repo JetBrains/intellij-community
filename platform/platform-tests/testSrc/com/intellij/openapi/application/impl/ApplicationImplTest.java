@@ -636,45 +636,38 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() {
+    for (int i = 0; i < 1000; i++) {
+      safeWrite(() -> checkPooledThreadsDontGetWrongPrivileges());
+    }
+  }
+
+  private static void checkPooledThreadsDontGetWrongPrivileges() {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    safeWrite(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < 1000; i++) {
-          checkPooledThreadsDontGetWrongPrivileges();
-          UIUtil.dispatchAllInvocationEvents();
-        }
+    Ref<Future> future = Ref.create();
+
+    Disposable disableStderrDumping = Disposer.newDisposable();
+    LoggedErrorProcessor.getInstance().disableStderrDumping(disableStderrDumping);
+
+    Semaphore mayFinish = new Semaphore();
+    mayFinish.down();
+    try {
+      app.executeSuspendingWriteAction(ourProject, "", () ->
+        future.set(app.executeOnPooledThread(
+          () -> assertTrue(mayFinish.waitFor(1000)))));
+    }
+    catch (AssertionError e) {
+      if (!isEscapingThreadAssertion(e)) {
+        e.printStackTrace();
+        throw e;
       }
+    }
+    finally {
+      Disposer.dispose(disableStderrDumping);
+    }
 
-      private void checkPooledThreadsDontGetWrongPrivileges() {
-        Ref<Future> future = Ref.create();
-
-        Disposable disableStderrDumping = Disposer.newDisposable();
-        LoggedErrorProcessor.getInstance().disableStderrDumping(disableStderrDumping);
-
-        Semaphore mayFinish = new Semaphore();
-        mayFinish.down();
-        try {
-          app.executeSuspendingWriteAction(ourProject, "", () ->
-            future.set(app.executeOnPooledThread(
-              () -> assertTrue(mayFinish.waitFor(1000)))));
-        }
-        catch (AssertionError e) {
-          if (!isEscapingThreadAssertion(e)) {
-            e.printStackTrace();
-            throw e;
-          }
-        }
-        finally {
-          Disposer.dispose(disableStderrDumping);
-        }
-
-        app.executeSuspendingWriteAction(ourProject, "", () -> {});
-        mayFinish.up();
-        waitForFuture(future.get());
-      }
-
-    });
+    app.executeSuspendingWriteAction(ourProject, "", () -> {});
+    mayFinish.up();
+    waitForFuture(future.get());
   }
 
   private static boolean isEscapingThreadAssertion(AssertionError e) {

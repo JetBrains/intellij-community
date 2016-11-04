@@ -43,7 +43,10 @@ class ModuleStoreTest {
       }
     }
 
-    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(path) }
+    private fun VirtualFile.loadModule(): Module {
+      val project = projectRule.project
+      return runWriteAction { ModuleManager.getInstance(project).loadModule(path) }
+    }
 
     fun Path.createModule() = projectRule.createModule(this)
   }
@@ -158,4 +161,7 @@ class ModuleStoreTest {
 val Module.contentRootUrls: Array<String>
   get() = ModuleRootManager.getInstance(this).contentRootUrls
 
-fun ProjectRule.createModule(path: Path) = runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+fun ProjectRule.createModule(path: Path): Module {
+  val p = project
+  return runWriteAction { ModuleManager.getInstance(p).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+}

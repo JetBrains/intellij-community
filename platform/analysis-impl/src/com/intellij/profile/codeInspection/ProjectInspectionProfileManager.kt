@@ -36,7 +36,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.loadElement
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
@@ -179,13 +178,6 @@ class ProjectInspectionProfileManager(val project: Project,
         initialLoadSchemesFuture.done {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
-
-          val app = ApplicationManager.getApplication()
-          if (app.isUnitTestMode && app.isDispatchThread) {
-            // do not restart daemon in the middle of the test
-            //noinspection TestOnlyProblems
-            UIUtil.dispatchAllInvocationEvents()
-          }
         }
 
         scopeListener = NamedScopesHolder.ScopeListener {

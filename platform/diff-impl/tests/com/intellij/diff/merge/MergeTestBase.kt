@@ -19,12 +19,10 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeViewer
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
-import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -144,7 +142,6 @@ abstract class MergeTestBase : DiffTestCase() {
 
     fun write(f: () -> Unit): Unit {
       ApplicationManager.getApplication().runWriteAction({ CommandProcessor.getInstance().executeCommand(project, f, null, null) })
-      UIUtil.dispatchAllInvocationEvents()
     }
 
     fun Int.ignore(side: Side, modifier: Boolean = false) {

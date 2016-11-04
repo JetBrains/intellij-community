@@ -28,6 +28,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -366,12 +367,14 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   public void testCodeDuplicates() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, 0, "anObject", false, true, true, false, 0, true);
+    UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testCodeDuplicatesFromConstructor() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, 0, "anObject", false, true, true, false, 0, true);
+    UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
