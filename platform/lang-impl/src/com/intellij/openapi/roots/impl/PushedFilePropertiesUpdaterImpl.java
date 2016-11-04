@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -279,8 +278,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   public static void invokeConcurrentlyIfPossible(final List<Runnable> tasks) {
     if (tasks.size() == 1 ||
-        ApplicationManager.getApplication().isWriteAccessAllowed() ||
-        !Registry.is("idea.concurrent.scanning.files.to.index")) {
+        ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for(Runnable r:tasks) r.run();
       return;
     }
