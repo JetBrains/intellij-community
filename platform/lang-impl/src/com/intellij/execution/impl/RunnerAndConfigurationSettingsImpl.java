@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -335,7 +337,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
@@ -371,13 +373,20 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       myConfiguration = myManager.doCreateConfiguration(element.getAttributeValue(NAME_ATTR), factory, false);
     }
 
+    PathMacroManager.getInstance(myConfiguration.getProject()).expandPaths(element);
+    if (myConfiguration instanceof ModuleBasedConfiguration) {
+      Module module = ((ModuleBasedConfiguration)myConfiguration).getConfigurationModule().getModule();
+      if (module != null) {
+        PathMacroManager.getInstance(module).expandPaths(element);
+      }
+    }
     myConfiguration.readExternal(element);
     myRunnerSettings.loadState(element);
     myConfigurationPerRunnerSettings.loadState(element);
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     final ConfigurationFactory factory = myConfiguration.getFactory();
     if (!(myConfiguration instanceof UnknownRunConfiguration)) {
       element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));

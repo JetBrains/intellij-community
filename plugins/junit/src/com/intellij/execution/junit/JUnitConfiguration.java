@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -343,7 +342,6 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void readExternal(final Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     readModule(element);

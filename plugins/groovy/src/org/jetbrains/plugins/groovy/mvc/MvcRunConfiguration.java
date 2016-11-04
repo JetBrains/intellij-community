@@ -20,7 +20,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -164,7 +163,6 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
     vmParams = JDOMExternalizer.readString(element, "vmparams");
