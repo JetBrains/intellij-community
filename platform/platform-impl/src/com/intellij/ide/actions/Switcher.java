@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -70,13 +71,14 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static java.awt.event.InputEvent.*;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
 
@@ -886,7 +888,8 @@ public class Switcher extends AnAction implements DumbAware {
       }
       else if (values[0] instanceof ToolWindow) {
         final ToolWindow toolWindow = (ToolWindow)values[0];
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true));
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
+                                                                    ModalityState.current());
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
@@ -916,7 +919,7 @@ public class Switcher extends AnAction implements DumbAware {
               }
             }
           }
-        });
+        }, ModalityState.current());
       }
     }
 
