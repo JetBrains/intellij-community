@@ -93,7 +93,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (ref == null || !ref.isQualified()) {
       PsiTypeLookupItem.addImportForItem(context, psiClass);
     }
-    if (context.getOffset(refEnd) < 0) {
+    if (!context.getOffsetMap().containsOffset(refEnd)) {
       return;
     }
 
