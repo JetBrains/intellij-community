@@ -64,7 +64,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     currentProvider.set(attributes, credentials)
-    if (attributes.isPasswordMemoryOnly && credentials.isFulfilled()) {
+    if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password
       memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
     }

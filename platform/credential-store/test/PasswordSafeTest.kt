@@ -150,8 +150,7 @@ class PasswordSafeTest {
     val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath()))
 
     val id = "test PasswordSafeTest.credentials with empty username"
-    val attributes = CredentialAttributes(id, null, null, true)
-
+    val attributes = CredentialAttributes(id, isPasswordMemoryOnly = true)
     try {
       val credentials = Credentials(null, "passphrase")
       ps.set(attributes, credentials)
