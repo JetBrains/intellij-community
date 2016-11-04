@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.GenericDetailsLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
@@ -44,22 +43,23 @@ import javax.swing.*;
 public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Change> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
 
+  @NotNull private final Project myProject;
+  @NotNull private final String myLoadingTitle;
+  private Ticket myCurrentlySelected;
+  private Ticket mySetId;
   private final Ticket myTicket;
   private final DetailsPanel myDetailsPanel;
-  private final GenericDetailsLoader<Ticket, T> myDetailsLoader;
   private final BackgroundTaskQueue myQueue;
   private volatile boolean myDisposed;
 
-  protected AbstractRefreshablePanel(final Project project, final String loadingTitle, final BackgroundTaskQueue queue) {
+  protected AbstractRefreshablePanel(@NotNull Project project, @NotNull String loadingTitle, @NotNull BackgroundTaskQueue queue) {
+    myProject = project;
+    myLoadingTitle = loadingTitle;
     myQueue = queue;
     myTicket = new Ticket();
     myDetailsPanel = new DetailsPanel();
     myDetailsPanel.loading();
     myDetailsPanel.layout();
-
-    myDetailsLoader = new GenericDetailsLoader<>(
-      ticket -> myQueue.run(new Loader(project, loadingTitle, myTicket.copy())),
-      (ticket, t) -> acceptData(t));
   }
 
   @Override
@@ -78,10 +78,16 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
   @Override
   public void refresh() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
-    if (! Comparing.equal(myDetailsLoader.getCurrentlySelected(), myTicket)) {
-      final Ticket copy = myTicket.copy();
-      myDetailsLoader.updateSelection(copy, false);
+
+    if (!Comparing.equal(myCurrentlySelected, myTicket)) {
+      Ticket copy = myTicket.copy();
+      Ticket previousId = myCurrentlySelected;
+      myCurrentlySelected = copy;
+      mySetId = null;
+      if (!Comparing.equal(copy, previousId)) {
+        myQueue.run(new Loader(myProject, myLoadingTitle, copy));
+      }
+
       myDetailsPanel.loading();
       myDetailsPanel.layout();
     } else {
@@ -144,7 +150,11 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     @Override
     protected void doInAwtIfSuccess() {
       if (myDisposed) return;
-      myDetailsLoader.take(myTicketCopy, myT);
+
+      if (!myTicketCopy.equals(mySetId) && myTicketCopy.equals(myCurrentlySelected)) {
+        mySetId = myTicketCopy;
+        acceptData(myT);
+      }
     }
 
     @Override

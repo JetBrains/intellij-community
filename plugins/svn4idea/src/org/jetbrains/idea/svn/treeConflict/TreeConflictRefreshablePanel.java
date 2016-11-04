@@ -79,7 +79,10 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final TLongArrayList myRightRevisionsList;
 
-  public TreeConflictRefreshablePanel(Project project, String loadingTitle, BackgroundTaskQueue queue, Change change) {
+  public TreeConflictRefreshablePanel(@NotNull Project project,
+                                      @NotNull String loadingTitle,
+                                      @NotNull BackgroundTaskQueue queue,
+                                      Change change) {
     super(project, loadingTitle, queue);
     myVcs = SvnVcs.getInstance(project);
     assert change instanceof ConflictedSvnChange;
