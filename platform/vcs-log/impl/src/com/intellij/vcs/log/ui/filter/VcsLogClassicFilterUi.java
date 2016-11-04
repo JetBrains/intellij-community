@@ -90,14 +90,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties);
 
     updateUiOnFilterChange();
-    ApplicationManager.getApplication().invokeLater(myUi::applyFiltersAndUpdateUi);
+    myUi.applyFiltersAndUpdateUi(getFilters());
   }
 
   private void updateUiOnFilterChange() {
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
-        myUi.applyFiltersAndUpdateUi();
+        myUi.applyFiltersAndUpdateUi(getFilters());
         myBranchFilterModel
           .onStructureFilterChanged(new HashSet<>(myLogData.getRoots()), myStructureFilterModel.getFilter());
       });
