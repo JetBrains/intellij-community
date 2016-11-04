@@ -20,8 +20,8 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +186,7 @@ public class DirectoryEntry extends Entry {
     }
 
     if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
-      THashMap<String, Entry> nameToEntryMap = new THashMap<>(uniqueNameIdToMyChildEntries.size(), FileUtil.PATH_HASHING_STRATEGY);
+      THashMap<String, Entry> nameToEntryMap = new THashMap<>(uniqueNameIdToMyChildEntries.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
 
       uniqueNameIdToMyChildEntries.forEachValue(myChildEntry -> {
         nameToEntryMap.put(myChildEntry.getName(), myChildEntry);
