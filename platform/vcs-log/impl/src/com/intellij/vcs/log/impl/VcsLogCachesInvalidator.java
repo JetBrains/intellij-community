@@ -26,7 +26,7 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
 
   public synchronized boolean isValid() {
     if (PersistentUtil.getCorruptionMarkerFile().exists()) {
-      boolean deleted = FileUtil.delete(PersistentUtil.LOG_CACHE);
+      boolean deleted = FileUtil.deleteWithRenaming(PersistentUtil.LOG_CACHE);
       if (!deleted) {
         // if could not delete caches, ensure that corruption marker is still there
         FileUtil.createIfDoesntExist(PersistentUtil.getCorruptionMarkerFile());
