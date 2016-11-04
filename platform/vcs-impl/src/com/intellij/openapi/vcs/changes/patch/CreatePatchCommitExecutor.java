@@ -73,6 +73,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager = changeListManager;
   }
 
+  @Override
   @Nls
   public String getActionText() {
     return "Create Patch...";
@@ -83,34 +84,42 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     return "reference.dialogs.vcs.patch.create";
   }
 
+  @Override
   @NotNull
   public CommitSession createCommitSession() {
     return new CreatePatchCommitSession();
   }
 
+  @Override
   public void projectOpened() {
     myChangeListManager.registerCommitExecutor(this);
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "CreatePatchCommitExecutor";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -127,11 +136,13 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       myCommitContext = context;
     }
 
+    @Override
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
       return myPanel.getPanel();
     }
 
+    @Override
     public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
       if (PATCH_PATH.length() == 0) {
         VcsApplicationSettings settings = VcsApplicationSettings.getInstance();
@@ -157,10 +168,12 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       return panel;
     }
 
+    @Override
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return myPanel.isOkToExecute();
     }
 
+    @Override
     public void execute(Collection<Change> changes, String commitMessage) {
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
@@ -211,6 +224,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       }
     }
 
+    @Override
     public void executionCanceled() {
     }
 
