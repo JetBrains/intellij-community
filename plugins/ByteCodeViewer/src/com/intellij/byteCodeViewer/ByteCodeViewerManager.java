@@ -173,6 +173,16 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Nullable
   public static String getByteCode(@NotNull PsiElement psiElement) {
+    byte[] classFileBinary = getClassFileBinary(psiElement);
+    if (classFileBinary != null) {
+      return processClassFile(classFileBinary);
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static byte[] getClassFileBinary(@NotNull PsiElement psiElement) {
     PsiClass containingClass = getContainingClass(psiElement);
     //todo show popup
     if (containingClass == null) return null;
@@ -196,7 +206,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
             if (rootForFile != null) {
               final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
               if (classFile != null) {
-                return processClassFile(classFile.contentsToByteArray());
+                return classFile.contentsToByteArray();
               }
             }
           }
@@ -233,7 +243,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
         LOG.info("search in: " + classPath);
         return null;
       }
-      return processClassFile(FileUtil.loadFileBytes(classFile));
+      return FileUtil.loadFileBytes(classFile);
     }
     catch (Exception e1) {
       LOG.error(e1);
