@@ -3,11 +3,15 @@
   <component name="JavaProjectCodeInsightSettings">
     <excluded-names>
       <name>android</name>
+      <name>com.android.annotations.Nullable</name>
       <name>com.google.android</name>
       <name>com.google.api.client.repackaged</name>
       <name>com.google.api.client.util</name>
       <name>com.sun</name>
       <name>java.awt.List</name>
+      <name>javax.annotation.Nullable</name>
+      <name>javax.annotation.RegEx</name>
+      <name>org.gradle.api.Nullable</name>
     </excluded-names>
   </component>
 </project>
