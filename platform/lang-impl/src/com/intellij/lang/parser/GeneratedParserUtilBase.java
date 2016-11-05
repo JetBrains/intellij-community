@@ -839,7 +839,7 @@ public class GeneratedParserUtilBase {
 
     @Override
     public String fun(Object o) {
-      return o.toString();
+      return convertItem(o);
     }
 
     public void addItem(@NotNull PsiBuilder builder, @NotNull String text) {
