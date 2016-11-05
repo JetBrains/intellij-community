@@ -17,186 +17,132 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.ActionExecuteHelper;
-import com.intellij.vcsUtil.ActionStateConsumer;
-import com.intellij.vcsUtil.ActionUpdateHelper;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
-import org.jetbrains.idea.svn.properties.ExternalsDefinitionParser;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/6/12
- * Time: 7:21 PM
- */
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.UtilKt.getIfSingle;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
+import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
+
 public class CreateExternalAction extends DumbAwareAction {
   public CreateExternalAction() {
-    super(SvnBundle.message("svn.create.external.below.action"), SvnBundle.message("svn.create.external.below.description"), null);
+    super(message("svn.create.external.below.action"), message("svn.create.external.below.description"), null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final ActionExecuteHelper helper = new ActionExecuteHelper();
-    checkState(e, helper);
-    if (! helper.isOk()) return;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = notNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, file);
 
-    final DataContext dc = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
+    if (dialog.showAndGet()) {
+      String url = dialog.getSelectedURL();
+      boolean checkout = dialog.isCheckout();
+      String target = dialog.getLocalTarget().trim();
 
-    //1 select target
-    final SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, vf);
-    dialog.show();
-    if (DialogWrapper.OK_EXIT_CODE != dialog.getExitCode()) return;
-
-    final String url = dialog.getSelectedURL();
-    final boolean checkout = dialog.isCheckout();
-    final String target = dialog.getLocalTarget().trim();
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Creating External", true, null) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        doInBackground(project, vf, url, checkout, target);
-      }
-    });
+      new Task.Backgroundable(project, "Creating External") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          doInBackground(project, file, url, checkout, target);
+        }
+      }.queue();
+    }
   }
 
-  private void doInBackground(Project project, VirtualFile vf, String url, boolean checkout, String target) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
+  private static void doInBackground(@NotNull Project project, @NotNull VirtualFile file, String url, boolean checkout, String target) {
+    SvnVcs vcs = SvnVcs.getInstance(project);
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    File ioFile = virtualToIoFile(file);
+
     try {
-      final File ioFile = new File(vf.getPath());
-      if (addToExternalProperty(vcs, ioFile, target, url)) return;
-      final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-      final FilePath filePath = VcsUtil.getFilePath(ioFile, true);
-      dirtyScopeManager.fileDirty(filePath);
-      if (checkout) {
-        // +-
-        final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
-        client.setEventHandler(new ProgressTracker() {
-          @Override
-          public void consume(ProgressEvent event) throws SVNException {
-          }
+      addToExternalProperty(vcs, ioFile, target, url);
+      dirtyScopeManager.fileDirty(file);
 
-          @Override
-          public void checkCancelled() throws SVNCancelException {
-            final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-            if (pi != null && pi.isCanceled()) throw new SVNCancelException();
-          }
-        });
+      if (checkout) {
+        UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
+        client.setEventHandler(new SvnProgressCanceller());
         client.doUpdate(ioFile, SVNRevision.HEAD, Depth.UNKNOWN, false, false);
-        vf.refresh(true, true, new Runnable() {
-          @Override
-          public void run() {
-            dirtyScopeManager.dirDirtyRecursively(filePath);
-          }
-        });
+        file.refresh(true, true, () -> dirtyScopeManager.dirDirtyRecursively(file));
       }
     }
-    catch (SVNException e1) {
-      AbstractVcsHelper.getInstance(project).showError(new VcsException(e1), "Create External");
-    }
-    catch (VcsException e1) {
-      AbstractVcsHelper.getInstance(project).showError(e1, "Create External");
+    catch (VcsException e) {
+      AbstractVcsHelper.getInstance(project).showError(e, "Create External");
     }
   }
 
-  public static boolean addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url)
-    throws SVNException, VcsException {
+  public static void addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url) throws VcsException {
     ClientFactory factory = vcs.getFactory(ioFile);
-    PropertyValue propertyValue = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
-                                                                              false, SVNRevision.UNDEFINED);
-    String newValue;
-    if (propertyValue != null && !StringUtil.isEmptyOrSpaces(propertyValue.toString())) {
-      Map<String, String> externalsMap = ExternalsDefinitionParser.parseExternalsProperty(propertyValue.toString());
-      String externalsForTarget = externalsMap.get(target);
+    PropertyValue propertyValue =
+      factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS, false, SVNRevision.UNDEFINED);
+    boolean hasExternals = propertyValue != null && !isEmptyOrSpaces(propertyValue.toString());
+    String newExternals = "";
+
+    if (hasExternals) {
+      String externalsForTarget = parseExternalsProperty(propertyValue.toString()).get(target);
 
       if (externalsForTarget != null) {
-        AbstractVcsHelper.getInstance(vcs.getProject()).showError(
-          new VcsException("Selected destination conflicts with existing: " + externalsForTarget), "Create External");
-        return true;
+        throw new VcsException("Selected destination conflicts with existing: " + externalsForTarget);
       }
-      final String string = createExternalDefinitionString(url, target);
-      newValue = propertyValue.toString().trim() + "\n" + string;
-    } else {
-      newValue = createExternalDefinitionString(url, target);
-    }
-    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, PropertyValue.create(newValue), Depth.EMPTY, false);
-    return false;
-  }
 
-  public static String createExternalDefinitionString(String url, String target) {
-    return CommandUtil.escape(url) + " " + target;
+      newExternals = propertyValue.toString().trim() + "\n";
+    }
+
+    newExternals += escape(url) + " " + target;
+    factory.createPropertyClient()
+      .setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, PropertyValue.create(newExternals), Depth.EMPTY, false);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final ActionUpdateHelper helper = new ActionUpdateHelper();
-    checkState(e, helper);
-    helper.apply(e);
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    boolean visible = project != null && isSvnActive(project);
+    boolean enabled = visible && isEnabled(project, getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(enabled);
   }
 
-  private void checkState(AnActionEvent e, final ActionStateConsumer sc) {
-    final DataContext dc = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dc);
-    if (project == null) {
-      sc.hide();
-      return;
-    }
-    final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    if (!manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
-      sc.hide();
-      return;
-    }
+  private static boolean isSvnActive(@NotNull Project project) {
+    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
+  }
 
-    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
-    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
-    if (vf == null || files == null || files.length != 1 || ! vf.isDirectory()) {
-      sc.disable();
-      return;
-    }
+  private static boolean isEnabled(@NotNull Project project, @Nullable VirtualFile file) {
+    return file != null &&
+           file.isDirectory() &&
+           getVcsForFile(file, project) instanceof SvnVcs &&
+           isEnabled(FileStatusManager.getInstance(project).getStatus(file));
+  }
 
-    final AbstractVcs vcsFor = manager.getVcsFor(vf);
-    if (vcsFor == null || ! SvnVcs.getKey().equals(vcsFor.getKeyInstanceMethod())) {
-      sc.disable();
-      return;
-    }
-
-    final FileStatus status = FileStatusManager.getInstance(project).getStatus(vf);
-    if (status == null || FileStatus.DELETED.equals(status) || FileStatus.IGNORED.equals(status) ||
-        FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status) || FileStatus.OBSOLETE.equals(status) || FileStatus.UNKNOWN.equals(status)) {
-      sc.disable();
-      return;
-    }
-    sc.enable();
+  private static boolean isEnabled(@Nullable FileStatus status) {
+    return status != null &&
+           !FileStatus.DELETED.equals(status) &&
+           !FileStatus.IGNORED.equals(status) &&
+           !FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status) &&
+           !FileStatus.OBSOLETE.equals(status) &&
+           !FileStatus.UNKNOWN.equals(status);
   }
 }
