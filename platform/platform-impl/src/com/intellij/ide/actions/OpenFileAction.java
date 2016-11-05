@@ -106,8 +106,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
           Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
           if (openedProject != null) {
             FileChooserUtil.setLastOpenedFile(openedProject, file);
-            return;
           }
+          return;
         }
       }
 
