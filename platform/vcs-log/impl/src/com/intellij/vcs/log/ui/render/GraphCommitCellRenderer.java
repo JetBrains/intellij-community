@@ -2,6 +2,8 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -46,12 +48,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Override
-  protected Component getTableCellRendererComponentImpl(@NotNull JTable table,
-                                                        @NotNull GraphCommitCell value,
-                                                        boolean isSelected,
-                                                        boolean hasFocus,
-                                                        int row,
-                                                        int column) {
+  protected SimpleColoredComponent getTableCellRendererComponentImpl(@NotNull JTable table,
+                                                                     @NotNull GraphCommitCell value,
+                                                                     boolean isSelected,
+                                                                     boolean hasFocus,
+                                                                     int row,
+                                                                     int column) {
     myComponent.customize(value, isSelected, hasFocus, row, column);
     return myComponent;
   }
