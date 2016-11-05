@@ -384,7 +384,7 @@ public class FSRecords implements Forceable {
         @Override
         public void run() {
           if (lastModCount == ourLocalModificationCount) {
-            flushSome();
+            flush();
           }
           lastModCount = ourLocalModificationCount;
         }
@@ -394,23 +394,25 @@ public class FSRecords implements Forceable {
     public static void force() {
       w.lock();
       try {
-        if (myRecords != null) {
-          markClean();
-        }
-        if (myNames != null) {
-          myNames.force();
-          myAttributes.force();
-          myContents.force();
-          if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-          myRecords.force();
-        }
+        doForce();
       }
       finally {
         w.unlock();
       }
     }
 
-    static void flushSome() {
+    private static void doForce() {
+      if (myNames != null) {
+        myNames.force();
+        myAttributes.force();
+        myContents.force();
+        if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
+        markClean();
+        myRecords.force();
+      }
+    }
+
+    private static void flush() {
       if (!isDirty() || HeavyProcessLatch.INSTANCE.isRunning()) return;
 
       r.lock();
@@ -418,15 +420,7 @@ public class FSRecords implements Forceable {
         if (myFlushingFuture == null) {
           return; // avoid NPE when close has already taken place
         }
-        myNames.force();
-
-        final boolean attribsFlushed = myAttributes.flushSome();
-        final boolean contentsFlushed = myContents.flushSome();
-        if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-        if (attribsFlushed && contentsFlushed) {
-          markClean();
-          myRecords.force();
-        }
+        doForce();
       }
       finally {
         r.unlock();
