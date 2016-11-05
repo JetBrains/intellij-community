@@ -27,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -173,6 +173,20 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Nullable
   public static String getByteCode(@NotNull PsiElement psiElement) {
+    VirtualFile classFile = getClassFile(psiElement);
+    if (classFile != null) {
+      try {
+        return processClassFile(classFile.contentsToByteArray());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile getClassFile(@NotNull PsiElement psiElement) {
     PsiClass containingClass = getContainingClass(psiElement);
     //todo show popup
     if (containingClass == null) return null;
@@ -184,24 +198,19 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
       final Project project = containingClass.getProject();
       final PsiClass topLevelClass = PsiUtil.getTopLevelClass(psiElement);
       final String qualifiedName = topLevelClass != null ? topLevelClass.getQualifiedName() : null;
-      final PsiClass aClass = qualifiedName != null 
-                              ? JavaPsiFacade.getInstance(project).findClass(qualifiedName, psiElement.getResolveScope()) 
+      final PsiClass aClass = qualifiedName != null
+                              ? JavaPsiFacade.getInstance(project).findClass(qualifiedName, psiElement.getResolveScope())
                               : null;
       if (aClass != null) {
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         if (virtualFile != null && fileIndex.isInLibraryClasses(virtualFile)) {
-          try {
-            final VirtualFile rootForFile = fileIndex.getClassRootForFile(virtualFile);
-            if (rootForFile != null) {
-              final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
-              if (classFile != null) {
-                return processClassFile(classFile.contentsToByteArray());
-              }
+          final VirtualFile rootForFile = fileIndex.getClassRootForFile(virtualFile);
+          if (rootForFile != null) {
+            final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
+            if (classFile != null) {
+              return classFile;
             }
-          }
-          catch (IOException e) {
-            LOG.error(e);
           }
           return null;
         }
@@ -233,7 +242,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
         LOG.info("search in: " + classPath);
         return null;
       }
-      return processClassFile(FileUtil.loadFileBytes(classFile));
+      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classFile);
     }
     catch (Exception e1) {
       LOG.error(e1);
