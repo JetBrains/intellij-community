@@ -230,7 +230,7 @@ public class GraphTableController {
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    @NotNull private final TableLinkMouseListener myLinkListener = new TableLinkMouseListener();
+    @NotNull private final TableLinkMouseListener myLinkListener = myCommitRenderer.createLinkListener();
 
     @Override
     public void mouseClicked(MouseEvent e) {

@@ -2,6 +2,8 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
@@ -46,12 +49,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Override
-  protected Component getTableCellRendererComponentImpl(@NotNull JTable table,
-                                                        @NotNull GraphCommitCell value,
-                                                        boolean isSelected,
-                                                        boolean hasFocus,
-                                                        int row,
-                                                        int column) {
+  protected SimpleColoredComponent getTableCellRendererComponentImpl(@NotNull JTable table,
+                                                                     @NotNull GraphCommitCell value,
+                                                                     boolean isSelected,
+                                                                     boolean hasFocus,
+                                                                     int row,
+                                                                     int column) {
     myComponent.customize(value, isSelected, hasFocus, row, column);
     return myComponent;
   }
@@ -102,6 +105,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private int getColumnWidth() {
     return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
+  }
+
+  public TableLinkMouseListener createLinkListener() {
+    return new MyTableLinkMouseListener();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -250,6 +257,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
      */
     int getWidth() {
       return myWidth;
+    }
+  }
+
+  public class MyTableLinkMouseListener extends TableLinkMouseListener {
+    @Override
+    protected Object tryGetTag(@NotNull MouseEvent e, @NotNull JTable table, int row, int column) {
+      SimpleColoredComponent component =
+        getTableCellRendererComponentImpl(table, getValue(table.getValueAt(row, column)), false, false, row, column);
+      Rectangle rc = table.getCellRect(row, column, false);
+      return component.getFragmentTagAt(e.getX() - rc.x);
     }
   }
 }
