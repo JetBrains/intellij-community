@@ -320,6 +320,7 @@ def create_execl(original_name):
         """
         import os
         args = patch_args(args)
+        send_process_created_message()
         return getattr(os, original_name)(path, *args)
     return new_execl
 
@@ -331,6 +332,7 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
+        send_process_created_message()
         return getattr(os, original_name)(path, patch_args(args))
     return new_execv
 
@@ -342,6 +344,7 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
+        send_process_created_message()
         return getattr(os, original_name)(path, patch_args(args), env)
     return new_execve
 
@@ -354,6 +357,7 @@ def create_spawnl(original_name):
         """
         import os
         args = patch_args(args)
+        send_process_created_message()
         return getattr(os, original_name)(mode, path, *args)
     return new_spawnl
 
@@ -365,6 +369,7 @@ def create_spawnv(original_name):
         os.spawnvp(mode, file, args)
         """
         import os
+        send_process_created_message()
         return getattr(os, original_name)(mode, path, patch_args(args))
     return new_spawnv
 
@@ -376,6 +381,7 @@ def create_spawnve(original_name):
     """
     def new_spawnve(mode, path, args, env):
         import os
+        send_process_created_message()
         return getattr(os, original_name)(mode, path, patch_args(args), env)
     return new_spawnve
 
@@ -387,6 +393,7 @@ def create_fork_exec(original_name):
     def new_fork_exec(args, *other_args):
         import _posixsubprocess  # @UnresolvedImport
         args = patch_args(args)
+        send_process_created_message()
         return getattr(_posixsubprocess, original_name)(args, *other_args)
     return new_fork_exec
 
@@ -414,6 +421,7 @@ def create_CreateProcess(original_name):
             import _subprocess
         except ImportError:
             import _winapi as _subprocess
+        send_process_created_message()
         return getattr(_subprocess, original_name)(app_name, patch_arg_str_win(cmd_line), *args)
     return new_CreateProcess
 
@@ -467,6 +475,13 @@ def create_fork(original_name):
                     debugger.send_process_created_message()
         return child_process
     return new_fork
+
+
+def send_process_created_message():
+    from _pydevd_bundle.pydevd_comm import get_global_debugger
+    debugger = get_global_debugger()
+    if debugger is not None:
+        debugger.send_process_created_message()
 
 
 def patch_new_process_functions():

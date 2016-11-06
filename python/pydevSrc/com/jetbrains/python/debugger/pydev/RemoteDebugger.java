@@ -57,7 +57,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;
-    myDebuggerTransport = new ClientModeDebuggerTransport(debugProcess, this, host, port);
+    myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port);
   }
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
@@ -437,8 +437,6 @@ public class RemoteDebugger implements ProcessDebugger {
     try {
       final ProtocolFrame frame = new ProtocolFrame(line);
       logFrame(frame, false);
-
-      myDebuggerTransport.messageReceived(frame);
 
       if (AbstractThreadCommand.isThreadCommand(frame.getCommand())) {
         processThreadEvent(frame);

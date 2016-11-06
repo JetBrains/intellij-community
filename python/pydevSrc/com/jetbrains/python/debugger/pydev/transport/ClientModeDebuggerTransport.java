@@ -1,12 +1,11 @@
 package com.jetbrains.python.debugger.pydev.transport;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
-import com.jetbrains.python.debugger.pydev.ProtocolFrame;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,11 +16,8 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link DebuggerTransport} implementation that expects a debugging script to behave as a server. The main process of the debugging script
@@ -51,20 +47,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ClientModeDebuggerTransport.class);
 
-  private static final ScheduledExecutorService myScheduledExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-    private AtomicInteger num = new AtomicInteger(1);
-
-    @Override
-    public Thread newThread(@NotNull Runnable r) {
-      return new Thread(r, "Python Debug Script Connection " + num.getAndIncrement());
-    }
-  });
-
-  private static final int MAX_CONNECTION_TRIES = 10;
+  private static final int MAX_CONNECTION_TRIES = 20;
   private static final long CHECK_CONNECTION_APPROVED_DELAY = 1000L;
   private static final long SLEEP_TIME_BETWEEN_CONNECTION_TRIES = 150L;
-
-  @NotNull private final IPyDebugProcess myDebugProcess;
 
   @NotNull private final String myHost;
   private final int myPort;
@@ -74,25 +59,16 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Nullable private Socket mySocket;
   @Nullable private volatile DebuggerReader myDebuggerReader;
 
-  public ClientModeDebuggerTransport(@NotNull IPyDebugProcess debugProcess,
-                                     @NotNull RemoteDebugger debugger,
+  public ClientModeDebuggerTransport(@NotNull RemoteDebugger debugger,
                                      @NotNull String host,
                                      int port) {
     super(debugger);
-    myDebugProcess = debugProcess;
     myHost = host;
     myPort = port;
   }
 
   @Override
   public void waitForConnect() throws IOException {
-    try {
-      Thread.sleep(500L);
-    }
-    catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-
     if (myState != State.INIT) {
       throw new IllegalStateException(
         "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
@@ -120,23 +96,77 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     boolean connected = false;
     while (!connected && i < MAX_CONNECTION_TRIES) {
       i++;
+
+      int attempt = i;
+      LOG.debug(String.format("[%d] Trying to connect: #%d attempt", hashCode(), attempt));
+
       try {
         Socket clientSocket = new Socket();
         clientSocket.setSoTimeout(0);
         clientSocket.connect(new InetSocketAddress(myHost, myPort));
 
+        synchronized (mySocketObject) {
+          mySocket = clientSocket;
+          myState = State.CONNECTED;
+        }
+
         try {
-          myDebuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
+          InputStream stream;
+          synchronized (mySocketObject) {
+            stream = mySocket.getInputStream();
+          }
+          myDebuggerReader = new DebuggerReader(myDebugger, stream);
         }
         catch (IOException e) {
           LOG.debug("Failed to create debugger reader", e);
           throw e;
         }
 
-        synchronized (mySocketObject) {
-          mySocket = clientSocket;
+        AtomicBoolean success = new AtomicBoolean(false);
+        CountDownLatch beforeHandshake = new CountDownLatch(1);
+        Future<Void> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            myDebuggerReader.awaitReadyToRead();
+          }
+          finally {
+            beforeHandshake.countDown();
+          }
+          try {
+            myDebugger.handshake();
+            success.set(true);
+          }
+          catch (PyDebuggerException e) {
+            LOG.debug(String.format("[%d] Handshake failed: #%d attempt", hashCode(), attempt));
+          }
+          return null;
+        });
+        try {
+          beforeHandshake.await();
+          future.get(CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
         }
-        connected = true;
+        catch (InterruptedException e) {
+          LOG.debug(String.format("[%d] Waiting for handshake interrupted: #%d attempt", hashCode(), attempt), e);
+          myDebuggerReader.close();
+          throw new IOException("Waiting for subprocess interrupted", e);
+        }
+        catch (ExecutionException e) {
+          LOG.debug(String.format("[%d] Execution exception occurred: #%d attempt", hashCode(), attempt), e);
+        }
+        catch (TimeoutException e) {
+          LOG.debug(String.format("[%d] Timeout: #%d attempt", hashCode(), attempt), e);
+          future.cancel(true);
+        }
+
+        connected = success.get();
+        if (!connected) {
+          myDebuggerReader.close();
+          try {
+            Thread.sleep(SLEEP_TIME_BETWEEN_CONNECTION_TRIES);
+          }
+          catch (InterruptedException e) {
+            throw new IOException(e);
+          }
+        }
       }
       catch (ConnectException e) {
         if (i < MAX_CONNECTION_TRIES) {
@@ -155,37 +185,14 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
       throw new IOException("Failed to connect to debugging script");
     }
 
-    myState = State.CONNECTED;
-    LOG.debug("Connected to Python debugger script on #" + i + " attempt");
-
-
-    try {
-      myDebugProcess.init();
-      myDebugger.run();
-    }
-    catch (PyDebuggerException e) {
-      myState = State.DISCONNECTED;
-      throw new IOException("Failed to send run command", e);
-    }
-
-    myScheduledExecutor.schedule(() -> {
-      if (myState == State.CONNECTED) {
-        try {
-          LOG.debug("Reconnecting...");
-          doConnect();
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          myDebugger.fireCommunicationError();
-        }
-      }
-    }, CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
+    myState = State.APPROVED;
+    LOG.debug(String.format("[%d] Connected to Python debugger script on #%d attempt", hashCode(), i));
   }
 
   @Override
   protected boolean sendMessageImpl(byte[] packed) throws IOException {
     synchronized (mySocketObject) {
-      if (mySocket == null) {
+      if (mySocket == null || mySocket.isClosed()) {
         return false;
       }
       final OutputStream os = mySocket.getOutputStream();
@@ -224,13 +231,6 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Override
   public void disconnect() {
     // TODO disconnect?
-  }
-
-  @Override
-  public void messageReceived(@NotNull ProtocolFrame frame) {
-    if (myState == State.CONNECTED) {
-      myState = State.APPROVED;
-    }
   }
 
   private enum State {

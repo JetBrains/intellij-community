@@ -34,7 +34,7 @@ public abstract class BaseDebuggerTransport implements DebuggerTransport {
       myDebugger.fireCommunicationError();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
     }
     return false;
   }
