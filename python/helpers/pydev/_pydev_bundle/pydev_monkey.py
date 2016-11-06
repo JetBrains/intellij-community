@@ -30,12 +30,13 @@ def _get_pydevd_args():
     return new_args
 
 def _get_python_c_args(host, port, indC, args):
+    host_literal = "'" + host + "'" if host is not None else 'None'
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
-            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
+            "pydevd.settrace(host=%s, port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
             "sys.original_argv = %s; %s"
             ) % (
                pydev_src_dir,
-               host,
+               host_literal,
                port,
                _get_pydevd_args(),
                args[indC + 1])
