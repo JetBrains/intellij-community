@@ -71,7 +71,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
       addDebugger(debugger);
 
-      LOG.debug("Connected to subprocess on attempt");
+      myDebugProcess.init();
+      debugger.run();
 
       return;
     }

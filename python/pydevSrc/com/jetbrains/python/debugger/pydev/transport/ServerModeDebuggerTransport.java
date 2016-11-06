@@ -2,7 +2,6 @@ package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.jetbrains.python.debugger.pydev.ProtocolFrame;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,11 +93,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
         }
       }
     }
-  }
-
-  @Override
-  public void messageReceived(@NotNull ProtocolFrame frame) {
-    // do nothing
   }
 
   @Override
