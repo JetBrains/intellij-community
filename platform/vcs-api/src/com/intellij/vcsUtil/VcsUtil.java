@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.stream.Collectors.groupingBy;
+
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
@@ -57,6 +61,8 @@ public class VcsUtil {
 
   public final static String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
+
+  @NotNull private static final VcsRoot FICTIVE_ROOT = new VcsRoot(null, null);
 
   public static int getMaxVcsLoadedFileSize() {
     return ourMaxLoadedFileSize;
@@ -622,6 +628,15 @@ public class VcsUtil {
 
   public static String getPathForProgressPresentation(@NotNull final File file) {
     return file.getName() + " (" + file.getParent() + ")";
+  }
+
+  @NotNull
+  public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
+                                                       @NotNull Collection<T> items,
+                                                       @NotNull Function<T, FilePath> filePathMapper) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+
+    return items.stream().collect(groupingBy(item -> notNull(manager.getVcsRootObjectFor(filePathMapper.fun(item)), FICTIVE_ROOT)));
   }
 
   @NotNull

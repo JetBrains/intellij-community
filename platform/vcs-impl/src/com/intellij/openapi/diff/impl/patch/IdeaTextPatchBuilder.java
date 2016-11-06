@@ -22,19 +22,22 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
 
 public class IdeaTextPatchBuilder {
   private IdeaTextPatchBuilder() {
@@ -42,14 +45,8 @@ public class IdeaTextPatchBuilder {
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(final Project project, final List<Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
-
-    final Convertor<Change, FilePath> beforePrefferingConvertor = new Convertor<Change, FilePath>() {
-      public FilePath convert(Change o) {
-        final FilePath before = ChangesUtil.getBeforePath(o);
-        return before == null ? ChangesUtil.getAfterPath(o) : before;
-      }
-    };
-    final MultiMap<VcsRoot,Change> byRoots = new SortByVcsRoots<>(project, beforePrefferingConvertor).sort(changes);
+    Map<VcsRoot, List<Change>> byRoots =
+      groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
