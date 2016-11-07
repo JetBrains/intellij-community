@@ -53,7 +53,6 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,12 +270,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
   }
-
-  @Override
-  public PsiElement getNavigationElement() {
-    final PsiElement element = PyiUtil.getOriginalElement(this);
-    return element != null ? element : super.getNavigationElement();
-  }
+  //
+  //@Override
+  //public PsiElement getNavigationElement() {
+  //  final PsiElement element = PyiUtil.getOriginalElement(this);
+  //  return element != null ? element : super.getNavigationElement();
+  //}
 
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     for (Language lang : getViewProvider().getLanguages()) {

@@ -37,6 +37,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -289,6 +290,9 @@ public class PythonPathEditor extends SdkPathEditor {
         return true;
       }
       else if (file.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+        return true;
+      }
+      else if (PyTypeShed.INSTANCE.isInside(file)) {
         return true;
       }
       else {

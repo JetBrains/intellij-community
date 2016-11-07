@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.PsiNavigateUtil;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -45,7 +46,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (element instanceof PyFunction || element instanceof PyTargetExpression) {
+    if (element instanceof PyFunction || element instanceof PyTargetExpression || element instanceof PyClass) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)element);
       if (pythonStub != null) {
         result.add(createLineMarkerInfo(element, pythonStub, "Has stub item"));

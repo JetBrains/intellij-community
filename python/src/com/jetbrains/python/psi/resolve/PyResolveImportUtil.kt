@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.psi.LanguageLevel
@@ -125,7 +126,7 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
  * Creates a [PyQualifiedNameResolveContext] from a [foothold] element.
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
-  val module = ModuleUtilCore.findModuleForPsiElement(foothold)
+  val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile)
   val sdk = module?.let { ModuleRootManager.getInstance(module).sdk }
   return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, sdk)
 }
@@ -181,7 +182,7 @@ private fun findFirstResults(results: List<PsiElement>) =
     if (results.all(::isNamespacePackage))
       results
     else {
-      val stubFile = results.firstOrNull { it is PyiFile }
+      val stubFile = results.firstOrNull { it is PyiFile || PyUtil.turnDirIntoInit(it) is PyiFile }
       if (stubFile != null)
         listOf(stubFile)
       else
@@ -214,9 +215,15 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
   val moduleResults = mutableListOf<PsiElement>()
   val sdkResults = mutableListOf<PsiElement>()
 
+  val sdk = context.effectiveSdk
+  val module = context.module
+  val footholdFile = context.footholdFile
+
   val visitor = RootVisitor { root, module, sdk, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
-    if (!root.isValid || root == PyUserSkeletonsUtil.getUserSkeletonsDirectory()) {
+    if (!root.isValid ||
+        root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
+        sdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, sdk)) {
       return@RootVisitor true
     }
     val result = resolveInRoot(name, root, context)
@@ -231,10 +238,6 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     }
     return@RootVisitor true
   }
-
-  val sdk = context.effectiveSdk
-  val module = context.module
-  val footholdFile = context.footholdFile
 
   when {
     context.visitAllModules -> {
