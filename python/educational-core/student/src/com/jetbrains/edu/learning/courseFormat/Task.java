@@ -16,9 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implementation of task which contains task files, tests, input file for tests
@@ -41,6 +39,10 @@ public class Task implements StudyItem {
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
+
+  @Expose @SerializedName("choice_variants") private List<String> choiceVariants = new ArrayList<>();
+  @Expose @SerializedName("is_multichoice") private boolean isMultichoice;
+  @Expose @SerializedName("choice_answer") private Boolean[] choiceAnswer;
 
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;
@@ -280,5 +282,30 @@ public class Task implements StudyItem {
 
   public boolean hasSubtasks() {
     return myLastSubtaskIndex > 0;
+  }
+
+  @NotNull
+  public List<String> getChoiceVariants() {
+    return choiceVariants;
+  }
+
+  public void setChoiceVariants(List<String> choiceVariants) {
+    this.choiceVariants = choiceVariants;
+  }
+
+  public boolean isMultichoice() {
+    return isMultichoice;
+  }
+
+  public void setMultichoice(boolean multichoice) {
+    isMultichoice = multichoice;
+  }
+
+  public Boolean[] getChoiceAnswer() {
+    return choiceAnswer;
+  }
+
+  public void setChoiceAnswer(Boolean[] choiceAnswer) {
+    this.choiceAnswer = choiceAnswer;
   }
 }

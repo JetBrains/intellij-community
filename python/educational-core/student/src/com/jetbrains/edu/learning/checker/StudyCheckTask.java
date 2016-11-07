@@ -83,6 +83,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (course.isAdaptive()) {
         checkForAdaptiveCourse(indicator);
       }
+      else if (!myTask.getChoiceVariants().isEmpty()) {
+        final Pair<Boolean, String> result = EduStepicConnector.checkChoiceTask(myTask.getChoiceAnswer());
+        processStepicCheckOutput(indicator, result);
+      }
       else {
         checkForEduCourse(indicator);
       }
@@ -150,26 +154,30 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       }
       else {
         final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
-          if (pair.getFirst()) {
-            onTaskSolved("Congratulations! Remote tests passed.");
-            if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
-            }
-          }
-          else {
-            final String checkMessage = pair.getSecond();
-            onTaskFailed(checkMessage);
-          }
-          runAfterTaskCheckedActions();
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
-                                                                                                    MessageType.WARNING
-                                                                                                      .getPopupBackground(),
-                                                                                                    myProject));
+        processStepicCheckOutput(indicator, pair);
+      }
+    }
+  }
+
+  private void processStepicCheckOutput(ProgressIndicator indicator, Pair<Boolean, String> pair) {
+    if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
+      if (pair.getFirst()) {
+        onTaskSolved("Congratulations! Remote tests passed.");
+        if (myStatusBeforeCheck != StudyStatus.Solved) {
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
         }
       }
+      else {
+        final String checkMessage = pair.getSecond();
+        onTaskFailed(checkMessage);
+      }
+      runAfterTaskCheckedActions();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
+                                                                                                MessageType.WARNING
+                                                                                                  .getPopupBackground(),
+                                                                                                myProject));
     }
   }
 
