@@ -47,7 +47,7 @@ public class TerminalShellCommandTest extends TestCase {
     hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
     Map<String, String> envs = Maps.newHashMap();
     hasRcConfig("bash --rcfile ~/.bashrc", "jediterm-bash.in", envs);
-    assertEquals("~/.bashrc", envs.get("JEDITERM_USER_RCFILE"));
+    assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
