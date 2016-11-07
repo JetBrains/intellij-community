@@ -279,6 +279,9 @@ public class ConversionContextImpl implements ConversionContext {
       }
       else {
         file = new File(mySettingsBaseDir, fileName);
+        if (!file.exists()) {
+          return null;
+        }
       }
       return new ComponentManagerSettingsImpl(file, this);
     }
