@@ -516,6 +516,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (myProject.isDisposed()) {
+            // committedness doesn't matter anymore; give clients a chance to do checkCanceled
+            semaphore.up();
+            return;
+          }
+
           performWhenAllCommitted(new Runnable() {
             @Override
             public void run() {
