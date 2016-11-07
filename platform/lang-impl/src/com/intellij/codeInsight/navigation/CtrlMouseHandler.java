@@ -34,7 +34,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -444,25 +443,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     @NotNull
     public DocInfo getInfo() {
-      return ReadAction.compute(() -> {
-        if (!myTargetElement.isValid() || !myElementAtPointer.isValid()) return DocInfo.EMPTY;
+      return areElementsValid() ? generateInfo(myTargetElement, myElementAtPointer, isNavigatable()) : DocInfo.EMPTY;
+    }
 
-        try {
-          return generateInfo(myTargetElement, myElementAtPointer, isNavigatable());
-        }
-        catch (IndexNotReadyException e) {
-          showDumbModeNotification(myTargetElement.getProject());
-          return DocInfo.EMPTY;
-        }
-      });
+    private boolean areElementsValid() {
+      return myTargetElement.isValid() && myElementAtPointer.isValid();
     }
 
     @Override
     public boolean isValid(@NotNull Document document) {
-      if (!myTargetElement.isValid()) return false;
-      if (!myElementAtPointer.isValid()) return false;
-
-      return rangesAreCorrect(document);
+      return areElementsValid() && rangesAreCorrect(document);
     }
 
     @Override
