@@ -68,7 +68,15 @@ import java.util.List;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private final static String HELP_ID = "reference.dialogs.vcs.commit";
+
   private static final int LAYOUT_VERSION = 2;
+  private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
+  private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_" + LAYOUT_VERSION;
+  private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION_";
+
+  private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
+  private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
+  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final CommitMessage myCommitMessageArea;
@@ -89,7 +97,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private final boolean myAllOfDefaultChangeListChangesIncluded;
-  @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
   private final CommitExecutorAction[] myExecutorActions;
   private final boolean myShowVcsCommit;
   @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
@@ -110,15 +117,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myHelpId;
 
   private SplitterWithSecondHideable myDetailsSplitter;
-  private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_" + LAYOUT_VERSION;
-  private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION_";
   private final String myOkActionText;
   private CommitAction myCommitAction;
   @Nullable private CommitResultHandler myResultHandler;
-
-  private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
-  private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
-  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
