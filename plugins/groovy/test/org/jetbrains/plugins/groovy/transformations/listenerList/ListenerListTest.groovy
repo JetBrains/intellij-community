@@ -44,7 +44,7 @@ def bean = new Bean()
 bean.addMyCoolListener {}
 bean.removeMyCoolListener() {}
 bean.getMyCoolListeners()
-bean.fireSomeCoolStuffHappened(null)
+bean.fireSomeCoolStuffHappened(new WowEvent())
 '''
       enableInspections(GrUnresolvedAccessInspection)
       checkHighlighting()
@@ -56,10 +56,111 @@ class Main {
     bean.addMyCoolListener(e -> {});
     bean.removeMyCoolListener(e -> {});
     MyCoolListener[] actionListeners = bean.getMyCoolListeners();
-    bean.fireSomeCoolStuffHappened(null);
+    bean.fireSomeCoolStuffHappened(new WowEvent());
   }
 }
 '''
+      checkHighlighting()
+    }
+  }
+
+  void 'test with empty custom name'() {
+    fixture.with {
+      addFileToProject 'Bean.groovy', '''\
+class WowEvent {}
+interface MyCoolListener {
+    void someCoolStuffHappened(WowEvent e)
+}
+class Bean {
+    @groovy.beans.ListenerList(name = "")
+    List<MyCoolListener> listeners
+}
+'''
+
+      configureByText '_.groovy', '''\
+def bean = new Bean()
+bean.addMyCoolListener {}
+bean.removeMyCoolListener() {}
+bean.getMyCoolListeners()
+bean.fireSomeCoolStuffHappened(new WowEvent())
+'''
+      enableInspections(GrUnresolvedAccessInspection)
+      checkHighlighting()
+
+      configureByText 'Main.java', '''\
+class Main {
+  void foo() {
+    Bean bean = new Bean();
+    bean.addMyCoolListener(e -> {});
+    bean.removeMyCoolListener(e -> {});
+    MyCoolListener[] actionListeners = bean.getMyCoolListeners();
+    bean.fireSomeCoolStuffHappened(new WowEvent());
+  }
+}
+'''
+      checkHighlighting()
+    }
+  }
+
+  void 'test with custom name'() {
+    fixture.with {
+      addFileToProject 'Bean.groovy', '''\
+class WowEvent {}
+interface MyCoolListener {
+    void someCoolStuffHappened(WowEvent e)
+}
+class Bean {
+    @groovy.beans.ListenerList(name = "awesomeListener")
+    List<MyCoolListener> listeners
+}
+'''
+
+      configureByText '_.groovy', '''\
+def bean = new Bean()
+bean.addAwesomeListener {}
+bean.removeAwesomeListener() {}
+bean.getAwesomeListeners()
+bean.fireSomeCoolStuffHappened(new WowEvent())
+'''
+      enableInspections(GrUnresolvedAccessInspection)
+      checkHighlighting()
+
+      configureByText 'Main.java', '''\
+class Main {
+  void foo() {
+    Bean bean = new Bean();
+    bean.addAwesomeListener(e -> {});
+    bean.removeAwesomeListener(e -> {});
+    MyCoolListener[] actionListeners = bean.getAwesomeListeners();
+    bean.fireSomeCoolStuffHappened(new WowEvent());
+  }
+}
+'''
+      checkHighlighting()
+    }
+  }
+
+  void 'test with spaces custom name'() {
+    fixture.with {
+      addFileToProject 'Bean.groovy', '''\
+class WowEvent {}
+interface MyCoolListener {
+    void someCoolStuffHappened(WowEvent e)
+}
+class Bean {
+    @groovy.beans.ListenerList(name = "  ")
+    List<MyCoolListener> listeners
+}
+'''
+
+      configureByText '_.groovy', '''\
+def bean = new Bean()
+bean.'add  ' {}
+bean.'remove  '() {}
+bean.'get  s'()
+bean.fireSomeCoolStuffHappened(new WowEvent())
+'''
+      enableInspections(GrUnresolvedAccessInspection)
       checkHighlighting()
     }
   }

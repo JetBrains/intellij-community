@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.transformations.listenerList
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
@@ -34,7 +35,8 @@ class ListenerListTransformationSupport : AstTransformationSupport {
       val annotation = PsiImplUtil.getAnnotation(field, listenerListFqn) ?: continue
       val listenerType = field.getListenerType() as? PsiClassType ?: continue
       val listenerClass = listenerType.resolve() ?: continue
-      val name = GrAnnotationUtil.getString(annotation.findDeclaredDetachedValue("name")) ?: listenerClass.name ?: continue
+      val declaredName = GrAnnotationUtil.getString(annotation.findDeclaredDetachedValue("name"))
+      val name = StringUtil.nullize(declaredName) ?: listenerClass.name ?: continue
       context += context.memberBuilder.method("add${name.capitalize()}") {
         addModifier(GrModifierFlags.PUBLIC_MASK)
         returnType = PsiType.VOID
