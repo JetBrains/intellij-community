@@ -120,32 +120,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
-  private static class MyUpdateButtonsRunnable implements Runnable {
-    private CommitChangeListDialog myDialog;
-
-    private MyUpdateButtonsRunnable(final CommitChangeListDialog dialog) {
-      myDialog = dialog;
-    }
-
-    public void cancel() {
-      myDialog = null;
-    }
-
-    @Override
-    public void run() {
-      if (myDialog != null) {
-        myDialog.updateButtons();
-        myDialog.updateLegend();
-      }
-    }
-
-    public void restart(final CommitChangeListDialog dialog) {
-      myDialog = dialog;
-      run();
-    }
-  }
-
-  @NotNull private final MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
+  @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
+    updateButtons();
+    updateLegend();
+  };
 
   public static boolean commitChanges(final Project project,
                                       final List<Change> changes,
@@ -790,7 +768,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Disposer.dispose(myBrowser);
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
-    myUpdateButtonsRunnable.cancel();
     super.dispose();
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
@@ -830,12 +807,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void stopUpdate() {
     myUpdateDisabled = true;
-    myUpdateButtonsRunnable.cancel();
   }
 
   private void restartUpdate() {
     myUpdateDisabled = false;
-    myUpdateButtonsRunnable.restart(this);
+    myUpdateButtonsRunnable.run();
   }
 
   private CheckinHandler.ReturnResult runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
