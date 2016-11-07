@@ -256,8 +256,8 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
           toRightPart = "org.hamcrest.CoreMatchers.containsString($sub$)";
         } else if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fromTemplate = "$collection$.contains($element$)";
-          toLeftPart = "$element$, ";
-          toRightPart = "org.hamcrest.CoreMatchers.anyOf($collection$)";
+          toLeftPart = "$collection$, ";
+          toRightPart = "org.hamcrest.CoreMatchers.hasItem($element$)";
         }
       }
     }
