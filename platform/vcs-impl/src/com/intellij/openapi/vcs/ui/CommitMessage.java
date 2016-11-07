@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -28,33 +28,39 @@ import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
-  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
+  public static final Key<CommitMessage> DATA_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private final TitledSeparator mySeparator;
+
+  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
 
   public CommitMessage(@NotNull Project project) {
     this(project, true);
   }
 
+  public CommitMessage(@NotNull Project project, @NotNull CommitMessage commitMessage) {
+    this(project);
+    myEditorField.setDocument(commitMessage.getEditorField().getDocument());
+  }
+
   public CommitMessage(@NotNull Project project, final boolean withSeparator) {
     super(new BorderLayout());
-    myEditorField = createEditorField(project);
 
-    // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
-    // IJ code editor uses monospaced font). Hence, we don't need any special actions here
-    // (myEditorField.setFontInheritedFromLAF(true) should be used instead).
+    myEditorField = createCommitTextEditor(project, false);
+    myEditorField.getDocument().putUserData(DATA_KEY, this);
 
     add(myEditorField, BorderLayout.CENTER);
 
@@ -101,12 +107,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @Override
   public void setCommitMessage(String currentDescription) {
     setText(currentDescription);
-  }
-
-  private static EditorTextField createEditorField(final Project project) {
-    EditorTextField editorField = createCommitTextEditor(project, false);
-    editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
-    return editorField;
   }
 
   /**
@@ -167,5 +167,18 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Override
   public void dispose() {
+  }
+
+  @CalledInAwt
+  public void setChangeLists(@NotNull List<ChangeList> value) {
+    WriteAction.run(() -> {
+      myChangeLists = value;
+    });
+  }
+
+  @NotNull
+  @CalledWithReadLock
+  public List<ChangeList> getChangeLists() {
+    return myChangeLists;
   }
 }

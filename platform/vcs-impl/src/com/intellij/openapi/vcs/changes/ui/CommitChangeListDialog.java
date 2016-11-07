@@ -66,6 +66,8 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.createMaybeSingletonList;
+
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
   private static final String TITLE = VcsBundle.message("commit.dialog.title");
@@ -267,12 +269,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myAllOfDefaultChangeListChangesIncluded =
       ContainerUtil.newHashSet(changes).containsAll(ContainerUtil.newHashSet(defaultChangeList.getChanges()));
 
+    myCommitMessageArea = new CommitMessage(project);
+
     myIsAlien = isAlien;
     if (isAlien) {
+      myCommitMessageArea.setChangeLists(ContainerUtil.newArrayList(changeLists));
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
-      //noinspection unchecked
+      myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
       boolean unversionedFilesEnabled = myShowVcsCommit && Registry.is("vcs.unversioned.files.in.commit");
+      //noinspection unchecked
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
@@ -291,6 +297,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       browser.addSelectedListChangeListener(new SelectedListChangeListener() {
         @Override
         public void selectedListChanged() {
+          myCommitMessageArea.setChangeLists(createMaybeSingletonList(browser.getSelectedChangeList()));
           updateOnListSelection();
         }
       });
@@ -308,8 +315,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         });
       }
     });
-
-    myCommitMessageArea = new CommitMessage(project);
     myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(myProject, myCommitMessageArea));
 
     mySplitter = new Splitter(true);
@@ -1209,8 +1214,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
     public DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
-      super(project);
-      getEditorField().setDocument(commitMessage.getEditorField().getDocument());
+      super(project, commitMessage);
     }
 
     @Override
