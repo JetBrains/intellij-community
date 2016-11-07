@@ -20,6 +20,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 
 @CompileStatic
 class ListenerListTest extends LightGroovyTestCase {
@@ -39,12 +40,12 @@ interface MyCoolListener {
 
   void 'test all methods resolved'() {
     fixture.with {
-      addFileToProject 'Bean.groovy', '''\
+      def file = addFileToProject('Bean.groovy', '''\
 class Bean {
     @groovy.beans.ListenerList
     List<MyCoolListener> listeners
 }
-'''
+''') as GroovyFileImpl
 
       configureByText '_.groovy', '''\
 def bean = new Bean()
@@ -68,6 +69,7 @@ class Main {
 }
 '''
       checkHighlighting()
+      assert !file.contentsLoaded
     }
   }
 
