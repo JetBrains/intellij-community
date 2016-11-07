@@ -53,6 +53,7 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
+        PsiType.VOID.equals(method.getReturnType()) ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE)) return null;
 
