@@ -2033,15 +2033,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    t = t;" +
                     "    s = this.s;" +
                     "  }" +
-                    //"}" +
-                    //"class B {" +
-                    //"  B(String t) {" +
-                    //"    super.s = s;" + // would be nice if found also
-                    //"  }" +
+                    "}" +
+                    "class B extends A {" +
+                    "  B(String t) {" +
+                    "    super.s = s;" +
+                    "  }" +
                     "}";
 
     String pattern = "'_var='_var";
-    assertEquals(3, findMatchesCount(source, pattern));
+    assertEquals(4, findMatchesCount(source, pattern));
   }
 
   public void testFindLambdas() {

@@ -2202,4 +2202,25 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replacer.testReplace(in2, what, by, options));
   }
+
+  public void testReplaceQualifiedReference() {
+    String in = "class A {" +
+                "  String s;" +
+                "  void setS(String s) {" +
+                "    System.out.println(this.s);" +
+                "    this.s = s;" +
+                "  }" +
+                "}";
+    String what = "System.out.println('_a);";
+    String by = "System.out.println(\"$a$\" + $a$);";
+    assertEquals("don't drop this",
+                 "class A {" +
+                 "  String s;" +
+                 "  void setS(String s) {" +
+                 "    System.out.println(\"this.s\" + this.s);" +
+                 "    this.s = s;" +
+                 "  }" +
+                 "}",
+                 replacer.testReplace(in, what, by, options));
+  }
 }
