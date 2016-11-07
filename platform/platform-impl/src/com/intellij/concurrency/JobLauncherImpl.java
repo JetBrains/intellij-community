@@ -15,7 +15,9 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,13 +58,18 @@ public class JobLauncherImpl extends JobLauncher {
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
-    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, wrapper, things, thingProcessor, 0, things.size(), failedSubTasks, null);
+    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, thingProcessor, 0, things.size(), failedSubTasks, null);
     try {
       ForkJoinPool.commonPool().invoke(applier);
       if (applier.throwable != null) throw applier.throwable;
     }
     catch (ApplierCompleter.ComputationAbortedException e) {
+      // one of the processors returned false
       return false;
+    }
+    catch (ApplicationUtil.CannotRunReadActionException e) {
+      // failFastOnAcquireReadAction==true and one of the processors called runReadAction() during the pending write action
+      throw e;
     }
     catch (ProcessCanceledException e) {
       // task1.processor returns false and the task cancels the indicator
@@ -91,7 +98,10 @@ public class JobLauncherImpl extends JobLauncher {
     //}
     if (things.isEmpty()) return true;
 
-    if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD) {
+    if (things.size() <= 1 ||
+        JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD ||
+        runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
+      ) {
       final AtomicBoolean result = new AtomicBoolean(true);
       Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         //noinspection ForLoopReplaceableByForEach

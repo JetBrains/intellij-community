@@ -19,6 +19,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -123,7 +125,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     runReadWrites(readIterations, writeIterations, 10000);
   }
 
-  private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) throws InterruptedException {
+  private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
@@ -331,6 +333,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private volatile boolean tryingToStartWriteAction;
   private volatile boolean readStarted;
   private volatile List<Thread> readThreads;
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend") // to prevent tearing
   public void testReadWontStartWhenWriteIsPending() throws Throwable {
     int N = 5;
     final AtomicBoolean[] anotherThreadStarted = new AtomicBoolean[N];
@@ -554,14 +557,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testSuspendWriteActionDelaysForeignReadActions() throws Exception {
-    List<String> log = Collections.synchronizedList(new ArrayList<>());
-
     Semaphore mayStartForeignRead = new Semaphore();
     mayStartForeignRead.down();
 
     List<Future> futures = new ArrayList<>();
 
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    List<String> log = Collections.synchronizedList(new ArrayList<>());
     futures.add(app.executeOnPooledThread(() -> {
       assertTrue(mayStartForeignRead.waitFor(1000));
       ReadAction.run(() -> log.add("foreign read"));
@@ -672,5 +674,44 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private static boolean isEscapingThreadAssertion(AssertionError e) {
     return e.getMessage().contains("should have been terminated");
+  }
+
+  public void testReadActionInImpatientModeShouldThrowWhenThereIsAPendingWrite() throws ExecutionException, InterruptedException {
+    AtomicBoolean stopRead = new AtomicBoolean();
+    AtomicBoolean readAcquired = new AtomicBoolean();
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    Future<?> readAction1 = app.executeOnPooledThread(() ->
+      app.runReadAction(() -> {
+        readAcquired.set(true);
+        try {
+          while (!stopRead.get()) ;
+        }
+        finally {
+          readAcquired.set(false);
+        }
+      })
+    );
+    while (!readAcquired.get());
+    Future<?> readAction2 = app.executeOnPooledThread(() -> {
+      // wait for write action attempt to start
+      while (!app.isWriteActionPending());
+      app.executeByImpatientReader(() -> {
+        try {
+          app.runReadAction(EmptyRunnable.getInstance());
+          fail("Must have been failed");
+        }
+        catch (ApplicationUtil.CannotRunReadActionException ignored) {
+
+        }
+        finally {
+          stopRead.set(true);
+        }
+      });
+    });
+
+    app.runWriteAction(EmptyRunnable.getInstance());
+
+    readAction2.get();
+    readAction1.get();
   }
 }

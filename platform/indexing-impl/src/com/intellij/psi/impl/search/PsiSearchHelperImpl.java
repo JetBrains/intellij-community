@@ -315,49 +315,66 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       final AtomicBoolean canceled = new AtomicBoolean(false);
 
-      boolean completed = true;
-      while (true) {
-        List<VirtualFile> failedList = new SmartList<>();
-        final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
-        final Processor<VirtualFile> processor = vfile -> {
-          try {
-            TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-            processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
-          }
-          catch (ApplicationUtil.CannotRunReadActionException action) {
-            failedFiles.add(vfile);
-          }
-          return !canceled.get();
-        };
-        if (ApplicationManager.getApplication().isWriteAccessAllowed() || ((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) {
-          // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-          completed &= ContainerUtil.process(files, processor);
+      return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, vfile -> {
+        TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
+        processVirtualFile(vfile, progress, localProcessor, canceled);
+        if (progress.isRunning()) {
+          double fraction = (double)counter.incrementAndGet() / totalSize;
+          progress.setFraction(fraction);
         }
-        else {
-          completed &= JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, false, processor);
-        }
-
-        if (failedFiles.isEmpty()) {
-          break;
-        }
-        // we failed to run read action in job launcher thread
-        // run read action in our thread instead to wait for a write action to complete and resume parallel processing
-        DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(EmptyRunnable.getInstance());
-        files = failedList;
-      }
-      return completed;
+        return !canceled.get();
+      });
     }
     finally {
       myManager.finishBatchFilesProcessingMode();
     }
   }
 
+  // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
+  // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
+  // {@localProcessor} must be as idempotent as possible.
+  public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
+                                                                    @NotNull List<VirtualFile> files,
+                                                                    @NotNull final ProgressIndicator progress,
+                                                                    @NotNull final Processor<VirtualFile> localProcessor) {
+    final AtomicBoolean canceled = new AtomicBoolean(false);
+
+    boolean completed = true;
+    while (true) {
+      List<VirtualFile> failedList = new SmartList<>();
+      final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
+      final Processor<VirtualFile> processor = vfile -> {
+        try {
+          return localProcessor.process(vfile);
+        }
+        catch (ApplicationUtil.CannotRunReadActionException action) {
+          failedFiles.add(vfile);
+        }
+        return !canceled.get();
+      };
+      if (ApplicationManager.getApplication().isWriteAccessAllowed() || ((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) {
+        // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
+        completed &= ContainerUtil.process(files, processor);
+      }
+      else {
+        completed &= JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, true, processor);
+      }
+
+      if (failedFiles.isEmpty()) {
+        break;
+      }
+      // we failed to run read action in job launcher thread
+      // run read action in our thread instead to wait for a write action to complete and resume parallel processing
+      DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
+      files = failedList;
+    }
+    return completed;
+  }
+
   private void processVirtualFile(@NotNull final VirtualFile vfile,
                                   @NotNull final ProgressIndicator progress,
                                   @NotNull final Processor<? super PsiFile> localProcessor,
-                                  @NotNull final AtomicBoolean canceled,
-                                  @NotNull AtomicInteger counter,
-                                  int totalSize) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull final AtomicBoolean canceled) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
@@ -391,10 +408,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         }
       });
-    }
-    if (progress.isRunning()) {
-      double fraction = (double)counter.incrementAndGet() / totalSize;
-      progress.setFraction(fraction);
     }
   }
 
