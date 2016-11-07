@@ -130,7 +130,7 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
                               @NotNull VirtualFile script,
                               @NotNull IdeScriptEngine engine) throws ExecutionException, IOException, IdeScriptException {
     String scriptText = VfsUtilCore.loadText(script);
-    IdeScriptBindings.ensureIdeIsBound(project, engine);
+    IdeConsoleScriptBindings.ensureIdeIsBound(project, engine);
 
     LOG.info(script.getPath());
     long start = System.currentTimeMillis();
