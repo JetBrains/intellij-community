@@ -16,7 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -62,7 +63,7 @@ public class SubstitutorComputer {
   @Nullable private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
   private final PsiElement myPlaceToInferContext;
-  private final AtomicNotNullLazyValue<Collection<PsiElement>> myExitPoints;
+  private final NotNullLazyValue<Collection<PsiElement>> myExitPoints;
   private final PsiResolveHelper myHelper;
 
   public SubstitutorComputer(PsiType thisType,
@@ -75,7 +76,7 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-    myExitPoints = AtomicNotNullLazyValue.createValue(() -> {
+    myExitPoints = VolatileNotNullLazyValue.createValue(() -> {
       if (canBeExitPoint(place)) {
         GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
         return newHashSet(ControlFlowUtils.collectReturns(flowOwner));
