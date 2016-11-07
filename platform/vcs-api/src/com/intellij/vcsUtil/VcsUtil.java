@@ -18,8 +18,7 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -28,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -139,86 +138,46 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static AbstractVcs getVcsFor(@NotNull final Project project, final FilePath file) {
-    final AbstractVcs[] vcss = new AbstractVcs[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
-        //  a future task after the component has been disposed.
-        if (!project.isDisposed()) {
-          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
-          vcss[0] = (mgr != null) ? mgr.getVcsFor(file) : null;
-        }
-      }
-    });
-    return vcss[0];
+  public static AbstractVcs getVcsFor(@NotNull Project project, FilePath filePath) {
+    return computeValue(project, manager -> manager.getVcsFor(filePath));
   }
 
   @Nullable
-  public static AbstractVcs getVcsFor(final Project project, @NotNull final VirtualFile file) {
-    final AbstractVcs[] vcss = new AbstractVcs[1];
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
-        //  a future task after the component has been disposed.
-        if( !project.isDisposed() )
-        {
-          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
-          vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
-        }
-      }
-    });
-    return vcss[0];
+  public static AbstractVcs getVcsFor(@NotNull Project project, @NotNull VirtualFile file) {
+    return computeValue(project, manager -> manager.getVcsFor(file));
   }
 
   @Nullable
-  public static VirtualFile getVcsRootFor(final Project project, final FilePath file) {
-    final VirtualFile[] roots = new VirtualFile[1];
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
-        //  a future task after the component has been disposed.
-        if( !project.isDisposed() )
-        {
-          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
-          roots[ 0 ] = (mgr != null) ? mgr.getVcsRootFor( file ) : null;
-        }
-      }
-    });
-    return roots[0];
+  public static VirtualFile getVcsRootFor(@NotNull Project project, FilePath filePath) {
+    return computeValue(project, manager -> manager.getVcsRootFor(filePath));
   }
 
   @Nullable
-  public static VirtualFile getVcsRootFor(final Project project, final VirtualFile file) {
-    final VirtualFile[] roots = new VirtualFile[1];
+  public static VirtualFile getVcsRootFor(@NotNull Project project, @Nullable VirtualFile file) {
+    return computeValue(project, manager -> manager.getVcsRootFor(file));
+  }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
-        //  a future task after the component has been disposed.
-        if( !project.isDisposed() )
-        {
-          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
-          roots[ 0 ] = (mgr != null) ? mgr.getVcsRootFor( file ) : null;
-        }
+  @Nullable
+  private static <T> T computeValue(@NotNull Project project, @NotNull Function<ProjectLevelVcsManager, T> provider) {
+    return ReadAction.compute(() -> {
+      //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
+      //  a future task after the component has been disposed.
+      T result = null;
+      if (!project.isDisposed()) {
+        ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+        result = manager != null ? provider.fun(manager) : null;
       }
+      return result;
     });
-    return roots[0];
   }
 
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    getApplication().assertIsDispatchThread();
     refreshFiles(collectFilesToRefresh(roots), runnable);
   }
 
   public static void refreshFiles(final File[] roots, final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    getApplication().assertIsDispatchThread();
     refreshFiles(collectFilesToRefresh(roots), runnable);
   }
 
@@ -260,25 +219,13 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static VirtualFile getVirtualFile(final String path) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      @Nullable
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));
-      }
-    });
+  public static VirtualFile getVirtualFile(@NotNull String path) {
+    return ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/')));
   }
 
   @Nullable
-  public static VirtualFile getVirtualFile(final File file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      @Nullable
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().findFileByIoFile(file);
-      }
-    });
+  public static VirtualFile getVirtualFile(@NotNull File file) {
+    return ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByIoFile(file));
   }
 
   @Nullable
@@ -292,14 +239,11 @@ public class VcsUtil {
     return result;
   }
 
-  public static String getFileContent(final String path) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        VirtualFile vFile = getVirtualFile(path);
-        assert vFile != null;
-        return FileDocumentManager.getInstance().getDocument(vFile).getText();
-      }
+  public static String getFileContent(@NotNull String path) {
+    return ReadAction.compute(() -> {
+      VirtualFile vFile = getVirtualFile(path);
+      assert vFile != null;
+      return FileDocumentManager.getInstance().getDocument(vFile).getText();
     });
   }
 
@@ -358,13 +302,10 @@ public class VcsUtil {
    * @param project Current project component
    * @param message information message
    */
-  public static void showStatusMessage(final Project project, final String message) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isOpen()) {
-          StatusBar.Info.set(message, project);
-        }
+  public static void showStatusMessage(@NotNull Project project, @Nullable String message) {
+    SwingUtilities.invokeLater(() -> {
+      if (project.isOpen()) {
+        StatusBar.Info.set(message, project);
       }
     });
   }
@@ -434,12 +375,7 @@ public class VcsUtil {
   }
 
   private static FilePath[] sortPaths(FilePath[] files, final int sign) {
-    Arrays.sort(files, new Comparator<FilePath>() {
-      @Override
-      public int compare(@NotNull FilePath o1, @NotNull FilePath o2) {
-        return sign * o1.getPath().compareTo(o2.getPath());
-      }
-    });
+    Arrays.sort(files, (file1, file2) -> sign * file1.getPath().compareTo(file2.getPath()));
     return files;
   }
 
@@ -500,15 +436,12 @@ public class VcsUtil {
   public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
     throws VcsException {
     final Ref<VcsException> ex = new Ref<>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-        }
-        catch (VcsException e) {
-          ex.set(e);
-        }
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        runnable.run();
+      }
+      catch (VcsException e) {
+        ex.set(e);
       }
     }, progressTitle, canBeCanceled, project);
     if (!ex.isNull()) {
@@ -517,24 +450,15 @@ public class VcsUtil {
     return result;
   }
 
-  public static VirtualFile waitForTheFile(final String path) {
-    final VirtualFile[] file = new VirtualFile[1];
-    final Application app = ApplicationManager.getApplication();
-    Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        app.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          }
-        });
-      }
-    };
+  @Nullable
+  public static VirtualFile waitForTheFile(@NotNull String path) {
+    Ref<VirtualFile> result = Ref.create();
 
-    app.invokeAndWait(action);
+    getApplication().invokeAndWait(
+      () -> getApplication().runWriteAction(
+        () -> result.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(path))));
 
-    return file[0];
+    return result.get();
   }
 
   public static String getCanonicalLocalPath(String localPath) {
