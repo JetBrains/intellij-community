@@ -22,6 +22,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -63,7 +64,10 @@ public class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = e.getProject() != null && Registry.is("ide.scratch.enabled");
+      String place = e.getPlace();
+      boolean enabled = e.getProject() != null
+                        && Registry.is("ide.scratch.enabled")
+                        && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
       presentation.setIcon(ICON);
