@@ -269,6 +269,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       myText = text;
     }
 
+    boolean hasUnsavedChanges() {
+      if (myText == null) return false;
+      return getFilter() == null || !myText.equals(getFilter().getText());
+    }
+
     @Override
     void setFilter(@Nullable VcsLogTextFilter filter) {
       super.setFilter(filter);
@@ -466,7 +471,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Override
     protected void onFocusLost() {
-      applyFilter();
+      if (myTextFilterModel.hasUnsavedChanges()) {
+        applyFilter();
+      }
     }
   }
 }
