@@ -142,6 +142,8 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListTransformationSupport"/>
+
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
