@@ -158,11 +158,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   @NotNull
   public String getComment() {
     final String s = myEditorField.getDocument().getCharsSequence().toString();
-    int end = s.length();
-    while(end > 0 && Character.isSpaceChar(s.charAt(end-1))) {
-      end--;
-    }
-    return s.substring(0, end);
+    return StringUtil.trimTrailing(s);
   }
 
   public void requestFocusInMessage() {
