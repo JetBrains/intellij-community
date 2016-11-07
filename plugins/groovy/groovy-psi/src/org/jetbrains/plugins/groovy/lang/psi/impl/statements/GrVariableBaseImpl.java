@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -168,7 +167,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
     }
 
     if (initializer != null) {
-      PsiType initializerType = ourGuard.doPreventingRecursion(this, true, (NullableComputable<PsiType>)() -> initializer.getType());
+      PsiType initializerType = ourGuard.doPreventingRecursion(this, true, initializer::getType);
       if (declaredType == null) return initializerType;
 
       if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
@@ -306,7 +305,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   private GrVariableDeclaration getDeclaration() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration)parent);
+      return (GrVariableDeclaration)parent;
     }
     return null;
   }
