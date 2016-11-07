@@ -26,13 +26,20 @@ class ListenerListTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
-  void 'test all methods resolved'() {
-    fixture.with {
-      addFileToProject 'Bean.groovy', '''\
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    fixture.addFileToProject 'listener.groovy', '''\
 class WowEvent {}
 interface MyCoolListener {
     void someCoolStuffHappened(WowEvent e)
 }
+'''
+  }
+
+  void 'test all methods resolved'() {
+    fixture.with {
+      addFileToProject 'Bean.groovy', '''\
 class Bean {
     @groovy.beans.ListenerList
     List<MyCoolListener> listeners
@@ -67,10 +74,6 @@ class Main {
   void 'test with empty custom name'() {
     fixture.with {
       addFileToProject 'Bean.groovy', '''\
-class WowEvent {}
-interface MyCoolListener {
-    void someCoolStuffHappened(WowEvent e)
-}
 class Bean {
     @groovy.beans.ListenerList(name = "")
     List<MyCoolListener> listeners
@@ -105,10 +108,6 @@ class Main {
   void 'test with custom name'() {
     fixture.with {
       addFileToProject 'Bean.groovy', '''\
-class WowEvent {}
-interface MyCoolListener {
-    void someCoolStuffHappened(WowEvent e)
-}
 class Bean {
     @groovy.beans.ListenerList(name = "awesomeListener")
     List<MyCoolListener> listeners
@@ -143,10 +142,6 @@ class Main {
   void 'test with spaces custom name'() {
     fixture.with {
       addFileToProject 'Bean.groovy', '''\
-class WowEvent {}
-interface MyCoolListener {
-    void someCoolStuffHappened(WowEvent e)
-}
 class Bean {
     @groovy.beans.ListenerList(name = "  ")
     List<MyCoolListener> listeners
