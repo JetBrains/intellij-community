@@ -73,6 +73,8 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.containers.TroveSetIntIterator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -283,6 +285,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public void requestReindex(@NotNull final VirtualFile file) {
+    ((GistManagerImpl)GistManager.getInstance()).invalidateData();
     myChangedFilesCollector.invalidateIndicesRecursively(file, true);
   }
 
