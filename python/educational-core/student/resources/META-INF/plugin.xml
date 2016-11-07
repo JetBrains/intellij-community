@@ -103,7 +103,7 @@
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
-
+    <editorNotificationProvider implementation="com.jetbrains.edu.learning.editor.StudyChoiceTaskEditorNotificationsProvider"/>
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>

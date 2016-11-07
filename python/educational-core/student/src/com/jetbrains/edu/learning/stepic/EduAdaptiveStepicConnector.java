@@ -52,6 +52,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
 
@@ -95,8 +97,13 @@ public class EduAdaptiveStepicConnector {
 
             for (int stepId : realLesson.steps) {
               final StepicWrappers.StepSource step = getStep(project, stepId);
-              if (step.block.name.equals(CODE_TASK_TYPE)) {
-                return getTaskFromStep(project, stepId, step.block, realLesson.getName());
+              final String stepType = step.block.name;
+              if (stepType.equals(CODE_TASK_TYPE)) {
+                //return getCodeTaskFromStep(project, stepId, step.block, realLesson.getName());
+                return getChoiceTaskFromStep(project, stepId, step.block, realLesson.getName());
+              }
+              else if (stepType.equals("choice")) {
+                return getChoiceTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
               else if (step.block.name.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
                 return EduStepicConnector.createTask(project, stepId);
@@ -134,6 +141,25 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     return null;
+  }
+
+  private static Task getChoiceTaskFromStep(Project project, int id, StepicWrappers.Step block, String lessonName) {
+    final Task task = new Task(lessonName);
+    task.setChoiceVariants(Arrays.asList("Программа не скомпилируется.",
+                                                         "Программа скомпилируется, но при попытке запуска упадет с ошибкой.",
+                                                         "Программа скомпилируется, запустится, но ничего не сделает"));
+    task.setMultichoice(false);
+    task.setChoiceAnswer(new Boolean[task.getChoiceVariants().size()]);
+    Arrays.fill(task.getChoiceAnswer(), false);
+    task.setText("Что произойдет, если объявить метод main с синтаксически корректной, но не поддерживаемой JVM комбинацией модификаторов, " +
+                 "возвращаемого значения и параметров?");
+    task.setStepId(id);
+    task.setName(lessonName);
+    final TaskFile taskFile = new TaskFile();
+    taskFile.text = "";
+    taskFile.name = "code";
+    task.taskFiles.put("code.py", taskFile);
+    return task;
   }
 
   private static void setTimeout(HttpGet request) {
@@ -309,7 +335,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(Project project, int lessonID, @NotNull final StepicWrappers.Step step, @NotNull String name) {
+  private static Task getCodeTaskFromStep(Project project, int lessonID, @NotNull final StepicWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
     task.setStepId(lessonID);
