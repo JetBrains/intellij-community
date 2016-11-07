@@ -80,7 +80,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @return true, if graceful process termination should be attempted first
    */
-  protected boolean shouldKillProcessSoftly() {
+  public boolean shouldKillProcessSoftly() {
     return myShouldKillProcessSoftly;
   }
 
