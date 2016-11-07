@@ -129,7 +129,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   /**
    * @param files the first file will be loaded in editor
    */
-  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) throws Exception {
+  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) {
     if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
@@ -138,7 +138,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
-    return configureByFiles(projectFile, vFiles);
+    try {
+      return configureByFiles(projectFile, vFiles);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void allowRootAccess(final String filePath) {
