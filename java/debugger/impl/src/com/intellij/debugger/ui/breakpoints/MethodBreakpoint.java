@@ -38,6 +38,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -46,6 +49,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -71,6 +75,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -145,7 +150,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       request.enable();
     }
 
-    processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false));
+    AtomicReference<ProgressIndicator> indicatorRef = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> indicatorRef.set(new ProgressWindowWithNotification(true, myProject)));
+    ProgressIndicator indicator = indicatorRef.get();
+    ProgressManager.getInstance().executeProcessUnderProgress(
+      () -> processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false), indicator),
+      indicator);
+    if (indicator.isCanceled()) {
+      AppUIUtil.invokeOnEdt(() -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this));
+    }
   }
 
   private void createRequestForPreparedClassEmulated(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType, boolean base) {
@@ -519,15 +532,34 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return StreamEx.empty();
   }
 
-  private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer) {
+  private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer, ProgressIndicator progressIndicator) {
     long start = 0;
     if (LOG.isDebugEnabled()) {
       start = System.currentTimeMillis();
     }
+    progressIndicator.start();
+    progressIndicator.setText("Processing classes");
+    try {
+      progressIndicator.setIndeterminate(true);
 
-    MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
-    classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
-    StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).forEach(consumer);
+      MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
+      classType.virtualMachine().allClasses().forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
+      List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
+
+      progressIndicator.setIndeterminate(false);
+      for (int i = 0; i < types.size(); i++) {
+        if (progressIndicator.isCanceled()) {
+          break;
+        }
+        consumer.accept(types.get(i));
+
+        progressIndicator.setText2(i + "/" + types.size());
+        progressIndicator.setFraction((double)i / types.size());
+      }
+    }
+    finally {
+      progressIndicator.stop();
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing all classes took: " + String.valueOf(System.currentTimeMillis() - start) + "ms");
