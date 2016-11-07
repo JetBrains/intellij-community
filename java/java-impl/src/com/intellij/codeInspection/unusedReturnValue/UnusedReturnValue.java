@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -214,13 +215,15 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
           try {
             final PsiExpression expression = returnStatement.getReturnValue();
             if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {    //avoid side effects
-              if (returnStatement == lastStatement) {
-                returnStatement.delete();
-              }
-              else {
-                returnStatement
-                  .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
-              }
+              WriteAction.run(() -> {
+                if (returnStatement == lastStatement) {
+                  returnStatement.delete();
+                }
+                else {
+                  returnStatement
+                    .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
+                }
+              });
             }
           }
           catch (IncorrectOperationException e) {
