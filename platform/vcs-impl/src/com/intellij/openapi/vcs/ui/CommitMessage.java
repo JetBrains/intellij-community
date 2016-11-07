@@ -57,26 +57,27 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
     // IJ code editor uses monospaced font). Hence, we don't need any special actions here
     // (myEditorField.setFontInheritedFromLAF(true) should be used instead).
-    
+
     add(myEditorField, BorderLayout.CENTER);
 
-    JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(BorderFactory.createEmptyBorder());
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), withSeparator);
+    toolbar.updateActionsImmediately();
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
+
     if (withSeparator) {
       mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
       JPanel separatorPanel = new JPanel(new BorderLayout());
       separatorPanel.add(mySeparator, BorderLayout.SOUTH);
       separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
+
+      JPanel labelPanel = new JPanel(new BorderLayout());
+      labelPanel.setBorder(BorderFactory.createEmptyBorder());
       labelPanel.add(separatorPanel, BorderLayout.CENTER);
-    }
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), withSeparator);
-    toolbar.updateActionsImmediately();
-    toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
-    if (withSeparator) {
       labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
       add(labelPanel, BorderLayout.NORTH);
-    } else {
+    }
+    else {
       add(toolbar.getComponent(), BorderLayout.EAST);
     }
 
