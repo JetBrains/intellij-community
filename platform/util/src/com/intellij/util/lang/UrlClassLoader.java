@@ -99,6 +99,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAllowBootstrapResources = false;
     @Nullable private CachePoolImpl myCachePool = null;
     @Nullable private CachingCondition myCachingCondition = null;
+    private boolean myErrorOnMissingJar = true;
 
     private Builder() { }
 
@@ -144,6 +145,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder noPreload() { return preload(false); }
     public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
@@ -179,7 +181,8 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
+                                builder.myErrorOnMissingJar);
   }
 
   public static URL internProtocol(@NotNull URL url) {

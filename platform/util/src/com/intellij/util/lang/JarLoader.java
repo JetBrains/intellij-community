@@ -46,15 +46,18 @@ class JarLoader extends Loader {
 
   private final File myCanonicalFile;
   private final boolean myCanLockJar; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
+  private final boolean myLogError;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
   private final Map<Resource.Attribute, String> myAttributes;
 
-  JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
+  JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents, boolean logError)
+    throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myCanonicalFile = new File(FileUtil.unquote(url.getFile())).getCanonicalFile();
     myCanLockJar = canLockJar;
+    myLogError = logError;
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
@@ -146,7 +149,12 @@ class JarLoader extends Loader {
   }
 
   protected void error(String message, Throwable t) {
-    Logger.getInstance(JarLoader.class).error(message, t);
+    if (myLogError) {
+      Logger.getInstance(JarLoader.class).error(message, t);
+    }
+    else {
+      Logger.getInstance(JarLoader.class).warn(message, t);
+    }
   }
 
   private static final Object ourLock = new Object();

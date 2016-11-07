@@ -57,6 +57,7 @@ public class ClassPath {
   private final boolean myCanHavePersistentIndex;
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
+  private final boolean myLogErrorOnMissingJar;
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -65,7 +66,8 @@ public class ClassPath {
                    boolean preloadJarContents,
                    boolean canHavePersistentIndex,
                    @Nullable CachePoolImpl cachePool,
-                   @Nullable UrlClassLoader.CachingCondition cachingCondition) {
+                   @Nullable UrlClassLoader.CachingCondition cachingCondition,
+                   boolean logErrorOnMissingJar) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
@@ -73,6 +75,7 @@ public class ClassPath {
     myCachePool = cachePool;
     myCachingCondition = cachingCondition;
     myCanHavePersistentIndex = canHavePersistentIndex;
+    myLogErrorOnMissingJar = logErrorOnMissingJar;
     push(urls);
   }
 
@@ -205,7 +208,7 @@ public class ClassPath {
       return new FileLoader(url, index, myCanHavePersistentIndex);
     }
     else if (file.isFile()) {
-      Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);
+      Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents, myLogErrorOnMissingJar);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(file);
         if (referencedJars != null) {
