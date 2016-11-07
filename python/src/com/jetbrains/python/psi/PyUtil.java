@@ -1000,6 +1000,11 @@ public class PyUtil {
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackage(directory)) {
+        return true;
+      }
+    }
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
@@ -1013,6 +1018,11 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackageFile(file)) {
+        return true;
+      }
+    }
     return PyNames.INIT_DOT_PY.equals(file.getName());
   }
 
