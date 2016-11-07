@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MockModule extends MockComponentManager implements Module {
   private final Project myProject;
+  private String myName = "MockModule";
 
   public MockModule(@NotNull Disposable parentDisposable) {
     this(null, parentDisposable);
@@ -114,7 +115,12 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   @NotNull
   public String getName() {
-    return "MockModule";
+    return myName;
+  }
+
+  public MockModule setName(String name) {
+    myName = name;
+    return this;
   }
 
   @Override
