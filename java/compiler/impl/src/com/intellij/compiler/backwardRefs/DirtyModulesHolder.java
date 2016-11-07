@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
@@ -77,8 +78,11 @@ public class DirtyModulesHolder extends UserDataHolderBase {
       if (myCompilationPhase) {
         return GlobalSearchScope.allScope(project);
       }
-      return ReadAction.compute(() -> CachedValuesManager.getManager(project).getCachedValue(this, () ->
-        CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService)));
+      return ReadAction.compute(() -> {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return CachedValuesManager.getManager(project).getCachedValue(this, () ->
+          CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+      });
     }
   }
 

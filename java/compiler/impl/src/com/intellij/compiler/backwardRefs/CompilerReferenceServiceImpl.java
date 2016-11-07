@@ -26,6 +26,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -191,17 +192,20 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                      @NotNull CompilerHierarchySearchType searchType) {
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
-    Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-      new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
-        @Nullable
-        @Override
-        protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
-          return calculateDirectInheritors(aClass,
-                                           useScope,
-                                           key.mySearchFileType,
-                                           key.mySearchType);
-        }
-      }, PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType)));
+    Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
+        new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
+          @Nullable
+          @Override
+          protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
+            return calculateDirectInheritors(aClass,
+                                             useScope,
+                                             key.mySearchFileType,
+                                             key.mySearchType);
+          }
+        }, PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
+    });
 
     if (candidatesPerFile == null) return null;
     GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
