@@ -30,9 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +44,6 @@ import java.util.List;
 public class RedundantThrows extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
-  private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<>();
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
   @Override
@@ -87,17 +84,17 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
 
             if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
           }
@@ -164,30 +161,16 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
     return SHORT_NAME;
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final String hint) {
-    QuickFix fix = myQuickFixes.get(hint);
-    if (fix == null) {
-      fix = new MyQuickFix(processor, hint);
-      if (hint != null) {
-        myQuickFixes.put(hint, fix);
-      }
-    }
-    return (LocalQuickFix)fix;
-  }
-
-
   @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
-    return getFix(null, hint);
+    return new MyQuickFix(null, hint);
   }
 
   @Override
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
-    final List<String> hints = myQuickFixes.getKeysByValue(fix);
-    LOG.assertTrue(hints != null && hints.size() == 1);
-    return hints.get(0);
+    return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
   }
 
   private static class MyQuickFix implements LocalQuickFix {
