@@ -2944,3 +2944,19 @@ class __method(object):
         if sys.version_info >= (2, 6):
             self.__func__ = None
             self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: Any
+    """
+    pass
+
+
+def raw_input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

@@ -1416,6 +1416,18 @@ public class PyTypeTest extends PyTestCase {
            "expr = get_value([])");
   }
 
+  // PY-21350
+  public void testBuiltinInput() {
+    doTest("Any",
+           "expr = input()");
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
+    doTest("str",
+           "expr = raw_input()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
