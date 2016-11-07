@@ -76,7 +76,9 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
                          createParams("4.11"),
                          createParams("4.10"),
                          createParams("4.9"),
-                         createParams("4.8.2")
+                         createParams("4.8.2"),
+                         createParams("4.5"),
+                         createParams("4.4")
     );
   }
 
@@ -145,6 +147,7 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
       JavaParameters parameters = state.getJavaParameters();
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters, getProject(), true);
       StringBuffer buf = new StringBuffer();
+      StringBuffer err = new StringBuffer();
       OSProcessHandler process = new OSProcessHandler(commandLine);
       process.addProcessListener(new ProcessAdapter() {
         @Override
@@ -153,6 +156,10 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
           try {
             if (outputType == ProcessOutputTypes.STDOUT && !text.isEmpty() && ServiceMessage.parse(text.trim()) == null) {
               buf.append(text);
+            }
+
+            if (outputType == ProcessOutputTypes.STDERR) {
+              err.append(text);
             }
           }
           catch (ParseException e) {
@@ -165,7 +172,12 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
       process.destroyProcess();
 
       String testOutput = buf.toString();
-      assertTrue(testOutput, testOutput.contains("Test1"));
+      assertEmpty(err.toString());
+      switch (myJUnitVersion) {
+        case "4.4": case "4.5": break; //shouldn't work for old versions
+        default:
+          assertTrue(testOutput, testOutput.contains("Test1"));
+      }
     });
   }
 
