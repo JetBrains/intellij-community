@@ -19,9 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -31,7 +29,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.ui.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +42,7 @@ import java.util.Set;
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
-  private Consumer<String> myMessageConsumer;
   private TitledSeparator mySeparator;
-  private boolean myCheckSpelling;
 
   public CommitMessage(Project project) {
     this(project, true);
@@ -155,9 +150,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public void setText(final String initialMessage) {
     final String text = initialMessage == null ? "" : StringUtil.convertLineSeparators(initialMessage);
     myEditorField.setText(text);
-    if (myMessageConsumer != null) {
-      myMessageConsumer.consume(text);
-    }
   }
 
   @NotNull
@@ -169,30 +161,9 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public void requestFocusInMessage() {
     myEditorField.requestFocus();
     myEditorField.selectAll();
-
   }
+
   @Override
-  public boolean isCheckSpelling() {
-    return myCheckSpelling;
-  }
-
-  public void setCheckSpelling(boolean check) {
-    myCheckSpelling = check;
-    Editor editor = myEditorField.getEditor();
-    if (!(editor instanceof EditorEx)) {
-      return;
-    }
-    EditorEx editorEx = (EditorEx)editor;
-    EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(check);
-    if (customization != null) {
-      customization.customize(editorEx);
-    }
-  }
-
   public void dispose() {
-  }
-
-  public void setMessageConsumer(Consumer<String> messageConsumer) {
-    myMessageConsumer = messageConsumer;
   }
 }

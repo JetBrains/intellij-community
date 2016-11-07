@@ -65,7 +65,6 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     wrapper.add(labelPanel, BorderLayout.WEST);
     parentPanel.add(wrapper, BorderLayout.NORTH);
     myCommitMessage = new CommitMessage(myProject, false);
-    myCommitMessage.setCheckSpelling(true);
     myCommitMessage.setText(myOldText);
     parentPanel.add(myCommitMessage, BorderLayout.CENTER);
     return parentPanel;

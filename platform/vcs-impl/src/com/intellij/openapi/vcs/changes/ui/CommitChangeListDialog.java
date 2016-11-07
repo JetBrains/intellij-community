@@ -816,17 +816,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return name != null ? name : VcsBundle.getString("commit.dialog.default.commit.operation.name");
   }
 
-  @Override
-  public boolean isCheckSpelling() {
-    return myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING;
-  }
-
-  @Override
-  public void setCheckSpelling(boolean checkSpelling) {
-    myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
-    myCommitMessageArea.setCheckSpelling(checkSpelling);
-  }
-
   private boolean checkComment() {
     if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && getCommitMessage().isEmpty()) {
       int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
