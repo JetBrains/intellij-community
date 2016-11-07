@@ -62,4 +62,8 @@ public interface VcsLogUi {
   boolean isShowDetails();
 
   void setShowDetails(boolean showDetails);
+
+  void setFilterByRegexEnabled(boolean enable);
+
+  boolean isFilterByRegexEnabled();
 }

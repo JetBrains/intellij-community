@@ -214,6 +214,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame.getGraphTable().setShowTagNames(show);
   }
 
+  @Override
+  public void setFilterByRegexEnabled(boolean enable) {
+    myUiProperties.setFilterByRegexEnabled(enable);
+    applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+  }
+
+  @Override
+  public boolean isFilterByRegexEnabled() {
+    return myUiProperties.isFilterByRegexEnabled();
+  }
+
   @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();

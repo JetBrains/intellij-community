@@ -89,6 +89,11 @@ class GitBekParentFixer {
 
   private static VcsLogFilterCollection createVcsLogFilterCollection() {
     final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
+      @Override
+      public boolean isRegex() {
+        return false;
+      }
+
       @NotNull
       @Override
       public String getText() {

@@ -18,18 +18,32 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Pattern;
 
 public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilter {
 
   @NotNull private final String myText;
+  private final boolean myIsRegexAllowed;
 
-  public VcsLogTextFilterImpl(@NotNull String text) {
+  public VcsLogTextFilterImpl(@NotNull String text, boolean isRegexAllowed) {
     myText = text;
+    myIsRegexAllowed = isRegexAllowed;
+  }
+
+  // used in upsource
+  @SuppressWarnings("unused")
+  public VcsLogTextFilterImpl(@NotNull String text) {
+    this(text, false);
   }
 
   @Override
   public boolean matches(@NotNull VcsCommitMetadata details) {
+    if (isRegex()) {
+      return Pattern.compile(myText, Pattern.CASE_INSENSITIVE).matcher(details.getFullMessage()).find();
+    }
     return details.getFullMessage().toLowerCase().contains(myText.toLowerCase());
   }
 
@@ -40,7 +54,12 @@ public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilt
   }
 
   @Override
+  public boolean isRegex() {
+    return myIsRegexAllowed && VcsLogUtil.isRegexp(myText);
+  }
+
+  @Override
   public String toString() {
-    return "containing " + myText;
+    return (isRegex() ? "matching " : "containing ") + myText;
   }
 }

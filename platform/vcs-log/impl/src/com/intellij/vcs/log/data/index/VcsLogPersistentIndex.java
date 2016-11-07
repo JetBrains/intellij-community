@@ -38,7 +38,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.StopWatch;
@@ -55,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
@@ -261,12 +261,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @NotNull
-  public TIntHashSet filterMessages(@NotNull String text) {
+  public TIntHashSet filterMessages(@NotNull String text, boolean isRegex) {
     if (myIndexStorage != null) {
       try {
-        if (VcsLogUtil.isRegexp(text)) {
-          Pattern pattern = Pattern.compile(text);
-          return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
+        if (isRegex) {
+          try {
+            Pattern pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
+            return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
+          }
+          catch (PatternSyntaxException ignored) {
+          }
         }
         else {
           TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(text);
@@ -324,7 +328,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     TIntHashSet filteredByMessage = null;
     if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter.getText());
+      filteredByMessage = filterMessages(textFilter.getText(), textFilter.isRegex());
     }
 
     TIntHashSet filteredByUser = null;

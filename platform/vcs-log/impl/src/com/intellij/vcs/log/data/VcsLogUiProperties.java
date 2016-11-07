@@ -64,4 +64,8 @@ public interface VcsLogUiProperties {
   boolean isShowTagNames();
 
   void setShowTagNames(boolean showTags);
+
+  boolean isFilterByRegexEnabled();
+
+  void setFilterByRegexEnabled(boolean enabled);
 }

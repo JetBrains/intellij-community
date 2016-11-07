@@ -39,6 +39,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
+    public boolean TEXT_FILTER_BY_REGEX = false;
   }
 
   @NotNull
@@ -173,6 +174,16 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setShowTagNames(boolean showTags) {
     getState().SHOW_TAG_NAMES = showTags;
+  }
+
+  @Override
+  public boolean isFilterByRegexEnabled() {
+    return getState().TEXT_FILTER_BY_REGEX;
+  }
+
+  @Override
+  public void setFilterByRegexEnabled(boolean enabled) {
+    getState().TEXT_FILTER_BY_REGEX = enabled;
   }
 
   public static class UserGroup {
