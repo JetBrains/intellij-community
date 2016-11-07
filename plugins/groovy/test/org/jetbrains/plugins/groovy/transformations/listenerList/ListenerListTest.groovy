@@ -63,4 +63,20 @@ class Main {
       checkHighlighting()
     }
   }
+
+  void 'test errors highlighting'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+import groovy.beans.ListenerList
+class Bean {
+  <error descr="@ListenerList field must have a generic Collection type">@ListenerList</error> Object notACollection
+  <error descr="@ListenerList field must have a generic Collection type">@ListenerList</error> List rawList
+  <error descr="@ListenerList field with generic wildcards not supported">@ListenerList</error> List<?> wildcardList
+  <error descr="@ListenerList field with generic wildcards not supported">@ListenerList</error> List<? extends Range> boundedList
+  @ListenerList List<Object> okList
+}
+'''
+      checkHighlighting()
+    }
+  }
 }
