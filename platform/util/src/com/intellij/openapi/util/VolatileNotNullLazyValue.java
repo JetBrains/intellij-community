@@ -39,6 +39,11 @@ public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
     return value;
   }
 
+  @Override
+  public boolean isComputed() {
+    return myValue != null;
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
   public static <T> VolatileNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<T> value) {
