@@ -40,15 +40,15 @@ Function ConfirmDesktopShortcut
       ${If} $3 != ""
         !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
         !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+      ${EndIf}
+      ${If} ${RunningX64}
         ; if 64-bit Win OS and jre64 for the build is available then add checkbox to Installation Options dialog
-        ${If} ${RunningX64}
-          StrCmp "${LINK_TO_JRE64}" "null" association 0
-          inetc::head /SILENT /TOSTACK ${LINK_TO_JRE64} "" /END
-          Pop $0
-          ${If} $0 == "OK"
-            !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-            !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install 64-bit JRE by JetBrains (will be used with 64-bit launcher)"
-          ${EndIf}
+        StrCmp "${LINK_TO_JRE64}" "null" association 0
+        inetc::head /SILENT /TOSTACK ${LINK_TO_JRE64} "" /END
+        Pop $0
+        ${If} $0 == "OK"
+          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
+          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install 64-bit JRE by JetBrains (will be used with 64-bit launcher)"
         ${EndIf}
       ${EndIf}
     ${EndIf}
