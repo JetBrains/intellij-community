@@ -67,7 +67,7 @@ import java.util.*;
 import java.util.List;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
-  private final static String outCommitHelpId = "reference.dialogs.vcs.commit";
+  private final static String HELP_ID = "reference.dialogs.vcs.commit";
   private static final int LAYOUT_VERSION = 2;
 
   @NotNull private final CommitContext myCommitContext;
@@ -631,7 +631,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myShowVcsCommit) {
       myCommitAction = new CommitAction();
       actions.add(myCommitAction);
-      myHelpId = outCommitHelpId;
+      myHelpId = HELP_ID;
     }
     if (myExecutors != null) {
       if (myCommitAction != null) {
