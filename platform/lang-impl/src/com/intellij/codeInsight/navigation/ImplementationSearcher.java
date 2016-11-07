@@ -43,33 +43,24 @@ public class ImplementationSearcher {
   public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
 
   @Nullable
-  PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
-    final TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-    boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null;
-      }
-    });
-    return searchImplementations(element, editor, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return element == null || targetElementUtil.includeSelfInGotoImplementation(element);
-        }
-    }), onRef);
+  PsiElement[] searchImplementations(Editor editor, PsiElement element, int offset) {
+    TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
+    boolean onRef = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
+    return searchImplementations(element, editor, onRef && ApplicationManager.getApplication().runReadAction(
+      (Computable<Boolean>)() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
   }
 
   @Nullable
-  public PsiElement[] searchImplementations(final PsiElement element,
-                                            final Editor editor,
-                                            final boolean includeSelfAlways,
-                                            final boolean includeSelfIfNoOthers) {
+  public PsiElement[] searchImplementations(PsiElement element,
+                                            Editor editor,
+                                            boolean includeSelfAlways,
+                                            boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
-    final PsiElement[] elements = searchDefinitions(element, editor);
+    PsiElement[] elements = searchDefinitions(element, editor);
     if (elements == null) return null; //the search has been cancelled
     if (elements.length > 0) {
       if (!includeSelfAlways) return filterElements(element, elements);
-      final PsiElement[] all;
+      PsiElement[] all;
       if (ReadAction.compute(() -> element.getTextRange()) != null) {
         all = new PsiElement[elements.length + 1];
         all[0] = element;
@@ -81,28 +72,19 @@ public class ImplementationSearcher {
       return filterElements(element, all);
     }
     return (includeSelfAlways || includeSelfIfNoOthers) &&
-           ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-             @Override
-             public TextRange compute() {
-               return element.getTextRange();
-             }
-           }) != null ?
+           ApplicationManager.getApplication().runReadAction((Computable<TextRange>)() -> element.getTextRange()) != null ?
            new PsiElement[] {element} :
            PsiElement.EMPTY_ARRAY;
   }
 
-  protected static SearchScope getSearchScope(final PsiElement element, final Editor editor) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return TargetElementUtil.getInstance().getSearchScope(editor, element);
-      }
-    });
+  protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<SearchScope>)() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
   }
 
   @Nullable("For the case the search has been cancelled")
-  protected PsiElement[] searchDefinitions(final PsiElement element, final Editor editor) {
-    final PsiElement[][] result = new PsiElement[1][];
+  protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {
+    PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         result[0] = search(element, editor).toArray(PsiElement.EMPTY_ARRAY);
@@ -126,12 +108,7 @@ public class ImplementationSearcher {
   }
 
   private static void dumbModeNotification(@NotNull PsiElement element) {
-    Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-      @Override
-      public Project compute() {
-        return element.getProject();
-      }
-    });
+    Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)() -> element.getProject());
     DumbService.getInstance(project).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 
@@ -145,14 +122,14 @@ public class ImplementationSearcher {
 
   public static class FirstImplementationsSearcher extends ImplementationSearcher {
     @Override
-    protected PsiElement[] searchDefinitions(final PsiElement element, final Editor editor) {
+    protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {
       if (canShowPopupWithOneItem(element)) {
         return new PsiElement[]{element};
       }
 
-      final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor =
+      PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor =
         new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
-      final PsiElement[][] result = new PsiElement[1][];
+      PsiElement[][] result = new PsiElement[1][];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
@@ -187,8 +164,8 @@ public class ImplementationSearcher {
 
   public abstract static class BackgroundableImplementationSearcher extends ImplementationSearcher {
     @Override
-    protected PsiElement[] searchDefinitions(final PsiElement element, Editor editor) {
-      final CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
+    protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {
+      CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
         @Override
         public boolean process(PsiElement element) {
           processElement(element);
