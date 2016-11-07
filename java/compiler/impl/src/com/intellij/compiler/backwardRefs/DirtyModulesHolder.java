@@ -31,6 +31,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
@@ -77,8 +78,13 @@ public class DirtyModulesHolder extends UserDataHolderBase {
       if (myCompilationPhase) {
         return GlobalSearchScope.allScope(project);
       }
-      return ReadAction.compute(() -> CachedValuesManager.getManager(project).getCachedValue(this, () ->
-        CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService)));
+      return ReadAction.compute(() -> {
+        if (project.isDisposed()) {
+          return GlobalSearchScope.allScope(project);
+        }
+        return CachedValuesManager.getManager(project).getCachedValue(this, () ->
+          CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+      });
     }
   }
 
@@ -162,8 +168,10 @@ public class DirtyModulesHolder extends UserDataHolderBase {
     }, myService.getProject());
   }
 
-  private Module getModuleForSourceContentFile(VirtualFile file) {
-    if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
+  private Module getModuleForSourceContentFile(@Nullable VirtualFile file) {
+    if (file != null &&
+        myService.getFileIndex().isInSourceContent(file) &&
+        myService.getFileTypes().contains(file.getFileType())) {
       return myService.getFileIndex().getModuleForFile(file);
     }
     return null;
