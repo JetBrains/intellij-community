@@ -23,6 +23,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
@@ -35,8 +37,16 @@ public class PythonModulePathCache extends PythonPathCache implements Disposable
 
   @SuppressWarnings({"UnusedDeclaration"})
   public PythonModulePathCache(final Module module) {
-    module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    final MessageBusConnection connection = module.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void rootsChanged(ModuleRootEvent event) {
+        updateCacheForSdk(module);
+        clearCache();
+      }
+    });
+    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
+      final Sdk moduleSdk = PythonSdkType.findPythonSdk(module);
+      if (sdk == moduleSdk) {
         updateCacheForSdk(module);
         clearCache();
       }

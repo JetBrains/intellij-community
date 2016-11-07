@@ -43,6 +43,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
@@ -278,6 +279,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -292,6 +294,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(getRemoteSdkMappedPaths(sdk, project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
