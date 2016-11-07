@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -45,7 +45,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Set;
+import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author Max Medvedev
@@ -58,11 +61,9 @@ public class SubstitutorComputer {
   private final PsiType myThisType;
   @Nullable private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
-
-  private final GrControlFlowOwner myFlowOwner;
   private final PsiElement myPlaceToInferContext;
+  private final AtomicNotNullLazyValue<Collection<PsiElement>> myExitPoints;
   private final PsiResolveHelper myHelper;
-
 
   public SubstitutorComputer(PsiType thisType,
                              @Nullable PsiType[] argumentTypes,
@@ -74,22 +75,23 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-
-    if (canBeExitPoint(place)) {
-      myFlowOwner = ControlFlowUtils.findControlFlowOwner(place);
-    }
-    else {
-      myFlowOwner = null;
-    }
+    myExitPoints = AtomicNotNullLazyValue.createValue(() -> {
+      if (canBeExitPoint(place)) {
+        GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
+        return newHashSet(ControlFlowUtils.collectReturns(flowOwner));
+      }
+      else {
+        return emptyList();
+      }
+    });
 
     myHelper = JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper();
-
   }
 
   @Nullable
   protected PsiType inferContextType() {
     final PsiElement parent = myPlaceToInferContext.getParent();
-    if (parent instanceof GrReturnStatement || exitsContains(myPlaceToInferContext)) {
+    if (parent instanceof GrReturnStatement || myExitPoints.getValue().contains(myPlaceToInferContext)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
       if (method != null) {
         return method.getReturnType();
@@ -270,16 +272,6 @@ public class SubstitutorComputer {
       return substitutor.put(typeParameter, inferred);
     }
     return substitutor;
-  }
-
-  private Set<PsiElement> myExitPoints;
-  protected boolean exitsContains(PsiElement place) {
-    if (myFlowOwner == null) return false;
-    if (myExitPoints == null) {
-      myExitPoints = new HashSet<>();
-      myExitPoints.addAll(ControlFlowUtils.collectReturns(myFlowOwner));
-    }
-    return myExitPoints.contains(place);
   }
 
   public PsiType[] getTypeArguments() {
