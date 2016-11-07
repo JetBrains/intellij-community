@@ -172,8 +172,6 @@
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
 
-    <fileBasedIndex implementation="com.intellij.codeInspection.dataFlow.ContractInferenceIndex"/>
-
     <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
                     serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
 

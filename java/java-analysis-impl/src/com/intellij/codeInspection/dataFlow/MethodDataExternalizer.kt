@@ -17,16 +17,21 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
-import com.intellij.util.io.IOUtil
 import java.io.DataInput
 import java.io.DataOutput
 
 /**
  * @author peter
  */
-internal object MethodDataExternalizer : DataExternalizer<MethodData> {
+internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> {
 
-  override fun save(out: DataOutput, data: MethodData) {
+  override fun save(out: DataOutput, value: Map<Int, MethodData>?) {
+    writeList(out, value!!.toList()) { DataInputOutputUtil.writeINT(out, it.first); writeMethod(out, it.second) }
+  }
+
+  override fun read(input: DataInput) = readList(input) { DataInputOutputUtil.readINT(input) to readMethod(input) }.toMap()
+
+  private fun writeMethod(out: DataOutput, data: MethodData) {
     writeNullable(out, data.nullity) { writeNullity(out, it) }
     writeNullable(out, data.purity) { writePurity(out, it) }
     writeList(out, data.contracts) { writeContract(out, it) }
@@ -34,7 +39,7 @@ internal object MethodDataExternalizer : DataExternalizer<MethodData> {
     DataInputOutputUtil.writeINT(out, data.bodyEnd)
   }
 
-  override fun read(input: DataInput): MethodData {
+  private fun readMethod(input: DataInput): MethodData {
     val nullity = readNullable(input) { readNullity(input) }
     val purity = readNullable(input) { readPurity(input) }
     val contracts = readList(input) { readContract(input) }

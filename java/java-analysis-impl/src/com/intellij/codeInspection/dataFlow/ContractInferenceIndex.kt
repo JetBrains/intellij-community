@@ -15,13 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow
 
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
-import com.intellij.lang.TreeBackedLighterAST
-import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -29,53 +25,36 @@ import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.indexing.*
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.IntInlineKeyDescriptor
+import com.intellij.util.gist.GistManager
 import java.util.*
 
 /**
  * @author peter
  */
 
-private val INDEX_ID = ID.create<Int, MethodData>("java.inferred.contracts")
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 0, MethodDataExternalizer) { file ->
+  indexFile(file.node.lighterAST)
+}
 
-class ContractInferenceIndex : FileBasedIndexExtension<Int, MethodData>(), PsiDependentIndex {
-  override fun getName() = INDEX_ID
-  override fun getVersion() = 0
-  override fun dependsOnFileContent() = true
-  override fun getKeyDescriptor() = IntInlineKeyDescriptor()
-  override fun getValueExternalizer(): DataExternalizer<MethodData> = MethodDataExternalizer
+private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
+  val result = HashMap<Int, MethodData>()
 
-  override fun getInputFilter() = FileBasedIndex.InputFilter {
-    it.fileType == JavaFileType.INSTANCE && JavaFileElementType.isInSourceContent(it)
-  }
+  object : RecursiveLighterASTNodeWalkingVisitor(tree) {
+    var methodIndex = 0
 
-  override fun getIndexer() = DataIndexer<Int, MethodData, FileContent> { fc ->
-    val result = HashMap<Int, MethodData>()
-
-    val tree = (fc as FileContentImpl).lighterASTForPsiDependentIndex
-    object : RecursiveLighterASTNodeWalkingVisitor(tree) {
-      var methodIndex = 0
-
-      override fun visitNode(element: LighterASTNode) {
-        if (element.tokenType === JavaElementType.METHOD) {
-          calcData(tree, element)?.let { data -> result[methodIndex] = data }
-          methodIndex++
-        }
-
-        if (JavaLightStubBuilder.isCodeBlockWithoutStubs(element)) return
-
-        super.visitNode(element)
+    override fun visitNode(element: LighterASTNode) {
+      if (element.tokenType === METHOD) {
+        calcData(tree, element)?.let { data -> result[methodIndex] = data }
+        methodIndex++
       }
-    }.visitNode(tree.root)
 
-    result
-  }
+      if (JavaLightStubBuilder.isCodeBlockWithoutStubs(element)) return
 
+      super.visitNode(element)
+    }
+  }.visitNode(tree.root)
+
+  return result
 }
 
 private fun calcData(tree: LighterAST, method: LighterASTNode): MethodData? {
@@ -116,22 +95,12 @@ private fun createData(body: LighterASTNode,
 
 fun getIndexedData(method: PsiMethod): MethodData? {
   if (method !is PsiMethodImpl || !InferenceFromSourceUtil.shouldInferFromSource(method)) return null
-  val vFile = method.containingFile.virtualFile ?: return calcNonPhysicalMethodData(method)
 
-  val ref = Ref<MethodData>()
-  val scope = GlobalSearchScope.fileScope(method.project, vFile)
-  FileBasedIndex.getInstance().processValues(INDEX_ID, methodIndex(method), vFile, { file, data -> ref.set(data); true }, scope)
-  return ref.get()
+  return gist.getFileData(method.containingFile)?.get(methodIndex(method))
 }
 
 private fun methodIndex(method: PsiMethodImpl): Int {
   val file = method.containingFile as PsiFileImpl
   val stubTree = file.stubTree ?: file.calcStubTree()
   return stubTree.plainList.filter { it.stubType == JavaElementType.METHOD }.map { it.psi }.indexOf(method)
-}
-
-private fun calcNonPhysicalMethodData(method: PsiMethodImpl): MethodData? {
-  return CachedValuesManager.getCachedValue(method) {
-    CachedValueProvider.Result(calcData(method.containingFile.node.lighterAST, TreeBackedLighterAST.wrap(method.node)), method)
-  }
 }
