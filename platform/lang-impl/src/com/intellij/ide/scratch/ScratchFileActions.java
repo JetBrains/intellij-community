@@ -182,9 +182,9 @@ public class ScratchFileActions {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      Set<Language> langs = files.filter(isScratch).transform(fileLanguage(project)).filter(notNull()).
-        addAllTo(ContainerUtil.<Language>newLinkedHashSet());
-      String langName = langs.size() == 1 ? langs.iterator().next().getDisplayName() : langs.size() + " different";
+      Set<Language> languages = files.filter(isScratch).transform(fileLanguage(project)).filter(notNull()).
+        addAllTo(ContainerUtil.newLinkedHashSet());
+      String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName() : languages.size() + " different";
       e.getPresentation().setText(String.format("Change %s (%s)...", getLanguageTerm(), langName));
       e.getPresentation().setEnabledAndVisible(true);
     }
