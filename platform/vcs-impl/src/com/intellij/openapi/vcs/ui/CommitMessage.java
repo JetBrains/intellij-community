@@ -66,7 +66,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
 
     if (withSeparator) {
-      mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
+      mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
       JPanel separatorPanel = new JPanel(new BorderLayout());
       separatorPanel.add(mySeparator, BorderLayout.SOUTH);
       separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
