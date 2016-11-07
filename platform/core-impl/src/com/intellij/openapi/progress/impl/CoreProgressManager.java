@@ -534,6 +534,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  @Override
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
+    ApplicationManager.getApplication().runReadAction(action);
+    return true;
+  }
+
   private void registerIndicatorAndRun(@NotNull ProgressIndicator indicator,
                                        @NotNull Thread currentThread,
                                        ProgressIndicator oldIndicator,
