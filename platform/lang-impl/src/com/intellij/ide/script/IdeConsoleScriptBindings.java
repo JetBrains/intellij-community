@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.script.IdeScriptEngine;
 
-public class IdeScriptBindings {
+public class IdeConsoleScriptBindings {
+
   public static final Binding<IDE> IDE = Binding.create("IDE", IDE.class);
 
   public static void ensureIdeIsBound(@Nullable Project project, @NotNull IdeScriptEngine engine) {
@@ -31,7 +32,7 @@ public class IdeScriptBindings {
     }
   }
 
-  private IdeScriptBindings() {
+  private IdeConsoleScriptBindings() {
   }
 
   public static class Binding<T> {
