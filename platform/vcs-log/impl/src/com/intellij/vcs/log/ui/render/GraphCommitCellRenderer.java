@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
@@ -105,10 +104,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private int getColumnWidth() {
     return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
-  }
-
-  public TableLinkMouseListener createLinkListener() {
-    return new MyTableLinkMouseListener();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -257,16 +252,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
      */
     int getWidth() {
       return myWidth;
-    }
-  }
-
-  public class MyTableLinkMouseListener extends TableLinkMouseListener {
-    @Override
-    protected Object tryGetTag(@NotNull MouseEvent e, @NotNull JTable table, int row, int column) {
-      SimpleColoredComponent component =
-        getTableCellRendererComponentImpl(table, getValue(table.getValueAt(row, column)), false, false, row, column);
-      Rectangle rc = table.getCellRect(row, column, false);
-      return component.getFragmentTagAt(e.getX() - rc.x);
     }
   }
 }

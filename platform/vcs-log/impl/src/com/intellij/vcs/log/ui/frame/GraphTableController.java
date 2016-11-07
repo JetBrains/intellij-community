@@ -36,6 +36,7 @@ import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
+import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +231,7 @@ public class GraphTableController {
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    @NotNull private final TableLinkMouseListener myLinkListener = myCommitRenderer.createLinkListener();
+    @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
 
     @Override
     public void mouseClicked(MouseEvent e) {
