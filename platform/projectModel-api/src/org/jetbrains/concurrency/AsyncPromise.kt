@@ -182,10 +182,12 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
   }
 
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
-    val latch = CountDownLatch(1)
-    processed { latch.countDown() }
-    if (!latch.await(timeout.toLong(), timeUnit)) {
-      throw TimeoutException()
+    if (isPending) {
+      val latch = CountDownLatch(1)
+      processed { latch.countDown() }
+      if (!latch.await(timeout.toLong(), timeUnit)) {
+        throw TimeoutException()
+      }
     }
 
     @Suppress("UNCHECKED_CAST")
