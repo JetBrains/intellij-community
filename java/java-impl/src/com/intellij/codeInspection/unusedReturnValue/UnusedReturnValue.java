@@ -42,8 +42,6 @@ import java.util.List;
  * @author max
  */
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
-  private MakeVoidQuickFix myQuickFix;
-
   public boolean IGNORE_BUILDER_PATTERN;
 
   @Override
@@ -69,7 +67,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiMethod.getNavigationElement(),
                                                                        InspectionsBundle
                                                                          .message("inspection.unused.return.value.problem.descriptor"),
-                                                                       !isNative ? getFix(processor) : null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                       !isNative ? new MakeVoidQuickFix(processor) : null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                        false)};
       }
     }
@@ -131,17 +129,10 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     return "UnusedReturnValue";
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor) {
-    if (myQuickFix == null) {
-      myQuickFix = new MakeVoidQuickFix(processor);
-    }
-    return myQuickFix;
-  }
-
   @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
-    return getFix(null);
+    return new MakeVoidQuickFix(null);
   }
 
   private static class MakeVoidQuickFix implements LocalQuickFix {
