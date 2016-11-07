@@ -510,7 +510,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   private static class DunderAllBuilder extends PyRecursiveElementVisitor {
-    private List<String> myResult = new ArrayList<>();
+    @Nullable private List<String> myResult = null;
     private boolean myDynamic = false;
     private boolean myFoundDunderAll = false;
 
@@ -577,6 +577,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           if ("append".equals(calleeName)) {
             final PyStringLiteralExpression argument = node.getArgument(0, PyStringLiteralExpression.class);
             if (argument != null) {
+              if (myResult == null) {
+                myResult = new ArrayList<>();
+              }
               myResult.add(argument.getStringValue());
               return;
             }
@@ -586,6 +589,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             if (argument != null) {
               final List<String> results = PyUtil.strListValue(argument);
               if (results != null) {
+                if (myResult == null) {
+                  myResult = new ArrayList<>();
+                }
                 myResult.addAll(results);
                 return;
               }
