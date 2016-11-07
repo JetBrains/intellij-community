@@ -60,6 +60,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -551,7 +552,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
+    TransactionGuard.submitTransaction(getProject(), () -> ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText()));
     UIUtil.dispatchAllInvocationEvents();
   }
 

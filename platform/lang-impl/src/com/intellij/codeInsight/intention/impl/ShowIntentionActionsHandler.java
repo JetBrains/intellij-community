@@ -32,6 +32,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -182,7 +183,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                                                                          (psiFile, editor) -> availableFor(psiFile, editor, action)) : Pair.<PsiFile, Editor>create(hostFile, null);
     if (pair == null) return false;
 
-    CommandProcessor.getInstance().executeCommand(project, () -> {
+    CommandProcessor.getInstance().executeCommand(project, () -> TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       Runnable r = () -> action.invoke(project, pair.second, pair.first);
       try {
         if (action.startInWriteAction()) {
@@ -197,7 +198,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       if (hostEditor != null) {
         DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
       }
-    }, text, null);
+    }), text, null);
     return true;
   }
 }
