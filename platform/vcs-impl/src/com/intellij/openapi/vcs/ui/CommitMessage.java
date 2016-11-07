@@ -42,13 +42,13 @@ import java.util.Set;
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
-  private TitledSeparator mySeparator;
+  private final TitledSeparator mySeparator;
 
-  public CommitMessage(Project project) {
+  public CommitMessage(@NotNull Project project) {
     this(project, true);
   }
 
-  public CommitMessage(Project project, final boolean withSeparator) {
+  public CommitMessage(@NotNull Project project, final boolean withSeparator) {
     super(new BorderLayout());
     myEditorField = createEditorField(project);
 
@@ -76,6 +76,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       add(labelPanel, BorderLayout.NORTH);
     }
     else {
+      mySeparator = null;
       add(toolbar.getComponent(), BorderLayout.EAST);
     }
 
@@ -91,7 +92,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return null;
   }
 
-  public void setSeparatorText(final String text) {
+  public void setSeparatorText(@NotNull String text) {
     if (mySeparator != null) {
       mySeparator.setText(text);
     }
@@ -116,7 +117,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
    *                          whether or not the editor has spell check enabled
    * @return a commit message editor
    */
-  public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
+  public static EditorTextField createCommitTextEditor(@NotNull Project project, boolean forceSpellCheckOn) {
     Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -138,16 +139,17 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
 
-  @Nullable
-  public static ActionGroup getToolbarActions() {
+  @NotNull
+  private static ActionGroup getToolbarActions() {
     return (ActionGroup)ActionManager.getInstance().getAction("Vcs.MessageActionGroup");
   }
 
+  @NotNull
   public EditorTextField getEditorField() {
     return myEditorField;
   }
 
-  public void setText(final String initialMessage) {
+  public void setText(@Nullable String initialMessage) {
     final String text = initialMessage == null ? "" : StringUtil.convertLineSeparators(initialMessage);
     myEditorField.setText(text);
   }
