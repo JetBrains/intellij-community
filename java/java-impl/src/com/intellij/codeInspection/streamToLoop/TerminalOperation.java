@@ -67,7 +67,7 @@ abstract class TerminalOperation extends Operation {
                                           @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
-        FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+        FunctionHelper fn = FunctionHelper.create(args[0], 1);
         return fn == null ? null : new ForEachTerminalOperation(fn);
       }
       return null;
@@ -94,19 +94,19 @@ abstract class TerminalOperation extends Operation {
       return new FindTerminalOperation(resultType.getCanonicalText());
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
-      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new MatchTerminalOperation(fn, name);
     }
     if(name.equals("reduce")) {
       if(args.length == 2 || args.length == 3) {
-        FunctionHelper fn = FunctionHelper.create(args[1], 2, true);
+        FunctionHelper fn = FunctionHelper.create(args[1], 2);
         if(fn != null) {
           return new ReduceTerminalOperation(args[0], fn, resultType.getCanonicalText());
         }
       }
       if(args.length == 1) {
         PsiType optionalElementType = getOptionalElementType(resultType);
-        FunctionHelper fn = FunctionHelper.create(args[0], 2, true);
+        FunctionHelper fn = FunctionHelper.create(args[0], 2);
         if(fn != null && optionalElementType != null) {
           return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
         }
@@ -135,6 +135,13 @@ abstract class TerminalOperation extends Operation {
                                                 "{acc}.toArray("+arr+")");
       }
     }
+    if(name.equals("collect") && args.length == 3) {
+      FunctionHelper supplier = FunctionHelper.create(args[0], 0);
+      if(supplier == null) return null;
+      FunctionHelper accumulator = FunctionHelper.create(args[1], 2);
+      if(accumulator == null) return null;
+      return new ExplicitCollectTerminalOperation(supplier, accumulator, resultType.getCanonicalText());
+    }
     if(name.equals("collect") && args.length == 1) {
       if(args[0] instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)args[0];
@@ -150,20 +157,20 @@ abstract class TerminalOperation extends Operation {
             return AccumulatedTerminalOperation.toCollection(resultType, CommonClassNames.JAVA_UTIL_HASH_SET, "set");
           }
           if(collector.getName().equals("toCollection") && collectorArgs.length == 1) {
-            FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 0, true);
+            FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 0);
             if(fn != null) {
               return new ToCollectionTerminalOperation(fn, resultType);
             }
           }
           if(collector.getName().equals("reducing") && collectorArgs.length == 2) {
-            FunctionHelper fn = FunctionHelper.create(collectorArgs[1], 2, true);
+            FunctionHelper fn = FunctionHelper.create(collectorArgs[1], 2);
             if(fn != null) {
               return new ReduceTerminalOperation(collectorArgs[0], fn, resultType.getCanonicalText());
             }
           }
           if(collector.getName().equals("reducing") && collectorArgs.length == 1) {
             PsiType optionalElementType = getOptionalElementType(resultType);
-            FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 2, true);
+            FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 2);
             if(fn != null && optionalElementType != null) {
               return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
             }
@@ -262,6 +269,38 @@ abstract class TerminalOperation extends Operation {
              "} else {\n" +
              accumulator + "=" + myUpdater.getText() + ";\n" +
              "}\n";
+    }
+  }
+
+  static class ExplicitCollectTerminalOperation extends TerminalOperation {
+    private final FunctionHelper mySupplier;
+    private final FunctionHelper myAccumulator;
+    private final String myResultType;
+
+    public ExplicitCollectTerminalOperation(FunctionHelper supplier, FunctionHelper accumulator, String resultType) {
+      mySupplier = supplier;
+      myAccumulator = accumulator;
+      myResultType = resultType;
+    }
+
+    @Override
+    void registerUsedNames(Consumer<String> usedNameConsumer) {
+      mySupplier.registerUsedNames(usedNameConsumer);
+      myAccumulator.registerUsedNames(usedNameConsumer);
+    }
+
+    @Override
+    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+      myAccumulator.suggestVariableName(inVar, 1);
+    }
+
+    @Override
+    String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      mySupplier.transform(context);
+      String candidate = myAccumulator.getParameterName(0);
+      String acc = context.declareResult(candidate == null ? "acc" : candidate, myResultType, mySupplier.getText());
+      myAccumulator.transform(context, acc, inVar.getName());
+      return myAccumulator.getText()+";\n";
     }
   }
 

@@ -39,7 +39,6 @@ import java.util.function.Consumer;
  *
  * @author Tagir Valeev
  */
-@SuppressWarnings("SameParameterValue")
 abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);
 
@@ -88,18 +87,18 @@ abstract class FunctionHelper {
     }
   }
 
-  @Contract("null, _, _ -> null")
+  @Contract("null, _ -> null")
   @Nullable
-  static FunctionHelper create(PsiExpression expression, int paramCount, boolean singleExpression) {
+  static FunctionHelper create(PsiExpression expression, int paramCount) {
     if (expression instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+      PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
+      if(functionalInterfaceType == null) return null;
       PsiParameterList list = lambda.getParameterList();
-      if (list.getParametersCount() != paramCount) {
-        return null;
-      }
+      if (list.getParametersCount() != paramCount) return null;
       String[] parameters = StreamEx.of(list.getParameters()).map(PsiVariable::getName).toArray(String[]::new);
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      if (body == null && singleExpression) return null;
+      if (body == null) return null;
       return new LambdaFunctionHelper(body, parameters);
     }
     if (expression instanceof PsiMethodReferenceExpression) {
@@ -177,6 +176,8 @@ abstract class FunctionHelper {
     @Override
     String tryLightTransform(PsiType type) {
       if(myMethodRef.isConstructor()) return null;
+      type = GenericsUtil.getVariableTypeByExpressionType(type);
+      if(type == null) return null;
       PsiElement element = myMethodRef.resolve();
       if(!(element instanceof PsiMethod)) return null;
       PsiMethod method = (PsiMethod)element;

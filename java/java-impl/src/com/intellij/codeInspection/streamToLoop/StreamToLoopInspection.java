@@ -210,7 +210,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       List<OperationRecord> operations = extractOperations(StreamVariable.STUB, terminalCall);
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      annotateOperations(project, operations);
+      allOperations(operations).forEach(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if(!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       terminalCall = ensureCodeBlock(terminalCall, factory);
@@ -277,14 +277,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {
       return StreamEx.of(operations)
         .flatMap(or -> or.myOperation.nestedOperations().append(or));
-    }
-
-    private static void annotateOperations(@NotNull Project project, List<OperationRecord> operations) {
-      JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      allOperations(operations)
-        .peek(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar))
-        .flatMap(or -> StreamEx.of(or.myInVar, or.myOutVar)).distinct()
-        .forEach(var -> var.addCandidatesFromType(javaCodeStyleManager));
     }
 
     private static void registerVariables(List<OperationRecord> operations, StreamToLoopReplacementContext context) {

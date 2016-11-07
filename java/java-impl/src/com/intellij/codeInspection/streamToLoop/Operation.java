@@ -65,11 +65,11 @@ abstract class Operation {
       return new LimitOperation(args[0]);
     }
     if(name.equals("filter") && args.length == 1) {
-      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new FilterOperation(fn);
     }
     if(name.equals("peek") && args.length == 1) {
-      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new PeekOperation(fn);
     }
     if((name.equals("boxed") || name.equals("asLongStream") || name.equals("asDoubleStream")) && args.length == 0) {
@@ -84,7 +84,7 @@ abstract class Operation {
          name.equals("mapToLong") ||
          name.equals("mapToDouble") ||
          name.equals("mapToObj")) && args.length == 1) {
-      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new MapOperation(fn);
     }
     return null;
@@ -225,7 +225,7 @@ abstract class Operation {
 
     @Nullable
     public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType) {
-      FunctionHelper fn = FunctionHelper.create(arg, 1, true);
+      FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
       String varName = fn.tryLightTransform(inType);
       if(varName == null) return null;

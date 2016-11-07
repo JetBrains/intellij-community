@@ -81,12 +81,12 @@ abstract class SourceOperation extends Operation {
     }
     if (name.equals("generate") && args.length == 1 && method.getModifierList().hasExplicitModifier(
       PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
-      FunctionHelper fn = FunctionHelper.create(args[0], 0, true);
+      FunctionHelper fn = FunctionHelper.create(args[0], 0);
       return fn == null ? null : new GenerateSource(fn);
     }
     if (name.equals("iterate") && args.length == 2 && method.getModifierList().hasExplicitModifier(
       PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
-      FunctionHelper fn = FunctionHelper.create(args[1], 1, true);
+      FunctionHelper fn = FunctionHelper.create(args[1], 1);
       return fn == null ? null : new IterateSource(args[0], fn);
     }
     if (name.equals("stream") && args.length == 0 &&
