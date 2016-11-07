@@ -26,10 +26,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CommitMessageI;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +42,7 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
-
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private Consumer<String> myMessageConsumer;
@@ -84,11 +87,13 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     setBorder(BorderFactory.createEmptyBorder());
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (key.is(VcsDataKeys.COMMIT_MESSAGE_CONTROL.getName())) {
-      sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, this);
+  public Object getData(@NonNls String dataId) {
+    if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
+      return this;
     }
+    return null;
   }
 
   public void setSeparatorText(final String text) {
