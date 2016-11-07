@@ -230,7 +230,7 @@ public class ProgressIndicatorUtils {
 
   /**
    * Ensure the current EDT activity finishes in case it requires many write actions, with each being delayed a bit
-   * by background thread read action (until its first checkCanceled call).
+   * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
   public static void yieldToPendingWriteActions() {
     ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
