@@ -269,15 +269,14 @@ public final class IdeMouseEventDispatcher {
         AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
                                                       ActionManager.getInstance(),
                                                       modifiers);
-        action.beforeActionPerformedUpdate(actionEvent);
-
-        if (presentation.isEnabled()) {
+        if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
           actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
           final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
           if (context != null && !context.isShowing()) continue;
 
-          action.actionPerformed(actionEvent);
+          ActionUtil.performActionDumbAware(action, actionEvent);
+          actionManager.fireAfterActionPerformed(action, dataContext, actionEvent);
           e.consume();
         }
       }

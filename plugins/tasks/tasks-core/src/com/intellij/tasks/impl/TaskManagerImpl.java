@@ -885,7 +885,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public LocalTask getAssociatedTask(@NotNull LocalChangeList list) {
     for (LocalTask task : getLocalTasks()) {
-      for (ChangeListInfo changeListInfo : task.getChangeLists()) {
+      for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
         if (changeListInfo.id.equals(list.getId())) {
           return task;
         }

@@ -17,7 +17,6 @@ package com.intellij.find.impl;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.findInProject.FindInProjectManager;
@@ -30,8 +29,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -58,8 +59,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageLimitUtil;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -67,10 +68,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -79,7 +76,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 class FindInProjectTask {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("find in path", JobSchedulerImpl.CORES_COUNT);
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
@@ -148,7 +144,7 @@ class FindInProjectTask {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + otherFiles.size() + " non-indexed files");
       }
-
+      myProgress.checkCanceled();
       long start = System.currentTimeMillis();
       searchInFiles(otherFiles, processPresentation, consumer);
       if (canRelyOnIndices && otherFiles.size() > 1000) {
@@ -196,33 +192,35 @@ class FindInProjectTask {
   private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
                              @NotNull final Processor<UsageInfo> consumer) {
-    AtomicInteger i = new AtomicInteger();
-    AtomicInteger count = new AtomicInteger();
+    AtomicInteger occurrenceCount = new AtomicInteger();
+    AtomicInteger processedFileCount = new AtomicInteger();
 
-    Consumer<VirtualFile> searchInFile = virtualFile -> {
-      final int index = i.incrementAndGet();
-      if (!virtualFile.isValid()) return;
+    Processor<VirtualFile> processor = virtualFile -> {
+      if (!virtualFile.isValid()) return true;
 
       long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
-      if (fileLength == -1) return; // Binary or invalid
+      if (fileLength == -1) return true; // Binary or invalid
 
       final boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
-      if (skipProjectFile && !Registry.is("find.search.in.project.files")) return;
+      if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
       if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
         myLargeFiles.add(virtualFile);
-        return;
+        return true;
       }
 
       myProgress.checkCanceled();
-      myProgress.setFraction((double)index / virtualFiles.size());
+      if (myProgress.isRunning()) {
+        double fraction = (double)processedFileCount.incrementAndGet() / virtualFiles.size();
+        myProgress.setFraction(fraction);
+      }
       String text = FindBundle.message("find.searching.for.string.in.file.progress",
                                        myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
       myProgress.setText(text);
-      myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
+      myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", occurrenceCount));
 
       Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
-      if (pair == null) return;
+      if (pair == null) return true;
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> skipProjectFile || consumer.process(info));
@@ -233,10 +231,10 @@ class FindInProjectTask {
           model.setSearchInProjectFiles(true);
           FindInProjectManager.getInstance(myProject).startFindInProject(model);
         });
-        return;
+        return true;
       }
 
-      count.addAndGet(countInFile);
+      occurrenceCount.addAndGet(countInFile);
       if (countInFile > 0) {
         if (myTotalFilesSize.addAndGet(fileLength) > FILES_SIZE_LIMIT && myWarningShown.compareAndSet(false, true)) {
           String message = FindBundle.message("find.excessive.total.size.prompt",
@@ -245,41 +243,9 @@ class FindInProjectTask {
           UsageLimitUtil.showAndCancelIfAborted(myProject, message, processPresentation.getUsageViewPresentation());
         }
       }
+      return true;
     };
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    forkJoin(virtualFiles, searchInFile, indicator != null ? indicator : new EmptyProgressIndicator());
-  }
-
-  private static void forkJoin(@NotNull Collection<VirtualFile> virtualFiles, Consumer<VirtualFile> searchInFile, ProgressIndicator indicator) {
-    List<Future<?>> futures = Collections.synchronizedList(new ArrayList<>());
-    for (VirtualFile file : virtualFiles) {
-      futures.add(ourExecutor.submit(() -> ProgressManager.getInstance().runProcess(() -> {
-        try {
-          searchInFile.consume(file);
-        }
-        catch (ProcessCanceledException e) {
-          futures.forEach(future -> future.cancel(false));
-        }
-      }, ProgressWrapper.wrap(indicator))));
-    }
-    waitForFutures(futures);
-  }
-
-  private static void waitForFutures(List<Future<?>> futures) {
-    for (Future<?> future : futures) {
-      try {
-        future.get();
-      }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException();
-      }
-      catch (CancellationException e) {
-        throw new ProcessCanceledException();
-      }
-      catch (ExecutionException e) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-      }
-    }
+    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, new ArrayList<>(virtualFiles), myProgress, processor);
   }
 
   // must return non-binary files

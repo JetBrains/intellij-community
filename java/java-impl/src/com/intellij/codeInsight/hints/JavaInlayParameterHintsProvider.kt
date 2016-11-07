@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -38,9 +39,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return emptyList()
   }
 
-  private fun getMethodInfo(method: PsiMethod): MethodInfo {
-    val qualifier = method.containingClass?.qualifiedName ?: ""
-    val fullMethodName = qualifier + "." + method.name
+  private fun getMethodInfo(method: PsiMethod): MethodInfo? {
+    val containingClass = method.containingClass ?: return null
+    val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 
     val paramNames: List<String> = method.parameterList.parameters.map { it.name ?: "" }
     return MethodInfo(fullMethodName, paramNames)
@@ -60,6 +61,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       
       "*Exception",
 
+      "*.add(*)",
       "*.set(*,*)",
       "*.get(*)",
       "*.create(*)",

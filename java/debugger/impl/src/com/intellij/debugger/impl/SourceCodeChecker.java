@@ -20,7 +20,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -91,13 +90,11 @@ public class SourceCodeChecker {
         catch (EvaluateException e) {
           LOG.info(e);
         }
-        catch (AbsentInformationException ignore) {
-        }
       }
     });
   }
 
-  private static ThreeState check(Location location, SourcePosition position, Project project) throws AbsentInformationException {
+  private static ThreeState check(Location location, SourcePosition position, Project project) {
     Method method = location.method();
     // for now skip constructors, bridges, lambdas etc.
     if (method.isConstructor() ||
@@ -105,10 +102,10 @@ public class SourceCodeChecker {
         method.isBridge() ||
         method.isStaticInitializer() ||
         (method.declaringType() instanceof ClassType && ((ClassType)method.declaringType()).isEnum()) ||
-        LambdaMethodFilter.isLambdaName(method.name())) {
+        DebuggerUtilsEx.isLambdaName(method.name())) {
       return ThreeState.UNSURE;
     }
-    List<Location> locations = method.allLineLocations();
+    List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
     if (ContainerUtil.isEmpty(locations)) {
       return ThreeState.UNSURE;
     }

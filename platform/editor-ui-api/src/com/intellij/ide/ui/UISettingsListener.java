@@ -29,6 +29,7 @@ import java.util.EventListener;
  * @see UISettings#fireUISettingsChanged()
  * @see com.intellij.util.ComponentTreeEventDispatcher
  */
+@FunctionalInterface
 public interface UISettingsListener extends EventListener {
 
   Topic<UISettingsListener> TOPIC = Topic.create("UI settings", UISettingsListener.class);

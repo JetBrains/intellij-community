@@ -16,6 +16,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.PurityInference
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -162,9 +163,61 @@ public Foo() {
     """
   }
 
+  void "test anonymous class initializer"() {
+    assertPure false, """
+    Object smth() {
+        return new I(){{ created++; }};
+    }
+
+    private static int created = 0;
+    
+    interface I {}
+    """
+  }
+
+  void "test simple anonymous class creation"() {
+    assertPure true, """
+    Object smth() {
+        return new I(){};
+    }
+    
+    interface I {}
+    """
+  }
+
+  void "test anonymous class with arguments"() {
+    assertPure false, """
+    Object smth() {
+        return new I(unknown()){};
+    }
+    
+    class I {
+      I(int a) {}
+    }
+    """
+  }
+
+  void "test class with impure initializer creation"() {
+    assertPure false, """
+    Object smth() {
+        return new I(42);
+    }
+    
+    class I {
+      I(int answer) {}
+      {
+        launchMissiles();
+      }
+    }
+    """
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
-    assert expected == PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    def purity = PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    assert expected == purity
   }
 
 }

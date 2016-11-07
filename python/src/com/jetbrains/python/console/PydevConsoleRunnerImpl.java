@@ -46,6 +46,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -53,6 +54,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -681,10 +683,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     AnAction anAction = new AnAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        if (myPydevConsoleCommunication.isExecuting()) {
+        if (myPydevConsoleCommunication.isExecuting() || myPydevConsoleCommunication.isWaitingForInput()) {
           myConsoleView.print("^C", ProcessOutputTypes.SYSTEM);
+          myPydevConsoleCommunication.interrupt();
+        } else{
+          DocumentEx document = myConsoleView.getConsoleEditor().getDocument();
+          if (!(document.getTextLength() == 0)) {
+            ApplicationManager.getApplication().runWriteAction(() ->
+            CommandProcessor
+              .getInstance()
+              .runUndoTransparentAction(() -> document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1))));
+          }
+
         }
-        myPydevConsoleCommunication.interrupt();
       }
 
       @Override

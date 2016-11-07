@@ -24,7 +24,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -138,8 +136,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  public void readExternal(Element element) {
     super.readExternal(element);
     readModule(element);
     scriptPath = ExternalizablePath.localPathValue(JDOMExternalizer.readString(element, "path"));

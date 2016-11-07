@@ -41,7 +41,7 @@ public class FakeVisiblePackBuilder {
 
   @NotNull
   public VisiblePack build(@NotNull VisiblePack visiblePack) {
-    if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl) {
+    if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl && visiblePack.getVisibleGraph().getVisibleCommitCount() > 0) {
       return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters());
     }
     else {

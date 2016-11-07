@@ -203,6 +203,17 @@ public class CompilerBackwardReferenceIndex {
     }
   }
 
+  void flush() {
+    myBackwardHierarchyMap.flush(false);
+    myBackwardReferenceMap.flush(false);
+    myBackwardClassDefinitionMap.flush(false);
+    myHierarchyMap.flush(false);
+    myReferenceMap.flush(false);
+    myClassDefinitionMap.flush(false);
+    myNameEnumerator.force();
+    myFilePathEnumerator.force();
+  }
+
   public static void removeIndexFiles(File buildDir) {
     final File indexDir = getIndexDir(buildDir);
     if (indexDir.exists()) {

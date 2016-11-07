@@ -35,11 +35,10 @@ import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class JavaLightUsageAdapter implements LanguageLightRefAdapter<PsiClass, PsiFunctionalExpression> {
+public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @NotNull
   @Override
   public Set<FileType> getFileTypes() {
@@ -113,23 +112,26 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter<PsiClass, 
 
   @NotNull
   @Override
-  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull Collection<LightRef.LightClassHierarchyElementDef> classes,
-                                                        @NotNull ByteArrayEnumerator byteArrayEnumerator,
+  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull String[] internalNames,
                                                         @NotNull PsiFileWithStubSupport file,
                                                         @NotNull PsiNamedElement superClass) {
-    String[] internalNames = classes.stream().map(LightRef.NamedLightRef::getName).map(byteArrayEnumerator::getName).toArray(String[]::new);
     return JavaCompilerElementRetriever.retrieveClassesByInternalNames(internalNames, superClass, file);
   }
 
   @NotNull
   @Override
-  public PsiFunctionalExpression[] findFunExpressionsInFile(@NotNull Collection<LightRef.LightFunExprDef> funExpressions,
+  public PsiFunctionalExpression[] findFunExpressionsInFile(@NotNull Integer[] funExpressions,
                                                             @NotNull PsiFileWithStubSupport file) {
-    TIntHashSet requiredIndices = new TIntHashSet(funExpressions.size());
-    for (LightRef.LightFunExprDef funExpr : funExpressions) {
-      requiredIndices.add(funExpr.getId());
+    TIntHashSet requiredIndices = new TIntHashSet(funExpressions.length);
+    for (int funExpr : funExpressions) {
+      requiredIndices.add(funExpr);
     }
     return JavaCompilerElementRetriever.retrieveFunExpressionsByIndices(requiredIndices, file);
+  }
+
+  @Override
+  public boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass) {
+    return ((PsiClass) candidate).isInheritor((PsiClass) baseClass, false);
   }
 
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {

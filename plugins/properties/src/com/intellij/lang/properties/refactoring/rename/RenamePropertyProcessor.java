@@ -35,11 +35,13 @@ import java.util.List;
 import java.util.Map;
 
 public class RenamePropertyProcessor extends RenamePsiElementProcessor {
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof IProperty ||
            (element instanceof PomTargetPsiElement && ((PomTargetPsiElement)element).getTarget() instanceof XmlProperty);
   }
 
+  @Override
   public void prepareRenaming(final PsiElement element, final String newName,
                               final Map<PsiElement, String> allRenames) {
     ResourceBundle resourceBundle = PropertiesImplUtil.getProperty(element).getPropertiesFile().getResourceBundle();

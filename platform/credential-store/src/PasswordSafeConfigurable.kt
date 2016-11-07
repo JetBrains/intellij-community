@@ -217,6 +217,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           row("Master Password:") {
             keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
           }
+          if (!SystemInfo.isWindows) {
+            row { hint("Stored using weak encryption. It is recommended to store password database on encrypted volume for additional security.") }
+          }
         }
 
         row {

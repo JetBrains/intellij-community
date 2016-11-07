@@ -829,49 +829,12 @@ public class StringUtil extends StringUtilRt {
     if (escaped) buffer.append('\\');
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   @Contract(pure = true)
-  public static String pluralize(@NotNull String suggestion) {
-    if (suggestion.endsWith("Child") || suggestion.endsWith("child")) {
-      return suggestion + "ren";
-    }
-
-    if (suggestion.equals("this")) {
-      return "these";
-    }
-    if (suggestion.equals("This")) {
-      return "These";
-    }
-    if (suggestion.equals("fix") || suggestion.equals("Fix")) {
-      return suggestion + "es";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "es")) {
-      return suggestion;
-    }
-
-    int len = suggestion.length();
-    if (endsWithIgnoreCase(suggestion, "ex") || endsWithIgnoreCase(suggestion, "ix")) {
-      return suggestion.substring(0, len - 2) + "ices";
-    }
-    if (endsWithIgnoreCase(suggestion, "um")) {
-      return suggestion.substring(0, len - 2) + "a";
-    }
-    if (endsWithIgnoreCase(suggestion, "an")) {
-      return suggestion.substring(0, len - 2) + "en";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") ||
-        endsWithIgnoreCase(suggestion, "ch") || endsWithIgnoreCase(suggestion, "sh")) {
-      return suggestion + "es";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "y") && len > 1 && !isVowel(toLowerCase(suggestion.charAt(len - 2)))) {
-      return suggestion.substring(0, len - 1) + "ies";
-    }
-
-    return suggestion + "s";
+  public static String pluralize(@NotNull String word) {
+    String plural = Pluralizer.PLURALIZER.plural(word);
+    return equalsIgnoreCase(plural, word) && !endsWithIgnoreCase(plural, "es") ?
+           Pluralizer.restoreCase(word, word + "s") : plural;
   }
 
   @NotNull
@@ -1684,58 +1647,17 @@ public class StringUtil extends StringUtilRt {
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns <code>null</code> if failed to match appropriate heuristic.
    *
-   * @param name english word in plural form
+   * @param word english word in plural form
    * @return name in singular form or <code>null</code> if failed to find one.
    */
-  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   @Contract(pure = true)
-  public static String unpluralize(@NotNull final String name) {
-    if (name.endsWith("sses") || name.endsWith("shes") || name.endsWith("ches") || name.endsWith("xes")) { //?
-      return name.substring(0, name.length() - 2);
+  public static String unpluralize(@NotNull String word) {
+    String singular = Pluralizer.PLURALIZER.singular(word);
+    if (equalsIgnoreCase(singular, word)) {
+      singular = nullize(trimEnd(singular, "s", true));
     }
-
-    if (name.endsWith("ses")) {
-      return name.substring(0, name.length() - 1);
-    }
-
-    if (name.endsWith("ies")) {
-      if (name.endsWith("cookies") || name.endsWith("Cookies")) {
-        return name.substring(0, name.length() - "ookies".length()) + "ookie";
-      }
-
-      return name.substring(0, name.length() - 3) + "y";
-    }
-
-    if (name.endsWith("leaves") || name.endsWith("Leaves")) {
-      return name.substring(0, name.length() - "eaves".length()) + "eaf";
-    }
-
-    String result = stripEnding(name, "s");
-    if (result != null) {
-      return result;
-    }
-
-    if (name.endsWith("children")) {
-      return name.substring(0, name.length() - "children".length()) + "child";
-    }
-
-    if (name.endsWith("Children") && name.length() > "Children".length()) {
-      return name.substring(0, name.length() - "Children".length()) + "Child";
-    }
-
-
-    return null;
-  }
-
-  @Nullable
-  @Contract(pure = true)
-  private static String stripEnding(@NotNull String name, @NotNull String ending) {
-    if (name.endsWith(ending)) {
-      if (name.equals(ending)) return name; // do not return empty string
-      return name.substring(0, name.length() - 1);
-    }
-    return null;
+    return equalsIgnoreCase(singular, word) ? null : singular;
   }
 
   @Contract(pure = true)

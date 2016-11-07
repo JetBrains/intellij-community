@@ -39,7 +39,7 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
@@ -61,7 +61,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final int VERSION = 0;
 
   @NotNull private final Project myProject;
-  @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
+  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogProgress myProgress;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogStorage myHashMap;
@@ -82,7 +82,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                                @NotNull VcsLogStorage hashMap,
                                @NotNull VcsLogProgress progress,
                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull FatalErrorConsumer fatalErrorsConsumer,
+                               @NotNull FatalErrorHandler fatalErrorsConsumer,
                                @NotNull Disposable disposableParent) {
     myHashMap = hashMap;
     myProject = project;

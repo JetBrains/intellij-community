@@ -15,6 +15,7 @@
  */
 package com.intellij.index
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -24,9 +25,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -50,11 +53,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.FileContentUtil
 import com.intellij.util.Processor
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
-import com.intellij.util.indexing.MapIndexStorage
-import com.intellij.util.indexing.StorageException
+import com.intellij.util.indexing.*
 import com.intellij.util.io.*
 import org.jetbrains.annotations.NotNull
 /**
@@ -548,5 +549,70 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope)
       }
     })
+  }
+
+  void testIndexedFilesListener() throws Throwable {
+    def listener = new IndexedFilesListener() {
+
+      @Override
+      protected void iterateIndexableFiles(VirtualFile file, ContentIterator iterator) {
+        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+          @Override
+          boolean visitFile(@NotNull VirtualFile visitedFile) {
+            iterator.processFile(visitedFile);
+            return true;
+          }
+        });
+      }
+
+      protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+        recordFileScheduledForInvalidation(((VirtualFileWithId)file).id, file, contentChange);
+      }
+
+      @Override
+      protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
+        recordFileScheduledForIndexing(((VirtualFileWithId)file).id, file, contentChange)
+      }
+    }
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
+      VirtualFileManager.VFS_CHANGES,
+      listener
+    );
+
+    def fileName = "test.txt"
+    final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
+
+    assertEquals("file: $fileName\n" +
+                 "operation: ADD UPDATE-REMOVE UPDATE", indexingOperation(listener, testFile))
+
+    FileContentUtil.reparseFiles(testFile)
+
+    assertEquals("file: $fileName\n" +
+                 "operation: REMOVE ADD", indexingOperation(listener, testFile))
+
+    VfsUtil.saveText(testFile, "foo");
+    VfsUtil.saveText(testFile, "bar");
+
+    assertEquals("file: $fileName\n" +
+                 "operation: UPDATE-REMOVE UPDATE", indexingOperation(listener, testFile));
+
+    VfsUtil.saveText(testFile, "baz")
+    testFile.delete(null)
+
+    assertEquals("file: $fileName\n" +
+                 "operation: REMOVE", indexingOperation(listener, testFile));
+  }
+
+  private static String indexingOperation(IndexedFilesListener listener, VirtualFile file) {
+    Ref<String> operation = new Ref<>()
+    listener.iterateChanges(new Processor<IndexedFilesListener.ChangeInfo>() {
+      @Override
+      boolean process(IndexedFilesListener.ChangeInfo info) {
+        operation.set(info.toString());
+        return true
+      }
+    })
+
+    StringUtil.replace(operation.get(), file.getPath(), file.getName());
   }
 }

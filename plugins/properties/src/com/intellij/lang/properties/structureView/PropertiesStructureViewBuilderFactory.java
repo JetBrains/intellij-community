@@ -30,9 +30,11 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class PropertiesStructureViewBuilderFactory implements PsiStructureViewFactory {
+  @Override
   @NotNull
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new StructureViewBuilder() {
+      @Override
       @NotNull
       public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
         return new PropertiesFileStructureViewComponent(project, (PropertiesFileImpl)psiFile, fileEditor);

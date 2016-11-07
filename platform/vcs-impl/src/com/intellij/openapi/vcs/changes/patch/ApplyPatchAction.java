@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -110,7 +109,7 @@ public class ApplyPatchAction extends DumbAwareAction {
         public void consume(VirtualFile file) {
           final VirtualFile parent = file.getParent();
           if (parent != null) {
-            settings.PATCH_STORAGE_LOCATION = FileUtil.toSystemDependentName(parent.getPath());
+            settings.PATCH_STORAGE_LOCATION = parent.getPath();
           }
           showApplyPatch(project, file);
         }

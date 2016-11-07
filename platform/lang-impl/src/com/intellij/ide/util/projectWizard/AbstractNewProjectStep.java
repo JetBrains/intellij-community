@@ -100,7 +100,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     protected abstract DirectoryProjectGenerator createEmptyProjectGenerator();
 
     @NotNull
-    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator emptyProjectGenerator,
+    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
                                                                                  @NotNull NullableConsumer<ProjectSettingsStepBase> callback);
 
 

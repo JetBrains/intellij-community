@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,7 +76,11 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<>(); // guarded by myRefTable
+
+  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<>(); // guarded by myRefTableLock
+  private final Map<PsiElement, RefElement> myPsiToRefTable = new THashMap<>(); // replacement of myRefTable, guarded by myRefTableLock
+  private final Object myRefTableLock = new Object();
+  
   private List<RefElement> mySortedRefs; // guarded by myRefTable
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
@@ -142,8 +147,8 @@ public class RefManagerImpl extends RefManager {
   public void cleanup() {
     myScope = null;
     myRefProject = null;
-    synchronized (myRefTable) {
-      myRefTable.clear();
+    synchronized (myRefTableLock) {
+      (usePsiAsKey() ? myPsiToRefTable : myRefTable).clear();
       mySortedRefs = null;
     }
     myModules.clear();
@@ -266,7 +271,7 @@ public class RefManagerImpl extends RefManager {
         lineElement.addContent(String.valueOf(range != null ? document.getLineNumber(range.getStartOffset()) + 1 : -1));
       }
       else {
-        lineElement.addContent(String.valueOf(actualLine));
+        lineElement.addContent(String.valueOf(actualLine + 1));
       }
 
       problem.addContent(fileElement);
@@ -345,7 +350,7 @@ public class RefManagerImpl extends RefManager {
     myIsInProcess = false;
     if (myScope != null) myScope.invalidate();
 
-    synchronized (myRefTable) {
+    synchronized (myRefTableLock) {
       mySortedRefs = null;
     }
   }
@@ -377,17 +382,17 @@ public class RefManagerImpl extends RefManager {
   @NotNull
   public List<RefElement> getSortedElements() {
     List<RefElement> answer;
-    synchronized (myRefTable) {
+    synchronized (myRefTableLock) {
       if (mySortedRefs != null) return mySortedRefs;
 
-      answer = new ArrayList<>(myRefTable.values());
+      answer = new ArrayList<>(usePsiAsKey() ? myPsiToRefTable.values() : myRefTable.values());
     }
     ReadAction.run(() -> ContainerUtil.quickSort(answer, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
       return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
     }));
-    synchronized (myRefTable) {
+    synchronized (myRefTableLock) {
       return mySortedRefs = Collections.unmodifiableList(answer);
     }
   }
@@ -405,17 +410,29 @@ public class RefManagerImpl extends RefManager {
       extension.removeReference(refElem);
     }
 
-    synchronized (myRefTable) {
+    synchronized (myRefTableLock) {
       mySortedRefs = null;
-      if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
+      if (element != null &&
+          (usePsiAsKey() ? myPsiToRefTable.remove(element) : myRefTable.remove(createAnchor(element))) != null) return;
 
       //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-      for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
-        RefElement value = entry.getValue();
-        PsiAnchor anchor = entry.getKey();
-        if (value == refElem) {
-          myRefTable.remove(anchor);
-          break;
+      if (usePsiAsKey()) {
+        for (Map.Entry<PsiElement, RefElement> entry : myPsiToRefTable.entrySet()) {
+          RefElement value = entry.getValue();
+          PsiElement anchor = entry.getKey();
+          if (value == refElem) {
+            myPsiToRefTable.remove(anchor);
+            break;
+          }
+        }
+      } else {
+        for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
+          RefElement value = entry.getValue();
+          PsiAnchor anchor = entry.getKey();
+          if (value == refElem) {
+            myRefTable.remove(anchor);
+            break;
+          }
         }
       }
     }
@@ -560,9 +577,9 @@ public class RefManagerImpl extends RefManager {
 
     PsiAnchor psiAnchor = createAnchor(element);
     T result;
-    synchronized (myRefTable) {
+    synchronized (myRefTableLock) {
       //noinspection unchecked
-      result = (T)myRefTable.get(psiAnchor);
+      result = (T) (usePsiAsKey() ? myPsiToRefTable.get(element) : myRefTable.get(psiAnchor));
 
       if (result != null) return result;
 
@@ -574,7 +591,11 @@ public class RefManagerImpl extends RefManager {
       result = factory.create();
       if (result == null) return null;
 
-      myRefTable.put(psiAnchor, result);
+      if (usePsiAsKey()) {
+        myPsiToRefTable.put(element, result);
+      } else {
+        myRefTable.put(psiAnchor, result);
+      }
       mySortedRefs = null;
 
       if (whenCached != null) {
@@ -652,5 +673,9 @@ public class RefManagerImpl extends RefManager {
 
   protected boolean isValidPointForReference() {
     return myIsInProcess || myOfflineView || ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private static boolean usePsiAsKey() {
+    return Registry.is("batch.inspections.use.psi.as.ref.table.key");
   }
 }

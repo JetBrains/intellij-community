@@ -23,6 +23,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,5 +96,18 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   @Override
   public Sdk getAlternativeJre() {
     return AlternativeJreClassFinder.getAlternativeJre(environment.getRunProfile());
+  }
+
+  @Nullable
+  @Override
+  public Sdk getRunJre() {
+    if (state instanceof JavaCommandLine) {
+      try {
+        return ((JavaCommandLine)state).getJavaParameters().getJdk();
+      }
+      catch (ExecutionException ignore) {
+      }
+    }
+    return ProjectRootManager.getInstance(environment.getProject()).getProjectSdk();
   }
 }

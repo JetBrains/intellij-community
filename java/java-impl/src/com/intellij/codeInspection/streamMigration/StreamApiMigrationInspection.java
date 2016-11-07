@@ -259,7 +259,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final PsiVariable variable = tb.getVariable();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
     LOG.assertTrue(methodCallExpression != null);
-    if (!isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0])) return false;
+    if (!ExpressionUtils.isIdentityMapping(variable, methodCallExpression.getArgumentList().getExpressions()[0])) return false;
     PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     if(qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) {
       PsiMethod method = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethod.class);
@@ -382,11 +382,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   private static boolean isThrowsCompatible(PsiMethod method) {
     return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), type -> !ExceptionUtil.isUncheckedException(type)) != null;
-  }
-
-  @Contract("_, null -> false")
-  static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
-    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).isReferenceTo(variable);
   }
 
   @Nullable
@@ -671,7 +666,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             if(!(var instanceof PsiVariable) || !nonFinalVariables.contains(var)) return;
             PsiExpression rValue = assignment.getRExpression();
             if(rValue == null || isVariableReferenced((PsiVariable)var, rValue)) return;
-            if(tb.getVariable().getType() instanceof PsiPrimitiveType && !isIdentityMapping(tb.getVariable(), rValue)) return;
+            if(tb.getVariable().getType() instanceof PsiPrimitiveType && !ExpressionUtils.isIdentityMapping(tb.getVariable(), rValue)) return;
             registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
           }
         }
@@ -718,7 +713,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
       }
       if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
-         && (!(tb.getVariable().getType() instanceof PsiPrimitiveType) || isIdentityMapping(tb.getVariable(), value))) {
+         && (!(tb.getVariable().getType() instanceof PsiPrimitiveType) || ExpressionUtils.isIdentityMapping(tb.getVariable(), value))) {
         registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
       }
     }
@@ -973,7 +968,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     public String createReplacement() {
-      if (isIdentityMapping(myVariable, myExpression)) {
+      if (ExpressionUtils.isIdentityMapping(myVariable, myExpression)) {
         if (!(myType instanceof PsiPrimitiveType)) {
           return myVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
         }

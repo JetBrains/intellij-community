@@ -20,7 +20,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
-object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.parameterHintsProvider")
+object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
 
 @ApiStatus.Experimental
 interface InlayParameterHintsProvider {
@@ -32,13 +32,12 @@ interface InlayParameterHintsProvider {
 
   /**
    * Provides fully qualified method name (e.g. "java.util.Map.put") and list of it's parameter names.
-   * Used when adding method to blacklist, when user invokes alt-enter on hint 
-   * and selects "Do not show for this method".
+   * Used to obtain method information when adding it to blacklist
    */
   fun getMethodInfo(element: PsiElement): MethodInfo?
   
   /**
-   * Default list of methods for which hints should not be shown
+   * Default list of patterns for which hints should not be shown
    */
   val defaultBlackList: Set<String>
 

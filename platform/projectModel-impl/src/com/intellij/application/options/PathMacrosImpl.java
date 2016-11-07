@@ -139,7 +139,6 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   );
 
   public PathMacrosImpl() {
-    //setMacro(USER_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
   }
 
   public static PathMacrosImpl getInstanceEx() {
@@ -199,12 +198,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
   @Override
   public Set<String> getAllMacroNames() {
-    final Set<String> userMacroNames = getUserMacroNames();
-    final Set<String> systemMacroNames = getSystemMacroNames();
-    final Set<String> allNames = new THashSet<>(userMacroNames.size() + systemMacroNames.size());
-    allNames.addAll(systemMacroNames);
-    allNames.addAll(userMacroNames);
-    return allNames;
+    return ContainerUtil.union(getUserMacroNames(), getSystemMacroNames());
   }
 
   @Override

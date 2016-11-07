@@ -48,6 +48,7 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
         UIUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
       }
     }
+    wrapper.owner = list;
     return wrapper;
   }
 

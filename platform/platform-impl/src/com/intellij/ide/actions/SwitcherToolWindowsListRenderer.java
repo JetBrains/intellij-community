@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -85,7 +86,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
       return PlatformIcons.UI_FORM_ICON;
     }
 
-    icon = IconUtil.toSize(icon, 16, 16);
+    icon = IconUtil.toSize(icon, JBUI.scale(16), JBUI.scale(16));
     return icon;
   }
 }

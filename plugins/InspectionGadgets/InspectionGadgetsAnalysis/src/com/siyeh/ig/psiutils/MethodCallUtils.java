@@ -55,12 +55,30 @@ public class MethodCallUtils {
 
   @Nullable
   public static PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
-    final PsiReferenceExpression method = expression.getMethodExpression();
-    final PsiExpression qualifierExpression = method.getQualifierExpression();
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     if (qualifierExpression == null) {
       return null;
     }
     return qualifierExpression.getType();
+  }
+
+  public static boolean isCompareToCall(@NotNull PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    if (!HardcodedMethodConstants.COMPARE_TO.equals(methodExpression.getReferenceName())) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isCompareTo(method);
+  }
+
+  public static boolean isCompareToIgnoreCaseCall(@NotNull PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    if (!"compareToIgnoreCase".equals(methodExpression.getReferenceName())) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isCompareToIgnoreCase(method);
   }
 
   public static boolean isEqualsCall(PsiMethodCallExpression expression) {
@@ -71,6 +89,16 @@ public class MethodCallUtils {
     }
     final PsiMethod method = expression.resolveMethod();
     return MethodUtils.isEquals(method);
+  }
+
+  public static boolean isEqualsIgnoreCaseCall(PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final String name = methodExpression.getReferenceName();
+    if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(name)) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isEqualsIgnoreCase(method);
   }
 
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,

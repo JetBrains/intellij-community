@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.assertj.core.api.Assertions
 
@@ -321,6 +323,7 @@ public class Test {
     System.out.println("A");
     System.out.print("A");
     
+    list.add("sss");
     list.get(1);
     list.set(1, "sss");
     
@@ -714,6 +717,18 @@ class Test {
     
     onLineStartingWith("check").assertInlays("isShow->1")
     onLineStartingWith("int").assertInlays("isShow->1")
+  }
+  
+  fun `test incorrect pattern`() {
+    ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "")
+    setup("""
+class Test {
+  void test() {
+    check(1000);  
+  }
+  void check(int isShow) {}
+}
+""")
   }
 
 }

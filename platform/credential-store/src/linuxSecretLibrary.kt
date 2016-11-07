@@ -103,7 +103,12 @@ private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorS
   val result = task(errorRef)
   val error = errorRef.get(0)
   if (error != null && error.code !== 0) {
-    LOG.error("$method error code ${error.code}, error message ${error.message}")
+    if (error.code == 32584 || error.code == 32618) {
+      LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
+    }
+    else {
+      LOG.error("$method error code ${error.code}, error message ${error.message}")
+    }
   }
   return result
 }

@@ -15,33 +15,44 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.psi.search.GlobalSearchScope.EMPTY_SCOPE;
-
-class DirtyModulesHolder extends UserDataHolderBase {
+public class DirtyModulesHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
-  private final Set<Module> myChangedModules = ContainerUtil.newHashSet();
+  private final FileDocumentManager myFileDocManager;
+  private final PsiDocumentManager myPsiDocManager;
+  private final Set<Module> myVFSChangedModules = ContainerUtil.newHashSet();
   private final Set<Module> myChangedModulesDuringCompilation = ContainerUtil.newHashSet();
   private final Object myLock = new Object();
 
   private boolean myCompilationPhase;
 
-  public DirtyModulesHolder(@NotNull CompilerReferenceServiceImpl service){
+  public DirtyModulesHolder(@NotNull CompilerReferenceServiceImpl service,
+                            FileDocumentManager fileDocumentManager,
+                            PsiDocumentManager psiDocumentManager){
     myService = service;
+    myFileDocManager = fileDocumentManager;
+    myPsiDocManager = psiDocumentManager;
   }
 
   void compilerActivityStarted() {
@@ -54,21 +65,43 @@ class DirtyModulesHolder extends UserDataHolderBase {
     synchronized (myLock) {
       myCompilationPhase = false;
 
-      ContainerUtil.removeAll(myChangedModules, affectedModules);
-      Collections.addAll(myChangedModules, markAsDirty);
-      myChangedModules.addAll(myChangedModulesDuringCompilation);
+      ContainerUtil.removeAll(myVFSChangedModules, affectedModules);
+      Collections.addAll(myVFSChangedModules, markAsDirty);
+      myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
     }
   }
 
   GlobalSearchScope getDirtyScope() {
-    return CachedValuesManager.getManager(myService.getProject()).getCachedValue(this, () -> {
-      synchronized (myLock) {
-        final GlobalSearchScope dirtyScope =
-          myChangedModules.stream().map(Module::getModuleWithDependentsScope).reduce(EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
-        return CachedValueProvider.Result.create(dirtyScope, PsiModificationTracker.MODIFICATION_COUNT, myService);
+    final Project project = myService.getProject();
+    synchronized (myLock) {
+      if (myCompilationPhase) {
+        return GlobalSearchScope.allScope(project);
       }
-    });
+      return ReadAction.compute(() -> {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return CachedValuesManager.getManager(project).getCachedValue(this, () ->
+          CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+      });
+    }
+  }
+
+  private GlobalSearchScope calculateDirtyModules() {
+    return getAllDirtyModules().stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+  }
+
+  @NotNull
+  private Set<Module> getAllDirtyModules() {
+    final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
+    for (Document document : myFileDocManager.getUnsavedDocuments()) {
+      final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
+      if (m != null) dirtyModules.add(m);
+    }
+    for (Document document : myPsiDocManager.getUncommittedDocuments()) {
+      final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
+      if (m != null) dirtyModules.add(m);
+    }
+    return dirtyModules;
   }
 
   boolean contains(VirtualFile file) {
@@ -76,71 +109,75 @@ class DirtyModulesHolder extends UserDataHolderBase {
   }
 
   void installVFSListener() {
-    PsiManager.getInstance(myService.getProject()).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-        psiChanged(event.getFile(), event.getParent());
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        processChange(event.getFile());
       }
 
       @Override
-      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-        psiChanged(event.getFile(), event.getParent());
+      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+        processChange(event.getFile());
       }
 
       @Override
-      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-        psiChanged(event.getFile(), event.getParent());
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        processChange(event.getFile());
       }
 
       @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        final PsiFile file = event.getFile();
-        if (file != null) {
-          psiChanged(file, null);
-        }
-        else {
-          psiChanged(null, event.getOldParent());
-          psiChanged(null, event.getNewParent());
+      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
+          processChange(event.getFile());
         }
       }
 
       @Override
-      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        psiChanged(event.getFile(), event.getParent());
+      public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+        processChange(event.getFile());
       }
 
       @Override
-      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-        if (PsiTreeChangeEvent.PROP_UNLOADED_PSI.equals(event.getPropertyName()) ||
-            PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName())) return;
-        psiChanged(event.getFile(), event.getParent());
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+        processChange(event.getFile());
       }
 
-      private void psiChanged(@Nullable PsiFile psiFile, @Nullable PsiElement parent) {
-        final VirtualFile file;
-        if (psiFile != null) {
-          file = psiFile.getVirtualFile();
-        }
-        else if (parent instanceof PsiFileSystemItem) {
-          file = ((PsiFileSystemItem)parent).getVirtualFile();
-        }
-        else {
-          return;
-        }
-        if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
-          final Module module = myService.getFileIndex().getModuleForFile(file);
-          if (module != null) {
-            synchronized (myLock) {
-              if (myCompilationPhase) {
-                myChangedModulesDuringCompilation.add(module);
-              }
-              else {
-                myChangedModules.add(module);
-              }
+      @Override
+      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+        processChange(event.getFile());
+      }
+
+      private void processChange(VirtualFile file) {
+        fileChanged(file);
+      }
+
+      void fileChanged(VirtualFile file) {
+        final Module module = getModuleForSourceContentFile(file);
+        if (module != null) {
+          synchronized (myLock) {
+            if (myCompilationPhase) {
+              myChangedModulesDuringCompilation.add(module);
+            } else {
+              myVFSChangedModules.add(module);
             }
           }
         }
       }
-    });
+    }, myService.getProject());
+  }
+
+  private Module getModuleForSourceContentFile(VirtualFile file) {
+    if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
+      return myService.getFileIndex().getModuleForFile(file);
+    }
+    return null;
+  }
+
+  @TestOnly
+  @NotNull
+  public Set<Module> getAllDirtyModulesForTest() {
+    synchronized (myLock) {
+      return getAllDirtyModules();
+    }
   }
 }

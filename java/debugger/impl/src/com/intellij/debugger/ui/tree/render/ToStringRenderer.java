@@ -25,9 +25,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -49,21 +47,25 @@ public class ToStringRenderer extends NodeRendererImpl {
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
-    setEnabled(true);
+    super("unnamed", true);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
-  public @NonNls String getName() {
+  @Override
+  public String getName() {
     return "toString";
   }
 
+  @Override
   public void setName(String name) {
     // prohibit change
   }
 
+  @Override
   public ToStringRenderer clone() {
     final ToStringRenderer cloned = (ToStringRenderer)super.clone();
     final ClassFilter[] classFilters = (myClassFilters.length > 0)? new ClassFilter[myClassFilters.length] : ClassFilter.EMPTY_ARRAY;
@@ -74,10 +76,12 @@ public class ToStringRenderer extends NodeRendererImpl {
     return cloned;
   }
 
+  @Override
   public String calcLabel(final ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, final DescriptorLabelListener labelListener)
     throws EvaluateException {
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
+      @Override
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
           StringUtil.notNullize(message)
@@ -85,6 +89,7 @@ public class ToStringRenderer extends NodeRendererImpl {
         labelListener.labelChanged();
       }
 
+      @Override
       public void evaluationError(String message) {
         final String msg = value != null? message + " " + DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
         valueDescriptor.setValueLabelFailed(new EvaluateException(msg, null));
@@ -102,6 +107,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     USE_CLASS_FILTERS = value;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     if(!(type instanceof ReferenceType)) {
       return false;
@@ -133,31 +139,39 @@ public class ToStringRenderer extends NodeRendererImpl {
     return false;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebugProcessImpl.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
   }
 
+  @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return DebugProcessImpl.getDefaultRenderer(((ValueDescriptor)node.getParent().getDescriptor()).getType())
       .getChildValueExpression(node, context);
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     super.readExternal(element);
-    final String value = JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS");
-    USE_CLASS_FILTERS = "true".equalsIgnoreCase(value);
+
+    USE_CLASS_FILTERS = "true".equalsIgnoreCase(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
     myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     super.writeExternal(element);
-    JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", USE_CLASS_FILTERS? "true" : "false");
+
+    if (USE_CLASS_FILTERS) {
+      JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
+    }
     DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
   }
 
@@ -166,7 +180,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   public void setClassFilters(ClassFilter[] classFilters) {
-    myClassFilters = classFilters != null? classFilters : ClassFilter.EMPTY_ARRAY;
+    myClassFilters = classFilters != null ? classFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   private boolean isFiltered(Type t) {

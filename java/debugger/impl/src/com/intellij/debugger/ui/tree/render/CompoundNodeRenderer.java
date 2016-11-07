@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,12 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     myChildrenRenderer = childrenRenderer;
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public CompoundNodeRenderer clone() {
     CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
     renderer.myLabelRenderer    = (myLabelRenderer    != null) ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
@@ -57,22 +59,27 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     return renderer;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     getChildrenRenderer().buildChildren(value, builder, evaluationContext);
   }
 
+  @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return getChildrenRenderer().getChildValueExpression(node, context);
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return getChildrenRenderer().isExpandable(value, evaluationContext, parentDescriptor);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return getLabelRenderer().isApplicable(type) && getChildrenRenderer().isApplicable(type);
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return getLabelRenderer().calcLabel(descriptor, evaluationContext, listener);
   }
@@ -93,6 +100,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     myChildrenRenderer = childrenRenderer;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
@@ -113,6 +121,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);

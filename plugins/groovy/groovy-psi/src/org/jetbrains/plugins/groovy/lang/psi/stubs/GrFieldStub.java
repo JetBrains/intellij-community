@@ -17,8 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.NamedStub;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -29,39 +27,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 /**
  * @author ilyas
  */
-public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField> {
+public class GrFieldStub extends GrVariableStubBase<GrField> {
+
   public static final byte IS_PROPERTY = 0x01;
   public static final byte IS_ENUM_CONSTANT = 0x02;
   public static final byte IS_DEPRECATED_BY_DOC_TAG = 0x04;
 
-  private final byte myFlags;
-  private final StringRef myName;
-  private final String[] myAnnotations;
   private final String[] myNamedParameters;
-  private final String myTypeText;
+  private final byte myFlags;
 
   public GrFieldStub(StubElement parent,
-                         StringRef name,
-                         final String[] annotations,
-                         String[] namedParameters,
-                         @NotNull IStubElementType elemType,
-                         byte flags, @Nullable String typeText) {
-    super(parent, elemType);
-    myName = name;
-    myAnnotations = annotations;
+                     @Nullable StringRef name,
+                     @NotNull final String[] annotations,
+                     @NotNull String[] namedParameters,
+                     @NotNull IStubElementType elemType,
+                     byte flags,
+                     @Nullable String typeText) {
+    super(parent, elemType, name, annotations, typeText);
     myNamedParameters = namedParameters;
     myFlags = flags;
-    myTypeText = typeText;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return StringRef.toString(myName);
-  }
-
-  public String[] getAnnotations() {
-    return myAnnotations;
   }
 
   @NotNull
@@ -81,11 +65,6 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
     return myFlags;
   }
 
-  @Nullable
-  public String getTypeText() {
-    return myTypeText;
-  }
-
   public static byte buildFlags(GrField field) {
     byte f = 0;
     if (field instanceof GrEnumConstant) {
@@ -97,7 +76,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
     }
 
     if (PsiImplUtil.isDeprecatedByDocTag(field)) {
-      f|= IS_DEPRECATED_BY_DOC_TAG;
+      f |= IS_DEPRECATED_BY_DOC_TAG;
     }
     return f;
   }

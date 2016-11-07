@@ -127,7 +127,7 @@ private class MyZipOutputStream(out: OutputStream) : ZipOutputStream(out) {
   }
 }
 
-data class ExportableItem(val files: List<Path>, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
+data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
   val plugins = ArrayList<String>()
@@ -156,15 +156,17 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
                                storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager,
                                onlyPaths: Set<String>? = null): Map<Path, List<ExportableItem>> {
   val result = LinkedHashMap<Path, MutableList<ExportableItem>>()
+  @Suppress("DEPRECATION")
   val processor = { component: ExportableComponent ->
-    val item = ExportableItem(component.exportFiles.map { it.toPath() }, component.presentableName, RoamingType.DEFAULT)
-    for (exportFile in item.files) {
-      result.putValue(exportFile, item)
+    for (file in component.exportFiles) {
+      val item = ExportableItem(file.toPath(), component.presentableName, RoamingType.DEFAULT)
+      result.putValue(item.file, item)
     }
   }
 
   @Suppress("DEPRECATION")
   ApplicationManager.getApplication().getComponents(ExportableApplicationComponent::class.java).forEach(processor)
+  @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
   val configPath = storageManager.expandMacros(ROOT_CONFIG)
@@ -191,6 +193,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
 
   ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
+    @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
       return@PairProcessor true
     }
@@ -227,10 +230,10 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
 
       val presentableName = if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
       if (isFileIncluded) {
-        result.putValue(file, ExportableItem(listOf(file), presentableName, storage.roamingType))
+        result.putValue(file, ExportableItem(file, presentableName, storage.roamingType))
       }
       if (additionalExportFile != null) {
-        result.putValue(additionalExportFile, ExportableItem(listOf(additionalExportFile), presentableName, RoamingType.DEFAULT))
+        result.putValue(additionalExportFile, ExportableItem(additionalExportFile, "$presentableName (schemes)", RoamingType.DEFAULT))
       }
     }
     true
@@ -241,7 +244,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
       val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
       if (!result.containsKey(file) && !isSkipFile(file)) {
-        result.putValue(file, ExportableItem(listOf(file), it.presentableName ?: "", it.roamingType))
+        result.putValue(file, ExportableItem(file, it.presentableName ?: "", it.roamingType))
       }
     }
   }

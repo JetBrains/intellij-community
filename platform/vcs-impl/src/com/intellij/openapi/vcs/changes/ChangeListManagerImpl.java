@@ -63,6 +63,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.*;
+
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
@@ -246,14 +248,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
-      vcsManager.addVcsListener(myVcsListener);
+      myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
     }
     else {
       ((ProjectLevelVcsManagerImpl)vcsManager).addInitializationRequest(
         VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();
-          vcsManager.addVcsListener(myVcsListener);
+          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
         });
 
       myConflictTracker.startTracking();
@@ -307,8 +309,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void projectClosed() {
-    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
-
     synchronized (myDataLock) {
       myUpdateChangesProgressIndicator.cancel();
     }

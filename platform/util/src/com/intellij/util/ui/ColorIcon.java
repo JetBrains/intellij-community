@@ -43,6 +43,18 @@ public class ColorIcon extends EmptyIcon {
     this(size, color, false);
   }
 
+  protected ColorIcon(ColorIcon icon) {
+    super(icon);
+    myColor = icon.myColor;
+    myBorder = icon.myBorder;
+    myColorSize = icon.myColorSize;
+  }
+
+  @Override
+  protected ColorIcon copy() {
+    return new ColorIcon(this);
+  }
+
   public Color getIconColor() {
     return myColor;
   }

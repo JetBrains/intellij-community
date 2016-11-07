@@ -27,12 +27,13 @@ public class TestCase {
     Assert.assertThat("asd", containsString("qwe"));
   }
 
-  void m3(Collection c, Object o) {
-    Assert.assertThat(o, anyOf(c));
+  void m3(Collection<String> c, String o) {
+    Assert.assertThat(c, hasItem(o));
     Assert.assertThat(o, is(c));
     Assert.assertThat("msg", o, is(c));
     Assert.assertThat(c, notNullValue());
     Assert.assertThat(c, nullValue());
+    Assert.assertThat(c, not(hasItem(o)));
   }
 
   void m(int[] a, int[] b) {

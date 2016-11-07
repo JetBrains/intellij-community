@@ -56,7 +56,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,6 +265,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
       final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
                                             project != null ? project : ApplicationManager.getApplication());
+      ((BalloonImpl)balloon).traceDispose(true);
 
       if (notification.isExpired()) {
         return null;
@@ -903,6 +907,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           showPopup(link, group);
         }
       });
+      Notification.setDataProvider(notification, action);
       action.setVisible(false);
       actionPanel.add(action);
     }

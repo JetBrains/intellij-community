@@ -34,6 +34,18 @@ public final class ColorIcon extends EmptyIcon {
     myColorSize = colorSize;
   }
 
+  protected ColorIcon(ColorIcon icon) {
+    super(icon);
+    myColorSize = icon.myColorSize;
+    myColor = icon.myColor;
+    myShowRedLine = icon.myShowRedLine;
+  }
+
+  @Override
+  protected ColorIcon copy() {
+    return new ColorIcon(this);
+  }
+
   public Color getColor() {
     return myShowRedLine ? null : myColor;
   }

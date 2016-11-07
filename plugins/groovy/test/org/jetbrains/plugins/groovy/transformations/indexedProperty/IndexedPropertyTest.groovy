@@ -87,6 +87,7 @@ class A {
     @IndexedProperty List<String> stringList
     @IndexedProperty Double[] doubleArray
     @IndexedProperty long[] primitiveArray
+    @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Collection<Number>">Collection<Number></error> numberCollection
     @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Object">untyped</error>
     @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Integer">Integer</error> nonIndexable    
     private <error descr="@IndexedProperty is applicable to properties only">@IndexedProperty</error> explicitVisibility 
@@ -121,6 +122,38 @@ new A().getStringList(0)
 '''
       enableInspections(GroovyUnusedDeclarationInspection)
       checkHighlighting()
+    }
+  }
+
+  void 'test indexed property rename'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> strin<caret>gList
+}
+def a = new A()
+a.stringList
+a.getStringList()
+a.stringList = []
+a.setStringList([])
+a.getStringList(0)
+a.setStringList(0, "") 
+'''
+      renameElementAtCaret 'newName'
+      checkResult '''\
+import groovy.transform.IndexedProperty
+class A {
+  @IndexedProperty List<String> newName
+}
+def a = new A()
+a.newName
+a.getNewName()
+a.newName = []
+a.setNewName([])
+a.getNewName(0)
+a.setNewName(0, "") 
+'''
     }
   }
 }

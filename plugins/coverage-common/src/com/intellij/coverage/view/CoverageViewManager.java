@@ -58,9 +58,8 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     myProject = project;
     myDataManager = dataManager;
 
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
-    toolWindow.setSplitMode(true, null);
     myContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myContentManager);
   }

@@ -16,19 +16,18 @@
 package org.jetbrains.plugins.groovy.transformations.indexedProperty
 
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
 internal val indexedPropertyFqn = "groovy.transform.IndexedProperty"
 internal val indexedPropertyOriginInfo = "by @IndexedProperty"
-internal val indexedMethodKind = "groovy.transform.IndexedProperty.kind"
+val indexedMethodKind = "groovy.transform.IndexedProperty.kind"
 
 internal fun GrField.getIndexedComponentType() = CachedValuesManager.getCachedValue(this) {
   Result.create(doGetIndexedComponentType(this), containingFile)
@@ -38,15 +37,7 @@ private fun doGetIndexedComponentType(field: GrField): PsiType? {
   val fieldType = field.type
   return when (fieldType) {
     is PsiArrayType -> fieldType.componentType
-    is PsiClassType -> {
-      val facade = JavaPsiFacade.getInstance(field.project)
-      val listClass = facade.findClass(JAVA_UTIL_LIST, field.resolveScope) ?: return null
-      val typeParameter = listClass.typeParameters.singleOrNull() ?: return null
-      val resolveResult = fieldType.resolveGenerics()
-      if (!InheritanceUtil.isInheritorOrSelf(resolveResult.element, listClass, true)) return null
-      val typeParameterType = facade.elementFactory.createType(typeParameter)
-      resolveResult.substitutor.substitute(typeParameterType)
-    }
+    is PsiClassType -> PsiUtil.substituteTypeParameter(fieldType, JAVA_UTIL_LIST, 0, true)
     else -> null
   }
 }

@@ -30,7 +30,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private final List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
 
   private ThreadRegistry myThreadRegistry = new ThreadRegistry();
-  @NotNull private final Object mySocketsObject = new Object();
 
   public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
@@ -55,18 +54,14 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public boolean isConnected() {
-    synchronized (myOtherDebuggersObject) {
-      return myOtherDebuggers.stream().anyMatch(RemoteDebugger::isConnected);
-    }
+    return getOtherDebuggers().stream().anyMatch(RemoteDebugger::isConnected);
   }
 
   @Override
   public void waitForConnect() throws Exception {
     Thread.sleep(500L);
 
-    synchronized (mySocketsObject) {
-      myMainDebugger.waitForConnect();
-    }
+    myMainDebugger.waitForConnect();
   }
 
   private void connectToSubprocess() {
@@ -76,7 +71,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
       addDebugger(debugger);
 
-      LOG.debug("Connected to subprocess on attempt");
+      myDebugProcess.init();
+      debugger.run();
 
       return;
     }
@@ -172,7 +168,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     else {
       // thread is not found in registry - lets search for it in attached debuggers
 
-      for (ProcessDebugger d : myOtherDebuggers) {
+      for (ProcessDebugger d : getOtherDebuggers()) {
         for (PyThreadInfo thread : d.getThreads()) {
           if (threadId.equals(thread.getId())) {
             return d;
@@ -223,7 +219,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
     List<PyThreadInfo> threads = collectAllThreads();
 
-    if (myOtherDebuggers.size() > 0) {
+    if (!isOtherDebuggersEmpty()) {
       //here we add process id to thread name in case there are more then one process
       return Collections.unmodifiableCollection(Collections2.transform(threads, new Function<PyThreadInfo, PyThreadInfo>() {
         @Override
@@ -260,11 +256,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     return result;
   }
 
-
   private void cleanOtherDebuggers() {
-    synchronized (myOtherDebuggersObject) {
-      removeDisconnected(getOtherDebuggers());
-    }
+    removeDisconnected(getOtherDebuggers());
   }
 
   private void removeDisconnected(ArrayList<RemoteDebugger> debuggers) {
@@ -295,6 +288,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     }
   }
 
+  private boolean isOtherDebuggersEmpty() {
+    synchronized (myOtherDebuggersObject) {
+      return myOtherDebuggers.isEmpty();
+    }
+  }
 
   @Override
   public void execute(@NotNull AbstractCommand command) {

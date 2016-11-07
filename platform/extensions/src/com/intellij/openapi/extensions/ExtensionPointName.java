@@ -26,18 +26,19 @@ import org.jetbrains.annotations.NotNull;
 public class ExtensionPointName<T> {
   private final String myName;
 
-  public ExtensionPointName(@NonNls final String name) {
+  public ExtensionPointName(@NotNull @NonNls final String name) {
     myName = name;
   }
 
-  public static <T> ExtensionPointName<T> create(@NonNls final String name) {
+  @NotNull
+  public static <T> ExtensionPointName<T> create(@NotNull @NonNls final String name) {
     return new ExtensionPointName<T>(name);
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
-
 
   @Override
   public String toString() {
@@ -49,6 +50,7 @@ public class ExtensionPointName<T> {
     return Extensions.getExtensions(this);
   }
 
+  @NotNull
   public T[] getExtensions(AreaInstance areaInstance) {
     return Extensions.getExtensions(this, areaInstance);
   }

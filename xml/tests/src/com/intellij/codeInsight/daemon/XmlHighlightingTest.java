@@ -2066,6 +2066,36 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testLinksInAttrValuesAndComments() throws Exception {
+    configureByFile(BASE_PATH +getTestName(false) + ".xml");
+    doDoTest(true, false);
+
+    List<WebReference> list = PlatformTestUtil.collectWebReferences(myFile);
+    assertEquals(2, list.size());
+
+    Collections.sort(list, (o1, o2) -> o1.getCanonicalText().length() - o2.getCanonicalText().length());
+
+    assertEquals("https://www.jetbrains.com/ruby/download", list.get(0).getCanonicalText());
+    assertTrue(list.get(0).getElement() instanceof  XmlAttributeValue);
+    assertEquals("http://blog.jetbrains.com/ruby/2012/04/rubymine-4-0-3-update-is-available/", list.get(1).getCanonicalText());
+    assertTrue(list.get(1).getElement() instanceof  XmlComment);
+  }
+
+  public void testBillionLaughs() {
+    configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
+    XmlFile file = (XmlFile)getFile();
+    int[] count = new int[] {0};
+    XmlUtil.processXmlElements(file.getRootTag(), element -> {
+      count[0]++;
+      return true;}, false);
+    assertEquals(7, count[0]);
+  }
+
+  public void testBillionLaughsValidation() throws Exception {
+    configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
+    doDoTest(true, false);
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -2142,20 +2172,5 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   protected void tearDown() throws Exception {
     XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
     super.tearDown();
-  }
-
-  public void testLinksInAttrValuesAndComments() throws Exception {
-    configureByFile(BASE_PATH +getTestName(false) + ".xml");
-    doDoTest(true, false);
-
-    List<WebReference> list = PlatformTestUtil.collectWebReferences(myFile);
-    assertEquals(2, list.size());
-
-    Collections.sort(list, (o1, o2) -> o1.getCanonicalText().length() - o2.getCanonicalText().length());
-
-    assertEquals("https://www.jetbrains.com/ruby/download", list.get(0).getCanonicalText());
-    assertTrue(list.get(0).getElement() instanceof  XmlAttributeValue);
-    assertEquals("http://blog.jetbrains.com/ruby/2012/04/rubymine-4-0-3-update-is-available/", list.get(1).getCanonicalText());
-    assertTrue(list.get(1).getElement() instanceof  XmlComment);
   }
 }

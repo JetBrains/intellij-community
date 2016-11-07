@@ -2392,11 +2392,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, forced);
   }
 
-  private void focusToolWinowByDefault(@Nullable String idToIngore) {
+  private void focusToolWinowByDefault(@Nullable String idToIgnore) {
     String toFocus = null;
 
     for (String each : myActiveStack.getStack()) {
-      if (idToIngore != null && idToIngore.equalsIgnoreCase(each)) continue;
+      if (idToIgnore != null && idToIgnore.equalsIgnoreCase(each)) continue;
 
       if (getInfo(each).isVisible()) {
         toFocus = each;
@@ -2406,7 +2406,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     if (toFocus == null) {
       for (String each : myActiveStack.getPersistentStack()) {
-        if (idToIngore != null && idToIngore.equalsIgnoreCase(each)) continue;
+        if (idToIgnore != null && idToIgnore.equalsIgnoreCase(each)) continue;
 
         if (getInfo(each).isVisible()) {
           toFocus = each;
@@ -2415,7 +2415,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
-    if (toFocus != null) {
+    if (toFocus != null && !ApplicationManager.getApplication().isDisposeInProgress() && !ApplicationManager.getApplication().isDisposed()) {
       activateToolWindow(toFocus, false, true);
     }
   }

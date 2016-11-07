@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -67,7 +66,6 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     XmlSerializer.deserializeInto(myBean, element);

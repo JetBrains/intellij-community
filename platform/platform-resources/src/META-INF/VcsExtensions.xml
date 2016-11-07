@@ -57,6 +57,8 @@
 
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
+                            order="first"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>

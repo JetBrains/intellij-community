@@ -27,19 +27,19 @@ import com.siyeh.ig.psiutils.SideEffectChecker
  * @author peter
  */
 interface PreContract {
-  fun toContracts(method: PsiMethod, body: PsiCodeBlock): List<MethodContract>
+  fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<MethodContract>
   fun negate(): PreContract? = NegatingContract(this)
 }
 
 internal data class KnownContract(val contract: MethodContract) : PreContract {
-  override fun toContracts(method: PsiMethod, body: PsiCodeBlock) = listOf(contract)
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock) = listOf(contract)
   override fun negate() = negateContract(contract)?.let(::KnownContract)
 }
 
-internal data class DelegationContract(private val expression: ExpressionRange, private val negated: Boolean) : PreContract {
+internal data class DelegationContract(internal val expression: ExpressionRange, internal val negated: Boolean) : PreContract {
 
-  override fun toContracts(method: PsiMethod, body: PsiCodeBlock): List<MethodContract> {
-    val call = expression.restoreExpression(body) as PsiMethodCallExpression? ?: return emptyList()
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<MethodContract> {
+    val call = expression.restoreExpression(body()) as PsiMethodCallExpression? ?: return emptyList()
 
     val result = call.resolveMethodGenerics()
     val targetMethod = result.element as PsiMethod? ?: return emptyList()
@@ -103,10 +103,10 @@ internal data class DelegationContract(private val expression: ExpressionRange, 
   }
 }
 
-internal data class SideEffectFilter(private val expressionsToCheck: List<ExpressionRange>, private val contracts: List<PreContract>) : PreContract {
+internal data class SideEffectFilter(internal val expressionsToCheck: List<ExpressionRange>, internal val contracts: List<PreContract>) : PreContract {
 
-  override fun toContracts(method: PsiMethod, body: PsiCodeBlock): List<MethodContract> {
-    if (expressionsToCheck.any { d -> mayHaveSideEffects(body, d) }) {
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<MethodContract> {
+    if (expressionsToCheck.any { d -> mayHaveSideEffects(body(), d) }) {
       return emptyList()
     }
     return contracts.flatMap { c -> c.toContracts(method, body) }
@@ -116,8 +116,8 @@ internal data class SideEffectFilter(private val expressionsToCheck: List<Expres
       range.restoreExpression(body)?.let { SideEffectChecker.mayHaveSideEffects(it) } ?: false
 }
 
-internal data class NegatingContract(private val negated: PreContract) : PreContract {
-  override fun toContracts(method: PsiMethod, body: PsiCodeBlock) = negated.toContracts(method, body).mapNotNull(::negateContract)
+internal data class NegatingContract(internal val negated: PreContract) : PreContract {
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock) = negated.toContracts(method, body).mapNotNull(::negateContract)
 }
 
 private fun negateContract(c: MethodContract): MethodContract? {
@@ -125,12 +125,14 @@ private fun negateContract(c: MethodContract): MethodContract? {
   return if (ret == TRUE_VALUE || ret == FALSE_VALUE) MethodContract(c.arguments, negateConstraint(ret)) else null
 }
 
-internal data class MethodCallContract(private val call: ExpressionRange, private val states: List<Array<MethodContract.ValueConstraint>>) : PreContract {
+@Suppress("EqualsOrHashCode")
+internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<MethodContract.ValueConstraint>>) : PreContract {
+  override fun hashCode() = call.hashCode() * 31 + states.flatten().map { it.ordinal }.hashCode()
 
-  override fun toContracts(method: PsiMethod, body: PsiCodeBlock): List<MethodContract> {
-    val target = (call.restoreExpression(body) as PsiMethodCallExpression?)?.resolveMethod()
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<MethodContract> {
+    val target = (call.restoreExpression(body()) as PsiMethodCallExpression?)?.resolveMethod()
     if (target != null && NullableNotNullManager.isNotNull(target)) {
-      return ContractInferenceInterpreter.toContracts(states, NOT_NULL_VALUE)
+      return ContractInferenceInterpreter.toContracts(states.map { it.toTypedArray() }, NOT_NULL_VALUE)
     }
     return emptyList()
   }

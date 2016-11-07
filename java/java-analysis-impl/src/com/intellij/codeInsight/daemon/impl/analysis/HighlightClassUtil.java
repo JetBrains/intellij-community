@@ -162,7 +162,7 @@ public class HighlightClassUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return null;
 
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));
+    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope()));
     if (classes.length < numOfClassesToFind) return null;
     final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);

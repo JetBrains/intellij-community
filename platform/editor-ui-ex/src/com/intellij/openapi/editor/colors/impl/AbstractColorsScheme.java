@@ -623,6 +623,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
+  private boolean isParentOverwritingInheritance(@NotNull TextAttributesKey key) {
+    TextAttributes parentAttributes =
+      myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+    return parentAttributes != null && parentAttributes != USE_INHERITED_MARKER;
+  }
+
   private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
@@ -630,7 +636,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       TextAttributes attributes = myAttributesMap.get(key);
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
       if (attributes == USE_INHERITED_MARKER) {
-        if (baseKey != null) {
+        // do not store if  inheritance = on in the parent scheme (https://youtrack.jetbrains.com/issue/IDEA-162774)
+        if (baseKey != null && isParentOverwritingInheritance(key)) {
           attrElements.addContent(new Element(OPTION_ELEMENT)
                                     .setAttribute(NAME_ATTR, key.getExternalName())
                                     .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));

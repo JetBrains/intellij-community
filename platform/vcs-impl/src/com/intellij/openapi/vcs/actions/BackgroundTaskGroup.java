@@ -15,17 +15,18 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,24 +35,21 @@ import static com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWri
 /**
  * Provides common cancellation and error handling behaviour for group of dependent tasks.
  */
-public class BackgroundTaskGroup {
+public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
   private static final Logger LOG = Logger.getInstance(BackgroundTaskGroup.class);
 
-  @NotNull private final QueueProcessor<TaskData> myProcessor;
   @NotNull private final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
-
   @NotNull private final Project myProject;
-  @NotNull private final String myTitle;
 
   public BackgroundTaskGroup(@NotNull Project project, @NotNull String title) {
+    super(project, title);
     myProject = project;
-    myTitle = title;
-
-    myProcessor = new QueueProcessor<>(TaskData::consume, true, QueueProcessor.ThreadToUse.AWT, project.getDisposed());
   }
 
-  private interface TaskData extends Consumer<Runnable> {
+  @Override
+  public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+    throw new UnsupportedOperationException();
   }
 
   public void runInBackground(@NotNull String title, @NotNull ThrowableConsumer<ProgressIndicator, VcsException> task) {

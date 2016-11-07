@@ -324,7 +324,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         if (frameProxy != null) {
           try {
             Location location = frameProxy.location();
-            MethodBytecodeUtil.visit(location.declaringType(), location.method(), location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
+            MethodBytecodeUtil.visit(location.method(), location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
               boolean myLineMatch = false;
 
               @Override

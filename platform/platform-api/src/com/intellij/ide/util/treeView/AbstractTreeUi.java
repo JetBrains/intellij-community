@@ -2689,6 +2689,11 @@ public class AbstractTreeUi {
           update(updateInfo.getDescriptor(), true);
         }
 
+        if (!updateInfo.isUpdateChildren()) {
+          nodeToProcessActions[0] = node;
+          return;
+        }
+
         Object element = getElementFromDescriptor(updateInfo.getDescriptor());
         if (element == null) {
           removeFromLoadedInBackground(oldElementFromDescriptor);
@@ -2698,7 +2703,7 @@ public class AbstractTreeUi {
 
         elementFromDescriptor.set(element);
 
-        Object[] loadedElements = updateInfo.isUpdateChildren() ? getChildrenFor(element) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+        Object[] loadedElements = getChildrenFor(element);
 
         final LoadedChildren loaded = new LoadedChildren(loadedElements);
         for (final Object each : loadedElements) {

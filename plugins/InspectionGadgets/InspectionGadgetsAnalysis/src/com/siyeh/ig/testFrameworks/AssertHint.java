@@ -78,8 +78,9 @@ public class AssertHint {
     if (minimumParamCount == null) {
       return null;
     }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
+    if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE) || !resolveResult.isValidResult()) {
       return null;
     }
     final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);
@@ -172,11 +173,12 @@ public class AssertHint {
   }
 
   public static class JUnitCommonAssertNames {
-    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(8);
+    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(13);
 
     static {
       COMMON_ASSERT_METHODS.put("assertArrayEquals", 2);
       COMMON_ASSERT_METHODS.put("assertEquals", 2);
+      COMMON_ASSERT_METHODS.put("assertNotEquals", 2);
       COMMON_ASSERT_METHODS.put("assertFalse", 1);
       COMMON_ASSERT_METHODS.put("assumeFalse", 1);
       COMMON_ASSERT_METHODS.put("assertNotNull", 1);

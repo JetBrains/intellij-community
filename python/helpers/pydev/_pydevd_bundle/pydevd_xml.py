@@ -2,7 +2,8 @@ from _pydev_bundle import pydev_log
 import traceback
 from _pydevd_bundle import pydevd_resolver
 import sys
-from _pydevd_bundle.pydevd_constants import dict_keys, IS_PY3K, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
+from _pydevd_bundle.pydevd_constants import dict_contains, dict_iter_items, dict_keys, IS_PY3K, \
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
 
 from _pydev_bundle.pydev_imports import quote
 
@@ -156,18 +157,8 @@ def get_type(o):
 
 def return_values_from_dict_to_xml(return_dict):
     res = ""
-    for name in dict_keys(return_dict):
-        val = return_dict[name]
-        res += var_to_xml(val, name, return_value=True)
-    return res
-
-
-def ipython_hidden_values_to_xml(key, val, hidden_ns):
-    res = ""
-    if key in hidden_ns.keys():
-        res += var_to_xml(val, str(key), ipython_hidden=True)
-    else:
-        res += var_to_xml(val, str(key))
+    for name, val in dict_iter_items(return_dict):
+        res += var_to_xml(val, name, additionalInXml=' isRetVal="True"')
     return res
 
 
@@ -189,8 +180,8 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
             if k == RETURN_VALUES_DICT:
                 xml += return_values_from_dict_to_xml(v)
             else:
-                if hidden_ns is not None:
-                    xml += ipython_hidden_values_to_xml(k, v, hidden_ns)
+                if hidden_ns is not None and dict_contains(hidden_ns, k):
+                    xml += var_to_xml(v, str(k), additionalInXml=' isIPythonHidden="True"')
                 else:
                     xml += var_to_xml(v, str(k))
         except Exception:
@@ -199,9 +190,6 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
 
     return xml
 
-
-def get_type_qualifier(type):
-    return getattr(type, "__module__", "")
 
 def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, ipython_hidden=False):
     """ single variable or dictionary to xml representation """
@@ -214,13 +202,8 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
         v = val
 
     _type, typeName, resolver = get_type(v)
-    type_qualifier = get_type_qualifier(_type)
-
-
-    do_not_call_value_str = False
-    if isinstance(resolver, pydevd_resolver.djangoFormResolver.__class__):
-        # do not call str() of Django form objects because has side effects and breaks self.errors
-        do_not_call_value_str = True
+    type_qualifier = getattr(_type, "__module__", "")
+    do_not_call_value_str = resolver is not None and resolver.use_value_repr_instead_of_str
 
     try:
         if hasattr(v, '__class__'):
@@ -263,20 +246,10 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
     except:
         pass
 
-    if return_value:
-        xmlRetVal = ' isRetVal="True"'
-    else:
-        xmlRetVal = ''
-
-    if ipython_hidden:
-        xmlIPythonHidden = ' isIPythonHidden="True"'
-    else:
-        xmlIPythonHidden = ''
-
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
-        xmlQualifier = ' qualifier="%s" ' % make_valid_xml_value(type_qualifier)
+        xmlQualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
     else:
         xmlQualifier = ''
 
@@ -309,5 +282,5 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
         else:
             xmlCont = ''
 
-    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, xmlRetVal, xmlIPythonHidden, additionalInXml, ' />\n'))
+    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, additionalInXml, ' />\n'))
 

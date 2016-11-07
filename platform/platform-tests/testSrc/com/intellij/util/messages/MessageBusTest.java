@@ -19,6 +19,7 @@
  */
 package com.intellij.util.messages;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.messages.impl.MessageBusImpl;
@@ -209,6 +210,33 @@ public class MessageBusTest extends TestCase {
                  "C2T2Handler:t21",
                  "inside:t11:done",
                  "C2T1Handler:t12");
+  }
+
+  public void testMessageDeliveredDespitePCE() {
+    final MessageBusConnection conn1 = myBus.connect();
+    conn1.subscribe(TOPIC1, new T1Listener() {
+      @Override
+      public void t11() {
+        myLog.add("pce");
+        throw new ProcessCanceledException();
+      }
+
+      @Override
+      public void t12() {
+        throw new UnsupportedOperationException();
+      }
+    });
+
+    final MessageBusConnection conn2 = myBus.connect();
+    conn2.subscribe(TOPIC1, new T1Handler("handler2"));
+
+    try {
+      myBus.syncPublisher(TOPIC1).t11();
+      fail("PCE expected");
+    }
+    catch (ProcessCanceledException ignored) {
+    }
+    assertEvents("pce", "handler2:t11");
   }
 
   public void testPostingPerformanceWithLowListenerDensityInHierarchy() {

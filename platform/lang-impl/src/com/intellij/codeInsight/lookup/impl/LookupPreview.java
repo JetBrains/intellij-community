@@ -57,10 +57,12 @@ class LookupPreview {
     if (!suffix.isEmpty() && editor instanceof EditorImpl &&
         !editor.getSelectionModel().hasSelection() &&
         InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
-      for (Caret caret : editor.getCaretModel().getAllCarets()) {
-        ensureCaretBeforeInlays(caret);
-        addInlay(suffix, caret.getOffset());
-      }
+      myLookup.performGuardedChange(() -> {
+        for (Caret caret : editor.getCaretModel().getAllCarets()) {
+          ensureCaretBeforeInlays(caret);
+          addInlay(suffix, caret.getOffset());
+        }
+      });
     }
   }
 

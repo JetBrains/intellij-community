@@ -955,6 +955,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myTraceDispose;
 
   public void traceDispose(boolean value) {
+    assert !isDisposed() : "Balloon is already disposed";
     myTraceDispose = value;
   }
 

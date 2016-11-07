@@ -786,7 +786,7 @@ class A {{
     template.addVariable("V3", "", "", true)
     final Editor editor = getEditor()
 
-    writeCommand { startTemplate(template) }
+    startTemplate(template)
 
     final TemplateState state = getState()
 
@@ -828,7 +828,7 @@ class A {{
     template.addVariable("V1", "", "", true)
     template.addVariable("V2", "", '"239"', true)
 
-    writeCommand { startTemplate(template) }
+    startTemplate(template)
 
     myFixture.checkResult '<caret> var = 239;'
 
@@ -1129,7 +1129,7 @@ class Foo {
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
-    writeCommand { startTemplate(template) }
+    startTemplate(template)
     myFixture.checkResult """\
 class Foo {
   {
@@ -1137,7 +1137,7 @@ class Foo {
   }
 }
 """
-    writeCommand { myFixture.type '42' }
+    myFixture.type '42'
     myFixture.checkResult """\
 class Foo {
   {
@@ -1146,7 +1146,7 @@ class Foo {
 }
 """
 
-    writeCommand { myFixture.type '\b\b' }
+    myFixture.type '\b\b'
     myFixture.checkResult """\
 class Foo {
   {

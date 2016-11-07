@@ -355,7 +355,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testModuleUnderIgnoredDir() {
-    final VirtualFile ignored = createChildDirectory(myRootVFile, "RCS");
+    final VirtualFile ignored = createChildDirectory(myRootVFile, ".git");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
     assertTrue(myFileIndex.isExcluded(ignored));
     assertTrue(myFileIndex.isUnderIgnored(ignored));
@@ -377,7 +377,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testModuleInIgnoredDir() {
-    final VirtualFile ignored = createChildDirectory(myRootVFile, "RCS");
+    final VirtualFile ignored = createChildDirectory(myRootVFile, ".git");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
     
     new WriteCommandAction.Simple(getProject()) {

@@ -65,12 +65,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     MessageBusConnection connection = project.getMessageBus().connect();
 
-    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        trimToSize();
-      }
-    });
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> trimToSize());
 
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
@@ -247,11 +242,11 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * Removes specified <code>file</code> from history. The method does
-   * nothing if <code>file</code> is not in the history.
+   * Removes specified {@code file} from history. The method does
+   * nothing if {@code file} is not in the history.
    *
-   * @exception IllegalArgumentException if <code>file</code>
-   * is <code>null</code>
+   * @exception IllegalArgumentException if {@code file}
+   * is {@code null}
    */
   public synchronized void removeFile(@NotNull final VirtualFile file){
     final HistoryEntry entry = getEntry(file);
@@ -268,7 +263,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * @return may be null
    */
-  public FileEditorProvider getSelectedProvider(final VirtualFile file) {
+  FileEditorProvider getSelectedProvider(final VirtualFile file) {
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getSelectedProvider() : null;
   }
@@ -285,7 +280,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * If total number of files in history more then <code>UISettings.RECENT_FILES_LIMIT</code>
+   * If total number of files in history more then {@code UISettings.RECENT_FILES_LIMIT}
    * then removes the oldest ones to fit the history to new size.
    */
   private synchronized void trimToSize(){
@@ -302,25 +297,19 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     // which is done via corresponding EditorProviders, those are not accessible before their
     // is initComponent() called
     final Element state = element.clone();
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        for (Element e : state.getChildren(HistoryEntry.TAG)) {
-          try {
-            addEntry(HistoryEntry.createHeavy(myProject, e));
-          }
-          catch (InvalidDataException e1) {
-            // OK here
-          }
-          catch (ProcessCanceledException e1) {
-            // OK here
-          }
-          catch (Exception anyException) {
-            LOG.error(anyException);
-          }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      for (Element e : state.getChildren(HistoryEntry.TAG)) {
+        try {
+          addEntry(HistoryEntry.createHeavy(myProject, e));
         }
-        trimToSize();
+        catch (InvalidDataException | ProcessCanceledException e1) {
+          // OK here
+        }
+        catch (Exception anyException) {
+          LOG.error(anyException);
+        }
       }
+      trimToSize();
     });
   }
 

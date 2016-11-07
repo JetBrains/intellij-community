@@ -20,10 +20,11 @@ import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomTarget;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -68,13 +71,10 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
 
     final String baseName = manager.getBaseName(containingFile);
-    final PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-      @Nullable
-      public PsiDirectory compute() {
-        return containingFile.getContainingDirectory();
-      }});
+    final String extension = containingFile.getVirtualFile().getExtension();
+    final PsiDirectory directory = ReadAction.compute(() -> containingFile.getContainingDirectory());
     if (directory == null) return ResourceBundleWithCachedFiles.EMPTY;
-    final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, directory);
+    final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, extension, directory);
     return bundle == null
            ? new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative))
            : bundle;
@@ -87,39 +87,23 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   private static ResourceBundleWithCachedFiles getResourceBundle(@NotNull final String baseName,
-                                                                 @NotNull final PsiDirectory baseDirectory) {
-    PropertiesFile defaultPropertiesFile = null;
+                                                                @Nullable final String extension,
+                                                                @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
-    final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-      @Override
-      public PsiFile[] compute() {
-        return baseDirectory.getFiles();
-      }
-    });
-    final List<PropertiesFile> bundleFiles = new ArrayList<>(1);
-    for (final PsiFile psiFile : psiFiles) {
-      final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
-      if (propertiesFile == null) {
-        continue;
-      }
-      if (baseName.equals(bundleBaseNameManager.getBaseName(psiFile))) {
-        if (defaultPropertiesFile == null) {
-          defaultPropertiesFile = propertiesFile;
-        } else {
-          final int nameDiff = defaultPropertiesFile.getName().compareTo(propertiesFile.getName());
-          if (nameDiff > 0) {
-            defaultPropertiesFile = propertiesFile;
-          } else if (nameDiff == 0) {
-            return null;
-          }
+    final List<PropertiesFile> bundleFiles = Stream
+      .of(ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {
+        @Override
+        public PsiFile[] compute() throws RuntimeException {
+          return baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY;
         }
-        bundleFiles.add(propertiesFile);
-      }
-    }
-    if (defaultPropertiesFile == null) {
-      return null;
-    }
-    return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(defaultPropertiesFile), bundleFiles);
+      }))
+      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension))
+      .filter(PropertiesImplUtil::isPropertiesFile)
+      .filter(f -> Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
+      .map(PropertiesImplUtil::getPropertiesFile)
+      .collect(Collectors.toList());
+    if (bundleFiles.isEmpty()) return null;
+    return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(bundleFiles.get(0)), bundleFiles);
   }
 
   public static boolean isPropertiesFile(@Nullable PsiFile file) {
@@ -153,18 +137,15 @@ public class PropertiesImplUtil extends PropertiesUtil {
     final ArrayList<IProperty> properties =
       new ArrayList<>(PropertyKeyIndex.getInstance().get(key, project, scope));
     final Set<VirtualFile> files = new HashSet<>();
-    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, new FileBasedIndex.ValueProcessor<String>() {
-      @Override
-      public boolean process(VirtualFile file, String value) {
-        if (files.add(file)) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
-          if (propertiesFile != null) {
-            properties.addAll(propertiesFile.findPropertiesByKey(key));
-          }
+    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, (file, value) -> {
+      if (files.add(file)) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
+        if (propertiesFile != null) {
+          properties.addAll(propertiesFile.findPropertiesByKey(key));
         }
-        return false;
       }
+      return false;
     }, scope);
     return properties;
   }
@@ -183,8 +164,17 @@ public class PropertiesImplUtil extends PropertiesUtil {
     if (baseDirectory == null) {
       return null;
     }
-    final ResourceBundleWithCachedFiles rb = getResourceBundle(baseName, baseDirectory);
-    return rb == null ? null : rb.getBundle();
+    final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(project);
+
+    for (PsiFile file : baseDirectory.getFiles()) {
+      final PropertiesFile propertiesFile = getPropertiesFile(file);
+      if (propertiesFile == null) continue;
+      final String currBaseName = bundleBaseNameManager.getBaseName(file);
+      if (currBaseName.equals(baseName)) {
+        return getResourceBundle(propertiesFile);
+      }
+    }
+    return null;
   }
 
   public static boolean isAlphaSorted(final Collection<? extends IProperty> properties) {

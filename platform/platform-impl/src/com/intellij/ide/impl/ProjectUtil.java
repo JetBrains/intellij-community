@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -281,28 +282,30 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  public static boolean isSameProject(String projectFilePath, @NotNull Project project) {
+  public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
+    if (projectFilePath == null) return false;
+
     IProjectStore projectStore = ProjectKt.getStateStore(project);
-
-    String toOpen = FileUtil.toSystemIndependentName(projectFilePath);
-    String existing = projectStore.getProjectFilePath();
-
-    String existingBaseDir = projectStore.getProjectBasePath();
-    if (existingBaseDir == null) {
+    String existingBaseDirPath = projectStore.getProjectBasePath();
+    if (existingBaseDirPath == null) {
       // could be null if not yet initialized
       return false;
     }
 
-    final File openFile = new File(toOpen);
-    if (openFile.isDirectory()) {
-      return FileUtil.pathsEqual(toOpen, existingBaseDir);
-    }
-    if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
-      // todo: check if IPR is located not under the project base dir
-      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir);
+    final File projectFile = new File(projectFilePath);
+    if (projectFile.isDirectory()) {
+      return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);
     }
 
-    return FileUtil.pathsEqual(toOpen, existing);
+    if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
+      return FileUtil.pathsEqual(projectFilePath, projectStore.getProjectFilePath());
+    }
+
+    File parent = projectFile.getParentFile();
+    if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      parent = parent.getParentFile();
+    }
+    return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
   }
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
@@ -333,8 +336,12 @@ public class ProjectUtil {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
+    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    if (PlatformUtils.isCLion()) {
+      productName = ApplicationNamesInfo.getInstance().getProductName();
+    }
     //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
+    return userHome.replace('/', File.separatorChar) + File.separator + productName +
            "Projects";
   }
 }

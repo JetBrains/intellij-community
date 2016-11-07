@@ -75,7 +75,18 @@ public class Patches {
    * Support default methods in JDI
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
-  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_45");
+
+  /**
+   * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
+   */
+  public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = true;
+
+  /**
+   * NPE from com.sun.jdi.ReferenceType#constantPool()
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6822627">JDK-6822627</a>
+   */
+  public static final boolean JDK_BUG_ID_6822627 = true;
 
   /**
    * JDK on Mac detects font style for system fonts based only on their name (PostScript name).

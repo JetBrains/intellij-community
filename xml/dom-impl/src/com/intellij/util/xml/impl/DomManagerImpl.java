@@ -167,13 +167,17 @@ public final class DomManagerImpl extends DomManager {
   }
 
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
-    if (!(file instanceof NewVirtualFile)) return Collections.emptyList();
+    if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
 
     final List<DomEvent> events = ContainerUtil.newArrayList();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) return false;
+        if (myProject.isDisposed() || !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) {
+          return false;
+        }
 
         if (!file.isDirectory() && StdFileTypes.XML == file.getFileType()) {
           final PsiFile psiFile = getCachedPsiFile(file);

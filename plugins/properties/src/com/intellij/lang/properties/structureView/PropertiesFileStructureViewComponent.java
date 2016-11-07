@@ -33,6 +33,7 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
     myPropertiesFile = propertiesFile;
   }
 
+  @Override
   public Object getData(String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return myPropertiesFile.getVirtualFile();

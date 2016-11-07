@@ -32,6 +32,7 @@
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
+    <extensionPoint name="renameHelper" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
@@ -132,12 +133,17 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport"/>
     <astTransformationSupport id="defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
+    <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
     <astTransformationSupport id="delegateSupport" order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
     <astTransformationSupport id="traitSupport" order="last"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
+    <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
+
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListTransformationSupport"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListAnnotationChecker"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -312,6 +318,9 @@
     <codeInsight.createFieldFromUsageHelper language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
+    <codeInsight.parameterNameHints
+        language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
+    />
 
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.dgm.DGMFileTypeFactory"/>
@@ -563,6 +572,7 @@
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
 
     <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 

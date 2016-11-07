@@ -516,6 +516,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (myProject.isDisposed()) {
+            // committedness doesn't matter anymore; give clients a chance to do checkCanceled
+            semaphore.up();
+            return;
+          }
+
           performWhenAllCommitted(new Runnable() {
             @Override
             public void run() {
@@ -756,7 +762,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   @NotNull
   public Document[] getUncommittedDocuments() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Document[] documents = myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
     return ArrayUtil.stripTrailingNulls(documents);
   }

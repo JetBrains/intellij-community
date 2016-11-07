@@ -53,13 +53,16 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
@@ -327,9 +330,15 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  static class MnemonicIcon implements Icon {
+  static class MnemonicIcon extends JBUI.CachingScalableJBIcon<MnemonicIcon> {
     private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;
+
+    @NotNull
+    @Override
+    protected MnemonicIcon copy() {
+      return new MnemonicIcon(myMnemonic);
+    }
 
     @NotNull
     static MnemonicIcon getIcon(char mnemonic) {
@@ -362,26 +371,27 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
-      final Font oldFont = g.getFont();
 
-      Font font = getBookmarkFont();
-      g.setFont(font);
-      //
-      GlyphVector gv = font.createGlyphVector(((Graphics2D)g).getFontRenderContext(), new char[]{myMnemonic});
+      float startingFontSize = 40f;  // large font for smaller rounding error
+      Font font = getBookmarkFont().deriveFont(startingFontSize);
+      FontRenderContext fontRenderContext = ((Graphics2D)g).getFontRenderContext();
+      double height40 = font.createGlyphVector(fontRenderContext, new char[]{'A'}).getVisualBounds().getHeight();
+      font = font.deriveFont((float)(startingFontSize * height / height40 * 0.7));
+
+      GlyphVector gv = font.createGlyphVector(fontRenderContext, new char[]{myMnemonic});
       Rectangle2D bounds = gv.getVisualBounds();
       ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
                                       (float)(y + (height - bounds.getHeight())/2 - bounds.getY()));
-      g.setFont(oldFont);
     }
 
     @Override
     public int getIconWidth() {
-      return DEFAULT_ICON.getIconWidth();
+      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.ARBITRARY);
     }
 
     @Override
     public int getIconHeight() {
-      return DEFAULT_ICON.getIconHeight();
+      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.ARBITRARY);
     }
 
     @Override
@@ -400,26 +410,32 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
   }
 
-  private static class MyCheckedIcon implements Icon, RetrievableIcon {
+  private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon<MyCheckedIcon> implements RetrievableIcon {
     @Nullable
     @Override
     public Icon retrieveIcon() {
-      return PlatformIcons.CHECK_ICON;
+      return IconUtil.scale(PlatformIcons.CHECK_ICON, getScale(), true);
     }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      (darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack).paintIcon(c, g, x, y);
+      IconUtil.scale((darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack), getScale(), true).paintIcon(c, g, x, y);
     }
 
     @Override
     public int getIconWidth() {
-      return PlatformIcons.CHECK_ICON.getIconWidth();
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.ARBITRARY);
     }
 
     @Override
     public int getIconHeight() {
-      return PlatformIcons.CHECK_ICON.getIconHeight();
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.ARBITRARY);
+    }
+
+    @NotNull
+    @Override
+    protected MyCheckedIcon copy() {
+      return new MyCheckedIcon();
     }
   }
 

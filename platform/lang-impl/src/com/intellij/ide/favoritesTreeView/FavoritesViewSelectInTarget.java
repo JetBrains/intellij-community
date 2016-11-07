@@ -68,20 +68,19 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
     final ToolWindow favoritesToolWindow = windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW);
 
     if (favoritesToolWindow != null) {
-      final FavoritesTreeViewPanel panel = UIUtil.findComponentOfType(favoritesToolWindow.getComponent(), FavoritesTreeViewPanel.class);
-
-      if (panel != null) {
-        final Runnable runnable = () -> {
+      final Runnable runnable = () -> {
+        final FavoritesTreeViewPanel panel = UIUtil.findComponentOfType(favoritesToolWindow.getComponent(), FavoritesTreeViewPanel.class);
+        if (panel != null) {
           panel.selectElement(toSelect, virtualFile, requestFocus);
           result.setDone();
-        };
+        }
+      };
 
-        if (requestFocus) {
-          favoritesToolWindow.activate(runnable, false);
-        }
-        else {
-          favoritesToolWindow.show(runnable);
-        }
+      if (requestFocus) {
+        favoritesToolWindow.activate(runnable, false);
+      }
+      else {
+        favoritesToolWindow.show(runnable);
       }
     }
 

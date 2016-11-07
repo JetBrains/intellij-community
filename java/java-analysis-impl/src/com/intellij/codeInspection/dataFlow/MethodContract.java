@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,6 +44,29 @@ public class MethodContract {
       args[i] = ValueConstraint.ANY_VALUE;
     }
     return args;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MethodContract)) return false;
+
+    MethodContract contract = (MethodContract)o;
+
+    if (!Arrays.equals(arguments, contract.arguments)) return false;
+    if (returnValue != contract.returnValue) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 0;
+    for (ValueConstraint argument : arguments) {
+      result = 31 * result + argument.ordinal();
+    }
+    result = 31 * result + returnValue.ordinal();
+    return result;
   }
 
   @Override

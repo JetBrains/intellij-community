@@ -27,6 +27,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -49,7 +50,7 @@ import java.util.concurrent.Semaphore;
 public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   private boolean myMultiprocessDebug = false;
-  private PythonRunConfiguration myRunConfiguration;
+  protected PythonRunConfiguration myRunConfiguration;
 
 
   public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
@@ -137,13 +138,21 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess =
                 new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(), isMultiprocessDebug());
 
+
+              StringBuilder output = new StringBuilder();
+
               myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+
+                @Override
+                public void onTextAvailable(ProcessEvent event, Key outputType) {
+                  output.append(event.getText());
+                }
 
                 @Override
                 public void processTerminated(ProcessEvent event) {
                   myTerminateSemaphore.release();
                   if (event.getExitCode() != 0 && !myProcessCanTerminate) {
-                    Assert.fail("Process terminated unexpectedly\n" + output());
+                    Assert.fail("Process terminated unexpectedly\n" + output.toString());
                   }
                 }
               });

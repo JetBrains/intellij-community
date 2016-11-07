@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -37,18 +36,22 @@ public class ConvertCompareToToEqualsTest extends JavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNoQualifier() {
+    doTest();
+  }
+
   public void testNotAvailable() {
-    doTestNotAvailable();;
+    doTestNotAvailable();
   }
 
   private void doTest() {
     final String name = getTestName(true);
-    CodeInsightTestUtil.doIntentionTest(myFixture, ConvertCompareToToEqualsIntention.TEXT, name + ".java", name + "_after.java");
+    CodeInsightTestUtil.doIntentionTest(myFixture, "Convert 'compareTo()' expression to 'equals()' call (may change semantics)", name + ".java", name + "_after.java");
   }
 
   private void doTestNotAvailable() {
     myFixture.configureByFile(getTestName(true) + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(ConvertCompareToToEqualsIntention.TEXT));
+    assertEmpty(myFixture.filterAvailableIntentions("Convert 'compareTo()' expression to 'equals()' call (may change semantics)"));
   }
 
 }

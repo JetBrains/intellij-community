@@ -16,12 +16,15 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI.ScalableJBIcon;
+import com.intellij.util.ui.JBUI.ScalableJBIcon.Scale;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +48,8 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   @Nullable
   public static Icon getRawIcon(final LookupElement item, boolean real) {
-    final Icon icon = _getRawIcon(item, real);
+    Icon icon = _getRawIcon(item, real);
+    if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
     if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
       return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
     }

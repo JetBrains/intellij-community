@@ -82,7 +82,11 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   }
 
   public final void copyFrom(@NotNull ProfileEx profile) {
-    readExternal(profile.writeScheme());
+    Element element = profile.writeScheme();
+    if (element.getName().equals("component")) {
+      element = element.getChild("profile");
+    }
+    readExternal(element);
   }
 
   @NotNull

@@ -133,18 +133,20 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static IdeScriptEngine redirectOutputToLog(IdeScriptEngine engine) {
-    engine.setStdOut(new MyAbstractWriter() {
-      @Override
-      public void write(char[] cbuf, int off, int len) throws IOException {
-        LOG.info(new String(cbuf, off, len));
+    class Log extends Writer {
+      final boolean error;
+      Log(boolean error) {this.error = error;}
+      @Override public void flush() throws IOException { }
+      @Override public void close() throws IOException { }
+      @Override public void write(char[] cbuf, int off, int len) throws IOException {
+        while (len > 0 && Character.isWhitespace(cbuf[off + len - 1])) len --;
+        if (len == 0) return;
+        String s = new String(cbuf, off, len);
+        if (error) LOG.warn(s); else LOG.info(s);
       }
-    });
-    engine.setStdErr(new MyAbstractWriter() {
-      @Override
-      public void write(char[] cbuf, int off, int len) throws IOException {
-        LOG.warn(new String(cbuf, off, len));
-      }
-    });
+    }
+    engine.setStdOut(new Log(false));
+    engine.setStdErr(new Log(true));
     return engine;
   }
 
@@ -225,16 +227,6 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
           }
         }
       });
-    }
-  }
-
-  private static abstract class MyAbstractWriter extends Writer {
-    @Override
-    public void flush() throws IOException {
-    }
-
-    @Override
-    public void close() throws IOException {
     }
   }
 

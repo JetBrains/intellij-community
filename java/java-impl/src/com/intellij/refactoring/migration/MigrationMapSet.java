@@ -29,13 +29,14 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -68,6 +69,19 @@ public class MigrationMapSet {
     }
     myMaps.add(map);
 //    saveMaps();
+  }
+
+  @Nullable
+  public MigrationMap findMigrationMap(@NotNull String name) {
+    if (myMaps == null) {
+      loadMaps();
+    }
+    for (MigrationMap map : myMaps) {
+      if (name.equals(map.getName())) {
+        return map;
+      }
+    }
+    return null;
   }
 
   public void replaceMap(MigrationMap oldMap, MigrationMap newMap) {

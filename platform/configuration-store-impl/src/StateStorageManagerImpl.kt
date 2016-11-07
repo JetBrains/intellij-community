@@ -170,10 +170,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     storageLock.read {
       var storage = storages.get(key)
       if (storage == null) {
-        storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
-        storages.put(key, storage)
+        storageLock.write {
+          storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
+          storages.put(key, storage)
+        }
       }
-      return storage
+      return storage!!
     }
   }
 

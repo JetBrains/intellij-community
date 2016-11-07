@@ -26,40 +26,49 @@ import java.util.Collection;
 enum CompilerHierarchySearchType {
   DIRECT_INHERITOR {
     @Override
-    PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+    PsiElement[] performSearchInFile(Object[] definitions,
                                      PsiNamedElement baseElement,
-                                     ByteArrayEnumerator nameEnumerator,
                                      PsiFileWithStubSupport file,
                                      LanguageLightRefAdapter adapter) {
-      return adapter.findDirectInheritorCandidatesInFile(definitions, nameEnumerator, file, baseElement);
+      return adapter.findDirectInheritorCandidatesInFile((String[])definitions, file, baseElement);
     }
 
     @Override
-    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter<?, ?> adapter) {
+    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter) {
       return adapter.getHierarchyObjectClass();
+    }
+
+    @Override
+    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
+      return lightRef.stream().map(r -> byteArrayEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
     }
   },
   FUNCTIONAL_EXPRESSION {
     @Override
-    PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+    PsiElement[] performSearchInFile(Object[] definitions,
                                      PsiNamedElement baseElement,
-                                     ByteArrayEnumerator nameEnumerator,
                                      PsiFileWithStubSupport file,
                                      LanguageLightRefAdapter adapter) {
-      return adapter.findFunExpressionsInFile(definitions, file);
+      return adapter.findFunExpressionsInFile((Integer[])definitions, file);
     }
 
     @Override
-    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter<?, ?> adapter) {
+    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter  adapter) {
       return adapter.getFunExprClass();
+    }
+
+    @Override
+    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
+      return lightRef.stream().map(r -> ((LightRef.LightFunExprDef) r).getId()).toArray(Integer[]::new);
     }
   };
 
-  abstract PsiElement[] performSearchInFile(Collection<LightRef> definitions,
+  abstract PsiElement[] performSearchInFile(Object[] definitions,
                                             PsiNamedElement baseElement,
-                                            ByteArrayEnumerator nameEnumerator,
                                             PsiFileWithStubSupport file,
                                             LanguageLightRefAdapter adapter);
 
-  abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter<?, ?> adapter);
+  abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter);
+
+  abstract Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator);
 }

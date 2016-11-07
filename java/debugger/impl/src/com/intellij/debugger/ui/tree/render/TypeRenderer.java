@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class TypeRenderer implements Renderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ReferenceRenderer");
-  protected BasicRendererProperties myProperties = new BasicRendererProperties();
+  protected BasicRendererProperties myProperties = new BasicRendererProperties(false);
 
   protected TypeRenderer() {
     this(CommonClassNames.JAVA_LANG_OBJECT);
@@ -44,6 +44,7 @@ public abstract class TypeRenderer implements Renderer {
     myProperties.setClassName(className);
   }
 
+  @Override
   public Renderer clone() {
     try {
       final TypeRenderer cloned = (TypeRenderer)super.clone();
@@ -56,20 +57,24 @@ public abstract class TypeRenderer implements Renderer {
     return null;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return DebuggerUtils.instanceOf(type, getClassName());
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myProperties.readExternal(element);
   }
 
   protected CachedEvaluator createCachedEvaluator() {
     return new CachedEvaluator() {
+      @Override
       protected String getClassName() {
         return TypeRenderer.this.getClassName();
       }

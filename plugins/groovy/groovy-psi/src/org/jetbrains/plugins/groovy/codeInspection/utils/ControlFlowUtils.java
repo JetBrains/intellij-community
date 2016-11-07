@@ -428,9 +428,13 @@ public class ControlFlowUtils {
     return false;
   }
 
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile);
   }
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
@@ -444,6 +448,7 @@ public class ControlFlowUtils {
     return collectReturns(flow, allExitPoints);
   }
 
+  @NotNull
   public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<>();

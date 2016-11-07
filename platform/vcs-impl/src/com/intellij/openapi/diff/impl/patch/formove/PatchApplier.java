@@ -566,9 +566,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     if (application.isUnitTestMode()) {
       return;
     }
-    final String title = VcsBundle.message("patch.apply.dialog.title");
-    final Runnable messageShower = () -> Messages.showErrorDialog(project, message, title);
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> messageShower.run(), null, project);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+      () -> Messages.showErrorDialog(project, message, VcsBundle.message("patch.apply.dialog.title")), null, project);
   }
 
   private static class FilesMover implements Consumer<Collection<FilePath>> {

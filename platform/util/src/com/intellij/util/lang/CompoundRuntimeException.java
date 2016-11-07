@@ -37,6 +37,10 @@ public class CompoundRuntimeException extends RuntimeException {
     myExceptions = throwables;
   }
 
+  public List<Throwable> getExceptions() {
+    return myExceptions;
+  }
+
   @Override
   public String getMessage() {
     return processAll(new Function<Throwable, String>() {

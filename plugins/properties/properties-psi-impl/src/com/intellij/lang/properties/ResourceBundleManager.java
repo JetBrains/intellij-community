@@ -17,7 +17,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -181,20 +180,18 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
 
   @Nullable
   public String getFullName(final @NotNull PropertiesFile propertiesFile) {
-    return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-      public String compute() {
-        final PsiDirectory directory = propertiesFile.getParent();
-        final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
-        if (packageQualifiedName == null) {
-          return null;
-        }
-        final StringBuilder qName = new StringBuilder(packageQualifiedName);
-        if (qName.length() > 0) {
-          qName.append(".");
-        }
-        qName.append(getBaseName(propertiesFile.getContainingFile()));
-        return qName.toString();
+    return ReadAction.compute(() -> {
+      final PsiDirectory directory = propertiesFile.getParent();
+      final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
+      if (packageQualifiedName == null) {
+        return null;
       }
+      final StringBuilder qName = new StringBuilder(packageQualifiedName);
+      if (qName.length() > 0) {
+        qName.append(".");
+      }
+      qName.append(getBaseName(propertiesFile.getContainingFile()));
+      return qName.toString();
     });
   }
 

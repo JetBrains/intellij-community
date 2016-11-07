@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
+  @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     if (file instanceof PropertiesFile) {

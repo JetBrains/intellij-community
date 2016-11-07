@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -44,6 +45,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.attribute
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
@@ -102,7 +104,32 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     LOG.catchAndLog {
       removeWorkspaceComponentConfiguration(defaultProject, element)
     }
+
+    if (isDirectoryBased) {
+      LOG.catchAndLog {
+        for (component in element.getChildren("component")) {
+          when (component.getAttributeValue("name")) {
+            "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true)
+            "CopyrightManager" -> convertProfiles(component.getChildren("copyright").iterator(), false)
+          }
+        }
+      }
+    }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
+  }
+
+  fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean) {
+    for (profile in profileIterator) {
+      val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue(
+          "value") ?: continue
+
+      profileIterator.remove()
+      val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
+      wrapper.addContent(profile)
+      val path = Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), if (isInspection) "inspectionProfiles" else "copyright",
+          "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
+      JDOMUtil.writeParent(wrapper, path.outputStream(), "\n")
+    }
   }
 
   override final fun getProjectBasePath(): String {
@@ -267,7 +294,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       val nameFile = nameFile
       if (nameFile.exists()) {
         try {
-          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+          nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
             lastSavedProjectName = it
             return it
           }

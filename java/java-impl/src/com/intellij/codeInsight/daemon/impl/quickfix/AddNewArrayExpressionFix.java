@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +63,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     PsiManager manager = file.getManager();
     PsiType type = getType();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    @NonNls String text = "new " + type.getPresentableText() + "[]{}";
+    @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) CodeStyleManager.getInstance(manager.getProject()).reformat(newExpr);
@@ -85,7 +87,9 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   }
 
   private static PsiType validateType(PsiType type) {
-    return LambdaUtil.notInferredType(type) ? null : type;
+    if (PsiType.NULL.equals(type)) return null;
+    return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type) ? null
+                                                                                   : TypeConversionUtil.erasure(type);
   }
 
   @Override

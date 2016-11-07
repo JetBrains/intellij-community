@@ -17,7 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
 
-abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTest {
+public abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTest {
   private boolean myDefaultEnableState;
 
   @Override

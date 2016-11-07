@@ -3,6 +3,7 @@
     <astTransformationSupport
         implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyTransformationSupport"
     />
+    <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.IndexedPropertyRenameHelper"/>
     <customAnnotationChecker
         implementation="org.jetbrains.plugins.groovy.transformations.indexedProperty.IndexedPropertyAnnotationChecker"
     />

@@ -150,6 +150,10 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"/>
+    <localInspection language="JAVA" shortName="PsiElementConcatenation"
+                     displayName="Using PsiElement string representation to generate new expression is incorrect"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>

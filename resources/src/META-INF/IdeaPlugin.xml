@@ -523,7 +523,6 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
-    <exportable serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
@@ -764,6 +763,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="Loop can be collapsed with Stream API"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop" displayName="Stream API call chain can be replaced with loop"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
@@ -865,6 +867,10 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
                      displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java9NonAccessibleTypeExposed"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
+                     enabledByDefault="true" level="WARNING" displayName="Non-accessible type is exposed"
+                     implementationClass="com.intellij.codeInspection.java19modules.Java9NonAccessibleTypeExposedInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -1158,7 +1164,7 @@
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
 
-    <parameterHintsProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
+    <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA"

@@ -255,8 +255,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myColorManager;
   }
 
-  public void applyFiltersAndUpdateUi() {
-    VcsLogFilterCollection filters = myMainFrame.getFilterUi().getFilters();
+  public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myFilterer.onFiltersChange(filters);
   }
 

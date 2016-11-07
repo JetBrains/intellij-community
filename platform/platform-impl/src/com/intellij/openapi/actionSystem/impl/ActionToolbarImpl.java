@@ -39,10 +39,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +50,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -64,6 +63,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
+
+  static {
+    JBUI.addPropertyChangeListener(JBUI.SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent e) {
+        ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
+        ((JBDimension)ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE).update();
+      }
+    });
+  }
 
   public static void updateAllToolbarsImmediately() {
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {

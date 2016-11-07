@@ -41,6 +41,7 @@ class GroovyClosurePattern : GroovyExpressionPattern<GrClosableBlock, GroovyClos
         }
         else -> return false
       }
+      context?.put(closureCallKey, call)
 
       val method = call.resolveMethod() ?: return false
       return methodPattern.accepts(method)

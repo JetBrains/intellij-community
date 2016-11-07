@@ -84,6 +84,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private void addToPopup(@NotNull BalloonImpl balloon, @NotNull BalloonLayoutData layoutData) {
+    balloon.traceDispose(false);
+
     layoutData.doLayout = this::layoutPopup;
     layoutData.configuration = layoutData.configuration.replace(JBUI.scale(myPopupBalloon == null ? 7 : 5), JBUI.scale(12));
 

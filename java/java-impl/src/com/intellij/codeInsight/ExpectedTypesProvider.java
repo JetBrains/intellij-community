@@ -39,8 +39,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
@@ -179,7 +180,7 @@ public class ExpectedTypesProvider {
       }
 
       if (infoImpl.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {
-        processAllSuperTypes(infoImpl.getType(), visitor, project, set);
+        processAllSuperTypes(infoImpl.getType(), visitor, project, set, new HashSet<>());
       }
       else if (infoImpl.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE) {
         if (infoImpl.getType() instanceof PsiPrimitiveType) {
@@ -209,7 +210,9 @@ public class ExpectedTypesProvider {
     }
   }
 
-  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<PsiType> set) {
+  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<PsiType> set, @NotNull Set<PsiType> visited) {
+    if (!visited.add(type)) return;
+
     if (type instanceof PsiPrimitiveType) {
       if (type.equals(PsiType.BOOLEAN) || type.equals(PsiType.VOID) || type.equals(PsiType.NULL)) return;
 
@@ -229,10 +232,9 @@ public class ExpectedTypesProvider {
       processType(objectType, visitor, set);
 
       if (type instanceof PsiClassType) {
-        PsiType[] superTypes = type.getSuperTypes();
-        for (PsiType superType : superTypes) {
+        for (PsiType superType : type.getSuperTypes()) {
           processType(superType, visitor, set);
-          processAllSuperTypes(superType, visitor, project, set);
+          processAllSuperTypes(superType, visitor, project, set, visited);
         }
       }
     }

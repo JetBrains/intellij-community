@@ -792,6 +792,15 @@ class float(object):
         """
         return 0.0
 
+    @staticmethod
+    def fromhex(cls, string):
+        """Create a floating-point number from a hexadecimal string.
+
+        :type string: str
+        :rtype: float
+        """
+        pass
+
 
 class complex(object):
     """Complex numeric type."""

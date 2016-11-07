@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -39,34 +40,31 @@ import com.intellij.psi.util.PsiTreeUtil
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)  
 
-class ShowParameterHintsSettings : AnAction() {
+class ShowSettingsWithAddedPattern : AnAction() {
   init {
-    val presentation = templatePresentation
-    presentation.text = CodeInsightBundle.message("inlay.hints.show.settings").capitalize()
-    presentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
+    templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
+    templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
+  override fun update(e: AnActionEvent) {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-    val dialog = ParameterNameHintsConfigurable(project, hintExtension.defaultBlackList, file.language)
-    dialog.show()
-  }
-}
-
-class BlacklistCurrentMethodAction : AnAction() {
-  init {
-    val presentation = templatePresentation
-    presentation.text = CodeInsightBundle.message("inlay.hints.blacklist.method").capitalize()
-    presentation.description = CodeInsightBundle.message("inlay.hints.blacklist.method.description")
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+    val info = getMethodInfoAtOffset(editor, file) ?: return
+
+    val name = info.getMethodName()
+    e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+
+    val language = file.language.baseLanguage ?: file.language
+    InlayParameterHintsExtension.forLanguage(language) ?: return
     
-    addMethodAtCaretToBlackList(editor, file)
+    val info = getMethodInfoAtOffset(editor, file) ?: return
+    val dialog = ParameterNameHintsConfigurable(language, info.toPattern())
+    dialog.show()
   }
 }
 
@@ -98,14 +96,30 @@ class ToggleInlineHintsAction : AnAction() {
   }
   
   override fun update(e: AnActionEvent) {
-    if (InlayParameterHintsExtension.hasAnyExtensions()) {
-      e.presentation.isEnabledAndVisible = true
-      val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-      e.presentation.text = if (isShow) disableText else enableText
+    if (!InlayParameterHintsExtension.hasAnyExtensions()) {
+      e.presentation.isEnabledAndVisible = false
+      return
     }
-    else {
-      e.presentation.isEnabledAndVisible = false      
+    
+    val isHintsShownNow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
+    e.presentation.text = if (isHintsShownNow) disableText else enableText
+    e.presentation.isEnabledAndVisible = true
+    
+    if (isInMainEditorPopup(e)) {
+      val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+      val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+      val caretOffset = editor.caretModel.offset
+      e.presentation.isEnabledAndVisible = !isHintsShownNow && isPossibleHintNearOffset(file, caretOffset)
     }
+  }
+
+  private fun isInMainEditorPopup(e: AnActionEvent): Boolean {
+    if (e.place != ActionPlaces.EDITOR_POPUP) return false
+    
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return false
+    val offset = editor.caretModel.offset
+    
+    return !editor.inlayModel.hasInlineElementAt(offset)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -143,17 +157,35 @@ private fun refreshAllOpenEditors() {
   }
 }
 
-private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+private fun getMethodInfoAtOffset(editor: Editor, file: PsiFile): MethodInfo? {
   val offset = editor.caretModel.offset
-
   val element = file.findElementAt(offset)
-  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+  
+  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
+  
+  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return null
+  return hintsProvider.getMethodInfo(method)
+}
 
-  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
-  val info = hintsProvider.getMethodInfo(method) ?: return
-
-  val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, pattern)
-
+private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+  val info = getMethodInfoAtOffset(editor, file) ?: return
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
   refreshAllOpenEditors()
 }
+
+fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
+  val hintProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return false
+
+  var element = file.findElementAt(offset)
+  for (i in 0..3) {
+    if (element == null) return false
+
+    val hints = hintProvider.getParameterHints(element)
+    if (hints.isNotEmpty()) return true
+    element = element.parent
+  }
+
+  return false
+}
+
+fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'

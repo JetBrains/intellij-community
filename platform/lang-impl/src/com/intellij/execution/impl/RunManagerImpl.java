@@ -1032,8 +1032,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   @NotNull
-  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type) {
-    return createConfiguration(name, type);
+  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory) {
+    return createConfiguration(name, factory);
   }
 
   @Override

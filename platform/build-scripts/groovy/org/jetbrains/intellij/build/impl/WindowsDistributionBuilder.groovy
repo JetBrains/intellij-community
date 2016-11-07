@@ -84,21 +84,22 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath];
 
-    if (customizer.buildZipArchive) {
-      if (customizer.getLinkToJre64() != null && arch != JvmArchitecture.x64) {
-        File archive = buildContext.bundledJreManager.findJreArchive("win")
-        if (archive != null) {
-          buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
-          //prepare JRE64 folder for win archive
-          def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
-          if (! new File("${jreDirectoryPath64}/jre64").exists()) {
-            buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
-              fileset(dir: "${jreDirectoryPath64}/jre")
-            }
+    if (customizer.getBaseDownloadUrlForJre64() != null && arch != JvmArchitecture.x64) {
+      File archive = buildContext.bundledJreManager.findWinJreArchive()
+      if (archive != null && archive.exists()) {
+        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
+        //prepare JRE64 folder for win archive
+        def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
+        if (! new File("${jreDirectoryPath64}/jre64").exists()) {
+          buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
+            fileset(dir: "${jreDirectoryPath64}/jre")
           }
-          jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
         }
+        jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
       }
+    }
+
+    if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
@@ -133,7 +134,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
@@ -180,7 +181,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : "";
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
-      def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
+      def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
@@ -226,8 +227,8 @@ IDS_VM_OPTIONS=$vmOptions
 
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
-      def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
+      def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath) {

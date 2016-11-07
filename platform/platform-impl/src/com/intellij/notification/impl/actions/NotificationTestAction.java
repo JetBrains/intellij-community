@@ -314,6 +314,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
+        Notification.get(e);
         if (MessageDialogBuilder.yesNo("AnAction", getTemplatePresentation().getText() + "      Expire?").isYes()) {
           myNotification.expire();
           myNotification = null;

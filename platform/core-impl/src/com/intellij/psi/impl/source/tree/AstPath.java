@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -39,6 +40,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class AstPath extends SubstrateRef {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.AstPath");
   private static final Key<CompositeElement[]> PATH_CHILDREN = Key.create("PATH_CHILDREN");
   private static final Key<AstPath> NODE_PATH = Key.create("NODE_PATH");
 
@@ -111,15 +113,19 @@ public abstract class AstPath extends SubstrateRef {
     scope.putUserData(PATH_CHILDREN, null);
     for (CompositeElement child : children) {
       child.putUserData(NODE_PATH, null);
-      PsiElement cachedPsi = child.getCachedPsi();
-      if (cachedPsi instanceof StubBasedPsiElementBase) {
-        if (((StubBasedPsiElementBase)cachedPsi).getSubstrateRef() instanceof AstPath) {
-          throw new AssertionError(cachedPsi.hashCode());
-        }
-      }
+      assertConsistency(child.getCachedPsi());
       if (child instanceof LazyParseableElement) {
         invalidatePaths((LazyParseableElement)child);
       }
+    }
+  }
+
+  private static void assertConsistency(PsiElement cachedPsi) {
+    if (cachedPsi instanceof StubBasedPsiElementBase &&
+        ((StubBasedPsiElementBase)cachedPsi).getSubstrateRef() instanceof AstPath) {
+      LOG.error("Expected strong reference at " + cachedPsi +
+                " of " + cachedPsi.getClass() +
+                " and " + ((StubBasedPsiElementBase)cachedPsi).getElementType());
     }
   }
 

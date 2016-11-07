@@ -720,6 +720,25 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertWritable(file, vFile, true);
   }
 
+  public void testModCountIncreases() throws IOException {
+    File file = IoTestUtil.createTestFile("file.txt");
+    VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertWritable(file, vFile, true);
+    ManagingFS managingFS = ManagingFS.getInstance();
+    final int globalModCount = managingFS.getFilesystemModificationCount();
+    final int parentModCount = managingFS.getModificationCount(vFile.getParent());
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      vFile.setWritable(false);
+      return null;
+    });
+
+    assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount + 1, managingFS.getFilesystemModificationCount());
+    assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile.getParent()));
+  }
+
   private static void assertWritable(File file, VirtualFile vFile, boolean expected) {
     assertEquals(expected, file.canWrite());
     assertEquals(expected, ObjectUtils.assertNotNull(FileSystemUtil.getAttributes(file)).isWritable());

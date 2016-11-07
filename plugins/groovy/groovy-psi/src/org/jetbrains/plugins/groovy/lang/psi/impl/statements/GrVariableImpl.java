@@ -19,21 +19,26 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Dmitry.Krasilschikov
  * @date 11.04.2007
  */
-public class GrVariableImpl extends GrVariableBaseImpl<StubElement> implements GrVariable {
+public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implements GrVariable {
 
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrVariableImpl(@NotNull GrVariableStub stub) {
+    super(stub, GroovyElementTypes.VARIABLE);
   }
 
   @Override

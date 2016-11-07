@@ -58,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -69,9 +68,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -242,7 +238,7 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected void checkForSettingsDamage(@NotNull List<Throwable> exceptions) {
+  protected void checkForSettingsDamage() {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
       return;
@@ -255,53 +251,43 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeStyleSettings = null;
 
-    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
+    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
   }
 
   public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                              @NotNull CodeStyleSettings currentCodeStyleSettings,
-                                              @NotNull List<Throwable> exceptions) {
+                                              @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    try {
-      Element newS = new Element("temp");
-      settings.writeExternal(newS);
-      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
-    }
-    catch (AssertionError error) {
-      CodeInsightSettings clean = new CodeInsightSettings();
-      for (Field field : clean.getClass().getFields()) {
+    new RunAll()
+      .append(() -> {
         try {
-          ReflectionUtil.copyFieldValue(clean, settings, field);
+          Element newS = new Element("temp");
+          settings.writeExternal(newS);
+          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
         }
-        catch (Exception ignored) {
+        catch (AssertionError error) {
+          CodeInsightSettings clean = new CodeInsightSettings();
+          for (Field field : clean.getClass().getFields()) {
+            try {
+              ReflectionUtil.copyFieldValue(clean, settings, field);
+            }
+            catch (Exception ignored) {
+            }
+          }
+          throw error;
         }
-      }
-      exceptions.add(error);
-    }
-
-    currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    try {
-      checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-    finally {
-      currentCodeStyleSettings.clearCodeStyleSettings();
-    }
-
-    try {
-      InplaceRefactoring.checkCleared();
-    }
-    catch (AssertionError e) {
-      exceptions.add(e);
-    }
-    try {
-      StartMarkAction.checkCleared();
-    }
-    catch (AssertionError e) {
-      exceptions.add(e);
-    }
+      })
+      .append(() -> {
+        currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+        try {
+          checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
+        }
+        finally {
+          currentCodeStyleSettings.clearCodeStyleSettings();
+        }
+      })
+      .append(() -> InplaceRefactoring.checkCleared())
+      .append(() -> StartMarkAction.checkCleared())
+      .run();
   }
 
   void storeSettings() {
@@ -843,28 +829,6 @@ public abstract class UsefulTestCase extends TestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     });
-  }
-
-  static void checkJavaSwingTimersAreDisposed(@NotNull List<Throwable> exceptions) {
-    try {
-      Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
-      Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
-
-      Object timerQueue = sharedInstance.invoke(null);
-      DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueClass, timerQueue, DelayQueue.class, "queue");
-      Delayed timer = delayQueue.peek();
-      if (timer != null) {
-        long delay = timer.getDelay(TimeUnit.MILLISECONDS);
-        String text = "(delayed for " + delay + "ms)";
-        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
-        Timer swingTimer = (Timer)getTimer.invoke(timer);
-        text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
-        exceptions.add(new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue));
-      }
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
   }
 
   /**

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.util.Disposer;
@@ -154,5 +155,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     };
 
     return ApplicationManager.getApplication().executeOnPooledThread(action);
+  }
+
+  @Override
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new AssertionError("runInReadActionWithWriteActionPriority shouldn't be invoked from read action");
+    }
+    boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
+    if (!success) {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+    }
+    return success;
   }
 }

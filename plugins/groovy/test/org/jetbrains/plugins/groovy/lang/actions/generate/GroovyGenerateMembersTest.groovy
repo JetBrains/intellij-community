@@ -25,12 +25,10 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author peter
  */
@@ -381,7 +379,6 @@ class GrImportStatementStub {
             return members
           }
         }.invoke(project, myFixture.editor, myFixture.file)
-        UIUtil.dispatchAllInvocationEvents()
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()

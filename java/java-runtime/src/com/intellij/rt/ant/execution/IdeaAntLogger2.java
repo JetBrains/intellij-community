@@ -24,6 +24,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.Stack;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
@@ -46,9 +47,15 @@ public final class IdeaAntLogger2 extends DefaultLogger {
    */
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
+  private final ThreadLocal myCallingTasks = new ThreadLocal() {
+    protected Object initialValue() {
+      return new Stack();
+    }
+  };
+
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);
-  private final Priority myTaskPriority = new StatePriority(Project.MSG_INFO);
+  private final Priority myTaskPriority = new StatePriority(Project.MSG_VERBOSE);
   private final Priority myAlwaysSend = new Priority() {
     public void setPriority(int level) {}
 
@@ -87,12 +94,19 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void taskStarted(BuildEvent event) {
-    myTaskPriority.sendMessage(TASK, event.getPriority(), event.getTask().getTaskName());
+    final String taskName = event.getTask().getTaskName();
+    getTaskCallStack().push(taskName);
+    myTaskPriority.sendMessage(TASK, event.getPriority(), taskName);
   }
 
   public synchronized void taskFinished(BuildEvent event) {
-    sendException(event, true);
-    myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
+    try {
+      sendException(event, true);
+      myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
+    }
+    finally {
+      getTaskCallStack().pop();
+    }
   }
 
   public synchronized void messageLogged(BuildEvent event) {
@@ -136,11 +150,12 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   private boolean sendException(BuildEvent event, boolean isFailOnError) {
     Throwable exception = event.getException();
     if (exception != null) {
-      if (isFailOnError) {
+      final boolean insideTryTask = getTaskCallStack().contains("try");
+      if (isFailOnError && !insideTryTask) {
         myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
         return true;
       }
-      myMessagePriority.sendMessage(MESSAGE, Project.MSG_WARN, exception.getMessage());
+      myMessagePriority.sendMessage(MESSAGE, insideTryTask? Project.MSG_VERBOSE : Project.MSG_WARN, exception.getMessage());
     }
     return false;
   }
@@ -163,6 +178,10 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     PacketWriter packet = PacketFactory.ourInstance.createPacket(id);
     packet.appendLong(priority);
     return packet;
+  }
+
+  private Stack getTaskCallStack() {
+    return (Stack)myCallingTasks.get();
   }
 
   private abstract class Priority {

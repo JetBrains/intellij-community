@@ -79,7 +79,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
         // schedule dumb mode start after the read action we're currently in
         TransactionGuard.submitTransaction(project, () -> {
           if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-            DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
+            DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
           }
         });
 

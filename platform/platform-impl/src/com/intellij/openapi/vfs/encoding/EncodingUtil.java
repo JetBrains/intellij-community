@@ -117,22 +117,19 @@ public class EncodingUtil {
       return;
     }
 
-    // first, save the file in the new charset and then mark the file as having the correct encoding
-    try {
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-        @Override
-        public Object compute() throws IOException {
+    EncodingProjectManagerImpl.suppressReloadDuring(() -> {
+      EncodingManager.getInstance().setEncoding(virtualFile, charset);
+      try {
+        ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
           virtualFile.setCharset(charset);
           LoadTextUtil.write(project, virtualFile, virtualFile, document.getText(), document.getModificationStamp());
           return null;
-        }
-      });
-    }
-    catch (IOException io) {
-      Messages.showErrorDialog(project, io.getMessage(), "Error Writing File");
-    }
-
-    EncodingProjectManagerImpl.suppressReloadDuring(() -> EncodingManager.getInstance().setEncoding(virtualFile, charset));
+        });
+      }
+      catch (IOException io) {
+        Messages.showErrorDialog(project, io.getMessage(), "Error Writing File");
+      }
+    });
   }
 
   static void reloadIn(@NotNull final VirtualFile virtualFile, @NotNull final Charset charset) {

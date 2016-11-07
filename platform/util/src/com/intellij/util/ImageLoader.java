@@ -195,6 +195,14 @@ public class ImageLoader implements Serializable {
       return new ImageConverterChain();
     }
 
+    public ImageConverterChain withFilter(final ImageFilter[] filters) {
+      ImageConverterChain chain = this;
+      for (ImageFilter filter : filters) {
+        chain = chain.withFilter(filter);
+      }
+      return chain;
+    }
+
     public ImageConverterChain withFilter(final ImageFilter filter) {
       return with(new ImageConverter() {
         @Override
@@ -253,11 +261,16 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    return loadFromUrl(url, allowFloatScaling, null);
+    return loadFromUrl(url, allowFloatScaling, (ImageFilter)null);
   }
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
+    return loadFromUrl(url, allowFloatScaling, new ImageFilter[] {filter});
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter[] filters) {
     final float scaleFactor = calcScaleFactor(allowFloatScaling);
 
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
@@ -271,7 +284,7 @@ public class ImageLoader implements Serializable {
 
     return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), loadRetinaImages, allowFloatScaling).load(
       ImageConverterChain.create().
-        withFilter(filter).
+        withFilter(filters).
         withRetina().
         with(new ImageConverter() {
               public Image convert(Image source, ImageDesc desc) {
@@ -309,13 +322,18 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
-    return loadFromUrl(url, dark, retina, null);
+    return loadFromUrl(url, dark, retina, (ImageFilter[])null);
   }
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter filter) {
+    return loadFromUrl(url, dark, retina, new ImageFilter[] {filter});
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter[] filters) {
     return ImageDescList.create(url.toString(), null, dark, retina, true).
-      load(ImageConverterChain.create().withFilter(filter).withRetina());
+      load(ImageConverterChain.create().withFilter(filters).withRetina());
   }
 
   @Nullable

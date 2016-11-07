@@ -139,11 +139,11 @@ public class PropertiesUtil {
     final Matcher matcher = LOCALE_PATTERN.matcher(suffix);
     if (matcher.find()) {
       final String rawLocale = matcher.group(1);
-      final String[] splittedRawLocale = rawLocale.split("_");
-      if (splittedRawLocale.length > 1 && splittedRawLocale[1].length() >= 2) {
-        final String language = splittedRawLocale[1];
-        final String country = splittedRawLocale.length > 2 ? splittedRawLocale[2] : "";
-        final String variant = splittedRawLocale.length > 3 ? splittedRawLocale[3] : "";
+      final String[] splitRawLocale = rawLocale.split("_");
+      if (splitRawLocale.length > 1 && splitRawLocale[1].length() >= 2) {
+        final String language = splitRawLocale[1];
+        final String country = splitRawLocale.length > 2 ? splitRawLocale[2] : "";
+        final String variant = splitRawLocale.length > 3 ? splitRawLocale[3] : "";
         return new Locale(language, country, variant);
       }
     }

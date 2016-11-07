@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -503,18 +504,18 @@ public class TypeMigrationLabeler {
     else if (expr instanceof PsiNewExpression) {
       if (originalType.getArrayDimensions() == migrationType.getArrayDimensions()) {
         if (migrationType.getArrayDimensions() > 0) {
-          final PsiType elemenType = ((PsiArrayType)migrationType).getComponentType();
+          final PsiType elementType = ((PsiArrayType)migrationType).getComponentType();
 
           final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)expr).getArrayInitializer();
 
           if (arrayInitializer != null) {
             final PsiExpression[] initializers = arrayInitializer.getInitializers();
             for (int i = initializers.length - 1; i >= 0; i--) {
-              migrateExpressionType(initializers[i], elemenType, place, alreadyProcessed, true);
+              migrateExpressionType(initializers[i], elementType, place, alreadyProcessed, true);
             }
           }
 
-          if (isGenericsArrayType(elemenType)){
+          if (isGenericsArrayType(elementType)){
             markFailedConversion(Pair.create(originalType, migrationType), expr);
             return;
           }
@@ -575,18 +576,12 @@ public class TypeMigrationLabeler {
     if (type.equals(PsiType.NULL)) {
       return false;
     }
-
     final PsiElement resolved = Util.normalizeElement(element);
-
-    final SearchScope searchScope = myRules.getSearchScope();
-    if (!resolved.isPhysical() || !PsiSearchScopeUtil.isInScope(searchScope, resolved)) {
+    if (!canBeRoot(resolved, myRules.getSearchScope())) {
       return false;
     }
-
     final PsiType originalType = getElementType(resolved);
-
     LOG.assertTrue(originalType != null);
-
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
     if (!userDefinedType) {
@@ -1121,6 +1116,14 @@ public class TypeMigrationLabeler {
       }
     }
     return refs;
+  }
+
+  private boolean canBeRoot(@Nullable PsiElement element, @NotNull SearchScope migrationScope) {
+    if (element == null) return false;
+    return element.isValid() &&
+           element.isPhysical() &&
+           PsiSearchScopeUtil.isInScope(migrationScope, element) &&
+           ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInSourceContent(element.getContainingFile().getVirtualFile());
   }
 
   @TestOnly

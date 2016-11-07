@@ -46,11 +46,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
-  private final boolean myOnStartup;
 
-  public UnindexedFilesUpdater(final Project project, boolean onStartup) {
+  public UnindexedFilesUpdater(final Project project) {
     myProject = project;
-    myOnStartup = onStartup;
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -82,7 +80,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     List<VirtualFile> files = finder.getFiles();
 
-    if (myOnStartup && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).scheduleInitialVfsRefresh();
     }

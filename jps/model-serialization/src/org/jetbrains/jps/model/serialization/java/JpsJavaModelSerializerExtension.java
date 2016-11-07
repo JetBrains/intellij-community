@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element entry) {
     boolean exported = entry.getAttributeValue(EXPORTED_ATTRIBUTE) != null;
     String scopeName = entry.getAttributeValue(SCOPE_ATTRIBUTE);
-    JpsJavaDependencyScope scope = null;
+    JpsJavaDependencyScope scope;
     try {
       scope = scopeName != null ? JpsJavaDependencyScope.valueOf(scopeName) : JpsJavaDependencyScope.COMPILE;
     }
@@ -220,7 +220,11 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     if (languageLevel != null) {
       rootModelComponent.setAttribute(MODULE_LANGUAGE_LEVEL_ATTRIBUTE, languageLevel.name());
     }
-    rootModelComponent.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, String.valueOf(extension.isInheritOutput()));
+
+    if (extension.isInheritOutput()) {
+      rootModelComponent.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "true");
+    }
+
     saveAdditionalRoots(rootModelComponent, JAVADOC_PATHS_TAG, extension.getJavadocRoots());
     saveAdditionalRoots(rootModelComponent, ANNOTATION_PATHS_TAG, extension.getAnnotationRoots());
   }

@@ -474,7 +474,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private boolean hasPrefix;
     private boolean hasParams;
 
-    AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
+    private AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
       super(ASM_API);
       myMapping = mapping;
       myCallback = callback;

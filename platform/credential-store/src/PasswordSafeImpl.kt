@@ -26,29 +26,28 @@ import com.intellij.openapi.diagnostic.catchAndLog
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
-class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  internal @Volatile var currentProvider: PasswordStorage
+fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+    return KeePassCredentialStore(memoryOnly = true)
+  }
+  else if (settings.providerType == ProviderType.KEEPASS) {
+    val dbFile = settings.state.keepassDb?.let {
+      LOG.catchAndLog { return@let Paths.get(it) }
+      return@let null
+    }
+    return KeePassCredentialStore(dbFile = dbFile)
+  }
+  else {
+    return createPersistentCredentialStore()
+  }
+}
 
+class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
+                                                 internal @Volatile var currentProvider: CredentialStore = computeProvider(settings)) : PasswordSafe(), SettingsSavingComponent {
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
-
-  init {
-    if (settings.providerType == ProviderType.MEMORY_ONLY || ApplicationManager.getApplication().isUnitTestMode) {
-      currentProvider = KeePassCredentialStore(memoryOnly = true)
-    }
-    else if (settings.providerType == ProviderType.KEEPASS) {
-      val dbFile = settings.state.keepassDb?.let {
-        LOG.catchAndLog { return@let Paths.get(it) }
-        return@let null
-      }
-      currentProvider = KeePassCredentialStore(dbFile = dbFile)
-    }
-    else {
-      currentProvider = createPersistentCredentialStore()
-    }
-  }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -65,7 +64,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     currentProvider.set(attributes, credentials)
-    if (attributes.isPasswordMemoryOnly && credentials.isFulfilled()) {
+    if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password
       memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
     }
@@ -123,7 +122,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   // public - backward compatibility
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
-  val masterKeyProvider: PasswordStorage
+  val masterKeyProvider: CredentialStore
     get() = currentProvider
 
   @Suppress("unused")

@@ -16,16 +16,18 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -35,8 +37,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
@@ -238,8 +238,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  public void readExternal(final Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -248,7 +247,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
@@ -283,6 +282,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       setupModulePath(params, module);
 
       return params;
+    }
+
+    @NotNull
+    @Override
+    protected OSProcessHandler startProcess() throws ExecutionException {
+      OSProcessHandler processHandler = super.startProcess();
+      if (processHandler instanceof KillableProcessHandler && DebuggerSettings.getInstance().KILL_PROCESS_IMMEDIATELY) {
+        ((KillableProcessHandler)processHandler).setShouldKillProcessSoftly(false);
+      }
+      return processHandler;
     }
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {

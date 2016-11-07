@@ -45,7 +45,7 @@ import java.nio.charset.Charset;
  * If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile}
  * can be used.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Virtual+File+System">IntelliJ IDEA Virtual File System</a>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">IntelliJ IDEA Virtual File System</a>
  * for high-level overview.
  *
  * @see VirtualFileSystem

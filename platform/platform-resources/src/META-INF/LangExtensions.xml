@@ -941,7 +941,7 @@
     <editorOptionsProvider instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"
                            id="reference.settingsdialog.IDE.editor.postfix.templates"
                            displayName="Postfix Completion"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor" order="last"/>
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>

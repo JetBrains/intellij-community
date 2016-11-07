@@ -78,8 +78,7 @@ public class ProblemDescriptorUtil {
         message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
-        message = StringUtil
-          .replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
+        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
     message = StringUtil.replace(message, "<code>", "'");

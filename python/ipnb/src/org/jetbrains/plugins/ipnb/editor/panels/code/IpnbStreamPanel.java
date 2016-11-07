@@ -14,7 +14,7 @@ public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
 
   @Override
   protected JComponent createViewPanel() {
-    final JComponent viewPanel = super.createViewPanel();
+    final JComponent viewPanel = IpnbErrorPanel.createColoredPanel(myCell.getText());
     if ("stderr".equals(myCell.getStream())) {
       viewPanel.setBackground(MessageType.ERROR.getPopupBackground());
     }

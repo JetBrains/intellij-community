@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.transformations.impl;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiModifier;
@@ -28,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -84,16 +80,11 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
   private static PsiClassType doGetSuperClassType(GroovyScriptClass scriptClass) {
     GrVariableDeclaration declaration = findDeclaration(scriptClass.getContainingFile());
     if (declaration != null) {
-
-
-      GrModifierList modifierList = declaration.getModifierList();
-      if (modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
-        GrTypeElement typeElement = declaration.getTypeElementGroovy();
-        if (typeElement != null) {
-          PsiType type = typeElement.getType();
-          if (type instanceof PsiClassType) {
-            return (PsiClassType)type;
-          }
+      GrTypeElement typeElement = declaration.getTypeElementGroovy();
+      if (typeElement != null) {
+        PsiType type = typeElement.getType();
+        if (type instanceof PsiClassType) {
+          return (PsiClassType)type;
         }
       }
     }
@@ -105,24 +96,11 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     if (!hasNameInFile(file, "BaseScript")) {
       return null;
     }
-    final Ref<GrVariableDeclaration> ref = Ref.create();
-    file.accept(new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
-        super.visitVariableDeclaration(variableDeclaration);
-        if (variableDeclaration.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
-          ref.set(variableDeclaration);
-        }
+    for (GrVariableDeclaration declaration : file.getScriptDeclarations(false)) {
+      if (declaration.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
+        return declaration;
       }
-
-      @Override
-      public void visitElement(@NotNull GroovyPsiElement element) {
-        if (ref.isNull()) {
-          super.visitElement(element);
-        }
-      }
-    });
-
-    return ref.get();
+    }
+    return null;
   }
 }

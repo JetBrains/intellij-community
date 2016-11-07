@@ -44,7 +44,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
       result = processManagedParent(parentFile);
     }
 
-    if (result == null) {
+    if (result == null && projectFile.getParent() != null) {
       parentFile = projectFile.getParent().findFileByRelativePath(parentDesc.getParentRelativePath());
       if (parentFile != null && parentFile.isDirectory()) {
         parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);

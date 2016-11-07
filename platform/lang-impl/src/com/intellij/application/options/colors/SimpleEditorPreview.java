@@ -370,13 +370,19 @@ public class SimpleEditorPreview implements PreviewPanel {
           else {
             rainbowTemp = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[tempKeyIndex++ % colorCount]);
           }
+          // TODO: <remove the hack>
+          // At some point highlighting data is applied in reversed order. To ensure rainbow highlighting is always on top, we add it twice.
           rainbowMarkup.add(rainbowTemp);
+          rainbowMarkup.add(rainbowAnchor);
+          rainbowMarkup.add(d);
           rainbowMarkup.add(rainbowAnchor);
           rainbowMarkup.add(rainbowTemp);
         }
         else {
           // rainbow off
           if (rainbowType) {
+            // TODO: <remove the hack>
+            // See above
             rainbowMarkup.add(d);
             rainbowMarkup.add(rainbowAnchor);
             rainbowMarkup.add(d);

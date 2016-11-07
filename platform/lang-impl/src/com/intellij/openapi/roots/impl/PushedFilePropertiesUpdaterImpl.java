@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -279,8 +278,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   public static void invokeConcurrentlyIfPossible(final List<Runnable> tasks) {
     if (tasks.size() == 1 ||
-        ApplicationManager.getApplication().isWriteAccessAllowed() ||
-        !Registry.is("idea.concurrent.scanning.files.to.index")) {
+        ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for(Runnable r:tasks) r.run();
       return;
     }
@@ -326,7 +324,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
         //noinspection unchecked
         pusher = pushers[i];
-        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
+        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
           continue;
         }
         findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i] : null);

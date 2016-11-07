@@ -67,12 +67,11 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   @Override
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
-    IElementType parentType = parent.getTokenType();
-    IElementType nodeType = node.getTokenType();
+    return checkByTypes(parent.getTokenType(), node.getTokenType()) || isCodeBlockWithoutStubs(node);
+  }
 
-    if (checkByTypes(parentType, nodeType)) return true;
-
-    if (nodeType == JavaElementType.CODE_BLOCK) {
+  public static boolean isCodeBlockWithoutStubs(@NotNull LighterASTNode node) {
+    if (node.getTokenType() == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
       CodeBlockVisitor visitor = new CodeBlockVisitor();
       ((LighterLazyParseableNode)node).accept(visitor);
       return visitor.result;

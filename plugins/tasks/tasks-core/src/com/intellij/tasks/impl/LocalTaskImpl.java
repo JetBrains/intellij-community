@@ -211,6 +211,7 @@ public class LocalTaskImpl extends LocalTask {
     return myChangeLists;
   }
 
+  // for serialization
   public void setChangeLists(List<ChangeListInfo> changeLists) {
     myChangeLists = changeLists;
   }

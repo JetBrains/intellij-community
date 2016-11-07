@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
@@ -94,11 +95,13 @@ class Impl extends Intf {
 
     def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
 
-    assert intf.findMethodsByName('xxx1', false)[0] in elements
-    assert intf.findMethodsByName('xxx2', false)[0] in elements
+    ReadAction.run {
+      assert intf.findMethodsByName('xxx1', false)[0] in elements
+      assert intf.findMethodsByName('xxx2', false)[0] in elements
 
-    assert impl.findMethodsByName('xxx3', false)[0] in elements
-    assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
+      assert impl.findMethodsByName('xxx3', false)[0] in elements
+      assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
+    }
   }
 
   void "test disprefer underscore"() {

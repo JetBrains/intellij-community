@@ -66,11 +66,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.*;
+import com.intellij.util.MemoryDumpHelper;
+import com.intellij.util.PathUtilRt;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -91,7 +93,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -427,144 +428,88 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
-    List<Throwable> exceptions = new SmartList<>();
     Project project = myProject;
-    if (project != null) {
-      try {
-        LightPlatformTestCase.doTearDown(project, ourApplication, false, exceptions);
-      }
-      catch (Throwable e) {
-        exceptions.add(e);
-      }
 
-      disposeProject(exceptions);
-    }
-
-    try {
-      checkForSettingsDamage(exceptions);
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-    try {
-      if (project != null) {
-        try {
+    new RunAll()
+      .append(() -> {
+        if (project != null) {
+          LightPlatformTestCase.doTearDown(project, ourApplication, false);
+        }
+      })
+      .append(() -> disposeProject())
+      .append(() -> checkForSettingsDamage())
+      .append(() -> {
+        if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
-        catch (AssertionError e) {
-          exceptions.add(e);
-        }
-      }
-      try {
+      })
+      .append(() -> {
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
-      }
-      catch (Throwable e) {
-        exceptions.add(e);
-      }
-
-      if (!myAssertionsInTestDetected) {
-        if (IdeaLogger.ourErrorsOccurred != null) {
-          exceptions.add(IdeaLogger.ourErrorsOccurred);
+      })
+      .append(() -> {
+        if (!myAssertionsInTestDetected) {
+          if (IdeaLogger.ourErrorsOccurred != null) {
+            throw IdeaLogger.ourErrorsOccurred;
+          }
         }
-      }
-
-      try {
-        super.tearDown();
-      }
-      catch (Throwable e) {
-        exceptions.add(e);
-      }
-
-      try {
+      })
+      .append(super::tearDown)
+      .append(() -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();
         }
-      }
-      catch (AssertionError error) {
-        exceptions.add(error);
-      }
-      try {
+      })
+      .append(() -> {
         if (myThreadTracker != null) {
           myThreadTracker.checkLeak();
         }
-      }
-      catch (AssertionError error) {
-        exceptions.add(error);
-      }
-      try {
-        LightPlatformTestCase.checkEditorsReleased(exceptions);
-      }
-      catch (Throwable error) {
-        exceptions.add(error);
-      }
-    }
-    finally {
-      myProjectManager = null;
-      myProject = null;
-      myModule = null;
-      myFilesToDelete.clear();
-      myEditorListenerTracker = null;
-      myThreadTracker = null;
-      ourTestCase = null;
-
-      CompoundRuntimeException.throwIfNotEmpty(exceptions);
-    }
+      })
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(() -> {
+        myProjectManager = null;
+        myProject = null;
+        myModule = null;
+        myFilesToDelete.clear();
+        myEditorListenerTracker = null;
+        myThreadTracker = null;
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourTestCase = null;
+      })
+      .run();
   }
 
-  private void disposeProject(@NotNull List<Throwable> exceptions) {
-    try {
+  private void disposeProject() {
+    new RunAll(() -> {
       DocumentCommitThread.getInstance().clearQueue();
       // sometimes SwingUtilities maybe confused about EDT at this point
       if (SwingUtilities.isEventDispatchThread()) {
         UIUtil.dispatchAllInvocationEvents();
       }
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-
-    Project project = myProject;
-    if (project == null) {
-      return;
-    }
-
-    closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions);
-    myProject = null;
+    }, () -> {
+      if (myProject != null) {
+        closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
+        myProject = null;
+      }
+    }).run();
   }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose, @NotNull final List<Throwable> exceptions) {
-    try {
-      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-      if (projectManager instanceof ProjectManagerImpl) {
-        for (Project project : projectManager.closeTestProject(projectToClose)) {
-          exceptions.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
-          try {
-            ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false);
-          }
-          catch (Throwable e) {
-            exceptions.add(e);
-          }
-        }
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
+    RunAll runAll = new RunAll();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    if (projectManager instanceof ProjectManagerImpl) {
+      for (Project project : projectManager.closeTestProject(projectToClose)) {
+        runAll = runAll
+          .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
+          .append(() -> ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false));
       }
     }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          Disposer.dispose(projectToClose);
-        }
-        catch (Throwable e) {
-          exceptions.add(e);
-        }
-      });
-    }
+    runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
   }
 
   protected void resetAllFields() {

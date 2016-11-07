@@ -104,7 +104,7 @@ public class InspectionProfileConvertor {
     }
 
     File[] files = profileDirectory.listFiles(pathname -> pathname.getPath().endsWith(File.separator + DEFAULT_XML));
-    if (files == null || files.length != 1 || !files[0].isFile()) {
+    if (files == null || files.length != 1 || !files[0].isFile() || files[0].length() == 0) {
       return;
     }
     try {

@@ -168,6 +168,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     FindUsagesInFileAction.updateFindUsagesAction(e);
 
@@ -1092,6 +1097,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                         @NotNull FindUsagesOptions options,
                         boolean isWarning) {
     Runnable runnable = () -> {
+      if (!handler.getPsiElement().isValid()) return;
+
       JComponent label = createHintComponent(hint, handler, popupPosition, editor, ShowUsagesAction::hideHints, maxUsages, options, isWarning);
       if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
         HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |

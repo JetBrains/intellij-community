@@ -95,7 +95,12 @@ class VariableView(override val variableName: String, private val variable: Vari
     }, false)
     node.setFullValueEvaluator(object : XFullValueEvaluator(" (invoke getter)") {
       override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
-        val valueModifier = variable.valueModifier
+        var valueModifier = variable.valueModifier
+        var nonProtoContext = context
+        while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
+          valueModifier = nonProtoContext.variable.valueModifier
+          nonProtoContext = nonProtoContext.parent
+        }
         valueModifier!!.evaluateGet(variable, evaluateContext)
           .done(node) {
             callback.evaluated("")
@@ -478,3 +483,5 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
     renderer.renderSpecialSymbol("]")
   }
 }
+
+private val PROTOTYPE_PROP = "__proto__"

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
@@ -56,6 +57,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return StringUtil.escapeXml(raw);
   }
 
+  @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     if (element instanceof IProperty) {
       IProperty property = (IProperty)element;

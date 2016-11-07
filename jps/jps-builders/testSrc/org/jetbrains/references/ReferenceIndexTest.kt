@@ -97,5 +97,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testNestedClasses() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testStaticallyImportedConstant() {
+    assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java")
+  }
 }
 

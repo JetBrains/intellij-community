@@ -28,10 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
-import com.intellij.util.SmartList;
-import com.intellij.util.lang.CompoundRuntimeException;
-
-import java.util.List;
 
 /**
  * @author mike
@@ -65,19 +61,15 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
-    List<Throwable> exceptions = new SmartList<>();
-    try {
-      UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
 
-      LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true, exceptions);
-      super.tearDown();
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      PersistentFS.getInstance().clearIdCache();
-      PlatformTestCase.cleanupApplicationCaches(project);
-    }
-    finally {
-      CompoundRuntimeException.throwIfNotEmpty(exceptions);
-    }
+    new RunAll()
+      .append(() -> UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
+      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true))
+      .append(super::tearDown)
+      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
+      .append(() -> PersistentFS.getInstance().clearIdCache())
+      .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
+      .run();
   }
 
   @Override

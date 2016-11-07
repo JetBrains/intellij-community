@@ -192,11 +192,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     int lambdaOrdinal = -1;
-    if (LambdaMethodFilter.isLambdaName(method.name())) {
+    if (DebuggerUtilsEx.isLambdaName(method.name())) {
       Set<Method> lambdas =
         ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), location1 -> {
           Method method1 = location1.method();
-          if (LambdaMethodFilter.isLambdaName(method1.name())) {
+          if (DebuggerUtilsEx.isLambdaName(method1.name())) {
             return method1;
           }
           return null;
@@ -233,7 +233,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return null;
         }
         else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
-                  (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName))) &&
+                  (method instanceof PsiLambdaExpression && DebuggerUtilsEx.isLambdaName(myExpectedMethodName))) &&
                  insideBody(element, DebuggerUtilsEx.getBody(method))) {
           return element;
         }
@@ -256,7 +256,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         public SourcePosition compute() {
           PsiFile file = original.getFile();
           int line = original.getLine();
-          if (LambdaMethodFilter.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
+          if (DebuggerUtilsEx.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
             List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
 
             Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);

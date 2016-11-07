@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.completion.CompletionConfidenceEP;
 import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.icons.AllIcons;
@@ -47,6 +48,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
@@ -209,6 +211,11 @@ class LanguageResolvingUtil {
     return new LanguageDefinition(anyLanguageId, languageClass, AllIcons.FileTypes.Any_type, "<any language>");
   }
 
+  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = ContainerUtil.immutableSet(
+    CompletionContributorEP.class.getName(),
+    CompletionConfidenceEP.class.getName()
+  );
+
   private static String calculateAnyLanguageId(ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
     if (extension == null) {
@@ -220,7 +227,7 @@ class LanguageResolvingUtil {
     }
 
     final GenericAttributeValue<PsiClass> epBeanClass = extensionPoint.getBeanClass();
-    if (CompletionContributorEP.class.getName().equals(epBeanClass.getStringValue())) {
+    if (EP_WITH_ANY_LANGUAGE_ID.contains(epBeanClass.getStringValue())) {
       return "any";
     }
 

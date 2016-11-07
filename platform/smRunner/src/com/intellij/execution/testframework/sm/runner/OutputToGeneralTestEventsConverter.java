@@ -52,9 +52,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private boolean myPendingLineBreakFlag;
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
+    this(testFrameworkName, consoleProperties.isEditable());
+  }
+
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, boolean stdinEnabled) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(consoleProperties.isEditable()) {
+    mySplitter = new OutputLineSplitter(stdinEnabled) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
         processConsistentText(text, outputType, tcLikeFakeOutput);

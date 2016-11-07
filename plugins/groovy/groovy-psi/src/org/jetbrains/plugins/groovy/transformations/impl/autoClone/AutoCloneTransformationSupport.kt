@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.transformations.impl.autoClone
 
-import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
@@ -80,15 +83,6 @@ class AutoCloneTransformationSupport : AstTransformationSupport {
           originInfo = ORIGIN_INFO
         }
       }
-    }
-  }
-
-  private fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotationMemberValue? {
-    val styleAttribute = AnnotationUtil.findDeclaredAttribute(this, attributeName)
-    return when (styleAttribute) {
-      null -> null
-      is PsiNameValuePair.Detachable -> styleAttribute.detachedValue
-      else -> styleAttribute.value
     }
   }
 }

@@ -16,11 +16,11 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
+import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.LogMessage
 
-import java.util.function.Function
-
+import java.util.function.BiFunction
 /**
  * todo[nik] this is replacement for BuildInfoPrinter. BuildInfoPrinter should be deleted after we move its remaining methods to this class.
  *
@@ -28,12 +28,16 @@ import java.util.function.Function
  */
 @CompileStatic
 class TeamCityBuildMessageLogger extends BuildMessageLogger {
-  public static final Function<String, BuildMessageLogger> FACTORY = { String taskName -> new TeamCityBuildMessageLogger(taskName) } as Function<String, BuildMessageLogger>
+  public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger antLogger ->
+    new TeamCityBuildMessageLogger(taskName, antLogger)
+  } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
   private static final PrintStream out = BuildUtils.realSystemOut
   private final String parallelTaskId
+  private AntTaskLogger antTaskLogger
 
-  TeamCityBuildMessageLogger(String parallelTaskId) {
+  TeamCityBuildMessageLogger(String parallelTaskId, AntTaskLogger antTaskLogger) {
     this.parallelTaskId = parallelTaskId
+    this.antTaskLogger = antTaskLogger
   }
 
   @Override
@@ -45,16 +49,16 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         logPlainMessage(message)
         break
       case LogMessage.Kind.PROGRESS:
-        out.println "##teamcity[progressMessage '${escape(message.text)}']"
+        printTeamCityMessage("progressMessage", false, "'${escape(message.text)}'")
         break
       case LogMessage.Kind.BLOCK_STARTED:
-        printTeamCityMessage("blockOpened", "name='${escape(message.text)}'")
+        printTeamCityMessage("blockOpened", true, "name='${escape(message.text)}'")
         break
       case LogMessage.Kind.BLOCK_FINISHED:
-        printTeamCityMessage("blockClosed", "name='${escape(message.text)}'")
+        printTeamCityMessage("blockClosed", true, "name='${escape(message.text)}'")
         break
       case LogMessage.Kind.ARTIFACT_BUILT:
-        out.println "##teamcity[publishArtifacts '${escape(message.text)}']"
+        printTeamCityMessage("publishArtifacts", false, "'${escape(message.text)}'")
         break
     }
   }
@@ -62,16 +66,20 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   void logPlainMessage(LogMessage message) {
     String status = message.kind == LogMessage.Kind.WARNING ? " status='WARNING'" : ""
     if (parallelTaskId != null || !status.isEmpty()) {
-      printTeamCityMessage("message", "text='${escape(message.text)}'$status")
+      printTeamCityMessage("message", true, "text='${escape(message.text)}'$status")
     }
     else {
+      antTaskLogger.logMessageToOtherLoggers(message.text, Project.MSG_INFO)
       out.println message.text
     }
   }
 
-  private void printTeamCityMessage(String messageId, String messageArguments) {
-    String flowArg = parallelTaskId != null ? " flowId='${escape(parallelTaskId)}'" : ""
-    out.println "##teamcity[$messageId$flowArg $messageArguments]"
+  private void printTeamCityMessage(String messageId, boolean includeFlowId, String messageArguments) {
+    String flowArg = includeFlowId && parallelTaskId != null ? " flowId='${escape(parallelTaskId)}'" : ""
+    String message = "##teamcity[$messageId$flowArg $messageArguments]"
+    //TeamCity reads messages from Ant-based builds via BuildListener so we need to send it to listeners
+    antTaskLogger.logMessageToOtherLoggers(message, Project.MSG_INFO)
+    out.println(message)
   }
 
   private static char escapeChar(char c) {

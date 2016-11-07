@@ -46,7 +46,6 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
     final Symbol sym = javacIdentifier.sym;
     if (sym.getKind() == ElementKind.PARAMETER ||
         sym.getKind() == ElementKind.LOCAL_VARIABLE ||
-        sym.getKind() == ElementKind.FIELD ||
         sym.getKind() == ElementKind.EXCEPTION_PARAMETER ||
         sym.getKind() == ElementKind.TYPE_PARAMETER) {
       return null;

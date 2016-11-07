@@ -16,7 +16,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,12 +30,18 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
+
+  public static final String SCALE_FACTOR_PROPERTY = "JBUI.scale";
+
+  private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   /**
    * A default system scale factor.
@@ -47,6 +52,21 @@ public class JBUI {
 
   static {
     setScaleFactor(SYSTEM_DEF_SCALE);
+  }
+
+  /**
+   * Adds property change listener. Supported properties:
+   * {@link #SCALE_FACTOR_PROPERTY}
+   */
+  public static void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    PCS.addPropertyChangeListener(propertyName, listener);
+  }
+
+  /**
+   * @see #addPropertyChangeListener(String, PropertyChangeListener)
+   */
+  public static void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    PCS.removePropertyChangeListener(propertyName, listener);
   }
 
   private static float getSystemDefScale() {
@@ -70,10 +90,14 @@ public class JBUI {
     return size / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
+  private static void setScaleFactorProperty(float scale) {
+    PCS.firePropertyChange(SCALE_FACTOR_PROPERTY, scaleFactor, scaleFactor = scale);
+    LOG.info("UI scale factor: " + scaleFactor);
+  }
+
   public static void setScaleFactor(float scale) {
     if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      scaleFactor = 1.0f;
-      LOG.info("UI scale factor: 1.0");
+      setScaleFactorProperty(1.0f);
       return;
     }
 
@@ -90,10 +114,7 @@ public class JBUI {
     if (scaleFactor == scale) {
       return;
     }
-    LOG.info("UI scale factor: " + scale);
-
-    scaleFactor = scale;
-    IconLoader.setScale(scale);
+    setScaleFactorProperty(scale);
   }
 
   public static int scale(int i) {
@@ -117,10 +138,10 @@ public class JBUI {
   public static JBDimension size(Dimension size) {
     if (size instanceof JBDimension) {
       final JBDimension jbSize = (JBDimension)size;
-      if (jbSize.originalScale == scale(1f)) {
+      if (jbSize.myJBUIScale == scale(1f)) {
         return jbSize;
       }
-      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.originalScale), (int)(jbSize.height / jbSize.originalScale));
+      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.myJBUIScale), (int)(jbSize.height / jbSize.myJBUIScale));
       return size instanceof UIResource ? newSize.asUIResource() : newSize;
     }
     return new JBDimension(size.width, size.height);
@@ -166,7 +187,7 @@ public class JBUI {
   }
 
   public static <T extends JBIcon> T scale(T icon) {
-    return (T)icon.withPreScaled(false);
+    return (T)icon.withJBUIPreScaled(false);
   }
 
   public static JBDimension emptySize() {
@@ -291,7 +312,7 @@ public class JBUI {
    * @author tav
    */
   public static abstract class JBIcon implements Icon {
-    private float myInitialJBUIScale = scale(1f);
+    private float myInitialJBUIScale = currentJBUIScale();
 
     protected JBIcon() {}
 
@@ -299,25 +320,31 @@ public class JBUI {
       myInitialJBUIScale = icon.myInitialJBUIScale;
     }
 
+    static float currentJBUIScale() {
+      // We don't JBUI-scale images on Retina, see comments in ImageLoader.loadFromUrl(..)
+      // So, make icons JBUI-scale conformant.
+      return UIUtil.isRetina() ? 1f : scale(1f);
+    }
+
     /**
      * @return the scale factor aligning the icon size metrics to conform to up-to-date JBUI.scale
      */
     private float getAligningScale() {
-      return scale(1f) / myInitialJBUIScale;
+      return currentJBUIScale() / myInitialJBUIScale;
     }
 
     /**
      * @return whether the icon size metrics are pre-scaled or not
      */
-    protected boolean isPreScaled() {
+    protected boolean isJBUIPreScaled() {
       return myInitialJBUIScale != 1f;
     }
 
     /**
      * Sets the icon size metrics to {@code preScaled}
      */
-    protected void setPreScaled(boolean preScaled) {
-      myInitialJBUIScale = preScaled ? scale(1f) : 1f;
+    protected void setJBUIPreScaled(boolean preScaled) {
+      myInitialJBUIScale = preScaled ? currentJBUIScale() : 1f;
     }
 
     /**
@@ -325,8 +352,8 @@ public class JBUI {
      *
      * @return the icon (this or new instance) with size metrics set to {@code preScaled}
      */
-    public JBIcon withPreScaled(boolean preScaled) {
-      setPreScaled(preScaled);
+    public JBIcon withJBUIPreScaled(boolean preScaled) {
+      setJBUIPreScaled(preScaled);
       return this;
     }
 
@@ -366,6 +393,7 @@ public class JBUI {
       EFFECTIVE   // effective scale
     }
 
+    @Override
     public float getScale() {
       return myScale;
     }
@@ -400,11 +428,59 @@ public class JBUI {
       }
     }
 
+    /**
+     * Scales the value in the icon's scale.
+     */
+    public static int scaleVal(Icon icon, int value, Scale type) {
+      return (int)scaleVal(icon, (float)value, type);
+    }
+
+    /**
+     * Scales the value in the icon's scale.
+     */
+    public static float scaleVal(Icon icon, float value, Scale type) {
+      if (icon instanceof ScalableJBIcon) {
+        return ((ScalableJBIcon)icon).scaleVal(value, type);
+      }
+      return value;
+    }
+  }
+
+  /**
+   * A ScalableJBIcon providing an immutable caching implementation of the {@link #scale(float)} method.
+   *
+   * @author tav
+   * @author Aleksey Pivovarov
+   */
+  public static abstract class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
+    private CachingScalableJBIcon myScaledIconCache;
+
+    protected CachingScalableJBIcon() {}
+
+    protected CachingScalableJBIcon(CachingScalableJBIcon icon) {
+      super(icon);
+      myScaledIconCache = null;
+    }
+
+    /**
+     * @return a new scaled copy of this icon, or the cached instance of the provided scale
+     */
     @Override
     public Icon scale(float scale) {
-      if (getScale() != scale) setScale(scale);
-      return this;
+      if (scale == getScale()) return this;
+
+      if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
+        myScaledIconCache = copy();
+        myScaledIconCache.setScale(scale);
+      }
+      return myScaledIconCache;
     }
+
+    /**
+     * @return a copy of this icon instance
+     */
+    @NotNull
+    protected abstract T copy();
   }
 
   public interface AuxJBUIScale {
@@ -449,13 +525,19 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class AuxScalableJBIcon extends ScalableJBIcon implements AuxJBUIScale {
-    private float myCachedJBUIScale = JBUI.scale(1f);
+  public static abstract class AuxScalableJBIcon extends CachingScalableJBIcon implements AuxJBUIScale {
+    private float myCachedJBUIScale = currentJBUIScale();
+
+    protected AuxScalableJBIcon() {}
+
+    protected AuxScalableJBIcon(AuxScalableJBIcon icon) {
+      super(icon);
+    }
 
     @Override
     public boolean updateJBUIScale() {
       if (needUpdateJBUIScale()) {
-        myCachedJBUIScale = JBUI.scale(1f);
+        myCachedJBUIScale = currentJBUIScale();
         return true;
       }
       return false;
@@ -463,7 +545,7 @@ public class JBUI {
 
     @Override
     public boolean needUpdateJBUIScale() {
-      return myCachedJBUIScale != JBUI.scale(1f);
+      return myCachedJBUIScale != currentJBUIScale();
     }
   }
 }

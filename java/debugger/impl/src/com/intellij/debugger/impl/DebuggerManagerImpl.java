@@ -243,11 +243,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-          final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+          ProcessHandler processHandler = event.getProcessHandler();
+          final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             // if current thread is a "debugger manager thread", stop will execute synchronously
             // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed && !(event.getProcessHandler() instanceof KillableColoredProcessHandler));
+            debugProcess.stop(willBeDestroyed && !(processHandler instanceof KillableColoredProcessHandler && ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
 
             // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang

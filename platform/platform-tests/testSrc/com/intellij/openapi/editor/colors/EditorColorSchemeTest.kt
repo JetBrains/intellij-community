@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
@@ -43,15 +44,9 @@ class EditorColorSchemeTest {
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
     <scheme name="Foo" version="142" parent_scheme="Default">
-      <metaInfo>
-        <property name="created">2016-09-29T12:13:05</property>
-        <property name="ide">idea</property>
-        <property name="ideVersion">2016.3.0.0</property>
-        <property name="modified">2016-09-29T12:14:54</property>
-        <property name="originalScheme">Default</property>
-      </metaInfo>
       <option name="EDITOR_FONT_SIZE" value="12" />
       <option name="EDITOR_FONT_NAME" value="Menlo" />
+      <option name="JAVA_NUMBER" baseAttributes="DEFAULT_NUMBER" />
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
@@ -60,9 +55,16 @@ class EditorColorSchemeTest {
     val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
+    (scheme as AbstractColorsScheme).isSaveNeeded = true
+
     schemeManagerFactory.save()
 
-    assertThat(schemeFile.readText()).isEqualTo(schemeData)
+    // JAVA_NUMBER is removed - see isParentOverwritingInheritance
+    assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
+    <scheme name="Foo" version="142" parent_scheme="Default">
+      <option name="EDITOR_FONT_SIZE" value="12" />
+      <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
+    </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
   }
 }

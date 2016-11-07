@@ -512,14 +512,14 @@ public class GenericsHighlightUtil {
 
   private static String hasUnrelatedDefaults(List<PsiClass> defaults) {
     if (defaults.size() > 1) {
-      for (int i = 0; i < defaults.size(); i++) {
-        final PsiClass aClass1 = defaults.get(i);
-        for (int j = i + 1; j < defaults.size(); j++) {
-          final PsiClass aClass2 = defaults.get(j);
-          if (aClass2 != null && !belongToOneHierarchy(aClass1, aClass2)) {
-            return  HighlightUtil.formatClass(aClass1) + " and " + HighlightUtil.formatClass(aClass2);
-          }
-        }
+      PsiClass[] defaultClasses = defaults.toArray(PsiClass.EMPTY_ARRAY);
+      ArrayList<PsiClass> classes = new ArrayList<>(defaults);
+      for (final PsiClass aClass1 : defaultClasses) {
+        classes.removeIf(aClass2 -> aClass1.isInheritor(aClass2, true));
+      }
+
+      if (classes.size() > 1) {
+        return HighlightUtil.formatClass(classes.get(0)) + " and " + HighlightUtil.formatClass(classes.get(1));
       }
     }
 

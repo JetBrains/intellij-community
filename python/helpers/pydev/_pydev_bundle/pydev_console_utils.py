@@ -6,16 +6,8 @@ from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_utils import to_string
-
-
-USE_IPYTHON = False
-
-
-def set_result_ipython_value(ipython):
-    global USE_IPYTHON
-    USE_IPYTHON = ipython
 
 
 # =======================================================================================================================
@@ -83,10 +75,6 @@ class BaseStdIn:
 
     def write(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
-
-    def isatty(self):
-        # return True for IPython console only
-        return USE_IPYTHON
 
     def flush(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
@@ -511,7 +499,7 @@ class BaseInterpreterInterface:
             debugger_options = {}
         env_key = "PYDEVD_EXTRA_ENVS"
         if env_key in debugger_options:
-            for (env_name, value) in debugger_options[env_key].items():
+            for (env_name, value) in dict_iter_items(debugger_options[env_key]):
                 os.environ[env_name] = value
             del debugger_options[env_key]
         def do_connect_to_debugger():

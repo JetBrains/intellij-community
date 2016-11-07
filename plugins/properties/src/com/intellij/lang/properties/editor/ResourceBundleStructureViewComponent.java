@@ -95,6 +95,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return PsiFile.EMPTY_ARRAY;
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
@@ -183,6 +184,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return super.getData(dataId);
   }
 
+  @Override
   protected boolean showScrollToFromSourceActions() {
     return false;
   }
@@ -225,6 +227,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
   }
 
+  @Override
   @NonNls
   public String getHelpID() {
     return "editing.propertyFile.bundleEditor";

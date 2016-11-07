@@ -29,8 +29,9 @@ import java.util.Locale;
  * @noinspection UseOfSystemOutOrSystemErr
  */
 public class AppMain {
-  private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  private static final String PROPERTY_BIN_PATH = "idea.launcher.bin.path";
+  public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
+  public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
+
   private static final String JAVAFX_LAUNCHER = "com.sun.javafx.application.LauncherImpl";
   private static final String LAUNCH_APPLICATION_METHOD_NAME = "launchApplication";
 
@@ -103,8 +104,8 @@ public class AppMain {
 
   public static void main(String[] args) throws Throwable {
     try {
-      boolean helperLibLoaded = loadHelper(System.getProperty(PROPERTY_BIN_PATH));
-      int portNumber = Integer.parseInt(System.getProperty(PROPERTY_PORT_NUMBER));
+      boolean helperLibLoaded = loadHelper(System.getProperty(LAUNCHER_BIN_PATH));
+      int portNumber = Integer.parseInt(System.getProperty(LAUNCHER_PORT_NUMBER));
       startMonitor(portNumber, helperLibLoaded);
     }
     catch (Throwable t) {

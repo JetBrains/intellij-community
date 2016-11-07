@@ -740,6 +740,7 @@
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses" text="Add Many Test Processes"/>
+        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Show Progress Test Dialog"/>
         <separator/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd" text="Test Dnd"/>

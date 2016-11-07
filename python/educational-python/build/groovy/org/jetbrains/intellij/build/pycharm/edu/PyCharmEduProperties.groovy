@@ -37,12 +37,12 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String systemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
     "PyCharmEdu${applicationInfo.majorVersion}0"
   }
 
   @Override
-  String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+  String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "pycharmEDU-$buildNumber"
   }
 
@@ -58,7 +58,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
+      String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Edu"
       }
 
@@ -79,7 +79,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         "pycharm-edu-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
 
@@ -104,7 +104,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String outputDirectoryName(ApplicationInfoProperties applicationInfo) {
+  String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) {
     "pycharm-edu"
   }
 }

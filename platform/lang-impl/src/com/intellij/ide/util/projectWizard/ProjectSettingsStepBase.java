@@ -48,6 +48,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
+
 public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
   protected final DirectoryProjectGenerator myProjectGenerator;
   private final NullableConsumer<ProjectSettingsStepBase> myCallback;
@@ -89,6 +91,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.setName(BOTTOM_PANEL);
 
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);

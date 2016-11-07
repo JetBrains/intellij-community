@@ -94,10 +94,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
 
-    final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
-    if (attributes != null && !attributes.isFile()) {
-      LOG.warn("not a file: " + ioFile + ", " + attributes);
-      throw new FileNotFoundException("Not a file: " + ioFile);
+    if (SystemInfo.isUnix) { // avoid opening fifo files
+      final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
+      if (attributes != null && !attributes.isFile()) {
+        LOG.warn("not a file: " + ioFile + ", " + attributes);
+        throw new FileNotFoundException("Not a file: " + ioFile);
+      }
     }
 
     return ioFile;

@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +82,8 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(isTitle() || isContent(), "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+    LOG.assertTrue(isTitle() || isContent(),
+                   "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
 
     id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
   }
@@ -216,6 +218,16 @@ public class Notification {
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAware(action, event);
     }
+  }
+
+  public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
+    DataManager.registerDataProvider(component, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return KEY.getName().equals(dataId) ? notification : null;
+      }
+    });
   }
 
   @NotNull

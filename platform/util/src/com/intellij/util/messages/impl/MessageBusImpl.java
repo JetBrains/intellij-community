@@ -17,10 +17,12 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -358,29 +360,67 @@ public class MessageBusImpl implements MessageBus {
       if (map != null) {
         Set<MessageBusImpl> buses = map.keySet();
         if (!buses.isEmpty()) {
-          for (MessageBusImpl bus : new ArrayList<MessageBusImpl>(buses)) {
-            if (bus.myDisposed) {
-              map.remove(bus);
-              LOG.error("Accessing disposed message bus " + bus);
-              continue;
-            }
-
-            bus.doPumpMessages();
-          }
+          pumpWaitingBuses(map, new ArrayList<MessageBusImpl>(buses));
         }
       }
     }
   }
 
-  private void doPumpMessages() {
+  private static void pumpWaitingBuses(Map<MessageBusImpl, Integer> map, ArrayList<MessageBusImpl> buses) {
+    List<Throwable> exceptions = null;
+    for (MessageBusImpl bus : buses) {
+      if (!ensureAlive(map, bus)) continue;
+
+      exceptions = appendExceptions(exceptions, bus.doPumpMessages());
+    }
+    rethrowExceptions(exceptions);
+  }
+
+  private static List<Throwable> appendExceptions(List<Throwable> exceptions, List<Throwable> busExceptions) {
+    if (!busExceptions.isEmpty()) {
+      if (exceptions == null) exceptions = new SmartList<Throwable>();
+      exceptions.addAll(busExceptions);
+    }
+    return exceptions;
+  }
+
+  private static void rethrowExceptions(List<Throwable> exceptions) {
+    if (exceptions == null) return;
+
+    ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+    if (pce != null) throw pce;
+
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
+  }
+
+  private static boolean ensureAlive(Map<MessageBusImpl, Integer> map, MessageBusImpl bus) {
+    if (bus.myDisposed) {
+      map.remove(bus);
+      LOG.error("Accessing disposed message bus " + bus);
+      return false;
+    }
+    return true;
+  }
+
+  private List<Throwable> doPumpMessages() {
     Queue<DeliveryJob> queue = myMessageQueue.get();
+    List<Throwable> exceptions = null;
     do {
       DeliveryJob job = queue.poll();
       if (job == null) break;
       notifyPendingJobChange(-1);
-      job.connection.deliverMessage(job.message);
+      try {
+        job.connection.deliverMessage(job.message);
+      }
+      catch (Throwable e) {
+        if (exceptions == null) {
+          exceptions = new SmartList<Throwable>();
+        }
+        exceptions.add(e);
+      }
     }
     while (true);
+    return exceptions == null ? Collections.<Throwable>emptyList() : exceptions;
   }
 
   void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {

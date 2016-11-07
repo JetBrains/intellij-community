@@ -52,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> implements GrParameter, StubBasedPsiElement<GrParameterStub> {
+public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> implements GrParameter {
   public GrParameterImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -162,28 +162,12 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
-    final GrParameterStub stub = getStub();
-    if (stub != null) {
-      final String typeText = stub.getTypeText();
-      if (typeText == null) {
-        return null;
-      }
-
-      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
-    }
-
-    return findChildByClass(GrTypeElement.class);
-  }
-
-  @Override
   public boolean isOptional() {
     final GrParameterStub stub = getStub();
     if (stub != null) {
       return GrParameterStub.hasInitializer(stub.getFlags());
     }
-    
+
     return getInitializerGroovy() != null;
   }
 
@@ -215,20 +199,10 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return new LocalSearchScope(scope);
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    final GrParameterStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
-    }
-    return super.getName();
-  }
-
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   @Override

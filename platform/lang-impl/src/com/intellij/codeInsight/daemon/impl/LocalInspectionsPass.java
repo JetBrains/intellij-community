@@ -33,6 +33,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -246,14 +247,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       pair -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
-        return runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds));
+        return true;
       };
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
   }
 
-  private boolean runToolOnElements(@NotNull final LocalInspectionToolWrapper toolWrapper,
+  private void runToolOnElements(@NotNull final LocalInspectionToolWrapper toolWrapper,
                                     Set<String> dialectIdsSpecifiedForTool,
                                     @NotNull final InspectionManager iManager,
                                     final boolean isOnTheFly,
@@ -289,7 +291,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       appendDescriptors(getFile(), holder.getResults(), toolWrapper);
     }
     applyIncrementally[0] = false; // do not apply incrementally outside visible range
-    return true;
   }
 
   private void visitRestElementsAndCleanup(@NotNull final ProgressIndicator indicator,

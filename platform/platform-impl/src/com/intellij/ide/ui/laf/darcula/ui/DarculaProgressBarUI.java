@@ -69,7 +69,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     int x = -offset;
     final float R = JBUI.scale(8f);
     final float R2 = JBUI.scale(9f);
-    final Area containingRoundRect = new Area(new RoundRectangle2D.Float(1f, 1f, w - 2f, h - 2f, R, R));
+    final float off = JBUI.scale(1f);
+
+    final Area innerBorderRoundRect = new Area(new RoundRectangle2D.Float(off, off, w - 2f * off, h - 2f * off, R, R));
+    final Area containingRoundRect = new Area(new RoundRectangle2D.Float(2f * off, 2f * off, w - 4f * off, h - 4f * off, R, R));
+
     while (x < Math.max(c.getWidth(), c.getHeight())) {
       Path2D.Double path = new Path2D.Double();
       float ww = getPeriodLength() / 2f;
@@ -87,17 +91,21 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     offset = (offset + 1) % getPeriodLength();
     Area area = new Area(new Rectangle2D.Float(0, 0, w, h));
-    area.subtract(new Area(new RoundRectangle2D.Float(1f, 1f, w - 2f, h - 2f, R, R)));
-    g.setPaint(Gray._128);
+    area.subtract(innerBorderRoundRect);
+    g.setColor(Gray._128);
     if (c.isOpaque()) {
       g.fill(area);
     }
     area.subtract(new Area(new RoundRectangle2D.Float(0, 0, w, h, R2, R2)));
-    g.setPaint(c.getParent().getBackground());
+    g.setColor(c.getParent().getBackground());
     if (c.isOpaque()) {
       g.fill(area);
     }
-    g.draw(new RoundRectangle2D.Float(1f, 1f, w - 2f - 1f, h - 2f -1f, R, R));
+
+    Area insetArea = new Area(innerBorderRoundRect);
+    insetArea.subtract(containingRoundRect);
+    g.fill(insetArea);
+
     g.translate(0, -(c.getHeight() - h) / 2);
 
     // Deal with possible text painting

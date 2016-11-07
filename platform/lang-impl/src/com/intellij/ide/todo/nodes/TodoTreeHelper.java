@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,21 +51,25 @@ public class TodoTreeHelper {
   }
 
   public void addPackagesToChildren(ArrayList<AbstractTreeNode> children,
-                                           Module module,
-                                           TodoTreeBuilder builder) {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
+                                    Module module,
+                                    TodoTreeBuilder builder) {
+    addDirsToChildren(collectContentRoots(module), children, builder);
+  }
+
+  protected List<VirtualFile> collectContentRoots(Module module) {
     final List<VirtualFile> roots = new ArrayList<>();
-    final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-      ContainerUtil.addAll(roots, projectRootManager.getContentRoots());
-      ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
+      ContainerUtil.addAll(roots, ProjectRootManager.getInstance(myProject).getContentRoots());
     } else {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      ContainerUtil.addAll(roots, moduleRootManager.getContentRoots());
-      ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
+      ContainerUtil.addAll(roots, ModuleRootManager.getInstance(module).getContentRoots());
     }
-    roots.removeAll(sourceRoots);
+    return roots;
+  }
+
+  protected void addDirsToChildren(List<VirtualFile> roots,
+                                   ArrayList<AbstractTreeNode> children,
+                                   TodoTreeBuilder builder) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile dir : roots) {
       final PsiDirectory directory = psiManager.findDirectory(dir);
       if (directory == null) {
@@ -80,7 +84,7 @@ public class TodoTreeHelper {
     }
   }
 
- public Collection<AbstractTreeNode> getDirectoryChildren(PsiDirectory psiDirectory, TodoTreeBuilder builder, boolean isFlatten) {
+  public Collection<AbstractTreeNode> getDirectoryChildren(PsiDirectory psiDirectory, TodoTreeBuilder builder, boolean isFlatten) {
     ArrayList<AbstractTreeNode> children = new ArrayList<>();
     if (!isFlatten || !skipDirectory(psiDirectory)) {
       final Iterator<PsiFile> iterator = builder.getFiles(psiDirectory);

@@ -15,25 +15,21 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
-import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
@@ -53,93 +49,92 @@ public class NullityInference {
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
-      TreeBackedLighterAST tree = new TreeBackedLighterAST(method.getContainingFile().getNode());
-      PsiCodeBlock body = ObjectUtils.assertNotNull(method.getBody());
-      ASTNode node = body.getNode();
-      NullityInferenceResult result = node == null ? null : doInferNullity(tree, TreeBackedLighterAST.wrap(node));
-      Nullness nullness = result == null ? null : RecursionManager.doPreventingRecursion(method, true, () -> result.getNullness(method, body));
+      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
+      NullityInferenceResult result = data == null ? null : data.getNullity();
+      Nullness nullness = result == null ? null : RecursionManager.doPreventingRecursion(method, true, () -> result.getNullness(method, data.methodBody(method)));
       if (nullness == null) nullness = Nullness.UNKNOWN;
       return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
-  @Nullable
-  private static NullityInferenceResult doInferNullity(LighterAST tree, LighterASTNode body) {
-    AtomicBoolean hasErrors = new AtomicBoolean();
-    AtomicBoolean hasNotNulls = new AtomicBoolean();
-    AtomicBoolean hasNulls = new AtomicBoolean();
-    AtomicBoolean hasUnknowns = new AtomicBoolean();
+  static class NullityInferenceVisitor {
+    private final LighterAST tree;
+    private final LighterASTNode body;
+    private boolean hasErrors;
+    private boolean hasNotNulls;
+    private boolean hasNulls;
+    private boolean hasUnknowns;
     MultiMap<String, ExpressionRange> delegates = MultiMap.create();
 
-    new RecursiveLighterASTNodeWalkingVisitor(tree) {
-      @Override
-      public void visitNode(@NotNull LighterASTNode element) {
-        IElementType type = element.getTokenType();
-        if (type == CLASS || type == ANONYMOUS_CLASS || type == LAMBDA_EXPRESSION) return;
-
-        if (type == TokenType.ERROR_ELEMENT) {
-          hasErrors.set(true);
-        }
-        else if (type == RETURN_STATEMENT) {
-          LighterASTNode value = JavaLightTreeUtil.findExpressionChild(tree, element);
-          if (value == null) {
-            hasErrors.set(true);
-          } else {
-            visitReturnedValue(value);
-          }
-        }
-
-        super.visitNode(element);
-      }
-
-      private void visitReturnedValue(LighterASTNode expr) {
-        IElementType type = expr.getTokenType();
-        if (containsNulls(expr)) {
-          hasNulls.set(true);
-        }
-        else if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION ||
-                 type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
-          hasNotNulls.set(true);
-        }
-        else if (type == METHOD_CALL_EXPRESSION) {
-          String calledMethod = JavaLightTreeUtil.getNameIdentifierText(tree, tree.getChildren(expr).get(0));
-          if (calledMethod != null) {
-            delegates.putValue(calledMethod, ExpressionRange.create(expr, body.getStartOffset()));
-          }
-        }
-        else {
-          hasUnknowns.set(true);
-        }
-      }
-
-      private boolean containsNulls(@NotNull LighterASTNode value) {
-        if (value.getTokenType() == CONDITIONAL_EXPRESSION) {
-          List<LighterASTNode> exprChildren = JavaLightTreeUtil.getExpressionChildren(tree, value);
-          return exprChildren.subList(1, exprChildren.size()).stream().anyMatch(e -> containsNulls(e));
-        }
-        if (value.getTokenType() == PARENTH_EXPRESSION) {
-          LighterASTNode wrapped = JavaLightTreeUtil.findExpressionChild(tree, value);
-          return wrapped != null && containsNulls(wrapped);
-        }
-        return value.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(value).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
-      }
-
-    }.visitNode(body);
-
-
-    if (hasNulls.get()) {
-      return new NullityInferenceResult.Predefined(Nullness.NULLABLE);
+    NullityInferenceVisitor(LighterAST tree, LighterASTNode body) {
+      this.tree = tree;
+      this.body = body;
     }
-    if (hasErrors.get() || hasUnknowns.get() || delegates.size() > 1) {
+
+    void visitNode(LighterASTNode element) {
+      IElementType type = element.getTokenType();
+
+      if (type == TokenType.ERROR_ELEMENT) {
+        hasErrors = true;
+      }
+      else if (type == RETURN_STATEMENT) {
+        LighterASTNode value = JavaLightTreeUtil.findExpressionChild(tree, element);
+        if (value == null) {
+          hasErrors= true;
+        } else {
+          visitReturnedValue(value);
+        }
+      }
+    }
+
+    private void visitReturnedValue(LighterASTNode expr) {
+      IElementType type = expr.getTokenType();
+      if (containsNulls(expr)) {
+        hasNulls = true;
+      }
+      else if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION ||
+               type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
+        hasNotNulls = true;
+      }
+      else if (type == METHOD_CALL_EXPRESSION) {
+        String calledMethod = JavaLightTreeUtil.getNameIdentifierText(tree, tree.getChildren(expr).get(0));
+        if (calledMethod != null) {
+          delegates.putValue(calledMethod, ExpressionRange.create(expr, body.getStartOffset()));
+        }
+      }
+      else {
+        hasUnknowns = true;
+      }
+    }
+
+    private boolean containsNulls(@NotNull LighterASTNode value) {
+      if (value.getTokenType() == CONDITIONAL_EXPRESSION) {
+        List<LighterASTNode> exprChildren = JavaLightTreeUtil.getExpressionChildren(tree, value);
+        return exprChildren.subList(1, exprChildren.size()).stream().anyMatch(e -> containsNulls(e));
+      }
+      if (value.getTokenType() == PARENTH_EXPRESSION) {
+        LighterASTNode wrapped = JavaLightTreeUtil.findExpressionChild(tree, value);
+        return wrapped != null && containsNulls(wrapped);
+      }
+      return value.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(value).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
+    }
+
+    @Nullable
+    NullityInferenceResult getResult() {
+      if (hasNulls) {
+        return new NullityInferenceResult.Predefined(Nullness.NULLABLE);
+      }
+      if (hasErrors || hasUnknowns || delegates.size() > 1) {
+        return null;
+      }
+      if (delegates.size() == 1) {
+        return new NullityInferenceResult.FromDelegate(ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next())));
+      }
+
+      if (hasNotNulls) {
+        return new NullityInferenceResult.Predefined(Nullness.NOT_NULL);
+      }
       return null;
     }
-    if (delegates.size() == 1) {
-      return new NullityInferenceResult.FromDelegate(delegates.get(delegates.keySet().iterator().next()));
-    }
-
-    if (hasNotNulls.get()) {
-      return new NullityInferenceResult.Predefined(Nullness.NOT_NULL);
-    }
-    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Element element = new Element("root");
     moduleRootManager.getState().writeExternal(element);
     assertElementEquals(element,
-                        "<root inherit-compiler-output=\"false\">" +
+                        "<root>" +
                         "<output url=\"file://$MODULE_DIR$/classes\" />" +
                         "<output-test url=\"file://$MODULE_DIR$/testClasses\" />" +
                         "<exclude-output />" +

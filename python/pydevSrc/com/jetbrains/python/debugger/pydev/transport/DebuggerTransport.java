@@ -18,6 +18,4 @@ public interface DebuggerTransport {
   boolean isConnected();
 
   void disconnect();
-
-  void messageReceived(@NotNull ProtocolFrame frame);
 }

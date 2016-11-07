@@ -198,6 +198,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void addVcsListener(VcsListener listener);
 
   /**
@@ -207,6 +208,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
@@ -279,8 +281,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
   public abstract boolean isIgnored(VirtualFile vf);
-
-  public abstract boolean dvcsUsedInProject();
 
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();

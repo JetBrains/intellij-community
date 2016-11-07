@@ -213,28 +213,28 @@ public class GrAliasImportIntention extends Intention {
             if (refName == null) return;
 
             if (memberName.equals(refName)) {
-              ref.handleElementRenameSimple(name);
+              ref.handleElementRename(name);
             }
             else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
               final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
               if (newPropName != null) {
-                ref.handleElementRenameSimple(newPropName);
+                ref.handleElementRename(newPropName);
               }
               else {
-                ref.handleElementRenameSimple(name);
+                ref.handleElementRename(name);
               }
             }
             else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
               final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
             else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
               final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
             else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
               final String getterName = GroovyPropertyUtils.getSetterName(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
           }
         }

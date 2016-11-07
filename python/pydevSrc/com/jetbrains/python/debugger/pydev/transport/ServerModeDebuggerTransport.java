@@ -2,10 +2,8 @@ package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.jetbrains.python.debugger.pydev.ProtocolFrame;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,10 +18,10 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ServerModeDebuggerTransport.class);
 
   @NotNull private final ServerSocket myServerSocket;
-  @Nullable private DebuggerReader myDebuggerReader;
+  private volatile DebuggerReader myDebuggerReader;
 
   private volatile boolean myConnected = false;
-  @Nullable private Socket mySocket;
+  private volatile Socket mySocket;
   private int myConnectionTimeout;
 
   public ServerModeDebuggerTransport(RemoteDebugger debugger, @NotNull ServerSocket socket, int connectionTimeout) {
@@ -34,45 +32,44 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void waitForConnect() throws IOException {
+    //noinspection SocketOpenedButNotSafelyClosed
+    myServerSocket.setSoTimeout(myConnectionTimeout);
+
     synchronized (mySocketObject) {
-      //noinspection SocketOpenedButNotSafelyClosed
-      myServerSocket.setSoTimeout(myConnectionTimeout);
-
-      Socket socket = myServerSocket.accept();
+      mySocket = myServerSocket.accept();
       myConnected = true;
-      try {
-        myDebuggerReader = new DebuggerReader(myDebugger, socket.getInputStream());
-      }
-      catch (IOException e) {
-        try {
-          socket.close();
-        }
-        catch (IOException ignore) {
-        }
-        throw e;
-      }
-      mySocket = socket;
-
-      // mySocket is closed in close() method on process termination
     }
+    try {
+      synchronized (mySocketObject) {
+        myDebuggerReader = new DebuggerReader(myDebugger, mySocket.getInputStream());
+      }
+    }
+    catch (IOException e) {
+      try {
+        mySocket.close();
+      }
+      catch (IOException ignore) {
+      }
+      throw e;
+    }
+
+    // mySocket is closed in close() method on process termination
   }
 
   @Override
   public void close() {
-    synchronized (mySocketObject) {
-      try {
-        if (myDebuggerReader != null) {
-          myDebuggerReader.stop();
-        }
+    try {
+      if (myDebuggerReader != null) {
+        myDebuggerReader.stop();
       }
-      finally {
-        if (!myServerSocket.isClosed()) {
-          try {
-            myServerSocket.close();
-          }
-          catch (IOException e) {
-            LOG.warn("Error closing socket", e);
-          }
+    }
+    finally {
+      if (!myServerSocket.isClosed()) {
+        try {
+          myServerSocket.close();
+        }
+        catch (IOException e) {
+          LOG.warn("Error closing socket", e);
         }
       }
     }
@@ -80,9 +77,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public boolean isConnected() {
-    synchronized (mySocketObject) {
-      return myConnected && mySocket != null && !mySocket.isClosed();
-    }
+    return myConnected && mySocket != null && !mySocket.isClosed();
   }
 
   @Override
@@ -98,11 +93,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
         }
       }
     }
-  }
-
-  @Override
-  public void messageReceived(@NotNull ProtocolFrame frame) {
-    // do nothing
   }
 
   @Override

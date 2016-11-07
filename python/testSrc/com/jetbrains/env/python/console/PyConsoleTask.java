@@ -324,6 +324,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         myConsoleView.executeInConsole(command);
       }
     });
+    Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
+                                    "Output: %s", command, output()), waitFor(myCommandSemaphore));
+    myCommandSemaphore.release();
   }
 
   protected boolean hasValue(String varName, String value) throws PyDebuggerException {

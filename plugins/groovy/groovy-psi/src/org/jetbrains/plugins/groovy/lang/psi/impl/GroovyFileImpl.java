@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -532,6 +533,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     return this;
+  }
+
+  @NotNull
+  @Override
+  public GrVariableDeclaration[] getScriptDeclarations(boolean topLevelOnly) {
+    return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
   }
 
   @Override

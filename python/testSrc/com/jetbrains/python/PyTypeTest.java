@@ -1392,6 +1392,12 @@ public class PyTypeTest extends PyTestCase {
                     "expr = copy.deepcopy(A())\n");
   }
 
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest("float",
+           "expr = float.fromhex(\"0.5\")");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

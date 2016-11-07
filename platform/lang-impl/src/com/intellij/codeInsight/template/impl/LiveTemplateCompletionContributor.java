@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
   private static boolean ourShowTemplatesInTests = false;
-  
+
   @TestOnly
   public static void setShowTemplatesInTests(boolean show, @NotNull Disposable parentDisposable) {
     ourShowTemplatesInTests = show;
@@ -88,11 +88,12 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
-              ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
+              ensureTemplatesShown(templatesShown, templates, finalResult);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, parameters, result);
+          ensureTemplatesShown(templatesShown, templates, result);
+          showCustomLiveTemplates(parameters, result);
           return;
         }
 
@@ -107,7 +108,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
               .addElement(new LiveTemplateLookupElementImpl(template, true));
           }
         }
-        
+
         for (Map.Entry<TemplateImpl, String> possible : templates.entrySet()) {
           String templateKey = possible.getKey().getKey();
           String currentPrefix = possible.getValue();
@@ -137,19 +138,21 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   private static void ensureTemplatesShown(AtomicBoolean templatesShown, Map<TemplateImpl, String> templates,
-                                           CompletionParameters parameters, CompletionResultSet result) {
+                                           CompletionResultSet result) {
     if (!templatesShown.getAndSet(true)) {
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(StringUtil.notNullize(entry.getValue())))
           .addElement(new LiveTemplateLookupElementImpl(entry.getKey(), false));
       }
+    }
+  }
 
-      PsiFile file = parameters.getPosition().getContainingFile();
-      Editor editor = parameters.getEditor();
-      for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
-        if (customLiveTemplate instanceof CustomLiveTemplateBase) {
-          ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
-        }
+  private static void showCustomLiveTemplates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    PsiFile file = parameters.getPosition().getContainingFile();
+    Editor editor = parameters.getEditor();
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+      if (customLiveTemplate instanceof CustomLiveTemplateBase) {
+        ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
       }
     }
   }

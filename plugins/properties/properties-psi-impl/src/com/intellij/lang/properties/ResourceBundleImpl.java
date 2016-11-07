@@ -20,15 +20,9 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public class ResourceBundleImpl extends ResourceBundle {
@@ -42,33 +36,7 @@ public class ResourceBundleImpl extends ResourceBundle {
   @NotNull
   @Override
   public List<PropertiesFile> getPropertiesFiles() {
-    if (ResourceBundleManager.getInstance(getProject()).isDefaultDissociated(myDefaultPropertiesFile.getVirtualFile())) {
-      return Collections.singletonList(myDefaultPropertiesFile);
-    }
-    PsiFile[] children =
-      ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-        @Override
-        public PsiFile[] compute() {
-          return myDefaultPropertiesFile.getParent().getFiles();
-        }
-      });
-    final String baseName = getBaseName();
-    List<PropertiesFile> result = new SmartList<>();
-    for (PsiFile file : children) {
-      if (!file.isValid()) continue;
-      PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-      if (propertiesFile == null) {
-        continue;
-      }
-      if (Comparing.strEqual(PropertiesUtil.getDefaultBaseName(file.getVirtualFile()), baseName)) {
-        result.add(propertiesFile);
-        if (!propertiesFile.equals(myDefaultPropertiesFile) &&
-            Comparing.equal(propertiesFile.getName(), myDefaultPropertiesFile.getName())) {
-          return Collections.singletonList(myDefaultPropertiesFile);
-        }
-      }
-    }
-    return result;
+    return PropertiesImplUtil.getResourceBundleWithCachedFiles(myDefaultPropertiesFile).getFiles();
   }
 
   @NotNull

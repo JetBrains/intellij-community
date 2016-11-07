@@ -179,12 +179,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @NotNull
   public String[] getSchemeNames() {
     List<MyColorScheme> schemes = new ArrayList<>(mySchemes.values());
-    Collections.sort(schemes, (o1, o2) -> {
-      if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
-      if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
-
-      return o1.getName().compareToIgnoreCase(o2.getName());
-    });
+    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
 
     List<String> names = new ArrayList<>(schemes.size());
     for (MyColorScheme scheme : schemes) {
@@ -204,8 +199,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     if (scheme == null) return;
 
     EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
-
-    scheme.apply(clone, false);
+    scheme.apply(clone);
+    if (clone instanceof AbstractColorsScheme) {
+      ((AbstractColorsScheme)clone).setSaveNeeded(true);
+    }
 
     clone.setName(name);
     MyColorScheme newScheme = new MyColorScheme(clone);
@@ -1125,12 +1122,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     private boolean apply() {
       if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
-        return apply(myParentScheme, true);
+        return apply(myParentScheme);
       }
       return false;
     }
 
-    private boolean apply(@NotNull EditorColorsScheme scheme, boolean onlyIfModified) {
+    private boolean apply(@NotNull EditorColorsScheme scheme) {
       boolean isModified = isFontModified() || isConsoleFontModified();
 
       scheme.setFontPreferences(getFontPreferences());
@@ -1140,7 +1137,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       scheme.setConsoleLineSpacing(getConsoleLineSpacing());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
-        if (!onlyIfModified || descriptor.isModified()) {
+        if (descriptor.isModified()) {
           isModified = true;
           descriptor.apply(scheme);
         }

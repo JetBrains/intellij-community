@@ -334,6 +334,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     removeExternalizableSchemes()
 
     loadSchemes()
+
+    (processor as? LazySchemeProcessor)?.reloaded()
   }
 
   private fun removeExternalizableSchemes() {
@@ -344,8 +346,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         continue
       }
 
-      if (scheme === currentScheme) {
-        currentScheme = null
+      currentScheme?.let {
+        if (scheme === it) {
+          currentPendingSchemeName = it.name
+          currentScheme = null
+        }
       }
 
       iterator.remove()

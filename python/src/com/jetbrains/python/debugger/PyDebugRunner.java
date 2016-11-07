@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -340,7 +339,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static void configureCommonDebugParameters(@NotNull Project project,
                                                     @NotNull ParamsGroup debugParams) {
     if (isModule) {
-      debugParams.addParameter("--module");
+      debugParams.addParameter(MODULE_PARAM);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

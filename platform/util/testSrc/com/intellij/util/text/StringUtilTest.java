@@ -98,8 +98,16 @@ public class StringUtilTest {
 
   @Test
   public void testUnPluralize() {
-    assertEquals("s", StringUtil.unpluralize("s"));
+    assertEquals("plurals", StringUtil.unpluralize("pluralss"));
+    assertEquals("I", StringUtil.unpluralize("Is"));
+    assertEquals(null, StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
+    assertEquals("Index", StringUtil.unpluralize("Indices"));
+    assertEquals("fix", StringUtil.unpluralize("fixes"));
+    assertEquals("man", StringUtil.unpluralize("men"));
+    assertEquals("leaf", StringUtil.unpluralize("leaves"));
+    assertEquals("cookie", StringUtil.unpluralize("cookies"));
+    assertEquals("search", StringUtil.unpluralize("searches"));
   }
 
   @Test
@@ -112,6 +120,14 @@ public class StringUtilTest {
     assertEquals("men", StringUtil.pluralize("man"));
     assertEquals("media", StringUtil.pluralize("medium"));
     assertEquals("stashes", StringUtil.pluralize("stash"));
+    assertEquals("children", StringUtil.pluralize("child"));
+    assertEquals("leaves", StringUtil.pluralize("leaf"));
+    assertEquals("These", StringUtil.pluralize("This"));
+    assertEquals("cookies", StringUtil.pluralize("cookie"));
+    assertEquals("VaLuES", StringUtil.pluralize("VaLuE"));
+    assertEquals("PLANS", StringUtil.pluralize("PLAN"));
+    assertEquals("stackTraceLineExes", StringUtil.pluralize("stackTraceLineEx"));
+    assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
   }
 
   @Test

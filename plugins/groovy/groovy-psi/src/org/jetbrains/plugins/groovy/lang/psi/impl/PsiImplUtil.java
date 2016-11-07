@@ -152,7 +152,7 @@ public class PsiImplUtil {
       }
     }
 
-    
+
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (oldParent instanceof GrStringInjection) {
       if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
@@ -165,7 +165,7 @@ public class PsiImplUtil {
         return ((GrExpression)statements[0]).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       }
     }
-    
+
     if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
@@ -173,7 +173,7 @@ public class PsiImplUtil {
       final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       return (GrExpression)replaced;
     }
-    
+
     //check priorities    
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression addedParenth = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);

@@ -22,11 +22,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
@@ -89,30 +89,40 @@ class AsyncFilterRunner {
       applyResults.set(bgComputation.compute());
     };
     while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(computeInReadAction)) {
-      TimeoutUtil.sleep(10);
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
     return applyResults.get();
   }
 
-  private void handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, int timeout) {
+  private boolean handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, long timeout) {
     try {
       future.get(timeout, TimeUnit.MILLISECONDS).applyHighlights(myHyperlinks);
       handled.set(true);
       myPendingFilterResults.remove(handled);
+      return true;
     }
     catch (TimeoutException ignored) {
+      return false;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
   
-  public void waitForPendingFilters() {
+  public boolean waitForPendingFilters(long timeoutMs) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    
+    long started = System.currentTimeMillis();
     while(!myPendingFilterResults.isEmpty()) {
       Map.Entry<AtomicBoolean, Future<FilterResults>> next = myPendingFilterResults.entrySet().iterator().next();
-      handleSynchronouslyIfQuick(next.getKey(), next.getValue(), 1000);
+
+      timeoutMs -= System.currentTimeMillis() - started;
+      if (timeoutMs < 1) return false;
+      
+      if (!handleSynchronouslyIfQuick(next.getKey(), next.getValue(), timeoutMs)) return false;
     }
+    
+    return true;
   }
 
   @NotNull
@@ -124,6 +134,7 @@ class AsyncFilterRunner {
     return () -> {
       List<Filter.Result> results = new ArrayList<>();
       for (LineHighlighter task : tasks) {
+        ProgressManager.checkCanceled();
         if (!marker.isValid()) return FilterResults.EMPTY;
         ContainerUtil.addIfNotNull(results, task.compute());
       }

@@ -19,22 +19,12 @@ import com.intellij.junit3.TestRunnerUtil;
 import junit.framework.TestCase;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.internal.AssumptionViolatedException;
-import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
-import org.junit.internal.builders.AnnotatedBuilder;
-import org.junit.internal.builders.IgnoredBuilder;
-import org.junit.internal.builders.JUnit4Builder;
-import org.junit.internal.requests.ClassRequest;
-import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized;
-import org.junit.runners.model.FrameworkMethod;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -159,7 +149,7 @@ public class JUnit4TestRunnerUtil {
             try {
               final Method method = clazz.getMethod(methodName, null);
               if (method != null && notForked && (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
-                final Request classRequest = createIgnoreIgnoredClassRequest(clazz, true);
+                final Request classRequest = JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, true);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
                   public boolean shouldRun(Description description) {
@@ -172,7 +162,7 @@ public class JUnit4TestRunnerUtil {
                 });
               }
             }
-            catch (Exception ignored) {
+            catch (Throwable ignored) {
               //return simple method runner
             }
           } else {
@@ -228,7 +218,7 @@ public class JUnit4TestRunnerUtil {
       final Class clazz = (Class)result.get(0);
       try {
         if (clazz.getAnnotation(Ignore.class) != null) { //override ignored case only
-          return createIgnoreIgnoredClassRequest(clazz, false);
+          return JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, false);
         }
       }
       catch (ClassNotFoundException e) {
@@ -251,7 +241,7 @@ public class JUnit4TestRunnerUtil {
         if (methodName != null) {
           final Method method = clazz.getMethod(methodName, new Class[0]);
           if (method != null && !method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
-            return Request.runner(createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
+            return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
           }
         }
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
@@ -289,86 +279,6 @@ public class JUnit4TestRunnerUtil {
       }
     }
     return null;
-  }
-
-  private static Runner createIgnoreAnnotationAndJUnit4ClassRunner(Class clazz) throws Throwable {
-    return new AllDefaultPossibilitiesBuilder(true) {
-      protected AnnotatedBuilder annotatedBuilder() {
-        return new AnnotatedBuilder(this) {
-          public Runner runnerForClass(Class testClass) throws Exception {
-            return null;
-          }
-        };
-      }
-
-      protected JUnit4Builder junit4Builder() {
-        return new JUnit4Builder() {
-          public Runner runnerForClass(Class testClass) throws Throwable {
-            return null;
-          }
-        };
-      }
-    }.runnerForClass(clazz);
-  }
-
-  private static Request createIgnoreIgnoredClassRequest(final Class clazz, final boolean recursively) throws ClassNotFoundException {
-    Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
-    return new ClassRequest(clazz) {
-      public Runner getRunner() {
-        try {
-          return new AllDefaultPossibilitiesBuilder(true) {
-            protected IgnoredBuilder ignoredBuilder() {
-              return new IgnoredBuilder() {
-                public Runner runnerForClass(Class testClass) {
-                  return null;
-                }
-              };
-            }
-
-            protected JUnit4Builder junit4Builder() {
-              return new JUnit4Builder() {
-                public Runner runnerForClass(Class testClass) throws Throwable {
-                  try {
-                    Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", new Class[]{FrameworkMethod.class});
-                    if (ignored != null) {
-                      return new BlockJUnit4ClassRunner(testClass) {
-                        protected boolean isIgnored(FrameworkMethod child) {
-                          return false;
-                        }
-                      };
-                    }
-                  }
-                  catch (NoSuchMethodException ignored) {}
-                  //older versions
-                  return new BlockJUnit4ClassRunner(testClass) {
-                    protected void runChild(FrameworkMethod method, RunNotifier notifier) {
-                      final Description description = describeChild(method);
-                      final EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
-                      eachNotifier.fireTestStarted();
-                      try {
-                        methodBlock(method).evaluate();
-                      }
-                      catch (AssumptionViolatedException e) {
-                        eachNotifier.addFailedAssumption(e);
-                      }
-                      catch (Throwable e) {
-                        eachNotifier.addFailure(e);
-                      }
-                      finally {
-                        eachNotifier.fireTestFinished();
-                      }
-                    }
-                  };
-                }
-              };
-            }
-          }.runnerForClass(clazz);
-        }
-        catch (Throwable throwable) {
-          return super.getRunner();
-        }
-      }
-    };
   }
 
   private static Request getClassRequestsUsing44API(String suiteName, Class[] classes) {

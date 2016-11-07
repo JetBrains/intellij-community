@@ -28,6 +28,10 @@ public class BuildDataCorruptedException extends RuntimeException {
     super(cause);
   }
 
+  public BuildDataCorruptedException(String message) {
+    super(message);
+  }
+
   @Override
   public synchronized IOException getCause() {
     return (IOException)super.getCause();

@@ -17,9 +17,9 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.ContractInference
 import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
@@ -569,6 +569,9 @@ class Foo {{
 
   private List<String> inferContracts(String method) {
     def clazz = myFixture.addClass("final class Foo { $method }")
-    return ContractInference.inferContracts(clazz.methods[0]).collect { it as String }
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    def contracts = ContractInference.inferContracts(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    return contracts.collect { it as String }
   }
 }

@@ -289,7 +289,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject));
     }
   }
 

@@ -26,6 +26,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -401,13 +403,18 @@ class PassExecutorService implements Disposable {
 
     @Override
     public void run() {
-      try {
-        doRun();
-      }
-      catch (RuntimeException | Error e) {
-        saveException(e,myUpdateProgress);
-        throw e;
-      }
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
+        try {
+          doRun();
+        }
+        catch (ApplicationUtil.CannotRunReadActionException e) {
+          myUpdateProgress.cancel();
+        }
+        catch (RuntimeException | Error e) {
+          saveException(e, myUpdateProgress);
+          throw e;
+        }
+      });
     }
 
     private void doRun() {

@@ -44,7 +44,7 @@ class WinExeInstallerBuilder {
     }
 
     String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     buildContext.messages.progress("Building Windows installer $outFileName")
 
     def box = "$buildContext.paths.temp/winInstaller"
@@ -131,13 +131,13 @@ class WinExeInstallerBuilder {
 
     def extensionsList = customizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToJre64 = customizer.getLinkToJre64() != null ?
-                      "${customizer.getLinkToJre64()}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}" :
+    def linkToJre64 = customizer.getBaseDownloadUrlForJre64() != null ?
+                      "${customizer.getBaseDownloadUrlForJre64()}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}" :
                       null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
-!define MUI_PRODUCT  "${customizer.fullNameIncludingEdition(buildContext.applicationInfo)}"
-!define PRODUCT_FULL_NAME "${customizer.fullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
+!define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
+!define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
 !define PRODUCT_EXE_FILE "$mainExeLauncherName"
 !define PRODUCT_EXE_FILE_64 "$x64LauncherName"
 !define PRODUCT_ICON_FILE "install.ico"
@@ -145,7 +145,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
-!define UNINSTALL_WEB_PAGE "${customizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
+!define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 !define LINK_TO_JRE64 "$linkToJre64"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed

@@ -1131,6 +1131,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public final void beforeAstChange() {
     if (!useStrongRefs()) {
+      myUseStrongRefs = true;
       myRefToPsi.switchToStrongRefs();
 
       FileElement element = getTreeElement();
@@ -1139,8 +1140,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       } else {
         LOG.error("No AST; " + derefStub() + "; " + this + " of " + getClass() + "; " + getViewProvider() + " of " + getViewProvider().getClass());
       }
-
-      myUseStrongRefs = true;
     }
   }
 

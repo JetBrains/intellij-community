@@ -135,6 +135,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
         return scheme.isEqualToBundled(bundledScheme);
       }
+
+      @Override
+      public void reloaded() {
+        initEditableDefaultSchemesCopies();
+        initEditableBundledSchemesCopies();
+      }
     }
     mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
 
@@ -282,13 +288,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme[] getAllSchemes() {
     EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
-    Arrays.sort(result, (s1, s2) -> {
-      if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
-      if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
-      if (s1.getName().equals(DEFAULT_NAME)) return -1;
-      if (s2.getName().equals(DEFAULT_NAME)) return 1;
-      return s1.getName().compareToIgnoreCase(s2.getName());
-    });
+    Arrays.sort(result, EditorColorSchemesComparator.INSTANCE);
     return result;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollingModel;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -41,7 +42,7 @@ public class CaretVisualPositionKeeper {
 
   private CaretVisualPositionKeeper(Editor[] editors) {
     for (Editor editor : editors) {
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
       Point pos = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
       int relativePosition = pos.y - visibleArea.y;
       myCaretRelativeVerticalPositions.put(editor, relativePosition);
@@ -54,9 +55,12 @@ public class CaretVisualPositionKeeper {
       int relativePosition = e.getValue();
       Point caretLocation = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
       int scrollOffset = caretLocation.y - relativePosition;
-      editor.getScrollingModel().disableAnimation();
-      editor.getScrollingModel().scrollVertically(scrollOffset);
-      editor.getScrollingModel().enableAnimation();
+      ScrollingModel scrollingModel = editor.getScrollingModel();
+      // when animated scrolling is in progress, we'll not stop it immediately
+      boolean useAnimation = !scrollingModel.getVisibleAreaOnScrollingFinished().equals(scrollingModel.getVisibleArea());
+      if (!useAnimation) scrollingModel.disableAnimation();
+      scrollingModel.scrollVertically(scrollOffset);
+      if (!useAnimation) scrollingModel.enableAnimation();
     }
   }
 }

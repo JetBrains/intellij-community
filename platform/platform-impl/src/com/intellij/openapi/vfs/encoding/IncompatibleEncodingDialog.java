@@ -35,10 +35,10 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   @NotNull private final EncodingUtil.Magic8 safeToReload;
   @NotNull private final EncodingUtil.Magic8 safeToConvert;
 
-  public IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
-                                    @NotNull final Charset charset,
-                                    @NotNull EncodingUtil.Magic8 safeToReload,
-                                    @NotNull EncodingUtil.Magic8 safeToConvert) {
+  IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
+                             @NotNull final Charset charset,
+                             @NotNull EncodingUtil.Magic8 safeToReload,
+                             @NotNull EncodingUtil.Magic8 safeToConvert) {
     super(false);
     this.virtualFile = virtualFile;
     this.charset = charset;
@@ -131,6 +131,6 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     return new Action[]{reloadAction, convertAction, cancelAction};
   }
 
-  public static final int RELOAD_EXIT_CODE = 10;
-  public static final int CONVERT_EXIT_CODE = 20;
+  static final int RELOAD_EXIT_CODE = 10;
+  static final int CONVERT_EXIT_CODE = 20;
 }

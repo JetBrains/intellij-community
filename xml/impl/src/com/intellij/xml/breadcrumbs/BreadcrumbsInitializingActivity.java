@@ -123,21 +123,20 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       for (final FileEditor fileEditor : fileEditors) {
         if (fileEditor instanceof TextEditor) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
-          BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
-          if (wrapper != null) {
-            wrapper.queueUpdate();
+          final BreadcrumbsXmlWrapper existingWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
+          if (existingWrapper != null) {
+            existingWrapper.queueUpdate();
             continue;
           }
 
-          wrapper = new BreadcrumbsXmlWrapper(editor);
+          final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
           final JComponent c = wrapper.getComponent();
           fileEditorManager.addTopComponent(fileEditor, c);
 
-          BreadcrumbsXmlWrapper finalWrapper = wrapper;
           Disposer.register(fileEditor, new Disposable() {
             @Override
             public void dispose() {
-              disposeWrapper(fileEditorManager, fileEditor, finalWrapper);
+              disposeWrapper(fileEditorManager, fileEditor, wrapper);
             }
           });
         }

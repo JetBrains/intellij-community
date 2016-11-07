@@ -1534,11 +1534,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @NotNull
   private ActionCallback setPaneOption(@NotNull Map<String, Boolean> optionsMap, boolean value, String paneId, final boolean updatePane) {
-    optionsMap.put(paneId, value);
-    if (updatePane) {
-      final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
-      if (pane != null) {
-        return pane.updateFromRoot(false);
+    if (paneId != null) {
+      optionsMap.put(paneId, value);
+      if (updatePane) {
+        final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
+        if (pane != null) {
+          return pane.updateFromRoot(false);
+        }
       }
     }
     return ActionCallback.DONE;

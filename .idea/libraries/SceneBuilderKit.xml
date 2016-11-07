@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="SceneBuilderKit">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/plugins/javaFX/lib/SceneBuilderKit-8.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/javaFX/lib/SceneBuilderKit-8.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

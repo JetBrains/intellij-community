@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -108,8 +106,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myShowCommandLineAfterwards = showCommandLineAfterwards;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  public void readExternal(Element element) {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -38,6 +39,7 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.util.Set;
 
 public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   public boolean CHECK_ACTIONS = true;
@@ -82,7 +84,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         classIdentifier != null &&
         psiFile != null &&
         psiFile.getVirtualFile() != null &&
-        !isAbstract(checkedClass))
+        !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT))
     {
       if (PsiUtil.isInnerClass(checkedClass)) {
         // don't check inner classes (make this an option?)
@@ -99,7 +101,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           return null;
         }
         if (checkedClass.isInheritor(actionClass, true)) {
-          if (IGNORE_NON_PUBLIC && !isPublic(checkedClass)) {
+          if (IGNORE_NON_PUBLIC && !checkedClass.hasModifierProperty(PsiModifier.PUBLIC)) {
             return null;
           }
           if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
@@ -125,7 +127,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           return null;
         }
         if (checkedClass.isInheritor(compClass, true)) {
-          if (getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
+          if (RegistrationCheckerUtil.getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
             LocalQuickFix fix = new RegisterComponentFix(type, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
             ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
                                                                               DevKitBundle.message("inspections.component.not.registered.message",
@@ -140,6 +142,17 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
       }
     }
     return null;
+  }
+
+  private static boolean isActionRegistered(PsiClass psiClass) {
+    final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(psiClass, true);
+    if (registrationTypes != null) {
+      for (PsiClass type : registrationTypes) {
+        if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
+        if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
+      }
+    }
+    return false;
   }
 
   private static boolean canFix(PsiClass psiClass) {

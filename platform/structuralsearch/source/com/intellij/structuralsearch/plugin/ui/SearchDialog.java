@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -37,7 +52,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -295,6 +309,7 @@ public class SearchDialog extends DialogWrapper {
       myEditorPanel = createEditorContent();
       myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
       myContentPanel.revalidate();
+      searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, model.getConfig());
     }
   }
 
@@ -371,8 +386,6 @@ public class SearchDialog extends DialogWrapper {
   }
 
   public void setValuesFromConfig(Configuration configuration) {
-    //searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
-
     setDialogTitle(configuration);
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
@@ -680,10 +693,7 @@ public class SearchDialog extends DialogWrapper {
 
   protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
-    if (handler == null) {
-      return Collections.emptyList();
-    }
-    return new ArrayList<>(handler.getVariables());
+    return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
 
   public final Project getProject() {
@@ -704,10 +714,6 @@ public class SearchDialog extends DialogWrapper {
   @Override
   public void show() {
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
-    searchCriteriaEdit.putUserData(
-      SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY,
-      model.getConfig()
-    );
 
     if (!useLastConfiguration) {
       final Editor editor = searchContext.getEditor();

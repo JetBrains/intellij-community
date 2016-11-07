@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.*;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -125,6 +126,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           }
         }
         else {
+          handleMapToObj(methodCall);
           handleStreamForEach(methodCall, method);
         }
       }
@@ -134,6 +136,71 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if(nameElement != null) {
           holder.registerProblem(nameElement, fix.getMessage(), new SimplifyCallChainFix(fix));
         }
+      }
+
+      private void handleMapToObj(PsiMethodCallExpression methodCall) {
+        PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+        if(nameElement == null || !"mapToObj".equals(nameElement.getText())) return;
+        PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+        if(args.length != 1) return;
+        PsiType type = StreamApiUtil.getStreamElementType(methodCall.getType());
+        if(!(type instanceof PsiClassType)) return;
+        PsiClass targetClass = ((PsiClassType)type).resolve();
+        PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
+        if (qualifier == null || !TypeConversionUtil
+          .boxingConversionApplicable(StreamApiUtil.getStreamElementType(qualifier.getType()), type)) {
+          return;
+        }
+        if(isBoxingFunction(args[0], targetClass)) {
+          ReplaceWithBoxedFix fix = new ReplaceWithBoxedFix();
+          holder.registerProblem(nameElement,
+                                 "Can be replaced with 'boxed'", new SimplifyCallChainFix(fix));
+        }
+      }
+
+      @Contract("null, _ -> false")
+      private boolean isBoxingFunction(PsiExpression arg, PsiClass targetClass) {
+        if(arg instanceof PsiMethodReferenceExpression) {
+          PsiElement target = ((PsiMethodReferenceExpression)arg).resolve();
+          if(target instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod)target;
+            // Integer::new or Integer::valueOf
+            if(targetClass == method.getContainingClass() &&
+               (method.isConstructor() || method.getName().equals("valueOf")) && method.getParameterList().getParametersCount() == 1) {
+              return true;
+            }
+          }
+        }
+        if(arg instanceof PsiLambdaExpression) {
+          PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+          PsiParameter[] parameters = lambda.getParameterList().getParameters();
+          if(parameters.length != 1) return false;
+          PsiParameter parameter = parameters[0];
+          PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+          // x -> x
+          if(expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(parameter)) {
+            return true;
+          }
+          if(expression instanceof PsiCallExpression) {
+            PsiExpressionList list = ((PsiCallExpression)expression).getArgumentList();
+            if(list == null) return false;
+            PsiExpression[] args = list.getExpressions();
+            if(args.length != 1 || !(args[0] instanceof PsiReferenceExpression) || !(((PsiReferenceExpression)args[0]).isReferenceTo(parameter))) {
+              return false;
+            }
+            // x -> new Integer(x)
+            if(expression instanceof PsiNewExpression) {
+              PsiJavaCodeReferenceElement ref = ((PsiNewExpression)expression).getClassReference();
+              if(ref != null && ref.isReferenceTo(targetClass)) return true;
+            }
+            // x -> Integer.valueOf(x)
+            if(expression instanceof PsiMethodCallExpression) {
+              PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+              if(method != null && method.getContainingClass() == targetClass && method.getName().equals("valueOf")) return true;
+            }
+          }
+        }
+        return false;
       }
 
       private void handleOptionalIsPresent(PsiMethodCallExpression methodCall) {
@@ -803,6 +870,30 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());
       }
       CodeStyleManager.getInstance(project).reformat(newExpression);
+    }
+  }
+
+  private static class ReplaceWithBoxedFix implements CallChainFix {
+    @Override
+    public String getName() {
+      return "Replace with 'boxed'";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      if(!(element instanceof PsiIdentifier)) return;
+      PsiElement parent = element.getParent();
+      if(!(parent instanceof PsiReferenceExpression)) return;
+      PsiElement grandParent = parent.getParent();
+      if(!(grandParent instanceof PsiMethodCallExpression)) return;
+      PsiExpression[] args = ((PsiMethodCallExpression)grandParent).getArgumentList().getExpressions();
+      if(args.length != 1) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      element.replace(factory.createIdentifier("boxed"));
+      args[0].delete();
+      ((PsiMethodCallExpression)grandParent).getTypeArgumentList().delete();
     }
   }
 }

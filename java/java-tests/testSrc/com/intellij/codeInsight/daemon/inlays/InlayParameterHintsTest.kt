@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
@@ -23,11 +24,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.DocumentUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 
 
 abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
   
   private var isParamHintsEnabledBefore = false
+  private lateinit var stateBefore: Element
 
   override fun setUp() {
     super.setUp()
@@ -35,11 +38,14 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
     val settings = EditorSettingsExternalizable.getInstance()
     isParamHintsEnabledBefore = settings.isShowParameterNameHints
     settings.isShowParameterNameHints = true
+    
+    stateBefore = ParameterNameHintsSettings.getInstance().state
   }
 
   override fun tearDown() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.isShowParameterNameHints = isParamHintsEnabledBefore
+    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
+    ParameterNameHintsSettings.getInstance().loadState(stateBefore)
+    
     super.tearDown()
   }
 
@@ -68,7 +74,7 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
 }
 
-class InlayAssert(private val file: PsiFile, private val inlays: List<Inlay>) {
+class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
 
   fun assertNoInlays() {
     assertThat(inlays).hasSize(0)

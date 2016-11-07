@@ -24,6 +24,12 @@ import java.util.Map;
 
 public class JUnitAssertsWithoutMessagesInspection extends AssertsWithoutMessagesInspection {
 
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "AssertsWithoutMessages";
+  }
+
   @Override
   protected Map<String, Integer> getAssertMethods() {
     return AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS;

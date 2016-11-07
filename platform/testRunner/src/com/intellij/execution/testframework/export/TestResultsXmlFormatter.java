@@ -19,14 +19,11 @@ import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.filters.*;
-import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -134,15 +131,6 @@ public class TestResultsXmlFormatter {
     catch (WriteExternalException ignore) {}
     processJDomElement(config);
 
-    CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
-    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-      Filter[] filters = eachProvider.getDefaultFilters(myRuntimeConfiguration.getProject());
-      for (Filter filter : filters) {
-        f.addFilter(filter);
-      }
-    }
-
-
     if (myTestRoot instanceof TestProxyRoot) {
       final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
       if (presentation != null) {
@@ -157,18 +145,18 @@ public class TestResultsXmlFormatter {
           rootAttrs.put("location", rootLocation);
         }
         startElement(ROOT_ELEM, rootAttrs);
-        writeOutput(myTestRoot, f);
+        writeOutput(myTestRoot);
         endElement(ROOT_ELEM);
       }
     }
     
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
-        processNode(node, f);
+        processNode(node);
       }
     }
     else {
-      processNode(myTestRoot, f);
+      processNode(myTestRoot);
     }
     endElement(ELEM_RUN);
     myResultHandler.endDocument();
@@ -192,7 +180,7 @@ public class TestResultsXmlFormatter {
     counts.put(status, count != null ? count + 1 : 1);
   }
 
-  private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
+  private void processNode(AbstractTestProxy node) throws SAXException {
     ProgressManager.checkCanceled();
     Map<String, String> attrs = new HashMap<>();
     attrs.put(ATTR_NAME, node.getName());
@@ -213,7 +201,7 @@ public class TestResultsXmlFormatter {
     if (node.isLeaf()) {
       started = true;
       startElement(elemName, attrs);
-      writeOutput(node, filter);
+      writeOutput(node);
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
@@ -225,7 +213,7 @@ public class TestResultsXmlFormatter {
           started = true;
           startElement(elemName, attrs);
         }
-        processNode(child, filter);
+        processNode(child);
       }
     }
     if (started) {
@@ -233,7 +221,7 @@ public class TestResultsXmlFormatter {
     }
   }
 
-  private void writeOutput(AbstractTestProxy node, final Filter filter) throws SAXException {
+  private void writeOutput(AbstractTestProxy node) throws SAXException {
     final StringBuilder buffer = new StringBuilder();
     final Ref<ConsoleViewContentType> lastType = new Ref<>();
     final Ref<SAXException> error = new Ref<>();
@@ -246,7 +234,7 @@ public class TestResultsXmlFormatter {
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
             try {
-              writeOutput(lastType.get(), buffer, filter);
+              writeOutput(lastType.get(), buffer);
             }
             catch (SAXException e) {
               error.set(e);
@@ -276,31 +264,15 @@ public class TestResultsXmlFormatter {
       throw error.get();
     }
     if (buffer.length() > 0) {
-      writeOutput(lastType.get(), buffer, filter);
+      writeOutput(lastType.get(), buffer);
     }
   }
 
-  private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {
+  private void writeOutput(ConsoleViewContentType type, StringBuilder text) throws SAXException {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      String line = StringUtil.escapeXml(t.nextToken()) + "\n";
-      Filter.Result result = null;//filter.applyFilter(line, line.length());
-      if (result != null && result.hyperlinkInfo instanceof OpenFileHyperlinkInfo) {
-        output.append(line.substring(0, result.highlightStartOffset));
-        OpenFileDescriptor descriptor = ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor();
-        output.append("<a href=\"javascript://\" onclick=\"Activator.doOpen('file?file=");
-        output.append(descriptor.getFile().getPresentableUrl());
-        output.append("&line=");
-        output.append(descriptor.getLine());
-        output.append("')\">");
-        output.append(line.substring(result.highlightStartOffset, result.highlightEndOffset));
-        output.append("</a>");
-        output.append(line.substring(result.highlightEndOffset));
-      }
-      else {
-        output.append(line);
-      }
+      output.append(StringUtil.escapeXml(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
 
@@ -124,7 +125,10 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
     Nullness inferNullity(PsiMethod method) {
-      return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      def result = NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      return result
     }
 
     void "test skip when errors"() {

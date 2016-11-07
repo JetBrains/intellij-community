@@ -35,6 +35,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnit5AssertionsConverterInspection extends BaseInspection {
+  private String myFrameworkName = "JUnit5";;
+
+  JUnit5AssertionsConverterInspection(String frameworkName) {
+    myFrameworkName = frameworkName;
+  }
+
+  public JUnit5AssertionsConverterInspection() {
+  }
 
   @Override
   @NotNull
@@ -61,7 +69,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     return new UseOfObsoleteAssertVisitor();
   }
 
-  private static class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
+  private class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -97,17 +105,33 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         if (file instanceof PsiClassOwner) {
           for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
             TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
-            if (testFramework != null && "JUnit5".equals(testFramework.getName())) {
+            if (testFramework != null && myFrameworkName.equals(testFramework.getName())) {
               String methodName = psiMethod.getName();
               registerMethodCallError(expression, name,
                                       getNewAssertClassName(methodName),
-                                      "fail".equals(methodName) && psiMethod.getParameterList().getParametersCount() == 0);
+                                      absentInJUnit5(psiMethod, methodName));
               break;
             }
           }
         }
 
       }
+    }
+
+    private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
+      if ("fail".equals(methodName)) {
+        return psiMethod.getParameterList().getParametersCount() == 0;
+      }
+      if ("assertNotEquals".equals(methodName)) {
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        if (parameters.length > 0) {
+          int lastParamIdx = parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) ? 3 : 2;
+          if (parameters.length > lastParamIdx && parameters[lastParamIdx].getType() instanceof PsiPrimitiveType) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 
@@ -123,7 +147,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     }
   }
 
-  private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
+  static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     private final String myBaseClassName;
 
     public ReplaceObsoleteAssertsFix(String baseClassName) {

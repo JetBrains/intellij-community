@@ -369,6 +369,8 @@ public class EditorSearchSession implements SearchSession,
   }
 
   private void initLivePreview() {
+    if (myEditor.isDisposed()) return;
+
     myLivePreviewController.on();
 
     myLivePreviewController.setUserActivityDelay(0);

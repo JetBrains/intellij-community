@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -545,26 +546,27 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
-    if (commits.isEmpty()) {
-      return false;
-    }
+  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
+  }
 
+  @Override
+  public String getInfo(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
+    int commitsNum = commits.values().size();
     for (VirtualFile root : commits.keySet()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        return false;
-      }
+      // all these roots already related to this cherry-picker
+      GitRepository repository = ObjectUtils.assertNotNull(myRepositoryManager.getRepositoryForRoot(root));
       for (Hash commit : commits.get(root)) {
         GitLocalBranch currentBranch = repository.getCurrentBranch();
         Collection<String> containingBranches = log.getContainingBranches(commit, root);
         if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
-          // already is contained in the current branch
-          return false;
+          // already in the current branch
+          return String.format("The current branch already contains %s the selected %s", commitsNum > 1 ? "one of" : "",
+                               pluralize("commit", commitsNum));
         }
       }
     }
-    return true;
+    return null;
   }
 
   private static class CherryPickData {

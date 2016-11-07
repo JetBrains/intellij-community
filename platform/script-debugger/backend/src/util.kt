@@ -17,6 +17,7 @@ package org.jetbrains.debugger
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.CharSequenceBackedByChars
 import com.intellij.util.io.addChannelListener
@@ -77,6 +78,7 @@ fun createDebugLoggerWithFile(debugFile: String): MessagingLogger? {
   val logger = MessagingLogger(queue)
   ApplicationManager.getApplication().executeOnPooledThread {
     val file = File(FileUtil.expandUserHome(debugFile))
+    FileUtilRt.createParentDirs(file)
     val out = FileOutputStream(file)
     val writer = out.writer()
     writer.write("[\n")
