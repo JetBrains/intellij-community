@@ -843,9 +843,11 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           noResources("android")
           noResources("android-plugin")
           noResources("observable")
+          noResources("designer")
         }
         resources("android")
         resources("android-plugin")
+        resources("designer")
 
         fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
         fileset(dir: "${androidHome}/android/lib") {
