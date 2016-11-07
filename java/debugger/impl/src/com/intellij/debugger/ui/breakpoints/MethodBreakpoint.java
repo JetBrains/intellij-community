@@ -49,7 +49,6 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -157,7 +156,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       () -> processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false), indicator),
       indicator);
     if (indicator.isCanceled()) {
-      AppUIUtil.invokeOnEdt(() -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this));
+      ApplicationManager.getApplication().invokeLater(
+        () -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this));
     }
   }
 
@@ -179,6 +179,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
       if (method != null) {
+        if (method.isNative()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            getProperties().EMULATED = false;
+            fireBreakpointChanged();
+          });
+          return;
+        }
         Method target = MethodBytecodeUtil.getBridgeTargetMethod(method);
         if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
           method = target;
