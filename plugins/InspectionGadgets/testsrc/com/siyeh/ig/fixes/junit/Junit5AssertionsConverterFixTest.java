@@ -26,6 +26,9 @@ public class Junit5AssertionsConverterFixTest extends IGQuickFixesTestCase {
   public void testAssertArrayEqualsMessage() { doTestAssertions();}
   public void testAssertEquals() { doTestAssertions();}
   public void testAssertTrue() { doTestAssertions();}
+  public void testAssertNotEqualsWithDelta() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("junit5.assertions.converter.quickfix", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS));
+  }
 
   public void testAssertThat() {
     doTest(InspectionGadgetsBundle.message("junit5.assertions.converter.quickfix", JUnitCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT));
@@ -59,6 +62,7 @@ public class Junit5AssertionsConverterFixTest extends IGQuickFixesTestCase {
                        "    public static void assertEquals(Object expected, Object actual) {}" +
                        "    public static void fail(String message) {}" +
                        "    public static <T> void assertThat(String reason, T actual, org.hamcrest.Matcher<? super T> matcher) {}" +
+                       "    public static void assertNotEquals(double unexpected, double actual, double delta){}" +
                        "}");
 
     myFixture.addClass("package org.junit.jupiter.api;\n" +

@@ -109,13 +109,29 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
               String methodName = psiMethod.getName();
               registerMethodCallError(expression, name,
                                       getNewAssertClassName(methodName),
-                                      "fail".equals(methodName) && psiMethod.getParameterList().getParametersCount() == 0);
+                                      absentInJUnit5(psiMethod, methodName));
               break;
             }
           }
         }
 
       }
+    }
+
+    private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
+      if ("fail".equals(methodName)) {
+        return psiMethod.getParameterList().getParametersCount() == 0;
+      }
+      if ("assertNotEquals".equals(methodName)) {
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        if (parameters.length > 0) {
+          int lastParamIdx = parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) ? 3 : 2;
+          if (parameters.length > lastParamIdx && parameters[lastParamIdx].getType() instanceof PsiPrimitiveType) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 
