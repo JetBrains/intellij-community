@@ -341,4 +341,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testFloatFromhex() {
     doTest();
   }
+
+  // PY-20073
+  public void testMapArgumentsInOppositeOrder() {
+    doTest();
+  }
 }
