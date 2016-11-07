@@ -79,11 +79,11 @@
       <pattern><![CDATA[\k<<error descr="Unresolved named group reference">adsf</error>>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test host="com.intellij.psi.impl.JavaRegExpHost" varify="false">
-      <pattern>(?&lt;important_value1&gt;\d\d)</pattern>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;<error descr="Invalid group name">important_value1</error>&gt;\d\d)</pattern>
       <expected>ERR</expected>
     </test>
-    <test host="com.intellij.psi.impl.JavaRegExpHost" varify="false">
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>(?&lt;importantValue1&gt;\d\d)</pattern>
       <expected>OK</expected>
     </test>
