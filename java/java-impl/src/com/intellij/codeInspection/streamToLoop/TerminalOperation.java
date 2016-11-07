@@ -16,11 +16,11 @@
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,21 +46,6 @@ abstract class TerminalOperation extends Operation {
   }
 
   abstract String generate(StreamVariable inVar, StreamToLoopReplacementContext context);
-
-  @NotNull
-  @Contract(pure = true)
-  private static String getOptionalClass(String type) {
-    switch (type) {
-      case "int":
-        return "java.util.OptionalInt";
-      case "long":
-        return "java.util.OptionalLong";
-      case "double":
-        return "java.util.OptionalDouble";
-      default:
-        return "java.util.Optional";
-    }
-  }
 
   @Nullable
   static TerminalOperation createTerminal(@NotNull String name, @NotNull PsiExpression[] args,
@@ -105,7 +90,7 @@ abstract class TerminalOperation extends Operation {
         }
       }
       if(args.length == 1) {
-        PsiType optionalElementType = getOptionalElementType(resultType);
+        PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
         FunctionHelper fn = FunctionHelper.create(args[0], 2);
         if(fn != null && optionalElementType != null) {
           return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
@@ -169,7 +154,7 @@ abstract class TerminalOperation extends Operation {
             }
           }
           if(collector.getName().equals("reducing") && collectorArgs.length == 1) {
-            PsiType optionalElementType = getOptionalElementType(resultType);
+            PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
             FunctionHelper fn = FunctionHelper.create(collectorArgs[0], 2);
             if(fn != null && optionalElementType != null) {
               return new ReduceToOptionalTerminalOperation(fn, optionalElementType.getCanonicalText());
@@ -191,30 +176,6 @@ abstract class TerminalOperation extends Operation {
       }
     }
     return null;
-  }
-
-  @Contract("null -> null")
-  static PsiType getOptionalElementType(PsiType type) {
-    if(!(type instanceof PsiClassType)) return null;
-    PsiClass aClass = ((PsiClassType)type).resolve();
-    if(aClass == null) return null;
-    if("java.util.OptionalInt".equals(aClass.getQualifiedName())) {
-      return PsiType.INT;
-    }
-    if("java.util.OptionalLong".equals(aClass.getQualifiedName())) {
-      return PsiType.LONG;
-    }
-    if("java.util.OptionalDouble".equals(aClass.getQualifiedName())) {
-      return PsiType.DOUBLE;
-    }
-    if(!CommonClassNames.JAVA_UTIL_OPTIONAL.equals(aClass.getQualifiedName())) return null;
-    PsiType[] parameters = ((PsiClassType)type).getParameters();
-    if(parameters.length != 1) return null;
-    PsiType streamType = parameters[0];
-    if(streamType instanceof PsiCapturedWildcardType) {
-      streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
-    }
-    return streamType;
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
@@ -261,7 +222,7 @@ abstract class TerminalOperation extends Operation {
       String seen = context.declare("seen", "boolean", "false");
       String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
       myUpdater.transform(context, accumulator, inVar.getName());
-      String optionalClass = getOptionalClass(myType);
+      String optionalClass = OptionalUtil.getOptionalClass(myType);
       context.setFinisher("(" + seen + "?" + optionalClass + ".of(" + accumulator + "):" + optionalClass + ".empty())");
       return "if(!" + seen + ") {\n" +
              seen + "=true;\n" +

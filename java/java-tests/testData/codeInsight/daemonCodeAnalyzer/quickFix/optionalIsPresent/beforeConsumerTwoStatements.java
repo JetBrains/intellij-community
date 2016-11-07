@@ -1,4 +1,4 @@
-// "Replace Optional.isPresent() condition with ifPresent()" "false"
+// "Replace Optional.isPresent() condition with functional style expression" "false"
 
 import java.util.*;
 

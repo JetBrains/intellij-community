@@ -792,4 +792,9 @@ public class ExpressionUtils {
     }
     return true;
   }
+
+  @Contract("_, null -> false")
+  public static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
+    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).isReferenceTo(variable);
+  }
 }
