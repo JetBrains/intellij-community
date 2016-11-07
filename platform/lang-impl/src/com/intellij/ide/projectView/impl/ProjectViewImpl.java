@@ -1700,8 +1700,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void selectElementAtCaretNotLosingFocus(@NotNull Editor editor) {
-      if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
-      selectElementAtCaret(editor);
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      if (pane != null && !IJSwingUtilities.hasFocus(pane.getComponentToFocus())) {
+        selectElementAtCaret(editor);
+      }
     }
 
     private void selectElementAtCaret(@NotNull Editor editor) {
