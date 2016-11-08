@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -42,9 +41,6 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final String myLoadingTitle;
-  private Ticket myCurrentlySelected;
-  private Ticket mySetId;
-  private final Ticket myTicket;
   private final JBLoadingPanel myDetailsPanel;
   private final BackgroundTaskQueue myQueue;
 
@@ -52,7 +48,6 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
     myProject = project;
     myLoadingTitle = loadingTitle;
     myQueue = queue;
-    myTicket = new Ticket();
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
     myDetailsPanel.setLoadingText("Loading...");
   }
@@ -61,17 +56,8 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
   public void refresh() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!Comparing.equal(myCurrentlySelected, myTicket)) {
-      Ticket copy = myTicket.copy();
-      Ticket previousId = myCurrentlySelected;
-      myCurrentlySelected = copy;
-      mySetId = null;
-      if (!Comparing.equal(copy, previousId)) {
-        myQueue.run(new Loader(myProject, myLoadingTitle, copy));
-      }
-
-      myDetailsPanel.startLoading();
-    }
+    myDetailsPanel.startLoading();
+    myQueue.run(new Loader(myProject, myLoadingTitle));
   }
 
   @CalledInBackground
@@ -90,12 +76,10 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
   }
 
   private class Loader extends ModalityIgnorantBackgroundableTask {
-    private final Ticket myTicketCopy;
     private T myData;
 
-    private Loader(@Nullable Project project, @NotNull String title, final Ticket ticketCopy) {
+    private Loader(@Nullable Project project, @NotNull String title) {
       super(project, title, false);
-      myTicketCopy = ticketCopy;
     }
 
     @Override
@@ -119,10 +103,7 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
     @Override
     protected void doInAwtIfSuccess() {
       if (!isDisposed(AbstractRefreshablePanel.this)) {
-        if (!myTicketCopy.equals(mySetId) && myTicketCopy.equals(myCurrentlySelected)) {
-          mySetId = myTicketCopy;
-          acceptData(myData);
-        }
+        acceptData(myData);
       }
     }
 
@@ -141,42 +122,5 @@ public abstract class AbstractRefreshablePanel<T> implements Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  private static class Ticket {
-    private int myId;
-
-    public Ticket() {
-      myId = 0;
-    }
-
-    public Ticket(int id) {
-      myId = id;
-    }
-
-    public Ticket copy() {
-      return new Ticket(myId);
-    }
-
-    public void increment() {
-      ++ myId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Ticket ticket = (Ticket)o;
-
-      if (myId != ticket.myId) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myId;
-    }
   }
 }
