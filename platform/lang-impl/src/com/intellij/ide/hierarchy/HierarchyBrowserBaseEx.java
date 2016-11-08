@@ -31,12 +31,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.PsiElementNavigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -140,13 +139,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         @Override
         @Nullable
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-          final HierarchyNodeDescriptor descriptor = getDescriptor(node);
-          if (descriptor == null) return null;
-          PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);
-          if (psiElement == null || !psiElement.isValid()) return null;
-          final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-          if (virtualFile == null) return null;
-          return new OpenFileDescriptor(psiElement.getProject(), virtualFile, psiElement.getTextOffset());
+          HierarchyNodeDescriptor descriptor = getDescriptor(node);
+          if (descriptor != null) {
+            PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);
+            if (psiElement != null && psiElement.isValid()) {
+              return new PsiElementNavigatable(psiElement);
+            }
+          }
+          return null;
         }
 
         @Override
