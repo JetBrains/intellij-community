@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.runners
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
@@ -23,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
 abstract class DefaultProgramRunner : GenericProgramRunner<RunnerSettings>() {
+  @Throws(ExecutionException::class)
   override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
     return executeState(state, env, this)
   }
