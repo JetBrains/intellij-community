@@ -355,6 +355,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     List<HighlightData> rainbowMarkup = new ArrayList<>();
 
     int tempKeyIndex = 0;
+    boolean repeatAnchor = true;
     for (HighlightData d : initialMarkup) {
       final TextAttributesKey highlightKey = d.getHighlightKey();
       final boolean rainbowType = page.isRainbowType(highlightKey);
@@ -368,7 +369,14 @@ public class SimpleEditorPreview implements PreviewPanel {
             rainbowTemp = getRainbowTemp(rainbowTempKeys, d.getStartOffset(), d.getEndOffset());
           }
           else {
-            rainbowTemp = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[tempKeyIndex++ % colorCount]);
+            rainbowTemp = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[tempKeyIndex % colorCount]);
+            if (repeatAnchor && tempKeyIndex == colorCount/2) {
+              // anchor [Color#3] colored twice: it the end and in the beginning of rainbow-demo string
+              repeatAnchor = false;
+            }
+            else {
+              ++tempKeyIndex;
+            }
           }
           // TODO: <remove the hack>
           // At some point highlighting data is applied in reversed order. To ensure rainbow highlighting is always on top, we add it twice.
