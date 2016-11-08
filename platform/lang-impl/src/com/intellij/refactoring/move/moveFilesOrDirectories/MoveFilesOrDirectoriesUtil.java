@@ -70,7 +70,7 @@ public class MoveFilesOrDirectoriesUtil {
   }
 
   /**
-   * Moves the specified file to the specified directory. Does not process non-code usages! file may be invalidated, need to be refreshed before use
+   * Moves the specified file to the specified directory. Does not process non-code usages! file may be invalidated, need to be refreshed before use, like {@code newDirectory.findFile(file.getName())}
    *
    * @param file         the file to move.
    * @param newDirectory the directory to move the file into.
