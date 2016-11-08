@@ -898,7 +898,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @TestOnly
   public void waitForInitialized() {
-    myInitialization.waitForInitialized();
+    myInitialization.waitForCompletion();
   }
 
   private static class ActionKey {
