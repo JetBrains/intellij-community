@@ -20,8 +20,6 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
@@ -44,14 +42,4 @@ private class DefaultProgramRunnerImpl : AsyncGenericProgramRunner<RunnerSetting
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
     return DefaultRunExecutor.EXECUTOR_ID == executorId && profile !is RunConfigurationWithSuppressedDefaultRunAction
   }
-}
-
-inline fun runProfileStarter(crossinline starter: (state: RunProfileState, environment: ExecutionEnvironment) -> RunContentDescriptor?) = object : RunProfileStarter() {
-  override fun execute(state: RunProfileState, env: ExecutionEnvironment) = starter(state, env)
-}
-
-internal fun executeState(state: RunProfileState, env: ExecutionEnvironment, runner: ProgramRunner<*>): RunContentDescriptor? {
-  FileDocumentManager.getInstance().saveAllDocuments()
-  val executionResult = state.execute(env.executor, runner) ?: return null
-  return RunContentBuilder(executionResult, env).showRunContent(env.contentToReuse)
 }
