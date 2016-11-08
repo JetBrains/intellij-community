@@ -23,52 +23,53 @@ import static java.util.Collections.unmodifiableSet;
 /**
  * @author Maxim.Medvedev
  */
-public final class GroovyCommonClassNames {
-  public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
-  public static final String GROOVY_OBJECT = "groovy.lang.GroovyObject";
-  public static final String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
-  public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
-  public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
-  public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
-  public static final String GROOVY_LANG_RANGE = "groovy.lang.Range";
-  public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
-  public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
-  public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
-  public static final String GROOVY_UTIL_CONFIG_OBJECT = "groovy.util.ConfigObject";
-  public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
-  public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
-  public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
-  public static final String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
-  public static final String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
-  public static final String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
-  public static final String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
-  public static final String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
-  public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
-  public static final String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
-  public static final String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
-  public static final String GROOVY_TRANSFORM_AUTO_EXTERNALIZE = "groovy.transform.AutoExternalize";
-  public static final String GROOVY_LANG_CATEGORY = "groovy.lang.Category";
-  public static final String GROOVY_LANG_MIXIN = "groovy.lang.Mixin";
-  public static final String GROOVY_UTIL_TEST_CASE = "groovy.util.GroovyTestCase";
-  public static final String GROOVY_LANG_SINGLETON = "groovy.lang.Singleton";
-  public static final String GROOVY_TRANSFORM_COMPILE_STATIC = "groovy.transform.CompileStatic";
-  public static final String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
-  public static final String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
-  public static final String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
-  public static final String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
-  public static final String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
-  public static final String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";
-  public static final String GROOVY_TRANSFORM_ANNOTATION_COLLECTOR = "groovy.transform.AnnotationCollector";
-  public static final String GROOVY_LANG_NEWIFY = "groovy.lang.Newify";
-  public static final String GROOVY_LANG_DELEGATES_TO = "groovy.lang.DelegatesTo";
-  public static final String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
-  public static final String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
-  public static final String GROOVY_TRANSFORM_STC_CLOSURE_PARAMS = "groovy.transform.stc.ClosureParams";
-  public static final String GROOVY_TRANSFORM_BASE_SCRIPT = "groovy.transform.BaseScript";
-  public static final String GROOVY_TRAIT = "groovy.transform.Trait";
-  public static final String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
+public interface GroovyCommonClassNames {
 
-  public static final Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
+  String GROOVY_OBJECT = "groovy.lang.GroovyObject";
+  String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
+  String GROOVY_LANG_GSTRING = "groovy.lang.GString";
+  String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
+  String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
+  String GROOVY_LANG_RANGE = "groovy.lang.Range";
+  String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
+  String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
+  String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
+  String GROOVY_UTIL_CONFIG_OBJECT = "groovy.util.ConfigObject";
+  String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
+  String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
+  String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
+  String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
+  String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
+  String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
+  String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
+  String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
+  String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
+  String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
+  String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
+  String GROOVY_TRANSFORM_AUTO_EXTERNALIZE = "groovy.transform.AutoExternalize";
+  String GROOVY_LANG_CATEGORY = "groovy.lang.Category";
+  String GROOVY_LANG_MIXIN = "groovy.lang.Mixin";
+  String GROOVY_UTIL_TEST_CASE = "groovy.util.GroovyTestCase";
+  String GROOVY_LANG_SINGLETON = "groovy.lang.Singleton";
+  String GROOVY_TRANSFORM_COMPILE_STATIC = "groovy.transform.CompileStatic";
+  String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
+  String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
+  String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
+  String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
+  String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
+  String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";
+  String GROOVY_TRANSFORM_ANNOTATION_COLLECTOR = "groovy.transform.AnnotationCollector";
+  String GROOVY_LANG_NEWIFY = "groovy.lang.Newify";
+  String GROOVY_LANG_DELEGATES_TO = "groovy.lang.DelegatesTo";
+  String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
+  String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
+  String GROOVY_TRANSFORM_STC_CLOSURE_PARAMS = "groovy.transform.stc.ClosureParams";
+  String GROOVY_TRANSFORM_BASE_SCRIPT = "groovy.transform.BaseScript";
+  String GROOVY_TRAIT = "groovy.transform.Trait";
+  String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
+
+  Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",
     "org.codehaus.groovy.runtime.DefaultGroovyMethods",
     "org.codehaus.groovy.runtime.EncodingGroovyMethods",
@@ -83,9 +84,7 @@ public final class GroovyCommonClassNames {
     "org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods"
   ));
 
-  public static final Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
     "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods"
   ));
-
-  private GroovyCommonClassNames() { }
 }
