@@ -50,6 +50,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -97,7 +98,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private final boolean myAllOfDefaultChangeListChangesIncluded;
-  private final CommitExecutorAction[] myExecutorActions;
+  @Nullable private final List<CommitExecutorAction> myExecutorActions;
   private final boolean myShowVcsCommit;
   @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
 
@@ -114,11 +115,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private ChangeInfoCalculator myChangesInfoCalculator;
 
   @NotNull private final PseudoMap<Object, Object> myAdditionalData;
-  private String myHelpId;
+  @Nullable private final String myHelpId;
 
   private SplitterWithSecondHideable myDetailsSplitter;
   private final String myOkActionText;
-  private CommitAction myCommitAction;
+  @Nullable private final CommitAction myCommitAction;
   @Nullable private CommitResultHandler myResultHandler;
 
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
@@ -429,15 +430,28 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     restoreState();
 
-    if (myExecutors != null) {
-      myExecutorActions = new CommitExecutorAction[myExecutors.size()];
+    if (myShowVcsCommit) {
+      myCommitAction = new CommitAction();
+    }
+    else {
+      myCommitAction = null;
+    }
 
-      for (int i = 0; i < myExecutors.size(); i++) {
-        final CommitExecutor commitExecutor = myExecutors.get(i);
-        myExecutorActions[i] = new CommitExecutorAction(commitExecutor, i == 0 && !myShowVcsCommit);
-      }
-    } else {
+    if (myExecutors == null) {
       myExecutorActions = null;
+      myHelpId = HELP_ID;
+    }
+    else {
+      myExecutorActions = ContainerUtil.map(myExecutors, CommitExecutorAction::new);
+
+      if (myCommitAction != null) {
+        myCommitAction.setOptions(myExecutorActions);
+        myHelpId = HELP_ID;
+      }
+      else {
+        myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
+        myHelpId = getHelpId(myExecutors);
+      }
     }
 
     myWarningLabel = new JLabel();
@@ -458,6 +472,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     showDetailsIfSaved();
+  }
+
+  @Nullable
+  private static String getHelpId(@NotNull List<CommitExecutor> executors) {
+    for (CommitExecutor executor : executors) {
+      if (executor instanceof CommitExecutorWithHelp) {
+        String helpId = ((CommitExecutorWithHelp)executor).getHelpId();
+        if (helpId != null) return helpId;
+      }
+    }
+    return null;
   }
 
   private void setComment(LocalChangeList initialSelection, String comment) {
@@ -549,8 +574,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return myOptions;
     }
 
-    public void setOptions(Action[] actions) {
-      myOptions = actions;
+    public void setOptions(List<? extends Action> actions) {
+      myOptions = ArrayUtil.toObjectArray(actions, Action.class);
     }
   }
 
@@ -606,24 +631,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<>();
 
-    myCommitAction = null;
-    if (myShowVcsCommit) {
-      myCommitAction = new CommitAction();
+    if (myCommitAction != null) {
       actions.add(myCommitAction);
-      myHelpId = HELP_ID;
     }
-    if (myExecutors != null) {
-      if (myCommitAction != null) {
-        myCommitAction.setOptions(myExecutorActions);
-      } else {
-        actions.addAll(Arrays.asList(myExecutorActions));
-      }
-      for (CommitExecutor executor : myExecutors) {
-        if (myHelpId != null) break;
-        if (executor instanceof CommitExecutorWithHelp) {
-          myHelpId = ((CommitExecutorWithHelp) executor).getHelpId();
-        }
-      }
+    else {
+      actions.addAll(myExecutorActions);
     }
     actions.add(getCancelAction());
     if (myHelpId != null) {
@@ -1206,12 +1218,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private class CommitExecutorAction extends AbstractAction {
     @NotNull private final CommitExecutor myCommitExecutor;
 
-    public CommitExecutorAction(@NotNull CommitExecutor commitExecutor, boolean isDefault) {
+    public CommitExecutorAction(@NotNull CommitExecutor commitExecutor) {
       super(commitExecutor.getActionText());
       myCommitExecutor = commitExecutor;
-      if (isDefault) {
-        putValue(DEFAULT_ACTION, Boolean.TRUE);
-      }
     }
 
     @Override
