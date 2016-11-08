@@ -166,7 +166,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     try {
-      Method method = MethodBytecodeUtil.getLambdaMethod(classType);
+      Method method = MethodBytecodeUtil.getLambdaMethod(classType, debugProcess.getVirtualMachineProxy());
       if (method == null) {
         for (Method m : classType.methods()) {
           if (!base && m.isAbstract()) {
@@ -186,7 +186,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
           });
           return;
         }
-        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method);
+        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, debugProcess.getVirtualMachineProxy());
         if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
           method = target;
         }

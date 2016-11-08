@@ -16,6 +16,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.Patches;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
@@ -232,7 +233,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getLambdaMethod(ReferenceType clsType) {
+  public static Method getLambdaMethod(ReferenceType clsType, VirtualMachineProxy vm) {
     Ref<Method> methodRef = Ref.create();
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
@@ -240,7 +241,7 @@ public class MethodBytecodeUtil {
         visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
+            ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
             if (cls != null) {
               cls.methodsByName(name, desc).stream().findFirst().ifPresent(methodRef::set);
             }
@@ -252,7 +253,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getBridgeTargetMethod(Method method) {
+  public static Method getBridgeTargetMethod(Method method, VirtualMachineProxy vm) {
     Ref<Method> methodRef = Ref.create();
     if (method.isBridge()) {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {
@@ -264,7 +265,7 @@ public class MethodBytecodeUtil {
             cls = declaringType;
           }
           else if (!"java/lang/AbstractMethodError".equals(owner)) {
-            cls = ContainerUtil.getFirstItem(method.virtualMachine().classesByName(owner));
+            cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
           }
           if (cls != null) {
             StreamEx.of(cls.methodsByName(name, desc)).findFirst().ifPresent(methodRef::set);
