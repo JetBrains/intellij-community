@@ -1756,6 +1756,11 @@
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
+      <option name="LOG_EXPIRED_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="555555"/>
+        </value>
+      </option>
       <option name="MATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="ffef28" />
