@@ -596,7 +596,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
         }
-        if (error instanceof RebuildRequestedException) {
+        if (error instanceof RebuildRequestedException || cause instanceof IOException) {
           messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));
