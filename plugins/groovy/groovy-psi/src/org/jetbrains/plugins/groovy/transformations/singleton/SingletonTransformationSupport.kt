@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.transformations.singleton
 
-import com.intellij.util.text.nullize
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*
 import org.jetbrains.plugins.groovy.lang.psi.impl.booleanValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
-import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
@@ -29,7 +27,7 @@ class SingletonTransformationSupport : AstTransformationSupport {
 
   override fun applyTransformation(context: TransformationContext) {
     val annotation = context.getAnnotation(singletonFqn) ?: return
-    val name = annotation.findDeclaredDetachedValue("property").stringValue().nullize(true) ?: "instance"
+    val name = annotation.getPropertyName()
     val lazy = annotation.findDeclaredDetachedValue("lazy").booleanValue() ?: false
 
     context += GrLightField(context.codeClass, name, context.classType, annotation).apply {
