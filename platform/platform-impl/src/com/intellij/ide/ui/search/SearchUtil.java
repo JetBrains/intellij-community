@@ -28,6 +28,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,6 +140,20 @@ public class SearchUtil {
         final Component tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent instanceof JComponent) {
           processComponent((JComponent)tabComponent, configurableOptions, title);
+        }
+      }
+    }
+    else if (component instanceof JBTabs) {
+      final JBTabs tabbedPane = (JBTabs)component;
+      final int tabCount = tabbedPane.getTabCount();
+      for (int i = 0; i < tabCount; i++) {
+        TabInfo tabInfo = tabbedPane.getTabAt(i);
+        String tabTitle = tabInfo.getText();
+        final String title = path != null ? path + '.' + tabTitle : tabTitle;
+        processUILabel(title, configurableOptions, title);
+        final JComponent tabComponent = tabInfo.getComponent();
+        if (tabComponent != null) {
+          processComponent(tabComponent, configurableOptions, title);
         }
       }
     }
