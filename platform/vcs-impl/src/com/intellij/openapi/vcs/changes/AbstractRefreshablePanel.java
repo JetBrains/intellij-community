@@ -59,7 +59,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
     myTicket = new Ticket();
     myDetailsPanel = new DetailsPanel();
     myDetailsPanel.loading();
-    myDetailsPanel.layout();
   }
 
   @CalledInAwt
@@ -77,7 +76,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
       }
 
       myDetailsPanel.loading();
-      myDetailsPanel.layout();
     } else {
       refreshPresentation();
     }
@@ -93,9 +91,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   
   @CalledInAwt
   private void acceptData(final T t) {
-    final JPanel panel = dataToPresentation(t);
-    myDetailsPanel.data(panel);
-    myDetailsPanel.layout();
+    myDetailsPanel.data(dataToPresentation(t));
   }
 
   @Override

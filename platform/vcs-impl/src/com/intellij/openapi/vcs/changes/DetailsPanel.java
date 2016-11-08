@@ -15,68 +15,34 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.UIVcsUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 9/7/11
-* Time: 2:43 PM
-*/
 public class DetailsPanel {
   private CardLayout myLayout;
   private JPanel myPanel;
-  private Layer myCurrentLayer;
 
   public DetailsPanel() {
     myPanel = new JPanel();
     myLayout = new CardLayout();
     myPanel.setLayout(myLayout);
-    JPanel dataPanel = new JPanel(new BorderLayout());
-
-    myPanel.add(UIVcsUtil.errorPanel("No details available", false), Layer.notAvailable.name());
-    myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), Layer.nothingSelected.name());
-    myPanel.add(UIVcsUtil.errorPanel("Changes content is not loaded yet", false), Layer.notLoadedInitial.name());
     myPanel.add(UIVcsUtil.errorPanel("Loading...", false), Layer.loading.name());
-    myPanel.add(dataPanel, Layer.data.name());
-  }
-
-  public void nothingSelected() {
-    myCurrentLayer = Layer.nothingSelected;
-  }
-
-  public void notAvailable() {
-    myCurrentLayer = Layer.notAvailable;
+    myPanel.add(JBUI.Panels.simplePanel(), Layer.data.name());
   }
 
   public void loading() {
-    myCurrentLayer = Layer.loading;
+    myLayout.show(myPanel, Layer.loading.name());
   }
 
-  public void loadingInitial() {
-    myCurrentLayer = Layer.notLoadedInitial;
-  }
-
-  public void data(final JPanel panel) {
-    myCurrentLayer = Layer.data;
+  public void data(JPanel panel) {
     myPanel.add(panel, Layer.data.name());
+    myLayout.show(myPanel, Layer.data.name());
   }
 
-  public void layout() {
-    myLayout.show(myPanel, myCurrentLayer.name());
-  }
-
-  public void clear() {
-    myPanel.removeAll();
-  }
-
-  private static enum Layer {
-    notAvailable,
-    nothingSelected,
-    notLoadedInitial,
+  private enum Layer {
     loading,
     data,
   }
