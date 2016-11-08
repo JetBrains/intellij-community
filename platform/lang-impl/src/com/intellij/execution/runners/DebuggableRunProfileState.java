@@ -15,23 +15,12 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.configurations.RunProfileState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
-/**
- * @deprecated Do not use and do not extends — use DefaultProgramRunner instead.
- */
-@Deprecated
-public class BasicProgramRunner extends DefaultProgramRunner {
+public interface DebuggableRunProfileState extends RunProfileState {
   @NotNull
-  @Override
-  public String getRunnerId() {
-    return "Basic";
-  }
-
-  @Override
-  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return DefaultRunExecutor.EXECUTOR_ID.equals(executorId) && !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
-  }
+  Promise<ExecutionResult> execute(int debugPort);
 }

@@ -2527,7 +2527,6 @@ com/intellij/openapi/ui/popup/ListPopupStep.class:/lib/openapi.jar
 com/intellij/openapi/ui/popup/PopupStep.class:/lib/openapi.jar
 com/intellij/execution/ExecutionException.class:/lib/openapi.jar
 com/intellij/execution/runners/Runner.class:/lib/openapi.jar
-com/intellij/tools/ToolProgramRunner.class:/lib/idea.jar
 com/intellij/execution/runners/DefaultProgramRunner.class:/lib/idea.jar
 com/intellij/execution/runners/GenericProgramRunner.class:/lib/openapi.jar
 com/intellij/execution/impl/DefaultJavaProgramRunner.class:/lib/idea.jar
