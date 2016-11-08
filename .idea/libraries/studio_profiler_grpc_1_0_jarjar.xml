@@ -4,8 +4,6 @@
       <root url="jar://$PROJECT_DIR$/../../out/studio/grpc-java/jarjar/studio-profiler-grpc-1.0-jarjar.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../../out/studio/grpc-java/jarjar/studio-profiler-grpc-1.0-jarjar.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
