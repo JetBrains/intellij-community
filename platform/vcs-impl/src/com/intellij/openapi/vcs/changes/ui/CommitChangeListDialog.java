@@ -67,7 +67,7 @@ import java.util.*;
 import java.util.List;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
-  private final static String HELP_ID = "reference.dialogs.vcs.commit";
+  private static final String HELP_ID = "reference.dialogs.vcs.commit";
 
   private static final int LAYOUT_VERSION = 2;
   private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
@@ -101,7 +101,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myShowVcsCommit;
   @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
 
-  @Nullable private final AbstractVcs myVcs;
+  @Nullable private final AbstractVcs mySingleVcs;
   private final boolean myIsAlien;
   private boolean myDisposed = false;
   private boolean myUpdateDisabled = false;
@@ -238,8 +238,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private CommitChangeListDialog(@NotNull Project project,
                                  @NotNull List<Change> changes,
-                                 final LocalChangeList initialSelection,
-                                 final List<CommitExecutor> executors,
+                                 @Nullable LocalChangeList initialSelection,
+                                 @Nullable List<CommitExecutor> executors,
                                  final boolean showVcsCommit,
                                  @NotNull LocalChangeList defaultChangeList,
                                  final List<LocalChangeList> changeLists,
@@ -253,7 +253,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myExecutors = executors;
     myShowVcsCommit = showVcsCommit;
-    myVcs = singleVcs;
+    mySingleVcs = singleVcs;
     myResultHandler = customResultHandler;
     myListComments = new HashMap<>();
     myAdditionalData = new PseudoMap<>();
@@ -944,9 +944,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData, customResultHandler);
 
     if (myIsAlien) {
-      helper.doAlienCommit(myVcs);
+      helper.doAlienCommit(mySingleVcs);
     } else {
-      helper.doCommit(myVcs);
+      helper.doCommit(mySingleVcs);
     }
   }
 
