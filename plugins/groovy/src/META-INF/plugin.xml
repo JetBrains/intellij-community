@@ -1148,6 +1148,10 @@
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
 
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Annotations verifying"
+                     bundle="org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
+                     key="singleton.constructor.inspection" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.groovy.transformations.singleton.SingletonConstructorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="DelegatesTo" displayName="@DelegatesTo inspection"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection"/>

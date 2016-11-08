@@ -15,7 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.transformations.singleton
 
+import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 internal val singletonFqn = GroovyCommonClassNames.GROOVY_LANG_SINGLETON
 internal val singletonOriginInfo = "by @Singleton"
+
+internal fun getAnnotation(identifier: PsiElement?): GrAnnotation? {
+  val parent = identifier?.parent as? GrMethod ?: return null
+  if (!parent.isConstructor) return null
+  val clazz = parent.containingClass as? GrTypeDefinition ?: return null
+  return AnnotationUtil.findAnnotation(clazz, singletonFqn) as? GrAnnotation
+}
