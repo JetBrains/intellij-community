@@ -252,6 +252,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
+  @NotNull
+  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
+    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
+      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
+      VfsUtil.saveText(myVFile, fileText);
+      return myVFile;
+    });
+  }
+
   private static void setupEditorForInjectedLanguage() {
     if (myEditor != null) {
       final Ref<EditorWindow> editorWindowRef = new Ref<>();
