@@ -277,7 +277,7 @@ public class ParenthesesUtils {
     }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression ||
-        parent instanceof PsiArrayInitializerExpression) {
+        parent instanceof PsiArrayInitializerExpression || parent instanceof PsiLambdaExpression) {
       final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
       removeParentheses(newExpression, ignoreClarifyingParentheses);
       return;
@@ -461,6 +461,9 @@ public class ParenthesesUtils {
 
   public static boolean areParenthesesNeeded(PsiParenthesizedExpression expression, boolean ignoreClarifyingParentheses) {
     final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiLambdaExpression) {
+      return false;
+    }
     if (!(parent instanceof PsiExpression)) {
       return false;
     }
