@@ -387,77 +387,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void checkSearchPattern(Project project, MatchOptions options) {
-    class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
-      private PsiElement myCurrent;
-
-      @Override public void visitAnnotation(PsiAnnotation annotation) {
-        final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
-
-        if (nameReferenceElement == null ||
-            !nameReferenceElement.getText().equals(MatchOptions.MODIFIER_ANNOTATION_NAME)) {
-          return;
-        }
-
-        for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
-          final PsiAnnotationMemberValue value = pair.getValue();
-
-          if (value instanceof PsiArrayInitializerMemberValue) {
-            for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-              final String name = StringUtil.stripQuotesAroundValue(v.getText());
-              checkModifier(name);
-            }
-
-          } else if (value != null) {
-            final String name = StringUtil.stripQuotesAroundValue(value.getText());
-            checkModifier(name);
-          }
-        }
-      }
-
-      private void checkModifier(final String name) {
-        if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
-            !PsiModifier.PACKAGE_LOCAL.equals(name) &&
-            ArrayUtil.find(JavaMatchingVisitor.MODIFIERS, name) < 0
-          ) {
-          throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
-        }
-      }
-
-      @Override
-      public void visitErrorElement(PsiErrorElement element) {
-        super.visitErrorElement(element);
-        final PsiElement parent = element.getParent();
-        final String errorDescription = element.getErrorDescription();
-        if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
-          // other class content variable.
-          return;
-        }
-        if (parent instanceof PsiTryStatement && "'catch' or 'finally' expected".equals(errorDescription)) {
-          // searching for naked try allowed
-          return;
-        }
-        if (parent == myCurrent) {
-          // search for expression, type, annotation or symbol
-          if ("';' expected".equals(errorDescription)) {
-            // expression
-            return;
-          }
-          if ("Identifier or type expected".equals(errorDescription)) {
-            // annotation
-            return;
-          }
-          if ("Identifier expected".equals(errorDescription)) {
-            // type
-            return;
-          }
-        }
-        throw new MalformedPatternException(errorDescription);
-      }
-
-      void setCurrent(PsiElement current) {
-        myCurrent = current;
-      }
-    }
     ValidatingVisitor visitor = new ValidatingVisitor();
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options);
     final int nodeCount = compiledPattern.getNodeCount();
@@ -492,6 +421,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     );
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
+    ValidatingVisitor visitor = new ValidatingVisitor();
+    for (PsiElement statement : statements2) {
+      visitor.setCurrent((statements.length == 1 && (statement instanceof PsiExpressionStatement || statement instanceof PsiDeclarationStatement))
+                         ? statement : null);
+      statement.accept(visitor);
+    }
+
     if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
       return;
     }
@@ -508,6 +444,78 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
         SSRBundle.message("search.template.is.not.expression.error.message")
       );
+    }
+  }
+
+  static class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
+    private PsiElement myCurrent;
+
+    @Override public void visitAnnotation(PsiAnnotation annotation) {
+      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+
+      if (nameReferenceElement == null ||
+          !nameReferenceElement.getText().equals(MatchOptions.MODIFIER_ANNOTATION_NAME)) {
+        return;
+      }
+
+      for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
+        final PsiAnnotationMemberValue value = pair.getValue();
+
+        if (value instanceof PsiArrayInitializerMemberValue) {
+          for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+            final String name = StringUtil.unquoteString(v.getText());
+            checkModifier(name);
+          }
+
+        } else if (value != null) {
+          final String name = StringUtil.unquoteString(value.getText());
+          checkModifier(name);
+        }
+      }
+    }
+
+    private static void checkModifier(final String name) {
+      if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
+          !PsiModifier.PACKAGE_LOCAL.equals(name) &&
+          ArrayUtil.find(JavaMatchingVisitor.MODIFIERS, name) < 0
+        ) {
+        throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
+      }
+    }
+
+    @Override
+    public void visitErrorElement(PsiErrorElement element) {
+      super.visitErrorElement(element);
+      final PsiElement parent = element.getParent();
+      final String errorDescription = element.getErrorDescription();
+      if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
+        // other class content variable.
+        return;
+      }
+      if (parent instanceof PsiTryStatement && "'catch' or 'finally' expected".equals(errorDescription)) {
+        // searching for naked try allowed
+        return;
+      }
+      if (parent == myCurrent) {
+        // search for expression, type, annotation or symbol
+        if ("';' expected".equals(errorDescription)) {
+          // expression
+          return;
+        }
+        if ("Identifier or type expected".equals(errorDescription)) {
+          // annotation
+          return;
+        }
+        if ("Identifier expected".equals(errorDescription)) {
+          // type
+          return;
+        }
+      }
+      throw new MalformedPatternException(errorDescription);
+    }
+
+    void setCurrent(PsiElement current) {
+      myCurrent = current;
     }
   }
 

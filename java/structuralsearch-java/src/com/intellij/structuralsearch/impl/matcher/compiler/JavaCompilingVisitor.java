@@ -296,11 +296,11 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiModifierList modifierList = (PsiModifierList)firstChild;
       final PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length != 1) {
-        throw new UnsupportedPatternException("Pattern is malformed");
+        throw new MalformedPatternException();
       }
       for (String modifier : PsiModifier.MODIFIERS) {
         if (modifierList.hasExplicitModifier(modifier)) {
-          throw new UnsupportedPatternException("Pattern is malformed");
+          throw new MalformedPatternException();
         }
       }
       myCompilingVisitor.setHandler(psiDeclarationStatement, new AnnotationHandler());

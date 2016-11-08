@@ -304,8 +304,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("replace silly assignments", expectedResult12, replacer.testReplace(s31,s32,s33,options));
 
     String s34 = "ParamChecker.isTrue(1==1, \"!!!\");";
-    String s35 = "ParamChecker.isTrue('_expr, '_msg)";
-    String s36 = "assert $expr$ : $msg$";
+    String s35 = "ParamChecker.isTrue('_expr, '_msg);";
+    String s36 = "assert $expr$ : $msg$;";
 
     String expectedResult13 = "assert 1==1 : \"!!!\";";
     assertEquals("replace with assert", expectedResult13, replacer.testReplace(s34,s35,s36,options));

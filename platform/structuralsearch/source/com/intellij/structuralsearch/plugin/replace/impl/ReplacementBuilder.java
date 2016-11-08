@@ -135,7 +135,7 @@ public final class ReplacementBuilder {
           profile.provideAdditionalReplaceOptions(patternNode, options, this);
         }
       } catch (IncorrectOperationException e) {
-        throw new MalformedPatternException();
+        throw new MalformedPatternException(e.getMessage());
       }
     }
   }
