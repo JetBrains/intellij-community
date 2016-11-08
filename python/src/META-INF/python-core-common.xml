@@ -312,7 +312,7 @@
     </intentionAction>
     
     <intentionAction>
-      <className>com.jetbrains.python.codeInsight.intentions.PyConvertToFStringIntention</className>
+      <className>com.jetbrains.python.codeInsight.intentions.convertToFString.PyConvertToFStringIntention</className>
       <category>Python</category>
     </intentionAction>
 
