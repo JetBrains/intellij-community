@@ -237,6 +237,8 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     public AllPluginsLoader() {
       // Groovy performance: do not specify parent loader to enable our luckyGuesser
+      // Also specify null explicitly to suppress getSystemClassLoader() as parent
+      super(null);
     }
 
     @Override
