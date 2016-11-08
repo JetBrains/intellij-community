@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.dataFlow
 
 import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.DataInputOutputUtil.*
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -26,24 +26,24 @@ import java.io.DataOutput
 internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> {
 
   override fun save(out: DataOutput, value: Map<Int, MethodData>?) {
-    writeList(out, value!!.toList()) { DataInputOutputUtil.writeINT(out, it.first); writeMethod(out, it.second) }
+    writeSeq(out, value!!.toList()) { writeINT(out, it.first); writeMethod(out, it.second) }
   }
 
-  override fun read(input: DataInput) = readList(input) { DataInputOutputUtil.readINT(input) to readMethod(input) }.toMap()
+  override fun read(input: DataInput) = readSeq(input) { readINT(input) to readMethod(input) }.toMap()
 
   private fun writeMethod(out: DataOutput, data: MethodData) {
     writeNullable(out, data.nullity) { writeNullity(out, it) }
     writeNullable(out, data.purity) { writePurity(out, it) }
-    writeList(out, data.contracts) { writeContract(out, it) }
-    DataInputOutputUtil.writeINT(out, data.bodyStart)
-    DataInputOutputUtil.writeINT(out, data.bodyEnd)
+    writeSeq(out, data.contracts) { writeContract(out, it) }
+    writeINT(out, data.bodyStart)
+    writeINT(out, data.bodyEnd)
   }
 
   private fun readMethod(input: DataInput): MethodData {
     val nullity = readNullable(input) { readNullity(input) }
     val purity = readNullable(input) { readPurity(input) }
-    val contracts = readList(input) { readContract(input) }
-    return MethodData(nullity, purity, contracts, DataInputOutputUtil.readINT(input), DataInputOutputUtil.readINT(input))
+    val contracts = readSeq(input) { readContract(input) }
+    return MethodData(nullity, purity, contracts, readINT(input), readINT(input))
   }
 
   private fun writeNullity(out: DataOutput, nullity: NullityInferenceResult) = when (nullity) {
@@ -56,14 +56,14 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     else -> NullityInferenceResult.FromDelegate(readRanges(input))
   }
 
-  private fun writeRanges(out: DataOutput, ranges: List<ExpressionRange>) = writeList(out, ranges) { writeRange(out, it) }
-  private fun readRanges(input: DataInput) = readList(input) { readRange(input) }
+  private fun writeRanges(out: DataOutput, ranges: List<ExpressionRange>) = writeSeq(out, ranges) { writeRange(out, it) }
+  private fun readRanges(input: DataInput) = readSeq(input) { readRange(input) }
 
   private fun writeRange(out: DataOutput, range: ExpressionRange) {
-    DataInputOutputUtil.writeINT(out, range.startOffset)
-    DataInputOutputUtil.writeINT(out, range.endOffset)
+    writeINT(out, range.startOffset)
+    writeINT(out, range.endOffset)
   }
-  private fun readRange(input: DataInput) = ExpressionRange(DataInputOutputUtil.readINT(input), DataInputOutputUtil.readINT(input))
+  private fun readRange(input: DataInput) = ExpressionRange(readINT(input), readINT(input))
 
   private fun writePurity(out: DataOutput, purity: PurityInferenceResult) {
     writeRanges(out, purity.mutatedRefs)
@@ -73,47 +73,33 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
 
   private fun writeContract(out: DataOutput, contract: PreContract): Unit = when (contract) {
     is DelegationContract -> { out.writeByte(0); writeRange(out, contract.expression); out.writeBoolean(contract.negated) }
-    is KnownContract -> { out.writeByte(1);
+    is KnownContract -> { out.writeByte(1)
       writeContractArguments(out, contract.contract.arguments.toList())
       out.writeByte(contract.contract.returnValue.ordinal)
     }
-    is MethodCallContract -> { out.writeByte(2);
-      writeRange(out, contract.call);
-      writeList(out, contract.states) { writeContractArguments(out, it) }
+    is MethodCallContract -> { out.writeByte(2)
+      writeRange(out, contract.call)
+      writeSeq(out, contract.states) { writeContractArguments(out, it) }
     }
     is NegatingContract -> { out.writeByte(3); writeContract(out, contract.negated) }
-    is SideEffectFilter -> { out.writeByte(4);
+    is SideEffectFilter -> { out.writeByte(4)
       writeRanges(out, contract.expressionsToCheck)
-      writeList(out, contract.contracts) { writeContract(out, it) }
+      writeSeq(out, contract.contracts) { writeContract(out, it) }
     }
     else -> throw IllegalArgumentException(contract.toString())
   }
   private fun readContract(input: DataInput): PreContract = when (input.readByte().toInt()) {
     0 -> DelegationContract(readRange(input), input.readBoolean())
     1 -> KnownContract(MethodContract(readContractArguments(input).toTypedArray(), readValueConstraint(input)))
-    2 -> MethodCallContract(readRange(input), readList(input) { readContractArguments(input) })
+    2 -> MethodCallContract(readRange(input), readSeq(input) { readContractArguments(input) })
     3 -> NegatingContract(readContract(input))
-    else -> SideEffectFilter(readRanges(input), readList(input) { readContract(input) })
+    else -> SideEffectFilter(readRanges(input), readSeq(input) { readContract(input) })
   }
 
   private fun writeContractArguments(out: DataOutput, arguments: List<MethodContract.ValueConstraint>) =
-      writeList(out, arguments) { out.writeByte(it.ordinal) }
-  private fun readContractArguments(input: DataInput) = readList(input, { readValueConstraint(input) })
+      writeSeq(out, arguments) { out.writeByte(it.ordinal) }
+  private fun readContractArguments(input: DataInput) = readSeq(input, { readValueConstraint(input) })
 
   private fun readValueConstraint(input: DataInput) = MethodContract.ValueConstraint.values()[input.readByte().toInt()]
 
 }
-
-// utils
-
-private fun <T> writeNullable(out: DataOutput, value: T?, writeItem: (T) -> Unit) = when (value) {
-  null -> out.writeBoolean(false)
-  else -> { out.writeBoolean(true); writeItem(value) }
-}
-private fun <T> readNullable(input: DataInput, readEach: () -> T): T? = if (input.readBoolean()) readEach() else null
-
-private fun <T> writeList(out: DataOutput, list: List<T>, writeEach: (T) -> Unit) {
-  DataInputOutputUtil.writeINT(out, list.size)
-  list.forEach(writeEach)
-}
-private fun <T> readList(input: DataInput, readEach: () -> T) = (0 until DataInputOutputUtil.readINT(input)).map { readEach() }
