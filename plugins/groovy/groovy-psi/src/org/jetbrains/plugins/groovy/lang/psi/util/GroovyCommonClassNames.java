@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.Collections;
 import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * @author Maxim.Medvedev
@@ -68,10 +68,9 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_TRAIT = "groovy.transform.Trait";
   public static final String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
 
-  public static final Set<String> GROOVY_EXTENSION_CLASSES = Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(
+  public static final Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",
     "org.codehaus.groovy.runtime.DefaultGroovyMethods",
-    "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods",
     "org.codehaus.groovy.runtime.EncodingGroovyMethods",
     "org.codehaus.groovy.runtime.IOGroovyMethods",
     "org.codehaus.groovy.runtime.ProcessGroovyMethods",
@@ -82,6 +81,10 @@ public final class GroovyCommonClassNames {
     "org.codehaus.groovy.runtime.SwingGroovyMethods",
     "org.codehaus.groovy.runtime.XmlGroovyMethods",
     "org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods"
+  ));
+
+  public static final Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+    "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods"
   ));
 
   private GroovyCommonClassNames() { }

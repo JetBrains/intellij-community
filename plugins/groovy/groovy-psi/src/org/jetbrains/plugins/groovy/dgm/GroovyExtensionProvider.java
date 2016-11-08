@@ -28,10 +28,12 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_INSTANCE_EXTENSIONS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_STATIC_EXTENSIONS;
 
 /**
  * @author Max Medvedev
@@ -48,15 +50,17 @@ public class GroovyExtensionProvider {
     return ServiceManager.getService(project, GroovyExtensionProvider.class);
   }
 
-  public Couple<List<String>> collectExtensions(GlobalSearchScope resolveScope) {
+  public Couple<List<String>> collectExtensions(@NotNull GlobalSearchScope resolveScope) {
+    List<String> instanceClasses = ContainerUtil.newArrayList(DEFAULT_INSTANCE_EXTENSIONS);
+    List<String> staticClasses = ContainerUtil.newArrayList(DEFAULT_STATIC_EXTENSIONS);
+    doCollectExtensions(resolveScope, instanceClasses, staticClasses);
+    return Couple.of(instanceClasses, staticClasses);
+  }
+
+  private void doCollectExtensions(@NotNull GlobalSearchScope resolveScope, List<String> instanceClasses, List<String> staticClasses) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("META-INF.services");
-    if (aPackage == null) {
-      return Couple.of(Collections.<String>emptyList(), Collections.<String>emptyList());
-    }
+    if (aPackage == null) return;
 
-
-    List<String> instanceClasses = new ArrayList<>();
-    List<String> staticClasses = new ArrayList<>();
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
       PsiFile file = directory.findFile(ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
       if (file instanceof PropertiesFile) {
@@ -67,8 +71,6 @@ public class GroovyExtensionProvider {
         if (stat != null) collectClasses(stat, staticClasses);
       }
     }
-
-    return Couple.of(instanceClasses, staticClasses);
   }
 
   private static void collectClasses(IProperty pr, List<String> classes) {
@@ -78,7 +80,7 @@ public class GroovyExtensionProvider {
     String[] qnames = value.split("\\s*,\\s*");
     ContainerUtil.addAll(classes, qnames);
   }
-  
+
   public static class GroovyExtensionVetoSPI implements Condition<String> {
 
     @Override
