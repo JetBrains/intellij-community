@@ -159,6 +159,13 @@ public class PyStringLiteralUtil {
     return StringUtil.indexOfIgnoreCase(prefix, 'f', 0) >= 0;
   }
 
+  /**
+   * @return alternative quote character, i.e. " for ' and ' for "
+   */
+  public static char flipQuote(char quote) {
+    return quote == '"' ? '\'' : '"';
+  }
+
   @Nullable
   private static Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
     final int length = text.length();
