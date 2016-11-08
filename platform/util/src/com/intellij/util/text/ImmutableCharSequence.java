@@ -35,4 +35,8 @@ public abstract class ImmutableCharSequence implements CharSequence {
   public abstract ImmutableCharSequence delete(int start, int end);
 
   public abstract ImmutableCharSequence subtext(int start, int end);
+
+  @NotNull
+  @Override
+  public abstract String toString();
 }
