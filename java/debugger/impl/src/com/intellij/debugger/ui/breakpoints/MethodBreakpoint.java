@@ -219,7 +219,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                       .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
                 }
               }
-            });
+            }, true);
           }
         }
         if (base) {

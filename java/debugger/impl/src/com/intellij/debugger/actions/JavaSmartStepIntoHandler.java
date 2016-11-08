@@ -344,7 +344,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                   });
                 }
               }
-            });
+            }, true);
           }
           catch (Exception e) {
             LOG.info(e);

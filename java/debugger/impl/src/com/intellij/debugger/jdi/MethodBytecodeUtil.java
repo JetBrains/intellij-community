@@ -32,6 +32,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,16 +47,16 @@ public class MethodBytecodeUtil {
   /**
    * Allows to use ASM MethodVisitor with jdi method bytecode
    */
-  public static void visit(Method method, MethodVisitor methodVisitor) {
-    visit(method, method.bytecodes(), methodVisitor);
+  public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
-  public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor) {
+  public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     // need to keep the size, otherwise labels array will not be initialized correctly
     byte[] originalBytecodes = method.bytecodes();
     byte[] bytecodes = new byte[originalBytecodes.length];
     System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(method, bytecodes, methodVisitor);
+    visit(method, bytecodes, methodVisitor, withLineNumbers);
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
@@ -73,7 +74,7 @@ public class MethodBytecodeUtil {
     }
   }
 
-  private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+  private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
     try {
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
@@ -111,7 +112,7 @@ public class MethodBytecodeUtil {
         }
 
         MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
-        mv.visitAttribute(createCode(writer, method, bytecodes));
+        mv.visitAttribute(createCode(writer, method, bytecodes, withLineNumbers));
 
         new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
           @Override
@@ -184,14 +185,14 @@ public class MethodBytecodeUtil {
   }
 
   @NotNull
-  private static Attribute createCode(ClassWriter cw, Method method, byte[] bytecodes) throws IOException {
+  private static Attribute createCode(ClassWriter cw, Method method, byte[] bytecodes, boolean withLineNumbers) throws IOException {
     return createAttribute("Code", dos -> {
       dos.writeShort(0); // max_stack
       dos.writeShort(0); // max_locals
       dos.writeInt(bytecodes.length);  // code_length
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
-      List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
+      List<Location> locations = withLineNumbers ? DebuggerUtilsEx.allLineLocations(method) : Collections.emptyList();
       if (!locations.isEmpty()) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
@@ -246,7 +247,7 @@ public class MethodBytecodeUtil {
               cls.methodsByName(name, desc).stream().findFirst().ifPresent(methodRef::set);
             }
           }
-        });
+        }, false);
       }
     }
     return methodRef.get();
@@ -271,7 +272,7 @@ public class MethodBytecodeUtil {
             StreamEx.of(cls.methodsByName(name, desc)).findFirst().ifPresent(methodRef::set);
           }
         }
-      });
+      }, false);
     }
     return methodRef.get();
   }
