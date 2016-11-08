@@ -17,9 +17,12 @@ package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -29,20 +32,24 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.AbstractRefreshablePanel;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,15 +69,13 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.Disposer.isDisposed;
 import static com.intellij.util.ObjectUtils.notNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 4/25/12
- * Time: 5:33 PM
- */
-public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
+public class TreeConflictRefreshablePanel implements Disposable {
+
+  private static final Logger LOG = Logger.getInstance(TreeConflictRefreshablePanel.class);
+
   public static final String TITLE = "Resolve tree conflict";
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
@@ -78,17 +83,24 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final TLongArrayList myRightRevisionsList;
+  @NotNull private final String myLoadingTitle;
+  @NotNull private final JBLoadingPanel myDetailsPanel;
+  @NotNull private final BackgroundTaskQueue myQueue;
 
   public TreeConflictRefreshablePanel(@NotNull Project project,
                                       @NotNull String loadingTitle,
                                       @NotNull BackgroundTaskQueue queue,
                                       Change change) {
-    super(project, loadingTitle, queue);
     myVcs = SvnVcs.getInstance(project);
     assert change instanceof ConflictedSvnChange;
     myChange = (ConflictedSvnChange) change;
     myPath = ChangesUtil.getFilePath(myChange);
     myRightRevisionsList = new TLongArrayList();
+
+    myLoadingTitle = loadingTitle;
+    myQueue = queue;
+    myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
+    myDetailsPanel.setLoadingText("Loading...");
   }
 
   public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
@@ -116,10 +128,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return true;
   }
 
-  @Override
-  protected Object loadImpl() throws VcsException {
-    return new BeforeAfter<>(processDescription(myChange.getBeforeDescription()),
-                             processDescription(myChange.getAfterDescription()));
+  @NotNull
+  public JPanel getPanel() {
+    return myDetailsPanel;
   }
 
   private BeforeAfter<ConflictSidePresentation> processDescription(TreeConflictDescription description) throws VcsException {
@@ -191,9 +202,23 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return side;
   }
 
-  @Override
-  protected JPanel dataToPresentation(Object o) {
-    final BeforeAfter<BeforeAfter<ConflictSidePresentation>> ba = (BeforeAfter<BeforeAfter<ConflictSidePresentation>>) o;
+  @CalledInAwt
+  public void refresh() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    myDetailsPanel.startLoading();
+    myQueue.run(new Loader(myVcs.getProject(), myLoadingTitle));
+  }
+
+  @CalledInBackground
+  @NotNull
+  protected BeforeAfter<BeforeAfter<ConflictSidePresentation>> loadData() throws VcsException {
+    return new BeforeAfter<>(processDescription(myChange.getBeforeDescription()),
+                             processDescription(myChange.getAfterDescription()));
+  }
+
+  @CalledInAwt
+  protected JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel main = new JPanel(new GridBagLayout());
 
@@ -211,8 +236,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     main.add(name, gb);
     ++ gb.gridy;
     gb.insets.top = 10;
-    appendDescription(myChange.getBeforeDescription(), main, gb, ba.getBefore(), myPath.isDirectory());
-    appendDescription(myChange.getAfterDescription(), main, gb, ba.getAfter(), myPath.isDirectory());
+    appendDescription(myChange.getBeforeDescription(), main, gb, data.getBefore(), myPath.isDirectory());
+    appendDescription(myChange.getAfterDescription(), main, gb, data.getAfter(), myPath.isDirectory());
     wrapper.add(main, BorderLayout.NORTH);
     return wrapper;
   }
@@ -413,7 +438,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
 
   @Override
   public void dispose() {
-    super.dispose();
     Disposer.dispose(myChildDisposables);
   }
 
@@ -539,6 +563,53 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myFileHistoryPanel.setBottomRevisionForShowDiff(last);
       myFileHistoryPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
       return myFileHistoryPanel;
+    }
+  }
+
+  private class Loader extends ModalityIgnorantBackgroundableTask {
+    private BeforeAfter<BeforeAfter<ConflictSidePresentation>> myData;
+
+    private Loader(@Nullable Project project, @NotNull String title) {
+      super(project, title, false);
+    }
+
+    @Override
+    protected void doInAwtIfFail(@NotNull Exception e) {
+      Exception cause;
+      if (e instanceof RuntimeException && e.getCause() != null) {
+        cause = (Exception)e.getCause();
+      }
+      else {
+        cause = e;
+      }
+      LOG.info(e);
+      String message = cause.getMessage() == null ? e.getMessage() : cause.getMessage();
+      message = message == null ? "Unknown error" : message;
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+    }
+
+    @Override
+    protected void doInAwtIfCancel() {
+    }
+
+    @Override
+    protected void doInAwtIfSuccess() {
+      if (!isDisposed(TreeConflictRefreshablePanel.this)) {
+        myDetailsPanel.add(dataToPresentation(myData));
+        myDetailsPanel.stopLoading();
+      }
+    }
+
+    @Override
+    protected void runImpl(@NotNull ProgressIndicator indicator) {
+      if (!isDisposed(TreeConflictRefreshablePanel.this)) {
+        try {
+          myData = loadData();
+        }
+        catch (VcsException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 }
