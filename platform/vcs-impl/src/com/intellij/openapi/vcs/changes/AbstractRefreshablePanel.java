@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * For presentation, which is itself in GenericDetails (not necessarily) - shown from time to time, but cached, and
@@ -48,7 +50,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   private Ticket myCurrentlySelected;
   private Ticket mySetId;
   private final Ticket myTicket;
-  private final DetailsPanel myDetailsPanel;
+  private final JBLoadingPanel myDetailsPanel;
   private final BackgroundTaskQueue myQueue;
   private volatile boolean myDisposed;
 
@@ -57,8 +59,8 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
     myLoadingTitle = loadingTitle;
     myQueue = queue;
     myTicket = new Ticket();
-    myDetailsPanel = new DetailsPanel();
-    myDetailsPanel.loading();
+    myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
+    myDetailsPanel.setLoadingText("Loading...");
   }
 
   @CalledInAwt
@@ -75,7 +77,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
         myQueue.run(new Loader(myProject, myLoadingTitle, copy));
       }
 
-      myDetailsPanel.loading();
+      myDetailsPanel.startLoading();
     } else {
       refreshPresentation();
     }
@@ -91,12 +93,13 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   
   @CalledInAwt
   private void acceptData(final T t) {
-    myDetailsPanel.data(dataToPresentation(t));
+    myDetailsPanel.add(dataToPresentation(t));
+    myDetailsPanel.stopLoading();
   }
 
   @Override
   public JPanel getPanel() {
-    return myDetailsPanel.getPanel();
+    return myDetailsPanel;
   }
 
   private class Loader extends ModalityIgnorantBackgroundableTask {
