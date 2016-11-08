@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
@@ -27,6 +28,8 @@ private class DefaultProgramRunnerImpl : AsyncGenericProgramRunner<RunnerSetting
   override fun getRunnerId() = "defaultRunner"
 
   override fun prepare(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
+    FileDocumentManager.getInstance().saveAllDocuments()
+
     if (state is DebuggableRunProfileState) {
       return state.execute(-1)
         .then {
@@ -36,7 +39,7 @@ private class DefaultProgramRunnerImpl : AsyncGenericProgramRunner<RunnerSetting
         }
     }
 
-    return resolvedPromise(runProfileStarter { state, environment -> executeState(state, environment, this) })
+    return resolvedPromise(runProfileStarter { state, environment -> showRunContent(state.execute(environment.executor, this), environment) })
   }
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
