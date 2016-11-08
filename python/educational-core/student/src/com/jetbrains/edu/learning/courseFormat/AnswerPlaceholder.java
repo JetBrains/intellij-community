@@ -33,6 +33,7 @@ public class AnswerPlaceholder {
 
   @Transient private TaskFile myTaskFile;
 
+  @SerializedName("subtask_infos")
   @Expose private Map<Integer, AnswerPlaceholderSubtaskInfo> mySubtaskInfos = new HashMap<>();
   public AnswerPlaceholder() {
   }

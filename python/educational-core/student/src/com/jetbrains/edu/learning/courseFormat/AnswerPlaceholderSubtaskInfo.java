@@ -17,12 +17,17 @@ public class AnswerPlaceholderSubtaskInfo {
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";
 
+  @SerializedName("placeholder_text")
   @Expose private String myPlaceholderText;
 
   private String myAnswer = "";
   private boolean mySelected = false;
   private StudyStatus myStatus = StudyStatus.Unchecked;
+
+  @SerializedName("has_frame")
   @Expose private boolean myHasFrame = true;
+
+  @SerializedName("need_insert_text")
   @Expose private boolean myNeedInsertText = false;
 
   public StudyStatus getStatus() {

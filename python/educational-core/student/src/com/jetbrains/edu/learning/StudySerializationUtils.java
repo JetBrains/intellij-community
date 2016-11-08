@@ -12,10 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -387,6 +387,10 @@ public class StudySerializationUtils {
 
     public static final String TASK_LIST = "task_list";
     public static final String TASK_FILES = "task_files";
+    public static final String FILES = "files";
+    public static final String HINTS = "hints";
+    public static final String SUBTASK_INFOS = "subtask_infos";
+    public static final String FORMAT_VERSION = "format_version";
 
     private Json() {
     }
@@ -438,74 +442,97 @@ public class StudySerializationUtils {
       }
     }
 
-    public static class StepicTaskFileAdapter implements JsonDeserializer<TaskFile> {
-
+    public static class StepicStepOptionsAdapter implements JsonDeserializer<StepicWrappers.StepOptions> {
       @Override
-      public TaskFile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        JsonObject taskFileObject = json.getAsJsonObject();
-        JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-        for (JsonElement placeholder : placeholders) {
-          JsonObject placeholderObject = placeholder.getAsJsonObject();
-          int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-          int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-          if (line == -1) {
-            placeholderObject.addProperty(OFFSET, start);
-          }
-          else {
-            Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
-            placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
-          }
-          final String hintString = placeholderObject.getAsJsonPrimitive(HINT).getAsString();
-          final JsonArray hintsArray = new JsonArray();
+      public StepicWrappers.StepOptions deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+        throws JsonParseException {
+        JsonObject stepOptionsJson = json.getAsJsonObject();
+        JsonPrimitive versionJson = stepOptionsJson.getAsJsonPrimitive(FORMAT_VERSION);
+        int version = 1;
+        if (versionJson != null) {
+          version = versionJson.getAsInt();
+        }
+        switch (version) {
+          case 1:
+            stepOptionsJson = convertToSecondVersion(stepOptionsJson);
+            // uncomment for future versions
+            //case 2:
+            //  stepOptionsJson = convertToThirdVersion(stepOptionsJson);
+        }
+        StepicWrappers.StepOptions stepOptions =
+          new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()
+            .fromJson(stepOptionsJson, StepicWrappers.StepOptions.class);
+        stepOptions.formatVersion = EduStepicConnector.CURRENT_VERSION;
+        return stepOptions;
+      }
 
-          try {
-            final Type listType = new TypeToken<List<String>>() {}.getType();
-            final List<String> hints = gson.fromJson(hintString, listType);
-            if (hints != null && !hints.isEmpty()) {
-              for (int i = 0; i < hints.size(); i++) {
-                if (i == 0) {
-                  placeholderObject.addProperty(HINT, hints.get(0));
-                  continue;
-                }
-                hintsArray.add(hints.get(i));
-              }
-              placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
-            }
-            else {
-              placeholderObject.addProperty(HINT, "");
-            }
-          }
-          catch (JsonParseException e) {
-            hintsArray.add(hintString);
+      private static JsonObject convertToSecondVersion(JsonObject stepOptionsJson) {
+        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
+          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+          for (JsonElement placeholder : placeholders) {
+            JsonObject placeholderObject = placeholder.getAsJsonObject();
+            convertToAbsoluteOffset(taskFileObject, placeholderObject);
+            convertMultipleHints(gson, placeholderObject);
+            convertToSubtaskInfo(placeholderObject);
           }
         }
-
-        return gson.fromJson(json, TaskFile.class);
+        return stepOptionsJson;
       }
-    }
 
-    public static class StepicAnswerPlaceholderAdapter implements JsonSerializer<AnswerPlaceholder> {
-      @Override
-      public JsonElement serialize(AnswerPlaceholder src, Type typeOfSrc, JsonSerializationContext context) {
-        final List<String> hints = src.getHints();
+      private static void convertToSubtaskInfo(JsonObject placeholderObject) {
+        JsonObject subtaskInfosObject = new JsonObject();
+        placeholderObject.add(SUBTASK_INFOS, subtaskInfosObject);
+        JsonObject subtaskInfo = new JsonObject();
+        subtaskInfosObject.add("0", subtaskInfo);
+        JsonArray hintsArray = new JsonArray();
+        hintsArray.add(placeholderObject.getAsJsonPrimitive(HINT).getAsString());
+        JsonArray additionalHints = placeholderObject.getAsJsonArray(ADDITIONAL_HINTS);
+        if (additionalHints != null) {
+          hintsArray.addAll(additionalHints);
+        }
+        subtaskInfo.add(HINTS, hintsArray);
+        subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
+      }
 
-        final int length = src.getLength();
-        final int start = src.getOffset();
-        final String possibleAnswer = src.getPossibleAnswer();
-        int line = -1;
+      private static void convertMultipleHints(Gson gson, JsonObject placeholderObject) {
+        final String hintString = placeholderObject.getAsJsonPrimitive(HINT).getAsString();
+        final JsonArray hintsArray = new JsonArray();
 
-        final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        final JsonObject answerPlaceholder = new JsonObject();
-        answerPlaceholder.addProperty(LINE, line);
-        answerPlaceholder.addProperty(START, start);
-        answerPlaceholder.addProperty(LENGTH, length);
-        answerPlaceholder.addProperty(POSSIBLE_ANSWER, possibleAnswer);
+        try {
+          final Type listType = new TypeToken<List<String>>() {
+          }.getType();
+          final List<String> hints = gson.fromJson(hintString, listType);
+          if (hints != null && !hints.isEmpty()) {
+            for (int i = 0; i < hints.size(); i++) {
+              if (i == 0) {
+                placeholderObject.addProperty(HINT, hints.get(0));
+                continue;
+              }
+              hintsArray.add(hints.get(i));
+            }
+            placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
+          }
+          else {
+            placeholderObject.addProperty(HINT, "");
+          }
+        }
+        catch (JsonParseException e) {
+          hintsArray.add(hintString);
+        }
+      }
 
-        final String jsonHints = gson.toJson(hints);
-        answerPlaceholder.addProperty(HINT, jsonHints);
-
-        return answerPlaceholder;
+      private static void convertToAbsoluteOffset(JsonObject taskFileObject, JsonObject placeholderObject) {
+        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
+        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
+        if (line == -1) {
+          placeholderObject.addProperty(OFFSET, start);
+        }
+        else {
+          Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
+          placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
+        }
       }
     }
   }
