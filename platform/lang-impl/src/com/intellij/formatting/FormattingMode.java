@@ -21,5 +21,5 @@ package com.intellij.formatting;
  */
 public enum FormattingMode {
   
-  REFORMAT, ADJUST_INDENT
+  REFORMAT, ADJUST_INDENT, ADJUST_INDENT_ON_ENTER
 }

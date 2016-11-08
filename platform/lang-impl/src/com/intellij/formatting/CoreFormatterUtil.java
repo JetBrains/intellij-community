@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -27,11 +28,10 @@ import java.util.Set;
 
 /**
  * Contains utility methods for core formatter processing.
- * 
- * @author Denis Zhdanov
- * @since 4/28/11 4:16 PM
  */
 public class CoreFormatterUtil {
+  
+  public final static Key<FormattingMode> MODE = Key.create("formatting.mode");
 
   private CoreFormatterUtil() {
   }
@@ -260,5 +260,18 @@ public class CoreFormatterUtil {
     else {
       return getFirstLeaf(((CompositeBlockWrapper)block).getChildren().get(0));
     }
+  }
+
+  /**
+   * Retrieves the current formatting mode from settings' user data.
+   * 
+   * @param settings  The settings.
+   * @return The current formatting mode (<code>FormattingMode.REFORMAT</code> by default).
+   * @see FormattingMode
+   */
+  @NotNull
+  public static FormattingMode getFormattingMode(@NotNull CodeStyleSettings settings) {
+    FormattingMode mode = settings.getUserData(MODE);
+    return mode != null ? mode : FormattingMode.REFORMAT;
   }
 }
