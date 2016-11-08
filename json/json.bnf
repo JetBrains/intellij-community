@@ -41,7 +41,7 @@
         NULL='null'
         // Actually not defined in RFC 4627, but may be used for JSON5 and helps with
         // auto completion of keywords.
-        INDENTIFIER='regexp:[:jletter:] [:jletterdigit:]*'
+        IDENTIFIER='regexp:[:jletter:] [:jletterdigit:]*'
     ]
 
     extends("container|literal|reference_expression")=value
@@ -130,7 +130,7 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
 
 fake container ::=
 
-reference_expression ::= INDENTIFIER
+reference_expression ::= IDENTIFIER
 
 value ::= object | array | literal | reference_expression
 

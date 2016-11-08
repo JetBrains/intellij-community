@@ -24,7 +24,7 @@ public interface JsonElementTypes {
   IElementType COMMA = new JsonTokenType(",");
   IElementType DOUBLE_QUOTED_STRING = new JsonTokenType("DOUBLE_QUOTED_STRING");
   IElementType FALSE = new JsonTokenType("false");
-  IElementType INDENTIFIER = new JsonTokenType("INDENTIFIER");
+  IElementType IDENTIFIER = new JsonTokenType("IDENTIFIER");
   IElementType LINE_COMMENT = new JsonTokenType("LINE_COMMENT");
   IElementType L_BRACKET = new JsonTokenType("[");
   IElementType L_CURLY = new JsonTokenType("{");
