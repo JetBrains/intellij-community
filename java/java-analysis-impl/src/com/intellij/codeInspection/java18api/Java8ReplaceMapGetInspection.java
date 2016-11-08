@@ -132,6 +132,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
       if (!(statement instanceof PsiBlockStatement)) return null;
       // like val = new ArrayList<>(); map.put(key, val);
       PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
+      if (statements.length != 2) return null;
       putCall = extractPutCall(statements[1]);
       if (putCall == null) return null;
       PsiExpression[] putArguments = putCall.getArgumentList().getExpressions();
