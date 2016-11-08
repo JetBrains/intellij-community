@@ -53,7 +53,6 @@ import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.history.SvnHistorySession;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -65,6 +64,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
 public class TreeConflictRefreshablePanel implements Disposable {
 
@@ -92,7 +92,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
     myLoadingTitle = loadingTitle;
     myQueue = queue;
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
-    myDetailsPanel.setLoadingText("Loading...");
   }
 
   public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
@@ -125,53 +124,43 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return myDetailsPanel;
   }
 
+  @CalledInBackground
   private BeforeAfter<ConflictSidePresentation> processDescription(TreeConflictDescription description) throws VcsException {
     if (description == null) return null;
     if (myChange.getBeforeRevision() != null) {
-      myCommittedRevision = (SvnRevisionNumber)SvnHistorySession.getCurrentCommittedRevision(myVcs,
-              myChange.getBeforeRevision() != null ? myChange.getBeforeRevision().getFile().getIOFile() : myPath.getIOFile());
+      myCommittedRevision = (SvnRevisionNumber)getCurrentCommittedRevision(myVcs, myChange.getBeforeRevision() != null ? myChange
+        .getBeforeRevision().getFile().getIOFile() : myPath.getIOFile());
     }
-    boolean differentURLs = isDifferentURLs(description);
 
-    ConflictSidePresentation leftSide = null;
-    ConflictSidePresentation rightSide = null;
-    try {
-      if (differentURLs) {
-        leftSide = createSide(description.getSourceLeftVersion(), null, true);
-        rightSide = createSide(description.getSourceRightVersion(), null, false);
-        leftSide.load();
-        rightSide.load();
-      } else {
-        //only one side
-        leftSide = EmptyConflictSide.getInstance();
-        final SVNRevision pegFromLeft;
-        if (description.getSourceLeftVersion() == null) {
-          pegFromLeft = null;
-        }
-        else {
-          long committed = description.getSourceLeftVersion().getPegRevision();
-          if (myCommittedRevision != null && myCommittedRevision.getRevision().getNumber() < committed &&
-            myCommittedRevision.getRevision().isValid()) {
-            committed = myCommittedRevision.getRevision().getNumber();
-          }
-          pegFromLeft = SVNRevision.create(committed);
-        }
-        rightSide = createSide(description.getSourceRightVersion(), pegFromLeft, false);
-        rightSide.load();
-        return new BeforeAfter<>(leftSide, rightSide);
-      }
-    } catch (SVNException e) {
-      throw new VcsException(e);
-    } finally {
-      if (leftSide != null) {
-        myChildDisposables.add(leftSide);
-      }
-      if (rightSide != null) {
-        myChildDisposables.add(rightSide);
-      }
+    ConflictSidePresentation leftSide;
+    ConflictSidePresentation rightSide;
+    if (isDifferentURLs(description)) {
+      leftSide = createSide(description.getSourceLeftVersion(), null, true);
+      rightSide = createSide(description.getSourceRightVersion(), null, false);
     }
+    else { //only one side
+      leftSide = createSide(null, null, true);
+      rightSide = createSide(description.getSourceRightVersion(), getPegRevisionFromLeftSide(description), false);
+    }
+    leftSide.load();
+    rightSide.load();
 
     return new BeforeAfter<>(leftSide, rightSide);
+  }
+
+  @Nullable
+  private SVNRevision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
+    SVNRevision result = null;
+    if (description.getSourceLeftVersion() != null) {
+      long committed = description.getSourceLeftVersion().getPegRevision();
+      if (myCommittedRevision != null &&
+          myCommittedRevision.getRevision().getNumber() < committed &&
+          myCommittedRevision.getRevision().isValid()) {
+        committed = myCommittedRevision.getRevision().getNumber();
+      }
+      result = SVNRevision.create(committed);
+    }
+    return result;
   }
 
   private static boolean isDifferentURLs(TreeConflictDescription description) {
@@ -179,19 +168,24 @@ public class TreeConflictRefreshablePanel implements Disposable {
                 ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
 
-  private ConflictSidePresentation createSide(ConflictVersion version, final SVNRevision untilThisOther, final boolean isLeft) throws VcsException {
-    if (version == null) return EmptyConflictSide.getInstance();
-    if (myChange.getBeforeRevision() != null && myCommittedRevision != null) {
-      SvnRevisionNumber number = myCommittedRevision;
-      if (isLeft && number.getRevision().isValid() && number.getRevision().getNumber() == version.getPegRevision()) {
-        return EmptyConflictSide.getInstance();
+  @NotNull
+  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable SVNRevision untilThisOther, boolean isLeft)
+    throws VcsException {
+    ConflictSidePresentation result = EmptyConflictSide.getInstance();
+    if (version != null &&
+        (myChange.getBeforeRevision() == null ||
+         myCommittedRevision == null ||
+         !isLeft ||
+         !myCommittedRevision.getRevision().isValid() ||
+         myCommittedRevision.getRevision().getNumber() != version.getPegRevision())) {
+      HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
+      if (untilThisOther != null && !isLeft) {
+        side.setListToReportLoaded(myRightRevisionsList);
       }
+      result = side;
     }
-    HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
-    if (untilThisOther != null && ! isLeft) {
-      side.setListToReportLoaded(myRightRevisionsList);
-    }
-    return side;
+    myChildDisposables.add(result);
+    return result;
   }
 
   @CalledInAwt
@@ -200,13 +194,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
     myDetailsPanel.startLoading();
     myQueue.run(new Loader(myVcs.getProject(), myLoadingTitle));
-  }
-
-  @CalledInBackground
-  @NotNull
-  protected BeforeAfter<BeforeAfter<ConflictSidePresentation>> loadData() throws VcsException {
-    return new BeforeAfter<>(processDescription(myChange.getBeforeDescription()),
-                             processDescription(myChange.getAfterDescription()));
   }
 
   @CalledInAwt
@@ -435,7 +422,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
   private interface ConflictSidePresentation extends Disposable {
     JPanel createPanel();
-    void load() throws SVNException, VcsException;
+
+    void load() throws VcsException;
   }
 
   private static class EmptyConflictSide implements ConflictSidePresentation {
@@ -455,7 +443,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
 
     @Override
-    public void load() throws SVNException {
+    public void load() {
     }
   }
 
@@ -508,7 +496,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
 
     @Override
-    public void load() throws SVNException, VcsException {
+    public void load() throws VcsException {
       SVNRevision from = SVNRevision.create(myVersion.getPegRevision());
       myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, myPeg == null ? LIMIT : 0, myPeg, true);
       VcsAbstractHistorySession session = mySessionAdapter.getSession();
@@ -569,7 +557,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       try {
-        myData = loadData();
+        myData = new BeforeAfter<>(processDescription(myChange.getBeforeDescription()), processDescription(myChange.getAfterDescription()));
       }
       catch (VcsException e) {
         myException = e;
