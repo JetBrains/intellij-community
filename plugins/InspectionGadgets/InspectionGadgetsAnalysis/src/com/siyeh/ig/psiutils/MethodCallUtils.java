@@ -117,6 +117,21 @@ public class MethodCallUtils {
     return isCallToMethod(expression, calledOnClassName, returnType, methodName, parameterTypes);
   }
 
+  public static boolean isCallToStaticMethod(@NotNull PsiMethodCallExpression expression, @NonNls @NotNull String calledOnClassName,
+                                             @NonNls @NotNull String methodName, int parameterCount) {
+    if (!methodName.equals(getMethodName(expression)) || expression.getArgumentList().getExpressions().length != parameterCount) {
+      return false;
+    }
+    PsiMethod method = expression.resolveMethod();
+    if (method == null ||
+        !method.getModifierList().hasExplicitModifier(PsiModifier.STATIC) ||
+        method.getParameterList().getParametersCount() != parameterCount) {
+      return false;
+    }
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && calledOnClassName.equals(aClass.getQualifiedName());
+  }
+
   public static boolean isCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @Nullable Pattern methodNamePattern, @Nullable PsiType... parameterTypes) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
