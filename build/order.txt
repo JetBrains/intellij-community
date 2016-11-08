@@ -11524,6 +11524,8 @@ org/jetbrains/plugins/groovy/compiler/ExcludeFromStubGenerationAction.class:/plu
 com/intellij/ide/actions/CloseAllUnmodifiedEditorsAction.class:/lib/idea.jar
 com/intellij/ide/actions/CloseEditorsActionBase.class:/lib/idea.jar
 com/intellij/ide/actions/CloseAllUnpinnedEditorsAction.class:/lib/idea.jar
+com/intellij/ide/actions/CloseAllEditorsToTheRightAction.class:/lib/idea.jar
+com/intellij/ide/actions/CloseAllEditorsToTheLeftAction.class:/lib/idea.jar
 com/intellij/ide/util/frameworkSupport/AddFrameworkSupportAction.class:/lib/idea.jar
 com/intellij/ide/actions/AssociateFileType.class:/lib/idea.jar
 com/intellij/ide/actions/EditSourceAction.class:/lib/idea.jar

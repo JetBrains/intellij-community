@@ -36,28 +36,33 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<>();
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    final EditorWindow[] windows;
-    if (editorWindow != null){
-      windows = new EditorWindow[]{ editorWindow };
-    }
-    else {
-      windows = editorManager.getWindows ();
-    }
-    final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-    if (fileStatusManager != null) {
-      for (int i = 0; i != windows.length; ++ i) {
-        final EditorWindow window = windows [i];
-        final EditorComposite [] editors = window.getEditors ();
-        for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window)) {
-            res.add(Pair.create(editor, window));
-          }
+    if (project != null) {
+      final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
+      final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
+      final EditorWindow[] windows;
+      if (editorWindow != null) {
+        windows = new EditorWindow[]{editorWindow};
+      }
+      else {
+        windows = editorManager.getWindows();
+      }
+      final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+      if (fileStatusManager != null) {
+        for (int i = 0; i != windows.length; ++i) {
+          fillFileListFromWindow(windows[i], res);
         }
       }
     }
     return res;
+  }
+
+  protected void fillFileListFromWindow(final EditorWindow window, final ArrayList<Pair<EditorComposite, EditorWindow>> consumer) {
+    final EditorComposite [] editors = window.getEditors ();
+    for (final EditorComposite editor : editors) {
+      if (isFileToClose(editor, window)) {
+        consumer.add(Pair.create(editor, window));
+      }
+    }
   }
 
   protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
