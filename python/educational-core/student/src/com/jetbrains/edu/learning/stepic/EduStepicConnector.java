@@ -29,6 +29,7 @@ import java.util.*;
 public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
 
+  public static final int CURRENT_VERSION = 2;
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
   private static final String ADAPTIVE_NOTE =
@@ -125,26 +126,51 @@ public class EduStepicConnector {
       return false;
     }
     final StepicWrappers.CoursesContainer coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
+    addAvailableCourses(result, coursesContainer);
+    return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
+  }
+
+  static void addAvailableCourses(List<CourseInfo> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
-      final String courseType = info.getType();
-      if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) continue;
-      final List<String> typeLanguage = StringUtil.split(courseType, " ");
-      if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
+      if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
+      if (canBeOpened(info)) {
         for (Integer instructor : info.instructors) {
           final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor),
-                                                  StepicWrappers.AuthorWrapper.class).users.get(0);
+                                                                  StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
-        
+
         if (info.isAdaptive()) {
           info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription() + ADAPTIVE_NOTE);
         }
-        
+
         result.add(info);
       }
     }
-    return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
+  }
+
+  static boolean canBeOpened(CourseInfo courseInfo) {
+    if (courseInfo.isAdaptive) {
+      return true;
+    }
+    String courseType = courseInfo.getType();
+    final List<String> typeLanguage = StringUtil.split(courseType, " ");
+    String prefix = typeLanguage.get(0);
+    if (typeLanguage.size() != 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
+      return false;
+    }
+    String versionString = prefix.substring(PYCHARM_PREFIX.length());
+    if (versionString.isEmpty()) {
+      return true;
+    }
+    try {
+      Integer version = Integer.valueOf(versionString);
+      return version <= CURRENT_VERSION;
+    } catch (NumberFormatException e) {
+      LOG.info("Wrong version format", e);
+      return false;
+    }
   }
 
   public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
@@ -158,7 +184,8 @@ public class EduStepicConnector {
     if (!course.isAdaptive()) {
       String courseType = info.getType();
       course.setName(info.getName());
-      course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
+      String language = courseType.split(" ")[1];
+      course.setLanguage(language);
       try {
         for (Integer section : info.sections) {
           course.addLessons(getLessons(section));
@@ -213,11 +240,11 @@ public class EduStepicConnector {
   private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
     final StepicWrappers.StepSource step = getStep(stepicId);
     final StepicWrappers.Step block = step.block;
-    if (!block.name.equals(PYCHARM_PREFIX)) return;
+    if (!block.name.startsWith(PYCHARM_PREFIX)) return;
     final Task task = new Task();
     task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
-    task.setName(block.options != null ? block.options.title : PYCHARM_PREFIX);
+    task.setName(block.options != null ? block.options.title : (PYCHARM_PREFIX + CURRENT_VERSION));
     task.setText(block.text);
     for (StepicWrappers.TestFileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);

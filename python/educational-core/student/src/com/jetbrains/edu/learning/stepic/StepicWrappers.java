@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -51,9 +52,14 @@ public class StepicWrappers {
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
     @Expose CodeTemplatesWrapper codeTemplates;
+    @SerializedName("format_version")
+    @Expose public int formatVersion = 2;
+    @SerializedName("last_subtask_index")
+    @Expose int lastSubtaskIndex = 0;
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
+      task.setLastSubtaskIndex(source.lastSubtaskIndex);
       setTests(task, source, project);
       source.files = new ArrayList<>();
       source.title = task.getName();

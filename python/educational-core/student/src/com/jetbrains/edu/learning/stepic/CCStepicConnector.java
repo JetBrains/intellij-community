@@ -12,10 +12,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -219,8 +217,7 @@ public class CCStepicConnector {
     final int lessonId = lesson.getId();
 
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepId()));
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
-      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     ApplicationManager.getApplication().invokeLater(() -> {
       task.addTestsTexts("tests.py", task.getTestsText(project));
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
@@ -331,9 +328,7 @@ public class CCStepicConnector {
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
-    //TODO: register type adapter for task files here?
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
-      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     ApplicationManager.getApplication().invokeLater(() -> {
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
       request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
