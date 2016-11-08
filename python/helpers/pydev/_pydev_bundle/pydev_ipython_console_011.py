@@ -111,6 +111,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     #   a better theme).
     colors_force = CBool(True)
     colors = Unicode("NoColor")
+    # Since IPython 5 the terminal interface is not compatible with Emacs `inferior-shell` and
+    # the `simple_prompt` flag is needed
+    simple_prompt = CBool(True)
 
     # In the PyDev Console, GUI control is done via hookable XML-RPC server
     @staticmethod
