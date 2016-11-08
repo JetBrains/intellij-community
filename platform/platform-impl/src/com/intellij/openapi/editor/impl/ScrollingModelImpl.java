@@ -114,7 +114,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     final int currentOffset = getVerticalScrollOffset();
     int offsetToUse = Math.min(minPreferredY, currentOffset);
     if (offsetToUse != currentOffset) {
-      scrollToOffsets(getHorizontalScrollOffset(), offsetToUse);
+      scroll(getHorizontalScrollOffset(), offsetToUse);
       return true;
     }
     return false;
@@ -159,7 +159,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
     Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
     Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
-    scrollToOffsets(p.x, p.y);
+    scroll(p.x, p.y);
   }
 
   @Override
@@ -305,7 +305,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   @Override
   public void scrollVertically(int scrollOffset) {
-    scrollToOffsets(getHorizontalScrollOffset(), scrollOffset);
+    scroll(getHorizontalScrollOffset(), scrollOffset);
   }
 
   private void _scrollVertically(int scrollOffset) {
@@ -319,7 +319,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   @Override
   public void scrollHorizontally(int scrollOffset) {
-    scrollToOffsets(scrollOffset, getVerticalScrollOffset());
+    scroll(scrollOffset, getVerticalScrollOffset());
   }
 
   private void _scrollHorizontally(int scrollOffset) {
@@ -330,7 +330,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     scrollbar.setValue(scrollOffset);
   }
 
-  void scrollToOffsets(int hOffset, int vOffset) {
+  @Override
+  public void scroll(int hOffset, int vOffset) {
     if (myAccumulateViewportChanges) {
       myAccumulatedXOffset = hOffset;
       myAccumulatedYOffset = vOffset;
@@ -431,7 +432,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void flushViewportChanges() {
     myAccumulateViewportChanges = false;
     if (myAccumulatedXOffset >= 0 && myAccumulatedYOffset >= 0) {
-      scrollToOffsets(myAccumulatedXOffset, myAccumulatedYOffset);
+      scroll(myAccumulatedXOffset, myAccumulatedYOffset);
       myAccumulatedXOffset = myAccumulatedYOffset = -1;
       cancelAnimatedScrolling(true);
     }
