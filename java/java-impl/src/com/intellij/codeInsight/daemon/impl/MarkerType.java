@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -267,12 +268,7 @@ public class MarkerType {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (isAbstract && collectProcessor.getCollection().size() < 2) {
-        final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return method.getContainingClass();
-          }
-        });
+        final PsiClass aClass = ReadAction.compute(() -> method.getContainingClass());
         if (aClass != null) {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
         }
@@ -353,11 +349,11 @@ public class MarkerType {
     final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2,
                                                                                                                                        new THashSet<>());
     final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor =
-      new PsiElementProcessor.CollectElementsWithLimit<>(2,
+      new PsiElementProcessor.CollectElementsWithLimit<>(1,
                                                          new THashSet<>());
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
-      if (collectProcessor.getCollection().size() < 2) {
+      if (collectProcessor.getCollection().size() < 1) {
         FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
     }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
@@ -390,6 +386,16 @@ public class MarkerType {
       return myClass.isInterface()
              ? CodeInsightBundle.message("goto.implementation.chooserTitle", myClass.getName(), size, suffix)
              : DaemonBundle.message("navigation.title.subclass", myClass.getName(), size, suffix);
+    }
+
+    @Override
+    public void onFinished() {
+      super.onFinished();
+      PsiElement oneElement = getTheOnlyOneElement();
+      if (oneElement instanceof NavigatablePsiElement) {
+        ((NavigatablePsiElement)oneElement).navigate(true);
+        myPopup.cancel();
+      }
     }
 
     @Override
@@ -439,6 +445,16 @@ public class MarkerType {
       return myMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
              DaemonBundle.message("navigation.title.implementation.method", myMethod.getName(), size) :
              DaemonBundle.message("navigation.title.overrider.method", myMethod.getName(), size);
+    }
+
+    @Override
+    public void onFinished() {
+      super.onFinished();
+      PsiElement oneElement = getTheOnlyOneElement();
+      if (oneElement instanceof NavigatablePsiElement) {
+        ((NavigatablePsiElement)oneElement).navigate(true);
+        myPopup.cancel();
+      }
     }
 
     @Override

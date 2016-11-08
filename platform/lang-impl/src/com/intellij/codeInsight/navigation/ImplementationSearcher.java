@@ -128,7 +128,7 @@ public class ImplementationSearcher {
       }
 
       PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor =
-        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
+        new PsiElementProcessor.CollectElementsWithLimit<>(1, new THashSet<>());
       PsiElement[][] result = new PsiElement[1][];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override

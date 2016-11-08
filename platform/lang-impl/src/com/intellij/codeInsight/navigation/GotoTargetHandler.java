@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -100,11 +101,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
-    if (targets.length == 1 && additionalActions.isEmpty()) {
-      Navigatable descriptor = targets[0] instanceof Navigatable ? (Navigatable)targets[0] : EditSourceUtil.getDescriptor(targets[0]);
-      if (descriptor != null && descriptor.canNavigate()) {
-        navigateToElement(descriptor);
-      }
+    boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
+    if (targets.length == 1 && additionalActions.isEmpty() && finished) {
+      navigateToElement(targets[0]);
       return;
     }
 
@@ -113,7 +112,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     final String name = ((PsiNamedElement)gotoData.source).getName();
-    boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
     if (shouldSortTargets()) {
@@ -200,10 +198,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     builder.getScrollPane().setViewportBorder(null);
 
     if (gotoData.listUpdaterTask != null) {
+      Alarm alarm = new Alarm(popup);
+      alarm.addRequest(() -> popup.showInBestPositionFor(editor), 300);
       gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
-    popup.showInBestPositionFor(editor);
+    else {
+      popup.showInBestPositionFor(editor);
+    }
   }
 
   @NotNull
@@ -250,6 +252,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return renderer;
   }
 
+  protected boolean navigateToElement(PsiElement target) {
+    Navigatable descriptor = target instanceof Navigatable ? (Navigatable)target : EditSourceUtil.getDescriptor(target);
+    if (descriptor != null && descriptor.canNavigate()) {
+      navigateToElement(descriptor);
+      return true;
+    }
+    return false;
+  }
 
   protected void navigateToElement(@NotNull Navigatable descriptor) {
     descriptor.navigate(true);
