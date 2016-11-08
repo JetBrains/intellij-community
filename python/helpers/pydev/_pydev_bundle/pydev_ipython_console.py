@@ -3,8 +3,6 @@ from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
 
 import os
 
-os.environ['TERM'] = 'emacs' #to use proper page_more() for paging
-
 
 # Uncomment to force PyDev standard shell.
 # raise ImportError()
