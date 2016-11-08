@@ -1438,14 +1438,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             }
           }
         }
-        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(first);
-        if(assignment != null) {
-          PsiExpression rValue = assignment.getRExpression();
-          if(rValue != null && ExpressionUtils.isReferenceTo(assignment.getLExpression(), myVariable)) {
-            PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
-            MapOp op = new MapOp(myPreviousOp, rValue, myVariable, myVariable.getType());
-            return new TerminalBlock(op, myVariable, leftOver);
-          }
+        PsiExpression rValue = ExpressionUtils.getAssignmentTo(first, myVariable);
+        if(rValue != null) {
+          PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+          MapOp op = new MapOp(myPreviousOp, rValue, myVariable, myVariable.getType());
+          return new TerminalBlock(op, myVariable, leftOver);
         }
       }
       return null;
