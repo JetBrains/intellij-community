@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    *
    * @param name the name of the component
    * @return component with given name or null if there is no such component
-   * @see com.intellij.openapi.components.NamedComponent#getComponentName()
+   * @see NamedComponent#getComponentName()
    */
   BaseComponent getComponent(@NotNull String name);
 
@@ -94,5 +94,5 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * see {@link com.intellij.openapi.application.Application#invokeLater(Runnable, Condition)} for the usage example.
    */
   @NotNull
-  Condition getDisposed();
+  Condition<?> getDisposed();
 }
