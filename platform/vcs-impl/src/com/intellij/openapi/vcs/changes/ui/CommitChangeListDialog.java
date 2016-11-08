@@ -68,6 +68,7 @@ import java.util.List;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
+  private static final String TITLE = VcsBundle.message("commit.dialog.title");
 
   private static final int LAYOUT_VERSION = 2;
   private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
@@ -92,10 +93,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = ContainerUtil.newArrayList();
   @NotNull private final List<CheckinHandler> myHandlers = ContainerUtil.newArrayList();
-  @NotNull private final String myActionName;
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
-  private final List<CommitExecutor> myExecutors;
+  @Nullable private final List<CommitExecutor> myExecutors;
   @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private final boolean myAllOfDefaultChangeListChangesIncluded;
@@ -119,7 +119,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable private final String myHelpId;
 
   @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
-  private final String myOkActionText;
   @Nullable private final CommitAction myCommitAction;
   @Nullable private final CommitResultHandler myResultHandler;
 
@@ -328,16 +327,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(this));
 
-    myActionName = VcsBundle.message("commit.dialog.title");
     final String actionName = getCommitActionName();
     final String borderTitleName = actionName.replace("_", "").replace("&", "");
 
     JPanel optionsPanel = createOptionsPanel(project, borderTitleName);
 
-    myOkActionText = actionName;
-
     if (myShowVcsCommit) {
-      setTitle(myActionName);
+      setTitle(TITLE);
     }
     else {
       setTitle(trimEllipsis(myExecutors.get(0).getActionText()));
@@ -346,7 +342,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     restoreState();
 
     if (myShowVcsCommit) {
-      myCommitAction = new CommitAction();
+      myCommitAction = new CommitAction(actionName);
     }
     else {
       myCommitAction = null;
@@ -616,8 +612,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     private Action[] myOptions = new Action[0];
 
-    private CommitAction() {
-      super(myOkActionText);
+    private CommitAction(String okActionText) {
+      super(okActionText);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -681,7 +677,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   protected Action getOKAction() {
-    return new CommitAction();
+    return myCommitAction != null ? myCommitAction : myExecutorActions.get(0);
   }
 
   @Override
@@ -1008,7 +1004,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myProject,
       myBrowser.getSelectedChangeList(),
       getIncludedChanges(),
-      myActionName,
+      TITLE,
       getCommitMessage(),
       myHandlers,
       myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData, customResultHandler);
