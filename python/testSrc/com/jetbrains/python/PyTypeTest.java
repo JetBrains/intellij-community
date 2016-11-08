@@ -1398,6 +1398,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = float.fromhex(\"0.5\")");
   }
 
+  // PY-20409
+  public void testGetFromDictWithDefaultNoneValue() {
+    doTest("Any",
+           "d = {}\n" +
+           "expr = d.get(\"abc\", None)");
+  }
+
   // PY-20757
   public void testMinOrNone() {
     doTest("Union[None, Any]",

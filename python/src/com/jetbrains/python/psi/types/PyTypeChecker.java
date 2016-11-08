@@ -127,7 +127,11 @@ public class PyTypeChecker {
       return false;
     }
     if (expected instanceof PyUnionType) {
-      for (PyType t : ((PyUnionType)expected).getMembers()) {
+      final Collection<PyType> expectedUnionTypeMembers = ((PyUnionType)expected).getMembers();
+      final StreamEx<PyType> notGenericTypes = StreamEx.of(expectedUnionTypeMembers).filter(type -> !PyGenericType.class.isInstance(type));
+      final StreamEx<PyGenericType> genericTypes = StreamEx.of(expectedUnionTypeMembers).select(PyGenericType.class);
+
+      for (PyType t : notGenericTypes.append(genericTypes)) {
         if (match(t, actual, context, substitutions, recursive)) {
           return true;
         }
