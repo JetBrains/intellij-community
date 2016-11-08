@@ -18,12 +18,8 @@ package org.jetbrains.idea.svn.treeConflict;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -40,7 +36,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
@@ -69,12 +64,9 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.Disposer.isDisposed;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class TreeConflictRefreshablePanel implements Disposable {
-
-  private static final Logger LOG = Logger.getInstance(TreeConflictRefreshablePanel.class);
 
   public static final String TITLE = "Resolve tree conflict";
   private final ConflictedSvnChange myChange;
@@ -566,49 +558,32 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
   }
 
-  private class Loader extends ModalityIgnorantBackgroundableTask {
+  private class Loader extends Task.Backgroundable {
     private BeforeAfter<BeforeAfter<ConflictSidePresentation>> myData;
+    private VcsException myException;
 
     private Loader(@Nullable Project project, @NotNull String title) {
       super(project, title, false);
     }
 
     @Override
-    protected void doInAwtIfFail(@NotNull Exception e) {
-      Exception cause;
-      if (e instanceof RuntimeException && e.getCause() != null) {
-        cause = (Exception)e.getCause();
+    public void run(@NotNull ProgressIndicator indicator) {
+      try {
+        myData = loadData();
+      }
+      catch (VcsException e) {
+        myException = e;
+      }
+    }
+
+    @Override
+    public void onSuccess() {
+      if (myException != null) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, myException.getMessage(), MessageType.ERROR);
       }
       else {
-        cause = e;
-      }
-      LOG.info(e);
-      String message = cause.getMessage() == null ? e.getMessage() : cause.getMessage();
-      message = message == null ? "Unknown error" : message;
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
-    }
-
-    @Override
-    protected void doInAwtIfCancel() {
-    }
-
-    @Override
-    protected void doInAwtIfSuccess() {
-      if (!isDisposed(TreeConflictRefreshablePanel.this)) {
         myDetailsPanel.add(dataToPresentation(myData));
         myDetailsPanel.stopLoading();
-      }
-    }
-
-    @Override
-    protected void runImpl(@NotNull ProgressIndicator indicator) {
-      if (!isDisposed(TreeConflictRefreshablePanel.this)) {
-        try {
-          myData = loadData();
-        }
-        catch (VcsException e) {
-          throw new RuntimeException(e);
-        }
       }
     }
   }
