@@ -1151,7 +1151,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point shiftedZoomCenterAbsolute = logicalPositionToXY(zoomCenterLogical);
     myScrollingModel.disableAnimation();
     try {
-      myScrollingModel.scrollToOffsets(visibleArea.x == 0 ? 0 : shiftedZoomCenterAbsolute.x - zoomCenterRelative.x, // stick to left border if it's visible
+      myScrollingModel.scroll(visibleArea.x == 0 ? 0 : shiftedZoomCenterAbsolute.x - zoomCenterRelative.x, // stick to left border if it's visible
                                        shiftedZoomCenterAbsolute.y - zoomCenterRelative.y + (intraLineOffset * getLineHeight() + oldLineHeight / 2) / oldLineHeight);
     } finally {
       myScrollingModel.enableAnimation();
