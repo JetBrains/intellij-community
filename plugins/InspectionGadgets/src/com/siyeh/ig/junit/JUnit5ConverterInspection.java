@@ -164,6 +164,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
         MigrationMap migrationMap = manager.findMigrationMap("JUnit (4.x -> 5.0)");
         if (migrationMap != null) {
           new MyJUnit5MigrationProcessor(project, migrationMap, files).run();
+          if (refreshViews != null) {
+            refreshViews.run();
+          }
         }
       }
     }
