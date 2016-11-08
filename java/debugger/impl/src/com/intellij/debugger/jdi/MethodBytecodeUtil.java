@@ -242,7 +242,7 @@ public class MethodBytecodeUtil {
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
             if (cls != null) {
-              cls.methodsByName(name).stream().findFirst().ifPresent(methodRef::set);
+              cls.methodsByName(name, desc).stream().findFirst().ifPresent(methodRef::set);
             }
           }
         });
@@ -258,9 +258,16 @@ public class MethodBytecodeUtil {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-          ReferenceType cls = ContainerUtil.getFirstItem(method.virtualMachine().classesByName(owner));
+          ReferenceType declaringType = method.declaringType();
+          ReferenceType cls = null;
+          if (declaringType.name().equals(owner.replace("/", "."))) {
+            cls = declaringType;
+          }
+          else if (!"java/lang/AbstractMethodError".equals(owner)) {
+            cls = ContainerUtil.getFirstItem(method.virtualMachine().classesByName(owner));
+          }
           if (cls != null) {
-            StreamEx.of(cls.methodsByName(name)).without(method).findFirst().ifPresent(methodRef::set);
+            StreamEx.of(cls.methodsByName(name, desc)).findFirst().ifPresent(methodRef::set);
           }
         }
       });
