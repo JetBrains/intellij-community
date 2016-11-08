@@ -1147,10 +1147,6 @@
                      groupName="Probable bugs"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySingletonAnnotation"
-                     displayName="Check '@Singleton' annotation conventions"
-                     groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="DelegatesTo" displayName="@DelegatesTo inspection"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
