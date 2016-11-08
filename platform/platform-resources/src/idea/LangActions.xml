@@ -428,7 +428,7 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <group id="Bookmarks">
+    <group id="Bookmarks" text="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -456,6 +456,7 @@
       <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark8Action"/>
       <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark9Action"/>
 
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
