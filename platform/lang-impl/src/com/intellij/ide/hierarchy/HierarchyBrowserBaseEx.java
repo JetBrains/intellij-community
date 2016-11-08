@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -49,7 +48,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,21 +65,12 @@ import java.util.List;
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
 
-  @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
+  public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
+  public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
+  public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
+  public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
-  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
-  private final Hashtable<String, JTree> myType2TreeMap = new Hashtable<>();
-
-  private final RefreshAction myRefreshAction = new RefreshAction();
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,this);
-  private SmartPsiElementPointer mySmartPsiElementPointer;
-  private final CardLayout myCardLayout;
-  private final JPanel myTreePanel;
-  protected String myCurrentViewType;
-
-  private boolean myCachedIsValidBase;
-
-  private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<>();
+  private static final String HELP_ID = "reference.toolWindows.hierarchy";
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
@@ -113,10 +103,18 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return "";
     }
   };
-  public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
-  public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
-  public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
-  public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
+
+  protected final Map<String, HierarchyTreeBuilder> myBuilders = Collections.synchronizedMap(new HashMap<>());
+  protected String myCurrentViewType;
+
+  private final Map<String, JTree> myType2TreeMap;
+  private final RefreshAction myRefreshAction = new RefreshAction();
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,this);
+  private SmartPsiElementPointer mySmartPsiElementPointer;
+  private final CardLayout myCardLayout;
+  private final JPanel myTreePanel;
+  private boolean myCachedIsValidBase;
+  private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<>();
   private final Map<String, String> myType2ScopeMap = new HashMap<>();
 
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
@@ -127,17 +125,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCardLayout = new CardLayout();
     myTreePanel = new JPanel(myCardLayout);
 
-    createTrees(myType2TreeMap);
+    Map<String, JTree> type2treeMap = new HashMap<>();
+    createTrees(type2treeMap);
+    myType2TreeMap = Collections.unmodifiableMap(type2treeMap);
 
-    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(project).getState();
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getSettings(project);
     for (String type : myType2TreeMap.keySet()) {
       myType2ScopeMap.put(type, state.SCOPE != null ? state.SCOPE : SCOPE_ALL);
     }
 
-    final Enumeration<String> keys = myType2TreeMap.keys();
-    while (keys.hasMoreElements()) {
-      final String key = keys.nextElement();
-      final JTree tree = myType2TreeMap.get(key);
+    for (String key : myType2TreeMap.keySet()) {
+      JTree tree = myType2TreeMap.get(key);
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Override
         @Nullable
@@ -174,6 +172,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     else {
       contentPanel = myTreePanel;
     }
+
     buildUi(createToolbar(getActionPlace(), HELP_ID).getComponent(), contentPanel);
   }
 
@@ -221,6 +220,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     };
 
     if (dndAware) {
+      //noinspection Duplicates
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
         @Override
         public void removeNotify() {
@@ -283,6 +283,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
+      //noinspection Duplicates
       tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
         @Override
         public void removeNotify() {
@@ -517,13 +518,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     public final boolean isSelected(final AnActionEvent event) {
-      return HierarchyBrowserManager.getInstance(myProject).getState().SORT_ALPHABETICALLY;
+      return HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY;
     }
 
     @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
-      final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(myProject);
-      hierarchyBrowserManager.getState().SORT_ALPHABETICALLY = flag;
+      HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
       final Comparator<NodeDescriptor> comparator = getComparator();
       final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
       for (final HierarchyTreeBuilder builder : builders) {
@@ -541,7 +541,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   static class BaseOnThisElementAction extends AnAction {
     private final String myBrowserDataKey;
-    @NotNull private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
+    private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
     BaseOnThisElementAction(@NotNull String text,
                             @NotNull String browserDataKey,
@@ -562,13 +562,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       final String currentViewType = browser.myCurrentViewType;
       Disposer.dispose(browser);
-      final HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(myProviderLanguageExtension,
-                                                                                selectedElement,
-                                                                                selectedElement.getContainingFile(),
-                                                                                event.getDataContext());
-      final HierarchyBrowser newBrowser = BrowseHierarchyActionBase.createAndAddToPanel(selectedElement.getProject(), provider, selectedElement);
-      ApplicationManager.getApplication().invokeLater(
-        () -> ((HierarchyBrowserBaseEx)newBrowser).changeView(correctViewType(browser, currentViewType)));
+      final HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(
+        myProviderLanguageExtension, selectedElement, selectedElement.getContainingFile(), event.getDataContext());
+      if (provider != null) {
+        HierarchyBrowserBaseEx newBrowser = (HierarchyBrowserBaseEx)BrowseHierarchyActionBase.createAndAddToPanel(
+          selectedElement.getProject(), provider, selectedElement);
+        ApplicationManager.getApplication().invokeLater(() -> newBrowser.changeView(correctViewType(browser, currentViewType)));
+      }
     }
 
     protected String correctViewType(HierarchyBrowserBaseEx browser, String viewType) {
@@ -677,7 +677,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     private void selectScope(final String scopeType) {
       myType2ScopeMap.put(myCurrentViewType, scopeType);
-      HierarchyBrowserManager.getInstance(myProject).getState().SCOPE = scopeType;
+      HierarchyBrowserManager.getSettings(myProject).SCOPE = scopeType;
 
       // invokeLater is called to update state of button before long tree building operation
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -689,9 +689,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     public final JComponent createCustomComponent(final Presentation presentation) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
       panel.add(super.createCustomComponent(presentation),
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
       return panel;
     }
 
