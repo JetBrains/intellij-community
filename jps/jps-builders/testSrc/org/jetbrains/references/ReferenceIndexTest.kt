@@ -94,6 +94,10 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     assertIndexOnRebuild("Foo.java")
   }
 
+  fun testMultiFileMultiUnitCompilation()  {
+    assertIndexOnRebuild("Foo.java", "Boo.java", "Bar.java")
+  }
+
   fun testNestedClasses() {
     assertIndexOnRebuild("Foo.java")
   }

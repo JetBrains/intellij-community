@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.javac.ast;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
@@ -24,6 +25,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Name;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
@@ -33,9 +35,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 final class JavacReferenceCollectorListener implements TaskListener {
   private final JavacFileReferencesRegistrar[] myFullASTListeners;
@@ -44,10 +44,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   private Name myAsterisk;
 
-  private int myRemainDeclarations;
-  private JCTree.JCCompilationUnit myCurrentCompilationUnit;
-  private Set<JavacRefSymbol> myCollectedReferences;
-  private List<JavacRefSymbol> myCollectedDefinitions;
+  private final Map<String, IncompletelyProcessedFile> myIncompletelyProcessedFiles = new THashMap<String, IncompletelyProcessedFile>(10);
 
   static void installOn(JavaCompiler.CompilationTask task,
                         JavacFileReferencesRegistrar[] fullASTListenerArray,
@@ -87,57 +84,83 @@ final class JavacReferenceCollectorListener implements TaskListener {
     try {
       if (e.getKind() == TaskEvent.Kind.ANALYZE) {
         // javac creates an event on each processed top level declared class not file
-        if (myCurrentCompilationUnit != e.getCompilationUnit()) {
-          myCurrentCompilationUnit = (JCTree.JCCompilationUnit)e.getCompilationUnit();
-          myCollectedDefinitions = new ArrayList<JavacRefSymbol>();
-          myCollectedReferences = new THashSet<JavacRefSymbol>();
-          myRemainDeclarations = myCurrentCompilationUnit.getTypeDecls().size() - 1;
-          scanImports(myCurrentCompilationUnit, myCollectedReferences);
-          for(JavacFileReferencesRegistrar r: myOnlyImportsListeners) {
-            r.registerFile(e.getSourceFile().getName(), myCollectedReferences, myCollectedDefinitions);
-          }
-        }
-        else {
-          myRemainDeclarations--;
+        final JCTree.JCCompilationUnit unit = (JCTree.JCCompilationUnit)e.getCompilationUnit();
+        final String fileName = e.getSourceFile().getName();
+        final List<JCTree> declarations = unit.getTypeDecls();
+        final int size = declarations.size();
+
+        boolean isFileDataComplete = true;
+        boolean submitImportsOnlyData = true;
+        JCTree declarationToProcess = null;
+        final Set<JavacRefSymbol> collectedReferences;
+        final List<JavacRefSymbol> collectedDefinitions;
+        final TypeElement analyzedElement = e.getTypeElement();
+
+        switch (size) {
+          case 0:
+            collectedReferences = IncompletelyProcessedFile.createReferenceHolder();
+            collectedDefinitions = IncompletelyProcessedFile.createDefinitionHolder();
+            break;
+          case 1:
+            collectedReferences = IncompletelyProcessedFile.createReferenceHolder();
+            collectedDefinitions = IncompletelyProcessedFile.createDefinitionHolder();
+            declarationToProcess = declarations.get(0);
+            break;
+          default:
+            IncompletelyProcessedFile incompletelyProcessedFile = myIncompletelyProcessedFiles.get(fileName);
+            if (incompletelyProcessedFile == null) {
+              myIncompletelyProcessedFiles.put(fileName, incompletelyProcessedFile = new IncompletelyProcessedFile(size));
+            } else {
+              submitImportsOnlyData = false;
+            }
+
+            if (--incompletelyProcessedFile.remainDeclarations == 0) {
+              myIncompletelyProcessedFiles.remove(fileName);
+            } else {
+              isFileDataComplete = false;
+            }
+            collectedReferences = incompletelyProcessedFile.collectedReferences;
+            collectedDefinitions = incompletelyProcessedFile.collectedDefinitions;
+
+            for (JCTree declaration : declarations) {
+              if (declaration.type != null && declaration.type.tsym == analyzedElement) {
+                declarationToProcess = declaration;
+                break;
+              }
+            }
+
+            if (declarationToProcess == null) throw new IllegalStateException("Can't find tree for " + analyzedElement.getQualifiedName());
         }
 
+        if (submitImportsOnlyData) {
+          scanImports(unit, collectedReferences);
+          for (JavacFileReferencesRegistrar r : myOnlyImportsListeners) {
+            r.registerFile(fileName, collectedReferences, collectedDefinitions);
+          }
+        }
+        if (myFullASTListeners.length == 0) return;
         JavacTreeScannerSink sink = new JavacTreeScannerSink() {
           @Override
           public void sinkReference(JavacRefSymbol ref) {
-            myCollectedReferences.add(ref);
+            collectedReferences.add(ref);
           }
 
           @Override
           public void sinkDeclaration(JavacRefSymbol def) {
-            myCollectedDefinitions.add(def);
+            collectedDefinitions.add(def);
           }
         };
+        myAstScanner.scan(declarationToProcess, sink);
 
-        if (myFullASTListeners.length != 0) {
-          TypeElement analyzedElement = e.getTypeElement();
-          for (JCTree tree : myCurrentCompilationUnit.getTypeDecls()) {
-            if (tree.type != null && tree.type.tsym == analyzedElement) {
-              myAstScanner.scan(tree, sink);
-            }
+        if (isFileDataComplete) {
+          for (JCTree.JCAnnotation annotation : unit.getPackageAnnotations()) {
+            myAstScanner.scan(annotation, sink);
+          }
+
+          for (JavacFileReferencesRegistrar r : myFullASTListeners) {
+            r.registerFile(e.getSourceFile().getName(), collectedReferences, collectedDefinitions);
           }
         }
-
-        if (myRemainDeclarations == 0) {
-          if (myFullASTListeners.length != 0) {
-            for (JCTree.JCAnnotation annotation : myCurrentCompilationUnit.getPackageAnnotations()) {
-              myAstScanner.scan(annotation, sink);
-            }
-          }
-
-          for(JavacFileReferencesRegistrar r: myFullASTListeners) {
-            r.registerFile(e.getSourceFile().getName(), myCollectedReferences, myCollectedDefinitions);
-          }
-
-          myCurrentCompilationUnit = null;
-          myCollectedDefinitions = null;
-          myCollectedReferences = null;
-        }
-
       }
     }
     catch (Exception ex) {
@@ -184,6 +207,24 @@ final class JavacReferenceCollectorListener implements TaskListener {
          symbol != null && symbol.getKind() != ElementKind.PACKAGE;
          symbol = symbol.owner) {
       collector.add(new JavacRefSymbol(symbol, Tree.Kind.IMPORT));
+    }
+  }
+
+  private static class IncompletelyProcessedFile {
+    private final Set<JavacRefSymbol> collectedReferences = createReferenceHolder();
+    private final List<JavacRefSymbol> collectedDefinitions = createDefinitionHolder();
+    private int remainDeclarations;
+
+    private IncompletelyProcessedFile(int remainDeclarations) {
+      this.remainDeclarations = remainDeclarations;
+    }
+
+    private static Set<JavacRefSymbol> createReferenceHolder() {
+      return new THashSet<JavacRefSymbol>();
+    }
+
+    private static List<JavacRefSymbol> createDefinitionHolder() {
+      return new ArrayList<JavacRefSymbol>();
     }
   }
 }
