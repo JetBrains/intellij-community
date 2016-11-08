@@ -545,7 +545,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       start = System.currentTimeMillis();
     }
     progressIndicator.start();
-    progressIndicator.setText("Processing classes");
+    progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
       progressIndicator.setIndeterminate(true);
 
@@ -565,13 +565,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         progressIndicator.setText2(i + "/" + types.size());
         progressIndicator.setFraction((double)i / types.size());
       }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processed " + types.size() + " classes in " + String.valueOf(System.currentTimeMillis() - start) + "ms");
+      }
     }
     finally {
       progressIndicator.stop();
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing all classes took: " + String.valueOf(System.currentTimeMillis() - start) + "ms");
     }
   }
 }

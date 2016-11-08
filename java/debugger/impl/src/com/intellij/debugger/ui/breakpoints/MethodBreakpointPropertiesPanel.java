@@ -47,7 +47,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
   public JComponent getComponent() {
     JPanel _panel, _panel0;
 
-    myEmulatedCheckBox = new JCheckBox("Emulated");
+    myEmulatedCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.emulated"));
     myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
     myWatchExitCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
     DialogUtil.registerMnemonic(myWatchEntryCheckBox);
