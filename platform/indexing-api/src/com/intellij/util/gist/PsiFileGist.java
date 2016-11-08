@@ -17,7 +17,6 @@ package com.intellij.util.gist;
 
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Calculates some data based on {@link PsiFile} content, stores it persistently and updates it when the content is changed. The data is calculated lazily, when needed.<p/>
@@ -35,6 +34,5 @@ public interface PsiFileGist<Data> {
   /**
    * Calculate or get the cached data by the current PSI content.
    */
-  @Nullable
   Data getFileData(@NotNull PsiFile file);
 }

@@ -26,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * Obtained using {@link GistManager#newVirtualFileGist}.<p/>
  *
  * Tracks VFS content only. Unsaved/uncommitted documents have no effect on the {@link #getFileData} results.
- * Neither do any disk file changes, until VFS refresh has detected them.
+ * Neither do any disk file changes, until VFS refresh has detected them.<p/>
+ *
+ * Please note that every call to {@link #getFileData} means a disk access. Clients that access gists frequently should take care of proper caching themselves.
  *
  * @see PsiFileGist
  * @since 171.*
@@ -37,7 +39,6 @@ public interface VirtualFileGist<Data> {
   /**
    * Calculate or get the cached data by the current virtual file content in the given project.
    */
-  @Nullable
   Data getFileData(@NotNull Project project, @NotNull VirtualFile file);
 
   /**

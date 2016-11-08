@@ -36,7 +36,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -60,7 +59,6 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   }
 
   @Override
-  @Nullable
   public Data getFileData(@NotNull PsiFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
