@@ -145,6 +145,8 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListTransformationSupport"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListAnnotationChecker"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.singleton.SingletonTransformationSupport"/>
+
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"

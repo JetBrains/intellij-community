@@ -54,10 +54,6 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   void testDelegateAnnotation() throws Throwable { doPlainTest() }
 
-  void testSingletonTransform() throws Throwable {
-    doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance')
-  }
-
   void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
 
   void testMixinTransform() throws Throwable { doPlainTest() }

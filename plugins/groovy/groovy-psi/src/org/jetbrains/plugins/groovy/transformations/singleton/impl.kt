@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package standardDsls
+package org.jetbrains.plugins.groovy.transformations.singleton
 
-contributor(ctype:hasAnnotation("groovy.lang.Singleton")) {
-  if (psiClass?.hasAnnotation("groovy.lang.Singleton")) {
-    property name: "instance",
-             type: psiClass?.getQualifiedName() ?: "java.lang.Object",
-             isStatic: true
-  }
-}
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+
+internal val singletonFqn = GroovyCommonClassNames.GROOVY_LANG_SINGLETON
+internal val singletonOriginInfo = "by @Singleton"
