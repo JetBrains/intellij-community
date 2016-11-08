@@ -165,13 +165,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
 
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), getUpdater().getModalityState());
-    cancelUpdate().doWhenDone(() -> batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
-        UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
-      }
-    }));
+    batch(indicator -> {
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+      UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
+    });
 
 
 
