@@ -1,8 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
     <extensionPoint name="appStarter"
@@ -68,7 +68,7 @@
     <extensionPoint name="cutElementMarker"
                     interface="com.intellij.openapi.ide.CutElementMarker"/>
 
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
     <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>

@@ -13,7 +13,7 @@
                     area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
     <extensionPoint name="moduleConfigurable"
@@ -659,7 +659,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="stubElementTypeHolder"
                     beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
 
