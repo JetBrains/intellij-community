@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -63,6 +64,7 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
@@ -78,6 +80,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   @NotNull private final String myLoadingTitle;
   @NotNull private final JBLoadingPanel myDetailsPanel;
   @NotNull private final BackgroundTaskQueue myQueue;
+  private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
 
   public TreeConflictRefreshablePanel(@NotNull Project project,
                                       @NotNull String loadingTitle,
@@ -125,12 +128,15 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @CalledInBackground
-  private BeforeAfter<ConflictSidePresentation> processDescription(TreeConflictDescription description) throws VcsException {
+  private BeforeAfter<ConflictSidePresentation> processDescription(@NotNull ProgressIndicator indicator,
+                                                                   TreeConflictDescription description) throws VcsException {
     if (description == null) return null;
     if (myChange.getBeforeRevision() != null) {
       myCommittedRevision = (SvnRevisionNumber)getCurrentCommittedRevision(myVcs, myChange.getBeforeRevision() != null ? myChange
         .getBeforeRevision().getFile().getIOFile() : myPath.getIOFile());
     }
+
+    indicator.checkCanceled();
 
     ConflictSidePresentation leftSide;
     ConflictSidePresentation rightSide;
@@ -142,8 +148,11 @@ public class TreeConflictRefreshablePanel implements Disposable {
       leftSide = createSide(null, null, true);
       rightSide = createSide(description.getSourceRightVersion(), getPegRevisionFromLeftSide(description), false);
     }
+    indicator.checkCanceled();
     leftSide.load();
+    indicator.checkCanceled();
     rightSide.load();
+    indicator.checkCanceled();
 
     return new BeforeAfter<>(leftSide, rightSide);
   }
@@ -193,7 +202,9 @@ public class TreeConflictRefreshablePanel implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myDetailsPanel.startLoading();
-    myQueue.run(new Loader(myVcs.getProject(), myLoadingTitle));
+    Loader task = new Loader(myVcs.getProject(), myLoadingTitle);
+    myIndicator = new BackgroundableProcessIndicator(task);
+    myQueue.run(task, defaultModalityState(), myIndicator);
   }
 
   @CalledInAwt
@@ -417,6 +428,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
   @Override
   public void dispose() {
+    myIndicator.cancel();
     Disposer.dispose(myChildDisposables);
   }
 
@@ -557,7 +569,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       try {
-        myData = new BeforeAfter<>(processDescription(myChange.getBeforeDescription()), processDescription(myChange.getAfterDescription()));
+        myData = new BeforeAfter<>(processDescription(indicator, myChange.getBeforeDescription()),
+                                   processDescription(indicator, myChange.getAfterDescription()));
       }
       catch (VcsException e) {
         myException = e;
