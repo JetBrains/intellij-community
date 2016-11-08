@@ -241,12 +241,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  @NotNull List<Change> changes,
                                  @Nullable LocalChangeList initialSelection,
                                  @Nullable List<CommitExecutor> executors,
-                                 final boolean showVcsCommit,
+                                 boolean showVcsCommit,
                                  @NotNull LocalChangeList defaultChangeList,
-                                 final List<LocalChangeList> changeLists,
+                                 @NotNull List<LocalChangeList> changeLists,
                                  @Nullable final AbstractVcs singleVcs,
-                                 final boolean isAlien,
-                                 final String comment,
+                                 boolean isAlien,
+                                 @Nullable String comment,
                                  @Nullable CommitResultHandler customResultHandler) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myCommitContext = new CommitContext();
@@ -485,7 +485,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return null;
   }
 
-  private void setComment(LocalChangeList initialSelection, String comment) {
+  private void setComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
     if (comment != null) {
       setCommitMessage(comment);
       myLastKnownComment = comment;
