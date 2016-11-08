@@ -179,7 +179,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
       if (method != null) {
-        if (method.isNative()) {
+        if (base && method.isNative()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             getProperties().EMULATED = false;
             fireBreakpointChanged();
