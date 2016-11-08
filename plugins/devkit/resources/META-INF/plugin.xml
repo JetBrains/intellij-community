@@ -85,12 +85,6 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
-    <localInspection language="XML" shortName="ExtensionPointBeanClass" applyToDialects="false"
-                     groupKey="inspections.group.name"
-                     displayName="&lt;extensionPoint&gt; beanClass specification"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
