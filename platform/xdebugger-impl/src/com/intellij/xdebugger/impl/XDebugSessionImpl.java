@@ -786,7 +786,7 @@ public class XDebugSessionImpl implements XDebugSession {
         // and should not be made when user steps in the code
         if (attract) {
           if (mySessionTab == null) {
-            LOG.warn("Can not request focus because Session Tab is not initialized yet");
+            LOG.debug("Cannot request focus because Session Tab is not initialized yet");
             return;
           }
 
