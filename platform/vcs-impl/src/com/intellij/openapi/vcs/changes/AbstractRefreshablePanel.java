@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -34,16 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * For presentation, which is itself in GenericDetails (not necessarily) - shown from time to time, but cached, and
- * which is a listener to some intensive changes (a group of invalidating changes should provoke a reload, but "outdated"
- * (loaded but already not actual) results should be thrown away)
- *
- * @author Irina.Chernushina
- * @since 7.09.2011
- */
-public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
+import static com.intellij.openapi.util.Disposer.isDisposed;
+
+public abstract class AbstractRefreshablePanel<T> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(AbstractRefreshablePanel.class);
 
   @NotNull private final Project myProject;
   @NotNull private final String myLoadingTitle;
@@ -52,7 +47,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   private final Ticket myTicket;
   private final JBLoadingPanel myDetailsPanel;
   private final BackgroundTaskQueue myQueue;
-  private volatile boolean myDisposed;
 
   protected AbstractRefreshablePanel(@NotNull Project project, @NotNull String loadingTitle, @NotNull BackgroundTaskQueue queue) {
     myProject = project;
@@ -64,7 +58,6 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   }
 
   @CalledInAwt
-  @Override
   public void refresh() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -78,33 +71,27 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
       }
 
       myDetailsPanel.startLoading();
-    } else {
-      refreshPresentation();
     }
   }
-
-  protected abstract void refreshPresentation();
 
   @CalledInBackground
   protected abstract T loadImpl() throws VcsException;
   @CalledInAwt
   protected abstract JPanel dataToPresentation(final T t);
-  protected abstract void disposeImpl();
-  
+
   @CalledInAwt
   private void acceptData(final T t) {
     myDetailsPanel.add(dataToPresentation(t));
     myDetailsPanel.stopLoading();
   }
 
-  @Override
   public JPanel getPanel() {
     return myDetailsPanel;
   }
 
   private class Loader extends ModalityIgnorantBackgroundableTask {
     private final Ticket myTicketCopy;
-    private T myT;
+    private T myData;
 
     private Loader(@Nullable Project project, @NotNull String title, final Ticket ticketCopy) {
       super(project, title, false);
@@ -131,30 +118,29 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
 
     @Override
     protected void doInAwtIfSuccess() {
-      if (myDisposed) return;
-
-      if (!myTicketCopy.equals(mySetId) && myTicketCopy.equals(myCurrentlySelected)) {
-        mySetId = myTicketCopy;
-        acceptData(myT);
+      if (!isDisposed(AbstractRefreshablePanel.this)) {
+        if (!myTicketCopy.equals(mySetId) && myTicketCopy.equals(myCurrentlySelected)) {
+          mySetId = myTicketCopy;
+          acceptData(myData);
+        }
       }
     }
 
     @Override
     protected void runImpl(@NotNull ProgressIndicator indicator) {
-      if (myDisposed) return;
-      try {
-        myT = loadImpl();
-      }
-      catch (VcsException e) {
-        throw new RuntimeException(e);
+      if (!isDisposed(AbstractRefreshablePanel.this)) {
+        try {
+          myData = loadImpl();
+        }
+        catch (VcsException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
 
   @Override
   public void dispose() {
-    myDisposed = true;
-    disposeImpl();
   }
 
   private static class Ticket {

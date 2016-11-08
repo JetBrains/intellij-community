@@ -117,10 +117,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   @Override
-  protected void refreshPresentation() {
-  }
-
-  @Override
   protected Object loadImpl() throws VcsException {
     return new BeforeAfter<>(processDescription(myChange.getBeforeDescription()),
                              processDescription(myChange.getAfterDescription()));
@@ -416,7 +412,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   @Override
-  protected void disposeImpl() {
+  public void dispose() {
+    super.dispose();
     Disposer.dispose(myChildDisposables);
   }
 
