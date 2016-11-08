@@ -48,10 +48,10 @@ class JavaModuleIndexBuildTask : CompileTask {
     } ?: return false
 
     try {
-      val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project)!!
+      val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project) ?: error("No system directory for project: ${project}")
       JavaModuleIndexImpl.store(BuildDataPathsImpl(systemDir).dataStorageRoot, map)
     }
-    catch(e: Exception) {
+    catch(e: Throwable) {
       Logger.getInstance(JavaModuleIndexBuildTask::class.java).error(e)
       context.addMessage(CompilerMessageCategory.ERROR, "Failed to save module index file: ${e.message}", null, 0, 0)
       return false
