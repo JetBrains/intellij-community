@@ -346,14 +346,11 @@ public class MarkerType {
       return;
     }
 
-    final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2,
-                                                                                                                                       new THashSet<>());
-    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor =
-      new PsiElementProcessor.CollectElementsWithLimit<>(1,
-                                                         new THashSet<>());
+    final PsiElementProcessor.FindElement<PsiClass> collectProcessor = new PsiElementProcessor.FindElement<>();
+    final PsiElementProcessor.FindElement<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.FindElement<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
-      if (collectProcessor.getCollection().size() < 1) {
+      if (collectProcessor.getFoundElement() == null) {
         FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
     }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
@@ -361,8 +358,8 @@ public class MarkerType {
     }
 
     final List<NavigatablePsiElement> inheritors = new ArrayList<>();
-    inheritors.addAll(collectProcessor.getCollection());
-    inheritors.addAll(collectExprProcessor.getCollection());
+    ContainerUtil.addIfNotNull(inheritors, collectProcessor.getFoundElement());
+    ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
     final PsiClassOrFunctionalExpressionListCellRenderer renderer = new PsiClassOrFunctionalExpressionListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
