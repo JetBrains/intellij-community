@@ -101,7 +101,9 @@ public class Group implements KeymapGroup {
         myIds.add(((QuickList)child).getActionId());
       }
       else if (child instanceof Group) {
-        myIds.addAll(((Group)child).initIds());
+        Group childGroup = (Group)child;
+        myIds.addAll(childGroup.initIds());
+        if (childGroup.myId != null) myIds.add(childGroup.myId);
       }
     }
     return myIds;
