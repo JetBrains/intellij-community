@@ -62,6 +62,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   private int myIndex;
   private boolean myFocusable;
   private boolean myEvent;
+  private boolean myTextChanged;
   private Runnable myRunnable;
 
   private MnemonicWrapper(T component, String text, String code, String index) {
@@ -84,6 +85,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     boolean disabled = isDisabled();
     try {
       myEvent = true;
+      if (myTextChanged) updateText();
       setMnemonicCode(disabled ? KeyEvent.VK_UNDEFINED : myCode);
       setMnemonicIndex(disabled ? -1 : myIndex);
       Component component = getFocusableComponent();
@@ -93,6 +95,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     }
     finally {
       myEvent = false;
+      myTextChanged = false;
       myRunnable = null;
     }
   }
@@ -102,9 +105,10 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     if (!myEvent) {
       String property = event.getPropertyName();
       if (myTextProperty.equals(property)) {
-        if (updateText()) {
-          updateRequest();
-        }
+        // it is needed to update text later because
+        // this listener is notified before Swing updates mnemonics
+        myTextChanged = true;
+        updateRequest();
       }
       else if (myCodeProperty.equals(property)) {
         myCode = getMnemonicCode();
@@ -157,6 +161,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   private void updateRequest() {
     if (myRunnable == null) {
       myRunnable = this; // run once
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(this);
     }
   }
