@@ -171,7 +171,7 @@ public final class FontInfo {
       if (font == null) {
         font = new Font(name, Font.PLAIN, DEFAULT_SIZE);
         // Java uses Dialog family for nonexistent fonts 
-        if (!Font.DIALOG.equals(name) && Font.DIALOG.equals(font.getFamily(ENGLISH))) {
+        if (!Font.DIALOG.equals(name) && UIUtil.isDialogFont(font)) {
           throw new IllegalArgumentException("not supported " + font);
         }
       }

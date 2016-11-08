@@ -54,8 +54,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
-import static java.util.Locale.ENGLISH;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -105,7 +103,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       Font font = new Font(".SF NS Text", style, size);
-      if (!Font.DIALOG.equals(font.getFamily(ENGLISH))) {
+      if (!UIUtil.isDialogFont(font)) {
         return new FontUIResource(font);
       }
     }
