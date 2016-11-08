@@ -20,7 +20,6 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
@@ -48,7 +47,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     init(parentScheme, null);
   }
 
-  private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
+  private void init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
     if (parentScheme == null) {
       myCodeStyleSettings = new CodeStyleSettings();
     }
@@ -98,8 +97,9 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
+  @Override
   @NotNull
-  public Element writeScheme() throws WriteExternalException {
+  public Element writeScheme() {
     if (myDataHolder == null) {
       Element newElement = new Element("code_scheme");
       newElement.setAttribute("name", getName());
