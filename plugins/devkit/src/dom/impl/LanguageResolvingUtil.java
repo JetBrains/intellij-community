@@ -187,7 +187,11 @@ class LanguageResolvingUtil {
   }
 
   @Nullable
-  private static String getStringConstantExpression(PsiExpressionList expressionList, int index) {
+  private static String getStringConstantExpression(@Nullable PsiExpressionList expressionList, int index) {
+    if (expressionList == null) {
+      return null;
+    }
+
     final PsiExpression[] argumentExpressions = expressionList.getExpressions();
     if (argumentExpressions.length < index + 1) {
       return null;
