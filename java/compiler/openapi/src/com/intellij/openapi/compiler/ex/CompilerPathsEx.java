@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,34 @@
  */
 package com.intellij.openapi.compiler.ex;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerationHandler;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -109,4 +121,97 @@ public class CompilerPathsEx extends CompilerPaths {
     }
     return ArrayUtil.toStringArray(outputPaths);
   }
+
+  public interface ClassFileDescriptor {
+    byte[] loadFileBytes() throws IOException;
+    String getPath();
+  }
+
+  @Nullable
+  public static ClassFileDescriptor findClassFileInOutput(@NotNull PsiClass sourceClass) {
+    String classVMName = getClassVMName(sourceClass);
+    if (classVMName == null) {
+      return null;
+    }
+    Module module = ModuleUtilCore.findModuleForPsiElement(sourceClass);
+    if (module == null){
+      final Project project = sourceClass.getProject();
+      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(sourceClass);
+      final String qualifiedName = topLevelClass != null ? topLevelClass.getQualifiedName() : null;
+      final PsiClass aClass = qualifiedName != null
+                              ? JavaPsiFacade.getInstance(project).findClass(qualifiedName, sourceClass.getResolveScope())
+                              : null;
+      if (aClass != null) {
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (virtualFile != null && fileIndex.isInLibraryClasses(virtualFile)) {
+          final VirtualFile rootForFile = fileIndex.getClassRootForFile(virtualFile);
+          if (rootForFile != null) {
+            final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
+            if (classFile != null) {
+              return new ClassFileDescriptor() {
+                @Override
+                public byte[] loadFileBytes() throws IOException {
+                  return classFile.contentsToByteArray();
+                }
+
+                @Override
+                public String getPath() {
+                  return classFile.getPath();
+                }
+              };
+            }
+          }
+          return null;
+        }
+      }
+      return null;
+    }
+
+    final PsiFile containingFile = sourceClass.getContainingFile();
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return null;
+    final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
+    if (moduleExtension == null) return null;
+    VirtualFile classRoot;
+    if (ProjectRootManager.getInstance(module.getProject()).getFileIndex().isInTestSourceContent(virtualFile)) {
+      classRoot = moduleExtension.getCompilerOutputPathForTests();
+    }
+    else {
+      classRoot = moduleExtension.getCompilerOutputPath();
+    }
+    if (classRoot == null) return null;
+
+    String classFilePath = classRoot.getPath() + "/" + classVMName.replace('.', '/') + ".class";
+
+    final File classFile = new File(classFilePath);
+    if (!classFile.exists()) {
+      return null;
+    }
+    return new ClassFileDescriptor() {
+      @Override
+      public byte[] loadFileBytes() throws IOException {
+        return FileUtil.loadFileBytes(classFile);
+      }
+
+      @Override
+      public String getPath() {
+        return classFile.getPath();
+      }
+    };
+  }
+
+  @Nullable
+  private static String getClassVMName(PsiClass containingClass) {
+    if (containingClass instanceof PsiAnonymousClass) {
+      final PsiClass containingClassOfAnonymous = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+      if (containingClassOfAnonymous == null) {
+        return null;
+      }
+      return getClassVMName(containingClassOfAnonymous) +
+             JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
+    }
+    return ClassUtil.getJVMClassName(containingClass);
+  }
+
 }
