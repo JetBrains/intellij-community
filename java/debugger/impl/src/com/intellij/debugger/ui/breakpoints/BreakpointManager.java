@@ -60,7 +60,9 @@ import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.request.*;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
+import com.sun.jdi.request.InvalidRequestStateException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +74,7 @@ import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class BreakpointManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
@@ -555,52 +558,29 @@ public class BreakpointManager {
     else {
       // important! need to add filter to _existing_ requests, otherwise Requestor->Request mapping will be lost
       // and debugger trees will not be restored to original state
-      abstract class FilterSetter <T extends EventRequest> {
-         void applyFilter(@NotNull final List<T> requests, final ThreadReference thread) {
-          for (T request : requests) {
-            try {
-              final boolean wasEnabled = request.isEnabled();
-              if (wasEnabled) {
-                request.disable();
-              }
-              addFilter(request, thread);
-              if (wasEnabled) {
-                request.enable();
-              }
-            }
-            catch (InternalException e) {
-              LOG.info(e);
-            }
-            catch (InvalidRequestStateException e) {
-              LOG.info(e);
-            }
-          }
-        }
-        protected abstract void addFilter(final T request, final ThreadReference thread);
-      }
-
-      final EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
+      EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
       if (eventRequestManager != null) {
-        new FilterSetter<BreakpointRequest>() {
-          @Override
-          protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
-            request.addThreadFilter(thread);
-          }
-        }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
+        applyFilter(eventRequestManager.breakpointRequests(), request -> request.addThreadFilter(newFilterThread));
+        applyFilter(eventRequestManager.methodEntryRequests(), request -> request.addThreadFilter(newFilterThread));
+        applyFilter(eventRequestManager.methodExitRequests(), request -> request.addThreadFilter(newFilterThread));
+      }
+    }
+  }
 
-        new FilterSetter<MethodEntryRequest>() {
-          @Override
-          protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
-            request.addThreadFilter(thread);
-          }
-        }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
-
-        new FilterSetter<MethodExitRequest>() {
-          @Override
-          protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
-            request.addThreadFilter(thread);
-          }
-        }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
+  private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<T> setter) {
+    for (T request : requests) {
+      try {
+        boolean wasEnabled = request.isEnabled();
+        if (wasEnabled) {
+          request.disable();
+        }
+        setter.accept(request);
+        if (wasEnabled) {
+          request.enable();
+        }
+      }
+      catch (InternalException | InvalidRequestStateException e) {
+        LOG.info(e);
       }
     }
   }
@@ -618,12 +598,6 @@ public class BreakpointManager {
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     breakpoint.reload();
     breakpoint.updateUI();
-  }
-
-  public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {
-    if (breakpoint.isEnabled() != enabled) {
-      breakpoint.setEnabled(enabled);
-    }
   }
 
   @Nullable
