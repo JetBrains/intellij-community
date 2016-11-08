@@ -82,50 +82,50 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final Comparator<AbstractVcs> VCS_COMPARATOR = Comparator.comparing(it -> it.getKeyInstanceMethod().getName(),
                                                                                      String::compareToIgnoreCase);
 
-  @NotNull private final CommitContext myCommitContext;
-  @NotNull private final CommitMessage myCommitMessageArea;
-  @NotNull private final Splitter mySplitter;
-
-  @NotNull private final ChangesBrowserBase<?> myBrowser;
-
-  @NotNull private final CommitLegendPanel myLegend;
-  @NotNull private final MyChangeProcessor myDiffDetails;
-
-  @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = ContainerUtil.newArrayList();
-  @NotNull private final List<CheckinHandler> myHandlers = ContainerUtil.newArrayList();
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @Nullable private final List<CommitExecutor> myExecutors;
-  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private String myLastKnownComment = "";
-  private final boolean myAllOfDefaultChangeListChangesIncluded;
-  @Nullable private final List<CommitExecutorAction> myExecutorActions;
   private final boolean myShowVcsCommit;
-  @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
-
   @Nullable private final AbstractVcs mySingleVcs;
   private final boolean myIsAlien;
-  private boolean myDisposed = false;
-  private boolean myUpdateDisabled = false;
-  @NotNull private final JLabel myWarningLabel;
-
-  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
-
-  @NotNull private final Map<String, String> myListComments;
-  private String myLastSelectedListName;
-  @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
-
-  @NotNull private final PseudoMap<Object, Object> myAdditionalData;
-  @Nullable private final String myHelpId;
-
-  @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
-  @Nullable private final CommitAction myCommitAction;
   @Nullable private final CommitResultHandler myResultHandler;
 
+  @NotNull private final List<CheckinHandler> myHandlers = ContainerUtil.newArrayList();
+  @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
+  @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = ContainerUtil.newArrayList();
+  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
+  private final boolean myAllOfDefaultChangeListChangesIncluded;
+
+  @NotNull private final Map<String, String> myListComments;
+  @NotNull private final PseudoMap<Object, Object> myAdditionalData;
+  @Nullable private final List<CommitExecutorAction> myExecutorActions;
+
+  @NotNull private final CommitContext myCommitContext;
+  @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
+  @NotNull private final ChangesBrowserBase<?> myBrowser;
+  @NotNull private final MyChangeProcessor myDiffDetails;
+  @NotNull private final CommitMessage myCommitMessageArea;
+  @NotNull private final CommitLegendPanel myLegend;
+
+  @NotNull private final Splitter mySplitter;
+  @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
+  @NotNull private final JLabel myWarningLabel;
+
+  @Nullable private final String myHelpId;
+  @Nullable private final CommitAction myCommitAction;
+
+  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();
   };
+
+  private boolean myDisposed = false;
+  private boolean myUpdateDisabled = false;
+
+  private String myLastKnownComment = "";
+  private String myLastSelectedListName;
+
 
   public static boolean commitChanges(final Project project,
                                       final List<Change> changes,
