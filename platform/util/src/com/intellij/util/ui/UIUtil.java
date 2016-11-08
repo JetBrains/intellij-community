@@ -84,8 +84,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
-import static java.util.Locale.ENGLISH;
-
 /**
  * @author max
  */
@@ -224,7 +222,7 @@ public class UIUtil {
   }
 
   public static boolean isDialogFont(Font font) {
-    return Font.DIALOG.equals(font.getFamily(ENGLISH));
+    return Font.DIALOG.equals(font.getFamily(Locale.US));
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
