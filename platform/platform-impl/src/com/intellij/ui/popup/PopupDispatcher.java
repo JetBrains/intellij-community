@@ -129,8 +129,15 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public static void unsetShowing(WizardPopup aBaseWizardPopup) {
-    ourShowingStep = aBaseWizardPopup.getParent();
-  }
+    if (ourActiveWizardRoot != null) {
+      for (WizardPopup wp = aBaseWizardPopup; wp != null; wp = wp.getParent()) {
+        if (wp == ourActiveWizardRoot) {
+          ourShowingStep = aBaseWizardPopup.getParent();
+          return;
+        }
+      }
+    }
+   }
 
   public static WizardPopup getActiveRoot() {
     return ourActiveWizardRoot;
