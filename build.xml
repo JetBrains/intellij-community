@@ -106,7 +106,7 @@
     <call_gant script="${project.home}/build/scripts/dist.gant"/>
   </target>
 
-  <target name="test" depends="init">
+  <target name="test" depends="init,gradleplugin">
     <call_gant script="${project.home}/build/scripts/tests.gant"/>
   </target>
 
@@ -114,7 +114,7 @@
     <call_gant script="${project.home}/build/scripts/tests.gant" target="coverage" />
   </target>
 
-  <target name="guiTests" depends="init">
+  <target name="guiTests" depends="init,gradleplugin">
     <delete>
       <fileset dir="${project.home}/build" includes="TEST-com.android.tools.idea.tests.gui.*"/>
     </delete>
