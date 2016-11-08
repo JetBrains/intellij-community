@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -37,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
@@ -80,16 +80,12 @@ public class GrStubUtils {
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
-    dataStream.writeBoolean(typeText != null);
-    if (typeText != null) {
-      dataStream.writeUTFFast(typeText);
-    }
+    DataInputOutputUtil.writeNullable(dataStream, typeText, s -> dataStream.writeUTFFast(s));
   }
 
   @Nullable
   public static String readNullableString(StubInputStream dataStream) throws IOException {
-    final boolean hasTypeText = dataStream.readBoolean();
-    return hasTypeText ? dataStream.readUTFFast() : null;
+    return DataInputOutputUtil.readNullable(dataStream, () -> dataStream.readUTFFast());
   }
 
   @Nullable
