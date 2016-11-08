@@ -110,37 +110,8 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
   static void simplifyAndFormat(@NotNull Project project, PsiElement result) {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-    removeRedundantTypeArguments(project, result);
+    PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
-  }
-
-  private static void removeRedundantTypeArguments(@NotNull Project project, PsiElement result) {
-    PsiElement[] typedCalls = PsiTreeUtil.collectElements(result, e -> {
-      if (!(e instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-      if (call.getTypeArguments().length == 0) return false;
-      PsiMethod method = call.resolveMethod();
-      if (method == null) return false;
-      PsiClass aClass = method.getContainingClass();
-      if (aClass == null) return false;
-      String className = aClass.getQualifiedName();
-      // We remove only those which related to Stream API calls trying to preserve ones which were originally in code
-      return className != null && className.startsWith("java.util.stream.");
-    });
-    for(PsiElement typedCall : typedCalls) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)typedCall;
-      PsiType[] arguments = call.getTypeArguments();
-      PsiMethod method = call.resolveMethod();
-      if(method != null) {
-        PsiTypeParameter[] parameters = method.getTypeParameters();
-        if(arguments.length == parameters.length &&
-           PsiDiamondTypeUtil.areTypeArgumentsRedundant(arguments, call, false, method, parameters)) {
-          PsiMethodCallExpression expr =
-            (PsiMethodCallExpression)JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
-          call.getTypeArgumentList().replace(expr.getTypeArgumentList());
-        }
-      }
-    }
   }
 
   static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {
