@@ -55,7 +55,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
   @NotNull
   @Override
-  protected PySubstitutionChunkReference createReference(@NotNull Field field, int position /* unused */) {
+  protected PySubstitutionChunkReference createReference(@NotNull Field field) {
     return new PySubstitutionChunkReference(myPyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0), false);
   }
 
@@ -80,14 +80,14 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   }
 
   @Override
-  protected boolean convertSubstitutionChunk(@NotNull Field field, int position, @NotNull StringBuilder fStringText) {
+  protected boolean convertSubstitutionChunk(@NotNull Field field, @NotNull StringBuilder fStringText) {
 
     final String stringText = myPyString.getText();
 
     // Actual format field
     fStringText.append("{");
     // Isn't supposed to be used by PySubstitutionChunkReference if explicit name or index is given
-    final PySubstitutionChunkReference reference = createReference(field, 0);
+    final PySubstitutionChunkReference reference = createReference(field);
     final PyExpression resolveResult = adjustResolveResult(reference.resolve());
     if (resolveResult == null) return false;
 
@@ -118,7 +118,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
           specOffset = nestedField.getFieldEnd();
 
           // recursively format nested field
-          if (!convertSubstitutionChunk(nestedField, 0, fStringText)) {
+          if (!convertSubstitutionChunk(nestedField, fStringText)) {
             return false;
           }
         }
