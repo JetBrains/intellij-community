@@ -27,7 +27,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -164,28 +163,32 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
                                                      @NotNull final String className,
                                                      final Function<VirtualFile, T> f,
                                                      final GlobalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {
-      @Override
-      public List<T> compute() {
-        final Collection<VirtualFile> files;
-        try {
-          files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
-                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
-        }
-        catch (IndexNotReadyException e) {
-          return Collections.emptyList();
-        }
-        if (files.isEmpty()) return Collections.emptyList();
-        List<T> result = new ArrayList<>();
-        for (VirtualFile file : files) {
-          if (!file.isValid()) continue;
-          final T fFile = f.fun(file);
-          if (fFile != null) { 
-            result.add(fFile);
-          }
-        }
-        return result;
+    return findFxmls(NAME, project, className, f, scope);
+  }
+
+  static <T> List<T> findFxmls(ID<String, ?> id, Project project,
+                               @NotNull String className,
+                               Function<VirtualFile, T> f,
+                               GlobalSearchScope scope) {
+    return ApplicationManager.getApplication().runReadAction((Computable<List<T>>)() -> {
+      final Collection<VirtualFile> files;
+      try {
+        files = FileBasedIndex.getInstance().getContainingFiles(id, className,
+                                                                GlobalSearchScope.projectScope(project).intersectWith(scope));
       }
+      catch (IndexNotReadyException e) {
+        return Collections.emptyList();
+      }
+      if (files.isEmpty()) return Collections.emptyList();
+      List<T> result = new ArrayList<>();
+      for (VirtualFile file : files) {
+        if (!file.isValid()) continue;
+        final T fFile = f.fun(file);
+        if (fFile != null) {
+          result.add(fFile);
+        }
+      }
+      return result;
     });
   }
 }

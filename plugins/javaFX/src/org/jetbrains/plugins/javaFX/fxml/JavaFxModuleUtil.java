@@ -2,7 +2,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -42,7 +42,7 @@ public class JavaFxModuleUtil {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final Project project = file.getProject();
-      final Module fileModule = ModuleUtil.findModuleForFile(virtualFile, project);
+      final Module fileModule = ModuleUtilCore.findModuleForFile(virtualFile, project);
       if (fileModule != null) {
         return getCachedJavaFxModules(project).contains(fileModule);
       }
@@ -52,22 +52,20 @@ public class JavaFxModuleUtil {
 
   @NotNull
   private static Set<Module> getCachedJavaFxModules(@NotNull Project project) {
-    Set<Module> value = CachedValuesManager.getManager(project).getCachedValue(
+    return CachedValuesManager.getManager(project).getCachedValue(
       project, () -> {
         final Collection<VirtualFile> files =
           FileTypeIndex.getFiles(JavaFxFileTypeFactory.getFileType(), GlobalSearchScope.projectScope(project));
 
         final Set<Module> modules = files.stream()
           .filter(JavaFxFileTypeFactory::isFxml)
-          .map(file -> ModuleUtil.findModuleForFile(file, project))
+          .map(file -> ModuleUtilCore.findModuleForFile(file, project))
           .collect(Collectors.toCollection(THashSet::new));
 
         return CachedValueProvider.Result.create(modules, FxmlPresenceListener.getModificationTracker(project));
       });
-    return value;
   }
 
-  @NotNull
   private static boolean hasJavaFxArtifacts(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(
       project, () -> {
@@ -94,7 +92,7 @@ public class JavaFxModuleUtil {
             () -> populateCachedJavaFxModules(project))));
     }
 
-    private void populateCachedJavaFxModules(@NotNull Project project) {
+    private static void populateCachedJavaFxModules(@NotNull Project project) {
       if (!project.isDisposed() && project.isOpen()) {
         hasJavaFxArtifacts(project);
         getCachedJavaFxModules(project);

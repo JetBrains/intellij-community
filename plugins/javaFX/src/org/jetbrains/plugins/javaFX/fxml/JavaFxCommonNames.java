@@ -81,10 +81,10 @@ public class JavaFxCommonNames {
 
   public static final Map<PsiPrimitiveType, String> ourObservablePrimitiveWrappers = new HashMap<>();
   static {
-    ourObservablePrimitiveWrappers.put(PsiPrimitiveType.INT, "javafx.beans.property.SimpleIntegerProperty");
-    ourObservablePrimitiveWrappers.put(PsiPrimitiveType.LONG, "javafx.beans.property.SimpleLongProperty");
-    ourObservablePrimitiveWrappers.put(PsiPrimitiveType.FLOAT, "javafx.beans.property.SimpleFloatProperty");
-    ourObservablePrimitiveWrappers.put(PsiPrimitiveType.DOUBLE, "javafx.beans.property.SimpleDoubleProperty");
-    ourObservablePrimitiveWrappers.put(PsiPrimitiveType.BOOLEAN, "javafx.beans.property.SimpleBooleanProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.INT, "javafx.beans.property.SimpleIntegerProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.LONG, "javafx.beans.property.SimpleLongProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.FLOAT, "javafx.beans.property.SimpleFloatProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.DOUBLE, "javafx.beans.property.SimpleDoubleProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.BOOLEAN, "javafx.beans.property.SimpleBooleanProperty");
   }
 }
