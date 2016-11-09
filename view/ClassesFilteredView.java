@@ -55,6 +55,7 @@ import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
+  private final static double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
@@ -383,7 +384,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
         chunks.add(counts);
 
-        mySingleAlarm.setDelay((int) (DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay));
+        int waitTime = (int) Math.min(DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay, MAX_DELAY_MILLIS);
+        mySingleAlarm.setDelay(waitTime);
         LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, batch.size()));
       }
 
