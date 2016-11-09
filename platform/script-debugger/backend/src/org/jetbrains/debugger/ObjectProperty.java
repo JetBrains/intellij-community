@@ -1,23 +1,20 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.FunctionValue;
+import org.jetbrains.debugger.values.FunctionValue
 
 /**
  * Exposes additional data if variable is a property of object and its property descriptor
  * is available.
  */
-public interface ObjectProperty extends Variable {
-  boolean isWritable();
+interface ObjectProperty : Variable {
+  val isWritable: Boolean
 
-  @Nullable
-  FunctionValue getGetter();
+  val getter: FunctionValue?
 
-  @Nullable
-  FunctionValue getSetter();
+  val setter: FunctionValue?
 
 
-  boolean isConfigurable();
+  val isConfigurable: Boolean
 
-  boolean isEnumerable();
+  val isEnumerable: Boolean
 }
