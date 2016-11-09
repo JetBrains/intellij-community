@@ -76,13 +76,13 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
               public void navigate(MouseEvent e, PsiElement elt) {
                 if (!elt.isWritable()) return;
 
-                final Editor editor = PsiUtilBase.findEditor(element);
+                final Editor editor = PsiUtilBase.findEditor(elt);
                 assert editor != null;
                 final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose Color", color, true);
                 if (c != null) {
                   AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(ColorLineMarkerProvider.class);
                   try {
-                    colorProvider.setColorTo(element, c);
+                    colorProvider.setColorTo(elt, c);
                   }
                   finally {
                     token.finish();
