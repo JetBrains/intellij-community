@@ -453,6 +453,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, globalContext) :
                              new RefUnreachableFilter(this, globalContext);
     final boolean[] requestAdded = {false};
+    LOG.assertTrue(myProcessedSuspicious != null, "phase: " + myPhase);
 
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
