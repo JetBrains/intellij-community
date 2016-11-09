@@ -1,26 +1,30 @@
 Backward Hierarchy:
-java.lang.Object -> Bar0 Bar1 Boo0 Boo1 Foo0 Foo1
+Bar0 -> Boo1
+Boo0 -> Bar1
+Foo0 -> Bar0 Foo1
+Foo1 -> Boo0
+java.lang.Object -> Foo0
 
 Backward References:
-Bar0 in Bar Foo
-Bar0.<init>(0) in Bar
+Bar0 in Bar Boo Foo
+Bar0.<init>(0) in Bar Boo
 Bar0.mm(0) in Bar Foo
 Bar1 in Bar Boo
 Bar1.<init>(0) in Bar
 Bar1.mm(0) in Bar Boo
-Boo0 in Boo Foo
-Boo0.<init>(0) in Boo
+Boo0 in Bar Boo Foo
+Boo0.<init>(0) in Bar Boo
 Boo0.mm(0) in Boo Foo
 Boo1 in Bar Boo
 Boo1.<init>(0) in Boo
 Boo1.mm(0) in Bar Boo
 Foo0 in Bar Foo
-Foo0.<init>(0) in Foo
+Foo0.<init>(0) in Bar Foo
 Foo0.mm(0) in Bar Foo
 Foo1 in Boo Foo
-Foo1.<init>(0) in Foo
+Foo1.<init>(0) in Boo Foo
 Foo1.mm(0) in Boo Foo
-java.lang.Object.<init>(0) in Bar Boo Foo
+java.lang.Object.<init>(0) in Foo
 
 Class Definitions:
 Bar0 in Bar
