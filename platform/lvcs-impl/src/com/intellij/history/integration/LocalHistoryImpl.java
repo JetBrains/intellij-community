@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
 import com.intellij.history.core.*;
-import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
@@ -26,11 +24,10 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -104,24 +100,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     VirtualFileManager fm = VirtualFileManager.getInstance();
     fm.addVirtualFileManagerListener(myEventDispatcher);
-
-    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> validateStorage());
-    }
-  }
-
-  private void validateStorage() {
-    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalHistoryLog.LOG.info("Checking local history storage...");
-      try {
-        long before = Clock.getTime();
-        myVcs.getChangeListInTests().getChangesInTests();
-        LocalHistoryLog.LOG.info("Local history storage seems to be ok (took " + ((Clock.getTime() - before) / 1000) + " sec)");
-      }
-      catch (Exception e) {
-        LocalHistoryLog.LOG.error(e);
-      }
-    }
   }
 
   public File getStorageDir() {
@@ -144,12 +122,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     fm.removeVirtualFileManagerListener(myEventDispatcher);
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
-
-    validateStorage();
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
-    validateStorage();
-
     myChangeList.close();
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
 
@@ -179,7 +153,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return label(myVcs.putUserLabel(name, getProjectId(p)));
   }
 
-  private String getProjectId(Project p) {
+  private static String getProjectId(Project p) {
     return p.getLocationHash();
   }
 
@@ -203,13 +177,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
       @Override
       public ByteContent getByteContent(final String path) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<ByteContent>() {
-          @Override
-          public ByteContent compute() {
-            RootEntry root = myGateway.createTransientRootEntryForPathOnly(path);
-            return impl.getByteContent(root, path);
-          }
-        });
+        return ReadAction.compute(() -> impl.getByteContent(myGateway.createTransientRootEntryForPathOnly(path), path));
       }
     };
   }
@@ -219,12 +187,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public byte[] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
-      @Override
-      public byte[] compute() {
-        return new ByteContentRetriever(myGateway, myVcs, f, c).getResult();
-      }
-    });
+    return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());
   }
 
   @Override
@@ -237,7 +200,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  @NonNls
   @NotNull
   public String getComponentName() {
     return "Local History";
