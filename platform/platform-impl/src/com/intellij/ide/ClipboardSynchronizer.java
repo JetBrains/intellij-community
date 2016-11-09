@@ -123,16 +123,15 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     myClipboardHandler.resetContent();
   }
 
-  private static boolean isWClipboardProblemLogged = false;
   @Nullable
   private static Clipboard getClipboard() {
     try {
-      //sun.awt.windows.WClipboard may throw an IllegalStateException
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
-    catch (Exception e) {
-      if (!isWClipboardProblemLogged) {
-        isWClipboardProblemLogged = true;
+    catch (IllegalStateException e) {
+      if (SystemInfo.isWindows) {
+        LOG.debug("Clipboard is busy");
+      } else {
         LOG.warn(e);
       }
       return null;
