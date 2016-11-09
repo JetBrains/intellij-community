@@ -143,6 +143,7 @@ public class PyNames {
   public static final String MUTABLE_MAPPING = "MutableMapping";
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
+  public static final String PATH_LIKE = "PathLike";
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
@@ -173,6 +174,7 @@ public class PyNames {
   public static final String AEXIT = "__aexit__";
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
+  public static final String FSPATH = "__fspath__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
