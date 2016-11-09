@@ -45,6 +45,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     BlockOpeningBrace,
     BlockClosingBrace,
     ArrayOpeningBracket,
+    ArrayClosingBracket,
     RightParenthesis,
     LeftParenthesis,
     Colon,
@@ -198,6 +199,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (position.isAt(BlockClosingBrace)) {
         position.beforeParentheses(BlockOpeningBrace, BlockClosingBrace);
+      }
+      else if (position.isAt(ArrayClosingBracket)) {
+        position.beforeParentheses(ArrayOpeningBracket, ArrayClosingBracket);
       }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 
