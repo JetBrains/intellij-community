@@ -1147,6 +1147,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     // At least one previous operation is present (stream source)
     private TerminalBlock(@NotNull Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+      for(PsiStatement statement : statements) Objects.requireNonNull(statement);
       myVariable = variable;
       while(true) {
         if(statements.length == 1 && statements[0] instanceof PsiBlockStatement) {
@@ -1200,8 +1201,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(getSingleStatement() instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)getSingleStatement();
         if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
-          return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, false),
-                                   myVariable, ifStatement.getThenBranch());
+          PsiStatement thenBranch = ifStatement.getThenBranch();
+          if(thenBranch != null) {
+            return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+          }
         }
       }
       if(myStatements.length >= 1) {
@@ -1367,7 +1370,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @NotNull
-    public static TerminalBlock from(StreamSource source, PsiStatement body) {
+    public static TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
       return new TerminalBlock(source, source.myVariable, body).extractOperations();
     }
   }
