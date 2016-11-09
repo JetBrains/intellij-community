@@ -460,8 +460,8 @@ java_library(
     name = "Netty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea/lib/netty-all-4.1.1.Final"],
-    runtime_deps = ["//tools:idea/lib/netty-all-4.1.1.Final"],
+    exports = ["//tools:idea/lib/netty-all-4.1.2.Final"],
+    runtime_deps = ["//tools:idea/lib/netty-all-4.1.2.Final"],
 )
 
 java_library(
