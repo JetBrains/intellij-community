@@ -40,6 +40,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   public final static String TOOL_WINDOW_ID = "Memory View";
 
   private final JComponent myEmptyContent;
+  private final JComponent myMemoryViewNotSupportedContent;
 
   private final Map<XDebugSession, ClassesFilteredView> myMemoryViews = new ConcurrentHashMap<>();
 
@@ -48,6 +49,8 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   {
     myEmptyContent = new JBLabel("Run debugging to see loaded classes", SwingConstants.CENTER);
+    myMemoryViewNotSupportedContent = new JBLabel("The Memory View not available for this session",
+        SwingConstants.CENTER);
   }
 
   @Override
@@ -98,9 +101,13 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     ToolWindow toolWindow = getToolWindow(session.getProject());
     if (!myMemoryViews.containsKey(session)) {
-      ClassesFilteredView newView = new ClassesFilteredView(session);
-      newView.setActive(toolWindow != null && toolWindow.isVisible());
-      myMemoryViews.put(session, newView);
+      try {
+        ClassesFilteredView newView = new ClassesFilteredView(session);
+        newView.setActive(toolWindow != null && toolWindow.isVisible());
+        myMemoryViews.put(session, newView);
+      } catch (Throwable e) {
+        LOG.warn("Cannot create new instance of the memory view", e);
+      }
     }
   }
 
@@ -112,11 +119,18 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   private void updateCurrentMemoryView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     if (!project.isDisposed()) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null && myMemoryViews.containsKey(session)) {
-        ClassesFilteredView view = myMemoryViews.get(session);
-        replaceToolWindowContent(toolWindow, view);
+      if (session != null) {
+        ClassesFilteredView view;
+        if (myMemoryViews.containsKey(session)) {
+          view = myMemoryViews.get(session);
+          replaceToolWindowContent(toolWindow, view);
+        } else {
+          view = null;
+          replaceToolWindowContent(toolWindow, myMemoryViewNotSupportedContent);
+        }
+
         if (myCurrentView != null) {
-          myCurrentView.setActive(true);
+          myCurrentView.setActive(false);
         }
 
         myCurrentView = view;
