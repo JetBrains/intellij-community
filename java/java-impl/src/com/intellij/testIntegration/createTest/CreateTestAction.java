@@ -109,7 +109,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiDirectory srcDir = element.getContainingFile().getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     Module testModule = suggestModuleForTests(project, srcModule);
     final List<VirtualFile> testRootUrls = computeTestRoots(testModule);
     if (testRootUrls.isEmpty() && computeSuitableTestRootUrls(testModule).isEmpty()) {
