@@ -193,7 +193,7 @@ public class TestDataGuessByExistingFilesUtil {
           }
 
           final String filePath = file.getPath();
-          if (!filePath.contains(possibleFilePath) && !filePath.contains(test)) {
+          if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
             continue;
           }
           final String fileName = PathUtil.getFileName(filePath).toLowerCase();
