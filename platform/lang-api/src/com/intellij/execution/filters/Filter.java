@@ -73,6 +73,7 @@ public interface Filter {
       myResultItems = resultItems;
     }
 
+    @NotNull
     public List<ResultItem> getResultItems() {
       List<ResultItem> resultItems = myResultItems;
       if (resultItems == null) {
