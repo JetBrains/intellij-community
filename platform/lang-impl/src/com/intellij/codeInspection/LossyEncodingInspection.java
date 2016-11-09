@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,8 +148,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     boolean equals = Arrays.equals(bytesToSave, loadedBytes);
     if (!equals && LOG.isDebugEnabled()) {
       try {
-        FileUtil.writeToFile(new File("C:\\temp\\bytesToSave"), bytesToSave);
-        FileUtil.writeToFile(new File("C:\\temp\\loadedBytes"), loadedBytes);
+        String tempDir = FileUtil.getTempDirectory();
+        FileUtil.writeToFile(new File(tempDir, "lossy-bytes-to-save"), bytesToSave);
+        FileUtil.writeToFile(new File(tempDir, "lossy-loaded-bytes"), loadedBytes);
+        LOG.debug("lossy bytes dumped into " + tempDir);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
