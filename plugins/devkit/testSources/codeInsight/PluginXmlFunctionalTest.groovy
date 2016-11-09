@@ -287,10 +287,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                "MyIconAttributeEPBean.java")
   }
 
-  void testPluginModule() throws Throwable {
-    myFixture.testHighlighting("pluginWithModules.xml")
-  }
-
   void testPluginWithModules() throws Throwable {
     myFixture.testHighlighting("pluginWithModules.xml")
   }
