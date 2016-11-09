@@ -426,19 +426,24 @@ public class StudySerializationUtils {
               JsonObject taskFileObject = taskFile.getValue().getAsJsonObject();
               JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
               for (JsonElement placeholder : placeholders) {
-                JsonObject placeholderObject = placeholder.getAsJsonObject();
-                if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
-                  break;
-                }
-                int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-                int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-                int offset = document.getLineStartOffset(line) + start;
-                placeholderObject.addProperty(OFFSET, offset);
+                convertToAbsoluteOffset(document, placeholder);
+                convertToSubtaskInfo(placeholder.getAsJsonObject());
               }
             }
           }
         }
         return new GsonBuilder().create().fromJson(json, Course.class);
+      }
+
+      private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
+        JsonObject placeholderObject = placeholder.getAsJsonObject();
+        if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
+          return;
+        }
+        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
+        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
+        int offset = document.getLineStartOffset(line) + start;
+        placeholderObject.addProperty(OFFSET, offset);
       }
     }
 
@@ -481,21 +486,6 @@ public class StudySerializationUtils {
         return stepOptionsJson;
       }
 
-      private static void convertToSubtaskInfo(JsonObject placeholderObject) {
-        JsonObject subtaskInfosObject = new JsonObject();
-        placeholderObject.add(SUBTASK_INFOS, subtaskInfosObject);
-        JsonObject subtaskInfo = new JsonObject();
-        subtaskInfosObject.add("0", subtaskInfo);
-        JsonArray hintsArray = new JsonArray();
-        hintsArray.add(placeholderObject.getAsJsonPrimitive(HINT).getAsString());
-        JsonArray additionalHints = placeholderObject.getAsJsonArray(ADDITIONAL_HINTS);
-        if (additionalHints != null) {
-          hintsArray.addAll(additionalHints);
-        }
-        subtaskInfo.add(HINTS, hintsArray);
-        subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
-      }
-
       private static void convertMultipleHints(Gson gson, JsonObject placeholderObject) {
         final String hintString = placeholderObject.getAsJsonPrimitive(HINT).getAsString();
         final JsonArray hintsArray = new JsonArray();
@@ -534,6 +524,21 @@ public class StudySerializationUtils {
           placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
         }
       }
+    }
+
+    private static void convertToSubtaskInfo(JsonObject placeholderObject) {
+      JsonObject subtaskInfosObject = new JsonObject();
+      placeholderObject.add(SUBTASK_INFOS, subtaskInfosObject);
+      JsonObject subtaskInfo = new JsonObject();
+      subtaskInfosObject.add("0", subtaskInfo);
+      JsonArray hintsArray = new JsonArray();
+      hintsArray.add(placeholderObject.getAsJsonPrimitive(HINT).getAsString());
+      JsonArray additionalHints = placeholderObject.getAsJsonArray(ADDITIONAL_HINTS);
+      if (additionalHints != null) {
+        hintsArray.addAll(additionalHints);
+      }
+      subtaskInfo.add(HINTS, hintsArray);
+      subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
     }
   }
 }
