@@ -1,59 +1,39 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.BitUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.FunctionValue;
-import org.jetbrains.debugger.values.Value;
+import com.intellij.util.BitUtil
+import org.jetbrains.debugger.values.FunctionValue
+import org.jetbrains.debugger.values.Value
 
-public class ObjectPropertyImpl extends VariableImpl implements ObjectProperty {
-  public static final byte WRITABLE = 0x01;
-  public static final byte CONFIGURABLE = 0x02;
-  public static final byte ENUMERABLE = 0x04;
+class ObjectPropertyImpl(name: String,
+                         value: Value?,
+                         private val getter: FunctionValue?,
+                         private val setter: FunctionValue?,
+                         valueModifier: ValueModifier?,
+                         private val flags: Int) : VariableImpl(name, value, valueModifier), ObjectProperty {
 
-  private final FunctionValue getter;
-  private final FunctionValue setter;
-
-  private final int flags;
-
-  public ObjectPropertyImpl(@NotNull String name,
-                            @Nullable Value value,
-                            @Nullable FunctionValue getter,
-                            @Nullable FunctionValue setter,
-                            @Nullable ValueModifier valueModifier,
-                            int flags) {
-    super(name, value, valueModifier);
-
-    this.getter = getter;
-    this.setter = setter;
-
-    this.flags = flags;
+  override fun getGetter(): FunctionValue? {
+    return getter
   }
 
-  @Nullable
-  @Override
-  public final FunctionValue getGetter() {
-    return getter;
+  override fun getSetter(): FunctionValue? {
+    return setter
   }
 
-  @Nullable
-  @Override
-  public final FunctionValue getSetter() {
-    return setter;
+  override fun isWritable(): Boolean {
+    return BitUtil.isSet(flags, WRITABLE.toInt())
   }
 
-  @Override
-  public final boolean isWritable() {
-    return BitUtil.isSet(flags, WRITABLE);
+  override fun isConfigurable(): Boolean {
+    return BitUtil.isSet(flags, CONFIGURABLE.toInt())
   }
 
-  @Override
-  public final boolean isConfigurable() {
-    return BitUtil.isSet(flags, CONFIGURABLE);
+  override fun isEnumerable(): Boolean {
+    return BitUtil.isSet(flags, ENUMERABLE.toInt())
   }
 
-  @Override
-  public final boolean isEnumerable() {
-    return BitUtil.isSet(flags, ENUMERABLE);
+  companion object {
+    val WRITABLE: Byte = 0x01
+    val CONFIGURABLE: Byte = 0x02
+    val ENUMERABLE: Byte = 0x04
   }
 }
