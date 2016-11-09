@@ -1252,7 +1252,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-    PsiElement method = methodExpression.resolve();
+    JavaResolveResult result = methodExpression.advancedResolve(false);
+    PsiElement method = result.getElement();
     PsiParameter[] parameters = method instanceof PsiMethod ? ((PsiMethod)method).getParameterList().getParameters() : null;
     boolean isEqualsCall = expressions.length == 1 && method instanceof PsiMethod &&
                            "equals".equals(((PsiMethod)method).getName()) && parameters.length == 1 &&
@@ -1263,7 +1264,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression paramExpr = expressions[i];
       paramExpr.accept(this);
       if (parameters != null && i < parameters.length) {
-        generateBoxingUnboxingInstructionFor(paramExpr, parameters[i].getType());
+        generateBoxingUnboxingInstructionFor(paramExpr, result.getSubstitutor().substitute(parameters[i].getType()));
       }
       if (i == 0 && isEqualsCall) {
         // stack: .., qualifier, arg1

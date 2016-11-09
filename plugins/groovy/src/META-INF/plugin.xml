@@ -576,7 +576,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
 
-    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
+    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionVetoSPI"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
@@ -625,9 +625,6 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleManagerImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsFacadeImpl"/>
-
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
 
