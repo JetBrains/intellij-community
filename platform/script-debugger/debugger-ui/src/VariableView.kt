@@ -195,7 +195,8 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   abstract class ObsolescentIndexedVariablesConsumer(protected val node: XCompositeNode) : IndexedVariablesConsumer() {
-    override fun isObsolete() = node.isObsolete
+    override val isObsolete: Boolean
+      get() = node.isObsolete
   }
 
   private fun computeIndexedProperties(value: ArrayValue, node: XCompositeNode, isLastChildren: Boolean): Promise<*> {
