@@ -35,19 +35,4 @@ public class JavacRefSymbol {
   public Tree.Kind getPlaceKind() {
     return myPlaceKind;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    JavacRefSymbol symbol = (JavacRefSymbol)o;
-
-    return mySymbol == symbol.mySymbol && myPlaceKind == symbol.myPlaceKind;
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * mySymbol.hashCode() + myPlaceKind.hashCode();
-  }
 }

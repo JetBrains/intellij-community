@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
@@ -27,6 +26,7 @@ import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Name;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
@@ -35,7 +35,10 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 final class JavacReferenceCollectorListener implements TaskListener {
   private final JavacFileReferencesRegistrar[] myFullASTListeners;
@@ -220,7 +223,17 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
 
     private static Set<JavacRefSymbol> createReferenceHolder() {
-      return new THashSet<JavacRefSymbol>();
+      return new THashSet<JavacRefSymbol>(new TObjectHashingStrategy<JavacRefSymbol>() {
+        @Override
+        public int computeHashCode(JavacRefSymbol ref) {
+          return ref.getSymbol().hashCode();
+        }
+
+        @Override
+        public boolean equals(JavacRefSymbol r1, JavacRefSymbol r2) {
+          return r1.getSymbol() == r2.getSymbol();
+        }
+      });
     }
 
     private static List<JavacRefSymbol> createDefinitionHolder() {
