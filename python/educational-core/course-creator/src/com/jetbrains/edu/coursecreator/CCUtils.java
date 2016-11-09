@@ -26,6 +26,7 @@ import com.intellij.util.Function;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -46,6 +47,28 @@ public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
+
+  public static int getSubtaskIndex(Project project, VirtualFile file) {
+    String fileName = file.getName();
+    String name = FileUtil.getNameWithoutExtension(fileName);
+    boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
+    if (!canBeSubtaskFile) {
+      return -1;
+    }
+    if (!name.contains(EduNames.SUBTASK_MARKER)) {
+      return 0;
+    }
+    int markerIndex = name.indexOf(EduNames.SUBTASK_MARKER);
+    String index = name.substring(markerIndex + EduNames.SUBTASK_MARKER.length());
+    if (index.isEmpty()) {
+      return -1;
+    }
+    try {
+      return Integer.valueOf(index);
+    } catch (NumberFormatException e) {
+      return -1;
+    }
+  }
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
