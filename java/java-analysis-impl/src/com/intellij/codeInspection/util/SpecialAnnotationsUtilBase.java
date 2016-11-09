@@ -16,13 +16,11 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
@@ -63,11 +61,10 @@ public class SpecialAnnotationsUtilBase {
   static void doQuickFixInternal(@NotNull Project project, @NotNull List<String> targetList, @NotNull String qualifiedName) {
     targetList.add(qualifiedName);
     Collections.sort(targetList);
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     //correct save settings
 
     //TODO lesya
-    InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+    InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
     /*
     try {
       inspectionProfile.save();

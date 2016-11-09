@@ -458,10 +458,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  @Override
-  public void save() {
-    InspectionProfileManager.getInstance().fireProfileChanged(this);
-  }
+  //@Override
+  //public void save() {
+  //  InspectionProfileManager.getInstance().fireProfileChanged(this);
+  //}
 
   @Nullable
   @Override

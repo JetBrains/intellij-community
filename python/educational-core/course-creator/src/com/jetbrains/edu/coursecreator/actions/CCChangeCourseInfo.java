@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator.actions;
 
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,8 +70,7 @@ public class CCChangeCourseInfo extends DumbAwareAction {
       course.setDescription(panel.getDescription());
       setVersion(course, panel);
       ProjectView.getInstance(project).refresh();
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      InspectionProfileManager.getInstance().fireProfileChanged(profile);
+      InspectionProfileManager.getInstance().fireProfileChanged(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     }
   }
 

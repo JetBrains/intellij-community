@@ -1126,12 +1126,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
       parentProfile.getProfileManager().deleteProfile(parentProfile.getName());
     }
-    if (selectedProfile.getProfileManager() != profileManager) {
-      copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
-      selectedProfile.setProfileManager(profileManager);
+    if (selectedProfile.getProfileManager() == profileManager) {
+      profileManager.updateProfile(selectedProfile);
     }
     else {
-      selectedProfile.getProfileManager().updateProfile(selectedProfile);
+      copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
+      selectedProfile.setProfileManager(profileManager);
     }
 
     selectedProfile.commit();

@@ -93,6 +93,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
         return fileNameWithoutExtension;
       }
 
+      @Override
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
@@ -201,18 +202,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       }
     }
     return getProfile(path, false);
-  }
-
-  @Override
-  public void updateProfile(@NotNull InspectionProfileImpl profile) {
-    super.updateProfile(profile);
-    updateProfileImpl(profile);
-  }
-
-  private static void updateProfileImpl(@NotNull InspectionProfileImpl profile) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      profile.initInspectionTools(project);
-    }
   }
 
   @Nullable

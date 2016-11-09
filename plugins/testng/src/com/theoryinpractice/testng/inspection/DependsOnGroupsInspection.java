@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
@@ -65,16 +64,19 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
     definedGroups.setText("&Defined Groups");
     final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         groups.clear();
         String text = textField.getText();
@@ -152,22 +154,23 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       myGroupName = groupName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Add '" + myGroupName + "' as a defined test group.";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "TestNG";
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       groups.add(myGroupName);
-      final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       //correct save settings
-      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
       //TODO lesya
       /*
       try {

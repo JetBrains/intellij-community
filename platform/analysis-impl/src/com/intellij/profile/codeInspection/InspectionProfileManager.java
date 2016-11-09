@@ -48,7 +48,7 @@ public interface InspectionProfileManager {
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  void fireProfileChanged(@Nullable InspectionProfile profile);
+  void fireProfileChanged(@Nullable InspectionProfileImpl profile);
 
   void fireProfileChanged(@Nullable InspectionProfile oldProfile, @NotNull InspectionProfile profile);
 

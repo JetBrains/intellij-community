@@ -51,10 +51,8 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  override final fun fireProfileChanged(profile: InspectionProfile?) {
-    if (profile is InspectionProfileImpl) {
-      profile.profileChanged()
-    }
+  override final fun fireProfileChanged(profile: InspectionProfileImpl?) {
+    profile?.profileChanged()
     for (adapter in profileListeners) {
       adapter.profileChanged(profile)
     }
