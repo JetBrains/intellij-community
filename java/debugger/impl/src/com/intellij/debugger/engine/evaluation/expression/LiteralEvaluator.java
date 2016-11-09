@@ -26,7 +26,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.StringReference;
 
@@ -64,7 +64,7 @@ class LiteralEvaluator implements Evaluator {
     if (myValue instanceof String) {
       StringReference str = vm.mirrorOf((String)myValue);
       // intern
-      Method internMethod = ContainerUtil.getFirstItem(str.referenceType().methodsByName("intern", "()Ljava/lang/String;"));
+      Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
       if (internMethod != null) {
         return context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
       }
