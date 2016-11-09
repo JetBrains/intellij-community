@@ -30,6 +30,7 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -99,8 +100,12 @@ object PyTypeShed {
   }
 
   val directory: VirtualFile? by lazy {
-    val path = PythonHelpersLocator.getHelperPath("typeshed")
-    StandardFileSystems.local().findFileByPath(path)
+    val paths = listOf("${PathManager.getConfigPath()}/typeshed",
+                       PythonHelpersLocator.getHelperPath("typeshed"))
+    paths.asSequence()
+        .map { StandardFileSystems.local().findFileByPath(it) }
+        .filterNotNull()
+        .firstOrNull()
   }
 
   fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
