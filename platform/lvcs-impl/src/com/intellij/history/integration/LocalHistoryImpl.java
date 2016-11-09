@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
@@ -104,24 +103,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     VirtualFileManager fm = VirtualFileManager.getInstance();
     fm.addVirtualFileManagerListener(myEventDispatcher);
-
-    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> validateStorage());
-    }
-  }
-
-  private void validateStorage() {
-    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalHistoryLog.LOG.info("Checking local history storage...");
-      try {
-        long before = Clock.getTime();
-        myVcs.getChangeListInTests().getChangesInTests();
-        LocalHistoryLog.LOG.info("Local history storage seems to be ok (took " + ((Clock.getTime() - before) / 1000) + " sec)");
-      }
-      catch (Exception e) {
-        LocalHistoryLog.LOG.error(e);
-      }
-    }
   }
 
   public File getStorageDir() {
@@ -144,12 +125,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     fm.removeVirtualFileManagerListener(myEventDispatcher);
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
-
-    validateStorage();
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
-    validateStorage();
-
     myChangeList.close();
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
 
