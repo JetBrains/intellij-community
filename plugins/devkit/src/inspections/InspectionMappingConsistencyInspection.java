@@ -27,7 +27,6 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -83,7 +82,7 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
 
   private static void checkDefaultBundle(DomElement element, ProblemsHolder holder) {
     IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
-    if (plugin != null && plugin.getResourceBundles().isEmpty()) {
+    if (plugin != null && !DomUtil.hasXml(plugin.getResourceBundle())) {
       registerProblem(element, holder, "Bundle should be specified");
     }
   }

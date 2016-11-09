@@ -110,9 +110,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testDependsConfigFileCompletion() {
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/used.xml")
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional2.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/used.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/optional.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/optional2.xml")
     configureByFile()
 
     myFixture.completeBasic()

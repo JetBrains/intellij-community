@@ -32,7 +32,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -129,38 +128,36 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
         return Collections.emptyList();
       }
 
-      final List<String> allBundleNames;
-      if (bundleName == null) {
-        allBundleNames = getPluginResourceBundles(element);
-      }
-      else {
-        allBundleNames = Collections.singletonList(bundleName);
+      final String bundleNameToUse = bundleName == null ? getPluginResourceBundle(element) : bundleName;
+      if (bundleNameToUse == null) {
+        return Collections.emptyList();
       }
 
       final Project project = element.getProject();
-      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
 
       final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
-      for (String name : allBundleNames) {
-        final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, name);
-        allPropertiesFiles.addAll(propertiesFiles);
 
-        if (propertiesFiles.isEmpty()) {
-          allPropertiesFiles.addAll(propertiesReferenceManager.findPropertiesFiles(projectScope, name, BundleNameEvaluator.DEFAULT));
-        }
+      final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
+      allPropertiesFiles.addAll(propertiesFiles);
+
+      if (propertiesFiles.isEmpty()) {
+      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        allPropertiesFiles
+          .addAll(propertiesReferenceManager.findPropertiesFiles(projectScope, bundleNameToUse, BundleNameEvaluator.DEFAULT));
       }
       return allPropertiesFiles;
     }
 
-    private static List<String> getPluginResourceBundles(PsiElement element) {
+    @Nullable
+    private static String getPluginResourceBundle(PsiElement element) {
       final DomElement domElement = DomUtil.getDomElement(element);
-      if (domElement == null) return Collections.emptyList();
+      if (domElement == null) return null;
       final DomElement rootElement = DomUtil.getFileElement(domElement).getRootElement();
-      if (!(rootElement instanceof IdeaPlugin)) return Collections.emptyList();
+      if (!(rootElement instanceof IdeaPlugin)) return null;
 
       IdeaPlugin plugin = (IdeaPlugin)rootElement;
-      return ContainerUtil.map(plugin.getResourceBundles(), value -> value.getStringValue());
+      return plugin.getResourceBundle().getStringValue();
     }
   }
 }
