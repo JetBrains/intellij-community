@@ -397,7 +397,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
 
-    final Set<VirtualFile> localScopeFiles = scope.toSearchScope() instanceof LocalSearchScope ? new THashSet<>() : null;
+    final Set<VirtualFile> localScopeFiles = ReadAction.compute(() -> scope.toSearchScope()) instanceof LocalSearchScope ? new THashSet<>() : null;
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();

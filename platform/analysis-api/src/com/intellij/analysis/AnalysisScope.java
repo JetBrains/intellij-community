@@ -643,6 +643,7 @@ public class AnalysisScope {
 
   @NotNull
   public SearchScope toSearchScope() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     switch (myType) {
       case CUSTOM:
         return myScope;
