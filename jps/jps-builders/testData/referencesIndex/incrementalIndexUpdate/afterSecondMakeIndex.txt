@@ -1,5 +1,4 @@
 Backward Hierarchy:
-Foo -> FooImpl
 java.lang.Object -> Bar FooImpl
 
 Backward References:

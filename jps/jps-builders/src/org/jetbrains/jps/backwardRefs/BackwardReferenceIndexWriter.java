@@ -263,7 +263,7 @@ public class BackwardReferenceIndexWriter {
     if (oldSuperClasses != null && !oldSuperClasses.isEmpty()) {
       myIndex.getHierarchyMap().removeAll(classId, oldSuperClasses);
       for (LightRef anOldClass : oldSuperClasses) {
-        myIndex.getBackwardHierarchyMap().put(anOldClass, classId);
+        myIndex.getBackwardHierarchyMap().removeFrom(anOldClass, classId);
       }
     }
   }
