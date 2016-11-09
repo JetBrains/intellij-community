@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.changeSignature;
+package com.intellij.refactoring.changeSignature.inplace;
+
+import com.intellij.lang.LanguageExtension;
+import com.intellij.refactoring.changeSignature.ChangeInfo;
 
 /**
  * User: anna
- * Date: Sep 10, 2010
+ * Date: Sep 9, 2010
  */
-public class MoveParameterRightAction extends MoveParameterAction {
-  public MoveParameterRightAction() {
-    super(false);
+public class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeSignatureDetector<ChangeInfo>> {
+  public static final LanguageChangeSignatureDetectors INSTANCE = new LanguageChangeSignatureDetectors();
+
+  LanguageChangeSignatureDetectors() {
+    super("com.intellij.changeSignatureDetector");
   }
+
 }

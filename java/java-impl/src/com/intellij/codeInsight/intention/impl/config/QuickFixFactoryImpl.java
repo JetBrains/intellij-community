@@ -54,7 +54,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -703,14 +702,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      PsiClass containingClass = method.getContainingClass();
-      if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
-        //ignore methods with deleted return types as they are always marked as unused without any reason
-        ChangeSignatureGestureDetector.getInstance(method.getProject()).dismissForElement(method);
-      }
-    }
     return new SafeDeleteFix(element);
   }
 
