@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.intentions.convertToFString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.SubstitutionChunk;
@@ -48,8 +49,8 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
   @NotNull
   @Override
-  protected PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk, int position) {
-    return new PySubstitutionChunkReference(myPyString, chunk, position, true);
+  protected PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk) {
+    return new PySubstitutionChunkReference(myPyString, chunk, ObjectUtils.chooseNotNull(chunk.getAutoPosition(), 0), true);
   }
 
   @Override
@@ -60,14 +61,11 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
   @Override
   protected boolean checkReferencedExpression(@NotNull List<SubstitutionChunk> chunks,
-                                              int position,
+                                              @NotNull SubstitutionChunk chunk,
                                               @NotNull PsiElement valueSource,
-                                              @NotNull PsiElement expression) {
-    final SubstitutionChunk chunk = chunks.get(position);
-    if ((chunk.getMappingKey() != null || chunks.size() > 1) && expression == valueSource) {
-      return false;
-    }
-    return super.checkReferencedExpression(chunks, position, valueSource, expression);
+                                              @NotNull PyExpression expression) {
+    if ((chunk.getMappingKey() != null || chunks.size() > 1) && expression == valueSource) return false;
+    return super.checkReferencedExpression(chunks, chunk, valueSource, expression);
   }
 
   @NotNull
@@ -86,7 +84,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   }
 
   @Override
-  protected boolean convertSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, int position, @NotNull StringBuilder fStringText) {
+  protected boolean convertSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, @NotNull StringBuilder fStringText) {
     final char conversionChar = subsChunk.getConversionType();
 
     String widthAndPrecision = StringUtil.notNullize(subsChunk.getWidth());
@@ -97,7 +95,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     final String conversionFlags = subsChunk.getConversionFlags();
 
     fStringText.append("{");
-    final PySubstitutionChunkReference reference = createReference(subsChunk, position);
+    final PySubstitutionChunkReference reference = createReference(subsChunk);
     final PyExpression resolveResult = adjustResolveResult(reference.resolve());
     assert resolveResult != null;
 
