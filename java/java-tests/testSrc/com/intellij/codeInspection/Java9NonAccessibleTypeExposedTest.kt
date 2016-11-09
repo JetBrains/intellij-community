@@ -31,9 +31,9 @@ class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTes
     super.setUp()
     myFixture.enableInspections(Java9NonAccessibleTypeExposedInspection())
     addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
-    addFile("apiPkg/PublicApi.java", "package apiPkg; public class PublicApi {}", MAIN)
-    addFile("apiPkg/PackageLocal.java", "package apiPkg; class PackageLocal {}", MAIN)
-    addFile("otherPkg/PublicOther.java", "package otherPkg; public class PublicOther {}", MAIN)
+    add("apiPkg", "PublicApi", "public class PublicApi {}")
+    add("apiPkg", "PackageLocal", "class PackageLocal {}")
+    add("otherPkg", "PublicOther", "public class PublicOther {}")
   }
 
   fun testPrimitives() {
@@ -168,7 +168,7 @@ public interface Highlighted {
   }
 
   fun testNotExportedPackage() {
-    addFile("implPkg/NotExported.java", "package implPkg; public class NotExported {}", MAIN)
+    add("implPkg", "NotExported", "public class NotExported {}")
     highlight("""package apiPkg;
 import implPkg.NotExported;
 public class Highlighted {
@@ -182,11 +182,11 @@ public class Highlighted {
   }
 
   fun testDoubleNested() {
-    addFile("apiPkg/PublicOuter.java", """package apiPkg; public class PublicOuter {
+    add("apiPkg", "PublicOuter", """public class PublicOuter {
   static class PackageLocal {
     public class DoubleNested {}
   }
-}""", MAIN)
+}""")
     highlight("""package apiPkg;
 import apiPkg.PublicOuter.PackageLocal;
 public class Highlighted {
@@ -197,9 +197,56 @@ public class Highlighted {
 """)
   }
 
+  fun testPublicAnnotation() {
+    add("apiPkg", "MyAnnotation", "public @interface MyAnnotation {}")
+    highlight("""package apiPkg;
+public class Highlighted {
+  @MyAnnotation public PublicApi field;
+  @MyAnnotation public Highlighted() {}
+  public Highlighted(@MyAnnotation PublicApi s) {field=s;}
+  @MyAnnotation protected void init() {}
+  protected @MyAnnotation PublicApi peek() {return field;}
+  public void set(@MyAnnotation PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testPackageLocalAnnotation() {
+    add("apiPkg", "MyAnnotation", "@interface MyAnnotation {}")
+    highlight("""package apiPkg;
+public class Highlighted {
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
+  public Highlighted(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> protected void init() {}
+  protected @<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi peek() {return field;}
+  public void set(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testNotExportedAnnotation() {
+    add("implPkg", "MyAnnotation", "public @interface MyAnnotation {}")
+    highlight("""package apiPkg;
+import implPkg.MyAnnotation;
+public class Highlighted {
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
+  public Highlighted(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> protected void init() {}
+  protected @<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi peek() {return field;}
+  public void set(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+}
+""")
+  }
+
   private fun highlight(@Language("JAVA") @NotNull @NonNls text: String) {
     val file = addFile("apiPkg/Highlighted.java", text, MAIN)
     myFixture.configureFromExistingVirtualFile(file)
     myFixture.checkHighlighting()
+  }
+
+  private fun add(packageName: String, className: String, @Language("JAVA") @NotNull @NonNls text: String) {
+    addFile("$packageName/$className.java", "package $packageName; $text", MAIN)
   }
 }

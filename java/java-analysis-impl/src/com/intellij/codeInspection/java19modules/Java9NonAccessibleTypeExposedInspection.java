@@ -65,6 +65,7 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
   }
 
   private static class NonAccessibleTypeExposedVisitor extends JavaElementVisitor {
+    public static final String CLASS_IS_NOT_EXPORTED = "The class is not exported from the module";
     private final ProblemsHolder myHolder;
     private final ModuleFileIndex myModuleFileIndex;
     private final Set<String> myExportedPackageNames;
@@ -96,18 +97,39 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
       }
     }
 
+    @Override
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (referenceElement != null) {
+        PsiElement resolved = referenceElement.resolve();
+        if (resolved instanceof PsiClass && !isModulePublicApi((PsiClass)resolved)) {
+          PsiAnnotationOwner owner = annotation.getOwner();
+          if (isModulePublicApi(owner)) {
+            myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+          }
+          if (owner instanceof PsiParameter) {
+            PsiElement parent = ((PsiParameter)owner).getParent();
+            if (parent instanceof PsiMember && isModulePublicApi((PsiMember)parent)) {
+              myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+            }
+          }
+        }
+      }
+    }
+
     private void checkType(@Nullable PsiType type, @Nullable PsiTypeElement typeElement) {
       if (typeElement != null) {
         PsiClass psiClass = PsiUtil.resolveClassInType(type);
         if (psiClass != null && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
-          myHolder.registerProblem(typeElement, "The class is not exported from the module");
+          myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
         }
       }
     }
 
     @Contract("null -> false")
     private boolean isModulePublicApi(@Nullable PsiMember member) {
-      if (member != null && isModulePublicApiMember(member)) {
+      if (member != null && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
         PsiElement parent = member.getParent();
         if (parent instanceof PsiClass) {
           return isModulePublicApi((PsiClass)parent);
@@ -120,12 +142,27 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
       return false;
     }
 
-    private static boolean isModulePublicApiMember(@NotNull PsiMember member) {
-      if (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return true;
+    @Contract("null -> false")
+    private boolean isModulePublicApi(@Nullable PsiAnnotationOwner owner) {
+      if (owner instanceof PsiModifierList) {
+        PsiElement parent = ((PsiModifierList)owner).getParent();
+        if (parent instanceof PsiMember) {
+          return isModulePublicApi((PsiMember)parent);
+        }
+        if (parent instanceof PsiParameter) {
+          PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+          if (declarationScope instanceof PsiMethod) {
+            return isModulePublicApi((PsiMethod)declarationScope);
+          }
+        }
       }
-      PsiClass containingClass = member.getContainingClass();
-      return containingClass != null && containingClass.isInterface();
+      else if (owner instanceof PsiTypeElement) {
+        PsiElement parent = ((PsiTypeElement)owner).getParent();
+        if (parent instanceof PsiMember) {
+          return isModulePublicApi((PsiMember)parent);
+        }
+      }
+      return false;
     }
 
     private boolean isInModuleSource(@NotNull PsiClass psiClass) {
