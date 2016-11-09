@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="library" name="Xerces" level="project" />
   </component>
 </module>
