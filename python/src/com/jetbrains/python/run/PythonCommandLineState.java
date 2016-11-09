@@ -254,7 +254,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     createStandardGroups(commandLine);
-    
+
     initEnvironment(project, commandLine, config, isDebug);
 
     setRunnerPath(project, commandLine, config);
@@ -293,7 +293,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
-    setupVirtualEnvVariables(env, myConfig.getSdkHome());
+    setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
 
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
@@ -303,12 +303,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildPythonPath(project, commandLine, myConfig, isDebug);
   }
 
-  private static void setupVirtualEnvVariables(Map<String, String> env, String sdkHome) {
+  private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
     if (PythonSdkType.isVirtualEnv(sdkHome)) {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
           env.putAll(reader.readShellEnv());
+
+          for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
+            if ("PATH".equals(e.getKey())) {
+              env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
+            }
+          }
+
         }
         catch (Exception e) {
           LOG.error("Couldn't read virtualenv variables", e);
@@ -516,7 +523,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       Module module = getModule(project, config);
 
       Sdk sdk = PythonSdkType.findPythonSdk(module);
-      
+
       if (sdk != null) {
         sdkHome = sdk.getHomePath();
       }
