@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.persistent;
+package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +40,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
   private final KeyDescriptor<K> myKeyDescriptor;
   private final DataExternalizer<V> myValueExternalizer;
   private boolean myDirty;
-  private Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.persistent.SmallMapSerializer");
+  private Logger LOG = Logger.getInstance(SmallMapSerializer.class);
 
   public SmallMapSerializer(final File file, final KeyDescriptor<K> keyDescriptor, final DataExternalizer<V> valueExternalizer) {
     myFile = file;

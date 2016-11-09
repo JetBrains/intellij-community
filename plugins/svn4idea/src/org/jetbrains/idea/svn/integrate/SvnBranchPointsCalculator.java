@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
+import org.jetbrains.idea.svn.SmallMapSerializer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
