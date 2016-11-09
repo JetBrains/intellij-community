@@ -168,6 +168,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     private boolean myIsEnabled = false;
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
+    private volatile boolean myIsDeleted = false;
 
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
       super(project, xBreakpoint);
@@ -197,6 +198,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         protected void action() throws Exception {
           disable();
           myDebugProcess.getRequestsManager().deleteRequest(MyConstructorBreakpoints.this);
+          myIsDeleted = true;
         }
       });
     }
@@ -208,7 +210,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         SuspendContextImpl suspendContext = action.getSuspendContext();
         if (suspendContext != null) {
           ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (myReference.equals(thisRef.referenceType())) {
+          if (myReference.equals(thisRef.referenceType()) && myPositionTracker != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
             ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
@@ -227,7 +229,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
               }).filter(Objects::nonNull).collect(Collectors.toList());
               myPositionTracker.addStack(myDebugSession, thisRef, stackFrameDescriptors);
             }
-
           }
         }
       } catch (EvaluateException e) {
@@ -242,14 +243,14 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     void enable() {
-      if (!myIsEnabled) {
+      if (!myIsEnabled && !myIsDeleted) {
         myRequests.forEach(EventRequest::enable);
         myIsEnabled = true;
       }
     }
 
     void disable() {
-      if (myIsEnabled) {
+      if (myIsEnabled && !myIsDeleted) {
         myRequests.forEach(EventRequest::disable);
         myIsEnabled = false;
       }

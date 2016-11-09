@@ -106,7 +106,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         newView.setActive(toolWindow != null && toolWindow.isVisible());
         myMemoryViews.put(session, newView);
       } catch (Throwable e) {
-        LOG.warn("Cannot create new instance of the memory view", e);
+        LOG.warn("Cannot create new instance of the memory view. " + e.getMessage());
       }
     }
   }

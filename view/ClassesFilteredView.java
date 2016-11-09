@@ -71,6 +71,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private final Map<ReferenceType, ConstructorInstancesTracker> myConstructorTrackedClasses = new ConcurrentHashMap<>();
   private final XDebugSessionListener myDebugSessionListener;
 
+  @Nullable
   private volatile SuspendContextImpl myLastSuspendContext;
 
   /**
@@ -92,6 +93,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSession = debugSession;
     myDebugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
         .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
+
+    if (myDebugProcess == null) {
+      throw new NullPointerException("Failed to receive a java debug process");
+    }
+
     myInstancesTracker = InstancesTracker.getInstance(myProject);
     InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
@@ -336,7 +342,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private void doActivate() {
     myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
-    if (myLastSuspendContext == null || !myLastSuspendContext.equals(getSuspendContext())) {
+    final SuspendContextImpl lastContext = myLastSuspendContext;
+    if (lastContext == null || !lastContext.equals(getSuspendContext())) {
       updateClassesAndCounts();
     }
   }
