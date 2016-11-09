@@ -113,7 +113,9 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   private void removeSession(@NotNull XDebugSession session) {
     ClassesFilteredView removed = myMemoryViews.remove(session);
-    Disposer.dispose(removed);
+    if (removed != null) {
+      Disposer.dispose(removed);
+    }
   }
 
   private void updateCurrentMemoryView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
