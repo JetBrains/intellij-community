@@ -403,11 +403,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       schemes.firstOrNull({ it.name == schemeName})?.let { existingScheme ->
         if (readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
           // so, bundled scheme is shadowed
-          removeFirstScheme({ it === existingScheme }, schemes, scheduleDelete = false)
+          removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
           return true
         }
         else if (processor.isExternalizable(existingScheme) && isOverwriteOnLoad(existingScheme)) {
-          removeFirstScheme({ it === existingScheme }, schemes)
+          removeFirstScheme(schemes) { it === existingScheme }
         }
         else {
           if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
@@ -919,13 +919,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  override fun removeScheme(schemeName: String) = removeFirstScheme({it.name == schemeName}, schemes)
+  override fun removeScheme(schemeName: String) = removeFirstScheme(schemes) {it.name == schemeName}
 
-  override fun removeScheme(scheme: T) {
-    removeFirstScheme({ it == scheme }, schemes)
-  }
+  override fun removeScheme(scheme: T) = removeFirstScheme(schemes) { it == scheme } != null
 
-  private fun removeFirstScheme(condition: (T) -> Boolean, schemes: MutableList<T>, scheduleDelete: Boolean = true): T? {
+  private fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {
       if (!condition(scheme)) {

@@ -80,7 +80,7 @@ public abstract class SchemeManager<T extends Scheme> {
     return scheme == null ? null : scheme.getName();
   }
 
-  public abstract void removeScheme(@NotNull T scheme);
+  public abstract boolean removeScheme(@NotNull T scheme);
 
   @Nullable
   public T removeScheme(@NotNull String name) {

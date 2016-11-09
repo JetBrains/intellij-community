@@ -109,14 +109,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       public void onSchemeDeleted(@NotNull InspectionProfileImpl scheme) {
         onProfilesChanged();
       }
-
-      @Override
-      public void onCurrentSchemeSwitched(@Nullable InspectionProfileImpl oldScheme, @Nullable InspectionProfileImpl newScheme) {
-        if (newScheme != null) {
-          fireProfileChanged(oldScheme, newScheme);
-        }
-        onProfilesChanged();
-      }
     });
   }
 
@@ -264,6 +256,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile);
     }
+
+    onProfilesChanged();
   }
 
   public static void onProfilesChanged() {

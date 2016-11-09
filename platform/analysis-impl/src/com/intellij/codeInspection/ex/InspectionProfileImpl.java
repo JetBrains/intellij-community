@@ -410,7 +410,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public void modifyProfile(@NotNull Consumer<ModifiableModel> modelConsumer) {
-    ModifiableModel model = getModifiableModel();
+    InspectionProfileImpl model = getModifiableModel();
     modelConsumer.consume(model);
     model.commit();
   }
@@ -820,7 +820,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   //invoke when isChanged() == true
-  @Override
   public void commit() {
     LOG.assertTrue(mySource != null);
     mySource.commit(this);
@@ -836,8 +835,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myChangedToolNames = model.myChangedToolNames;
     myTools = model.myTools;
     setProfileManager(model.getProfileManager());
-
-    getProfileManager().fireProfileChanged(model);
   }
 
   @Tag

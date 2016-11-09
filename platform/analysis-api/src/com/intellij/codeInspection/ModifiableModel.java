@@ -46,8 +46,6 @@ public interface ModifiableModel extends InspectionProfile {
   @Override
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
-  void commit();
-
   boolean isChanged();
 
   void setModified(final boolean toolsSettingsChanged);

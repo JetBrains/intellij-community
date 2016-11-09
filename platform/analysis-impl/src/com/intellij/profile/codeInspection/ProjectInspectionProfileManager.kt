@@ -32,9 +32,11 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
+import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
@@ -71,6 +73,8 @@ class ProjectInspectionProfileManager(val project: Project,
       return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
+
+  private val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
@@ -320,6 +324,16 @@ class ProjectInspectionProfileManager(val project: Project,
 
   fun fireProfileChanged() {
     fireProfileChanged(currentProfile)
+  }
+
+  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+    ContainerUtil.add(listener, profileListeners, parentDisposable)
+  }
+
+  fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
+    for (adapter in profileListeners) {
+      adapter.profileActivated(oldProfile, profile)
+    }
   }
 
   override fun fireProfileChanged(profile: InspectionProfileImpl) {

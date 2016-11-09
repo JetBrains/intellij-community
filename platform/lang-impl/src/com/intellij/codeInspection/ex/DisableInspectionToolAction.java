@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -71,9 +72,7 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   public static void modifyAndCommitProjectProfile(Consumer<ModifiableModel> action, Project project) {
-    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
-    ModifiableModel model = inspectionProfile.getModifiableModel();
+    InspectionProfileImpl model = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile().getModifiableModel();
     action.consume(model);
     model.commit();
   }
