@@ -20,8 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -103,6 +102,19 @@ public class JavacProtoUtil {
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.OUTPUT_OBJECT).setOutputObject(msgBuilder.build());
 
     return builder.build();
+  }
+
+  public static JavacRemoteProto.Message.Response createCustomDataResponse(String pluginId, String dataName, byte[] data) {
+    final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
+      .setKind(JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER)
+      .setFilePath(pluginId)
+      .setClassName(dataName)
+      .setContent(ByteString.copyFrom(data))
+      .build();
+    return JavacRemoteProto.Message.Response.newBuilder()
+      .setResponseType(JavacRemoteProto.Message.Response.Type.CUSTOM_OUTPUT_OBJECT)
+      .setOutputObject(outObjMsg)
+      .build();
   }
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {

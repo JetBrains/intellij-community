@@ -49,7 +49,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final PsiFile psiFile = element.getContainingFile();
     if (! (psiFile instanceof JsonFile)) return;
 
-    final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    final JsonProperty firstProp = getFirstProperty(element);
     if (firstProp == null) {
       checkRootObject(holder, element);
       return;
@@ -90,8 +90,21 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
   }
 
+  private static JsonProperty getFirstProperty(@NotNull PsiElement element) {
+    JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    if (firstProp == null) {
+      final JsonObject firstObject = PsiTreeUtil.getParentOfType(element, JsonObject.class, false);
+      if (firstObject != null && firstObject.getParent() instanceof JsonValue) {
+        final List<JsonProperty> propertyList = firstObject.getPropertyList();
+        if (!propertyList.isEmpty()) firstProp = propertyList.get(0);
+      }
+    }
+    return firstProp;
+  }
+
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    JsonValue object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
@@ -373,10 +386,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           return;
         }
       }
-      if (schema.getMultipleOf() != null) {
-        final double leftOver = value.doubleValue() % schema.getMultipleOf().doubleValue();
+      final Number multipleOf = schema.getMultipleOf();
+      if (multipleOf != null) {
+        final double leftOver = value.doubleValue() % multipleOf.doubleValue();
         if (leftOver > 0.000001) {
-          error("Is not multiple of " + propValue.getText(), propValue);
+          final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
+                                                        multipleOf.intValue() : multipleOf);
+          error("Is not multiple of " + multipleOfValue, propValue);
           return;
         }
       }

@@ -52,6 +52,7 @@ message Message {
       BUILD_COMPLETED = 4;
       REQUEST_ACK = 5;
       SRC_FILE_LOADED = 6;
+      CUSTOM_OUTPUT_OBJECT = 6;
     }
 
     message CompileMessage {

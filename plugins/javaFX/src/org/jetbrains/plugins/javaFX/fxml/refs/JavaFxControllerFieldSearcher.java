@@ -45,19 +45,11 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiField) {
       final PsiField field = (PsiField)elementToSearch;
-      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          return field.getContainingClass();
-        }
-      });
+      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(
+        (Computable<PsiClass>)() -> field.getContainingClass());
       if (containingClass != null) {
-        final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return containingClass.getQualifiedName(); 
-          }
-        });
+        final String qualifiedName = ApplicationManager.getApplication().runReadAction(
+          (Computable<String>)() -> containingClass.getQualifiedName());
         if (qualifiedName != null) {
           Project project = PsiUtilCore.getProjectInReadAction(containingClass);
           final List<PsiFile> fxmlWithController =

@@ -142,7 +142,8 @@ public interface PydevConsoleRunner {
     return Pair.create(sdk, module);
   }
 
-  static String constructPythonPathCommand(Collection<String> pythonPath, String command) {
+  static String constructPyPathAndWorkingDirCommand(Collection<String> pythonPath, String workingDir, String command) {
+    pythonPath.add(workingDir);
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
@@ -150,7 +151,7 @@ public interface PydevConsoleRunner {
       }
     }));
 
-    return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_ENV, path);
+    return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PY_PATHS_ENV, path);
   }
 
   static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {

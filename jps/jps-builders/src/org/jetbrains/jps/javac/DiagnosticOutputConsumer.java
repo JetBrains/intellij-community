@@ -27,4 +27,5 @@ public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObj
   void outputLineAvailable(String line);
   void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
   void javaFileLoaded(File file);
+  void customOutputData(String pluginId, String dataName, byte[] data);
 }

@@ -35,9 +35,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import static com.sun.tools.javac.code.Flags.PRIVATE;
@@ -166,7 +164,7 @@ public class BackwardReferenceIndexWriter {
 
   synchronized void writeReferences(int fileId, Collection<JavacRefSymbol> refs) {
     final ByteArrayEnumerator byteSeqEum = myIndex.getByteSeqEum();
-    final List<LightRef> usages = ContainerUtil.mapNotNull(refs, new Function<JavacRefSymbol, LightRef>() {
+    final Set<LightRef> usages = ContainerUtil.map2SetNotNull(refs, new Function<JavacRefSymbol, LightRef>() {
       @Override
       public LightRef fun(JavacRefSymbol symbol) {
         return fromSymbol(symbol, byteSeqEum);
@@ -186,7 +184,7 @@ public class BackwardReferenceIndexWriter {
 
   private void updateReferenceIndicesIncrementally(int fileId, Collection<LightRef> usages) {
     final Collection<LightRef> rawOldUsages = myIndex.getReferenceMap().get(fileId);
-    Collection<LightRef> oldUsages = rawOldUsages == null ? null : new ArrayList<LightRef>(rawOldUsages);
+    Collection<LightRef> oldUsages = rawOldUsages == null ? null : new THashSet<LightRef>(rawOldUsages);
     for (LightRef usage : usages) {
       if (oldUsages == null || !oldUsages.remove(usage)) {
         myIndex.getBackwardReferenceMap().put(usage, fileId);
