@@ -16,12 +16,13 @@
 package com.jetbrains.python.codeInsight
 
 import com.intellij.testFramework.EdtTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
-import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
 import junit.framework.TestCase
 import org.junit.After
@@ -29,16 +30,15 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.io.File
 
 /**
  * @author vlan
  */
 @RunWith(Parameterized::class)
-class PyTypeShedTest(val path: String) : PyTestCase() {
-
-  override fun getProjectDescriptor(): LightProjectDescriptor? {
-    return PyTestCase.ourPy3Descriptor
-  }
+class PyTypeShedTest(val languageLevel: LanguageLevel, val path: String) : PyTestCase() {
+  override fun getProjectDescriptor(): PyLightProjectDescriptor =
+      if (languageLevel.isAtLeast(LanguageLevel.PYTHON30)) PyTestCase.ourPy3Descriptor else PyTestCase.ourPyDescriptor
 
   @Before
   fun initialize() {
@@ -54,7 +54,8 @@ class PyTypeShedTest(val path: String) : PyTestCase() {
   fun test() {
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
       with(myFixture) {
-        configureByText(PythonFileType.INSTANCE, path)
+        val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
+        configureByFile("$typeShedPath/$path")
         enableInspections(PyUnresolvedReferencesInspection::class.java)
         enableInspections(PyTypeCheckerInspection::class.java)
         checkHighlighting(true, false, true)
@@ -65,12 +66,26 @@ class PyTypeShedTest(val path: String) : PyTestCase() {
   }
 
   companion object {
-    @Parameterized.Parameters(name = "{0}")
+    val LANGUAGE_LEVELS = listOf(
+        LanguageLevel.PYTHON35,
+        LanguageLevel.PYTHON27)
+
+    @Parameterized.Parameters(name = "PY{0}: {1}")
     @JvmStatic fun params(): List<Array<Any>> {
-      // TODO: Put real test data from typeshed here
-      return listOf(
-          arrayOf<Any>("foo = 10\n"),
-          arrayOf<Any>("2 + 'foo'\n"))
+      val typeShedPath = PyTypeShed.directoryPath ?: return emptyList()
+      val typeShedFile = File(typeShedPath)
+      return LANGUAGE_LEVELS
+          .asSequence()
+          .flatMap { level ->
+            PyTypeShed.findRootsForLanguageLevel(level)
+                .asSequence()
+                .flatMap { root ->
+                  File("$typeShedPath/$root").walk()
+                      .filter { it.isFile && it.extension == "pyi" }
+                      .map { arrayOf(level, it.relativeTo(typeShedFile).toString()) }
+                }
+          }
+          .toList()
     }
   }
 }

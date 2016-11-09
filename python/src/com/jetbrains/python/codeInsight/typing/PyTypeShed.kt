@@ -27,6 +27,7 @@ import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
+import java.io.File
 
 /**
  * Utilities for managing the local copy of the typeshed repository.
@@ -62,25 +63,32 @@ object PyTypeShed {
   }
 
   /**
-   * Returns list of roots in typeshed for Python language level of [sdk].
+   * Returns the list of roots in typeshed for the Python language level of [sdk].
    */
   fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonSdkType.getLanguageLevelForSdk(sdk)
+    val dir = directory ?: return emptyList()
+    return findRootsForLanguageLevel(level)
+        .asSequence()
+        .map { dir.findFileByRelativePath(it) }
+        .filterNotNull()
+        .toList()
+  }
+
+  /**
+   * Returns the list of roots in typeshed for the specified Python language [level].
+   */
+  fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
     val minor = when (level.major) {
       2 -> ONLY_SUPPORTED_PY2_MINOR
       3 -> Math.min(Math.max(level.minor, SUPPORTED_PY3_MINORS.start), SUPPORTED_PY3_MINORS.endInclusive)
       else -> return emptyList()
     }
-    val dir = directory ?: return emptyList()
-    val paths = listOf("stdlib/${level.major}.${minor}",
-                       "stdlib/${level.major}",
-                       "stdlib/2and3",
-                       "third_party/${level.major}",
-                       "third_party/2and3")
-    return paths.asSequence()
-        .map { dir.findFileByRelativePath(it) }
-        .filterNotNull()
-        .toList()
+    return listOf("stdlib/${level.major}.${minor}",
+                  "stdlib/${level.major}",
+                  "stdlib/2and3",
+                  "third_party/${level.major}",
+                  "third_party/2and3")
   }
 
   /**
@@ -95,13 +103,18 @@ object PyTypeShed {
    * The actual typeshed directory.
    */
   val directory: VirtualFile? by lazy {
-    val paths = listOf("${PathManager.getConfigPath()}/typeshed",
-                       PythonHelpersLocator.getHelperPath("typeshed"))
-    paths.asSequence()
-        .map { StandardFileSystems.local().findFileByPath(it) }
-        .filterNotNull()
-        .firstOrNull()
+    val path = directoryPath ?: return@lazy null
+    StandardFileSystems.local().findFileByPath(path)
   }
+
+  val directoryPath: String?
+    get() {
+      val paths = listOf("${PathManager.getConfigPath()}/typeshed",
+                         PythonHelpersLocator.getHelperPath("typeshed"))
+      return paths.asSequence()
+          .filter { File(it).exists() }
+          .firstOrNull()
+    }
 
   /**
    * A shallow check for a [file] being located inside the typeshed third-party stubs.
