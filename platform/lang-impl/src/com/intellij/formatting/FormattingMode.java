@@ -16,10 +16,23 @@
 package com.intellij.formatting;
 
 /**
- * @author Denis Zhdanov
- * @since 8/22/12 2:44 PM
+ * The current formatting mode.
  */
 public enum FormattingMode {
-  
-  REFORMAT, ADJUST_INDENT, ADJUST_INDENT_ON_ENTER
+
+  /**
+   * Normal reformat (modifies indents and inline whitespaces).
+   */
+  REFORMAT,
+
+  /**
+   * Line indent adjustment.
+   */
+  ADJUST_INDENT,
+
+  /**
+   * Indent adjustment on a new line after Enter.  In some cases a behavior may be different from the case when the same code is
+   * reformatted or indented, especially when some more input is expected to follow on the new line.
+   */ 
+  ADJUST_INDENT_ON_ENTER
 }

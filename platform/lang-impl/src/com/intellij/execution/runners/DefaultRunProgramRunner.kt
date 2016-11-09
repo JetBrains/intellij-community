@@ -24,8 +24,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
-private class DefaultProgramRunnerImpl : AsyncGenericProgramRunner<RunnerSettings>() {
-  override fun getRunnerId() = "defaultRunner"
+private class DefaultRunProgramRunner : AsyncGenericProgramRunner<RunnerSettings>() {
+  override fun getRunnerId() = "defaultRunRunner"
 
   override fun prepare(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
     FileDocumentManager.getInstance().saveAllDocuments()
