@@ -19,12 +19,16 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
+import com.sun.org.apache.xerces.internal.impl.Constants
+import org.apache.xerces.util.SecurityManager
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
+import org.jdom.input.SAXHandler
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
+import org.xml.sax.XMLReader
 import java.io.CharArrayReader
 import java.io.InputStream
 import java.io.Reader
@@ -37,7 +41,14 @@ private fun getSaxBuilder(): SAXBuilder {
   val reference = cachedSaxBuilder.get()
   var saxBuilder = SoftReference.dereference<SAXBuilder>(reference)
   if (saxBuilder == null) {
-    saxBuilder = SAXBuilder()
+    saxBuilder = object : SAXBuilder() {
+      override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
+        super.configureParser(parser, contentHandler)
+        val manager = SecurityManager()
+        manager.entityExpansionLimit = 10000
+        parser.setProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY, manager)
+      }
+    }
     saxBuilder.ignoringBoundaryWhitespace = true
     saxBuilder.ignoringElementContentWhitespace = true
     saxBuilder.entityResolver = EntityResolver { publicId, systemId -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
