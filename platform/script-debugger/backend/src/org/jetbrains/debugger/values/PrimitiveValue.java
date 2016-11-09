@@ -1,45 +1,30 @@
-package org.jetbrains.debugger.values;
+package org.jetbrains.debugger.values
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+open class PrimitiveValue(type: ValueType, override val valueString: String) : ValueBase(type) {
 
-public class PrimitiveValue extends ValueBase {
-  public static final String NA_N_VALUE = "NaN";
-  public static final String INFINITY_VALUE = "Infinity";
-
-  public static final PrimitiveValue NULL = new PrimitiveValue(ValueType.NULL, "null");
-  public static final PrimitiveValue UNDEFINED = new PrimitiveValue(ValueType.UNDEFINED, "undefined");
-
-  public static final PrimitiveValue NAN = new PrimitiveValue(ValueType.NUMBER, NA_N_VALUE);
-  public static final PrimitiveValue INFINITY = new PrimitiveValue(ValueType.NUMBER, INFINITY_VALUE);
-
-  private static final PrimitiveValue TRUE = new PrimitiveValue(ValueType.BOOLEAN, "true");
-  private static final PrimitiveValue FALSE = new PrimitiveValue(ValueType.BOOLEAN, "false");
-
-  private final String valueString;
-
-  public PrimitiveValue(@NotNull ValueType type, @NotNull String valueString) {
-    super(type);
-
-    this.valueString = valueString;
+  constructor(type: ValueType, value: Int) : this(type, Integer.toString(value)) {
   }
 
-  @NotNull
-  public static PrimitiveValue bool(@NotNull String value) {
-    return value.equals("true") ? TRUE : FALSE;
+  constructor(type: ValueType, value: Long) : this(type, java.lang.Long.toString(value)) {
   }
 
-  public PrimitiveValue(ValueType type, int value) {
-    this(type, Integer.toString(value));
-  }
+  companion object {
+    val NA_N_VALUE = "NaN"
+    val INFINITY_VALUE = "Infinity"
 
-  public PrimitiveValue(ValueType type, long value) {
-    this(type, Long.toString(value));
-  }
+    @JvmField
+    val NULL = PrimitiveValue(ValueType.NULL, "null")
+    @JvmField
+    val UNDEFINED = PrimitiveValue(ValueType.UNDEFINED, "undefined")
 
-  @Nullable
-  @Override
-  public final String getValueString() {
-    return valueString;
+    val NAN = PrimitiveValue(ValueType.NUMBER, NA_N_VALUE)
+    val INFINITY = PrimitiveValue(ValueType.NUMBER, INFINITY_VALUE)
+
+    private val TRUE = PrimitiveValue(ValueType.BOOLEAN, "true")
+    private val FALSE = PrimitiveValue(ValueType.BOOLEAN, "false")
+
+    fun bool(value: String): PrimitiveValue {
+      return if (value == "true") TRUE else FALSE
+    }
   }
 }
