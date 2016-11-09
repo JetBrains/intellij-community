@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       if (classes.length == 1) {
         if (!moveDestination.equals(file.getContainingDirectory())) {
           MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
+          file = moveDestination.findFile(file.getName());
           ((PsiClassOwner)file).setPackageName(newPackageName);
         }
         return ((GroovyFile)file).getScriptClass();
