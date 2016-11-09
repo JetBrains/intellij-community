@@ -26,8 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -53,6 +55,8 @@ import java.util.concurrent.Future;
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
+  public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
+  public static final String ZDOTDIR = "ZDOTDIR";
 
   private final Charset myDefaultCharset;
 
@@ -128,7 +132,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      return PtyProcess.exec(command, envs, directory != null ? directory : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
+      return PtyProcess.exec(command, envs, directory != null
+                                            ? directory
+                                            : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -189,7 +195,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
           }
           else if (shellName.equals("zsh")) {
-            envs.put("ZDOTDIR", new File(rcFilePath).getParent());
+            if (StringUtil.isNotEmpty(EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR))) {
+              File zshRc = new File(FileUtil.expandUserHome(envs.get(ZDOTDIR)), ".zshrc");
+              if (zshRc.exists()) {
+                envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
+              }
+            }
+            envs.put(ZDOTDIR, new File(rcFilePath).getParent());
           }
         }
 
@@ -222,7 +234,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (idx >= 0) {
       command.remove(idx);
       if (idx < command.size()) {
-        envs.put("JEDITERM_USER_RCFILE", FileUtil.expandUserHome(command.get(idx)));
+        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(command.get(idx)));
         command.remove(idx);
       }
     }

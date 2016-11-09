@@ -4,9 +4,14 @@
 bindkey '^[^[[C' forward-word
 bindkey '^[^[[D' backward-word
 
+if [ -n "$JEDITERM_USER_RCFILE" ]
+then
+  source $JEDITERM_USER_RCFILE
+fi
+
 if [ -f "$HOME/.zshrc" ]; then
      source "$HOME/.zshrc"
-  fi
+fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
