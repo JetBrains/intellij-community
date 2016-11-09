@@ -336,4 +336,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testActualBasestringExpectedUnionStrUnicode() {
     doTest();
   }
+
+  public void testPositionalArguments() {
+    doTest();
+  }
 }
