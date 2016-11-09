@@ -159,6 +159,11 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20769
+  public void testPathLikePassedToStdlibFunctions() {
+    doMultiFileTest();
+  }
+
   // PY-21048
   public void testAsyncFunctionReturnType() {
     doTest();
