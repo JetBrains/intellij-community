@@ -86,6 +86,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
 
         Renderer lastRenderer = descriptor.getLastRenderer();
         if (lastRenderer instanceof CompoundNodeRenderer &&
+            NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)lastRenderer) &&
             !(((CompoundNodeRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer)) {
             ((CompoundNodeRenderer)lastRenderer).setChildrenRenderer(enumerationChildrenRenderer);
         }
