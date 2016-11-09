@@ -35,8 +35,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -173,6 +172,12 @@ public class ExternalJavacProcess {
       @Override
       public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
         final JavacRemoteProto.Message.Response response = JavacProtoUtil.createClassDataResponse(className, imports, staticImports);
+        context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, response));
+      }
+
+      @Override
+      public void customOutputData(String pluginId, String dataName, byte[] data) {
+        final JavacRemoteProto.Message.Response response = JavacProtoUtil.createCustomDataResponse(pluginId, dataName, data);
         context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, response));
       }
     };

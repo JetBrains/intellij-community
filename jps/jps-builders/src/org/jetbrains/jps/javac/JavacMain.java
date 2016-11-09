@@ -169,7 +169,9 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, wrapWithCallDispatcher(fileManager), diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
-      compilingTool.prepareCompilationTask(task, _options);
+      for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
+        extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
+      }
 
       //if (!IS_VM_6_VERSION) { //todo!
       //  // Do not add the processor for JDK 1.6 because of the bugs in javac

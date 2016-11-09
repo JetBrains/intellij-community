@@ -32,6 +32,7 @@ import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
+import org.jetbrains.jps.javac.JavaCompilerToolExtension;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -239,6 +240,10 @@ public class ClasspathBootstrap {
     final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
     for (JavaSourceTransformer t : loader) {
       cp.add(getResourceFile(t.getClass()));
+    }
+
+    for (JavaCompilerToolExtension toolExtension : JavaCompilerToolExtension.getExtensions()) {
+      cp.add(getResourceFile(toolExtension.getClass()));
     }
 
     return new ArrayList<File>(cp);

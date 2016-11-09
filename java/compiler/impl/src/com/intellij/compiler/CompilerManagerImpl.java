@@ -506,6 +506,9 @@ public class CompilerManagerImpl extends CompilerManager {
       // ignore
     }
 
+    public void customOutputData(String pluginId, String dataName, byte[] data) {
+    }
+
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       myDiagnostics.add(diagnostic);
     }
