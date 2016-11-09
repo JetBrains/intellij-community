@@ -19,12 +19,15 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Calculates some data based on {@link PsiFile} content, stores it persistently and updates it when the content is changed. The data is calculated lazily, when needed.<p/>
+ * Calculates some data based on {@link PsiFile} content, persists it between IDE restarts,
+ * and updates it when the content is changed. The data is calculated lazily, when needed.<p/>
  *
  * Obtained using {@link GistManager#newPsiFileGist}.<p/>
  *
  * The difference to {@link VirtualFileGist} is that PSI content is used here. So if an uncommitted document is saved onto disk,
- * this class will use the last committed content of the PSI file, while {@link VirtualFileGist} will use the saved virtual file content.
+ * this class will use the last committed content of the PSI file, while {@link VirtualFileGist} will use the saved virtual file content.<p/>
+ *
+ * Please note that VirtualFileGist is used inside, so using PsiFileGist has the same performance implications (see {@link VirtualFileGist} documentation).
  *
  * @since 171.*
  * @author peter

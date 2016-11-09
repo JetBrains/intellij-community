@@ -17,20 +17,28 @@ package com.intellij.util.gist;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Calculates some data based on {@link VirtualFile} content, stores that data persistently and updates it when the content is changed. The data is calculated lazily, when needed, and can be different for different projects.<p/>
+ * Calculates some data based on {@link VirtualFile} content, persists it between IDE restarts,
+ * and updates it when the content is changed. The data is calculated lazily, when needed, and can be different for different projects.<p/>
  *
  * Obtained using {@link GistManager#newVirtualFileGist}.<p/>
  *
  * Tracks VFS content only. Unsaved/uncommitted documents have no effect on the {@link #getFileData} results.
- * Neither do any disk file changes, until VFS refresh has detected them.<p/>
+ * Neither do any disk file changes, until VFS refresh has detected them. To work with PSI content, use {@link PsiFileGist}.<p/>
  *
- * Please note that every call to {@link #getFileData} means a disk access. Clients that access gists frequently should take care of proper caching themselves.
+ * Please note that every call to {@link #getFileData} means a disk access. Clients that access gists frequently should take care of proper caching themselves. The data is calculated on demand when first requested, so if you need this data for a lot of files at once, this can take some amount of time on the first query. If that's unacceptable from the UX perspective,
+ * consider using {@link FileBasedIndexExtension} instead.<p/>
  *
- * @see PsiFileGist
+ * The differences to file-based index:
+ * <ul>
+ *   <li>Gists have simpler lifecycle and API, but don't provide a possibility for queries across multiple files.</li>
+ *   <li>Gists are project-dependent.</li>
+ *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
+ * </ul>
  * @since 171.*
  * @author peter
  */
