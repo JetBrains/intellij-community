@@ -16,8 +16,6 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -72,8 +70,6 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       customStartScript = "\n" + customStartScript;
     }
 
-    String selfPathAppend = PydevConsoleRunner.constructPythonPathCommand(pythonPath, customStartScript);
-
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
       if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
@@ -92,6 +88,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     if (pathMapper != null && workingDir != null) {
       workingDir = pathMapper.convertToRemote(workingDir);
     }
+
+    String selfPathAppend = PydevConsoleRunner.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
 
     BuildoutFacet facet = null;
     if (module != null) {
