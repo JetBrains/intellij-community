@@ -46,7 +46,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class CreateClassFixTest extends UsefulTestCase{
+public class CreateClassFixTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
   @org.junit.runners.Parameterized.Parameter(0) public String myTestName;
@@ -54,13 +54,15 @@ public class CreateClassFixTest extends UsefulTestCase{
 
   @Before
   public void setUp() throws Exception {
+    super.setUp();
     final Ref<Exception> ex = new Ref<>();
     Runnable runnable = new Runnable() {
       public void run() {
         try {
           CreateClassFixTest.super.setUp();
           final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
+          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder =
+            JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
           myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
           myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
 
@@ -81,6 +83,7 @@ public class CreateClassFixTest extends UsefulTestCase{
     }
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @After
   public void tearDown() throws Exception {
     final Ref<Exception> ex = new Ref<>();
@@ -106,9 +109,9 @@ public class CreateClassFixTest extends UsefulTestCase{
 
   @Parameterized.Parameters(name = "{0} : {1}")
   public static List<Object[]> data() {
-    return Arrays.asList(new Object[]{"Action", true}, 
-                         new Object[]{"Impl", true}, 
-                         new Object[]{"Intf", true}, 
+    return Arrays.asList(new Object[]{"Action", true},
+                         new Object[]{"Impl", true},
+                         new Object[]{"Intf", true},
                          new Object[]{"Intf", false});
   }
 
