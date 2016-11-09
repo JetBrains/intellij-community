@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 
 /**
@@ -40,8 +42,10 @@ class ExecutorAction private constructor(private val myOrigin: AnAction,
   }
 
   companion object {
+    private val LOG = logger<ExecutorAction>()
     private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
 
+    @JvmStatic
     fun getActions(order: Int): Array<AnAction> {
       return ExecutorRegistry.getInstance().registeredExecutors.map {
         ExecutorAction(ActionManager.getInstance().getAction(it.contextActionId), it, order)
@@ -63,9 +67,11 @@ class ExecutorAction private constructor(private val myOrigin: AnAction,
         return emptyList()
       }
       return RunConfigurationProducer.getProducers(context.project).mapNotNull {
-        val configuration = it.createLightConfiguration(context) ?: return@mapNotNull null
-        val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
-        ConfigurationFromContextImpl(it, settings, context.psiLocation)
+        LOG.catchAndLog {
+          val configuration = it.createLightConfiguration(context) ?: return@mapNotNull null
+          val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
+          ConfigurationFromContextImpl(it, settings, context.psiLocation)
+        }
       }
     }
   }
