@@ -51,6 +51,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.IF_KEYWORD, IfKeyword);
     SYNTAX_MAP.put(JavaTokenType.ELSE_KEYWORD, ElseKeyword);
     SYNTAX_MAP.put(JavaTokenType.FOR_KEYWORD, ForKeyword);
+    SYNTAX_MAP.put(JavaTokenType.DO_KEYWORD, DoKeyword);
     SYNTAX_MAP.put(JavaTokenType.C_STYLE_COMMENT, BlockComment);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_START, DocBlockStart);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_END, DocBlockEnd);

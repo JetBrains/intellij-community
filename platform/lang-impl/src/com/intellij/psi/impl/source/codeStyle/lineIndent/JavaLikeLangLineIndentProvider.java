@@ -52,6 +52,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     ElseKeyword,
     IfKeyword,
     ForKeyword,
+    DoKeyword,
     BlockComment,
     DocBlockStart,
     DocBlockEnd,
@@ -134,7 +135,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
       ) || getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(ElseKeyword)
+        position -> position.before().isAtAnyOf(ElseKeyword, DoKeyword) 
       )) {
         return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
       }
