@@ -493,7 +493,6 @@ public class CreateTestDialog extends DialogWrapper {
       final int result = Messages
         .showOkCancelDialog(myProject, errorMessage + ". Update existing class?", CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       if (result == Messages.CANCEL) {
-        super.close(CANCEL_EXIT_CODE);
         return;
       }
     }
