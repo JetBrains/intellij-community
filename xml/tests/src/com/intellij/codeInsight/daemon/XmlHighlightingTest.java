@@ -2088,7 +2088,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     XmlUtil.processXmlElements(file.getRootTag(), element -> {
       count[0]++;
       return true;}, false);
-    assertEquals(7, count[0]);
+    assertEquals(9, count[0]);
   }
 
   public void testBillionLaughsValidation() throws Exception {

@@ -108,7 +108,7 @@ public class AssertHint {
     }
     else {
       argumentIndex = 0;
-      if (parameters.length > minimumParamCount && minimumParamCount > 0) {
+      if (parameters.length > minimumParamCount && minimumParamCount >= 0) {
         int lastParameterIdx = parameters.length - 1;
         //check that it's not delta in assertEquals(dbl, dbl, dbl), etc
         if (parameters[lastParameterIdx].getType() instanceof PsiClassType) {

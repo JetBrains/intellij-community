@@ -237,6 +237,7 @@ public class MoveClassesOrPackagesUtil {
       LOG.assertTrue(file.getVirtualFile() != null, aClass);
 
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
+      file = moveDestination.findFile(file.getName());
 
       if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) && !PsiUtil.isModuleFile(file)) {
         // Do not rely on class instance identity retention after setPackageName (Scala)

@@ -50,7 +50,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testNumberMultipleWrong() throws Exception {
     testImpl("{ \"properties\": { \"prop\": {\"type\": \"number\", \"multipleOf\": 2}}}",
-             "{ \"prop\": <warning descr=\"Is not multiple of 3\">3</warning>}");
+             "{ \"prop\": <warning descr=\"Is not multiple of 2\">3</warning>}");
   }
 
   public void testNumberMultipleCorrect() throws Exception {
@@ -94,6 +94,27 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schema, "{\"prop\": [101, 102]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18.0\">16</warning>]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
+  }
+
+  public void testTopLevelArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"number\", \"minimum\": 18" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[101, 102]");
+  }
+
+  public void testTopLevelObjectArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[{\"a\": <warning descr=\"Type is not allowed\">true</warning>}]");
+    testImpl(schema, "[{\"a\": 18}]");
   }
 
   public void testArrayTuples1() throws Exception {

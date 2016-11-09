@@ -32,9 +32,11 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
+import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
@@ -67,10 +69,12 @@ class ProjectInspectionProfileManager(val project: Project,
                                       schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): ProjectInspectionProfileManager {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
+    fun getInstance(project: Project): ProjectInspectionProfileManager {
+      return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
+
+  private val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
@@ -161,12 +165,6 @@ class ProjectInspectionProfileManager(val project: Project,
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
 
-  @Synchronized override fun updateProfile(profile: InspectionProfileImpl) {
-    super.updateProfile(profile)
-
-    profile.initInspectionTools(project)
-  }
-
   override fun schemeRemoved(scheme: InspectionProfile) {
     scheme.cleanup(project)
   }
@@ -174,7 +172,7 @@ class ProjectInspectionProfileManager(val project: Project,
   @Suppress("unused")
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
-      getInstanceImpl(project).apply {
+      getInstance(project).apply {
         initialLoadSchemesFuture.done {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
@@ -322,5 +320,26 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
+  }
+
+  fun fireProfileChanged() {
+    fireProfileChanged(currentProfile)
+  }
+
+  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+    ContainerUtil.add(listener, profileListeners, parentDisposable)
+  }
+
+  fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
+    for (adapter in profileListeners) {
+      adapter.profileActivated(oldProfile, profile)
+    }
+  }
+
+  override fun fireProfileChanged(profile: InspectionProfileImpl) {
+    profile.profileChanged()
+    for (adapter in profileListeners) {
+      adapter.profileChanged(profile)
+    }
   }
 }

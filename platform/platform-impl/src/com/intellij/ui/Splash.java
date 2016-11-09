@@ -174,7 +174,14 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
-        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, uiScale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11)));
+
+        Font font = SystemInfo.isMacOSElCapitan ? createFont(".SF NS Text") :
+                    SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") :
+                    null;
+        if (font == null || UIUtil.isDialogFont(font)) {
+          font = createFont(UIUtil.ARIAL_FONT_NAME);
+        }
+        g.setFont(font);
 
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
@@ -198,6 +205,11 @@ public class Splash extends JDialog implements StartupProgress {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  protected static Font createFont(String name) {
+    return new Font(name, Font.PLAIN, uiScale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11));
   }
 
   private static float JBUI_INIT_SCALE = JBUI.scale(1f);

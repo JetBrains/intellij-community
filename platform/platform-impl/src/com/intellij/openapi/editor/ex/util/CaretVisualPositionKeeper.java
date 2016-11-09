@@ -56,10 +56,11 @@ public class CaretVisualPositionKeeper {
       Point caretLocation = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
       int scrollOffset = caretLocation.y - relativePosition;
       ScrollingModel scrollingModel = editor.getScrollingModel();
+      Rectangle targetArea = scrollingModel.getVisibleAreaOnScrollingFinished();
       // when animated scrolling is in progress, we'll not stop it immediately
-      boolean useAnimation = !scrollingModel.getVisibleAreaOnScrollingFinished().equals(scrollingModel.getVisibleArea());
+      boolean useAnimation = !targetArea.equals(scrollingModel.getVisibleArea());
       if (!useAnimation) scrollingModel.disableAnimation();
-      scrollingModel.scrollVertically(scrollOffset);
+      scrollingModel.scroll(targetArea.x, scrollOffset);
       if (!useAnimation) scrollingModel.enableAnimation();
     }
   }

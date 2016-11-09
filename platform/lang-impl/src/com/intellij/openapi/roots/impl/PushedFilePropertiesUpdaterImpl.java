@@ -39,6 +39,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
@@ -88,7 +89,10 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     boolean pushedSomething = false;
     List<Runnable> delayedTasks = ContainerUtil.newArrayList();
     for (VFileEvent event : events) {
-      final VirtualFile file = event.getFile();
+      VirtualFile file = event.getFile();
+      if (event instanceof VFileCopyEvent) {
+        file = ((VFileCopyEvent)event).getNewParent().findChild(((VFileCopyEvent)event).getNewChildName());
+      }
       if (file == null) continue;
 
       final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
@@ -104,8 +108,8 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         else if (!ProjectUtil.isProjectOrWorkspaceFile(file)) {
           ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(file, pushers));
         }
-      } else if (event instanceof VFileMoveEvent) {
-        for (FilePropertyPusher pusher : pushers) {
+      } else if (event instanceof VFileMoveEvent || event instanceof VFileCopyEvent) {
+        for (FilePropertyPusher<?> pusher : pushers) {
           file.putUserData(pusher.getFileDataKey(), null);
         }
         // push synchronously to avoid entering dumb mode in the middle of a meaningful write action

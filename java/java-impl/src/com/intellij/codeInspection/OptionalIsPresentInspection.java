@@ -198,7 +198,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
                                        PsiExpression falseValue) {
     String lambdaText = generateOptionalLambda(factory, optionalVariable, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
-    if(falseValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)falseValue).isReferenceTo(optionalVariable)) {
+    if(ExpressionUtils.isReferenceTo(falseValue, optionalVariable)) {
       falseValue = factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL+".empty()", falseValue);
     }
     return OptionalUtil.generateOptionalUnwrap(optionalVariable.getName(), lambda.getParameterList().getParameters()[0],

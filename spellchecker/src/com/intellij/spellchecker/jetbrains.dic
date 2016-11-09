@@ -105,6 +105,7 @@ configurators
 const
 constexpr
 contravariant
+contrib
 controlfile
 coursecreator
 covariant

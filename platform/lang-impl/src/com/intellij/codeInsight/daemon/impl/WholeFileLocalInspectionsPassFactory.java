@@ -32,7 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -50,11 +50,10 @@ import java.util.stream.Collectors;
 */
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   private final Map<PsiFile, Boolean> myFileToolsCache = ContainerUtil.createConcurrentWeakMap();
-  private final InspectionProjectProfileManager myProfileManager;
+  private final ProjectInspectionProfileManager myProfileManager;
   private final Map<PsiFile, Long> myPsiModificationCount = ContainerUtil.createConcurrentWeakMap();
 
-  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar,
-                                              final InspectionProjectProfileManager profileManager) {
+  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar, ProjectInspectionProfileManager profileManager) {
     super(project);
     // can run in the same time with LIP, but should start after it, since I believe whole-file inspections would run longer
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.WHOLE_FILE_LOCAL_INSPECTIONS);

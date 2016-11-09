@@ -747,8 +747,6 @@ done:
 
   ;registration application to be presented in Open With list
   call ProductRegistration
-  ;reset icon cache
-  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
@@ -844,6 +842,9 @@ skip_properties:
     AccessControl::GrantOnFile \
       "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
+
+  ;reset icon cache
+  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
 
 ;------------------------------------------------------------------------------

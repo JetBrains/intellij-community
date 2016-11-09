@@ -1123,15 +1123,14 @@ public class SingleInspectionProfilePanel extends JPanel {
     BaseInspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
     InspectionProfileImpl parentProfile = selectedProfile.getParentProfile();
 
-    if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
-      parentProfile.getProfileManager().deleteProfile(parentProfile.getName());
+    // delete by instance, only if from another profile manager or has another name (otherwise will be replaced and we don't need to explicitly delete it)
+    if (parentProfile.getProfileManager() != profileManager || !parentProfile.getName().equals(selectedProfile.getName())) {
+      parentProfile.getProfileManager().deleteProfile(parentProfile);
     }
+
     if (selectedProfile.getProfileManager() != profileManager) {
       copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
-    }
-    else {
-      selectedProfile.getProfileManager().updateProfile(selectedProfile);
     }
 
     selectedProfile.commit();

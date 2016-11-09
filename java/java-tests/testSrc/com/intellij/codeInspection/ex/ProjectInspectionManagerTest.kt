@@ -52,7 +52,7 @@ class ProjectInspectionManagerTest {
     loadAndUseProject(tempDirManager, {
       it.path
     }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
@@ -106,7 +106,7 @@ class ProjectInspectionManagerTest {
       val profileFile = inspectionDir.resolve("Project_Default.xml")
       assertThat(profileFile).doesNotExist()
 
-      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       projectInspectionProfileManager.currentProfile
@@ -123,7 +123,7 @@ class ProjectInspectionManagerTest {
     loadAndUseProject(tempDirManager, {
       it.path
     }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       projectInspectionProfileManager.forceLoadSchemes()
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
@@ -170,7 +170,7 @@ class ProjectInspectionManagerTest {
     loadAndUseProject(tempDirManager, {
       it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", emptyProjectFile).path
     }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       projectInspectionProfileManager.forceLoadSchemes()
 
       assertThat(projectInspectionProfileManager.state).isEmpty()

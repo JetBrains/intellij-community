@@ -33,6 +33,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.Set;
 
@@ -75,10 +76,12 @@ public abstract class NewEditChangelistPanel extends JPanel {
     gb.weightx = 1;
     gb.weighty = 1;
     gb.fill = GridBagConstraints.BOTH;
+    gb.insets = JBUI.insetsTop(2);
     myDescriptionTextArea = createEditorField(project, 4);
     myDescriptionTextArea.setOneLineMode(false);
     add(myDescriptionTextArea, gb);
     commentLabel.setLabelFor(myDescriptionTextArea);
+    gb.insets = JBUI.insetsTop(0);
 
     ++ gb.gridy;
     gb.gridx = 0;
@@ -88,6 +91,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final BoxLayout layout = new BoxLayout(myAdditionalControlsPanel, BoxLayout.X_AXIS);
     myAdditionalControlsPanel.setLayout(layout);
     myMakeActiveCheckBox = new JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"));
+    myMakeActiveCheckBox.setBorder(JBUI.Borders.emptyRight(4));
     myAdditionalControlsPanel.add(myMakeActiveCheckBox);
     add(myAdditionalControlsPanel, gb);
   }
@@ -187,6 +191,8 @@ public abstract class NewEditChangelistPanel extends JPanel {
     editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
     editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
+    editorField.addSettingsProvider(editor -> editor.getContentComponent()
+      .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2))));
     return editorField;
   }
 

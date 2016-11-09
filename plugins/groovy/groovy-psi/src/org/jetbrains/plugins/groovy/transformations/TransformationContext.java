@@ -28,11 +28,22 @@ import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
 import java.util.Collection;
 import java.util.List;
 
-@SuppressWarnings("unused")
 public interface TransformationContext {
 
   @NotNull
+  Project getProject();
+
+  @NotNull
+  PsiManager getManager();
+
+  @NotNull
+  JavaPsiFacade getPsiFacade();
+
+  @NotNull
   GrTypeDefinition getCodeClass();
+
+  @NotNull
+  PsiClassType getClassType();
 
   @NotNull
   Collection<PsiMethod> getMethods();
@@ -55,21 +66,6 @@ public interface TransformationContext {
   }
 
   @NotNull
-  default Project getProject() {
-    return getCodeClass().getProject();
-  }
-
-  @NotNull
-  default JavaPsiFacade getPsiFacade() {
-    return JavaPsiFacade.getInstance(getProject());
-  }
-
-  @NotNull
-  default PsiManager getManager() {
-    return getCodeClass().getManager();
-  }
-
-  @NotNull
   default GlobalSearchScope getResolveScope() {
     return getCodeClass().getResolveScope();
   }
@@ -82,10 +78,6 @@ public interface TransformationContext {
 
   @Nullable
   PsiAnnotation getAnnotation(@NotNull String fqn);
-
-  default boolean hasAnnotation(@NotNull String fqn) {
-    return getAnnotation(fqn) != null;
-  }
 
   default boolean isInheritor(@NotNull String fqn) {
     PsiClass baseClass = getPsiFacade().findClass(fqn, getResolveScope());

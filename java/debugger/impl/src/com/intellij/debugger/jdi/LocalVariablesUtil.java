@@ -301,7 +301,7 @@ public class LocalVariablesUtil {
                }
              }
            }
-          });
+          }, false);
         if (usedVars.isEmpty()) {
           return Collections.emptyList();
         }

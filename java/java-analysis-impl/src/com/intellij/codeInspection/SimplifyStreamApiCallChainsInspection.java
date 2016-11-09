@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.*;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -178,14 +179,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           PsiParameter parameter = parameters[0];
           PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
           // x -> x
-          if(expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(parameter)) {
+          if(ExpressionUtils.isReferenceTo(expression, parameter)) {
             return true;
           }
           if(expression instanceof PsiCallExpression) {
             PsiExpressionList list = ((PsiCallExpression)expression).getArgumentList();
             if(list == null) return false;
             PsiExpression[] args = list.getExpressions();
-            if(args.length != 1 || !(args[0] instanceof PsiReferenceExpression) || !(((PsiReferenceExpression)args[0]).isReferenceTo(parameter))) {
+            if(args.length != 1 || !ExpressionUtils.isReferenceTo(args[0], parameter)) {
               return false;
             }
             // x -> new Integer(x)

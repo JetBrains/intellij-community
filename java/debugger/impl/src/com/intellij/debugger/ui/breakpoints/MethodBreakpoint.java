@@ -166,7 +166,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     try {
-      Method method = MethodBytecodeUtil.getLambdaMethod(classType);
+      Method method = MethodBytecodeUtil.getLambdaMethod(classType, debugProcess.getVirtualMachineProxy());
       if (method == null) {
         for (Method m : classType.methods()) {
           if (!base && m.isAbstract()) {
@@ -179,14 +179,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
       if (method != null) {
-        if (method.isNative()) {
+        if (base && method.isNative()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             getProperties().EMULATED = false;
             fireBreakpointChanged();
           });
           return;
         }
-        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method);
+        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, debugProcess.getVirtualMachineProxy());
         if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
           method = target;
         }
@@ -219,7 +219,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                       .findFirst().ifPresent(location -> createLocationBreakpointRequest(location, debugProcess));
                 }
               }
-            });
+            }, true);
           }
         }
         if (base) {
@@ -545,7 +545,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       start = System.currentTimeMillis();
     }
     progressIndicator.start();
-    progressIndicator.setText("Processing classes");
+    progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
       progressIndicator.setIndeterminate(true);
 
@@ -565,13 +565,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         progressIndicator.setText2(i + "/" + types.size());
         progressIndicator.setFraction((double)i / types.size());
       }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processed " + types.size() + " classes in " + String.valueOf(System.currentTimeMillis() - start) + "ms");
+      }
     }
     finally {
       progressIndicator.stop();
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing all classes took: " + String.valueOf(System.currentTimeMillis() - start) + "ms");
     }
   }
 }

@@ -388,7 +388,7 @@
       <reference ref="Diff.SelectedChange"/>
       <separator/>
 
-      <add-to-group group-id="Diff.KeymapGroup"/>
+      <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
 
     <group id="Vcs.Show.Toolwindow.Tab">

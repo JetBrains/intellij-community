@@ -221,6 +221,10 @@ public class UIUtil {
     }
   }
 
+  public static boolean isDialogFont(Font font) {
+    return Font.DIALOG.equals(font.getFamily(Locale.US));
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}

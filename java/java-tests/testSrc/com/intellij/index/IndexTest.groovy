@@ -16,6 +16,7 @@
 package com.intellij.index
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -39,6 +41,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
+import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.EverythingGlobalScope
@@ -50,6 +53,7 @@ import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -615,4 +619,21 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     StringUtil.replace(operation.get(), file.getPath(), file.getName());
   }
+
+  void "test files inside copied directory are indexed"() {
+    def facade = JavaPsiFacade.getInstance(project)
+
+    def srcFile = myFixture.addFileToProject('foo/bar/A.java', 'class A {}')
+    assert facade.findClass('A', GlobalSearchScope.moduleScope(myModule)) != null
+
+    def anotherDir = myFixture.tempDirFixture.findOrCreateDir('another')
+    def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', anotherDir)
+    assert !facade.findClass('A', GlobalSearchScope.moduleScope(anotherModule))
+
+    WriteAction.run { srcFile.virtualFile.parent.copy(this, anotherDir, 'doo') }
+
+    assert facade.findClass('A', GlobalSearchScope.moduleScope(anotherModule)) != null
+    assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,19 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,8 +198,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
         return Pair.create(true, null);
       }
       for (PsiAssignmentExpression expression : PsiTreeUtil.findChildrenOfType(currentStatement, PsiAssignmentExpression.class)) {
-        final PsiExpression lExpression = expression.getLExpression();
-        if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).isReferenceTo(localVariable)) {
+        if (ExpressionUtils.isReferenceTo(expression.getLExpression(), localVariable)) {
           final PsiExpression rExpression = expression.getRExpression();
           final boolean isValid = checkLocalVariableAssignmentOrInitializer(rExpression);
           return Pair.create(isValid, isValid ? (PsiNewExpression)rExpression : null);
@@ -207,7 +208,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return Pair.create(true, null);
   }
 
-  private boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
+  private static boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
     final boolean[] isReplaceable = new boolean[]{true};
     final PsiFile newExpressionContainingFile = newExpression.getContainingFile();
     final TextRange newExpressionTextRange = newExpression.getTextRange();

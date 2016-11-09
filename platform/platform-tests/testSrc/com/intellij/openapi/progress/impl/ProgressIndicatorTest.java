@@ -316,6 +316,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         @Override
         public void checkCanceled() throws ProcessCanceledException {
           checkCanceledCalled = true;
+          throw new RuntimeException("must not call checkCanceled()");
         }
       });
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -617,7 +618,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         try {
           Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
             () -> ProgressManager.getInstance().runProcess(
-              () -> assertInvokeAndWaitWorks(),
+              ProgressIndicatorTest::assertInvokeAndWaitWorks,
               ProgressWrapper.wrap(indicator)));
           future.get(2000, TimeUnit.MILLISECONDS);
         }
@@ -631,7 +632,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   private static void assertInvokeAndWaitWorks() {
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    ApplicationManager.getApplication().invokeLater(() -> semaphore.up());
+    ApplicationManager.getApplication().invokeLater(semaphore::up);
     assertTrue("invokeAndWait would deadlock", semaphore.waitFor(1000));
   }
 }

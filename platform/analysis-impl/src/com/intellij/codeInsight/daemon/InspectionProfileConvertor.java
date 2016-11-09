@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -88,9 +87,9 @@ public class InspectionProfileConvertor {
     return false;
   }
 
-  public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfile editorProfile) {
+  public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfileImpl editorProfile) {
     if (retrieveOldSettings(element)) {
-      InspectionProfileImpl editorProfileModel = (InspectionProfileImpl)editorProfile.getModifiableModel();
+      InspectionProfileImpl editorProfileModel = editorProfile.getModifiableModel();
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
     }

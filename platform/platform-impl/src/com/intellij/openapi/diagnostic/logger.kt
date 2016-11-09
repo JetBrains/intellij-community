@@ -27,13 +27,15 @@ inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   }
 }
 
-inline fun Logger.catchAndLog(runnable: () -> Unit) {
+inline fun <T> Logger.catchAndLog(runnable: () -> T): T? {
   try {
-    runnable()
+    return runnable()
   }
   catch (e: ProcessCanceledException) {
+    return null
   }
   catch (e: Throwable) {
     error(e)
+    return null
   }
 }

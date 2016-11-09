@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -110,21 +111,32 @@ public class RainbowHighlighter {
 
   @NotNull
   private static String getKey(@Nullable Language language) {
-    return RAINBOW_TYPE + " " + (language == null ? "Default language" : language.getID());
+    return RAINBOW_TYPE + " " + (language == null ? UIBundle.message("color.settings.common.default.language") : language.getID());
   }
 
   @NotNull
-  public static String generatePaletteExample() {
+  public static String generatePaletteExample(@NotNull String indent) {
     int stopCount = RAINBOW_COLOR_KEYS.length;
     StringBuilder sb = new StringBuilder();
+
+    sb.append(indent).append(UIBundle.message("color.settings.rainbow.demo.header.1"))
+      .append(indent).append(UIBundle.message("color.settings.rainbow.demo.header.2"))
+      .append(indent);
     String tagRainbow = RAINBOW_GRADIENT_DEMO.getExternalName();
+    boolean needLineBreak = true;
     for (int i = 0; i < RAINBOW_TEMP_KEYS.length; ++i) {
-      if (sb.length() != 0) {
-        sb.append(" ");
-      }
+      sb.append(" ");
       sb.append("<").append(tagRainbow).append(">");
-      sb.append((i % stopCount == 0) ? "Stop#" + String.valueOf(i / stopCount + 1) : "T");
+      final String anchor = String.valueOf(i / stopCount + 1);
+      final String minor = String.valueOf(i % stopCount);
+      sb.append((i % stopCount == 0) ? "Color#" + anchor : ("SC" + anchor + "." + minor));
       sb.append("</").append(tagRainbow).append(">");
+      if (needLineBreak && i == RAINBOW_TEMP_KEYS.length/2) {
+        sb.append(indent);
+        needLineBreak = false;
+        //noinspection AssignmentToForLoopParameter
+        --i;
+      }
     }
     return sb.toString();
   }

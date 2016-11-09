@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiNameValuePair
 
 fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotationMemberValue? {
@@ -28,3 +29,8 @@ fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotati
     else -> styleAttribute.value
   }
 }
+
+fun PsiAnnotationMemberValue?.booleanValue() = (this as? PsiLiteral)?.value as? Boolean
+
+fun PsiAnnotationMemberValue?.stringValue() = (this as? PsiLiteral)?.value as? String
+

@@ -29,8 +29,10 @@ import java.util.Map;
  */
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
-    doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
-    doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
+    if (SystemInfo.isUnix) {
+      doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
+      doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
+    }
   }
 
   public void testAddInteractiveOrLogin() {
@@ -43,11 +45,13 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   public void testAddRcConfig() {
-    hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
-    hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
-    Map<String, String> envs = Maps.newHashMap();
-    hasRcConfig("bash --rcfile ~/.bashrc", "jediterm-bash.in", envs);
-    assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
+    if (SystemInfo.isUnix) {
+      hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
+      hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
+      Map<String, String> envs = Maps.newHashMap();
+      hasRcConfig("bash --rcfile ~/.bashrc", "jediterm-bash.in", envs);
+      assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
+    }
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {

@@ -37,7 +37,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     val profile = configureInspections(arrayOf(myInspection), project, testRootDisposable)
 
     val model = profile.modifiableModel
-    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstanceImpl(project), model)
+    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstance(project), model)
     panel.isVisible = true
     panel.reset()
 
@@ -54,7 +54,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
   fun testModifyInstantiatedTool() {
     val project = ProjectManager.getInstance().defaultProject
-    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+    val profileManager = ProjectInspectionProfileManager.getInstance(project)
     val profile = profileManager.createProfile(myInspection, testRootDisposable)
     profile.initInspectionTools(project)
 
@@ -82,7 +82,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
   fun testDoNotChangeSettingsOnCancel() {
     val project = ProjectManager.getInstance().defaultProject
-    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+    val profileManager = ProjectInspectionProfileManager.getInstance(project)
     val profile = profileManager.createProfile(myInspection, testRootDisposable)
     profile.initInspectionTools(project)
 

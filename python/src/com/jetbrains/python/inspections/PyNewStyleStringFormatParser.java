@@ -117,6 +117,8 @@ public class PyNewStyleStringFormatParser {
   private Field parseField(int startOffset, int recursionDepth) {
     assert myNodeText.charAt(startOffset) == '{';
 
+    int autoFieldNumber = myImplicitlyNumberedFieldsCounter;
+
     // in the order of appearance inside a field
     final TIntArrayList attrAndLookupBounds = new TIntArrayList();
     int conversionStart = -1;
@@ -155,6 +157,11 @@ public class PyNewStyleStringFormatParser {
           if (!recovering) {
             // avoid duplicate offsets in sequences like "]." or "]["
             addIfNotLastItem(attrAndLookupBounds, offset);
+            
+            // no name in the field, increment implicitly named fields counter
+            if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.get(0) == startOffset + 1) {
+              myImplicitlyNumberedFieldsCounter++;
+            }
           }
 
           if (c == ':') {
@@ -194,23 +201,18 @@ public class PyNewStyleStringFormatParser {
       addIfNotLastItem(attrAndLookupBounds, contentEnd);
     }
 
-
-    final Field field = new Field(myNodeText,
-                                  startOffset,
-                                  attrAndLookupBounds.toNativeArray(),
-                                  conversionStart,
-                                  formatSpecStart,
-                                  nestedFields,
-                                  rightBraceOffset,
-                                  rightBraceOffset == -1 ? contentEnd : rightBraceOffset + 1,
-                                  myImplicitlyNumberedFieldsCounter,
-                                  recursionDepth);
-
     assert !attrAndLookupBounds.isEmpty();
-    if (attrAndLookupBounds.get(0) == startOffset + 1) {
-      myImplicitlyNumberedFieldsCounter++;
-    }
-    return field;
+
+    return new Field(myNodeText,
+                     startOffset,
+                     attrAndLookupBounds.toNativeArray(),
+                     conversionStart,
+                     formatSpecStart,
+                     nestedFields,
+                     rightBraceOffset,
+                     rightBraceOffset == -1 ? contentEnd : rightBraceOffset + 1,
+                     autoFieldNumber,
+                     recursionDepth);
   }
 
   private static void addIfNotLastItem(TIntArrayList attrAndLookupBounds, int offset) {

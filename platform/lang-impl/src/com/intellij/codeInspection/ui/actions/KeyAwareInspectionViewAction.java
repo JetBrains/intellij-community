@@ -20,9 +20,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -87,11 +87,12 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
       if (view.isSingleInspectionRun()) {
-        final ModifiableModel model = view.getCurrentProfile().getModifiableModel();
+        InspectionProfileImpl model = view.getCurrentProfile().getModifiableModel();
         model.disableTool(key.toString(), view.getProject());
         model.commit();
         view.updateCurrentProfile();
-      } else {
+      }
+      else {
         final RefEntity[] selectedElements = view.getTree().getSelectedElements();
         final Set<PsiElement> files = new HashSet<>();
         final Project project = view.getProject();
@@ -102,7 +103,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
             files.add(element);
           }
         }
-        ModifiableModel model = profileManager.getCurrentProfile().getModifiableModel();
+        InspectionProfileImpl model = profileManager.getCurrentProfile().getModifiableModel();
         for (PsiElement element : files) {
           model.disableTool(key.toString(), element);
         }

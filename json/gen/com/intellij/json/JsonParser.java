@@ -341,13 +341,13 @@ public class JsonParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // INDENTIFIER
+  // IDENTIFIER
   public static boolean reference_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reference_expression")) return false;
-    if (!nextTokenIs(b, INDENTIFIER)) return false;
+    if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, INDENTIFIER);
+    r = consumeToken(b, IDENTIFIER);
     exit_section_(b, m, REFERENCE_EXPRESSION, r);
     return r;
   }

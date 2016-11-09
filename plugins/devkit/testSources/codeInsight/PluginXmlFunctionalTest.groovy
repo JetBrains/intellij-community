@@ -67,7 +67,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-impl", platformImplJar)
   }
 
-  void testExtensionsHighlighting() throws Throwable {
+  void testExtensionsHighlighting() {
     final String root = "idea_core"
     addPluginXml(root, """
         <id>com.intellij</id>
@@ -96,7 +96,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  void testDependsHighlighting() throws Throwable {
+  void testDependsHighlighting() {
     final String root = "idea_core"
     addPluginXml(root, """
         <id>com.intellij</id>
@@ -110,16 +110,16 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testDependsConfigFileCompletion() {
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/used.xml")
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
-    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional2.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/used.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/optional.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting.xml", "META-INF/optional2.xml")
     configureByFile()
 
     myFixture.completeBasic()
     assertSameElements(myFixture.getLookupElementStrings(), "optional.xml", "optional2.xml")
   }
 
-  void testDependsCompletion() throws Throwable {
+  void testDependsCompletion() {
     addPluginXml("platform", """
         <id>com.intellij</id>
         <module value="com.intellij.modules.vcs"/>
@@ -143,13 +143,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"))
   }
 
-  void testExtensionQualifiedName() throws Throwable {
+  void testExtensionQualifiedName() {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     configureByFile()
     myFixture.checkHighlighting(false, false, false)
   }
 
-  void testInnerClassCompletion() throws Throwable {
+  void testInnerClassCompletion() {
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.completeBasic()
@@ -157,14 +157,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
-  void testInnerClassSmartCompletion() throws Throwable {
+  void testInnerClassSmartCompletion() {
     myFixture.addClass("package foo; public class Foo { public static class Fubar extends Foo {} }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.complete(CompletionType.SMART)
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
-  void testResolveExtensionsFromDependentDescriptor() throws Throwable {
+  void testResolveExtensionsFromDependentDescriptor() {
     addPluginXml("xxx", """
         <id>com.intellij.xxx</id>
         <extensionPoints>
@@ -184,7 +184,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root)) }
   }
 
-  void testNoWordCompletionInClassPlaces() throws Throwable {
+  void testNoWordCompletionInClassPlaces() {
     myFixture.addClass("package foo; public class FooFooFooFooFoo { }")
     myFixture.addClass("package foo; public interface ExtIntf { }")
 
@@ -194,7 +194,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
-  void testNoClassCompletionOutsideJavaReferences() throws Throwable {
+  void testNoClassCompletionOutsideJavaReferences() {
     myFixture.addClass("package foo; public class FooFooFooFooFoo { }")
 
     myFixture.configureByFile(getTestName(false) + ".xml")
@@ -287,11 +287,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                "MyIconAttributeEPBean.java")
   }
 
-  void testPluginModule() throws Throwable {
-    myFixture.testHighlighting("pluginWithModules.xml")
-  }
-
-  void testPluginWithModules() throws Throwable {
+  void testPluginWithModules() {
     myFixture.testHighlighting("pluginWithModules.xml")
   }
 
@@ -326,7 +322,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("pluginWithBigNumberInUntilBuild_after.xml")
   }
 
-  void testPluginWithXInclude() throws Throwable {
+  void testPluginWithXInclude() {
     myFixture.testHighlighting("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml")
   }
 

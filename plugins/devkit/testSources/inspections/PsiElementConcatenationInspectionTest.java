@@ -18,29 +18,31 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 public class PsiElementConcatenationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        super.configureModule(module, model, contentEntry);
-        PsiTestUtil.addLibrary(module, model, "core-api", "", PathUtil.getJarPathForClass(PsiElement.class));
-        PsiTestUtil.addLibrary(module, model, "java-psi-api", "", PathUtil.getJarPathForClass(PsiElementFactory.class));
-      }
-    };
+  protected void beforeActionStarted(String testName, String contents) {
+    try {
+      createAndSaveFile("com/intellij/psi/PsiElement.java",
+                        "package com.intellij.psi;interface PsiElement {}");
+      createAndSaveFile("com/intellij/psi/PsiExpression.java",
+                        "package com.intellij.psi;interface PsiExpression extends PsiElement {}");
+      createAndSaveFile("com/intellij/psi/PsiType.java",
+                        "package com.intellij.psi;interface PsiType {}");
+      createAndSaveFile("com/intellij/psi/PsiElementFactory.java",
+                        "package com.intellij.psi;\n" +
+                        "interface PsiElementFactory {\n" +
+                        "PsiExpression createExpressionFromText(String str, PsiElement context);\n" +
+                        "}");
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    super.beforeActionStarted(testName, contents);
   }
 
   @NotNull

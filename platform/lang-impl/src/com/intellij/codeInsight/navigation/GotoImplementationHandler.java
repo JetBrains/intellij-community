@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,16 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }.searchImplementations(editor, source, offset);
     if (targets == null) return null;
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
-    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
+    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
+      @Override
+      public void onFinished() {
+        super.onFinished();
+        PsiElement oneElement = getTheOnlyOneElement();
+        if (oneElement != null && navigateToElement(oneElement)) {
+          myPopup.cancel();
+        }
+      }
+    };
     return gotoData;
   }
 

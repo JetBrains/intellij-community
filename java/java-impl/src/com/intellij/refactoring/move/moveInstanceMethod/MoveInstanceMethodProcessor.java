@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -382,8 +383,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private PsiExpression replaceRefsToTargetVariable(final PsiExpression expression) {
     final PsiManager manager = expression.getManager();
-    if (expression instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)expression).isReferenceTo(myTargetVariable)) {
+    if (ExpressionUtils.isReferenceTo(expression, myTargetVariable)) {
       return createThisExpr(manager);
     }
 
@@ -460,7 +460,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             try {
               final PsiExpression qualifier = expression.getQualifierExpression();
               final PsiElement resolved = expression.resolve();
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
+              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 if (resolved instanceof PsiField) {
                   for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
                     if (Comparing.strEqual(parameter.getName(), ((PsiField)resolved).getName())) {
@@ -508,7 +508,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           @Override public void visitNewExpression(PsiNewExpression expression) {
             try {
               final PsiExpression qualifier = expression.getQualifier();
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
+              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 //Target is a field, replace target.new A() -> new A()
                 qualifier.delete();
               } else {

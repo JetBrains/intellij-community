@@ -150,7 +150,10 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
 
     val indicator = ProgressManager.getInstance().progressIndicator
-    if (indicator != null) myProgress.put(file, indicator)
+    if (indicator != null) {
+      myProgress.put(file, indicator)
+      indicator.text = IdeaDecompilerBundle.message("decompiling.progress", file.name)
+    }
 
     try {
       val mask = "${file.nameWithoutExtension}$"

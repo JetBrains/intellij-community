@@ -27,8 +27,8 @@ public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonRe
 
   @Override
   @NotNull
-  public PsiElement getIndentifier() {
-    return findNotNullChildByType(INDENTIFIER);
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

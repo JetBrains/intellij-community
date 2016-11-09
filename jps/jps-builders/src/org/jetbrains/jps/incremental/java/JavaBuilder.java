@@ -1028,6 +1028,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     @Override
+    public void customOutputData(String pluginId, String dataName, byte[] data) {
+      final JavaCompilerToolExtension handler = JavaCompilerToolExtension.getExtension(pluginId);
+      if (handler != null) {
+        handler.processData(dataName, data);
+      }
+    }
+
+    @Override
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
         if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {

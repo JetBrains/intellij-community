@@ -125,12 +125,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         AtomicBoolean success = new AtomicBoolean(false);
         CountDownLatch beforeHandshake = new CountDownLatch(1);
         Future<Void> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            myDebuggerReader.awaitReadyToRead();
-          }
-          finally {
-            beforeHandshake.countDown();
-          }
+          beforeHandshake.countDown();
           try {
             myDebugger.handshake();
             success.set(true);

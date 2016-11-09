@@ -43,6 +43,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.LBRACE, BlockOpeningBrace);
     SYNTAX_MAP.put(JavaTokenType.RBRACE, BlockClosingBrace);
     SYNTAX_MAP.put(JavaTokenType.LBRACKET, ArrayOpeningBracket);
+    SYNTAX_MAP.put(JavaTokenType.RBRACKET, ArrayClosingBracket);
     SYNTAX_MAP.put(JavaTokenType.RPARENTH, RightParenthesis);
     SYNTAX_MAP.put(JavaTokenType.LPARENTH, LeftParenthesis);
     SYNTAX_MAP.put(JavaTokenType.COLON, Colon);
@@ -51,6 +52,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.IF_KEYWORD, IfKeyword);
     SYNTAX_MAP.put(JavaTokenType.ELSE_KEYWORD, ElseKeyword);
     SYNTAX_MAP.put(JavaTokenType.FOR_KEYWORD, ForKeyword);
+    SYNTAX_MAP.put(JavaTokenType.DO_KEYWORD, DoKeyword);
     SYNTAX_MAP.put(JavaTokenType.C_STYLE_COMMENT, BlockComment);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_START, DocBlockStart);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_END, DocBlockEnd);

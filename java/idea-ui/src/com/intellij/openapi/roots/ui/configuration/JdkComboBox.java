@@ -42,10 +42,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
@@ -60,6 +58,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   @Nullable
   private final Condition<SdkTypeId> myCreationFilter;
   private JButton mySetUpButton;
+  private Condition<SdkTypeId> mySdkTypeFilter;
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
@@ -75,8 +74,18 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                      @Nullable Condition<Sdk> filter,
                      @Nullable Condition<SdkTypeId> creationFilter,
                      boolean addSuggestedItems) {
-    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
+    this(jdkModel, sdkTypeFilter, filter, creationFilter, null, addSuggestedItems);
+  }
+
+  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
+                     @Nullable Condition<SdkTypeId> sdkTypeFilter,
+                     @Nullable Condition<Sdk> filter,
+                     @Nullable Condition<SdkTypeId> creationFilter,
+                     @Nullable Comparator<Sdk> mySdkComparator,
+                     boolean addSuggestedItems) {
+    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems, mySdkComparator));
     myFilter = filter;
+    mySdkTypeFilter = sdkTypeFilter;
     myCreationFilter = creationFilter;
     setRenderer(new ProjectJdkListRenderer() {
       @Override
@@ -272,29 +281,34 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
-    final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
+    final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
     if (project == null) {
       model.addElement(firstItem);
       return;
     }
-    model.removeAllElements();
-    model.addElement(firstItem);
-    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-    List<Sdk> projectJdks = new ArrayList<>(projectJdksModel.getProjectSdks().values());
-    if (myFilter != null) {
-      projectJdks = ContainerUtil.filter(projectJdks, myFilter);
-    }
-    Collections.sort(projectJdks, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-    for (Sdk projectJdk : projectJdks) {
-      model.addElement(new ActualJdkComboBoxItem(projectJdk));
-    }
+    model.reload(firstItem, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel(), mySdkTypeFilter, myFilter, false);
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    public JdkComboBoxModel(final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
+    @NotNull
+    private final Comparator<Sdk> mySdkComparator;
+
+    public JdkComboBoxModel(@NotNull final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
+                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested, @Nullable Comparator<Sdk> sdkComparator) {
+      mySdkComparator = sdkComparator != null ? sdkComparator : (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName());
+      reload(null, jdksModel, sdkTypeFilter, sdkFilter, addSuggested);
+    }
+
+    void reload(@Nullable final JdkComboBoxItem firstItem,
+                @NotNull final ProjectSdksModel jdksModel,
+                @Nullable Condition<SdkTypeId> sdkTypeFilter,
+                @Nullable Condition<Sdk> sdkFilter,
+                boolean addSuggested) {
+      removeAllElements();
+      if (firstItem != null) addElement(firstItem);
+
       Sdk[] jdks = jdksModel.getSdks();
-      Arrays.sort(jdks, (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()));
+      Arrays.sort(jdks, mySdkComparator);
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
           addElement(new ActualJdkComboBoxItem(jdk));

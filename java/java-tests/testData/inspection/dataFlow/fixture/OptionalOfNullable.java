@@ -20,5 +20,11 @@ class Test {
     return Optional.ofNullable(<warning descr="Passing 'null' argument to 'Optional'">null</warning>);
   }
 
+  long field;
+
+  Optional<Long> getName4() {
+    return Optional.ofNullable(<warning descr="Passing a non-null argument to 'Optional'">field</warning>);
+  }
+
 }
 

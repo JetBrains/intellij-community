@@ -90,7 +90,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   }
 
   public static void startup(String outputPath) throws IOException {
-    Map<SearchableConfigurable, Set<OptionDescription>> options = new HashMap<>();
+    Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
     Element root = new Element(OPTIONS);

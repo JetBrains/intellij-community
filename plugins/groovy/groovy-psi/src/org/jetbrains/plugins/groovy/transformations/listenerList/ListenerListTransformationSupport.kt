@@ -20,9 +20,9 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
@@ -35,7 +35,7 @@ class ListenerListTransformationSupport : AstTransformationSupport {
       val annotation = PsiImplUtil.getAnnotation(field, listenerListFqn) ?: continue
       val listenerType = field.getListenerType() as? PsiClassType ?: continue
       val listenerClass = listenerType.resolve() ?: continue
-      val declaredName = GrAnnotationUtil.getString(annotation.findDeclaredDetachedValue("name"))
+      val declaredName = annotation.findDeclaredDetachedValue("name").stringValue()
       val name = StringUtil.nullize(declaredName) ?: listenerClass.name ?: continue
       context += context.memberBuilder.method("add${name.capitalize()}") {
         addModifier(GrModifierFlags.PUBLIC_MASK)

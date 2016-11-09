@@ -1534,12 +1534,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "@Foo(value2=baz3) int a3;\n" +
                  "@Foo(value2=baz4) int a3;\n" +
                  "}";
-    assertEquals("Find anno parameter value",1,findMatchesCount(s11, "@Foo(value=baz) int 'a;)"));
-    assertEquals("Find anno parameter value",2,findMatchesCount(s11, "@Foo(value='baz:baz2 ) int '_a;)"));
-    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = baz3 ) int '_a;)"));
-    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz3 ) int '_a;)"));
-    assertEquals("Find anno parameter value",0,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz ) int '_a;)"));
-    assertEquals("Find anno parameter value",4,findMatchesCount(s11, "@Foo('value:value2 = '_baz3 ) int '_a;)"));
+    assertEquals("Find anno parameter value",1,findMatchesCount(s11, "@Foo(value=baz) int 'a;"));
+    assertEquals("Find anno parameter value",2,findMatchesCount(s11, "@Foo(value='baz:baz2 ) int '_a;"));
+    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value",0,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz ) int '_a;"));
+    assertEquals("Find anno parameter value",4,findMatchesCount(s11, "@Foo('value:value2 = '_baz3 ) int '_a;"));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11, "@Foo('value:value2 = ) int '_a;"));
 
     String source1 = "class A {" +
@@ -1704,7 +1704,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testFindClassesWithinHierarchy() {
     String s1 = "class A implements I {}\n" +
-                "interface I {}\n" + 
+                "interface I {}\n" +
                 "class B extends A implements I { }\n" +
                 "class B2 implements I  { }\n" +
                 "class B3 extends A { }\n" +
@@ -1926,18 +1926,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(s_2, s2_3));
     assertEquals(1, findMatchesCount(s, s2_3));
   }
-  
+
   public void testFindAnnotationDeclarations() throws Exception {
     String s = "interface Foo {} interface Bar {} @interface X {}";
     String s2 = "@interface 'x {}";
-        
+
     assertEquals(1, findMatchesCount(s,s2));
   }
-  
+
   public void testFindEnums() throws Exception {
     String s = "class Foo {} class Bar {} enum X {}";
     String s2 = "enum 'x {}";
-        
+
     assertEquals(1, findMatchesCount(s,s2));
   }
 
@@ -2125,30 +2125,29 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testNoUnexpectedException() {
     String source = "{}";
 
-    MalformedPatternException ex = null;
     try {
       findMatchesCount(source, "/*$A$a*/");
-    } catch (MalformedPatternException e) {
-      ex = e;
-    }
-    assertNotNull(ex);
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
 
     try {
       findMatchesCount(source, "class $A$Visitor {}");
-    } catch (MalformedPatternException e) {
-      ex = e;
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {
     }
-    assertNotNull(ex);
 
     try {
       String pattern3 = "class $Class$ { \n" +
                         "  class $n$$FieldType$ $FieldName$ = $Init$;\n" +
                         "}";
       findMatchesCount(source, pattern3);
-    } catch (MalformedPatternException e) {
-      ex = e;
-    }
-    assertNotNull(ex);
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "import java.util.ArrayList;");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testFindInnerClass() {

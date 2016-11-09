@@ -36,7 +36,6 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;

@@ -202,9 +202,9 @@ def map(function, sequence, *sequence_1):
     """Return a list of the results of applying the function to the items of
     the argument sequence(s).
 
-    :type function: ((T) -> V) | None
+    :type function: None | (T) -> V
     :type sequence: collections.Iterable[T]
-    :rtype: list[V] | bytes | unicode
+    :rtype: list[V]
     """
     pass
 

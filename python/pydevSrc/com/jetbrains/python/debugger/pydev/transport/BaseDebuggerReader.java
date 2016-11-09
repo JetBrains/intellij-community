@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 /**
@@ -22,8 +21,6 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
 
   @NotNull private final RemoteDebugger myDebugger;
   @NotNull private StringBuilder myTextBuilder = new StringBuilder();
-
-  private final CountDownLatch myReadyToReadLatch = new CountDownLatch(1);
 
   public BaseDebuggerReader(@NotNull InputStream inputStream, @NotNull Charset charset, @NotNull RemoteDebugger debugger) {
     super(inputStream, charset);
@@ -36,7 +33,6 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
   }
 
   protected void doRun() {
-    myReadyToReadLatch.countDown();
     try {
       while (true) {
         boolean read = readAvailableBlocking();
@@ -102,9 +98,5 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
         myDebugger.processResponse(line + "\n");
       }
     }
-  }
-
-  public void awaitReadyToRead() throws InterruptedException {
-    myReadyToReadLatch.await();
   }
 }

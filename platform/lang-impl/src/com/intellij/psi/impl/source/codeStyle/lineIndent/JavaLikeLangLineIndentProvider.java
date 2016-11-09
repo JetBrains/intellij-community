@@ -45,6 +45,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     BlockOpeningBrace,
     BlockClosingBrace,
     ArrayOpeningBracket,
+    ArrayClosingBracket,
     RightParenthesis,
     LeftParenthesis,
     Colon,
@@ -53,6 +54,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     ElseKeyword,
     IfKeyword,
     ForKeyword,
+    DoKeyword,
     BlockComment,
     DocBlockStart,
     DocBlockEnd,
@@ -135,7 +137,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
       ) || getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(ElseKeyword)
+        position -> position.before().isAtAnyOf(ElseKeyword, DoKeyword) 
       )) {
         return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
       }
@@ -197,6 +199,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (position.isAt(BlockClosingBrace)) {
         position.beforeParentheses(BlockOpeningBrace, BlockClosingBrace);
+      }
+      else if (position.isAt(ArrayClosingBracket)) {
+        position.beforeParentheses(ArrayOpeningBracket, ArrayClosingBracket);
       }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 

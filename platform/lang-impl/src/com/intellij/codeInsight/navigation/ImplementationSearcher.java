@@ -34,7 +34,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,9 +126,8 @@ public class ImplementationSearcher {
         return new PsiElement[]{element};
       }
 
-      PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor =
-        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
-      PsiElement[][] result = new PsiElement[1][];
+      PsiElementProcessor.FindElement<PsiElement> collectProcessor = new PsiElementProcessor.FindElement<>();
+      PsiElement[] result = new PsiElement[1];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
@@ -140,7 +138,7 @@ public class ImplementationSearcher {
                 return !accept(element) || super.processInReadAction(element);
               }
             });
-            result[0] = collectProcessor.toArray();
+            result[0] = collectProcessor.getFoundElement();
           }
           catch (IndexNotReadyException e) {
             ImplementationSearcher.dumbModeNotification(element);
@@ -150,7 +148,8 @@ public class ImplementationSearcher {
       }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
         return null;
       }
-      return result[0];
+      PsiElement foundElement = result[0];
+      return foundElement != null ? new PsiElement[] {foundElement} : null;
     }
 
     protected boolean canShowPopupWithOneItem(PsiElement element) {

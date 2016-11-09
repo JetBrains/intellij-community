@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
@@ -80,8 +79,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = loadProfile();
     final InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
@@ -98,7 +96,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl localProfile = createProfile();
     profileManager.updateProfile(localProfile);
 
-    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(getProject());
+    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
     try {
       //normally on open project profile wrappers are init for both managers
       profileManager.updateProfile(localProfile);
@@ -150,8 +148,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                             "</inspections>").getRootElement();
     InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
-    ModifiableModel model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
 
     assertThat(profile.writeScheme()).isEqualTo(loadProfile());
   }
@@ -207,8 +204,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                   "</profile>");
     final InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
@@ -487,8 +483,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JDOMUtil.loadDocument(initialText).getRootElement();
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(element);
-    ModifiableModel model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertEquals(initialText, serialize(profile));
   }
 

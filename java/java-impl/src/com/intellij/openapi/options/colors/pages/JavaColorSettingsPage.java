@@ -178,9 +178,8 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "  public static int <static>staticField</static> = 0;\n" +
       "  public final int <instanceFinalField>instanceFinalField</instanceFinalField> = 0;\n" +
       "\n" +
-      "  /**\n" +
-      "   * " + ApplicationBundle.message("rainbow.option.panel.display.name") + ":\n" +
-      "   * " + RainbowHighlighter.generatePaletteExample() + "\n" +
+      "  /**" +
+      RainbowHighlighter.generatePaletteExample("\n   * ") + "\n" +
       "   * @param <javadocTagValue>param1</javadocTagValue>\n" +
       "   * @param <javadocTagValue>reassignedParam</javadocTagValue>\n" +
       "   * @param <javadocTagValue>param2</javadocTagValue>\n" +

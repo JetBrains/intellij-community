@@ -34,13 +34,13 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -70,10 +70,14 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     super.checkDomElement(element, holder, helper);
 
     if (element instanceof IdeaPlugin) {
+      annotateIdeaPlugin((IdeaPlugin)element, holder);
       checkJetBrainsPlugin((IdeaPlugin)element, holder);
     }
     else if (element instanceof Extension) {
       annotateExtension((Extension)element, holder);
+    }
+    else if (element instanceof ExtensionPoint) {
+      annotateExtensionPoint((ExtensionPoint)element, holder);
     }
     else if (element instanceof Vendor) {
       annotateVendor((Vendor)element, holder);
@@ -95,6 +99,10 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
+    highlightNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
+  }
+
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
     final Module module = ideaPlugin.getModule();
     if (module == null) return;
@@ -112,14 +120,23 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
-    if (vendor == null) {
+    final Vendor vendor = ideaPlugin.getVendor();
+    if (!DomUtil.hasXml(vendor)) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
                            "Plugin developed as a part of IntelliJ IDEA project should specify 'JetBrains' as its vendor",
                            new SpecifyJetBrainsAsVendorQuickFix());
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, "Plugin developed as a part of IntelliJ IDEA project should include 'JetBrains' as one of its vendors");
+    }
+  }
+
+  private static void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    if (extensionPoint.getWithElements().isEmpty() &&
+        !extensionPoint.collectMissingWithTags().isEmpty()) {
+      holder.createProblem(extensionPoint,
+                           "<extensionPoint> does not have <with> tags to specify the types of class fields",
+                           new AddWithTagFix());
     }
   }
 
@@ -201,8 +218,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
-          Vendor vendor = ContainerUtil.getFirstItem(plugin.getVendors());
-          if (vendor != null && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
+          Vendor vendor = plugin.getVendor();
+          if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
             LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
             holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  "Exceptions from plugins developed by JetBrains are reported via ITNReporter automatically," +
@@ -337,8 +354,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(project).getFileElement((XmlFile)file, IdeaPlugin.class);
       if (fileElement != null) {
         IdeaPlugin root = fileElement.getRootElement();
-        XmlTag after = getLastSubTag(root, root.getId(), ContainerUtil.getLastItem(root.getDescriptions()),
-                                     ContainerUtil.getLastItem(root.getVersions()), root.getName());
+        XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
         XmlTag rootTag = root.getXmlTag();
         XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
         if (after == null) {

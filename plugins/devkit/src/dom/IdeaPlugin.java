@@ -42,7 +42,8 @@ public interface IdeaPlugin extends DomElement {
   GenericDomValue<String> getId();
 
   @NotNull
-  GenericAttributeValue<String> getVersion();
+  @Attribute("version")
+  GenericAttributeValue<Integer> getIdeaPluginVersion();
 
   @NotNull
   GenericAttributeValue<String> getUrl();
@@ -56,39 +57,31 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
-  List<GenericDomValue<String>> getDescriptions();
-  GenericDomValue<String> addDescription();
+  GenericDomValue<String> getDescription();
 
 
   @NotNull
-  List<GenericDomValue<String>> getVersions();
-  GenericDomValue<String> addVersion();
+  GenericDomValue<String> getVersion();
 
 
   @NotNull
-  List<Vendor> getVendors();
-  Vendor addVendor();
+  Vendor getVendor();
 
 
   @NotNull
-  List<GenericDomValue<String>> getChangeNotess();
-  GenericDomValue<String> addChangeNotes();
+  GenericDomValue<String> getChangeNotes();
 
 
   @NotNull
-  List<IdeaVersion> getIdeaVersions();
-  IdeaVersion addIdeaVersion();
+  IdeaVersion getIdeaVersion();
 
 
   @NotNull
-  List<GenericDomValue<String>> getCategories();
-  GenericDomValue<String> addCategory();
+  GenericDomValue<String> getCategory();
 
 
   @NotNull
-  @SubTagList("resource-bundle")
-  List<GenericDomValue<String>> getResourceBundles();
-  GenericDomValue<String> addResourceBundle();
+  GenericDomValue<String> getResourceBundle();
 
 
   @NotNull
@@ -120,16 +113,19 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("application-components")
   List<ApplicationComponents> getApplicationComponents();
 
-  ApplicationComponents addApplicationComponent();
+  ApplicationComponents addApplicationComponents();
 
   @NotNull
   @SubTagList("project-components")
   List<ProjectComponents> getProjectComponents();
 
-  ProjectComponents addProjectComponent();
+  ProjectComponents addProjectComponents();
 
   @NotNull
-  ModuleComponents getModuleComponents();
+  @SubTagList("module-components")
+  List<ModuleComponents> getModuleComponents();
+
+  ModuleComponents addModuleComponents();
 
 
   @NotNull

@@ -21,12 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
-import org.jetbrains.jps.javac.ast.JavacReferencesCollector;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.tools.*;
 import java.io.File;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -80,10 +78,5 @@ public class JavacCompilerTool extends JavaCompilingTool {
   @Override
   public List<String> getDefaultCompilerOptions() {
     return Collections.singletonList("-implicit:class");
-  }
-
-  @Override
-  public void prepareCompilationTask(@NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options) {
-    JavacReferencesCollector.installOn(task);
   }
 }

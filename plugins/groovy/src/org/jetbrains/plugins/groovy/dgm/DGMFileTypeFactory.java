@@ -29,7 +29,7 @@ public class DGMFileTypeFactory extends FileTypeFactory {
 
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    ExactFileNameMatcher matcher = new ExactFileNameMatcher(GroovyExtensionProvider.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE,
+    ExactFileNameMatcher matcher = new ExactFileNameMatcher(DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE,
                                                             !SystemInfo.isFileSystemCaseSensitive);
     consumer.consume(PropertiesFileType.INSTANCE, matcher);
   }

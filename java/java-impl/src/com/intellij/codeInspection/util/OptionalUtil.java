@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +43,14 @@ public class OptionalUtil {
     }
   }
 
+  /**
+   * Unwraps an {@link java.util.Optional}, {@link java.util.OptionalInt}, {@link java.util.OptionalLong} or {@link java.util.OptionalDouble}
+   * returning its element type
+   *
+   * @param type a type representing optional (e.g. {@code Optional<String>} or {@code OptionalInt})
+   * @return an element type (e.g. {@code String} or {@code int}). Returns {@code null} if the supplied type is not an optional type
+   * or its a raw {@code java.util.Optional}.
+   */
   @Contract("null -> null")
   public static PsiType getOptionalElementType(PsiType type) {
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
@@ -68,38 +77,6 @@ public class OptionalUtil {
     }
   }
 
-  static boolean isOptionalEmptyCall(PsiMethodCallExpression call) {
-    if ("empty".equals(call.getMethodExpression().getReferenceName())) {
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if(args.length == 0) {
-        PsiMethod method = call.resolveMethod();
-        if (method != null && method.getParameterList().getParametersCount() == 0) {
-          PsiClass aClass = method.getContainingClass();
-          if(aClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(aClass.getQualifiedName())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  static boolean isOptionalOfCall(PsiMethodCallExpression call) {
-    if ("of".equals(call.getMethodExpression().getReferenceName())) {
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if(args.length == 1) {
-        PsiMethod method = call.resolveMethod();
-        if (method != null && method.getParameterList().getParametersCount() == 1) {
-          PsiClass aClass = method.getContainingClass();
-          if(aClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(aClass.getQualifiedName())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   /**
    * Generates an expression text which will unwrap an {@link java.util.Optional}.
    *
@@ -114,12 +91,12 @@ public class OptionalUtil {
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType, boolean useOrElseGet) {
-    if (!ExpressionUtils.isIdentityMapping(var, trueExpression)) {
+    if (!ExpressionUtils.isReferenceTo(trueExpression, var)) {
       if(trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)trueExpression;
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
-        if(castType != null && ExpressionUtils.isIdentityMapping(var, castExpression.getOperand())) {
+        if(castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
@@ -135,11 +112,13 @@ public class OptionalUtil {
             condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
         }
       }
-      if(falseExpression instanceof PsiMethodCallExpression && isOptionalEmptyCall((PsiMethodCallExpression)falseExpression)) {
+      if(falseExpression instanceof PsiMethodCallExpression &&
+         MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)falseExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0)) {
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
-        if (trueExpression instanceof PsiMethodCallExpression && isOptionalOfCall((PsiMethodCallExpression)trueExpression)) {
+        if (trueExpression instanceof PsiMethodCallExpression &&
+            MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)trueExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "of", 1)) {
           PsiExpression arg = ((PsiMethodCallExpression)trueExpression).getArgumentList().getExpressions()[0];
-          if(ExpressionUtils.isIdentityMapping(var, arg)) {
+          if(ExpressionUtils.isReferenceTo(arg, var)) {
             return qualifier;
           }
           return qualifier + ".map(" + LambdaUtil.createLambda(var, arg) + ")";

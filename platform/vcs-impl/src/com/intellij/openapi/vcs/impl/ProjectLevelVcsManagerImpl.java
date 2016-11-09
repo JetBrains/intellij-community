@@ -66,7 +66,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Attribute;
@@ -83,7 +82,7 @@ import java.util.List;
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
-  @NonNls public static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
+  @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
@@ -94,7 +93,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private ContentManager myContentManager;
   private ConsoleView myConsole;
-  private Disposable myConsoleDisposer = new Disposable() {
+  private final Disposable myConsoleDisposer = new Disposable() {
     @Override
     public void dispose() {
       if (myConsole != null) {
@@ -113,11 +112,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
-  private boolean myMappingsLoaded = false;
-  private boolean myHaveLegacyVcsConfiguration = false;
+  private boolean myMappingsLoaded;
+  private boolean myHaveLegacyVcsConfiguration;
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
-  private volatile int myBackgroundOperationCounter = 0;
+  private volatile int myBackgroundOperationCounter;
 
   private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newHashSet();
 
@@ -165,34 +164,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
     myVcsFileListenerContextHelper = vcsFileListenerContextHelper;
-    VcsListener vcsListener = new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        myVcsHistoryCache.clear();
-        myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
-      }
+    VcsListener vcsListener = () -> {
+      myVcsHistoryCache.clear();
+      myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
     };
     myExcludedIndex = excludedFileIndex;
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-    connection.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
-      @Override
-      public void consume(Set<String> strings) {
-        myContentRevisionCache.clearCurrent(strings);
-      }
-    });
+    connection.subscribe(UpdatedFilesListener.UPDATED_FILES, myContentRevisionCache::clearCurrent);
     myAnnotationLocalChangesListener = new VcsAnnotationLocalChangesListenerImpl(myProject, this);
   }
 
   @Override
   public void initComponent() {
-    myOptionsAndConfirmations.init(new Convertor<String, VcsShowConfirmationOption.Value>() {
-      @Override
-      public VcsShowConfirmationOption.Value convert(String o) {
-        return mySerialization.getInitOptionValue(o);
-      }
-    });
+    myOptionsAndConfirmations.init(mySerialization::getInitOptionValue);
   }
 
   public void registerVcs(AbstractVcs vcs) {
@@ -534,7 +520,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return null;
   }
 
-  public boolean hasExplicitMapping(final VirtualFile vFile) {
+  private boolean hasExplicitMapping(final VirtualFile vFile) {
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(vFile);
     return mapping != null && !mapping.isDefaultMapping();
   }
@@ -707,7 +693,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myProject.getMessageBus().syncPublisher(VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }
 
-  public void readDirectoryMappings(final Element element) {
+  void readDirectoryMappings(final Element element) {
     myMappings.clear();
 
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
@@ -746,7 +732,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.setDirectoryMappings(mappingsList);
   }
 
-  public void writeDirectoryMappings(@NotNull Element element) {
+  void writeDirectoryMappings(@NotNull Element element) {
     if (myProject.isDefault()) {
       element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
     }
@@ -853,15 +839,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean isFileInContent(@Nullable final VirtualFile vf) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                              hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
-                              || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))
-               && !isIgnored(vf);
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+      vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
+                     hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
+                     || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))
+      && !isIgnored(vf));
   }
 
   @Override
@@ -898,13 +880,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @TestOnly
   public void waitForInitialized() {
-    myInitialization.waitForInitialized();
+    myInitialization.waitForCompletion();
   }
 
   private static class ActionKey {
     private final Object[] myObjects;
 
-    public ActionKey(@NotNull Object... objects) {
+    ActionKey(@NotNull Object... objects) {
       myObjects = objects;
     }
 

@@ -33,6 +33,25 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     assertIndexEquals("afterSecondMakeIndex.txt")
   }
 
+  fun testIncrementalIndexUpdate2() {
+    assertIndexOnRebuild("Foo.java")
+    changeFileContent("Foo.java", "Foo_2.java")
+    buildAllModules()
+    assertIndexEquals("after1MakeIndex.txt")
+    deleteFile("m/Foo.java")
+    addFile("Bar.java")
+    buildAllModules()
+    assertIndexEquals("after2MakeIndex.txt")
+  }
+
+  fun testIncrementalIndexUpdate3() {
+    assertIndexOnRebuild("Foo.java")
+    changeFileContent("Foo.java", "Foo_2.java")
+    addFile("Bar.java")
+    buildAllModules()
+    assertIndexEquals("after1MakeIndex.txt")
+  }
+
   fun testFileCaseOnlyRename() {
     assertIndexOnRebuild("Bar.java")
     renameFile("Bar.java", "bar.java")
@@ -92,6 +111,10 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
 
   fun testCompilationUnitContains2Decls() {
     assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testMultiFileMultiUnitCompilation()  {
+    assertIndexOnRebuild("Foo.java", "Boo.java", "Bar.java")
   }
 
   fun testNestedClasses() {

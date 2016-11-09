@@ -17,6 +17,7 @@ package com.intellij.util.gist;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,8 +37,9 @@ import java.util.Map;
 /**
  * @author peter
  */
-class VirtualFileGistImpl<Data>implements VirtualFileGist<Data> {
+class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.gist.VirtualFileGist");
+  private static final int ourInternalVersion = 1;
 
   @NotNull private final String myId;
   private final int myVersion;
@@ -51,16 +53,17 @@ class VirtualFileGistImpl<Data>implements VirtualFileGist<Data> {
     myCalculator = calcData;
   }
 
-  @Override@Nullable
+  @Override
   public Data getFileData(@NotNull Project project, @NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    ProgressManager.checkCanceled();
 
     if (!(file instanceof VirtualFileWithId)) return myCalculator.calcData(project, file);
 
     long stamp = file.getTimeStamp() + ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
 
     try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
-      if (stream != null && DataInputOutputUtil.readLONG(stream) == stamp) {
+      if (stream != null && DataInputOutputUtil.readTIME(stream) == stamp) {
         return stream.readBoolean() ? myExternalizer.read(stream) : null;
       }
     }
@@ -75,7 +78,7 @@ class VirtualFileGistImpl<Data>implements VirtualFileGist<Data> {
 
   private void cacheResult(long modCount, @Nullable Data result, Project project, VirtualFile file) {
     try (DataOutputStream out = getFileAttribute(project).writeAttribute(file)) {
-      DataInputOutputUtil.writeLONG(out, modCount);
+      DataInputOutputUtil.writeTIME(out, modCount);
       out.writeBoolean(result != null);
       if (result != null) {
         myExternalizer.save(out, result);
@@ -97,7 +100,7 @@ class VirtualFileGistImpl<Data>implements VirtualFileGist<Data> {
 
   private FileAttribute getFileAttribute(Project project) {
     synchronized (ourAttributes) {
-      return ourAttributes.get(Pair.create(myId + project.getLocationHash(), myVersion));
+      return ourAttributes.get(Pair.create(myId + project.getLocationHash(), myVersion + ourInternalVersion));
     }
   }
 

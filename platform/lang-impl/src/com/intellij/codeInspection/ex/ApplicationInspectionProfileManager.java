@@ -40,10 +40,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileProcessor;
+import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -93,6 +90,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
         return fileNameWithoutExtension;
       }
 
+      @Override
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
@@ -109,14 +107,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
       @Override
       public void onSchemeDeleted(@NotNull InspectionProfileImpl scheme) {
-        onProfilesChanged();
-      }
-
-      @Override
-      public void onCurrentSchemeSwitched(@Nullable InspectionProfileImpl oldScheme, @Nullable InspectionProfileImpl newScheme) {
-        if (newScheme != null) {
-          fireProfileChanged(oldScheme, newScheme);
-        }
         onProfilesChanged();
       }
     });
@@ -203,18 +193,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return getProfile(path, false);
   }
 
-  @Override
-  public void updateProfile(@NotNull InspectionProfileImpl profile) {
-    super.updateProfile(profile);
-    updateProfileImpl(profile);
-  }
-
-  private static void updateProfileImpl(@NotNull InspectionProfileImpl profile) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      profile.initInspectionTools(project);
-    }
-  }
-
   @Nullable
   @Override
   public Element getState() {
@@ -271,6 +249,15 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   @NotNull
   public String getRootProfileName() {
     return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+  }
+
+  @Override
+  public void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile);
+    }
+
+    onProfilesChanged();
   }
 
   public static void onProfilesChanged() {

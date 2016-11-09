@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -85,22 +86,21 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         return false;
       }
 
-      final List<FormatStringChunk> chunks = percentOperator ? PyStringFormatParser.parsePercentFormat(stringText)
-                                                             : PyStringFormatParser.parseNewStyleFormat(stringText);
-      final List<SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(chunks);
-
-      // TODO handle dynamic format spec in both formatting styles
-      final boolean hasDynamicFormatting;
+      final List<SubstitutionChunk> substitutions;
       if (percentOperator) {
-        hasDynamicFormatting = substitutions.stream().anyMatch(s -> "*".equals(s.getWidth()) || "*".equals(s.getPrecision()));
+        final List<FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(stringText);
+        substitutions = PyStringFormatParser.filterSubstitutions(chunks);
       }
       else {
-        hasDynamicFormatting = false;
+        substitutions = new ArrayList<>(PyNewStyleStringFormatParser.parse(stringText).getFields());
       }
-      if (hasDynamicFormatting) return false;
 
-      final PySubstitutionChunkReference[] references =
-        PythonFormattedStringReferenceProvider.getReferencesFromChunks(pyString, substitutions, percentOperator);
+      // TODO handle dynamic width and precision in old-style/"percent" formatting
+      if (percentOperator && substitutions.stream().anyMatch(s -> "*".equals(s.getWidth()) || "*".equals(s.getPrecision()))) {
+        return false;
+      }
+
+      final PySubstitutionChunkReference[] references = createChunkReferences(substitutions, pyString, percentOperator);
 
       final PsiElement valuesSource;
       if (percentOperator) {
@@ -113,6 +113,15 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
         assert callExpression != null;
         valuesSource = callExpression.getArgumentList();
       }
+      
+      if (percentOperator) {
+        for (int i = 0; i < substitutions.size(); i++) {
+          final SubstitutionChunk chunk = substitutions.get(i);
+          if ((chunk.getMappingKey() != null || substitutions.size() > 1) && references[i].resolve() == valuesSource) {
+            return false;
+          }
+        }
+      }
 
       return Arrays.stream(references)
         .map(PyConvertToFStringIntention::getActualReplacementExpression)
@@ -123,6 +132,20 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
                              expressionCanBeInlined(pyString, element));
     }
     return false;
+  }
+
+  @NotNull
+  private static PySubstitutionChunkReference[] createChunkReferences(@NotNull List<SubstitutionChunk> substitutions,
+                                                                      @NotNull PyStringLiteralExpression pyString,
+                                                                      boolean percentOperator) {
+    if (percentOperator) {
+      return PythonFormattedStringReferenceProvider.getReferencesFromChunks(pyString, substitutions, true);
+    }
+    return substitutions.stream()
+      .filter(PyNewStyleStringFormatParser.Field.class::isInstance)
+      .map(PyNewStyleStringFormatParser.Field.class::cast)
+      .map(field -> new PySubstitutionChunkReference(pyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0), false))
+      .toArray(PySubstitutionChunkReference[]::new);
   }
 
   private static boolean expressionCanBeInlined(@NotNull PyStringLiteralExpression host, @NotNull PyExpression target) {
@@ -355,7 +378,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
     if (adjusted == null) return false;
 
     newStringText.append(adjusted.getText());
-    final String quotedAttrsAndItems = quoteItemsInFragments(field, stringInfo.getSingleQuote());
+    final String quotedAttrsAndItems = quoteItemsInFragments(field, stringInfo);
     if (quotedAttrsAndItems == null) return false;
 
     newStringText.append(quotedAttrsAndItems);
@@ -396,7 +419,7 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
   }
 
   @Nullable
-  private static String quoteItemsInFragments(@NotNull PyNewStyleStringFormatParser.Field field, char hostStringQuote) {
+  private static String quoteItemsInFragments(@NotNull PyNewStyleStringFormatParser.Field field, @NotNull StringNodeInfo hostStringInfo) {
     List<String> escaped = new ArrayList<>();
     for (String part : field.getAttributesAndLookups()) {
       if (part.startsWith(".")) {
@@ -411,11 +434,17 @@ public class PyConvertToFStringIntention extends PyBaseIntentionAction {
           escaped.add(part);
           continue;
         }
-        final char quote = flipQuote(hostStringQuote);
-        if (indexText.indexOf(hostStringQuote) >= 0 || indexText.indexOf(quote) >= 0) {
-          return null;
+        final char originalQuote = hostStringInfo.getSingleQuote();
+        char targetQuote = flipQuote(originalQuote);
+        // there are no escapes inside the fragment, so the lookup key cannot contain 
+        // the host string quote unless it's a multiline string literal
+        if (indexText.indexOf(targetQuote) >= 0) {
+          if (!hostStringInfo.isTripleQuoted() || indexText.indexOf(originalQuote) >= 0) {
+            return null;
+          }
+          targetQuote = originalQuote;
         }
-        escaped.add("[" + quote + indexText + quote + "]");
+        escaped.add("[" + targetQuote + indexText + targetQuote + "]");
       }
     }
     return StringUtil.join(escaped, "");

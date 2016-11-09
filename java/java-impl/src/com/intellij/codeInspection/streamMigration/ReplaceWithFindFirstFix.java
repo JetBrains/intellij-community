@@ -86,16 +86,12 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
           return replaceInitializer(loopStatement, var, initializer, replacementText, status);
         }
       }
-      PsiAssignmentExpression previousAssignment =
-        ExpressionUtils.getAssignment(PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class));
-      if(previousAssignment != null) {
-        PsiExpression prevRValue = previousAssignment.getRExpression();
-        PsiExpression prevLValue = previousAssignment.getLExpression();
-        if(prevRValue != null && prevLValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)prevLValue).isReferenceTo(var)) {
-          previousAssignment.delete();
-          return loopStatement.replace(elementFactory.createStatementFromText(
-            var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, prevRValue, var.getType()) + ";", loopStatement));
-        }
+      PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);
+      PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
+      if(prevRValue != null) {
+        maybeAssignment.delete();
+        return loopStatement.replace(elementFactory.createStatementFromText(
+          var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, prevRValue, var.getType()) + ";", loopStatement));
       }
       return loopStatement.replace(elementFactory.createStatementFromText(
         var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue, var.getType()) + ";", loopStatement));

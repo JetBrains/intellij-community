@@ -22,6 +22,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
@@ -160,18 +161,18 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                  final boolean requestFocus,
                                  final Condition<AbstractTreeNode> nonStopCondition) {
 
+    AbstractTreeUpdater updater = getUpdater();
+    if (updater == null) return ActionCallback.REJECTED;
+
     final ActionCallback result = new ActionCallback();
 
     final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
 
-    UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), getUpdater().getModalityState());
-    cancelUpdate().doWhenDone(() -> batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
-        UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
-      }
-    }));
+    UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
+    batch(indicator -> {
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+      UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
+    });
 
 
 

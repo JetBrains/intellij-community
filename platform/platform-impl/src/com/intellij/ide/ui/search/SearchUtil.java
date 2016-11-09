@@ -141,6 +141,19 @@ public class SearchUtil {
         }
       }
     }
+    else if (component instanceof TabbedPaneWrapper.TabbedPaneHolder) {
+      final TabbedPaneWrapper tabbedPane = ((TabbedPaneWrapper.TabbedPaneHolder)component).getTabbedPaneWrapper();
+      final int tabCount = tabbedPane.getTabCount();
+      for (int i = 0; i < tabCount; i++) {
+        String tabTitle = tabbedPane.getTitleAt(i);
+        final String title = path != null ? path + '.' + tabTitle : tabTitle;
+        processUILabel(title, configurableOptions, title);
+        final JComponent tabComponent = tabbedPane.getComponentAt(i);
+        if (tabComponent != null) {
+          processComponent(tabComponent, configurableOptions, title);
+        }
+      }
+    }
     else {
       final Component[] components = component.getComponents();
       if (components != null) {

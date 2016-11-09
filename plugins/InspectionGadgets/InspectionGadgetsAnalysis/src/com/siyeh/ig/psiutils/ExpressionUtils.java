@@ -736,6 +736,25 @@ public class ExpressionUtils {
     return null;
   }
 
+  /**
+   * Returns an expression assigned to the target variable if supplied element is
+   * either simple (non-compound) assignment expression or an expression statement containing assignment expression
+   * and the corresponding assignment l-value is the reference to target variable.
+   *
+   * @param element element to get assignment expression from
+   * @param target a variable to extract an assignment to
+   * @return extracted assignment r-value or null if assignment is not found or assignment is compound or it's an assignment
+   * to the wrong variable
+   */
+  @Contract("null, _ -> null; _, null -> null")
+  public static PsiExpression getAssignmentTo(PsiElement element, PsiVariable target) {
+    PsiAssignmentExpression assignment = getAssignment(element);
+    if(assignment != null && isReferenceTo(assignment.getLExpression(), target)) {
+      return assignment.getRExpression();
+    }
+    return null;
+  }
+
   @Contract("null, _ -> false")
   public static boolean isLiteral(PsiElement element, Object value) {
     return element instanceof PsiLiteralExpression && value.equals(((PsiLiteralExpression)element).getValue());
@@ -793,8 +812,9 @@ public class ExpressionUtils {
     return true;
   }
 
-  @Contract("_, null -> false")
-  public static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
-    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).isReferenceTo(variable);
+  @Contract("null, _ -> false; _, null -> false")
+  public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
   }
 }

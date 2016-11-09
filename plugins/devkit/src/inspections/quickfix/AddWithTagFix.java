@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
-import org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection;
 
 import java.util.List;
 
@@ -53,7 +52,7 @@ public class AddWithTagFix implements LocalQuickFix {
       return;
     }
     ExtensionPoint extensionPoint = (ExtensionPoint)element;
-    List<PsiField> fields = ExtensionPointBeanClassInspection.collectMissingWithTags(extensionPoint);
+    List<PsiField> fields = extensionPoint.collectMissingWithTags();
     PsiElement navTarget = null;
     for (PsiField field : fields) {
       With with = extensionPoint.addWith();

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -32,12 +33,17 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
 class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
@@ -222,8 +228,10 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
           try {
             return myEngine.eval(script);
           }
-          catch (Throwable e) {
-            throw new IdeScriptException(e);
+          catch (Throwable ex) {
+            //noinspection InstanceofCatchParameter
+            while (ex instanceof ScriptException && ex.getCause() != null) ex = ex.getCause();
+            throw new IdeScriptException(ex);
           }
         }
       });
@@ -233,10 +241,12 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   static class AllPluginsLoader extends ClassLoader {
     static final AllPluginsLoader INSTANCE = new AllPluginsLoader();
 
-    final Map<Long, ClassLoader> myLuckyGuess = ContainerUtil.newConcurrentMap();
+    final ConcurrentMap<Long, ClassLoader> myLuckyGuess = ContainerUtil.newConcurrentMap();
 
     public AllPluginsLoader() {
       // Groovy performance: do not specify parent loader to enable our luckyGuesser
+      // Also specify null explicitly to suppress getSystemClassLoader() as parent
+      super(null);
     }
 
     @Override
@@ -244,55 +254,57 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       //long ts = System.currentTimeMillis();
 
       int p0 = name.indexOf("$");
-      int p1 = p0 > 0 ? name.indexOf("$", p0 + 1) : -1;
-      String base = p0 > 0 ? name.substring(0, Math.max(p0, p1)) : name;
+      boolean hasBase = p0 > 0;
+      int p1 = hasBase ? name.indexOf("$", p0 + 1) : -1;
+      String base = hasBase ? name.substring(0, Math.max(p0, p1)) : name;
       long hash = StringHash.calc(base);
 
-      ClassLoader loader = myLuckyGuess.get(hash);
-      if (loader == this) throw new ClassNotFoundException(name);
-
       Class<?> c = null;
-      if (loader != null) {
+      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader
+      ClassLoader guess2 = myLuckyGuess.get(0L);     // last recently used
+      for (ClassLoader loader : JBIterable.of(guess1, guess2)) {
+        if (loader == this) throw new ClassNotFoundException(name);
+        if (loader == null) continue;
         try {
           c = loader.loadClass(name);
+          break;
         }
         catch (ClassNotFoundException ignored) {
         }
       }
       if (c == null) {
-        boolean first = true;
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           ClassLoader l = descriptor.getPluginClassLoader();
-          if (l == null || l == loader) continue;
+          if (l == null || l == guess1 || l == guess2) continue;
           try {
-            l.loadClass(base);
-
-            if (first) {
-              myLuckyGuess.put(hash, l);
+            if (hasBase) {
+              l.loadClass(base);
+              myLuckyGuess.putIfAbsent(hash, l);
             }
-            first = false;
             try {
               c = l.loadClass(name);
+              myLuckyGuess.putIfAbsent(hash, l);
+              myLuckyGuess.put(0L, l);
               break;
             }
             catch (ClassNotFoundException e) {
-              if (p0 > 0) break;
+              if (hasBase) break;
               if (name.startsWith("java.") || name.startsWith("groovy.")) break;
             }
           }
           catch (ClassNotFoundException ignored) {
           }
         }
-        if (first && loader == null) {
-          myLuckyGuess.put(hash, this);
-        }
       }
 
       //LOG.info("AllPluginsLoader [" + StringUtil.formatDuration(System.currentTimeMillis() - ts) + "]: " + (c != null ? "+" : "-") + name);
-      if (c != null) return c;
-      myLuckyGuess.put(StringHash.calc(name), this);
-
-      throw new ClassNotFoundException(name);
+      if (c != null) {
+        return c;
+      }
+      else {
+        myLuckyGuess.putIfAbsent(hash, this);
+        throw new ClassNotFoundException(name);
+      }
     }
 
     private static boolean isAllowedPluginResource(String name) {

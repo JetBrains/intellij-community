@@ -487,7 +487,7 @@ public class ActionsTree {
         final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
         if (!nodesToSelect.isEmpty()) {
           for (DefaultMutableTreeNode node : nodesToSelect) {
-            TreeUtil.selectInTree(node, false, myTree);
+            TreeUtil.selectNode(myTree, node);
           }
         }
         else {

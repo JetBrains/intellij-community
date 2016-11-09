@@ -14,6 +14,7 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.rainbow"/>
+          <verticalTextPosition value="1"/>
         </properties>
       </component>
       <component id="5556e" class="javax.swing.JTextPane" binding="myGradientLabel">

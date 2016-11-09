@@ -111,7 +111,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           String error = EncodingUtil.checkCanConvert(virtualFile);
           int res = Messages.showDialog(XmlStringUtil.wrapInHtml(
                                         "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
-                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)),
+                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : "Because "+error)),
                                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
                                         AllIcons.General.WarningDialog);
           if (res != 0) {

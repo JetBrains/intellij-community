@@ -55,7 +55,8 @@ public class EmptySchemesManager extends SchemeManager {
   }
 
   @Override
-  public void removeScheme(@NotNull Scheme scheme) {
+  public boolean removeScheme(@NotNull Scheme scheme) {
+    return false;
   }
 
   @Override
