@@ -33,6 +33,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -227,8 +228,10 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
           try {
             return myEngine.eval(script);
           }
-          catch (Throwable e) {
-            throw new IdeScriptException(e);
+          catch (Throwable ex) {
+            //noinspection InstanceofCatchParameter
+            while (ex instanceof ScriptException && ex.getCause() != null) ex = ex.getCause();
+            throw new IdeScriptException(ex);
           }
         }
       });
