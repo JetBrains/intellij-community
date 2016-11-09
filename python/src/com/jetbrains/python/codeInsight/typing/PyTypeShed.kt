@@ -13,21 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.application.PathManager
@@ -44,6 +29,10 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
 
 /**
+ * Utilities for managing the local copy of the typeshed repository.
+ *
+ * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
+ *
  * @author vlan
  */
 object PyTypeShed {
@@ -94,11 +83,17 @@ object PyTypeShed {
         .toList()
   }
 
+  /**
+   * Checks if the [file] is located inside the typeshed directory.
+   */
   fun isInside(file: VirtualFile): Boolean {
     val dir = directory
     return dir != null && VfsUtilCore.isAncestor(dir, file, true)
   }
 
+  /**
+   * The actual typeshed directory.
+   */
   val directory: VirtualFile? by lazy {
     val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                        PythonHelpersLocator.getHelperPath("typeshed"))
@@ -108,6 +103,9 @@ object PyTypeShed {
         .firstOrNull()
   }
 
+  /**
+   * A shallow check for a [file] being located inside the typeshed third-party stubs.
+   */
   fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
 
   private fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
