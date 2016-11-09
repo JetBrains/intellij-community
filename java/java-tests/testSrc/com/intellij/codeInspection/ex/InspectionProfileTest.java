@@ -98,7 +98,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl localProfile = createProfile();
     profileManager.updateProfile(localProfile);
 
-    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(getProject());
+    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
     try {
       //normally on open project profile wrappers are init for both managers
       profileManager.updateProfile(localProfile);

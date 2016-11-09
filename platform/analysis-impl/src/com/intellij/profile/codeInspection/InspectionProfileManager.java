@@ -18,10 +18,8 @@ package com.intellij.profile.codeInspection;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +46,6 @@ public interface InspectionProfileManager {
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  void fireProfileChanged(@Nullable InspectionProfileImpl profile);
-
-  void fireProfileChanged(@Nullable InspectionProfile oldProfile, @NotNull InspectionProfile profile);
-
   void setRootProfile(@Nullable String name);
 
   @NotNull
@@ -68,8 +62,6 @@ public interface InspectionProfileManager {
   default InspectionProfileImpl getProfile(@NotNull String name) {
     return getProfile(name, true);
   }
-
-  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 
   @NotNull
   SeverityRegistrar getSeverityRegistrar();

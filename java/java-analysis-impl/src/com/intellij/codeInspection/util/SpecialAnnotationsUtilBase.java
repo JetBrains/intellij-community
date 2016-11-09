@@ -20,7 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
@@ -64,7 +64,7 @@ public class SpecialAnnotationsUtilBase {
     //correct save settings
 
     //TODO lesya
-    InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
+    ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     /*
     try {
       inspectionProfile.save();

@@ -458,11 +458,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  //@Override
-  //public void save() {
-  //  InspectionProfileManager.getInstance().fireProfileChanged(this);
-  //}
-
   @Nullable
   @Override
   public String getSingleTool() {
@@ -485,7 +480,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (ScopeToolState toolState : getAllTools(null)) {
       toolState.scopesChanged();
     }
-    InspectionProfileManager.getInstance().fireProfileChanged(this);
+    getProfileManager().fireProfileChanged(this);
   }
 
   @Override
@@ -842,7 +837,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myTools = model.myTools;
     setProfileManager(model.getProfileManager());
 
-    InspectionProfileManager.getInstance().fireProfileChanged(model);
+    getProfileManager().fireProfileChanged(model);
   }
 
   @Tag

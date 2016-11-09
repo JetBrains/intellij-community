@@ -91,7 +91,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
                                      final InspectionProfileImpl inspectionProfile,
                                      final Consumer<ErrorsConfigurable> configurableAction) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    final ErrorsConfigurable errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstanceImpl(project)) {
+    final ErrorsConfigurable errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstance(project)) {
 
       @Override
       protected boolean setActiveProfileAsDefaultOnApply() {

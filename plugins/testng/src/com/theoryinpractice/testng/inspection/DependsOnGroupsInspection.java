@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
@@ -170,7 +170,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       groups.add(myGroupName);
       //correct save settings
-      InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
       //TODO lesya
       /*
       try {

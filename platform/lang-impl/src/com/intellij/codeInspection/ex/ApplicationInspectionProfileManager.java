@@ -40,10 +40,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileProcessor;
+import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -260,6 +257,13 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   @NotNull
   public String getRootProfileName() {
     return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+  }
+
+  @Override
+  public void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile);
+    }
   }
 
   public static void onProfilesChanged() {

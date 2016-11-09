@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 // cannot be interface due to backward compatibility
 public abstract class InspectionProjectProfileManager implements InspectionProfileManager {
   public static InspectionProjectProfileManager getInstance(@NotNull Project project){
-    return project.getComponent(InspectionProjectProfileManager.class);
+    return project.getComponent(ProjectInspectionProfileManager.class);
   }
 
   @NotNull

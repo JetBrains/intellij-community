@@ -29,8 +29,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
@@ -426,7 +426,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             }
           }
           if (changed) {
-            InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
+            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
           }
         }
       }

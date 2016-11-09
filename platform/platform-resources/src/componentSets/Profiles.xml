@@ -1,7 +1,7 @@
 <idea-plugin>
   <project-components>
     <component>
-      <interface-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</interface-class>
+      <interface-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</interface-class>
       <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
       <loadForDefaultProject/>
     </component>

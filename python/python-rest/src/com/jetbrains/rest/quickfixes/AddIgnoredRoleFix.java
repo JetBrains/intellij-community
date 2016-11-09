@@ -19,7 +19,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.inspections.RestRoleInspection;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!myInspection.ignoredRoles.contains(myRole)) {
       myInspection.ignoredRoles.add(myRole);
-      InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
   }
 }

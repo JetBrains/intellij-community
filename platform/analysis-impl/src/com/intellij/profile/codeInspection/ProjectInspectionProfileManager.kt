@@ -67,8 +67,8 @@ class ProjectInspectionProfileManager(val project: Project,
                                       schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): ProjectInspectionProfileManager {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
+    fun getInstance(project: Project): ProjectInspectionProfileManager {
+      return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
 
@@ -168,7 +168,7 @@ class ProjectInspectionProfileManager(val project: Project,
   @Suppress("unused")
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
-      getInstanceImpl(project).apply {
+      getInstance(project).apply {
         initialLoadSchemesFuture.done {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
@@ -316,5 +316,16 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
+  }
+
+  fun fireProfileChanged() {
+    fireProfileChanged(currentProfile)
+  }
+
+  override fun fireProfileChanged(profile: InspectionProfileImpl) {
+    profile.profileChanged()
+    for (adapter in profileListeners) {
+      adapter.profileChanged(profile)
+    }
   }
 }

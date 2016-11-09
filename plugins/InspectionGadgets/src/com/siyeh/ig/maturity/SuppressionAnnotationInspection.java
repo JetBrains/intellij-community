@@ -22,7 +22,7 @@ import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -100,7 +100,7 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
           myAllowedSuppressions.add(id);
         }
       }
-      InspectionProfileManager.getInstance().fireProfileChanged(InspectionProfileManager.getInstance(project).getCurrentProfile());
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
 
     @NotNull

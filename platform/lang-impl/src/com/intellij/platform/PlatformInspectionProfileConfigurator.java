@@ -28,6 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class PlatformInspectionProfileConfigurator implements DirectoryProjectConfigurator {
   @Override
   public void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef) {
-    ProjectInspectionProfileManager.getInstanceImpl(project).setRootProfile(null);
+    ProjectInspectionProfileManager.getInstance(project).setRootProfile(null);
   }
 }

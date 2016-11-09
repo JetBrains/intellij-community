@@ -41,7 +41,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 
   override final fun getOwnSeverityRegistrar() = severityRegistrar
 
-  override final fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
     ContainerUtil.add(listener, profileListeners, parentDisposable)
   }
 
@@ -51,14 +51,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  override final fun fireProfileChanged(profile: InspectionProfileImpl?) {
-    profile?.profileChanged()
-    for (adapter in profileListeners) {
-      adapter.profileChanged(profile)
-    }
-  }
-
-  override final fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
+  fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
     for (adapter in profileListeners) {
       adapter.profileActivated(oldProfile, profile)
     }
@@ -86,6 +79,8 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     schemeManager.addScheme(profile)
     fireProfileChanged(profile)
   }
+
+  abstract fun fireProfileChanged(profile: InspectionProfileImpl)
 }
 
 abstract class InspectionProfileProcessor : LazySchemeProcessor<InspectionProfileImpl, InspectionProfileImpl>() {
