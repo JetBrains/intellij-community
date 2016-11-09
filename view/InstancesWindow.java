@@ -18,6 +18,7 @@ import com.intellij.debugger.ui.tree.render.CachedEvaluator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -61,11 +62,14 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Math.min;
 
 public class InstancesWindow extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(InstancesWindow.class);
+
   private static final int DEFAULT_WINDOW_WIDTH = 870;
   private static final int DEFAULT_WINDOW_HEIGHT = 400;
   private static final int FILTERING_BUTTON_ADDITIONAL_WIDTH = 30;
@@ -288,10 +292,9 @@ public class InstancesWindow extends DialogWrapper {
       if (expression != null && !expression.getExpression().isEmpty()) {
         try {
           myEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(expression));
-          myEvaluator.setReferenceExpression(TextWithImportsImpl.
-              fromXExpression(expression));
           evaluator = myEvaluator.getEvaluator();
         } catch (EvaluateException ignored) {
+          LOG.info("cannot create evaluator by the expression = " + expression.getExpression());
         }
       }
 
@@ -392,10 +395,10 @@ public class InstancesWindow extends DialogWrapper {
 
     private class MyFilteringWorker extends SwingWorker<Void, Void> {
       private final List<ObjectReference> myReferences;
-      private final EvaluationContextImpl myEvaluationContext;
-      private final ExpressionEvaluator myExpressionEvaluator;
       private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup("Errors");
+      private final ExpressionEvaluator myExpressionEvaluator;
 
+      private final EvaluationContextImpl myEvaluationContext;
       private volatile boolean myDebuggerTaskCompleted = false;
 
       @NotNull
@@ -430,6 +433,7 @@ public class InstancesWindow extends DialogWrapper {
 
         AtomicInteger totalChildren = new AtomicInteger(0);
         AtomicInteger totalViewed = new AtomicInteger(0);
+        long start = System.nanoTime();
         for (int i = 0, size = myReferences.size(); i < size && totalChildren.get() < MAX_TREE_NODE_COUNT;
              i += FILTERING_CHUNK_SIZE) {
           myDebuggerTaskCompleted = false;
@@ -498,6 +502,9 @@ public class InstancesWindow extends DialogWrapper {
             }
           }
         }
+
+        LOG.info(String.format("Filtering time = %d ms, count = %d, matched = %d",
+            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start), totalViewed.get(), totalChildren.get()));
 
         myCompletionReason = totalViewed.get() == myReferences.size()
             ? FilteringCompletionReason.ALL_CHECKED
