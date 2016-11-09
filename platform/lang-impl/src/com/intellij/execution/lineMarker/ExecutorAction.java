@@ -13,98 +13,80 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.lineMarker;
+package com.intellij.execution.lineMarker
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.actions.*;
-import com.intellij.execution.configurations.LocatableConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.Key;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.actions.*
+import com.intellij.execution.configurations.LocatableConfiguration
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.util.Key
 
 /**
  * @author Dmitry Avdeev
  */
-public class ExecutorAction extends AnAction {
-  private static final Key<List<ConfigurationFromContext>> CONFIGURATION_CACHE = Key.create("ConfigurationFromContext");
+class ExecutorAction private constructor(private val myOrigin: AnAction,
+                                         private val myExecutor: Executor,
+                                         private val myOrder: Int) : AnAction() {
 
-  @NotNull
-  public static AnAction[] getActions(final int order) {
-    return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class,
-                                   (Function<Executor, AnAction>)executor -> new ExecutorAction(ActionManager.getInstance().getAction(executor.getContextActionId()), executor, order));
+  init {
+    copyFrom(myOrigin)
   }
 
-  private final AnAction myOrigin;
-  private final Executor myExecutor;
-  private final int myOrder;
+  companion object {
+    private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
 
-  private ExecutorAction(@NotNull AnAction origin,
-                         @NotNull Executor executor,
-                         int order) {
-    myOrigin = origin;
-    myExecutor = executor;
-    myOrder = order;
-    copyFrom(origin);
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    String name = getActionName(e.getDataContext(), myExecutor);
-    e.getPresentation().setVisible(name != null);
-    e.getPresentation().setText(name);
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    myOrigin.actionPerformed(e);
-  }
-
-  @NotNull
-  private static List<ConfigurationFromContext> getConfigurations(DataContext dataContext) {
-    List<ConfigurationFromContext> result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE);
-    if (result == null) {
-      DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result = calcConfigurations(dataContext));
+    fun getActions(order: Int): Array<AnAction> {
+      return ExecutorRegistry.getInstance().registeredExecutors.map {
+        ExecutorAction(ActionManager.getInstance().getAction(it.contextActionId), it, order)
+      }.toTypedArray()
     }
-    return result;
+
+    private fun getConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
+      var result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE)
+      if (result == null) {
+        result = calcConfigurations(dataContext)
+        DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result)
+      }
+      return result
+    }
+
+    private fun calcConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
+      val context = ConfigurationContext.getFromContext(dataContext)
+      if (context.location == null) {
+        return emptyList()
+      }
+      return RunConfigurationProducer.getProducers(context.project).mapNotNull {
+        val configuration = it.createLightConfiguration(context) ?: return@mapNotNull null
+        val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
+        ConfigurationFromContextImpl(it, settings, context.psiLocation)
+      }
+    }
   }
 
-  @NotNull
-  private static List<ConfigurationFromContext> calcConfigurations(DataContext dataContext) {
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (context.getLocation() == null) return Collections.emptyList();
-    List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
-    return ContainerUtil.mapNotNull(producers, producer -> createConfiguration(producer, context));
+  override fun update(e: AnActionEvent) {
+    val name = getActionName(e.dataContext, myExecutor)
+    e.presentation.isVisible = name != null
+    e.presentation.text = name
   }
 
-  private String getActionName(DataContext dataContext, @NotNull Executor executor) {
-    List<ConfigurationFromContext> list = getConfigurations(dataContext);
-    if (list.isEmpty()) return null;
-    ConfigurationFromContext configuration = list.get(myOrder < list.size() ? myOrder : 0);
-    String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
-    return executor.getStartActionText(actionName);
+  override fun actionPerformed(e: AnActionEvent) {
+    myOrigin.actionPerformed(e)
   }
 
-  @Nullable
-  private static ConfigurationFromContext createConfiguration(RunConfigurationProducer<?> producer,
-                                                              ConfigurationContext context) {
-    RunConfiguration configuration = producer.createLightConfiguration(context);
-    if (configuration == null) return null;
-    RunnerAndConfigurationSettingsImpl
-      settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.getProject()), configuration, false);
-    return new ConfigurationFromContextImpl(producer, settings, context.getPsiLocation());
+  private fun getActionName(dataContext: DataContext, executor: Executor): String? {
+    val list = getConfigurations(dataContext)
+    if (list.isEmpty()) {
+      return null
+    }
+    val configuration = list[if (myOrder < list.size) myOrder else 0]
+    val actionName = BaseRunConfigurationAction.suggestRunActionName(configuration.configuration as LocatableConfiguration)
+    return executor.getStartActionText(actionName)
   }
 }
