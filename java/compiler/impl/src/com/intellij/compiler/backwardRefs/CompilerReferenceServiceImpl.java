@@ -23,6 +23,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -63,6 +64,8 @@ import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFile
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
 public class CompilerReferenceServiceImpl extends CompilerReferenceService implements ModificationTracker {
+  private final static Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
+
   private final Set<FileType> myFileTypes;
   private final DirtyModulesHolder myDirtyModulesHolder;
   private final ProjectFileIndex myProjectFileIndex;
@@ -169,10 +172,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
     if (!isServiceEnabledFor(element)) return null;
 
-    return CachedValuesManager.getCachedValue(element,
-                                              () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
-                                                                                      PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                      this));
+    try {
+      return CachedValuesManager.getCachedValue(element,
+                                                () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
+                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                        this));
+    }
+    catch (Exception e) {
+      LOG.error("an exception during scope without code references calculation", e);
+      return null;
+    }
   }
 
   @Nullable
@@ -201,27 +210,34 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                      @NotNull CompilerHierarchySearchType searchType) {
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
-    Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
-      if (myProject.isDisposed()) throw new ProcessCanceledException();
-      return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-        new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
-          @Nullable
-          @Override
-          protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
-            return calculateDirectInheritors(aClass,
-                                             useScope,
-                                             key.mySearchFileType,
-                                             key.mySearchType);
-          }
-        }, PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
-    });
+    try {
 
-    if (candidatesPerFile == null) return null;
-    GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
-    if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
-      dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+      Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+        return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
+          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
+            @Nullable
+            @Override
+            protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
+              return calculateDirectInheritors(aClass,
+                                               useScope,
+                                               key.mySearchFileType,
+                                               key.mySearchType);
+            }
+          }, PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
+      });
+
+      if (candidatesPerFile == null) return null;
+      GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
+      if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
+        dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+      }
+      return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, myProject, searchFileType, searchType);
     }
-    return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, myProject, searchFileType, searchType);
+    catch (Exception e) {
+      LOG.error("an exception during hierarchy calculation", e);
+      return null;
+    }
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
