@@ -51,23 +51,22 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     final PsiElement valuesSource = getValuesSource();
     if (valuesSource == null) return false;
     final List<T> chunks = extractAllSubstitutionChunks();
-    for (int i = 0; i < chunks.size(); i++) {
-      final T chunk = chunks.get(i);
+    for (T chunk : chunks) {
       if (!checkChunk(chunk)) return false;
-      final PySubstitutionChunkReference reference = createReference(chunk, i);
-      final PsiElement referencedExpr = adjustResolveResult(reference.resolve());
+      final PySubstitutionChunkReference reference = createReference(chunk);
+      final PyExpression referencedExpr = adjustResolveResult(reference.resolve());
       if (referencedExpr == null) return false;
       if (!PsiTreeUtil.isAncestor(valuesSource, referencedExpr, false)) return false;
       if (referencedExpr instanceof PyStarExpression || referencedExpr instanceof PyStarArgument) return false;
-      if (!checkReferencedExpression(chunks, i, valuesSource, referencedExpr)) return false;
+      if (!checkReferencedExpression(chunks, chunk, valuesSource, referencedExpr)) return false;
     }
     return true;
   }
 
   protected boolean checkReferencedExpression(@NotNull List<T> chunks,
-                                              int position,
+                                              @NotNull T chunk,
                                               @NotNull PsiElement valueSource,
-                                              @NotNull PsiElement expression) {
+                                              @NotNull PyExpression expression) {
     if (expression.textContains('\\') || expression.textContains('\n')) return false;
     return adjustQuotesInsideInjectedExpression(expression) != null;
   }
@@ -82,15 +81,12 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     final TextRange contentRange = myNodeInfo.getContentRange();
     int offset = contentRange.getStartOffset();
 
-    final List<T> chunks = extractTopLevelSubstitutionChunks();
-    for (int i = 0; i < chunks.size(); i++) {
-      final T chunk = chunks.get(i);
-
+    for (final T chunk : extractTopLevelSubstitutionChunks()) {
       // Preceding literal text
       fStringText.append(stringText, offset, chunk.getStartIndex());
       offset = chunk.getEndIndex();
 
-      if (!convertSubstitutionChunk(chunk, i, fStringText)) return;
+      if (!convertSubstitutionChunk(chunk, fStringText)) return;
     }
 
     if (offset < contentRange.getEndOffset()) {
@@ -115,11 +111,11 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
   }
 
   @NotNull
-  protected abstract PySubstitutionChunkReference createReference(@NotNull T chunk, int position);
+  protected abstract PySubstitutionChunkReference createReference(@NotNull T chunk);
 
   protected abstract boolean checkChunk(@NotNull T chunk);
 
-  protected abstract boolean convertSubstitutionChunk(@NotNull T chunk, int position, @NotNull StringBuilder fStringText);
+  protected abstract boolean convertSubstitutionChunk(@NotNull T chunk, @NotNull StringBuilder fStringText);
 
   @Nullable
   protected PsiElement adjustQuotesInsideInjectedExpression(@NotNull PsiElement expression) {
