@@ -57,6 +57,7 @@ class JarLoader extends Loader {
 
     myCanonicalFile = new File(FileUtil.unquote(url.getFile())).getCanonicalFile();
     myCanLockJar = canLockJar;
+    // Android Studio: Added to avoid fatal error reports when build jars disappear during a preview render
     myLogError = logError;
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,

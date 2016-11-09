@@ -57,6 +57,7 @@ public class ClassPath {
   private final boolean myCanHavePersistentIndex;
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
+  // Android Studio: Added to avoid fatal error reports when build jars disappear during a preview render
   private final boolean myLogErrorOnMissingJar;
 
   public ClassPath(List<URL> urls,

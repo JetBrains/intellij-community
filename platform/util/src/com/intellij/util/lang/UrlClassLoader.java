@@ -145,6 +145,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder noPreload() { return preload(false); }
     public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    // Android Studio: Added to avoid fatal error reports when build jars disappear during a preview render
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
