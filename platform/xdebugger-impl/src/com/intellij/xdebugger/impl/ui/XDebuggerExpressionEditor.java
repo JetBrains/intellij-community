@@ -68,7 +68,9 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.getSettings().setUseSoftWraps(isUseSoftWraps());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
-        editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
+        if (multiline) {
+          editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
+        }
         return editor;
       }
 
