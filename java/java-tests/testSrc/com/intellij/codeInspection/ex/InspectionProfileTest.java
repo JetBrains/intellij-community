@@ -215,8 +215,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                   "</profile>");
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(element);
-    InspectionProfileImpl model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
 
 
@@ -239,8 +238,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                         "   </inspection_tool>\n" +
                                                         "</profile>");
     profile.readExternal(unusedProfile);
-    model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertEquals("<profile version=\"1.0\">\n" +
                  "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                  "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
@@ -262,13 +260,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     //make them default
     profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(unusedProfile);
-    model = profile.getModifiableModel();
-    InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
-    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
-    tool.ADD_NONJAVA_TO_ENTRIES = true;
-    UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
-    inspectionTool.setParameterVisibility(PsiModifier.PUBLIC);
-    model.commit();
+    profile.modifyProfile(it -> {
+      InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
+      UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
+      tool.ADD_NONJAVA_TO_ENTRIES = true;
+      UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+      inspectionTool.setParameterVisibility(PsiModifier.PUBLIC);
+    });
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
@@ -297,8 +295,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();
     profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(mergedElement);
-    model = profile.getModifiableModel();
-    model.commit();
+    profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
 
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
@@ -320,13 +317,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
                                                "  </inspection_tool>\n" +
                                                "</profile>").getRootElement());
-    InspectionProfileImpl model = profile.getModifiableModel();
-    InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
-    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
-    UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
-    inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
-    inspectionTool.CLASS = false;
-    model.commit();
+    profile.modifyProfile(it -> {
+      InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
+      UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
+      UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+      inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
+      inspectionTool.CLASS = false;
+    });
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                         "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
@@ -506,10 +503,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("foo")));
     assertTrue(profile.getToolDefaultState("foo", getProject()).isEnabled());
 
-    InspectionProfileImpl model = profile.getModifiableModel();
-    model.lockProfile(true);
-    model.initInspectionTools(getProject()); // todo commit should take care of initialization
-    model.commit();
+    profile.modifyProfile(it -> {
+      it.lockProfile(true);
+      it.initInspectionTools(getProject()); // todo commit should take care of initialization
+    });
 
     assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
                  "  <option name=\"myName\" value=\"Foo\" />\n" +
@@ -563,13 +560,12 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testInspectionsInitialization() throws Exception {
-
     InspectionProfileImpl foo = new InspectionProfileImpl("foo");
     assertEquals(0, countInitializedTools(foo));
     foo.initInspectionTools(getProject());
     assertEquals(0, countInitializedTools(foo));
 
-    InspectionProfileImpl model = foo.getModifiableModel();
+    InspectionProfileModifiableModel model = foo.getModifiableModel();
     assertEquals(0, countInitializedTools(model));
     model.commit();
     assertEquals(0, countInitializedTools(model));

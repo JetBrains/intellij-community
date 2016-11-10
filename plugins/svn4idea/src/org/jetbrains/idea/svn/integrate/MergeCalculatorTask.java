@@ -15,108 +15,110 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.history.LogHierarchyNode;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
-import java.util.LinkedList;
 import java.util.List;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
+import static java.lang.Math.min;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
 public class MergeCalculatorTask extends BaseMergeTask {
 
-  @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
-  @NotNull private final MergeChecker myMergeChecker;
+  public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
+  private final static int BUNCH_SIZE = 100;
 
-  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess, @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
-    super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
+  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  @NotNull private final OneShotMergeInfoHelper myMergeChecker;
+  @NotNull private final List<SvnChangeList> myChangeLists;
+  @NotNull private final Consumer<MergeCalculatorTask> myCallback;
+  private boolean myAllListsLoaded;
+
+  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
+                             @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                             @NotNull Consumer<MergeCalculatorTask> callback) {
+    super(mergeProcess);
     myCopyPoint = copyPoint;
+    myCallback = callback;
+    myChangeLists = newArrayList();
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
   }
 
+  public boolean areAllListsLoaded() {
+    return myAllListsLoaded;
+  }
+
+  @NotNull
+  public MergeChecker getMergeChecker() {
+    return myMergeChecker;
+  }
+
+  @NotNull
+  public List<SvnChangeList> getChangeLists() {
+    return myChangeLists;
+  }
+
   @Override
   public void run() throws VcsException {
+    progress("Collecting merge information");
     myMergeChecker.prepare();
 
-    List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists = getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision());
-    List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
-
-    if (!notMergedChangeLists.isEmpty()) {
-      next(new ShowRevisionSelector(myMergeProcess, notMergedChangeLists, myMergeChecker));
+    if (myCopyPoint != null) {
+      myChangeLists.addAll(getNotMergedChangeLists(getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision())));
+      myAllListsLoaded = true;
     }
     else {
-      end("Everything is up-to-date", false);
+      Pair<List<SvnChangeList>, Boolean> loadResult = loadChangeLists(myMergeContext, -1, getBunchSize(-1));
+
+      myChangeLists.addAll(loadResult.first);
+      myAllListsLoaded = loadResult.second;
+    }
+
+    if (!myChangeLists.isEmpty()) {
+      myCallback.consume(this);
+    }
+    else {
+      myMergeProcess.end("Everything is up-to-date", false);
     }
   }
 
   @NotNull
-  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(final long revision) {
+  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(long revision) throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.CHANGE_AFTER = Long.toString(revision);
     settings.USE_CHANGE_AFTER_FILTER = true;
 
-    List<Pair<SvnChangeList, LogHierarchyNode>> result = newArrayList();
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
-    try {
-      ((SvnCommittedChangesProvider)myMergeContext.getVcs().getCommittedChangesProvider())
-        .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()), 0,
-                                               (changeList, tree) -> {
-                                                 indicator.checkCanceled();
-                                                 if (revision < changeList.getNumber()) {
-                                                   result.add(Pair.create(changeList, tree));
-                                                 }
-                                               });
-    }
-    catch (VcsException e) {
-      end("Checking revisions for merge fault", e);
-    }
-
-    return result;
+    return getChangeLists(myMergeContext, settings, revision, -1, Pair::create);
   }
 
   @NotNull
-  private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
-    ProgressManager.getInstance().getProgressIndicator().setText("Checking merge information...");
+  private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+    List<SvnChangeList> result = newArrayList();
 
-    String repositoryRelativeWorkingCopyRoot =
-      ensureStartSlash(getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl()));
-    String repositoryRelativeSourceBranch =
-      ensureStartSlash(getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl()));
-
-    return getNotMergedChangeLists(changeLists, repositoryRelativeWorkingCopyRoot, repositoryRelativeSourceBranch);
-  }
-
-  @NotNull
-  private List<CommittedChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists,
-                                                            @NotNull String workingCopyRoot,
-                                                            @NotNull String sourceBranch) {
-    List<CommittedChangeList> result = newArrayList();
-
+    progress("Collecting not merged revisions");
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       SvnChangeList changeList = pair.getFirst();
 
-      ProgressManager.getInstance().getProgressIndicator().setText2("Processing revision " + changeList.getNumber());
-
-      if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(myMergeChecker.checkList(changeList)) &&
-          !checkListForPaths(workingCopyRoot, sourceBranch, pair.getSecond())) {
+      progress2(message("progress.text2.processing.revision", changeList.getNumber()));
+      if (MergeCheckResult.NOT_MERGED.equals(myMergeChecker.checkList(changeList)) && !myMergeChecker.checkListForPaths(pair.getSecond())) {
         result.add(changeList);
       }
     }
@@ -124,93 +126,44 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return result;
   }
 
-  private static class ShowRevisionSelector extends BaseMergeTask {
-
-    @NotNull private final List<CommittedChangeList> myChangeLists;
-    @NotNull private final MergeChecker myMergeChecker;
-
-    private ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
-                                 @NotNull List<CommittedChangeList> changeLists,
-                                 @NotNull MergeChecker mergeChecker) {
-      super(mergeProcess, "show revisions to merge", Where.AWT);
-
-      myChangeLists = changeLists;
-      myMergeChecker = mergeChecker;
+  @NotNull
+  public static Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
+    throws VcsException {
+    ChangeBrowserSettings settings = new ChangeBrowserSettings();
+    if (beforeRevision > 0) {
+      settings.CHANGE_BEFORE = String.valueOf(beforeRevision);
+      settings.USE_CHANGE_BEFORE_FILTER = true;
     }
 
-    @Override
-    public void run() {
-      QuickMergeInteraction.SelectMergeItemsResult result =
-        myInteraction.selectMergeItems(myChangeLists, myMergeContext.getTitle(), myMergeChecker);
-
-      switch (result.getResultCode()) {
-        case cancel:
-          end();
-          break;
-        case all:
-          next(getMergeAllTasks(true));
-          break;
-        default:
-          List<CommittedChangeList> lists = result.getSelectedLists();
-
-          if (!lists.isEmpty()) {
-            runChangeListsMerge(lists, myMergeContext.getTitle());
-          }
-          break;
-      }
-    }
+    List<SvnChangeList> changeLists = getChangeLists(mergeContext, settings, beforeRevision, size, (changeList, tree) -> changeList);
+    return Pair.create(
+      changeLists.subList(0, min(size, changeLists.size())),
+      changeLists.size() < size + 1);
   }
 
-  // true if errors found
-  static boolean checkListForPaths(@NotNull String workingCopyRoot, @NotNull String sourceBranch, @NotNull LogHierarchyNode node) {
-    // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
-    // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
-    // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
-    // TODO: will return true => so such revision will not be used (and displayed) further.
+  public static int getBunchSize(int size) {
+    Integer configuredSize = Integer.getInteger(PROP_BUNCH_SIZE);
 
-    // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
-    // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
-    boolean isLocalChange = ContainerUtil.or(node.getChildren(), child -> checkForSubtree(child, workingCopyRoot, sourceBranch));
-
-    return isLocalChange || checkForEntry(node.getMe(), workingCopyRoot, sourceBranch);
+    return configuredSize != null ? configuredSize : size > 0 ? size : BUNCH_SIZE;
   }
 
-  /**
-   * TODO: Why parameters here are in [relativeBranch/sourceBranch, localURL/workingCopyRoot] order? - not as in other similar checkXxx()
-   * TODO: methods? Check if this is correct, because currently it results that checkForEntry() from checkListForPaths() and
-   * TODO: checkForSubtree() are called with swapped parameters.
-   */
-  // true if errors found
-  private static boolean checkForSubtree(@NotNull LogHierarchyNode tree, @NotNull String relativeBranch, @NotNull String localURL) {
-    LinkedList<LogHierarchyNode> queue = new LinkedList<>();
-    queue.addLast(tree);
+  @NotNull
+  private static <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
+                                            @NotNull ChangeBrowserSettings settings,
+                                            long revisionToExclude,
+                                            int size,
+                                            @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
+    List<T> result = newArrayList();
 
-    while (!queue.isEmpty()) {
-      LogHierarchyNode element = queue.removeFirst();
-      ProgressManager.checkCanceled();
+    ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
+      .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),
+                                             size > 0 ? size + (revisionToExclude > 0 ? 2 : 1) : 0,
+                                             (changeList, tree) -> {
+                                               if (revisionToExclude != changeList.getNumber()) {
+                                                 result.add(resultProvider.fun(changeList, tree));
+                                               }
+                                             });
 
-      if (checkForEntry(element.getMe(), localURL, relativeBranch)) return true;
-      queue.addAll(element.getChildren());
-    }
-    return false;
-  }
-
-  // true if errors found
-  // checks if either some changed path is in current branch => treat as local change
-  // or if no changed paths in current branch, checks if at least one path in "merge from" branch
-  // NOTE: this fails for "merge-source" log entries from other branches - when all changed paths are from some
-  // third branch - this logic treats such log entry as local.
-  private static boolean checkForEntry(@NotNull LogEntry entry, @NotNull String localURL, @NotNull String relativeBranch) {
-    boolean atLeastOneUnderBranch = false;
-
-    for (LogEntryPath path : entry.getChangedPaths().values()) {
-      if (isAncestor(localURL, path.getPath())) {
-        return true;
-      }
-      if (!atLeastOneUnderBranch && isAncestor(relativeBranch, path.getPath())) {
-        atLeastOneUnderBranch = true;
-      }
-    }
-    return !atLeastOneUnderBranch;
+    return result;
   }
 }

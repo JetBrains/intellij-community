@@ -635,4 +635,30 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ApplicationManager.getApplication().invokeLater(semaphore::up);
     assertTrue("invokeAndWait would deadlock", semaphore.waitFor(1000));
   }
+
+  public void testNonCancelableSectionDetectedCorrectly() {
+    ProgressManager progressManager = ProgressManager.getInstance();
+    assertFalse(progressManager.isInNonCancelableSection());
+    progressManager.run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        assertFalse(indicator instanceof NonCancelableIndicator);
+        assertFalse(progressManager.isInNonCancelableSection());
+        progressManager.executeNonCancelableSection(() -> {
+          assertTrue(progressManager.getProgressIndicator() instanceof NonCancelableIndicator);
+          assertTrue(progressManager.isInNonCancelableSection());
+
+          progressManager.executeProcessUnderProgress(() -> {
+            assertFalse(progressManager.getProgressIndicator() instanceof NonCancelableIndicator);
+            assertTrue(progressManager.isInNonCancelableSection());
+          }, new DaemonProgressIndicator());
+
+          assertTrue(progressManager.isInNonCancelableSection());
+        });
+
+        assertFalse(progressManager.isInNonCancelableSection());
+      }
+    });
+    assertFalse(progressManager.isInNonCancelableSection());
+  }
 }

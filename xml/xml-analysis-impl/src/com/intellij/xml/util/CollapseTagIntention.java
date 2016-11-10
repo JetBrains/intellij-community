@@ -73,7 +73,10 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    applyFix(project, getTag(editor, file));
+    XmlTag tag = getTag(editor, file);
+    if (tag != null) {
+      applyFix(project, tag);
+    }
   }
 
   private static XmlTag getTag(Editor editor, PsiFile file) {

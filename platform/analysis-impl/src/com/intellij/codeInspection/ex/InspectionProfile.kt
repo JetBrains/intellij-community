@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.ex
 
-import com.intellij.codeInspection.ModifiableModel
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
@@ -24,13 +24,13 @@ import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 
-abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), ModifiableModel, SerializableScheme {
+abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   private var isProjectLevel: Boolean = false
 
   @Transient
-  override fun isProjectLevel() = isProjectLevel
+  fun isProjectLevel() = isProjectLevel
 
-  override fun setProjectLevel(value: Boolean) {
+  fun setProjectLevel(value: Boolean) {
     isProjectLevel = value
   }
 
@@ -44,7 +44,6 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   protected val pathMacroManager: PathMacroManager
     get() {
       val profileManager = profileManager
-      return PathMacroManager.getInstance(
-          if (profileManager is ProjectInspectionProfileManager) profileManager.project else ApplicationManager.getApplication())
+      return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
 }

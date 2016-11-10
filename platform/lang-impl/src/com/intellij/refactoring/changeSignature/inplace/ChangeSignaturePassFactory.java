@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.changeSignature;
+package com.intellij.refactoring.changeSignature.inplace;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
@@ -23,7 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -33,24 +32,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.changeSignature.ChangeInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
 public class ChangeSignaturePassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ChangeSignaturePassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
   }
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    LanguageChangeSignatureDetector detector =
+    LanguageChangeSignatureDetector<ChangeInfo> detector =
       LanguageChangeSignatureDetectors.INSTANCE.forLanguage(file.getLanguage());
     if (detector == null) return null;
 
@@ -63,58 +61,41 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
     private final PsiFile myFile;
     private final Editor myEditor;
 
-    private TextRange myRange;
-
     public ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
-      super(project, editor.getDocument(), false);
+      super(project, editor.getDocument(), true);
       myProject = project;
       myFile = file;
       myEditor = editor;
     }
 
     @Override
-    public void doCollectInformation(@NotNull ProgressIndicator progress) {
-      myRange = null;
-      final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(myProject);
-      final ChangeInfo changeInfo = detector.getInitialChangeInfo(myFile);
-      if (changeInfo != null) {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {}
+
+    @Override
+    public void doApplyInformationToEditor() {
+      HighlightInfo info = null;
+      final InplaceChangeSignature currentRefactoring = InplaceChangeSignature.getCurrentRefactoring(myEditor);
+      if (currentRefactoring != null) {
+        final ChangeInfo changeInfo = currentRefactoring.getStableChange();
         final PsiElement element = changeInfo.getMethod();
         int offset = myEditor.getCaretModel().getOffset();
         if (element == null || !element.isValid()) return;
         final TextRange elementTextRange = element.getTextRange();
         if (elementTextRange == null || !elementTextRange.contains(offset)) return;
-        final TextRange range = getHighlightingRange(changeInfo);
-        if (range != null && detector.isChangeSignatureAvailable(element)) {
-          myRange = range;
-        }
-      }
-    }
-
-    @Override
-    public void doApplyInformationToEditor() {
-      HighlightInfo info = null;
-      if (myRange != null)  {
+        final LanguageChangeSignatureDetector<ChangeInfo> detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(changeInfo.getLanguage());
+        TextRange range = detector.getHighlightingRange(changeInfo);
         TextAttributes attributes = new TextAttributes(null, null,
                                                        myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES)
                                                          .getEffectColor(),
                                                        null, Font.PLAIN);
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(myRange);
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(range);
         builder.textAttributes(attributes);
         builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
         info = builder.createUnconditionally();
-        final ArrayList<IntentionAction> options = new ArrayList<>();
-        options.add(new DismissNewSignatureIntentionAction());
-        QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction(), options, null);
+        QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(DescriptiveNameUtil.getDescriptiveName(element)));
       }
       Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.<HighlightInfo>emptyList();
       UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
-    }
-
-    @Nullable
-    private static TextRange getHighlightingRange(ChangeInfo changeInfo) {
-      if (changeInfo == null) return null;
-      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(changeInfo.getLanguage());
-      return detector != null ? detector.getHighlightingRange(changeInfo) : null;
     }
   }
 }

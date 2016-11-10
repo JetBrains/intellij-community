@@ -24,6 +24,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
@@ -99,7 +100,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   protected JComponent getAdditionalActionSettings(@NotNull final Project project, final BaseAnalysisActionDialog dialog) {
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final ProfilesComboBox profiles = (ProfilesComboBox)panel.myBrowseProfilesCombo.getComboBox();
+    final ProfilesComboBox<InspectionProfileImpl> profiles = (ProfilesComboBox<InspectionProfileImpl>)panel.myBrowseProfilesCombo.getComboBox();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
@@ -142,7 +143,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   protected static class ExternalProfilesComboboxAwareInspectionToolsConfigurable extends InspectionToolsConfigurable {
-    private final ProfilesComboBox myProfilesCombo;
+    private final ProfilesComboBox<InspectionProfileImpl> myProfilesCombo;
 
     public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager, ProfilesComboBox profilesCombo) {
       super(projectProfileManager);
@@ -155,9 +156,9 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
 
     @Override
-    protected void addProfile(InspectionProfileImpl model) {
+    protected void addProfile(InspectionProfileModifiableModel model) {
       super.addProfile(model);
-      myProfilesCombo.addProfile(model.getParentProfile());
+      myProfilesCombo.addProfile(model.getSource());
     }
 
     @Override
@@ -173,7 +174,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
 
-  private void reloadProfiles(ProfilesComboBox profilesCombo,
+  private void reloadProfiles(ProfilesComboBox<InspectionProfileImpl> profilesCombo,
                               InspectionProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {

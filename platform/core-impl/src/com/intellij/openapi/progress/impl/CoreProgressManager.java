@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -50,6 +51,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.CoreProgressManager");
+
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
@@ -75,6 +78,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    */
   // multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
+
+  /** true if running in non-cancelable section started with
+   * {@link #startNonCancelableSection()} or {@link #executeNonCancelableSection(Runnable)} in this thread
+   */
+  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<Boolean>(); // do not supply initial value to conserve memory
 
   public CoreProgressManager() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
@@ -206,7 +214,18 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
+    if (isInNonCancelableSection()) {
+      runnable.run();
+    }
+    else {
+      try {
+        isInNonCancelableSection.set(Boolean.TRUE);
+        executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
+      }
+      finally {
+        isInNonCancelableSection.remove();
+      }
+    }
   }
 
   @Override
@@ -656,17 +675,26 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @NotNull
   @Override
   public final NonCancelableSection startNonCancelableSection() {
+    LOG.warn("Use executeNonCancelableSection() instead");
+    if (isInNonCancelableSection()) return NonCancelableSection.EMPTY;
     final ProgressIndicator myOld = getProgressIndicator();
 
     final Thread currentThread = Thread.currentThread();
-    NonCancelableIndicator nonCancelor = new NonCancelableIndicator() {
+    final NonCancelableIndicator nonCancelor = new NonCancelableIndicator() {
       @Override
       public void done() {
         setCurrentIndicator(currentThread, myOld);
+        isInNonCancelableSection.remove();
       }
     };
+    isInNonCancelableSection.set(Boolean.TRUE);
     setCurrentIndicator(currentThread, nonCancelor);
     return nonCancelor;
+  }
+
+  @Override
+  public boolean isInNonCancelableSection() {
+    return isInNonCancelableSection.get() != null;
   }
 
   @NotNull
@@ -710,15 +738,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       return myTask.toString();
     }
   }
-  protected static class TaskRunnable extends TaskContainer {
+
+  static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
     private final Runnable myContinuation;
 
-    public TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
+    TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
       this(task, indicator, null);
     }
 
-    public TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
+    TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
       super(task);
       myIndicator = indicator;
       myContinuation = continuation;

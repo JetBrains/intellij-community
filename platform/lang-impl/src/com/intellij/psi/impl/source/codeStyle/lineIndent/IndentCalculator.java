@@ -57,7 +57,13 @@ class IndentCalculator {
       return CharArrayUtil.shiftBackward(currPosition.getChars(), currPosition.getStartOffset(), " \t\n\r");
     }
   };
-  
+
+  public final static BaseLineOffsetCalculator LINE_AFTER = new BaseLineOffsetCalculator() {
+    @Override
+    public int getOffsetInBaseIndentLine(@NotNull SemanticEditorPosition currPosition) {
+      return CharArrayUtil.shiftForward(currPosition.getChars(), currPosition.getStartOffset(), " \t\n\r");
+    }
+  };
   
   @Nullable
   String getIndentString(@Nullable Language language, @NotNull SemanticEditorPosition currPosition) {

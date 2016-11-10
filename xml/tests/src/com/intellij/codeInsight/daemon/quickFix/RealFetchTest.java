@@ -33,9 +33,9 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testFetchDtd() throws Exception {
 
-    final String url = "http://helpserver.labs.intellij.net/help/images.dtd";
+    final String url = "http://java.sun.com/dtd/preferences.dtd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
-    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://helpserver.labs.intellij.net/help/ima<caret>ges.dtd\">");
+    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
     IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
@@ -45,11 +45,11 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testOverwriteFetchDtd() throws Exception {
 
-    final String url = "http://helpserver.labs.intellij.net/help/images.dtd";
+    final String url = "http://java.sun.com/dtd/preferences.dtd";
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource(url, virtualFile.getPath()));
 
-    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://helpserver.labs.intellij.net/help/ima<caret>ges.dtd</error>\"><images> </images>");
+    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://java.sun.com/dtd/prefer<caret>ences.dtd</error>\"><images> </images>");
     myFixture.testHighlighting();
     IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
     assertNotNull(intention);

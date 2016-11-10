@@ -337,29 +337,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                     @NotNull List<VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
                                                                     @NotNull final Processor<VirtualFile> localProcessor) {
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     final AtomicBoolean canceled = new AtomicBoolean(false);
 
-    boolean completed = true;
     while (true) {
       List<VirtualFile> failedList = new SmartList<>();
       final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
       final Processor<VirtualFile> processor = vfile -> {
         try {
-          return localProcessor.process(vfile);
+          boolean result = localProcessor.process(vfile);
+          if (!result) {
+            canceled.set(true);
+          }
+          return result;
         }
         catch (ApplicationUtil.CannotRunReadActionException action) {
           failedFiles.add(vfile);
         }
         return !canceled.get();
       };
-      if (ApplicationManager.getApplication().isWriteAccessAllowed() || ((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) {
+      boolean completed;
+      if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
         // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-        completed &= ContainerUtil.process(files, processor);
+        completed = ContainerUtil.process(files, processor);
+      }
+      else if (app.isWriteActionPending()) {
+        completed = true;
+        // we don't have read action now so wait for write action to complete
+        failedFiles.addAll(files);
       }
       else {
-        completed &= JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, true, processor);
+        // try to run parallel read actions but fail as soon as possible
+        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, true, processor);
       }
-
+      if (!completed) {
+        return false;
+      }
       if (failedFiles.isEmpty()) {
         break;
       }
@@ -368,7 +381,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
       files = failedList;
     }
-    return completed;
+    return true;
   }
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,

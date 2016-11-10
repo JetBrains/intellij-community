@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
-import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -29,30 +28,24 @@ public class LookForBranchOriginTask extends BaseMergeTask {
   public LookForBranchOriginTask(@NotNull QuickMerge mergeProcess,
                                  boolean fromSource,
                                  @NotNull Consumer<SvnBranchPointsCalculator.WrapperInvertor> callback) {
-    super(mergeProcess, "Looking for branch origin", Where.POOLED);
+    super(mergeProcess);
     myFromSource = fromSource;
     myCallback = callback;
   }
 
   @Override
-  public void run() {
+  public void run() throws VcsException {
     SVNURL repoUrl = myMergeContext.getWcInfo().getRootInfo().getRepositoryUrlUrl();
     String sourceUrl = myFromSource ? myMergeContext.getSourceUrl() : myMergeContext.getWcInfo().getRootUrl();
     String targetUrl = myFromSource ? myMergeContext.getWcInfo().getRootUrl() : myMergeContext.getSourceUrl();
+    SvnBranchPointsCalculator.WrapperInvertor copyPoint =
+      myMergeContext.getVcs().getSvnBranchPointsCalculator().calculateCopyPoint(repoUrl, sourceUrl, targetUrl);
 
-    try {
-      SvnBranchPointsCalculator.WrapperInvertor copyPoint =
-        myMergeContext.getVcs().getSvnBranchPointsCalculator().calculateCopyPoint(repoUrl, sourceUrl, targetUrl);
-
-      if (copyPoint != null) {
-        myCallback.consume(copyPoint);
-      }
-      else {
-        end("Merge start wasn't found", true);
-      }
+    if (copyPoint != null) {
+      myCallback.consume(copyPoint);
     }
-    catch (VcsException e) {
-      end("Merge start wasn't found", e);
+    else {
+      myMergeProcess.end("Merge start wasn't found", true);
     }
   }
 }

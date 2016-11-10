@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
@@ -271,7 +272,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(project, problem, file, problemElement)) {
+      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(problem, file, problemElement)) {
         continue;
       }
 
@@ -331,8 +332,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
   }
 
-  private static boolean ignoredDueToProblemSuppressors(@NotNull Project project,
-                                                        @NotNull Problem problem,
+  private static boolean ignoredDueToProblemSuppressors(@NotNull Problem problem,
                                                         @NotNull PsiFile file,
                                                         @Nullable PsiElement element) {
     final Pep8ProblemSuppressor[] suppressors = Pep8ProblemSuppressor.EP_NAME.getExtensions();
@@ -445,8 +445,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyProfile(model -> {
-        PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+        PyPep8Inspection tool = (PyPep8Inspection)it.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
         if (!tool.ignoredErrors.contains(myCode)) {
           tool.ignoredErrors.add(myCode);
         }

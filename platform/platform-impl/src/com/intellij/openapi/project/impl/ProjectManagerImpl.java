@@ -386,8 +386,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static boolean canCancelProjectLoading() {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    return !(indicator instanceof NonCancelableSection);
+    return !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override

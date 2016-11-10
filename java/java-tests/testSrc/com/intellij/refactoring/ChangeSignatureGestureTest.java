@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,64 +25,62 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
-import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.changeSignature.inplace.ApplyChangeSignatureAction;
+import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.util.List;
+import java.util.Optional;
 
 /**
  * User: anna
  * Date: Sep 9, 2010
  */
+@PlatformTestCase.WrapInCommand
 public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
 
-  private void doTest(final Runnable run, boolean shouldShow, final String hint) {
+  private void doTest(final Runnable run, boolean shouldShow) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     myFixture.enableInspections(new UnusedDeclarationInspection());
-    final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(getProject());
     final EditorEx editor = (EditorEx)myFixture.getEditor();
     final Document document = editor.getDocument();
-    try {
-      PsiManager.getInstance(getProject()).addPsiTreeChangeListener(detector);
-      detector.addDocListener(document);
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
-          run.run();
-        }
-      }.execute().throwException();
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> new InplaceChangeSignature(myFixture.getProject(), editor, myFixture.getFile().findElementAt(myFixture.getCaretOffset())),
+                                                  ChangeSignatureHandler.REFACTORING_NAME, null);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        run.run();
+      }
+    }.execute().throwException();
 
 
-      myFixture.doHighlighting();
-      if (shouldShow) {
-        final IntentionAction intention = myFixture.findSingleIntention(hint);
-        myFixture.launchAction(intention);
-        myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
-      }
-      else {
-        final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(hint);
-        assertEmpty(intentionActions);
-      }
+    myFixture.doHighlighting();
+    Optional<IntentionAction> intentionAction =
+      myFixture.getAvailableIntentions().stream().filter(action -> action instanceof ApplyChangeSignatureAction).findFirst();
+    if (shouldShow) {
+      final IntentionAction intention = intentionAction.orElse(null);
+      assertNotNull(intention);
+      myFixture.launchAction(intention);
+      myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
     }
-    finally {
-      detector.removeDocListener(document, editor.getVirtualFile());
-      PsiManager.getInstance(getProject()).removePsiTreeChangeListener(detector);
+    else {
+      assertFalse(intentionAction.isPresent());
     }
   }
 
   public void testSimple() {
-    doTypingTest("param");
+    doTypingTest(", int param");
   }
 
-  public void testSpaces() {
-    doTypingNoBorderTest("   ");
-  }
 
   public void testNoUsages() {
-    doTypingNoBorderTest("int param");
+    doTypingTest("int param");
   }
 
   public void testOccurrencesInSameFile() {
@@ -97,18 +95,6 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingTest("int param");
   }
 
-  public void testAddParameter2UnusedConstructor() {
-    doTypingNoBorderTest("int param");
-  }
-
-  public void testOnAnotherMethod() {
-    doTest(() -> {
-      myFixture.type("int param");
-      final int nextMethodOffset = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[1].getTextOffset();
-      myFixture.getEditor().getCaretModel().moveToOffset(nextMethodOffset);
-    }, false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
-  }
-  
   public void testAddParamChangeReturnType() {
     doTest(() -> {
       myFixture.type("int param");
@@ -125,7 +111,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
         myFixture.type('\b');
       }
       myFixture.type("boolean");
-    }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+    }, true);
   }
 
   public void testNewParam() {
@@ -140,24 +126,12 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingTest(", int param");
   }
 
-  public void testRenameLocalVariable() {
-    doTypingTest("1", ChangeSignatureDetectorAction.NEW_NAME);
-  }
-
   private void doTypingTest(final String param) {
-    doTypingTest(param, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
-  }
-
-  private void doTypingTest(final String param, final String hint) {
-    doTest(() -> myFixture.type(param), true, hint);
-  }
-
-  public void testReturnValue() {
-    doTypingNoBorderTest("void");
+    doTest(() -> myFixture.type(param), true);
   }
 
   public void testModifier() {
-    doTypingNoBorderTest("private");
+    doTypingTest("private ");
   }
 
   public void testAddParameterFinal() {
@@ -165,7 +139,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doTypingNoBorderTest(final String param) {
-    doTest(() -> myFixture.type(param), false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+    doTest(() -> myFixture.type(param), false);
   }
 
   public void testDeleteParamInSuperUsed() {
@@ -187,7 +161,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       document.deleteString(selectionStart, selectionEnd);
       editor.getCaretModel().moveToOffset(selectionStart);
-    }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+    }, true);
   }
 
   @Override

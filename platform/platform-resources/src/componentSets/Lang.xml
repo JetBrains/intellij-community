@@ -147,7 +147,7 @@
       <skipForDefaultProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignaturePassFactory</implementation-class>
+      <implementation-class>com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
     <component>
@@ -201,11 +201,6 @@
     <component>
       <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>

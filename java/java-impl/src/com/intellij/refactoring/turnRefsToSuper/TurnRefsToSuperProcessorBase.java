@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -532,9 +532,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      final PsiElement el = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-      constrainingType = el instanceof PsiMethod ? ((PsiMethod)el).getReturnType() 
-                                                 : el instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)el) : null;
+      constrainingType = TypeUtils.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();

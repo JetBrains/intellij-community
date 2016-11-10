@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.Field;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.ParseResult;
@@ -145,6 +146,14 @@ public class PyStringFormatParserTest extends UsefulTestCase {
     assertEquals(TextRange.create(1, 4), chunks.get(0).getTextRange());
   }
 
+  public void testAutoPosition() {
+    final List<SubstitutionChunk> oldStyleChunks = filterSubstitutions(parsePercentFormat("%s %(foo)s %(bar)s %*.*d"));
+    assertOrderedEquals(ContainerUtil.map(oldStyleChunks, SubstitutionChunk::getAutoPosition), 0, null, null, 1);
+
+    final List<SubstitutionChunk> newStyleChunks = filterSubstitutions(parseNewStyleFormat("'{foo} {} {bar} {0} {}'"));
+    assertOrderedEquals(ContainerUtil.map(newStyleChunks, SubstitutionChunk::getAutoPosition), null, 0, null, null, 1);
+  }
+
   public void testNewStyleConstant() {
     List<FormatStringChunk> chunks = parseNewStyleFormat("a");
     assertEquals(1, chunks.size());
@@ -178,8 +187,8 @@ public class PyStringFormatParserTest extends UsefulTestCase {
     final List<Field> topLevelFields = result.getFields();
     assertSize(2, topLevelFields);
     assertSize(5, result.getAllFields());
-    assertOrderedEquals(result.getAllFields().stream().map(f -> f.getDepth()).toArray(), 1, 2, 3, 4, 1);
-    assertOrderedEquals(result.getAllFields().stream().map(f -> f.getAutoPosition()).toArray(), 0, 1, 2, 3, 4);
+    assertOrderedEquals(result.getAllFields().stream().map(Field::getDepth).toArray(), 1, 2, 3, 4, 1);
+    assertOrderedEquals(result.getAllFields().stream().map(SubstitutionChunk::getAutoPosition).toArray(), 0, 1, 2, 3, 4);
   }
 
   public void testNewStyleAttrAndLookups() {
@@ -325,7 +334,7 @@ public class PyStringFormatParserTest extends UsefulTestCase {
     assertOrderedEquals(field.getAttributesAndLookups(), "[foo]", ".bar");
   }
 
-  public void testAutoPosition() {
+  public void testNewStyleAutoPosition() {
     final ParseResult result = PyNewStyleStringFormatParser.parse("'{foo} {} {bar} {0} {}'");
     final List<Field> topLevelFields = result.getFields();
     assertSize(5, topLevelFields);

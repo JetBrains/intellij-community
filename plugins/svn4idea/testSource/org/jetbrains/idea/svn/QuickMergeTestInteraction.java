@@ -17,11 +17,14 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
+import org.jetbrains.idea.svn.integrate.SelectMergeItemsResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
@@ -34,10 +37,12 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   private QuickMergeContentsVariants myMergeVariant = QuickMergeContentsVariants.all;
   private final boolean myReintegrateAnswer;
+  @Nullable private final Function.Mono<List<SvnChangeList>> mySelectedListsProvider;
   @NotNull private final List<Exception> myExceptions;
 
-  public QuickMergeTestInteraction(boolean reintegrate) {
+  public QuickMergeTestInteraction(boolean reintegrate, @Nullable Function.Mono<List<SvnChangeList>> selectedListsProvider) {
     myReintegrateAnswer = reintegrate;
+    mySelectedListsProvider = selectedListsProvider;
     myExceptions = newArrayList();
   }
 
@@ -63,30 +68,14 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                                 @NotNull String mergeTitle,
-                                                 @NotNull MergeChecker mergeChecker) {
-    return new SelectMergeItemsResult() {
-      @NotNull
-      @Override
-      public QuickMergeContentsVariants getResultCode() {
-        return QuickMergeContentsVariants.all;
-      }
-
-      @NotNull
-      @Override
-      public List<CommittedChangeList> getSelectedLists() {
-        return emptyList();
-      }
-    };
-  }
-
-  @NotNull
-  @Override
-  public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull MergeChecker mergeChecker,
-                                                               boolean everyThingLoaded) {
-    return emptyList();
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
+                                                 @NotNull MergeChecker mergeChecker,
+                                                 boolean allStatusesCalculated,
+                                                 boolean allListsLoaded) {
+    return new SelectMergeItemsResult(
+      mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all,
+      mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList()
+    );
   }
 
   @NotNull

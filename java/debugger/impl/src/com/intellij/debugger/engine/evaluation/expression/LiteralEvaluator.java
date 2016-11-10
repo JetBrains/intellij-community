@@ -63,10 +63,12 @@ class LiteralEvaluator implements Evaluator {
     }
     if (myValue instanceof String) {
       StringReference str = vm.mirrorOf((String)myValue);
-      // intern
-      Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
-      if (internMethod != null) {
-        return context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
+      // intern starting from jdk 7
+      if (vm.versionHigher("1.7")) {
+        Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
+        if (internMethod != null) {
+          return context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
+        }
       }
       return str;
     }

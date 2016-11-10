@@ -723,7 +723,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> getCommittedChangesProvider() {
     if (myCommittedChangesProvider == null) {
-      myCommittedChangesProvider = new SvnCommittedChangesProvider(myProject);
+      myCommittedChangesProvider = new SvnCommittedChangesProvider(this);
     }
     return myCommittedChangesProvider;
   }

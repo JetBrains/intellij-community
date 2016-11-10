@@ -187,7 +187,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     IdeaLogger.ourErrorsOccurred = null;
 
-    LOG.info(getClass().getName() + ".setUp()");
+    LOG.debug(getClass().getName() + ".setUp()");
 
     initApplication();
 

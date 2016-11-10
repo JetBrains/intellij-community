@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,9 +88,7 @@ public class InspectionProfileConvertor {
 
   public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfileImpl editorProfile) {
     if (retrieveOldSettings(element)) {
-      InspectionProfileImpl editorProfileModel = editorProfile.getModifiableModel();
-      fillErrorLevels(editorProfileModel);
-      editorProfileModel.commit();
+      editorProfile.modifyProfile(it -> fillErrorLevels(it));
     }
   }
 
@@ -122,8 +119,8 @@ public class InspectionProfileConvertor {
   }
 
   protected void fillErrorLevels(final InspectionProfileImpl profile) {
-    InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
-    LOG.assertTrue(toolWrappers != null, "Profile was not correctly init");
+    //noinspection ConstantConditions
+    LOG.assertTrue(profile.getInspectionTools(null) != null, "Profile was not correctly init");
     //fill error levels
     for (final String shortName : myDisplayLevelMap.keySet()) {
       //key <-> short name

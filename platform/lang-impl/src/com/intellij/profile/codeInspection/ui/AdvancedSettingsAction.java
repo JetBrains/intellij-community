@@ -16,6 +16,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -103,7 +104,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
 
     @Override
     public void actionPerformed() {
-      final InspectionProfileImpl inspectionProfile = getInspectionProfile();
+      InspectionProfileModifiableModel inspectionProfile = getInspectionProfile();
       if (inspectionProfile == null) {
         return;
       }
@@ -179,7 +180,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
     }
   }
 
-  protected abstract InspectionProfileImpl getInspectionProfile();
+  protected abstract InspectionProfileModifiableModel getInspectionProfile();
 
   protected abstract void postProcessModification();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,15 +64,7 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
       return isIterable(((PsiLocalVariable)parent).getType());
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-      PsiType methodReturnType = null;
-      if (methodOrLambda instanceof PsiMethod) {
-        methodReturnType = ((PsiMethod)methodOrLambda).getReturnType();
-      }
-      else if (methodOrLambda instanceof PsiLambdaExpression) {
-        methodReturnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)methodOrLambda);
-      }
-      return isIterable(methodReturnType);
+      return isIterable(TypeUtils.getMethodReturnType(parent));
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;

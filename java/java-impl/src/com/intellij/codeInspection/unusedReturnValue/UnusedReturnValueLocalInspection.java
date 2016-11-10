@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,8 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
     if (method.isConstructor() ||
         PsiType.VOID.equals(method.getReturnType()) ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(method) ||
-        method.hasModifierProperty(PsiModifier.NATIVE)) return null;
+        method.hasModifierProperty(PsiModifier.NATIVE) ||
+        MethodUtils.hasSuper(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {

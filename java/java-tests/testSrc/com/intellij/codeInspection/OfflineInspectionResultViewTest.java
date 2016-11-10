@@ -84,8 +84,8 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
       @Override
       @NotNull
-      public InspectionProfileImpl getModifiableModel() {
-        return new InspectionProfileImpl("test") {
+      public InspectionProfileModifiableModel getModifiableModel() {
+        return new InspectionProfileModifiableModel(this) {
           @Override
           @NotNull
           public InspectionToolWrapper[] getInspectionTools(PsiElement element) {

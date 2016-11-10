@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -40,11 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -53,7 +52,7 @@ public class StorageUtil {
   public static final String NOTIFICATION_GROUP_ID = "Load Error";
   
   @TestOnly
-  public static String DEBUG_LOG = null;
+  public static String DEBUG_LOG;
 
   private StorageUtil() { }
 
@@ -68,12 +67,7 @@ public class StorageUtil {
                      "Some of the files describing the current project settings contain unknown path variables " +
                      "and " + productName + " cannot restore those paths.";
     new UnknownMacroNotification(NOTIFICATION_GROUP_ID, "Load error: undefined path variables", content, NotificationType.ERROR,
-                                 new NotificationListener() {
-                                   @Override
-                                   public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                                     checkUnknownMacros(project, true, macros, substitutorToStore);
-                                   }
-                                 }, macros).notify(project);
+                                 (notification, event) -> checkUnknownMacros(project, true, macros, substitutorToStore), macros).notify(project);
   }
 
   public static void checkUnknownMacros(@NotNull Project project, boolean notify) {
@@ -101,17 +95,12 @@ public class StorageUtil {
                                          boolean showDialog,
                                          @NotNull Set<String> unknownMacros,
                                          @NotNull Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
-    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<>(unknownMacros)))) {
+    if (unknownMacros.isEmpty() || showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<>(unknownMacros))) {
       return;
     }
 
     PathMacros pathMacros = PathMacros.getInstance();
-    for (Iterator<String> it = unknownMacros.iterator(); it.hasNext(); ) {
-      String macro = it.next();
-      if (StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro)) {
-        it.remove();
-      }
-    }
+    unknownMacros.removeIf(macro -> StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro));
 
     if (unknownMacros.isEmpty()) {
       return;

@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
@@ -33,9 +33,10 @@ public interface QuickMergeInteraction {
   boolean shouldReintegrate(@NotNull String targetUrl);
 
   @NotNull
-  SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                          @NotNull String mergeTitle,
-                                          @NotNull MergeChecker mergeChecker);
+  SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
+                                          @NotNull MergeChecker mergeChecker,
+                                          boolean allStatusesCalculated,
+                                          boolean allListsLoaded);
 
   @NotNull
   LocalChangesAction selectLocalChangesAction(boolean mergeAll);
@@ -45,17 +46,4 @@ public interface QuickMergeInteraction {
   void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions);
 
   void showErrors(@NotNull String message, boolean isError);
-
-  @NotNull
-  List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                        @NotNull MergeChecker mergeChecker,
-                                                        boolean everyThingLoaded);
-
-  interface SelectMergeItemsResult {
-    @NotNull
-    QuickMergeContentsVariants getResultCode();
-
-    @NotNull
-    List<CommittedChangeList> getSelectedLists();
-  }
 }
