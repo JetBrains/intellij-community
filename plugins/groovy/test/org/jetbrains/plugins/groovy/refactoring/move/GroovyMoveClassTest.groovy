@@ -15,8 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.move
-import com.intellij.ide.fileTemplates.FileTemplate
-import com.intellij.ide.fileTemplates.FileTemplateManager
+
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -24,50 +23,16 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination
-import org.jetbrains.plugins.groovy.actions.GroovyTemplates
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
+@CompileStatic
 class GroovyMoveClassTest extends GroovyMoveTestBase {
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveClass/"
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp()
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
-    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest")
-    if (temp != null) templateManager.removeTemplate(temp)
-
-    temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy")
-    temp.text = '''\
-#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
-#end
-class ${NAME} {
-}'''
-
-    temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS)
-    if (temp != null) templateManager.removeTemplate(temp)
-
-    temp = templateManager.addTemplate(GroovyTemplates.GROOVY_CLASS, "groovy")
-    temp.text = '''\
-#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
-#end
-class ${NAME} {
-}'''
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
-    FileTemplate temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS)
-    templateManager.removeTemplate(temp)
-
-    temp = templateManager.getTemplate("GroovyClass.groovyForTest")
-    templateManager.removeTemplate(temp)
-    super.tearDown()
   }
 
   void testMoveMultiple1() throws Exception {
