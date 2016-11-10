@@ -21,15 +21,17 @@ import org.jetbrains.annotations.NonNls;
  * @author Max Medvedev
  */
 public interface GroovyTemplates {
-  @NonNls String GROOVY_CLASS = "GroovyClass.groovy";
-  @NonNls String GROOVY_INTERFACE = "GroovyInterface.groovy";
-  @NonNls String GROOVY_TRAIT = "GroovyTrait.groovy";
-  @NonNls String GROOVY_ENUM = "GroovyEnum.groovy";
-  @NonNls String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
-  @NonNls String GROOVY_SCRIPT = "GroovyScript.groovy";
-  @NonNls String GROOVY_DSL_SCRIPT = "GroovyDslScript.gdsl";
-  @NonNls String GANT_SCRIPT = "GantScript.gant";
-  @NonNls String GROOVY_SERVER_PAGE = "GroovyServerPage.gsp";
+  @NonNls String GROOVY_CLASS = "Groovy Class.groovy";
+  @NonNls String GROOVY_INTERFACE = "Groovy Interface.groovy";
+  @NonNls String GROOVY_TRAIT = "Groovy Trait.groovy";
+  @NonNls String GROOVY_ENUM = "Groovy Enum.groovy";
+  @NonNls String GROOVY_ANNOTATION = "Groovy Annotation.groovy";
+
+  @NonNls String GROOVY_SCRIPT = "Groovy Script.groovy";
+  @NonNls String GROOVY_DSL_SCRIPT = "Groovy DSL Script.gdsl";
+
+  @NonNls String GANT_SCRIPT = "Gant Script.gant";
+
   @NonNls String GROOVY_FROM_USAGE_METHOD_BODY = "Groovy New Method Body.groovy";
   @NonNls String GROOVY_JUNIT_TEST_METHOD_GROOVY = "Groovy JUnit Test Method.groovy";
   @NonNls String GROOVY_JUNIT_SET_UP_METHOD_GROOVY = "Groovy JUnit SetUp Method.groovy";
