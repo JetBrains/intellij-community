@@ -187,9 +187,9 @@ public class JobUtilTest extends PlatformTestCase {
 
   private static class MyException extends RuntimeException {}
   public void testExceptionalCompletion() throws Throwable {
-    final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
     try {
+      final List<Object> objects = Collections.nCopies(100000000, null);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
         if (COUNT.incrementAndGet() == 100000) {
           System.out.println("PCE");
@@ -204,8 +204,8 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
   public void testNotNormalCompletion() throws Throwable {
-    final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
+    final List<Object> objects = Collections.nCopies(100000000, null);
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
       if (COUNT.incrementAndGet() == 100000) {
         System.out.println("PCE");
@@ -217,8 +217,8 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   public void testJobUtilCompletesEvenIfCannotGrabReadAction() throws Throwable {
-    final List<Object> objects = Collections.nCopies(1000000, null);
     COUNT.set(0);
+    final List<Object> objects = Collections.nCopies(1000000, null);
     ApplicationManager.getApplication().runWriteAction(() -> {
       boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, false, o -> {
         COUNT.incrementAndGet();
