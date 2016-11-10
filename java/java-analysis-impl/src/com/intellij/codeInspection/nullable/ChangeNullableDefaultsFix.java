@@ -50,6 +50,11 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myNotNullName != null) {
       myManager.setDefaultNotNull(myNotNullName);
