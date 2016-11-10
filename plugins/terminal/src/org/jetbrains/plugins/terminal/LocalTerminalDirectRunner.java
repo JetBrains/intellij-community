@@ -57,6 +57,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   public static final String ZDOTDIR = "ZDOTDIR";
+  public static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
+
 
   private final Charset myDefaultCharset;
 
@@ -79,10 +81,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         shellName = "bash";
       }
       try {
-
         String rcfile = "jediterm-" + shellName + ".in";
         if ("zsh".equals(shellName)) {
           rcfile = ".zshrc";
+        } else if ("fish".equals(shellName)) {
+          rcfile = "fish/config.fish";
         }
         URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
         if (resource != null && "jar".equals(resource.getProtocol())) {
@@ -202,6 +205,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
               }
             }
             envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+          }
+          else if (shellName.equals("fish")) {
+            if (StringUtil.isNotEmpty(EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME))) {
+              File fishConfig = new File(new File(FileUtil.expandUserHome(envs.get(XDG_CONFIG_HOME)), "fish"), "config.fish");
+              if (fishConfig.exists()) {
+                envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
+              }
+            }
+
+            envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
           }
         }
 

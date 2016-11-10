@@ -45,7 +45,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         val shellPath = command[0]
         val shellName = File(shellPath).name
 
-        if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh")) {
+        if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh") || (shellName == "fish")) {
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
           findActivateScript(path, shellPath)?.let { activate -> envs.put("JEDITERM_SOURCE", activate) }
         }
@@ -56,7 +56,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
             envs.putAll(reader.readShellEnv().filterKeys { k -> k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME") })
           }
         }
-
       }
     }
 
