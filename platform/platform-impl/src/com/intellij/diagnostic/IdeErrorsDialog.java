@@ -976,31 +976,26 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
 
-    // Android Studio: special case Kotlin plugin (org.jetbrains.kotlin) errors alone
-    if (pluginId != null && StringUtil.containsIgnoreCase(pluginId.getIdString(), "kotlin")) {
-      ErrorReportSubmitter kotlinReporter = getErrorReporter(reporters, "kotlin");
-      if (kotlinReporter != null) {
-        return kotlinReporter;
+    for (ErrorReportSubmitter reporter : reporters) {
+      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+        return reporter;
       }
     }
-
-    // Android Studio: Always use the android error reporter
-    return getErrorReporter(reporters, "android");
-
-    //for (ErrorReportSubmitter reporter : reporters) {
-    //  final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-    //  if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
-    //    return reporter;
-    //  }
-    //}
-    //IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    //if (plugin == null) {
-    //  return getCorePluginSubmitter(reporters);
-    //}
-    //if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
-    //  return getCorePluginSubmitter(reporters);
-    //}
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    if (plugin == null) {
+      // Android Studio: use Android instead of Jetbrains
+      // return getCorePluginSubmitter(reporters);
+      return getAndroidErrorReporter();
+    }
+    if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+      // Android Studio: use Android instead of Jetbrains
+      //return getCorePluginSubmitter(reporters);
+      return getAndroidErrorReporter();
+    }
+    // Android Studio: use Android instead of Jetbrains
     //return null;
+    return getAndroidErrorReporter();
   }
 
   // NOTE: This API is only present in Android Studio, so don't invoke it from a plugin
