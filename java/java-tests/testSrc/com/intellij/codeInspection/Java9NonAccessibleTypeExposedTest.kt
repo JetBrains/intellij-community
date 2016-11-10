@@ -197,6 +197,23 @@ public class Highlighted {
 """)
   }
 
+  fun testThrows() {
+    add("apiPkg", "PublicException", "public class PublicException extends Exception {}")
+    add("apiPkg", "PackageLocalException", "class PackageLocalException extends Exception {}")
+    add("otherPkg", "OtherException", "public class OtherException extends Exception {}")
+    add("implPkg", "NotExportedException", "public class NotExportedException extends Exception {}")
+    highlight("""package apiPkg;
+import otherPkg.*;
+import implPkg.*;
+public class Highlighted {
+  public void throwsPublic() throws PublicException {}
+  public void throwsPackageLocal() throws <warning descr="The class is not exported from the module">PackageLocalException</warning> {}
+  public void throwsOther() throws OtherException {}
+  public void throwsNotExported() throws <warning descr="The class is not exported from the module">NotExportedException</warning> {}
+}
+""")
+  }
+
   fun testPublicAnnotation() {
     add("apiPkg", "MyAnnotation", "public @interface MyAnnotation {}")
     highlight("""package apiPkg;

@@ -86,6 +86,12 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
         for (PsiParameter parameter : method.getParameterList().getParameters()) {
           checkType(parameter.getType(), parameter.getTypeElement());
         }
+        for (PsiJavaCodeReferenceElement referenceElement : method.getThrowsList().getReferenceElements()) {
+          PsiElement resolved = referenceElement.resolve();
+          if (resolved instanceof PsiClass) {
+            checkType((PsiClass)resolved, referenceElement);
+          }
+        }
       }
     }
 
@@ -121,9 +127,13 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     private void checkType(@Nullable PsiType type, @Nullable PsiTypeElement typeElement) {
       if (typeElement != null) {
         PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass != null && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
-          myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
-        }
+        checkType(psiClass, typeElement);
+      }
+    }
+
+    private void checkType(PsiClass psiClass, @NotNull PsiElement typeElement) {
+      if (psiClass != null && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
+        myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
       }
     }
 
