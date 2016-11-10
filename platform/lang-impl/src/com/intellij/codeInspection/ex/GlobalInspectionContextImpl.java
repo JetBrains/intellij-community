@@ -876,7 +876,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-    final SearchScope searchScope = scope.toSearchScope();
+    final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
     final TextRange range;
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
