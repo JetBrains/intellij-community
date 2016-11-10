@@ -52,8 +52,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
 
@@ -156,7 +154,7 @@ public class EduAdaptiveStepicConnector {
     task.setStepId(id);
     task.setName(lessonName);
     final TaskFile taskFile = new TaskFile();
-    taskFile.text = "";
+    taskFile.text = "# you can experiment here, it won't be checked";
     taskFile.name = "code";
     task.taskFiles.put("code.py", taskFile);
     return task;
