@@ -57,6 +57,11 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
     return new MySpeedSearchAction(child);
   }
 
+  @NotNull
+  public static ActionGroup createSpeedSearchActionGroupWrapper(@NotNull ActionGroup child) {
+    return new MySpeedSearchActionGroup(child);
+  }
+
   @Override
   public boolean shouldBeShowing(Object value) {
     if (!super.shouldBeShowing(value)) return false;
@@ -78,27 +83,17 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public interface SpeedsearchAction {
   }
 
-  private static class MySpeedSearchAction extends AnAction implements SpeedsearchAction {
-    @NotNull private final AnAction myAction;
+  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction {
 
     public MySpeedSearchAction(@NotNull AnAction action) {
-      myAction = action;
-      copyFrom(action);
+      super(action);
     }
+  }
 
-    @Override
-    public boolean isDumbAware() {
-      return myAction.isDumbAware();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      myAction.update(e);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myAction.actionPerformed(e);
+  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup
+    implements FlatSpeedSearchPopup.SpeedsearchAction {
+    public MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+      super(actionGroup);
     }
   }
 }
