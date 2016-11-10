@@ -121,6 +121,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
+    private static final int FREE_SPACE = 20;
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
@@ -131,7 +132,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private Font myFont;
     private int myHeight;
 
-    public MyComponent(@NotNull VcsLogData data, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table, boolean compact, boolean showTags) {
+    public MyComponent(@NotNull VcsLogData data,
+                       @NotNull GraphCellPainter painter,
+                       @NotNull VcsLogGraphTable table,
+                       boolean compact,
+                       boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
@@ -204,7 +209,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     private int getAvailableWidth(int column) {
       int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
-      return Math.min(columnWidth - super.getPreferredSize().width, columnWidth / 3);
+      return Math.min(columnWidth - super.getPreferredSize().width,
+                      myReferencePainter.isCompact() ? columnWidth / 3 : Math.max(columnWidth - FREE_SPACE, 0));
     }
 
     private int calculateHeight() {

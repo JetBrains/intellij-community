@@ -80,4 +80,36 @@ public class SimpleRefGroup implements RefGroup {
       return colorsList;
     }
   }
+
+  public static void buildGroups(@NotNull MultiMap<VcsRefType, VcsRef> groupedRefs,
+                                 boolean compact,
+                                 boolean showTagNames,
+                                 @NotNull List<RefGroup> result) {
+    if (groupedRefs.isEmpty()) return;
+
+    if (compact) {
+      VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(groupedRefs.values()));
+      RefGroup group = ContainerUtil.getFirstItem(result);
+      if (group == null) {
+        result.add(new SimpleRefGroup(firstRef.getType().isBranch() || showTagNames ? firstRef.getName() : "",
+                                      ContainerUtil.newArrayList(groupedRefs.values())));
+      }
+      else {
+        group.getRefs().addAll(groupedRefs.values());
+      }
+    }
+    else {
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> entry : groupedRefs.entrySet()) {
+        if (entry.getKey().isBranch()) {
+          for (VcsRef ref : entry.getValue()) {
+            result.add(new SimpleRefGroup(ref.getName(), ContainerUtil.newArrayList(ref)));
+          }
+        }
+        else {
+          result.add(new SimpleRefGroup(showTagNames ? ObjectUtils.notNull(ContainerUtil.getFirstItem(entry.getValue())).getName() : "",
+                                        ContainerUtil.newArrayList(entry.getValue())));
+        }
+      }
+    }
+  }
 }

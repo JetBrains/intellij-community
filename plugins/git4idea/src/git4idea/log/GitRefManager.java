@@ -20,6 +20,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.DataInput;
@@ -141,52 +142,71 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean showTagNames) {
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
-    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
-    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ContainerUtil.getFirstItem(groupedRefs);
-    List<RefGroup> groups = ContainerUtil.newArrayList();
-    if (firstGroup == null) return groups;
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
 
+    List<RefGroup> result = ContainerUtil.newArrayList();
+    if (groupedRefs.isEmpty()) return result;
+
+    VcsRef head = null;
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ObjectUtils.notNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
     if (firstGroup.getKey().equals(HEAD)) {
-      VcsRef head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(head.getRoot());
-      if (repository == null) {
-        LOG.warn("No repository for root: " + head.getRoot());
+      head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      groupedRefs.remove(HEAD, head);
+    }
+
+    GitRepository repository = getRepository(references);
+    if (repository != null) {
+      result.addAll(getTrackedRefs(groupedRefs, repository));
+    }
+    result.forEach(refGroup -> {
+      groupedRefs.remove(LOCAL_BRANCH, refGroup.getRefs().get(0));
+      groupedRefs.remove(REMOTE_BRANCH, refGroup.getRefs().get(1));
+    });
+
+    SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
+
+    if (head != null) {
+      if (repository != null && !repository.isOnBranch()) {
+        result.add(0, new SimpleRefGroup("!", Collections.singletonList(head)));
       }
       else {
-        if (!repository.isOnBranch()) {
-          groups.add(new SimpleRefGroup("!", Collections.singletonList(head)));
-          sortedReferences = sortedReferences.subList(1, sortedReferences.size());
+        if (!result.isEmpty()) {
+          RefGroup first = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(result));
+          first.getRefs().add(0, head);
+        }
+        else {
+          result.add(0, new SimpleRefGroup("", Collections.singletonList(head)));
         }
       }
-      firstGroup = ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(HEAD));
-    }
-    if (firstGroup == null) return groups;
-
-    VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
-    VcsRefType firstRefType = firstGroup.getKey();
-    String name = (showTagNames || firstRefType.isBranch()) && !firstRefType.equals(HEAD) ? firstRef.getName() : "";
-
-    if (firstRefType.equals(LOCAL_BRANCH)) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(firstRef.getRoot());
-      if (repository == null) {
-        LOG.warn("No repository for root: " + firstRef.getRoot());
-      }
-      else {
-        name = getCombinedTrackedName(repository, references, firstRef);
-      }
     }
 
-    groups.add(new SimpleRefGroup(name, sortedReferences));
-
-    return groups;
+    return result;
   }
 
   @NotNull
-  private static String getCombinedTrackedName(@NotNull GitRepository repository,
-                                               @NotNull Collection<VcsRef> references,
-                                               @NotNull VcsRef localRef) {
+  private static List<RefGroup> getTrackedRefs(@NotNull MultiMap<VcsRefType, VcsRef> groupedRefs,
+                                               @NotNull GitRepository repository) {
+    List<RefGroup> result = ContainerUtil.newArrayList();
+
+    Collection<VcsRef> locals = groupedRefs.get(LOCAL_BRANCH);
+    Collection<VcsRef> remotes = groupedRefs.get(REMOTE_BRANCH);
+
+    for (VcsRef localRef : locals) {
+      SimpleRefGroup group = createTrackedGroup(repository, remotes, localRef);
+      if (group != null) {
+        result.add(group);
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static SimpleRefGroup createTrackedGroup(@NotNull GitRepository repository,
+                                                   @NotNull Collection<VcsRef> references,
+                                                   @NotNull VcsRef localRef) {
     List<VcsRef> remoteBranches = ContainerUtil.filter(references, ref -> ref.getType().equals(REMOTE_BRANCH));
 
     GitBranchTrackInfo trackInfo =
@@ -194,7 +214,8 @@ public class GitRefManager implements VcsLogRefManager {
     if (trackInfo != null) {
       VcsRef trackedRef = ContainerUtil.find(remoteBranches, ref -> ref.getName().equals(trackInfo.getRemoteBranch().getName()));
       if (trackedRef != null) {
-        return trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName();
+        return new SimpleRefGroup(trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
+                                  ContainerUtil.newArrayList(localRef, trackedRef));
       }
     }
 
@@ -202,12 +223,25 @@ public class GitRefManager implements VcsLogRefManager {
     for (GitRemote remote : repository.getRemotes()) {
       for (VcsRef candidate : trackingCandidates) {
         if (candidate.getName().equals(remote.getName() + SEPARATOR + localRef.getName())) {
-          return remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName();
+          return new SimpleRefGroup(remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
+                                    ContainerUtil.newArrayList(localRef, candidate));
         }
       }
     }
 
-    return localRef.getName();
+    return null;
+  }
+
+  @Nullable
+  private GitRepository getRepository(@NotNull Collection<VcsRef> references) {
+    if (references.isEmpty()) return null;
+
+    VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
+    if (repository == null) {
+      LOG.warn("No repository for root: " + ref.getRoot());
+    }
+    return repository;
   }
 
   @Override
