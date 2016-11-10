@@ -881,6 +881,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
+    return getAndroidErrorReporter();  /* Android Studio: use Android instead of Jetbrains
     if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
@@ -891,6 +892,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     return null;
+    */
   }
 
   // NOTE: This API is only present in Android Studio, so don't invoke it from a plugin
