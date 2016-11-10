@@ -15,16 +15,16 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,17 +176,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         }
       }
       else if (parent instanceof PsiReturnStatement) {
-        final PsiElement container = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-        final PsiType returnType;
-        if (container instanceof PsiMethod) {
-          returnType = ((PsiMethod)container).getReturnType();
-        } 
-        else if (container instanceof PsiLambdaExpression) {
-          returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)container);
-        }
-        else {
-          returnType = null;
-        }
+        final PsiType returnType = TypeUtils.getMethodReturnType(parent);
         if (isObsoleteCollectionType(returnType)) {
           return true;
         }
