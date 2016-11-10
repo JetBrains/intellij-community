@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * Date: 15-Feb-2006
  */
 public interface ModifiableModel extends InspectionProfile {
-
-  InspectionProfile getParentProfile();
-
   void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
 
   void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
@@ -46,16 +43,6 @@ public interface ModifiableModel extends InspectionProfile {
   @Override
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
-  boolean isChanged();
-
-  void setModified(final boolean toolsSettingsChanged);
-
-  boolean isProperSetting(@NotNull String toolId);
-
-  void resetToBase(@Nullable Project project);
-
-  void resetToEmpty(Project project);
-
   @Override
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
@@ -66,10 +53,6 @@ public interface ModifiableModel extends InspectionProfile {
    * @see InspectionProfile#getSingleTool()
    */
   void setSingleTool(@NotNull String toolShortName);
-
-  boolean isProfileLocked();
-
-  void lockProfile(boolean isLocked);
 
   void disableTool(@NotNull String toolId, @NotNull PsiElement element);
 

@@ -16,13 +16,12 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -31,7 +30,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -87,28 +85,23 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
       if (view.isSingleInspectionRun()) {
-        InspectionProfileImpl model = view.getCurrentProfile().getModifiableModel();
-        model.disableTool(key.toString(), view.getProject());
-        model.commit();
+        view.getCurrentProfile().modifyProfile(it -> it.disableTool(key.toString(), view.getProject()));
         view.updateCurrentProfile();
       }
       else {
         final RefEntity[] selectedElements = view.getTree().getSelectedElements();
         final Set<PsiElement> files = new HashSet<>();
-        final Project project = view.getProject();
-        final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
         for (RefEntity selectedElement : selectedElements) {
           if (selectedElement instanceof RefElement) {
-            final PsiElement element = ((RefElement)selectedElement).getElement();
-            files.add(element);
+            files.add(((RefElement)selectedElement).getElement());
           }
         }
-        InspectionProfileImpl model = profileManager.getCurrentProfile().getModifiableModel();
-        for (PsiElement element : files) {
-          model.disableTool(key.toString(), element);
-        }
-        model.commit();
-        DaemonCodeAnalyzer.getInstance(project).restart();
+
+        InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(view.getProject(), it -> {
+          for (PsiElement element : files) {
+            it.disableTool(key.toString(), element);
+          }
+        });
       }
     }
   }
