@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -109,15 +110,18 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
       PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null) {
         PsiElement resolved = referenceElement.resolve();
-        if (resolved instanceof PsiClass && !isModulePublicApi((PsiClass)resolved)) {
-          PsiAnnotationOwner owner = annotation.getOwner();
-          if (isModulePublicApi(owner)) {
-            myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
-          }
-          if (owner instanceof PsiParameter) {
-            PsiElement parent = ((PsiParameter)owner).getParent();
-            if (parent instanceof PsiMember && isModulePublicApi((PsiMember)parent)) {
+        if (resolved instanceof PsiClass) {
+          PsiClass annotationClass = (PsiClass)resolved;
+          if (isInModuleSource(annotationClass) && !isModulePublicApi(annotationClass)) {
+            PsiAnnotationOwner owner = annotation.getOwner();
+            if (isModulePublicApi(owner)) {
               myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+            }
+            if (owner instanceof PsiParameter) {
+              PsiElement parent = ((PsiParameter)owner).getParent();
+              if (parent instanceof PsiMember && isModulePublicApi((PsiMember)parent)) {
+                myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+              }
             }
           }
         }
@@ -132,7 +136,7 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     }
 
     private void checkType(PsiClass psiClass, @NotNull PsiElement typeElement) {
-      if (psiClass != null && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
+      if (psiClass != null && !(psiClass instanceof PsiTypeParameter) && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
         myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
       }
     }
@@ -170,6 +174,19 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
         PsiElement parent = ((PsiTypeElement)owner).getParent();
         if (parent instanceof PsiMember) {
           return isModulePublicApi((PsiMember)parent);
+        }
+        if (parent instanceof PsiReferenceParameterList) {
+          PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+          return isModulePublicApi(method);
+        }
+      }
+      else if (owner instanceof PsiTypeParameter) {
+        PsiElement parent = ((PsiTypeParameter)owner).getParent();
+        if (parent instanceof PsiTypeParameterList) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiMember) {
+            return isModulePublicApi((PsiMember)grandParent);
+          }
         }
       }
       return false;

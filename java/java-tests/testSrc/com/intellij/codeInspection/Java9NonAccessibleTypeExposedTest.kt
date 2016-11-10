@@ -217,6 +217,7 @@ public class Highlighted {
   fun testPublicAnnotation() {
     add("apiPkg", "MyAnnotation", "public @interface MyAnnotation {}")
     highlight("""package apiPkg;
+@MyAnnotation
 public class Highlighted {
   @MyAnnotation public PublicApi field;
   @MyAnnotation public Highlighted() {}
@@ -231,6 +232,7 @@ public class Highlighted {
   fun testPackageLocalAnnotation() {
     add("apiPkg", "MyAnnotation", "@interface MyAnnotation {}")
     highlight("""package apiPkg;
+@<warning descr="The class is not exported from the module">MyAnnotation</warning>
 public class Highlighted {
   @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
   @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
@@ -246,6 +248,7 @@ public class Highlighted {
     add("implPkg", "MyAnnotation", "public @interface MyAnnotation {}")
     highlight("""package apiPkg;
 import implPkg.MyAnnotation;
+@<warning descr="The class is not exported from the module">MyAnnotation</warning>
 public class Highlighted {
   @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
   @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
@@ -253,6 +256,32 @@ public class Highlighted {
   @<warning descr="The class is not exported from the module">MyAnnotation</warning> protected void init() {}
   protected @<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi peek() {return field;}
   public void set(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testTypeParameterAndUseAnnotation() {
+    highlight("""package apiPkg;
+import java.lang.annotation.*;
+import java.util.*;
+@Highlighted.PublicAnnotation
+@<warning descr="The class is not exported from the module">Highlighted.PackageLocalAnnotation</warning>
+public class Highlighted {
+  @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE}) public @interface PublicAnnotation {}
+  @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE}) @interface PackageLocalAnnotation {}
+
+  public class C1<@PublicAnnotation T> {
+    public void foo(Set<@PublicAnnotation String> s) {}
+    protected <@PublicAnnotation X> void bar(X x) {}
+    protected List<@PublicAnnotation T> baz() { return new ArrayList<@PublicAnnotation T>();}
+  }
+  public class C2<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> T> {
+    public void foo(Set<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> String> s) {}
+    protected <@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> X> void bar(X x) {}
+    protected List<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> T> baz() {
+      return new ArrayList<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> T>();
+    }
+  }
 }
 """)
   }
