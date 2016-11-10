@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
+package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -27,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
@@ -97,7 +97,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
   }
 
   private fun processQualifierType(qualifierType: PsiType, state: ResolveState): Boolean {
-    val type = if (qualifierType is PsiDisjunctionType) qualifierType.leastUpperBound else qualifierType
+    val type = (qualifierType as? PsiDisjunctionType)?.leastUpperBound ?: qualifierType
     return doProcessQualifierType(type, state)
   }
 
