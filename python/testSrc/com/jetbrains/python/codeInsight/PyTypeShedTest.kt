@@ -15,15 +15,27 @@
  */
 package com.jetbrains.python.codeInsight
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.ThrowableRunnable
+import com.jetbrains.env.PyEnvTaskRunner
+import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
-import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdkTools.PyTestSdkTools
+import com.jetbrains.python.sdkTools.SdkCreationType
 import junit.framework.TestCase
 import org.junit.After
 import org.junit.Before
@@ -36,53 +48,80 @@ import java.io.File
  * @author vlan
  */
 @RunWith(Parameterized::class)
-class PyTypeShedTest(val languageLevel: LanguageLevel, val path: String) : PyTestCase() {
-  override fun getProjectDescriptor(): PyLightProjectDescriptor =
-      if (languageLevel.isAtLeast(LanguageLevel.PYTHON30)) PyTestCase.ourPy3Descriptor else PyTestCase.ourPyDescriptor
+class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
+  var fixture: CodeInsightTestFixture? = null
 
   @Before
   fun initialize() {
-    setUp()
+    val factory = IdeaTestFixtureFactory.getFixtureFactory()
+    val fixtureBuilder = factory.createLightFixtureBuilder()
+    fixture = factory.createCodeInsightFixture(fixtureBuilder.fixture, LightTempDirTestFixtureImpl(true))
+    fixture?.testDataPath = ""  // testDataPath is required to be not null
+    fixture?.setUp()
+    initSdk()
+  }
+
+  fun initSdk() {
+    val sdkByPath = PythonSdkType.findSdkByPath(sdkPath)
+    val module = fixture?.module ?: return
+    val project = fixture?.project ?: return
+    if (sdkByPath != null) {
+      ModuleRootModificationUtil.setModuleSdk(module, sdkByPath)
+      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+        ApplicationManager.getApplication().runWriteAction {
+          ProjectRootManager.getInstance(project).projectSdk = sdkByPath
+        }
+      })
+      if (PySdkUtil.findSkeletonsDir(sdkByPath) == null) {
+        PyTestSdkTools.generateTempSkeletonsOrPackages(sdkByPath, true, module)
+      }
+    }
+    else {
+      val sdkFile = StandardFileSystems.local().findFileByPath(sdkPath) ?: return
+      PyTestSdkTools.createTempSdk(sdkFile, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module)
+    }
   }
 
   @After
   fun deInitialize() {
-    tearDown()
+    fixture?.tearDown()
   }
 
   @Test
   fun test() {
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
-      with(myFixture) {
-        val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
-        configureByFile("$typeShedPath/$path")
-        enableInspections(PyUnresolvedReferencesInspection::class.java)
-        enableInspections(PyTypeCheckerInspection::class.java)
-        checkHighlighting(true, false, true)
-        val sdk = PythonSdkType.findPythonSdk(module)
-        TestCase.assertNotNull(sdk)
-      }
+      val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
+      fixture?.configureByFile("$typeShedPath/$path")
+      fixture?.enableInspections(PyUnresolvedReferencesInspection::class.java)
+      fixture?.enableInspections(PyTypeCheckerInspection::class.java)
+      fixture?.checkHighlighting(true, false, true)
+      val moduleSdk = PythonSdkType.findPythonSdk(fixture?.module)
+      TestCase.assertNotNull(moduleSdk)
     })
   }
 
   companion object {
-    val LANGUAGE_LEVELS = listOf(
-        LanguageLevel.PYTHON35,
-        LanguageLevel.PYTHON27)
-
-    @Parameterized.Parameters(name = "PY{0}: {1}")
+    @Parameterized.Parameters(name = "{0}: {1}")
     @JvmStatic fun params(): List<Array<Any>> {
+      LightPlatformTestCase.initApplication()
+      val tags = setOf("typeshed")
       val typeShedPath = PyTypeShed.directoryPath ?: return emptyList()
       val typeShedFile = File(typeShedPath)
-      return LANGUAGE_LEVELS
+      return getPythonRoots()
           .asSequence()
-          .flatMap { level ->
-            PyTypeShed.findRootsForLanguageLevel(level)
-                .asSequence()
-                .flatMap { root ->
-                  File("$typeShedPath/$root").walk()
+          .filter { PyEnvTaskRunner.isSuitableForTags(PyEnvTestCase.loadEnvTags(it), tags) }
+          .map { PythonSdkType.getPythonExecutable(it) }
+          .filterNotNull()
+          .flatMap { sdkPath ->
+            val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
+            val versionString = flavor.getVersionString(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
+            val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name + " "))
+            PyTypeShed.findRootsForLanguageLevel(level).asSequence()
+                .flatMap { root: String ->
+                  val results = File("$typeShedPath/$root").walk()
                       .filter { it.isFile && it.extension == "pyi" }
-                      .map { arrayOf(level, it.relativeTo(typeShedFile).toString()) }
+                      .map { arrayOf<Any>(it.relativeTo(typeShedFile).toString(), sdkPath) }
+                  results
                 }
           }
           .toList()
