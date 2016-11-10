@@ -156,7 +156,7 @@ public class CheckRegExpForm {
       myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
       myRootPanel.revalidate();
       Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
-      if (balloon != null) balloon.revalidate();
+      if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
     });
   }
 
