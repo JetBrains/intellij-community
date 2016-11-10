@@ -722,11 +722,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  @Override
-  public void initialize(@NotNull GlobalInspectionContext context) {
-    super.initialize(context);
-  }
-
   @TestOnly
   public List<EntryPoint> getExtensions() {
     return myExtensions;

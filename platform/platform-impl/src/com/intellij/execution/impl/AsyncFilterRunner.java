@@ -135,7 +135,7 @@ class AsyncFilterRunner {
       List<Filter.Result> results = new ArrayList<>();
       for (LineHighlighter task : tasks) {
         ProgressManager.checkCanceled();
-        if (!marker.isValid()) return FilterResults.EMPTY;
+        if (!marker.isValid() || marker.getEndOffset() == 0) return FilterResults.EMPTY;
         ContainerUtil.addIfNotNull(results, task.compute());
       }
       return new FilterResults(markerOffset, marker, results);
@@ -146,8 +146,8 @@ class AsyncFilterRunner {
   private static LineHighlighter processLine(Document document, Filter filter, int line) {
     int lineEnd = document.getLineEndOffset(line);
     int endOffset = lineEnd + (lineEnd < document.getTextLength() ? 1 /* for \n */ : 0);
-    String text = EditorHyperlinkSupport.getLineText(document, line, true);
-    return () -> checkRange(filter, endOffset, filter.applyFilter(text, endOffset));
+    CharSequence text = EditorHyperlinkSupport.getLineSequence(document, line, true);
+    return () -> checkRange(filter, endOffset, filter.applyFilter(text.toString(), endOffset));
   }
 
   private static Filter.Result checkRange(Filter filter, int endOffset, Filter.Result result) {

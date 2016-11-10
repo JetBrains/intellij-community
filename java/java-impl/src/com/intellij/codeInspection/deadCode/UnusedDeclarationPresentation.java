@@ -619,7 +619,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
   }
 
