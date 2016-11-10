@@ -364,12 +364,17 @@ public class EditorHyperlinkSupport {
   }
 
 
-  public static String getLineText(Document document, int lineNumber, boolean includeEol) {
+  @NotNull
+  public static String getLineText(@NotNull Document document, int lineNumber, boolean includeEol) {
+    return getLineSequence(document, lineNumber, includeEol).toString();
+  }
+
+  static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
     }
-    return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+    return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset);
   }
 
   private static class HyperlinkInfoTextAttributes extends TextAttributes {
