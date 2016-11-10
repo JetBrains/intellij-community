@@ -33,7 +33,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -494,12 +493,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     for (SingleInspectionProfilePanel panel : myPanels) {
       if (panel.isModified()) return true;
     }
-    if (getProfiles().size() != myPanels.size()) return true;
-    return !myDeletedProfiles.isEmpty();
+    return getProfiles().size() != myPanels.size() || !myDeletedProfiles.isEmpty();
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
     for (InspectionProfileImpl profile : myDeletedProfiles) {
       deleteProfile(profile);
@@ -540,11 +538,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     final Collection<InspectionProfileImpl> profiles = getProfiles();
     final List<InspectionProfileImpl> modifiableProfiles = new ArrayList<>(profiles.size());
     for (InspectionProfileImpl profile : profiles) {
-      InspectionProfileImpl modifiableProfile = profile.getModifiableModel();
-      final InspectionProfileImpl inspectionProfile = modifiableProfile;
+      InspectionProfileImpl inspectionProfile = profile.getModifiableModel();
       modifiableProfiles.add(inspectionProfile);
-      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile);
-      myPanels.add(panel);
+      myPanels.add(createPanel(inspectionProfile));
     }
     myProfiles.getProfilesComboBox().reset(modifiableProfiles);
     myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());

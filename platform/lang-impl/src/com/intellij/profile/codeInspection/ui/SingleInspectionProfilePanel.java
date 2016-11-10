@@ -36,7 +36,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -1113,7 +1112,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProfile.setProjectLevel(myProfile.getParentProfile().isProjectLevel());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     final boolean modified = isModified();
     if (!modified) {
       return;
