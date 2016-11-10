@@ -492,19 +492,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void apply() {
-    SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
     for (InspectionProfileModifiableModel profile : myDeletedProfiles) {
-      // getParentProfile here is original scheme
-      if (profile.getProfileManager() == myApplicationProfileManager) {
-        myApplicationProfileManager.deleteProfile(profile.getSource());
-      }
-      else {
-        myProjectProfileManager.deleteProfile(profile.getName());
-      }
+      profile.getProfileManager().deleteProfile(profile.getSource());
     }
-
     myDeletedProfiles.clear();
 
+    SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
     for (SingleInspectionProfilePanel panel : myPanels) {
       panel.apply();
       if (setActiveProfileAsDefaultOnApply() && panel == selectedPanel) {
