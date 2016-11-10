@@ -380,13 +380,20 @@ class VariableView(override val variableName: String, private val variable: Vari
       return null
     }
 
-    val list = SmartList(variable.name)
+    val list = SmartList<String>()
+    addVarName(list, parent, variable.name)
+
     var parent: VariableContext? = context
     while (parent != null && parent.variableName != null) {
-      list.add(parent.variableName!!)
+      addVarName(list, parent.parent, parent.variableName!!)
       parent = parent.parent
     }
     return context.viewSupport.propertyNamesToString(list, false)
+  }
+
+  private fun addVarName(list: SmartList<String>, parent: VariableContext?, name: String) {
+    if (parent == null || parent.variableName != null) list.add(name)
+    else list.addAll(name.split(".").reversed())
   }
 
   private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length) {
