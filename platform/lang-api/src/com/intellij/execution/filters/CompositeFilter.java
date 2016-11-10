@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("ForLoopReplaceableByForEach")
@@ -199,6 +200,11 @@ public class CompositeFilter implements Filter, FilterMixin {
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
     myIsAnyHeavy |= filter instanceof FilterMixin;
+  }
+
+  @NotNull
+  public List<Filter> getFilters() {
+    return Collections.unmodifiableList(myFilters);
   }
 
   public void setForceUseAllFilters(boolean forceUseAllFilters) {
