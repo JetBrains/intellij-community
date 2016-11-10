@@ -1,0 +1,27 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager"
+                    testServiceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersStartupActivity"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
+  </extensions>
+
+  <actions>
+    <group id="Groovy.Dynamic.Toolbar">
+      <action id="Groovy.Dynamic.Remove"
+              class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.RemoveDynamicAction"
+              icon="AllIcons.General.Remove" text="Remove" description="Remove dynamic element"/>
+      <separator/>
+      <action id="Groovy.Dynamic.ExpandAll"
+              class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction"
+              icon="AllIcons.Actions.Expandall" text="Expand all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.CollapseAll"
+              class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction"
+              icon="AllIcons.Actions.Collapseall" text="Collapse all" description="Collapse all"/>
+    </group>
+  </actions>
+</idea-plugin>
