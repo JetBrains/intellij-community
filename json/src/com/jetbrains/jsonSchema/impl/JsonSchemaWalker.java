@@ -99,7 +99,8 @@ public class JsonSchemaWalker {
           }
         }
         if (selectedSchema != null) {
-          queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
+          if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, selectedSchema);
+          else queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
         }
       } else {
         List<JsonSchemaObject> list = new ArrayList<>();
