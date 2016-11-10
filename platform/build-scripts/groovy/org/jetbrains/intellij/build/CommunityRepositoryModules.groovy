@@ -242,6 +242,7 @@ class CommunityRepositoryModules {
     plugin("terminal") {
       withResource("resources/.zshrc", "")
       withResource("resources/jediterm-bash.in", "")
+      withResource("fish/config.fish", "fish")
     }
   ]
 
