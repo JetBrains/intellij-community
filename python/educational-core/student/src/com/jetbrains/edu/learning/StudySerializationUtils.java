@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -391,6 +392,7 @@ public class StudySerializationUtils {
     public static final String HINTS = "hints";
     public static final String SUBTASK_INFOS = "subtask_infos";
     public static final String FORMAT_VERSION = "format_version";
+    public static final String INDEX = "index";
 
     private Json() {
     }
@@ -464,11 +466,36 @@ public class StudySerializationUtils {
             //case 2:
             //  stepOptionsJson = convertToThirdVersion(stepOptionsJson);
         }
+        convertSubtaskInfosToMap(stepOptionsJson);
         StepicWrappers.StepOptions stepOptions =
           new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()
             .fromJson(stepOptionsJson, StepicWrappers.StepOptions.class);
         stepOptions.formatVersion = EduStepicConnector.CURRENT_VERSION;
         return stepOptions;
+      }
+
+      private static JsonObject convertSubtaskInfosToMap(JsonObject stepOptionsJson) {
+        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
+          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+          for (JsonElement placeholder : placeholders) {
+            JsonObject placeholderObject = placeholder.getAsJsonObject();
+            JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
+            Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
+            for (JsonElement info : infos) {
+              JsonObject object = info.getAsJsonObject();
+              int index = object.getAsJsonPrimitive(INDEX).getAsInt();
+              objectsToInsert.put(index, object);
+            }
+            placeholderObject.remove(SUBTASK_INFOS);
+            JsonObject newInfos = new JsonObject();
+            placeholderObject.add(SUBTASK_INFOS, newInfos);
+            for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
+              newInfos.add(entry.getKey().toString(), entry.getValue());
+            }
+          }
+        }
+        return stepOptionsJson;
       }
 
       private static JsonObject convertToSecondVersion(JsonObject stepOptionsJson) {
@@ -527,18 +554,38 @@ public class StudySerializationUtils {
     }
 
     private static void convertToSubtaskInfo(JsonObject placeholderObject) {
-      JsonObject subtaskInfosObject = new JsonObject();
-      placeholderObject.add(SUBTASK_INFOS, subtaskInfosObject);
-      JsonObject subtaskInfo = new JsonObject();
-      subtaskInfosObject.add("0", subtaskInfo);
+      JsonArray subtaskInfos = new JsonArray();
+      placeholderObject.add(SUBTASK_INFOS, subtaskInfos);
       JsonArray hintsArray = new JsonArray();
       hintsArray.add(placeholderObject.getAsJsonPrimitive(HINT).getAsString());
       JsonArray additionalHints = placeholderObject.getAsJsonArray(ADDITIONAL_HINTS);
       if (additionalHints != null) {
         hintsArray.addAll(additionalHints);
       }
+      JsonObject subtaskInfo = new JsonObject();
+      subtaskInfos.add(subtaskInfo);
+      subtaskInfo.add(INDEX, new JsonPrimitive(0));
       subtaskInfo.add(HINTS, hintsArray);
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
+    }
+
+    public static class StepicAnswerPlaceholderAdapter implements JsonSerializer<AnswerPlaceholder> {
+      @Override
+      public JsonElement serialize(AnswerPlaceholder placeholder, Type typeOfSrc, JsonSerializationContext context) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        JsonElement answerPlaceholderJson = gson.toJsonTree(placeholder);
+        JsonObject answerPlaceholderObject = answerPlaceholderJson.getAsJsonObject();
+        JsonObject subtaskInfos = answerPlaceholderObject.getAsJsonObject(SUBTASK_INFOS);
+        JsonArray infosArray = new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : subtaskInfos.entrySet()) {
+          JsonObject subtaskInfo = entry.getValue().getAsJsonObject();
+          subtaskInfo.add(INDEX, new JsonPrimitive(Integer.valueOf(entry.getKey())));
+          infosArray.add(subtaskInfo);
+        }
+        answerPlaceholderObject.remove(SUBTASK_INFOS);
+        answerPlaceholderObject.add(SUBTASK_INFOS, infosArray);
+        return answerPlaceholderJson;
+      }
     }
   }
 }

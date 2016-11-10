@@ -29,16 +29,20 @@
                   "hint": "[\"Type your name here.\"]",
                   "offset": 32,
                   "length": 14,
-                  "subtask_infos": {
-                    "0": {
-                      "hints": ["Type your name here."],
+                  "subtask_infos": [
+                    {
+                      "index": 0,
+                      "hints": [
+                        "Type your name here."
+                      ],
                       "possible_answer": "Liana"
                     },
-                    "1": {
-                      "hints":[],
+                    {
+                      "index": 1,
+                      "hints": [],
                       "possible_answer": "miss X"
                     }
-                  }
+                  ]
                 }
               ],
               "text": "print(\"Hello, world! My name is type your name\")\n",
