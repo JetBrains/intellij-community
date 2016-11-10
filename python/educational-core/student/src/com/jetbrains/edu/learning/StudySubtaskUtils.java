@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -65,6 +66,10 @@ public class StudySubtaskUtils {
     transformTestFile(project, toSubtaskIndex, taskDir);
     task.setActiveSubtaskIndex(toSubtaskIndex);
     updateUI(project, task, taskDir);
+
+    for (StudySubtaskChangeListener listener : Extensions.getExtensions(StudySubtaskChangeListener.EP_NAME)) {
+      listener.subtaskChanged(project, task, fromSubtaskIndex, toSubtaskIndex);
+    }
   }
 
   private static void transformTestFile(@NotNull Project project, int toSubtaskIndex, VirtualFile taskDir) {
