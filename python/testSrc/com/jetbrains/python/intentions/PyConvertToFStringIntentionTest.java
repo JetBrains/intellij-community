@@ -168,4 +168,14 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testFormatMethodParentFieldUnresolved() {
     doNegativeTest();
   }
+
+  // PY-21246
+  public void testFormatMethodWrapExpressionsInParentheses() {
+    doTest();
+  }
+
+  // PY-21246
+  public void testPercentOperatorWrapLambdaInParentheses() {
+    doTest();
+  }
 }

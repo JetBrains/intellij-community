@@ -99,7 +99,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     final PyExpression resolveResult = adjustResolveResult(reference.resolve());
     assert resolveResult != null;
 
-    final PsiElement adjusted = adjustQuotesInsideInjectedExpression(resolveResult);
+    final PsiElement adjusted = prepareExpressionToInject(resolveResult, subsChunk);
     if (adjusted == null) return false;
 
     fStringText.append(adjusted.getText());
