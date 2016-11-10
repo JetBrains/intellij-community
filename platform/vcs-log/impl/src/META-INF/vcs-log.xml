@@ -56,8 +56,6 @@
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowGraphHistoryAction" id="Vcs.Show.Graph.History"
             text="Show History as Graph" description="Show History as Graph" internal="true"/>
-    <action class="com.intellij.vcs.log.ui.actions.PrintIndexInfoAction" id="Vcs.Log.Print.Index.Info"
-            text="Print Index Info" description="Print Index Info for a Commit into Log File" internal="true"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
             use-shortcut-of="QuickJavaDoc"/>
@@ -83,12 +81,10 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
-      <reference id="Vcs.Log.Print.Index.Info"/>
     </group>
 
     <group id="Log.KeymapGroup" text="Log">
       <reference ref="Vcs.Log.CreatePatch"/>
-      <reference ref="Vcs.Log.Print.Index.Info"/>
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
