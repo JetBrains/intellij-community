@@ -33,6 +33,7 @@
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
     <studyActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyActionListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
+    <studySubtaskChangeListener implementation="com.jetbrains.edu.coursecreator.CCSubtaskChangeListener"/>
   </extensions>
 
   <project-components>
