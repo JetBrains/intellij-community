@@ -240,4 +240,17 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
 
+  public static boolean isInNonCancelableSection() {
+    ProgressIndicator indicator = getGlobalProgressIndicator();
+    while (indicator != null) {
+      if (indicator instanceof NonCancelableSection) return true;
+      if (indicator instanceof WrappedProgressIndicator) {
+        indicator = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
+      }
+      else {
+        break;
+      }
+    }
+    return false;
+  }
 }

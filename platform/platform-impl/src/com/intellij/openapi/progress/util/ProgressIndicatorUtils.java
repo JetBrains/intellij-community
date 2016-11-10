@@ -233,18 +233,4 @@ public class ProgressIndicatorUtils {
   public static void yieldToPendingWriteActions() {
     ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
-
-  public static boolean isInNonCancelableSection() {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    while (indicator != null) {
-      if (indicator instanceof NonCancelableSection) return true;
-      if (indicator instanceof WrappedProgressIndicator) {
-        indicator = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
-      }
-      else {
-        break;
-      }
-    }
-    return false;
-  }
 }
