@@ -35,6 +35,15 @@ target(compile: "Compile project") {
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
   }
+  // This is to delete the module-specific plugin.xmls used by android tests.
+  // They are not necessary in this context, since their content is included by the main
+  // android plugin.xml
+  files = fileset(dir: "$home/out/test", includes: "**/plugin.xml")
+              .findAll { it.getFile().readLines().collect { it.trim() }.contains("<!-- DELETE FOR ANT TESTS -->") }
+
+  ant.delete(failonerror: true) {
+    files.each { fileset(file: it) }
+  }
 }
 
 private pass(List<String> args, String prop) {
