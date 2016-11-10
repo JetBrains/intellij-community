@@ -141,9 +141,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                               @Nullable JComponent parentComponent);
 
   /**
-   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
-   * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
+   * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
+   * {@code canceledRunnable} will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *
    * @param project          the project in the context of which the operation is executed.
@@ -159,9 +159,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
   /**
-   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
-   * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
+   * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
+   * {@code canceledRunnable} will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *
    * @param project          the project in the context of which the operation is executed.
@@ -180,7 +180,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @NotNull PerformInBackgroundOption option);
 
   /**
-   * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
+   * Runs a specified {@code task} in either background/foreground thread and shows a progress dialog.
    *
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    */
@@ -226,7 +226,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending,
    * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or
    * {@link ProgressIndicator#checkCanceled()} often enough).
-   * It returns <code>true</code> if action was executed successfully. It returns <code>false</code> if the action was not
+   * It returns {@code true} if action was executed successfully. It returns {@code false} if the action was not
    * executed successfully, i.e. if:
    * <ul>
    * <li>write action was in progress when the method was called</li>
@@ -240,17 +240,5 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
 
-  public static boolean isInNonCancelableSection() {
-    ProgressIndicator indicator = getGlobalProgressIndicator();
-    while (indicator != null) {
-      if (indicator instanceof NonCancelableSection) return true;
-      if (indicator instanceof WrappedProgressIndicator) {
-        indicator = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
-      }
-      else {
-        break;
-      }
-    }
-    return false;
-  }
+  public abstract boolean isInNonCancelableSection();
 }
