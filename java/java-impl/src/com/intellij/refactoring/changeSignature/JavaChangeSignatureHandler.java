@@ -92,7 +92,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass));
-    InplaceChangeSignature inplaceChangeSignature = InplaceChangeSignature.getCurrentRefactoring(editor);
+    InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
 
     boolean isInplace = Registry.is("inplace.change.signature") && editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (initialChange == null || initialChange.getMethod() != method);

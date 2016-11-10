@@ -106,7 +106,7 @@ public class InplaceChangeSignature implements DocumentListener {
   }
 
   @Nullable
-  public static InplaceChangeSignature getCurrentRefactoring(Editor editor) {
+  public static InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
     return editor.getUserData(INPLACE_CHANGE_SIGNATURE);
   }
 
