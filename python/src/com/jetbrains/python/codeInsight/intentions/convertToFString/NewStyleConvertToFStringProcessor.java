@@ -23,10 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.Field;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +76,21 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     return callExpression.getArgumentList();
   }
 
+  @Nullable
+  @Override
+  protected PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull Field field) {
+    final PsiElement prepared = super.prepareExpressionToInject(expression, field);
+    if (prepared == null) return null;
+
+    // You cannot access attributes on numeric literals without wrapping them in parentheses
+    if (!field.getAttributesAndLookups().isEmpty() && (prepared instanceof PyBinaryExpression ||
+                                                       prepared instanceof PyPrefixExpression ||
+                                                       prepared instanceof PyNumericLiteralExpression)) {
+      return wrapExpressionInParentheses(prepared);
+    }
+    return prepared;
+  }
+
   @Override
   protected boolean convertSubstitutionChunk(@NotNull Field field, @NotNull StringBuilder fStringText) {
 
@@ -86,12 +98,11 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
     // Actual format field
     fStringText.append("{");
-    // Isn't supposed to be used by PySubstitutionChunkReference if explicit name or index is given
     final PySubstitutionChunkReference reference = createReference(field);
     final PyExpression resolveResult = adjustResolveResult(reference.resolve());
     if (resolveResult == null) return false;
 
-    final PsiElement adjusted = adjustQuotesInsideInjectedExpression(resolveResult);
+    final PsiElement adjusted = prepareExpressionToInject(resolveResult, field);
     if (adjusted == null) return false;
 
     fStringText.append(adjusted.getText());

@@ -164,6 +164,23 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
   protected abstract PsiElement getValuesSource();
 
   @Nullable
+  protected PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull T chunk) {
+    final PsiElement quoted = adjustQuotesInsideInjectedExpression(expression);
+    if (quoted == null) return null;
+
+    if (quoted instanceof PyLambdaExpression) {
+      return wrapExpressionInParentheses(quoted);
+    }
+    return quoted;
+  }
+
+  @Nullable
+  protected final PsiElement wrapExpressionInParentheses(@NotNull PsiElement expression) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(myPyString.getProject());
+    return generator.createExpressionFromText(LanguageLevel.forElement(myPyString), "(" + expression.getText() + ")");
+  }
+
+  @Nullable
   protected static PyExpression adjustResolveResult(@Nullable PsiElement resolveResult) {
     if (resolveResult == null) return null;
     final PyKeywordArgument argument = as(resolveResult, PyKeywordArgument.class);
