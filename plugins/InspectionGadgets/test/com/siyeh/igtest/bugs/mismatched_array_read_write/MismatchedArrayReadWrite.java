@@ -1,8 +1,8 @@
 package com.siyeh.igtest.bugs.mismatched_array_read_write;
 
 public class MismatchedArrayReadWrite {
-    private int[] foo = new int[3];
-    private int[] bar;
+    private int[] <warning descr="Contents of array 'foo' are written to, but never read">foo</warning> = new int[3];
+    private int[] <warning descr="Contents of array 'bar' are read, but never written to">bar</warning>;
 
     public void bar()
     {
@@ -11,13 +11,13 @@ public class MismatchedArrayReadWrite {
 
     public void bar2()
     {
-        final int[] barzoom = new int[3];
+        final int[] <warning descr="Contents of array 'barzoom' are written to, but never read">barzoom</warning> = new int[3];
         barzoom[2] = 3;
     }
 
     public void bar3()
     {
-        final int[] barzoom = new int[3];
+        final int[] <warning descr="Contents of array 'barzoom' are read, but never written to">barzoom</warning> = new int[3];
         int baz = barzoom[2];
     }
 
@@ -29,13 +29,13 @@ public class MismatchedArrayReadWrite {
 
     public int bar5()
     {
-        final int[] barzoom = new int[3];
+        final int[] <warning descr="Contents of array 'barzoom' are read, but never written to">barzoom</warning> = new int[3];
         return barzoom[3];
     }
 
     public void bar6()
     {
-        final int[] barzoom = new int[3];
+        final int[] <warning descr="Contents of array 'barzoom' are read, but never written to">barzoom</warning> = new int[3];
         System.out.println(barzoom[3]);
     }
 
@@ -87,17 +87,17 @@ class Test{
     }
 
     void foo1() {
-        final int[] barzoom = {};
+        final int[] <warning descr="Contents of array 'barzoom' are written to, but never read">barzoom</warning> = {};
         barzoom[2] = 3;
     }
 
     void foo2() {
-        final int[] barzoom = new int[]{};
+        final int[] <warning descr="Contents of array 'barzoom' are written to, but never read">barzoom</warning> = new int[]{};
         barzoom[2] = 3;
     }
 
     void foo3(Object[] otherArr) {
-        Object[] arr = otherArr.clone();
+        Object[] <warning descr="Contents of array 'arr' are written to, but never read">arr</warning> = otherArr.clone();
         for (int i = 0; i < 10; i++) arr[i] = i;
     }
 
