@@ -181,7 +181,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   }
 
   protected CCCreateAnswerPlaceholderDialog createDialog(Project project, AnswerPlaceholder answerPlaceholder) {
-    return new CCCreateAnswerPlaceholderDialog(project, StringUtil.notNullize(answerPlaceholder.getTaskText()),
+    String answerPlaceholderText = StringUtil.notNullize(answerPlaceholder.getTaskText());
+    return new CCCreateAnswerPlaceholderDialog(project, answerPlaceholderText.isEmpty() ? "type here" : answerPlaceholderText,
                                                answerPlaceholder.getHints());
   }
 }
