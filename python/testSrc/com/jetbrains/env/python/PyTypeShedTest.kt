@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.codeInsight
+package com.jetbrains.env.python
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -109,7 +109,7 @@ class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
       val typeShedFile = File(typeShedPath)
       return getPythonRoots()
           .asSequence()
-          .filter { PyEnvTaskRunner.isSuitableForTags(PyEnvTestCase.loadEnvTags(it), tags) }
+          .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
           .map { PythonSdkType.getPythonExecutable(it) }
           .filterNotNull()
           .flatMap { sdkPath ->
