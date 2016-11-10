@@ -26,6 +26,7 @@ import com.intellij.execution.actions.EOFAction;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter.ResultItem;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleHighlighterLayer;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -44,7 +45,9 @@ import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -1027,7 +1030,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                   if (additionalAttributes != null) {
                     ResultItem item = additionalHighlight.getResultItems().get(0);
                     myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                        additionalAttributes);
+                                                additionalAttributes, ConsoleHighlighterLayer.HIGHLIGHT_LAYER);
                   }
                   else {
                     myHyperlinks.highlightHyperlinks(additionalHighlight, 0);

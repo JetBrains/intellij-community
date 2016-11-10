@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -55,6 +54,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.execution.ui.ConsoleHighlighterLayer.HYPERLINK_LAYER;
+
 /**
  * @author peter
  */
@@ -62,8 +63,6 @@ public class EditorHyperlinkSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.EditorHyperlinkSupport");
   public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
-  private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
-  private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 111;
 
   private final Editor myEditor;
   @NotNull private final Project myProject;
@@ -217,7 +216,8 @@ public class EditorHyperlinkSupport {
                                           int highlightEndOffset,
                                           @Nullable TextAttributes highlightAttributes,
                                           @NotNull HyperlinkInfo hyperlinkInfo) {
-    return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null);
+    return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null, 
+                           HYPERLINK_LAYER);
   }
 
   @NotNull
@@ -225,11 +225,12 @@ public class EditorHyperlinkSupport {
                                            final int highlightEndOffset,
                                            @Nullable final TextAttributes highlightAttributes,
                                            @NotNull final HyperlinkInfo hyperlinkInfo,
-                                           @Nullable TextAttributes followedHyperlinkAttributes) {
+                                           @Nullable TextAttributes followedHyperlinkAttributes, 
+                                           int layer) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
-                                                                                       HYPERLINK_LAYER,
+                                                                                       layer,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
     associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
@@ -283,16 +284,17 @@ public class EditorHyperlinkSupport {
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
       if (resultItem.getHyperlinkInfo() != null) {
-        createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes());
+        createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
+                        resultItem.getHighlighterLayer());
       }
       else if (attributes != null) {
-        addHighlighter(start, end, attributes);
+        addHighlighter(start, end, attributes, resultItem.getHighlighterLayer());
       }
     }
   }
 
-  public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset, HIGHLIGHT_LAYER, highlightAttributes,
+  public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes, int highlighterLayer) {
+    myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset, highlighterLayer, highlightAttributes,
                                                   HighlighterTargetArea.EXACT_RANGE);
   }
 
@@ -365,7 +367,7 @@ public class EditorHyperlinkSupport {
       }
     }
     //refresh highlighter text attributes
-    markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
+    markupModel.addRangeHighlighter(0, 0, link.getLayer(), getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
   }
 
 
