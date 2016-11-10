@@ -448,6 +448,17 @@ public class Py3TypeTest extends PyTestCase {
            "    expr = x");
   }
 
+  // PY-20757
+  public void testMinElseNone() {
+    doTest("Union[None, Any]",
+           "def get_value(v):\n" +
+           "    if v:\n" +
+           "        return min(v)\n" +
+           "    else:\n" +
+           "        return None\n" +
+           "expr = get_value([])");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

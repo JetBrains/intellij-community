@@ -225,7 +225,8 @@ def min(*args, key=None, default=None):
     """Return the smallest item in an iterable or the smallest of two or more
     arguments.
 
-    :rtype: object | unknown
+    :type args: tuple[T]
+    :rtype: T
     """
     pass
 

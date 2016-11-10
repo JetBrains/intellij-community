@@ -209,6 +209,16 @@ def map(function, sequence, *sequence_1):
     pass
 
 
+def min(*args, key=None, default=None):
+    """Return the smallest item in an iterable or the smallest of two or more
+    arguments.
+
+    :type args: tuple[T]
+    :rtype: T
+    """
+    pass
+
+
 def next(iterator, default=None):
     """Return the next item from the iterator.
 
