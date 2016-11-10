@@ -68,6 +68,7 @@ public class LabelPainter implements ReferencePainter {
   private static final String SEPARATOR = "/";
   @SuppressWarnings("UseJBColor") private static final JBColor BACKGROUND = new JBColor(Color.BLACK, Color.WHITE);
   private static final float BALANCE = 0.08f;
+  private static final JBColor TEXT_COLOR = new JBColor(new Color(0x7a7a7a), new Color(0x909090));
 
   @NotNull private final VcsLogData myLogData;
 
@@ -89,7 +90,7 @@ public class LabelPainter implements ReferencePainter {
                                boolean isSelected,
                                int availableWidth) {
     myBackground = background;
-    myForeground = foreground;
+    myForeground = isSelected ? foreground : TEXT_COLOR;
 
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
