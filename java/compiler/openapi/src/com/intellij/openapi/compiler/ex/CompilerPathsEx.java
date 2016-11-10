@@ -122,8 +122,19 @@ public class CompilerPathsEx extends CompilerPaths {
     return ArrayUtil.toStringArray(outputPaths);
   }
 
+  /**
+   * Presents .class file in form of {@link File} for files inside output directories or {@link VirtualFile} inside jars for library classes.
+   * Building virtual files for output directories is not feasible for the task and io.File won't work inside jars.
+   */
   public interface ClassFileDescriptor {
+    /**
+     * Loads content of the class file
+     */
     byte[] loadFileBytes() throws IOException;
+
+    /**
+     * Returns system independent path to the class file
+     */
     String getPath();
   }
 
@@ -145,24 +156,17 @@ public class CompilerPathsEx extends CompilerPaths {
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         if (virtualFile != null && fileIndex.isInLibraryClasses(virtualFile)) {
-          final VirtualFile rootForFile = fileIndex.getClassRootForFile(virtualFile);
-          if (rootForFile != null) {
-            final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
-            if (classFile != null) {
-              return new ClassFileDescriptor() {
-                @Override
-                public byte[] loadFileBytes() throws IOException {
-                  return classFile.contentsToByteArray();
-                }
-
-                @Override
-                public String getPath() {
-                  return classFile.getPath();
-                }
-              };
+          return new ClassFileDescriptor() {
+            @Override
+            public byte[] loadFileBytes() throws IOException {
+              return virtualFile.contentsToByteArray();
             }
-          }
-          return null;
+
+            @Override
+            public String getPath() {
+              return virtualFile.getPath();
+            }
+          };
         }
       }
       return null;
@@ -196,7 +200,7 @@ public class CompilerPathsEx extends CompilerPaths {
 
       @Override
       public String getPath() {
-        return classFile.getPath();
+        return FileUtil.toSystemIndependentName(classFile.getPath());
       }
     };
   }
