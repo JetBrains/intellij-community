@@ -15,12 +15,30 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
+import java.util.function.Supplier;
 
 public class ClipboardUtil {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
+
+  public static <E> E handleClipboardSafely(Supplier<E> supplier, Supplier<E> onFail) {
+    try {
+      return supplier.get();
+    }catch (IllegalStateException e) {
+      if (SystemInfo.isWindows) {
+        LOG.debug("Clipboard is busy");
+      } else {
+        LOG.warn(e);
+      }
+      return onFail.get();
+    }
+  }
 
   @Nullable
   public static String getTextInClipboard() {

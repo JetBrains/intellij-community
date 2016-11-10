@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -24,14 +25,15 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.FutureResult;
 import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -41,6 +43,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -94,25 +98,57 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     return "ClipboardSynchronizer";
   }
 
+  public void areDataFlavorsAvailableAsync(@NotNull Consumer<Boolean> callback, @NotNull DataFlavor... flavors) {
+    final Supplier<Boolean> availabilitySupplier =
+      () -> ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors),() -> false);
+
+    Boolean available = availabilitySupplier.get();
+    if (available) {
+      callback.consume(available);
+    } else {
+      AtomicInteger counter = new AtomicInteger();
+
+      Timer timer = new Timer(50, event -> {});
+      timer.addActionListener( event -> {
+        Boolean a = availabilitySupplier.get();
+        if (counter.incrementAndGet() > 3 || a) {
+          timer.stop();
+        }
+        callback.consume(a);
+      });
+      timer.start();
+    }
+  }
+
+  public void getContentsAsync(@NotNull Consumer<Transferable> callback) {
+    final Supplier<Transferable> transferableSupplier =
+      () -> ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
+
+    Transferable transferable = transferableSupplier.get();
+    if (transferable != null) {
+      callback.consume(transferable);
+    } else {
+      AtomicInteger counter = new AtomicInteger();
+
+      Timer timer = new Timer(50, event -> {});
+      timer.addActionListener( event -> {
+        Transferable t = transferableSupplier.get();
+        if (counter.incrementAndGet() > 3) {
+          timer.stop();
+        }
+        callback.consume(t);
+      });
+      timer.start();
+    }
+  }
+
   public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-    try {
-      return myClipboardHandler.areDataFlavorsAvailable(flavors);
-    }
-    catch (IllegalStateException e) {
-      LOG.info(e);
-      return false;
-    }
+    return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), () -> false);
   }
 
   @Nullable
   public Transferable getContents() {
-    try {
-      return myClipboardHandler.getContents();
-    }
-    catch (IllegalStateException e) {
-      LOG.info(e);
-      return null;
-    }
+    return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
   }
 
   public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
@@ -156,40 +192,15 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
 
     @Nullable
-    public Transferable getContents() throws IllegalStateException {
-      IllegalStateException last = null;
-      for (int i = 0; i < 3; i++) {
-        try {
-          Clipboard clipboard = getClipboard();
-          if (clipboard == null){
-            TimeoutUtil.sleep(50);
-            continue;
-          }
-          return clipboard.getContents(this);
-        }
-        catch (IllegalStateException e) {
-          TimeoutUtil.sleep(50);
-          last = e;
-        }
-      }
-      throw last;
+    public Transferable getContents() {
+      Clipboard clipboard = getClipboard();
+      return clipboard == null ? null: clipboard.getContents(this);
     }
 
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
-      for (int i = 0; i < 3; i++) {
-        try {
-          Clipboard clipboard = getClipboard();
-          if (clipboard == null) {
-            TimeoutUtil.sleep(50);
-            continue;
-          }
-          clipboard.setContents(content, owner);
-        }
-        catch (IllegalStateException e) {
-          TimeoutUtil.sleep(50);
-          continue;
-        }
-        break;
+      Clipboard clipboard = getClipboard();
+      if (clipboard !=null) {
+        clipboard.setContents(content, owner);
       }
     }
 
@@ -202,14 +213,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     private Pair<String,Transferable> myFullTransferable;
 
     @Nullable
-    private Transferable doGetContents() throws IllegalStateException {
-      if (Registry.is("ide.mac.useNativeClipboard")) {
-        final Transferable safe = getContentsSafe();
-        if (safe != null) {
-          return safe;
-        }
-      }
-
+    private Transferable doGetContents() {
       return super.getContents();
     }
 
