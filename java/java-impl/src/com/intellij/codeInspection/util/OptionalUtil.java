@@ -141,11 +141,14 @@ public class OptionalUtil {
   @NotNull
   public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
     if (!(type instanceof PsiClassType)) return "";
-    if (((PsiClassType)type).getParameterCount() == 0) {
-      PsiExpression copy =
-        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
-      PsiType exprType = copy.getType();
-      if (exprType != null && !LambdaUtil.notInferredType(exprType) && TypeConversionUtil.isAssignable(type, exprType)) return "";
+    PsiExpression copy =
+      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
+    PsiType exprType = copy.getType();
+    if (exprType != null &&
+        !exprType.equals(PsiType.NULL) &&
+        !LambdaUtil.notInferredType(exprType) &&
+        TypeConversionUtil.isAssignable(type, exprType)) {
+      return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }
