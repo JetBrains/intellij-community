@@ -301,28 +301,15 @@ public class EduStepicConnector {
     }
   }
 
-  public static void postAttempt(@NotNull final Task task, boolean passed, @NotNull final Project project) {
+  public static void postSolution(@NotNull final Task task, boolean passed, @NotNull final Project project) {
     if (task.getStepId() <= 0) {
       return;
     }
-
-    final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
-    String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepId()));
-    attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
-
+    
     try {
-      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
-      final CloseableHttpResponse attemptResponse = client.execute(attemptRequest);
-      final HttpEntity responseEntity = attemptResponse.getEntity();
-      final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-      final StatusLine statusLine = attemptResponse.getStatusLine();
-      EntityUtils.consume(responseEntity);
-      if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.warn("Failed to make attempt " + attemptResponseString);
-      }
-      final StepicWrappers.AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, 
-                                                                                StepicWrappers.AttemptContainer.class).attempts.get(0);
-
+      final String response = postAttempt(project, task.getStepId());
+      final StepicWrappers.AttemptWrapper.Attempt attempt =
+        new Gson().fromJson(response, StepicWrappers.AttemptContainer.class).attempts.get(0);
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
       final ArrayList<StepicWrappers.SolutionFile> files = new ArrayList<>();
       final VirtualFile taskDir = task.getTaskDir(project);
@@ -340,11 +327,29 @@ public class EduStepicConnector {
           }
         }
       }
+      
       postSubmission(passed, attempt, project, files);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
+  }
+
+  public static String postAttempt(@NotNull Project project, int id) throws IOException {
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
+    final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
+    String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(id));
+    attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
+
+    final CloseableHttpResponse attemptResponse = client.execute(attemptRequest);
+    final HttpEntity responseEntity = attemptResponse.getEntity();
+    final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    final StatusLine statusLine = attemptResponse.getStatusLine();
+    EntityUtils.consume(responseEntity);
+    if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+      LOG.warn("Failed to make attempt " + attemptResponseString);
+    }
+    return attemptResponseString;
   }
 
   private static void postSubmission(boolean passed, StepicWrappers.AttemptWrapper.Attempt attempt,

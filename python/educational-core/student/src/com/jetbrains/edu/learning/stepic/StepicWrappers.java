@@ -254,9 +254,10 @@ public class StepicWrappers {
     Attempt attempt;
   }
 
-  static class AttemptToPostWrapper {
+  static class AdaptiveAttemptWrapper {
     static class Attempt {
       int step;
+      Dataset dataset;
       String dataset_url;
       String status;
       String time;
@@ -268,12 +269,21 @@ public class StepicWrappers {
         this.step = step;
       }
     }
+    
+    static class Dataset {
+      boolean is_multiple_choice;
+      List<String> options;
+    }
 
-    public AttemptToPostWrapper(int step) {
+    public AdaptiveAttemptWrapper(int step) {
       attempt = new Attempt(step);
     }
 
     Attempt attempt;
+  }
+
+  static class AdaptiveAttemptContainer {
+    List<AdaptiveAttemptWrapper.Attempt> attempts;
   }
 
   static class AttemptContainer {
