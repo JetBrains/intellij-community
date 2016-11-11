@@ -812,7 +812,7 @@
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type can be replaced with lambda using factory method or special constructor"
+    <localInspection groupPath="Java" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionsApi"

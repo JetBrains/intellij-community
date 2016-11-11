@@ -107,7 +107,7 @@ public class AnonymousHasLambdaAlternativeInspection extends BaseJavaBatchLocalI
     @NotNull
     @Override
     public String getName() {
-      return "Replace anonymous class with "+myAlternative.myReplacementMessage;
+      return "Replace with "+myAlternative.myReplacementMessage;
     }
 
     @Nls
