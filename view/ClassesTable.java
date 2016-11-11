@@ -29,6 +29,7 @@ import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
 import org.jetbrains.debugger.memory.utils.InstancesProvider;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.util.*;
@@ -41,6 +42,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       DataKey.create("ClassesTable.NewInstances");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
       DataKey.create("ClassesTable.ReferenceCountProvider");
+
+  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -399,6 +402,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
                                          boolean hasFocus, int row, int column) {
       column = convertColumnIndexToModel(column);
       TrackingType trackingType = getTrackingType(row);
+
+      if (hasFocus) {
+        setBorder(EMPTY_BORDER);
+      }
 
       if (trackingType != null && column == DiffViewTableModel.DIFF_COLUMN_INDEX) {
         setIcon(MemoryViewIcons.CLASS_TRACKED);
