@@ -404,7 +404,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int oldStartIndex = 0;
     int startIndex = 0;
 
-    if (offset > 0 && mySegments.getSegmentCount() > 0) {
+    if (mySegments.getSegmentCount() > 0) {
       final int segmentIndex = mySegments.findSegmentIndex(offset - 1) - 2;
       oldStartIndex = Math.max(0, segmentIndex);
       startIndex = oldStartIndex;

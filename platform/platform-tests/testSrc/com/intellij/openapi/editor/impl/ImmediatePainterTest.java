@@ -74,16 +74,6 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     }
   }
 
-  public void testEmptyFile() throws Exception {
-    init("");
-    assertRenderedCorrectly(0, 'c');
-  }
-
-  public void testBeginningOfFile() throws Exception {
-    init("\nfoo");
-    assertRenderedCorrectly(0, 'c');
-  }
-
   public void testDrawingNarrowChar() throws Exception {
     init("");
     assertRenderedCorrectly(0, '▌');
