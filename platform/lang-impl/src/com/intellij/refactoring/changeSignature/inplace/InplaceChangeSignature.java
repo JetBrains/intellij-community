@@ -51,8 +51,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +208,7 @@ public class InplaceChangeSignature implements DocumentListener {
   }
 
   protected void showBalloon() {
-    JBCheckBox checkBox = new JBCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
+    NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> myDelegate = checkBox.isSelected());
     JPanel content = new JPanel(new BorderLayout());
     content.add(myPreview.getComponent(), BorderLayout.NORTH);
