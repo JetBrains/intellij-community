@@ -1,8 +1,13 @@
 package com.siyeh.igtest.bugs.mismatched_array_read_write;
 
+import java.util.*;
+
+import static java.lang.System.arraycopy;
+
 public class MismatchedArrayReadWrite {
     private int[] <warning descr="Contents of array 'foo' are written to, but never read">foo</warning> = new int[3];
     private int[] <warning descr="Contents of array 'bar' are read, but never written to">bar</warning>;
+    private int[] IVAL_3 = {3}; // strictly written, but warned about by "Unused declaration" inspection
 
     public void bar()
     {
@@ -65,6 +70,20 @@ public class MismatchedArrayReadWrite {
             }
         }
     }
+
+    void bar10(int[] is) {
+        int[] <warning descr="Contents of array 'js' are written to, but never read">js</warning> = new int[is.length];
+        arraycopy(is, 0, js, 0, is.length);
+        int[] <warning descr="Contents of array 'ks' are read, but never written to">ks</warning> = new int[is.length];
+        arraycopy(ks, 0, is, 0, is.length);
+    }
+
+    public void bar11() {
+        final int[][] <warning descr="Contents of array 'allResults' are written to, but never read">allResults</warning> = new int[10][10];
+        for (int row = 0; row < 10; row++) {
+            allResults[row] = new int[9];
+        }
+    }
 }
 class Test{
     public void bar(){
@@ -83,7 +102,6 @@ class Test{
     private void testStuff() {
         int[][] array = new int[2][2];
         array[0][1]++;
-        System.out.println(array[0][1]);
     }
 
     void foo1() {
@@ -195,5 +213,54 @@ class TestIDEA128098 {
     SomeEnum(String... patterns) {
       myPatterns = patterns;
     }
+  }
+
+  void m(boolean b, String[] ts) {
+    Object[] <warning descr="Contents of array 'ss' are read, but never written to">ss</warning> = new String[10];
+    for (String s : b ? (String[])(ss) : ts) {
+
+    }
+  }
+
+  void m1(List<String> list) {
+    String[] ss = list.toArray(new String[0]);
+    System.out.println(ss[0]);
+  }
+
+  void m2(Object[] otherArr) {
+    Object[] <warning descr="Contents of array 'arr' are written to, but never read">arr</warning> = new Object[10];
+    Arrays.fill(arr, "null");
+  }
+
+  void m3() {
+    String[] <warning descr="Contents of array 'ss' are read, but never written to">ss</warning> = new String[1];
+    System.out.println(Arrays.toString(ss));
+  }
+}
+class Ball {
+  private String[] names;
+
+  Ball() {
+    names = new String[] {
+      "tennisball",
+      "football",
+      "basketball"
+    };
+  }
+
+  public String toString() {
+    return Arrays.toString(names);
+  }
+}
+class ParentRecorder {
+  private final int[] parents;
+
+  public ParentRecorder(int[] parents) {
+    this.parents = parents;
+    Arrays.fill(parents, -1);
+  }
+
+  public void treeEdge(int e, int g) {
+    parents[e] = g;
   }
 }
