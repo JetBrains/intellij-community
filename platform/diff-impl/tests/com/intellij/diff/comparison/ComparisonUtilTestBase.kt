@@ -32,14 +32,22 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private fun doWordTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+  private fun doLineInnerTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
     val rawFragments = MANAGER.compareLinesInner(before.charsSequence, after.charsSequence, policy, INDICATOR)
     val fragments = MANAGER.squash(rawFragments)
-    checkConsistencyWord(fragments, before, after)
+    checkConsistencyLineInner(fragments, before, after)
 
     val diffFragments = fragments[0].innerFragments!!
     if (matchings != null) checkDiffMatching(diffFragments, matchings)
     if (expected != null) checkDiffChanges(diffFragments, expected)
+  }
+
+  private fun doWordTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+    val fragments = MANAGER.compareWords(before.charsSequence, after.charsSequence, policy, INDICATOR)
+    checkConsistency(fragments, before, after)
+
+    if (matchings != null) checkDiffMatching(fragments, matchings)
+    if (expected != null) checkDiffChanges(fragments, expected)
   }
 
   private fun doCharTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
@@ -62,7 +70,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private fun checkConsistencyWord(fragments: List<LineFragment>, before: Document, after: Document) {
+  private fun checkConsistencyLineInner(fragments: List<LineFragment>, before: Document, after: Document) {
     assertTrue(fragments.size == 1)
     val fragment = fragments[0]
 
@@ -169,7 +177,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   //
 
   internal enum class TestType {
-    LINE, WORD, CHAR, SPLITTER
+    LINE, LINE_INNER, WORD, CHAR, SPLITTER
   }
 
   internal inner class TestBuilder(private val type: TestType) {
@@ -215,6 +223,10 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
         when (type) {
           TestType.LINE -> doLineTest(before!!, after!!, matchings, change, policy)
+          TestType.LINE_INNER -> {
+            doLineInnerTest(before!!, after!!, matchings, change, policy)
+            doWordTest(before!!, after!!, matchings, change, policy)
+          }
           TestType.WORD -> doWordTest(before!!, after!!, matchings, change, policy)
           TestType.CHAR -> doCharTest(before!!, after!!, matchings, change, policy)
           TestType.SPLITTER -> {
@@ -360,6 +372,8 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   }
 
   internal fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
+
+  internal fun lines_inner(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE_INNER, f)
 
   internal fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
 
