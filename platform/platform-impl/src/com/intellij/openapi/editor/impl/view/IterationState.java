@@ -47,7 +47,7 @@ import java.util.List;
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
-  public static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
+  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
     final int result = LayerComparator.INSTANCE.compare(o1, o2);
     if (result != 0) {
       return result;

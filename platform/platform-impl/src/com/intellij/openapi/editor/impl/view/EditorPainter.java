@@ -813,9 +813,10 @@ class EditorPainter implements TextDrawingCallback {
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
         int lineWidth = JBUI.scale(settings.getLineCursorWidth());
-        // fully cover extra character's pixel which can appear due to antialiasing
-        // see IDEA-148843 for more details
-        if (x > minX && lineWidth > 1) x--;
+        // See IDEA-148843 for details
+        if (!ImmediatePainter.isZeroLatencyTypingEnabled()) {
+          if (x > minX && lineWidth > 1) x--; // fully cover extra character's pixel which can appear due to antialiasing
+        }
         g.fillRect(x, y, lineWidth, nominalLineHeight);
         if (myDocument.getTextLength() > 0 && caret != null &&
             !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
