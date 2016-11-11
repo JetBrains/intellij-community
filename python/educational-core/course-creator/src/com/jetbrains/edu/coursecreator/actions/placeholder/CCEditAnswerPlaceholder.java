@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class CCEditAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   public CCEditAnswerPlaceholder() {
-    super("Edit Answer Placeholder", "Edit answer placeholder");
+    super("Edit", "Edit answer placeholder");
   }
 
   @Override

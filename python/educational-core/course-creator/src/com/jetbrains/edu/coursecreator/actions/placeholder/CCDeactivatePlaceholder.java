@@ -8,7 +8,7 @@ import java.util.Collections;
 
 public class CCDeactivatePlaceholder extends CCSubtaskPlaceholderAction {
 
-  public static final String TITLE = "Deactivate Answer Placeholder";
+  public static final String TITLE = "Deactivate";
 
   protected CCDeactivatePlaceholder() {
     super(TITLE, TITLE);
