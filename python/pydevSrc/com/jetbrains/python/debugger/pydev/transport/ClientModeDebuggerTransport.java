@@ -17,7 +17,6 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link DebuggerTransport} implementation that expects a debugging script to behave as a server. The main process of the debugging script
@@ -122,22 +121,21 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           throw e;
         }
 
-        AtomicBoolean success = new AtomicBoolean(false);
         CountDownLatch beforeHandshake = new CountDownLatch(1);
-        Future<Void> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           beforeHandshake.countDown();
           try {
             myDebugger.handshake();
-            success.set(true);
+            return true;
           }
           catch (PyDebuggerException e) {
             LOG.debug(String.format("[%d] Handshake failed: #%d attempt", hashCode(), attempt));
+            return false;
           }
-          return null;
         });
         try {
           beforeHandshake.await();
-          future.get(CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
+          connected = future.get(CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
         }
         catch (InterruptedException e) {
           LOG.debug(String.format("[%d] Waiting for handshake interrupted: #%d attempt", hashCode(), attempt), e);
@@ -152,7 +150,6 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           future.cancel(true);
         }
 
-        connected = success.get();
         if (!connected) {
           myDebuggerReader.close();
           try {
