@@ -15,16 +15,16 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -37,15 +37,18 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class PyiTypeTest extends PyTestCase {
+  public static void addPyiStubsToContentRoot(CodeInsightTestFixture fixture) {
+    final String path = fixture.getTestDataPath() + "/pyi/pyiStubs";
+    final VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
+    assertNotNull(file);
+    file.refresh(false, true);
+    ModuleRootModificationUtil.addContentRoot(fixture.getModule(), path);
+  }
+
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK) {
-      @Override
-      public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-        createLibrary(model, "pyiStubs", "/community/python/testData/pyi/pyiStubs");
-      }
-    };
+    return ourPy3Descriptor;
   }
 
   @Override
@@ -99,6 +102,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testPyiOnPythonPath() {
+    addPyiStubsToContentRoot(myFixture);
     doTest("int");
   }
 
