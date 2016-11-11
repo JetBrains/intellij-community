@@ -22,6 +22,7 @@ target(compile: "Compile project") {
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
   }
+  pruneTestPlugins()
 }
 
 private pass(String prop) {
