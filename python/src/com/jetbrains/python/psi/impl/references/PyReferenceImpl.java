@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -305,7 +306,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
             continue;
           }
-          if (resolved == referenceOwner && referenceOwner instanceof PyClass) {
+          if (skipClassForwardReferences(referenceOwner, resolved)) {
             continue;
           }
           if (definer == null) {
@@ -327,6 +328,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return resolveByReferenceResolveProviders();
+  }
+
+  private static boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
+    final boolean insidePythonStub = referenceOwner != null && referenceOwner.getContainingFile() instanceof PyiFile;
+    return resolved == referenceOwner && referenceOwner instanceof PyClass && !insidePythonStub;
   }
 
   private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {

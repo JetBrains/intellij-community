@@ -79,4 +79,9 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testPyiMissingOrEmptyDocstring() {
     doPyiTest(PyMissingOrEmptyDocstringInspection.class);
   }
+
+  // PY-19374
+  public void testPyiClassForwardReferences() {
+    doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
 }
