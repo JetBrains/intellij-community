@@ -71,7 +71,9 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     private final ModuleFileIndex myModuleFileIndex;
     private final Set<String> myExportedPackageNames;
 
-    public NonAccessibleTypeExposedVisitor(ProblemsHolder holder, Module module, Set<String> exportedPackageNames) {
+    public NonAccessibleTypeExposedVisitor(@NotNull ProblemsHolder holder,
+                                           @NotNull Module module,
+                                           @NotNull Set<String> exportedPackageNames) {
       myHolder = holder;
       myModuleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
       myExportedPackageNames = exportedPackageNames;
@@ -84,6 +86,7 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
         if (!method.isConstructor()) {
           checkType(method.getReturnType(), method.getReturnTypeElement());
         }
+        checkTypeParameters(method.getTypeParameterList());
         for (PsiParameter parameter : method.getParameterList().getParameters()) {
           checkType(parameter.getType(), parameter.getTypeElement());
         }
@@ -128,22 +131,68 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
       }
     }
 
-    private void checkType(@Nullable PsiType type, @Nullable PsiTypeElement typeElement) {
-      if (typeElement != null) {
-        PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        checkType(psiClass, typeElement);
+    @Override
+    public void visitClass(PsiClass aClass) {
+      super.visitClass(aClass);
+      if (isModulePublicApi(aClass)) {
+        checkTypeParameters(aClass.getTypeParameterList());
       }
     }
 
-    private void checkType(PsiClass psiClass, @NotNull PsiElement typeElement) {
+    private void checkType(@Nullable PsiType type, @Nullable PsiTypeElement typeElement) {
+      if (typeElement != null) {
+        if (type instanceof PsiWildcardType) {
+          type = ((PsiWildcardType)type).getBound();
+          PsiElement lastChild = typeElement.getLastChild();
+          if (lastChild instanceof PsiTypeElement) {
+            typeElement = (PsiTypeElement)lastChild;
+          }
+        }
+        PsiClass psiClass = PsiUtil.resolveClassInType(type);
+        checkType(psiClass, typeElement);
+        if (type instanceof PsiClassType && !(psiClass instanceof PsiTypeParameter)) {
+          PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+          if (referenceElement != null) {
+            checkTypeParameters(referenceElement.getParameterList());
+          }
+        }
+      }
+    }
+
+    private void checkType(@Nullable PsiClass psiClass, @NotNull PsiElement typeElement) {
       if (psiClass != null && !(psiClass instanceof PsiTypeParameter) && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
         myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
       }
     }
 
+    private void checkTypeParameters(@Nullable PsiReferenceParameterList parameterList) {
+      if (parameterList != null) {
+        PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+        for (PsiTypeElement typeParameterElement : typeParameterElements) {
+          checkType(typeParameterElement.getType(), typeParameterElement);
+        }
+      }
+    }
+
+    private void checkTypeParameters(@Nullable PsiTypeParameterList parameterList) {
+      if (parameterList != null) {
+        for (PsiTypeParameter typeParameter : parameterList.getTypeParameters()) {
+          for (PsiJavaCodeReferenceElement referenceElement : typeParameter.getExtendsList().getReferenceElements()) {
+            PsiElement resolved = referenceElement.resolve();
+            if (resolved instanceof PsiClass) {
+              checkType((PsiClass)resolved, referenceElement);
+            }
+            checkTypeParameters(referenceElement.getParameterList());
+          }
+        }
+      }
+    }
+
     @Contract("null -> false")
     private boolean isModulePublicApi(@Nullable PsiMember member) {
-      if (member != null && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
+      if (member != null &&
+          !(member instanceof PsiTypeParameter) &&
+          (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
         PsiElement parent = member.getParent();
         if (parent instanceof PsiClass) {
           return isModulePublicApi((PsiClass)parent);
@@ -160,27 +209,26 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     private boolean isModulePublicApi(@Nullable PsiAnnotationOwner owner) {
       if (owner instanceof PsiModifierList) {
         PsiElement parent = ((PsiModifierList)owner).getParent();
-        if (parent instanceof PsiMember) {
+        if (parent instanceof PsiMember) { // class or field or method
           return isModulePublicApi((PsiMember)parent);
         }
-        if (parent instanceof PsiParameter) {
+        if (parent instanceof PsiParameter) { // method parameter
           PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
           if (declarationScope instanceof PsiMethod) {
             return isModulePublicApi((PsiMethod)declarationScope);
           }
         }
       }
-      else if (owner instanceof PsiTypeElement) {
-        PsiElement parent = ((PsiTypeElement)owner).getParent();
-        if (parent instanceof PsiMember) {
-          return isModulePublicApi((PsiMember)parent);
-        }
-        if (parent instanceof PsiReferenceParameterList) {
-          PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-          return isModulePublicApi(method);
+      else if (owner instanceof PsiTypeElement) { // type argument (aka type_use)
+        PsiElement grandParent = PsiTreeUtil.skipParentsOfType(((PsiTypeElement)owner),
+                                                               PsiParameter.class, PsiParameterList.class, PsiTypeElement.class,
+                                                               PsiReferenceList.class, PsiReferenceParameterList.class,
+                                                               PsiJavaCodeReferenceElement.class);
+        if (grandParent instanceof PsiMember) {
+          return isModulePublicApi((PsiMember)grandParent);
         }
       }
-      else if (owner instanceof PsiTypeParameter) {
+      else if (owner instanceof PsiTypeParameter) { // type parameter declaration
         PsiElement parent = ((PsiTypeParameter)owner).getParent();
         if (parent instanceof PsiTypeParameterList) {
           PsiElement grandParent = parent.getParent();
