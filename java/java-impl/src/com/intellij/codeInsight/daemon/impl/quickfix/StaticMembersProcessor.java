@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
@@ -79,13 +79,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiElement psiElement = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
-      if (psiElement instanceof PsiLambdaExpression) {
-        return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)psiElement).getFunctionalInterfaceType());
-      }
-      else if (psiElement instanceof PsiMethod) {
-        return ((PsiMethod)psiElement).getReturnType();
-      }
+      return PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiElement pParent = parent.getParent();

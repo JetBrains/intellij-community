@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,7 +176,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         }
       }
       else if (parent instanceof PsiReturnStatement) {
-        final PsiType returnType = TypeUtils.getMethodReturnType(parent);
+        final PsiType returnType = PsiTypesUtil.getMethodReturnType(parent);
         if (isObsoleteCollectionType(returnType)) {
           return true;
         }

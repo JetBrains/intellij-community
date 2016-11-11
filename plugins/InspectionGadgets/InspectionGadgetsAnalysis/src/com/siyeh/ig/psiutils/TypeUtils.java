@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -257,19 +256,5 @@ public class TypeUtils {
       return PsiType.DOUBLE;
     }
     return type;
-  }
-
-  /**
-   * Returns the return type for enclosing method or lambda
-   *
-   * @param element element inside method or lambda to determine the return type of
-   * @return the return type or null if cannot be determined
-   */
-  @Nullable
-  public static PsiType getMethodReturnType(PsiElement element) {
-    final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-    return methodOrLambda instanceof PsiMethod
-           ? ((PsiMethod)methodOrLambda).getReturnType()
-           : methodOrLambda instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)methodOrLambda) : null;
   }
 }

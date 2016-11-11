@@ -23,9 +23,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -61,7 +61,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       final PsiCodeBlock returnScope = (PsiCodeBlock)returnParent;
       final PsiStatement[] statements = returnScope.getStatements();
       if (statements.length != 0 && statements[statements.length - 1] == returnStatement) {
-        final PsiType returnType = TypeUtils.getMethodReturnType(returnStatement);
+        final PsiType returnType = PsiTypesUtil.getMethodReturnType(returnStatement);
         if (returnType != null) {
           PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
           if (refactoredStatement != null) {

@@ -44,7 +44,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -532,7 +531,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      constrainingType = TypeUtils.getMethodReturnType(parent);
+      constrainingType = PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
