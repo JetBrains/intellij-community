@@ -16,13 +16,18 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
@@ -35,7 +40,7 @@ class SmartPointerTracker {
   private int nextAvailableIndex;
   private int size;
   private PointerReference[] references = new PointerReference[10];
-  final MarkerCache markerCache = new MarkerCache(this);
+  private final MarkerCache markerCache = new MarkerCache(this);
   private boolean mySorted;
 
   static {
@@ -47,7 +52,7 @@ class SmartPointerTracker {
     }, ApplicationManager.getApplication());
   }
 
-  synchronized boolean addReference(@NotNull PointerReference reference) {
+  synchronized boolean addReference(@NotNull PointerReference reference, @NotNull SmartPsiElementPointerImpl pointer) {
     if (!isActual(reference.file, reference.key)) {
       // this pointer list has been removed by another thread; clients should get/create an up-to-date list and try adding to it
       return false;
@@ -62,6 +67,9 @@ class SmartPointerTracker {
     storePointerReference(references, nextAvailableIndex++, reference);
     size++;
     mySorted = false;
+    if (((SelfElementInfo)pointer.getElementInfo()).hasRange()) {
+      markerCache.rangeChanged();
+    }
     return true;
   }
 
@@ -104,7 +112,7 @@ class SmartPointerTracker {
     }
   }
 
-  synchronized void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
+  private void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
     for (int i = 0; i < nextAvailableIndex; i++) {
       PointerReference ref = references[i];
       if (ref == null) continue;
@@ -144,6 +152,58 @@ class SmartPointerTracker {
     }
   }
 
+  synchronized void updateMarkers(FrozenDocument frozen, List<DocumentEvent> events) {
+    boolean stillSorted = markerCache.updateMarkers(frozen, events);
+    if (!stillSorted) {
+      mySorted = false;
+    }
+  }
+
+  @Nullable
+  synchronized Segment getUpdatedRange(SelfElementInfo info, FrozenDocument document, List<DocumentEvent> events) {
+    return markerCache.getUpdatedRange(info, document, events);
+  }
+
+  synchronized void switchStubToAst(AnchorElementInfo info, PsiElement element) {
+    info.switchToTreeRange(element);
+    markerCache.rangeChanged();
+    mySorted = false;
+  }
+
+  synchronized void fastenBelts() {
+    processQueue();
+    processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
+      @Override
+      public boolean process(SmartPsiElementPointerImpl pointer) {
+        pointer.getElementInfo().fastenBelt();
+        return true;
+      }
+    });
+  }
+
+  synchronized void updatePointerTargetsAfterReparse() {
+    processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
+      @Override
+      public boolean process(SmartPsiElementPointerImpl pointer) {
+        if (!(pointer instanceof SmartPsiFileRangePointerImpl)) {
+          updatePointerTarget(pointer, pointer.getPsiRange());
+        }
+        return true;
+      }
+    });
+  }
+
+  // after reparse and its complex tree diff, the element might have "moved" to other range
+  // but if an element of the same type can still be found at the old range, let's point there
+  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @Nullable Segment pointerRange) {
+    E cachedElement = pointer.getCachedElement();
+    if (cachedElement == null || cachedElement.isValid() && pointerRange != null && pointerRange.equals(cachedElement.getTextRange())) {
+      return;
+    }
+
+    pointer.cacheElement(pointer.doRestoreElement());
+  }
+
   private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
     references[index] = ref;
     ref.index = index;
@@ -169,10 +229,6 @@ class SmartPointerTracker {
   @TestOnly
   synchronized int getSize() {
     return size;
-  }
-
-  synchronized void markUnsorted() {
-    mySorted = false;
   }
 
   static class PointerReference extends WeakReference<SmartPsiElementPointerImpl> {

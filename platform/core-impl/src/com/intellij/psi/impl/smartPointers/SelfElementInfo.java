@@ -274,9 +274,9 @@ public class SelfElementInfo extends SmartPointerElementInfo {
         PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          MarkerCache markerCache = myManager.getMarkerCache(getVirtualFile());
-          if (markerCache != null) {
-            return markerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          SmartPointerTracker tracker = myManager.getTracker(getVirtualFile());
+          if (tracker != null) {
+            return tracker.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
           }
         }
       }

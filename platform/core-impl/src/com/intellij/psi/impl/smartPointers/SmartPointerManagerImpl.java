@@ -23,13 +23,14 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,17 +51,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public void fastenBelts(@NotNull VirtualFile file) {
-    SmartPointerTracker.processQueue();
-    SmartPointerTracker pointers = getPointers(file);
-    if (pointers != null) {
-      pointers.processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
-        @Override
-        public boolean process(SmartPsiElementPointerImpl pointer) {
-          pointer.getElementInfo().fastenBelt();
-          return true;
-        }
-      });
-    }
+    SmartPointerTracker pointers = getTracker(file);
+    if (pointers != null) pointers.fastenBelts();
   }
 
   private static final Key<Reference<SmartPsiElementPointerImpl>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
@@ -138,14 +130,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
     SmartPointerTracker.PointerReference reference = new SmartPointerTracker.PointerReference(pointer, containingFile, POINTERS_KEY);
     while (true) {
-      SmartPointerTracker pointers = getPointers(containingFile);
+      SmartPointerTracker pointers = getTracker(containingFile);
       if (pointers == null) {
         pointers = containingFile.putUserDataIfAbsent(POINTERS_KEY, new SmartPointerTracker());
       }
-      if (pointers.addReference(reference)) {
-        if (((SelfElementInfo)info).hasRange()) {
-          pointers.markerCache.rangeChanged();
-        }
+      if (pointers.addReference(reference, pointer)) {
         break;
       }
     }
@@ -169,7 +158,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       if (containingFile == null) return;
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
-      SmartPointerTracker pointers = getPointers(vFile);
+      SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
       if (pointers != null && reference != null) {
         pointers.removeReference(reference);
@@ -178,20 +167,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @Nullable
-  private SmartPointerTracker getPointers(@NotNull VirtualFile containingFile) {
+  SmartPointerTracker getTracker(@NotNull VirtualFile containingFile) {
     return containingFile.getUserData(POINTERS_KEY);
-  }
-
-  @Nullable
-  MarkerCache getMarkerCache(@NotNull VirtualFile file) {
-    SmartPointerTracker pointers = getPointers(file);
-    return pointers == null ? null : pointers.markerCache;
   }
 
   @TestOnly
   public int getPointersNumber(@NotNull PsiFile containingFile) {
     VirtualFile file = containingFile.getViewProvider().getVirtualFile();
-    SmartPointerTracker pointers = getPointers(file);
+    SmartPointerTracker pointers = getTracker(file);
     return pointers == null ? 0 : pointers.getSize();
   }
 
@@ -202,38 +185,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   public void updatePointers(Document document, FrozenDocument frozen, List<DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    SmartPointerTracker list = file == null ? null : getPointers(file);
-    if (list == null) return;
-
-    list.markerCache.updateMarkers(frozen, events);
+    SmartPointerTracker list = file == null ? null : getTracker(file);
+    if (list != null) list.updateMarkers(frozen, events);
   }
 
   public void updatePointerTargetsAfterReparse(@NotNull VirtualFile file) {
-    SmartPointerTracker list = getPointers(file);
-    if (list == null) return;
-
-    list.processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
-      @Override
-      public boolean process(SmartPsiElementPointerImpl pointer) {
-        if (!(pointer instanceof SmartPsiFileRangePointerImpl)) {
-          updatePointerTarget(pointer, pointer.getPsiRange());
-        }
-        return true;
-      }
-    });
+    SmartPointerTracker list = getTracker(file);
+    if (list != null) list.updatePointerTargetsAfterReparse();
   }
-
-  // after reparse and its complex tree diff, the element might have "moved" to other range
-  // but if an element of the same type can still be found at the old range, let's point there
-  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @Nullable Segment pointerRange) {
-    E cachedElement = pointer.getCachedElement();
-    if (cachedElement == null || cachedElement.isValid() && pointerRange != null && pointerRange.equals(cachedElement.getTextRange())) {
-      return;
-    }
-
-    pointer.cacheElement(pointer.doRestoreElement());
-  }
-
 
   Project getProject() {
     return myProject;
