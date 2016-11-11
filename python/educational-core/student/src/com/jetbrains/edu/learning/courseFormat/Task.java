@@ -40,9 +40,9 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_variants") private List<String> choiceVariants = new ArrayList<>();
-  @Expose @SerializedName("is_multichoice") private boolean isMultichoice;
-  @Expose @SerializedName("choice_answer") private Boolean[] choiceAnswer;
+  @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
+  @Expose @SerializedName("is_multichoice") private boolean myIsMultichoice;
+  @Expose @SerializedName("choice_answer") private Boolean[] myChoiceAnswer;
 
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;
@@ -286,26 +286,26 @@ public class Task implements StudyItem {
 
   @NotNull
   public List<String> getChoiceVariants() {
-    return choiceVariants;
+    return myChoiceVariants;
   }
 
   public void setChoiceVariants(List<String> choiceVariants) {
-    this.choiceVariants = choiceVariants;
+    this.myChoiceVariants = choiceVariants;
   }
 
   public boolean isMultichoice() {
-    return isMultichoice;
+    return myIsMultichoice;
   }
 
   public void setMultichoice(boolean multichoice) {
-    isMultichoice = multichoice;
+    myIsMultichoice = multichoice;
   }
 
   public Boolean[] getChoiceAnswer() {
-    return choiceAnswer;
+    return myChoiceAnswer;
   }
 
   public void setChoiceAnswer(Boolean[] choiceAnswer) {
-    this.choiceAnswer = choiceAnswer;
+    this.myChoiceAnswer = choiceAnswer;
   }
 }
