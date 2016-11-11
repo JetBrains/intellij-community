@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @authot anna
- * @since 26-Jun-2007
- */
 public abstract class ExternalAnnotationsManager {
   public static final String ANNOTATIONS_XML = "annotations.xml";
 
