@@ -26,22 +26,25 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiInspectionsTest extends PyTestCase {
-  private void doTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
+  private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
+    doTestByFileName(inspectionClass, getTestName(false) + extension);
+  }
+
+  private void doTestByFileName(@NotNull Class<? extends LocalInspectionTool> inspectionClass, String fileName) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
     myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String fileName = getTestName(false) + extension;
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
   }
 
   private void doPyTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
-    doTest(inspectionClass, ".py");
+    doTestByExtension(inspectionClass, ".py");
   }
 
   private void doPyiTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
-    doTest(inspectionClass, ".pyi");
+    doTestByExtension(inspectionClass, ".pyi");
   }
 
   public void testUnresolvedModuleAttributes() {
@@ -91,5 +94,10 @@ public class PyiInspectionsTest extends PyTestCase {
 
   public void testPyiUnusedImports() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiRelativeImports() {
+    PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 }
