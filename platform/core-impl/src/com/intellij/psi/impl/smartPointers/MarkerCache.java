@@ -48,10 +48,10 @@ class MarkerCache {
       return (info1.isForInjected() ? 1 : 0) - (info2.isForInjected() ? 1 : 0);
     }
   };
-  private final SmartPointerManagerImpl.FilePointersList myPointers;
+  private final SmartPointerTracker myPointers;
   private volatile UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
+  MarkerCache(SmartPointerTracker pointers) {
     myPointers = pointers;
   }
 
