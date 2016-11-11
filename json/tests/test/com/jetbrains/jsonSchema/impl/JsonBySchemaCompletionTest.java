@@ -116,6 +116,17 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     testImpl(schema, "[{\"address\": {\"houseNumber\": <caret>}}]", "1", "2");
   }
 
+  public void testPatternPropertyCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"C\": {\n" +
+                          "      \"enum\": [\"test\", \"em\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"Cyan\": <caret>}", "\"em\"", "\"test\"");
+  }
+
   @NotNull
   private static String parcelShopSchema() {
     return "{\n" +
