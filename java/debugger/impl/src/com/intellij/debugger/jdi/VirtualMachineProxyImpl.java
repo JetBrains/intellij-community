@@ -35,6 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import com.sun.tools.jdi.JNITypeParser;
 import com.sun.tools.jdi.TargetVM;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -100,12 +101,41 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine;
   }
 
-  public List<ReferenceType> classesByName(String s) {
-    if (myAllClassesByName == null) {
-      myAllClassesByName = new MultiMap<>();
-      allClasses().forEach(t -> myAllClassesByName.putValue(t.name(), t));
+  static final class JNITypeParserReflect {
+    static final Method typeNameToSignatureMethod;
+
+    static {
+      typeNameToSignatureMethod = ReflectionUtil.getDeclaredMethod(JNITypeParser.class, "typeNameToSignature", String.class);
+      if (typeNameToSignatureMethod == null) {
+        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
+      }
     }
-    return (List<ReferenceType>)myAllClassesByName.get(s);
+
+    @Nullable
+    static String typeNameToSignature(@NotNull String name) {
+      if (typeNameToSignatureMethod != null) {
+        try {
+          return (String)typeNameToSignatureMethod.invoke(null, name);
+        }
+        catch (Exception ignored) {
+        }
+      }
+      return null;
+    }
+  }
+
+  public List<ReferenceType> classesByName(String s) {
+    String signature = JNITypeParserReflect.typeNameToSignature(s);
+    if (signature != null) {
+      if (myAllClassesByName == null) {
+        myAllClassesByName = new MultiMap<>();
+        allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
+      }
+      return (List<ReferenceType>)myAllClassesByName.get(signature);
+    }
+    else {
+      return myVirtualMachine.classesByName(s);
+    }
   }
 
   public List<ReferenceType> nestedTypes(ReferenceType refType) {

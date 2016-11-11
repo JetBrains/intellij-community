@@ -242,7 +242,7 @@ public class MethodBytecodeUtil {
         visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner.replace("/", ".")));
+            ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
             if (cls != null) {
               Method method = DebuggerUtils.findMethod(cls, name, desc);
               if (method != null) {
