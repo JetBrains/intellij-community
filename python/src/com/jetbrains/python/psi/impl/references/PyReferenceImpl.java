@@ -330,9 +330,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolveByReferenceResolveProviders();
   }
 
-  private static boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
+  private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
     final boolean insidePythonStub = referenceOwner != null && referenceOwner.getContainingFile() instanceof PyiFile;
-    return resolved == referenceOwner && referenceOwner instanceof PyClass && !insidePythonStub;
+    final boolean insideTypeHintInStub = insidePythonStub &&
+                                         PsiTreeUtil.getParentOfType(myElement, PyAnnotation.class, true, ScopeOwner.class) != null;
+    return resolved == referenceOwner && referenceOwner instanceof PyClass && !insideTypeHintInStub;
   }
 
   private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
