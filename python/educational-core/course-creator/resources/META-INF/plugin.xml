@@ -80,23 +80,28 @@
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </group>
 
-    <group id="AnswerPlaceholderGroup">
+    <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCAddAnswerPlaceholder">
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </action>
+
+    <group id="AnswerPlaceholderGroup" popup="true" text="Answer Placeholder" class="com.jetbrains.edu.coursecreator.CCAnswerPlaceholderActionGroup">
       <action id="CC.HideFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCHidePlaceholderFromPrevSubtasks"/>
       <action id="CC.MakeVisibleFromPrevSubtasks" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCMakeVisibleForPrevSubtasks"/>
       <action id="CC.ActivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCActivatePlaceholder"/>
       <action id="CC.DeactivatePlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCDeactivatePlaceholder" />
       <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCEditAnswerPlaceholder"/>
-      <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCAddAnswerPlaceholder"/>
+      <action id="DeleteAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCDeleteAnswerPlaceholder" />
       <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.placeholder.CCDeleteAllAnswerPlaceholdersAction"/>
-      <separator/>
-      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="AddTaskWindow"/>
     </group>
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
     <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.CCGetCourseFromStepic"/>
-    <action class="com.jetbrains.edu.coursecreator.actions.CCNewSubtaskAction" id="CC.NewStep">
-      <add-to-group group-id="AnswerPlaceholderGroup" relative-to-action="DeleteAllPlaceholders" anchor="after"/>
-    </action>
+    <group id="CC.AddSubtaskGroup">
+      <action class="com.jetbrains.edu.coursecreator.actions.CCNewSubtaskAction" id="CC.NewStep"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="AnswerPlaceholderGroup" anchor="after"/>
+    </group>
   </actions>
 
 

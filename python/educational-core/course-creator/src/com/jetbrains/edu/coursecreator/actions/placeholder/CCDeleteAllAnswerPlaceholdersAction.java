@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -27,7 +26,7 @@ import java.util.List;
 
 public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
 
-  public static final String ACTION_NAME = "Delete All " + EduNames.ANSWER_PLACEHOLDER + "s";
+  public static final String ACTION_NAME = "Delete All";
 
   public CCDeleteAllAnswerPlaceholdersAction() {
     super(ACTION_NAME);

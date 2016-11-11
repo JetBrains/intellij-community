@@ -14,7 +14,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
@@ -27,7 +26,7 @@ import java.util.List;
 public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   public CCAddAnswerPlaceholder() {
-    super("Add/Delete Answer Placeholder", "Add/Delete answer placeholder");
+    super("Add Answer Placeholder", "Add/Delete answer placeholder");
   }
 
 
@@ -116,30 +115,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   @Override
   protected void performAnswerPlaceholderAction(@NotNull CCState state) {
-    if (canAddPlaceholder(state)) {
-      addPlaceholder(state);
-      return;
-    }
-    if (canDeletePlaceholder(state)) {
-      deletePlaceholder(state);
-    }
-  }
-
-  private static void deletePlaceholder(@NotNull CCState state) {
-    Project project = state.getProject();
-    TaskFile taskFile = state.getTaskFile();
-    AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    EduUtils.runUndoableAction(project, "Delete Answer Placeholder", new AddAction(answerPlaceholder, taskFile, state.getEditor()) {
-      @Override
-      public void undo() throws UnexpectedUndoException {
-        super.redo();
-      }
-
-      @Override
-      public void redo() throws UnexpectedUndoException {
-        super.undo();
-      }
-    });
+    addPlaceholder(state);
   }
 
   @Override
@@ -153,9 +129,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
 
     presentation.setVisible(true);
-    if (canAddPlaceholder(state) || canDeletePlaceholder(state)) {
+    if (canAddPlaceholder(state)) {
       presentation.setEnabled(true);
-      presentation.setText((state.getAnswerPlaceholder() == null ? "Add " : "Delete ") + EduNames.ANSWER_PLACEHOLDER);
     }
   }
 
@@ -171,13 +146,6 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
     int offset = editor.getCaretModel().getOffset();
     return taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders()) == null;
-  }
-
-  private static boolean canDeletePlaceholder(@NotNull CCState state) {
-    if (state.getEditor().getSelectionModel().hasSelection()) {
-      return false;
-    }
-    return state.getAnswerPlaceholder() != null;
   }
 
   protected CCCreateAnswerPlaceholderDialog createDialog(Project project, AnswerPlaceholder answerPlaceholder) {

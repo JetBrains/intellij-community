@@ -7,7 +7,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 
 public class CCActivatePlaceholder extends CCSubtaskPlaceholderAction {
 
-  public static final String TITLE = "Activate Answer Placeholder";
+  public static final String TITLE = "Activate";
 
   protected CCActivatePlaceholder() {
     super(TITLE, TITLE);
