@@ -26,14 +26,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class UpdatesInfo(node: Element) {
-  private val products = node.getChildren("product").map { Product(it) }
+  private val products = node.getChildren("product").map(::Product)
   operator fun get(code: String): Product? = products.find { code in it.codes }
 }
 
 class Product(node: Element) {
   val name: String = node.getAttributeValue("name") ?: throw JDOMException("product@name missing")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
-  val channels: List<UpdateChannel> = node.getChildren("channel").map { UpdateChannel(it) }
+  val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
 
   override fun toString() = codes.firstOrNull() ?: "-"
 }
@@ -49,7 +49,7 @@ class UpdateChannel(node: Element) {
   val licensing: String = node.getAttributeValue("licensing", LICENSING_PRODUCTION)
   val homePageUrl: String? = node.getAttributeValue("url")
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
-  val builds: List<BuildInfo> = node.getChildren("build").map { BuildInfo(it) }
+  val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
 
   override fun toString() = id
 }
@@ -61,8 +61,8 @@ class BuildInfo(node: Element) {
   val message: String = node.getChild("message")?.value ?: ""
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
-  val buttons: List<ButtonInfo> = node.getChildren("button").map { ButtonInfo(it) }
-  val patches: List<PatchInfo> = node.getChildren("patch").map { PatchInfo(it) }
+  val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
+  val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
 
   private fun parseDate(value: String?): Date? = value?.let {
     try {
