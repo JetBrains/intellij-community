@@ -208,8 +208,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
             envs.put(ZDOTDIR, new File(rcFilePath).getParent());
           }
           else if (shellName.equals("fish")) {
-            if (StringUtil.isNotEmpty(EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME))) {
-              File fishConfig = new File(new File(FileUtil.expandUserHome(envs.get(XDG_CONFIG_HOME)), "fish"), "config.fish");
+            String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
+            if (StringUtil.isNotEmpty(xdgConfig)) {
+              File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
               if (fishConfig.exists()) {
                 envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
               }
