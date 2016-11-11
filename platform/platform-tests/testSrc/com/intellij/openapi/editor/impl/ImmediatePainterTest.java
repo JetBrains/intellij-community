@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -228,13 +227,11 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     BufferedImage immediateImage;
 
-    DataContext dataContext = ((EditorImpl)myEditor).getDataContext();
-
     try {
       editorComponent.paint(graphics);
-      ((EditorImpl)myEditor).processKeyTypedImmediately(c, graphics, dataContext);
+      ((EditorImpl)myEditor).processKeyTypedImmediately(c, graphics);
       immediateImage = copy(image);
-      ((EditorImpl)myEditor).processKeyTypedNormally(c, dataContext);
+      ((EditorImpl)myEditor).processKeyTypedNormally(c);
       editorComponent.paint(graphics);
     }
     finally {

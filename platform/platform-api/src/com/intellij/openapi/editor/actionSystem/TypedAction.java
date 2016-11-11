@@ -100,7 +100,7 @@ public class TypedAction {
 
   /**
    * Gets the current 'raw' typing handler.
-   *
+   * 
    * @see #setupRawHandler(TypedActionHandler)
    */
   @NotNull
@@ -109,10 +109,10 @@ public class TypedAction {
   }
 
   /**
-   * Replaces current 'raw' typing handler with the specified handler. The handler should pass unprocessed typing to the
+   * Replaces current 'raw' typing handler with the specified handler. The handler should pass unprocessed typing to the 
    * previously registered 'raw' handler.
    * <p>
-   * 'Raw' handler is a handler directly invoked by the code which handles typing in editor. Default 'raw' handler
+   * 'Raw' handler is a handler directly invoked by the code which handles typing in editor. Default 'raw' handler 
    * performs some generic logic that has to be done on typing (like checking whether file has write access, creating a command
    * instance for undo subsystem, initiating write action, etc), but delegates to 'normal' handler for actual typing logic.
    *
@@ -130,30 +130,13 @@ public class TypedAction {
     return tmp;
   }
 
-  public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-    if (myRawHandler instanceof TypedActionHandlerEx) {
-      ((TypedActionHandlerEx)myRawHandler).beforeExecute(editor, c, context, plan);
-    }
-  }
-
   public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
     if (editor == null) return;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     FreezeLogger.getInstance().runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));
   }
-
-  private class DefaultRawHandler implements TypedActionHandlerEx {
-    @Override
-    public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-      if (editor.isViewer() || !editor.getDocument().isWritable()) return;
-
-      TypedActionHandler handler = getHandler();
-
-      if (handler instanceof TypedActionHandlerEx) {
-        ((TypedActionHandlerEx)handler).beforeExecute(editor, c, context, plan);
-      }
-    }
-
+  
+  private class DefaultRawHandler implements TypedActionHandler {
     @Override
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       CommandProcessor.getInstance().executeCommand(

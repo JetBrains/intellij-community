@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -26,6 +28,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -42,14 +45,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
  * @author Pavel Fatin
  */
 class ImmediatePainter {
+  private static final Set<Character> KEY_CHARS_TO_SKIP =
+    new HashSet<>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
+
   private static final int DEBUG_PAUSE_DURATION = 1000;
+
+  private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
 
   static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
   static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
@@ -69,23 +77,20 @@ class ImmediatePainter {
     });
   }
 
-  void paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
-      if (plan.getCaretShift() != 1) return;
+  void paintCharacter(final Graphics g, final char c) {
+    final EditorImpl editor = myEditor;
 
-      final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
-      if (replacements.size() != 1) return;
+    if (!VIM_PLUGIN_LOADED &&
+        ENABLED.asBoolean() &&
+        editor.getDocument().isWritable() &&
+        !editor.isViewer() &&
+        canPaintImmediately(editor, c)) {
 
-      final EditorActionPlan.Replacement replacement = replacements.get(0);
-      if (replacement.getText().length() != 1) return;
-
-      final int caretOffset = replacement.getBegin();
-      final char c = replacement.getText().charAt(0);
-      paintImmediately(g, caretOffset, c);
+      paintImmediately(g, editor.getCaretModel().getPrimaryCaret().getOffset(), c);
     }
   }
 
-  private static boolean canPaintImmediately(final EditorImpl editor) {
+  private static boolean canPaintImmediately(final EditorImpl editor, final char c) {
     final CaretModel caretModel = editor.getCaretModel();
     final Caret caret = caretModel.getPrimaryCaret();
     final Document document = editor.getDocument();
@@ -98,7 +103,15 @@ class ImmediatePainter {
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
-           !caret.isAtBidiRunBoundary();
+           !caret.isAtBidiRunBoundary() &&
+           !KEY_CHARS_TO_SKIP.contains(c);
+  }
+
+  private static boolean isPluginLoaded(final String id) {
+    final PluginId pluginId = PluginId.findId(id);
+    if (pluginId == null) return false;
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    return plugin != null && plugin.isEnabled();
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
