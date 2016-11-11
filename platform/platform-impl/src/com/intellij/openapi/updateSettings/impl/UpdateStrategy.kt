@@ -17,11 +17,14 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
+import java.util.*
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
+
+  private val lineage = currentBuild.baselineVersion
 
   fun checkForUpdates(): CheckForUpdateResult {
     val product = updates[currentBuild.productCode]
@@ -33,12 +36,10 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
     val result = product.channels.asSequence()
-        .filter { ch -> ch.status >= selectedChannel }  // filter out inapplicable channels
-        .sortedBy { ch -> ch.status }  // sort by stability, asc
-        .map { ch -> ch.builds.asSequence().filter { build -> isApplicable(build, ignoredBuilds) } to ch }  // filter out inapplicable builds
-        .map { p -> maxBuild(p.first) to p.second }  // max build in a channel, preferring same baseline
-        .filter { p -> p.first != null }
-        .maxBy { p -> p.first!!.number }
+      .filter { ch -> ch.status >= selectedChannel }                                      // filters out inapplicable channels
+      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }              // maps into a sequence of <build, channel> pairs
+      .filter { p -> isApplicable(p.first, ignoredBuilds) }                               // filters out inapplicable builds
+      .maxWith(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
 
     return CheckForUpdateResult(result?.first, result?.second)
   }
@@ -48,8 +49,10 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
       candidate.target?.inRange(currentBuild) ?: true
 
-  private fun maxBuild(builds: Sequence<BuildInfo>) =
-      builds.filter { it.number.baselineVersion == currentBuild.baselineVersion }.maxBy { it.number } ?: builds.maxBy { it.number }
+  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber) =
+      if (n1.baselineVersion == lineage && n2.baselineVersion != lineage) 1
+      else if (n2.baselineVersion == lineage && n1.baselineVersion != lineage) -1
+      else n1.compareTo(n2)
 
   //<editor-fold desc="Deprecated stuff.">
 
