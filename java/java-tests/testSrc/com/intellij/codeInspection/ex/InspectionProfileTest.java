@@ -94,15 +94,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   public void testSameNameSharedProfile() throws Exception {
     BaseInspectionProfileManager profileManager = getApplicationProfileManager();
     InspectionProfileImpl localProfile = createProfile();
-    profileManager.updateProfile(localProfile);
+    updateProfile(profileManager, localProfile);
 
     ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
     try {
       //normally on open project profile wrappers are init for both managers
-      profileManager.updateProfile(localProfile);
+      updateProfile(profileManager, localProfile);
       InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager,
                                                                 InspectionProfileImpl.getBaseProfile(), null);
-      projectProfileManager.updateProfile(profile);
+      updateProfile(projectProfileManager, profile);
       projectProfileManager.setRootProfile(profile.getName());
 
       assertTrue(projectProfileManager.getCurrentProfile() == profile);
@@ -110,6 +110,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     finally {
       projectProfileManager.deleteProfile(PROFILE);
     }
+  }
+
+  private static void updateProfile(BaseInspectionProfileManager profileManager, InspectionProfileImpl localProfile) {
+    profileManager.addProfile(localProfile);
+    profileManager.fireProfileChanged(localProfile);
   }
 
   public void testConvertOldProfile() throws Exception {

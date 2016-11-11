@@ -1124,6 +1124,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     selectedProfile.commit();
+    profileManager.addProfile(source);
+    profileManager.fireProfileChanged(source);
+
     myModified = false;
     myRoot.dropCache();
     initToolStates();

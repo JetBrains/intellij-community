@@ -95,7 +95,6 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
   //invoke when isChanged() == true
   fun commit() {
     source.commit(this)
-    profileManager.updateProfile(source)
     modified = false
   }
 
@@ -120,4 +119,5 @@ inline fun InspectionProfileImpl.edit(task: InspectionProfileModifiableModel.() 
   val model = InspectionProfileModifiableModel(this)
   model.task()
   model.commit()
+  profileManager.fireProfileChanged(this)
 }

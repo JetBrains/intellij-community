@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.MessageBus
-import org.jetbrains.annotations.TestOnly
 
 @JvmField
 internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
@@ -44,7 +43,6 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  @TestOnly
   fun addProfile(profile: InspectionProfileImpl) {
     schemeManager.addScheme(profile)
   }
@@ -62,11 +60,6 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
   }
 
   open protected fun schemeRemoved(scheme: InspectionProfile) {
-  }
-
-  open fun updateProfile(profile: InspectionProfileImpl) {
-    schemeManager.addScheme(profile)
-    fireProfileChanged(profile)
   }
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)
