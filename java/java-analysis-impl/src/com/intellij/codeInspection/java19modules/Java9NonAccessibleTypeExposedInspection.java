@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -66,7 +67,6 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
   }
 
   private static class NonAccessibleTypeExposedVisitor extends JavaElementVisitor {
-    public static final String CLASS_IS_NOT_EXPORTED = "The class is not exported from the module";
     private final ProblemsHolder myHolder;
     private final ModuleFileIndex myModuleFileIndex;
     private final Set<String> myExportedPackageNames;
@@ -118,12 +118,12 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
           if (isInModuleSource(annotationClass) && !isModulePublicApi(annotationClass)) {
             PsiAnnotationOwner owner = annotation.getOwner();
             if (isModulePublicApi(owner)) {
-              myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+              registerProblem(referenceElement);
             }
             if (owner instanceof PsiParameter) {
               PsiElement parent = ((PsiParameter)owner).getParent();
               if (parent instanceof PsiMember && isModulePublicApi((PsiMember)parent)) {
-                myHolder.registerProblem(referenceElement, CLASS_IS_NOT_EXPORTED);
+                registerProblem(referenceElement);
               }
             }
           }
@@ -161,7 +161,7 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
 
     private void checkType(@Nullable PsiClass psiClass, @NotNull PsiElement typeElement) {
       if (psiClass != null && !(psiClass instanceof PsiTypeParameter) && isInModuleSource(psiClass) && !isModulePublicApi(psiClass)) {
-        myHolder.registerProblem(typeElement, CLASS_IS_NOT_EXPORTED);
+        registerProblem(typeElement);
       }
     }
 
@@ -249,6 +249,10 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
         }
       }
       return false;
+    }
+
+    private void registerProblem(PsiElement element) {
+      myHolder.registerProblem(element, InspectionsBundle.message("inspection.non.accessible.type.exposed.name"));
     }
   }
 }
