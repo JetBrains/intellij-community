@@ -197,6 +197,9 @@ public class PsiTypesUtil {
     return null;
   }
 
+  /**
+   * Return type explicitly declared in parent
+   */
   @Nullable
   public static PsiType getExpectedTypeByParent(PsiElement element) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
