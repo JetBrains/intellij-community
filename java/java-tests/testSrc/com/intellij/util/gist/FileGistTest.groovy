@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -78,7 +79,7 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
     FileContentUtilCore.reparseFiles(file)
     assert gist.getFileData(project, file) == 3
 
-    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(file)
+    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(file, Conditions.alwaysTrue())
     assert gist.getFileData(project, file) == 4
   }
 

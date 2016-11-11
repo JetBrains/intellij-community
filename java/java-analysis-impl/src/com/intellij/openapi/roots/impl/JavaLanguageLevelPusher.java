@@ -107,11 +107,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
-    for (VirtualFile child : fileOrDir.getChildren()) {
-      if (!child.isDirectory() && isJavaLike(child.getFileType())) {
-        PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
-      }
-    }
+    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, f -> isJavaLike(f.getFileType()));
   }
 
   private static boolean isJavaLike(FileType type) {
