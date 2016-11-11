@@ -263,13 +263,16 @@ public class MethodBytecodeUtil {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+          if ("java/lang/AbstractMethodError".equals(owner)) {
+            return;
+          }
           ReferenceType declaringType = method.declaringType();
-          ReferenceType cls = null;
+          ReferenceType cls;
           owner = owner.replace("/", ".");
           if (declaringType.name().equals(owner)) {
             cls = declaringType;
           }
-          else if (!"java.lang.AbstractMethodError".equals(owner)) {
+          else {
             cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
           }
           if (cls != null) {
