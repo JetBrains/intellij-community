@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui;
+package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public class LightFilePointer implements VirtualFilePointer {
   private final String myUrl;
@@ -69,10 +68,12 @@ public class LightFilePointer implements VirtualFilePointer {
     return toPresentableUrl(myUrl);
   }
 
-  public static String toPresentableUrl(String url) {
+  @NotNull
+  private static String toPresentableUrl(@NotNull String url) {
     String path = VirtualFileManager.extractPath(url);
-    path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
-    return path.replace('/', File.separatorChar);
+    String protocol = VirtualFileManager.extractProtocol(url);
+    VirtualFileSystem fileSystem = VirtualFileManager.getInstance().getFileSystem(protocol);
+    return ObjectUtils.notNull(fileSystem, StandardFileSystems.local()).extractPresentableUrl(path);
   }
 
   @Override

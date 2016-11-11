@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
@@ -36,7 +36,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   volatile FilePointerPartNode myNode; // null means disposed
 
-  VirtualFilePointerImpl(VirtualFilePointerListener listener, @NotNull Disposable parentDisposable, Pair<VirtualFile, String> fileAndUrl) {
+  VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
     myListener = listener;
   }
@@ -71,7 +71,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
 
   @NotNull
-  String getUrlNoUpdate() {
+  private String getUrlNoUpdate() {
     return isDisposed() ? "" : myNode.myFileAndUrl.second;
   }
 
@@ -121,5 +121,9 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   VirtualFilePointerListener getListener() {
     return myListener;
+  }
+
+  int incrementUsageCount(int delta) {
+    return myNode.incrementUsageCount(delta);
   }
 }
