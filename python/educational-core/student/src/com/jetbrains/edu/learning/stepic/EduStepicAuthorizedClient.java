@@ -194,15 +194,15 @@ public class EduStepicAuthorizedClient {
     parameters.add(new BasicNameValuePair("username", email));
     parameters.add(new BasicNameValuePair("password", password));
 
-    final StepicWrappers.TokenInfo tokenInfo = postCredentials(parameters);
-
     final StepicUser user = new StepicUser(email, password);
-    final StepicUser currentUser = getCurrentUser();
-    if (currentUser != null) {
-      user.setId(currentUser.getId());
-    }
+    final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
       user.setupTokenInfo(tokenInfo);
+    }
+
+    final StepicUser currentUser = getCurrentUser(user);
+    if (currentUser != null) {
+      user.setId(currentUser.getId());
     }
     return user;
   }
@@ -216,14 +216,13 @@ public class EduStepicAuthorizedClient {
     parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
     parameters.add(new BasicNameValuePair("refresh_token", refreshToken));
 
-    return postCredentials(parameters);
+    return getTokens(parameters);
   }
 
   @Nullable
-  static StepicUser getCurrentUser() {
+  static StepicUser getCurrentUser(StepicUser user) {
     try {
-      final StepicWrappers.AuthorWrapper wrapper = EduStepicClient.getFromStepic(EduStepicNames.CURRENT_USER,
-                                                                                    StepicWrappers.AuthorWrapper.class);
+      final StepicWrappers.AuthorWrapper wrapper = getFromStepic(EduStepicNames.CURRENT_USER, StepicWrappers.AuthorWrapper.class, user);
       if (wrapper != null && !wrapper.users.isEmpty()) {
         return wrapper.users.get(0);
       }
@@ -235,7 +234,7 @@ public class EduStepicAuthorizedClient {
   }
 
   @Nullable
-  private static StepicWrappers.TokenInfo postCredentials(@NotNull final List<NameValuePair> parameters) {
+  private static StepicWrappers.TokenInfo getTokens(@NotNull final List<NameValuePair> parameters) {
     final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
     final HttpPost request = new HttpPost(EduStepicNames.TOKEN_URL);
