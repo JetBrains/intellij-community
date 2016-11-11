@@ -153,7 +153,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     ApplicationManager.getApplication().invokeAndWait(() -> indicatorRef.set(new ProgressWindowWithNotification(true, myProject)));
     ProgressIndicator indicator = indicatorRef.get();
     ProgressManager.getInstance().executeProcessUnderProgress(
-      () -> processSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false), indicator),
+      () -> processPreparedSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false), indicator),
       indicator);
     if (indicator.isCanceled()) {
       ApplicationManager.getApplication().invokeLater(
@@ -539,7 +539,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return StreamEx.empty();
   }
 
-  private static void processSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer, ProgressIndicator progressIndicator) {
+  private static void processPreparedSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer, ProgressIndicator progressIndicator) {
     long start = 0;
     if (LOG.isDebugEnabled()) {
       start = System.currentTimeMillis();
@@ -547,18 +547,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     progressIndicator.start();
     progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
-      progressIndicator.setIndeterminate(true);
-
       MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
-      classType.virtualMachine().allClasses().stream()
-        .filter(ReferenceType::isPrepared)
-        .forEach(type -> supertypes(type).forEach(st -> inheritance.putValue(st, type)));
+      List<ReferenceType> allTypes = classType.virtualMachine().allClasses();
+      for (int i = 0; i < allTypes.size(); i++) {
+        if (progressIndicator.isCanceled()) {
+          return;
+        }
+        ReferenceType type = allTypes.get(i);
+        if (type.isPrepared()) {
+          supertypes(type).forEach(st -> inheritance.putValue(st, type));
+        }
+        progressIndicator.setText2(i + "/" + allTypes.size());
+        progressIndicator.setFraction((double)i / allTypes.size());
+      }
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
-      progressIndicator.setIndeterminate(false);
+      progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
+
       for (int i = 0; i < types.size(); i++) {
         if (progressIndicator.isCanceled()) {
-          break;
+          return;
         }
         consumer.accept(types.get(i));
 
