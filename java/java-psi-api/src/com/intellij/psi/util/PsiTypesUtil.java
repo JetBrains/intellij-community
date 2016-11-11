@@ -211,7 +211,13 @@ public class PsiTypesUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      return getMethodReturnType(parent);
+      final PsiElement psiElement = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
+      if (psiElement instanceof PsiLambdaExpression) {
+        return null;
+      }
+      else if (psiElement instanceof PsiMethod){
+        return ((PsiMethod)psiElement).getReturnType();
+      }
     }
     else if (PsiUtil.isCondition(element, parent)) {
       return PsiType.BOOLEAN.getBoxedType(parent);
@@ -231,7 +237,7 @@ public class PsiTypesUtil {
         }
       }
       else if (gParent instanceof PsiArrayInitializerExpression) {
-        final PsiType expectedTypeByParent = getExpectedTypeByParent((PsiExpression)parent);
+        final PsiType expectedTypeByParent = getExpectedTypeByParent(parent);
         return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
                ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
       }
