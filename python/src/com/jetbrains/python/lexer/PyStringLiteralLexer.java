@@ -226,7 +226,7 @@ public class PyStringLiteralLexer extends LexerBase {
       if (myBuffer.charAt(i) == 'x') {
         i++;
         for (; i < start + 4; i++) {
-          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar || myBuffer.charAt(i) == '\\') {
             return i;
           }
         }
@@ -238,7 +238,7 @@ public class PyStringLiteralLexer extends LexerBase {
         final int width = myBuffer.charAt(i) == 'u'? 4 : 8; // is it uNNNN or Unnnnnnnn
         i++;
         for (; i < start + width + 2; i++) {
-          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar || myBuffer.charAt(i) == '\\') {
             return i;
           }
         }
@@ -247,10 +247,10 @@ public class PyStringLiteralLexer extends LexerBase {
 
       if (myBuffer.charAt(i) == 'N' && isUnicodeMode()) {
         i++;
-        while(i < myBufferEnd && myBuffer.charAt(i) != '}') {
+        while(i < myBufferEnd && myBuffer.charAt(i) != '}' && myBuffer.charAt(i) != '\\') {
           i++;
         }
-        if (i < myBufferEnd) {
+        if (i < myBufferEnd && myBuffer.charAt(i) == '}') {
           i++;
         }
         return i;
