@@ -138,7 +138,6 @@
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="android-plugin" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="android-tests" scope="TEST" />
     <orderEntry type="module" module-name="designer" />
   </component>
 </module>
