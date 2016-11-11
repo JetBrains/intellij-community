@@ -112,7 +112,9 @@ class PyTypeShedTest(private val path: String, private val sdkPath: String) : Py
   fun test() {
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
       val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
-      fixture?.configureByFile("$typeShedPath/$path")
+      val importablePath = path.split("/").drop(2).joinToString("/")
+      fixture?.copyFileToProject("$typeShedPath/$path", importablePath)
+      fixture?.configureFromTempProjectFile(importablePath)
       fixture?.enableInspections(PyUnresolvedReferencesInspection::class.java)
       fixture?.enableInspections(PyTypeCheckerInspection::class.java)
       fixture?.checkHighlighting(true, false, true)
