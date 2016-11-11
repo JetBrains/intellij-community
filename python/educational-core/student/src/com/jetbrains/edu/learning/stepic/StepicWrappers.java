@@ -375,7 +375,11 @@ public class StepicWrappers {
     Submission submission;
 
     public SubmissionToPostWrapper(@NotNull String attemptId, @NotNull String language, @NotNull String code) {
-      submission = new Submission(attemptId, new Submission.Reply(language, code));
+      submission = new Submission(attemptId, new Submission.CodeReply(language, code));
+    }
+    
+    public SubmissionToPostWrapper(@NotNull String attemptId, List<Boolean> choices) {
+      submission = new Submission(attemptId, new Submission.ChoiceReply(choices));
     }
 
     static class Submission {
@@ -387,13 +391,26 @@ public class StepicWrappers {
         this.reply = reply;
       }
 
-      static class Reply {
+      
+      interface Reply {
+        
+      }
+      
+      static class CodeReply implements Reply {
         String language;
         String code;
 
-        public Reply(String language, String code) {
+        public CodeReply(String language, String code) {
           this.language = language;
           this.code = code;
+        }
+      }
+      
+      static class ChoiceReply implements Reply {
+        List<Boolean> choices;
+
+        public ChoiceReply(List<Boolean> choices) {
+          this.choices = choices;
         }
       }
     }

@@ -83,10 +83,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (course.isAdaptive()) {
         checkForAdaptiveCourse(indicator);
       }
-      else if (!myTask.getChoiceVariants().isEmpty()) {
-        final Pair<Boolean, String> result = EduStepicConnector.checkChoiceTask(myTask.getChoiceAnswer());
-        processStepicCheckOutput(indicator, result);
-      }
       else {
         checkForEduCourse(indicator);
       }
@@ -145,16 +141,23 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
-    final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
-    if (testOutput != null) {
-      // As tests in adaptive courses are created from
-      // samples and stored in task, to disable it we should ignore local testing results
-      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
-        onTaskFailed(testOutput.getMessage());
-      }
-      else {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        processStepicCheckOutput(indicator, pair);
+    final boolean isChoiceTask = myTask.getChoiceVariants().isEmpty();
+    if (!isChoiceTask) {
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
+      processStepicCheckOutput(indicator, result);
+    }
+    else {
+      final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+      if (testOutput != null) {
+        // As tests in adaptive courses are created from
+        // samples and stored in task, to disable it we should ignore local testing results
+        if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+          onTaskFailed(testOutput.getMessage());
+        }
+        else {
+          final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask);
+          processStepicCheckOutput(indicator, pair);
+        }
       }
     }
   }

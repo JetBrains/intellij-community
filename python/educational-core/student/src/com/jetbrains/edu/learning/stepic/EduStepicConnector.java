@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -42,10 +41,6 @@ public class EduStepicConnector {
     "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it become!";
 
   private EduStepicConnector() {
-  }
-
-  public static Pair<Boolean, String> checkChoiceTask(Boolean[] answer) {
-    return new Pair<>(false, "");
   }
 
   public static boolean enrollToCourse(final int courseId, final StepicUser stepicUser) {
