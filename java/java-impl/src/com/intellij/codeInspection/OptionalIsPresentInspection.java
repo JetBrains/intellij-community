@@ -321,7 +321,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
           falseAssignment == null ||
           !EquivalenceChecker.getCanonicalPsiEquivalence()
             .expressionsAreEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) ||
-          !isOptionalLambdaCandidate(optionalVariable, trueAssignment.getRExpression(), falseAssignment.getLExpression())) {
+          !isOptionalLambdaCandidate(optionalVariable, trueAssignment.getRExpression(), falseAssignment.getRExpression())) {
         return false;
       }
       return ExpressionUtils.isSimpleExpression(falseAssignment.getRExpression()) ||
