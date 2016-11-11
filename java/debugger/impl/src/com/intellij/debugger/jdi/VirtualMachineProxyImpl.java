@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -52,6 +53,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   // cached data
   private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<>();
+  private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
+
   @NotNull
   private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
@@ -326,6 +329,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
+  }
+
+  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+    throws EvaluateException {
+    StringReference reference = myStringLiteralCache.get(s);
+    if (reference != null && !reference.isCollected()) {
+      return reference;
+    }
+    reference = generator.get();
+    myStringLiteralCache.put(s, reference);
+    return reference;
   }
 
   public Process process() {

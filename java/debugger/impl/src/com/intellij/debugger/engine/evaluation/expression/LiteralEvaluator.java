@@ -62,15 +62,17 @@ class LiteralEvaluator implements Evaluator {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).longValue());
     }
     if (myValue instanceof String) {
-      StringReference str = vm.mirrorOf((String)myValue);
-      // intern starting from jdk 7
-      if (vm.versionHigher("1.7")) {
-        Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
-        if (internMethod != null) {
-          return context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
+      return vm.mirrorOfStringLiteral(((String)myValue), () -> {
+        StringReference str = vm.mirrorOf((String)myValue);
+        // intern starting from jdk 7
+        if (vm.versionHigher("1.7")) {
+          Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
+          if (internMethod != null) {
+            return (StringReference)context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
+          }
         }
-      }
-      return str;
+        return str;
+      });
     }
     throw EvaluateExceptionUtil
       .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", myExpectedType));
