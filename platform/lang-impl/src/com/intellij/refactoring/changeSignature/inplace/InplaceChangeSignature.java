@@ -238,6 +238,8 @@ public class InplaceChangeSignature implements DocumentListener {
     myDetector = null;
     FinishMarkAction.finish(myProject, myEditor, myMarkAction);
     myEditor.putUserData(INPLACE_CHANGE_SIGNATURE, null);
+    EditorFactory.getInstance().releaseEditor(myPreview);
+    myPreview = null;
   }
 
   public static void temporallyRevertChanges(final TextRange signatureRange,
