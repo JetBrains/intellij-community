@@ -15,10 +15,13 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -28,11 +31,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -174,7 +179,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
                                                                                         getNewReturnType(),
                                                                                         (ParameterInfoImpl[])getNewParameters(),
                                                                                         getNewExceptions(), getNewName(),
-                                                                                        method.getName(), false) {
+                                                                                        method.getName(), isGenerateDelegate()) {
       @Override
       protected void fillOldParams(PsiMethod method) {
         super.fillOldParams(method);
@@ -250,11 +255,11 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     return true;
   }
 
-  boolean perform(ChangeInfo initialChangeInfo, final String oldText, boolean silently) {
+  void perform(final String oldText, Editor editor, boolean silently) {
     final PsiMethod method = getSuperMethod();
 
-    Project project = initialChangeInfo.getMethod().getProject();
-    final PsiMethod currentMethod = (PsiMethod)initialChangeInfo.getMethod();
+    Project project = getMethod().getProject();
+    final PsiMethod currentMethod = getMethod();
     final TextRange signatureRange = JavaChangeSignatureDetector.getSignatureRange(currentMethod);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(currentMethod.getContainingFile());
@@ -262,10 +267,40 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       final String currentSignature = currentMethod.getContainingFile().getText().substring(signatureRange.getStartOffset(),
                                                                                             signatureRange.getEndOffset());
       InplaceChangeSignature.temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, oldText, project);
+      PsiMethod prototype;
+      if (isGenerateDelegate()) {
+        for (JavaParameterInfo info : getNewParameters()) {
+          if (info.getOldIndex() == -1) {
+            ((ParameterInfoImpl)info).setDefaultValue("null"); //to be replaced with template expr
+          }
+        }
+        prototype = JavaChangeSignatureUsageProcessor.generateDelegatePrototype(this);
+      }
+      else {
+        prototype = null;
+      }
       createChangeSignatureProcessor(method).run();
-      InplaceChangeSignature
-        .temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, currentSignature, project);
-      return true;
+      InplaceChangeSignature.temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, currentSignature, project);
+      if (prototype != null) {
+        WriteCommandAction.runWriteCommandAction(project, "Delegate", null, () -> {
+          PsiMethod delegate = currentMethod.getContainingClass().findMethodBySignature(prototype, false);
+          PsiExpression expression = delegate != null ? LambdaUtil.extractSingleExpressionFromBody(delegate.getBody()) : null;
+          if (expression instanceof PsiMethodCallExpression) {
+
+            PsiExpression[] expressions = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
+            JavaParameterInfo[] parameters = getNewParameters();
+            PsiExpression[] toBeDefault =
+              Arrays.stream(parameters)
+                .filter(param -> param.getOldIndex() == -1)
+                .map(info -> {
+                  int i = ArrayUtil.find(parameters, info);
+                  return expressions[i];
+                }).toArray(PsiExpression[]::new);
+            DefineParamsDefaultValueAction.startTemplate(project, editor, toBeDefault, delegate);
+          }
+        });
+      }
+      return;
     }
     final JavaMethodDescriptor descriptor = new JavaMethodDescriptor(currentMethod) {
       @Override
@@ -291,6 +326,6 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
           super.invokeRefactoring(processor);
         }
       };
-    return dialog.showAndGet();
+    dialog.showAndGet();
   }
 }

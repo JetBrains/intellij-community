@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -45,8 +46,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public void performChange(final DetectedJavaChangeInfo changeInfo, @NotNull final String oldText) {
-    changeInfo.perform(changeInfo, oldText, true);
+  public void performChange(final DetectedJavaChangeInfo changeInfo, Editor editor, @NotNull final String oldText) {
+    changeInfo.perform(oldText, editor, true);
   }
 
   @Override

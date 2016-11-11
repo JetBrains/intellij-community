@@ -70,7 +70,7 @@ public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
 
     final LanguageChangeSignatureDetector<ChangeInfo> detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
 
-    detector.performChange(currentInfo, initialSignature);
+    detector.performChange(currentInfo, editor, initialSignature);
   }
 
   @Override

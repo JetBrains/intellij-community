@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature.inplace;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
   boolean ignoreChanges(PsiElement element);
   @Nullable C createNextChangeInfo(String signature, @NotNull C currentInfo, boolean delegate);
 
-  void performChange(C changeInfo, @NotNull String oldText);
+  void performChange(C changeInfo, Editor editor, @NotNull String oldText);
 
   boolean isChangeSignatureAvailableOnElement(@NotNull PsiElement element, C currentInfo);
 
