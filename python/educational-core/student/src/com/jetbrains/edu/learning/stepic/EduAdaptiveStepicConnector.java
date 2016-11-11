@@ -97,13 +97,12 @@ public class EduAdaptiveStepicConnector {
               final StepicWrappers.StepSource step = getStep(project, stepId);
               final String stepType = step.block.name;
               if (stepType.equals(CODE_TASK_TYPE)) {
-                //return getCodeTaskFromStep(project, stepId, step.block, realLesson.getName());
-                return getChoiceTaskFromStep(project, stepId, step.block, realLesson.getName());
+                return getCodeTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
               else if (stepType.equals("choice")) {
                 return getChoiceTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
-              else if (step.block.name.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
+              else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
                 return EduStepicConnector.createTask(project, stepId);
               }
             }
@@ -143,21 +142,49 @@ public class EduAdaptiveStepicConnector {
 
   private static Task getChoiceTaskFromStep(Project project, int id, StepicWrappers.Step block, String lessonName) {
     final Task task = new Task(lessonName);
-    task.setChoiceVariants(Arrays.asList("Программа не скомпилируется.",
-                                                         "Программа скомпилируется, но при попытке запуска упадет с ошибкой.",
-                                                         "Программа скомпилируется, запустится, но ничего не сделает"));
-    task.setMultichoice(false);
-    task.setChoiceAnswer(new Boolean[task.getChoiceVariants().size()]);
-    Arrays.fill(task.getChoiceAnswer(), false);
-    task.setText("Что произойдет, если объявить метод main с синтаксически корректной, но не поддерживаемой JVM комбинацией модификаторов, " +
-                 "возвращаемого значения и параметров?");
     task.setStepId(id);
-    task.setName(lessonName);
+    task.setText(block.text);
+
+    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(project, id);
+    if (attempt != null) {
+      final StepicWrappers.AdaptiveAttemptWrapper.Dataset dataset = attempt.dataset;
+      if (dataset != null) {
+        task.setChoiceVariants(dataset.options);
+        task.setMultichoice(dataset.is_multiple_choice);
+        final List<Boolean> choiceAnswer = new ArrayList<>(Collections.nCopies(task.getChoiceVariants().size(), false));
+        task.setChoiceAnswer(choiceAnswer);
+      }
+      else {
+        LOG.warn("Dataset for step " + id + " is null");
+      }
+    }
+
+    createMockTaskFileForChoiceProblem(task);
+    return task;
+  }
+
+  private static void createMockTaskFileForChoiceProblem(Task task) {
     final TaskFile taskFile = new TaskFile();
     taskFile.text = "# you can experiment here, it won't be checked";
     taskFile.name = "code";
     task.taskFiles.put("code.py", taskFile);
-    return task;
+  }
+
+  @Nullable
+  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(Project project, int id) {
+    try {
+      final String response = EduStepicConnector.postAttempt(project, id);
+      final StepicWrappers.AdaptiveAttemptContainer attempt = new Gson().fromJson(response, StepicWrappers.AdaptiveAttemptContainer.class);
+      final List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> attempts = attempt.attempts;
+      if (attempts != null && attempts.size() > 0) {
+        return attempts.get(0);
+      }
+      return null;
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    return null;
   }
 
   private static void setTimeout(HttpGet request) {
@@ -307,16 +334,16 @@ public class EduAdaptiveStepicConnector {
         final VirtualFile taskDir = VfsUtil
           .findFileByIoFile(new File(lessonDir.getCanonicalPath(), EduNames.TASK + unsolvedTask.getIndex()), true);
         final File resourceRoot = new File(course.getCourseDirectory(), lessonDir.getName());
-        File newResourceRoot;
+        
         if (taskDir != null) {
-          newResourceRoot = new File(resourceRoot, taskDir.getName());
+          final File newResourceRoot = new File(resourceRoot, taskDir.getName());
           File[] filesInTask = newResourceRoot.listFiles();
           if (filesInTask != null) {
             for (File file : filesInTask) {
-              String taskRelativePath = FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
+              final String taskRelativePath = FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
               if (taskRelativePath != null && !task.isTaskFile(taskRelativePath)) {
-                File resourceFile = new File(newResourceRoot, taskRelativePath);
-                File fileInProject = new File(taskDir.getCanonicalPath(), taskRelativePath);
+                final File resourceFile = new File(newResourceRoot, taskRelativePath);
+                final File fileInProject = new File(taskDir.getCanonicalPath(), taskRelativePath);
                 FileUtil.copy(resourceFile, fileInProject);
               }
             }
@@ -423,8 +450,10 @@ public class EduAdaptiveStepicConnector {
         final int id = user.getId();
         wrapper = getCheckResults(attemptId, id, client, wrapper);
         if (wrapper.submissions.length == 1) {
-          final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
-          return Pair.create(isSolved, wrapper.submissions[0].hint);
+          final String status = wrapper.submissions[0].status;
+      final String hint = wrapper.submissions[0].hint;
+      final boolean isSolved = !status.equals("wrong");
+          return Pair.create(isSolved, hint.isEmpty() ? "Your solution is " + status : hint);
         }
         else {
           LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
@@ -439,9 +468,7 @@ public class EduAdaptiveStepicConnector {
 
   @Nullable
   private static StepicWrappers.ResultSubmissionWrapper postResultsForCheck(@NotNull final CloseableHttpClient client,
-                                                                            final int attemptId,
-                                                                            @NotNull final String language,
-                                                                            @NotNull final String text) {
+                                                                            StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper) {
     final CloseableHttpResponse response;
     try {
       final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
@@ -522,7 +549,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   private static int getAttemptId(@NotNull final Project project, @NotNull Task task) throws IOException {
-    final StepicWrappers.AttemptToPostWrapper attemptWrapper = new StepicWrappers.AttemptToPostWrapper(task.getStepId());
+    final StepicWrappers.AdaptiveAttemptWrapper attemptWrapper = new StepicWrappers.AdaptiveAttemptWrapper(task.getStepId());
 
     final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
