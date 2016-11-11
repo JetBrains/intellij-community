@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,14 +237,28 @@ public class PsiTypesUtil {
         }
       }
       else if (gParent instanceof PsiArrayInitializerExpression) {
-        final PsiType expectedTypeByParent = getExpectedTypeByParent((PsiExpression)parent);
+        final PsiType expectedTypeByParent = getExpectedTypeByParent(parent);
         return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
                ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
       }
     }
     return null;
   }
-  
+
+  /**
+   * Returns the return type for enclosing method or lambda
+   *
+   * @param element element inside method or lambda to determine the return type of
+   * @return the return type or null if cannot be determined
+   */
+  @Nullable
+  public static PsiType getMethodReturnType(PsiElement element) {
+    final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    return methodOrLambda instanceof PsiMethod
+           ? ((PsiMethod)methodOrLambda).getReturnType()
+           : methodOrLambda instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)methodOrLambda) : null;
+  }
+
   public static boolean compareTypes(PsiType leftType, PsiType rightType, boolean ignoreEllipsis) {
     if (ignoreEllipsis) {
       if (leftType instanceof PsiEllipsisType) {

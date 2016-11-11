@@ -222,6 +222,7 @@
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+    <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -409,8 +410,6 @@
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
       </group>
-
-      <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>

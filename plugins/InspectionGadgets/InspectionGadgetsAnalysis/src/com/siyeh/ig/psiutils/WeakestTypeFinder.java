@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
@@ -155,7 +156,7 @@ public class WeakestTypeFinder {
         checkClass(javaLangIterableClass, weakestTypeClasses);
       }
       else if (referenceParent instanceof PsiReturnStatement) {
-        final PsiType type = TypeUtils.getMethodReturnType(referenceParent);
+        final PsiType type = PsiTypesUtil.getMethodReturnType(referenceParent);
         if (!checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }

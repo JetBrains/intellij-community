@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -31,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
-import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
-import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -124,23 +122,21 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       }
       else if (((GroovyFile)file).getClasses().length > 1) {
         correctSelfReferences(aClass, newPackage);
-
-        final PsiFile fromTemplate =
-          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, GroovyTemplates.GROOVY_CLASS, true);
-        final PsiClass created = ((GroovyFile)fromTemplate).getClasses()[0];
+        Project project = aClass.getProject();
+        PsiFileFactory fileFactory = PsiFileFactory.getInstance(project);
+        GroovyFile newFile = (GroovyFile)moveDestination.add(fileFactory.createFileFromText(
+          aClass.getName() + "." + GroovyFileType.DEFAULT_EXTENSION,
+          GroovyLanguage.INSTANCE,
+          "class XXX {}"
+        ));
+        final PsiClass created = newFile.getClasses()[0];
         PsiDocComment docComment = aClass.getDocComment();
         if (docComment != null) {
-          final PsiDocComment createdDocComment = created.getDocComment();
-          if (createdDocComment != null) {
-            createdDocComment.replace(docComment);
-          }
-          else {
-            created.getContainingFile().addBefore(docComment, created);
-          }
+          newFile.addBefore(docComment, created);
           docComment.delete();
         }
         newClass = (PsiClass)created.replace(aClass);
-        setPackageDefinition((GroovyFile)file, (GroovyFile)newClass.getContainingFile(), newPackageName);
+        setPackageDefinition((GroovyFile)file, newFile, newPackageName);
         correctOldClassReferences(newClass, aClass);
         aClass.delete();
       }

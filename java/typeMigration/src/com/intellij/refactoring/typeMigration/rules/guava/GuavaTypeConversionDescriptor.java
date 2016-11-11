@@ -22,7 +22,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,7 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
       return isIterable(((PsiLocalVariable)parent).getType());
     }
     else if (parent instanceof PsiReturnStatement) {
-      return isIterable(TypeUtils.getMethodReturnType(parent));
+      return isIterable(PsiTypesUtil.getMethodReturnType(parent));
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;

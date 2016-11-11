@@ -94,7 +94,6 @@
     <groovyFrameworkConfigNotification order="last"
                                        implementation="org.jetbrains.plugins.groovy.config.DefaultGroovyFrameworkConfigNotification"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
@@ -1573,9 +1572,6 @@
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrRemoveExplicitTypeDeclarationIntention</className>
     </intentionAction>
 
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
-
     <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
                     serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
 
@@ -1667,17 +1663,6 @@
             text="Gant Script" description="Create new Gant script">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
-
-    <group id="Groovy.Dynamic.Toolbar">
-      <action id="Groovy.Dynamic.Remove" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.RemoveDynamicAction"
-              icon="AllIcons.General.Remove" text="Remove" description="Remove dynamic element"/>
-      <separator/>
-      <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction"
-              icon="AllIcons.Actions.Expandall" text="Expand all" description="Collapse all"/>
-      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction"
-              icon="AllIcons.Actions.Collapseall" text="Collapse all" description="Collapse all"/>
-    </group>
-
 
     <action id="ConvertGroovyToJava"
             class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
@@ -1795,15 +1780,12 @@
       <implementation-class>org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
 
   <xi:include href="groovy-templates.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="groovy-dynamic-members.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

@@ -30,6 +30,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.testFrameworks.AssertHint;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -181,10 +182,17 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       if (newAssertClass == null) {
         return;
       }
+      String qualifiedName = newAssertClass.getQualifiedName();
+      if (qualifiedName == null) {
+        return;
+      }
 
       PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier != null || !ImportUtils.addStaticImport(qualifiedName, methodName, methodExpression)) {
+        methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
+      }
     }
 
     @Nls
