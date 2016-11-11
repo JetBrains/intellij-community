@@ -72,7 +72,8 @@ class PyTypeShedTest(private val path: String, private val sdkPath: String) : Py
     val newSdk = if (cachedSdk == null) createSdk(sdkPath, project) else null
     val sdk = cachedSdk ?: newSdk ?: return
     sdkCache[sdkPath] = sdk
-    if (PySdkUtil.findSkeletonsDir(sdk) == null) {
+    val skeletonsDir = PySdkUtil.findSkeletonsDir(sdk)
+    if (skeletonsDir == null || skeletonsDir.children?.isEmpty() ?: true) {
       PyTestSdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
     }
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
