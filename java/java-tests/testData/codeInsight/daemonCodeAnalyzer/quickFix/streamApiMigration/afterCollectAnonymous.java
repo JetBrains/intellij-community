@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public List<Runnable> test(List<String> list) {
-      List<Runnable> result = list.stream().<Runnable>map(s -> new Runnable() {
+      List<Runnable> result = list.stream().map(s -> new Runnable() {
           @Override
           public void run() {
               String str = s;

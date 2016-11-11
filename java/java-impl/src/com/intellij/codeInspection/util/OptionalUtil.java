@@ -18,6 +18,7 @@ package com.intellij.codeInspection.util;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -127,12 +128,25 @@ public class OptionalUtil {
       }
       trueExpression =
         targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
-      qualifier += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+      String typeArg = getMapTypeArgument(trueExpression, targetType);
+      qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseExpression)) {
       return qualifier + ".orElseGet(() -> " + falseExpression.getText() + ")";
     } else {
       return qualifier + ".orElse(" + falseExpression.getText() + ")";
     }
+  }
+
+  @NotNull
+  public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
+    if (!(type instanceof PsiClassType)) return "";
+    if (((PsiClassType)type).getParameterCount() == 0) {
+      PsiExpression copy =
+        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
+      PsiType exprType = copy.getType();
+      if (exprType != null && !LambdaUtil.notInferredType(exprType) && TypeConversionUtil.isAssignable(type, exprType)) return "";
+    }
+    return "<" + type.getCanonicalText() + ">";
   }
 }

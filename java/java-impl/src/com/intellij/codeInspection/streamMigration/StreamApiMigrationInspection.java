@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -997,10 +998,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         operationName = "mapToObj";
       }
       PsiExpression expression = myType == null ? myExpression : RefactoringUtil.convertInitializerToNormalExpression(myExpression, myType);
-      if(myType != null && !(myType instanceof PsiPrimitiveType) && !(myType instanceof PsiCapturedWildcardType)) {
-        operationName = "<"+myType.getCanonicalText()+">"+operationName;
-      }
-      return "." + operationName + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+      return "." + OptionalUtil.getMapTypeArgument(expression, myType) + operationName +
+             "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
     }
 
     @Override
