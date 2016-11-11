@@ -332,7 +332,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Filters valid paths from an initial set of Python paths and returns them as virtual files.
    */
   @NotNull
-  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
+  public static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
                                                   Collections.emptyList();

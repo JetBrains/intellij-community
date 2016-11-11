@@ -16,7 +16,11 @@
 package com.jetbrains.env.python
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.EdtTestUtil
@@ -33,9 +37,9 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdkTools.PyTestSdkTools
-import com.jetbrains.python.sdkTools.SdkCreationType
 import junit.framework.TestCase
 import org.junit.After
 import org.junit.Before
@@ -48,8 +52,8 @@ import java.io.File
  * @author vlan
  */
 @RunWith(Parameterized::class)
-class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
-  var fixture: CodeInsightTestFixture? = null
+class PyTypeShedTest(private val path: String, private val sdkPath: String) : PyEnvTestCase() {
+  private var fixture: CodeInsightTestFixture? = null
 
   @Before
   fun initialize() {
@@ -61,25 +65,41 @@ class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
     initSdk()
   }
 
-  fun initSdk() {
-    val sdkByPath = PythonSdkType.findSdkByPath(sdkPath)
+  private fun initSdk() {
     val module = fixture?.module ?: return
     val project = fixture?.project ?: return
-    if (sdkByPath != null) {
-      ModuleRootModificationUtil.setModuleSdk(module, sdkByPath)
-      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
-        ApplicationManager.getApplication().runWriteAction {
-          ProjectRootManager.getInstance(project).projectSdk = sdkByPath
-        }
-      })
-      if (PySdkUtil.findSkeletonsDir(sdkByPath) == null) {
-        PyTestSdkTools.generateTempSkeletonsOrPackages(sdkByPath, true, module)
+    val cachedSdk = sdkCache[sdkPath]
+    val newSdk = if (cachedSdk == null) createSdk(sdkPath, project) else null
+    val sdk = cachedSdk ?: newSdk ?: return
+    sdkCache[sdkPath] = sdk
+    if (PySdkUtil.findSkeletonsDir(sdk) == null) {
+      PyTestSdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
+    }
+    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      SdkConfigurationUtil.addSdk(sdk)
+      ApplicationManager.getApplication().runWriteAction {
+        ProjectRootManager.getInstance(project).projectSdk = sdk
       }
+      ModuleRootModificationUtil.setModuleSdk(module, sdk)
+    })
+  }
+
+  private fun createSdk(sdkPath: String, project: Project): Sdk? {
+    val sdkFile = StandardFileSystems.local().findFileByPath(sdkPath) ?: return null
+    var sdkVar: Sdk? = null
+    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      sdkVar = SdkConfigurationUtil.setupSdk(emptyArray(), sdkFile, PythonSdkType.getInstance(), true, null, null)
+    })
+    val sdk = sdkVar ?: return null
+    val modificator = sdk.sdkModificator
+    val paths = PythonSdkType.getSysPathsFromScript(sdkPath)
+    PythonSdkUpdater.filterRootPaths(sdk, paths, project).forEach {
+      modificator.addRoot(it, OrderRootType.CLASSES)
     }
-    else {
-      val sdkFile = StandardFileSystems.local().findFileByPath(sdkPath) ?: return
-      PyTestSdkTools.createTempSdk(sdkFile, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module)
-    }
+    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      modificator.commitChanges()
+    })
+    return sdk
   }
 
   @After
@@ -101,6 +121,8 @@ class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
   }
 
   companion object {
+    private val sdkCache = mutableMapOf<String, Sdk>()
+
     @Parameterized.Parameters(name = "{0}: {1}")
     @JvmStatic fun params(): List<Array<Any>> {
       LightPlatformTestCase.initApplication()
@@ -115,7 +137,7 @@ class PyTypeShedTest(val path: String, val sdkPath: String) : PyEnvTestCase() {
           .flatMap { sdkPath ->
             val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
             val versionString = flavor.getVersionString(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
-            val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name + " "))
+            val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name).trim())
             PyTypeShed.findRootsForLanguageLevel(level).asSequence()
                 .flatMap { root: String ->
                   val results = File("$typeShedPath/$root").walk()
