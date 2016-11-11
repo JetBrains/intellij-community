@@ -68,5 +68,7 @@ public interface PyQualifiedNameResolveContext {
   @NotNull
   PyQualifiedNameResolveContext copyWithoutRoots();
   @NotNull
+  PyQualifiedNameResolveContext copyWithRoots();
+  @NotNull
   PyQualifiedNameResolveContext copyWithoutStubs();
 }

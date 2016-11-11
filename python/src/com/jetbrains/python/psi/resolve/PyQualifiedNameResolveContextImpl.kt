@@ -68,6 +68,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun copyWithoutRoots() = copy(withoutRoots = true)
 
+  override fun copyWithRoots() = copy(withoutRoots = false)
+
   override fun copyWithoutStubs() = copy(withoutStubs = true)
 
   override fun getContainingDirectory(): PsiDirectory? {

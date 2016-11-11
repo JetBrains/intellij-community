@@ -64,9 +64,9 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   }
 
   val relativeDirectory = context.containingDirectory
-  val relativeResult = resolveWithRelativeLevel(name, context)
-  val foundRelativeImport = relativeDirectory != null && relativeResult != null &&
-      isRelativeImportResult(name, relativeDirectory, relativeResult, context)
+  val relativeResults = resolveWithRelativeLevel(name, context)
+  val foundRelativeImport = relativeDirectory != null &&
+      relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
 
   val cache = findCache(context)
   val mayCache = cache != null && !context.withoutRoots && !context.withoutForeign && !foundRelativeImport
@@ -75,11 +75,11 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   if (mayCache) {
     val cachedResults = cache?.get(key)
     if (cachedResults != null) {
-      return listOf(listOfNotNull(relativeResult), cachedResults).flatten()
+      return relativeResults + cachedResults
     }
   }
 
-  val allResults = listOf(listOfNotNull(relativeResult),
+  val allResults = listOf(relativeResults,
                           resultsFromRoots(name, context),
                           relativeResultsFromSkeletons(name, context),
                           foreignResults(name, context)).flatten()
@@ -109,16 +109,19 @@ fun resolveTopLevelMember(name: QualifiedName, context : PyQualifiedNameResolveC
 /**
  * Resolves a [name] relative to the specified [directory].
  */
-fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQualifiedNameResolveContext): PsiElement? {
+fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQualifiedNameResolveContext): List<PsiElement> {
   checkAccess()
+  val empty = emptyList<PsiElement>()
   if (directory == null || !directory.isValid) {
-    return null
+    return empty
   }
-  return name.components.fold(directory as PsiElement?) { seeker, component ->
-    if (component == null) null
-    // TODO: Switch to multi-resolve in this API
-    else ResolveImportUtil.resolveChild(seeker, component, context.footholdFile, !context.withMembers,
-                                        !context.withPlainDirectories, context.withoutStubs)
+  return name.components.fold(listOf<PsiElement>(directory)) { seekers, component ->
+    if (component == null) empty
+    else seekers.flatMap {
+      val children = ResolveImportUtil.resolveChildren(it, component, context.footholdFile, !context.withMembers,
+                                                       !context.withPlainDirectories, context.withoutStubs)
+      PyUtil.filterTopPriorityResults(children.toTypedArray())
+    }
   }
 }
 
@@ -168,11 +171,24 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
         val sdk = PythonSdkType.getSdk(footholdFile) ?: return emptyList()
         val skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
-        return listOfNotNull(resolveModuleAt(absoluteName, skeletonsDir, context))
+        return resolveModuleAt(absoluteName, skeletonsDir, context)
       }
     }
   }
   return emptyList()
+}
+
+fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  if (context.footholdFile !is PyiFile || context.relativeLevel <= 0) {
+    return emptyList()
+  }
+  val containingDirectory = context.containingDirectory ?: return emptyList()
+  val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null) ?: return emptyList()
+  if (containingName.componentCount <= 0) {
+    return emptyList()
+  }
+  val absoluteName = containingName.append(name)
+  return resultsFromRoots(absoluteName, context.copyWithRelative(-1).copyWithRoots())
 }
 
 /**
@@ -199,12 +215,12 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
   return false
 }
 
-private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): PsiElement? {
+private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): List<PsiElement> {
   val footholdFile = context.footholdFile
   if (context.relativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
-    return resolveModuleAt(name, context.containingDirectory, context)
+    return resolveModuleAt(name, context.containingDirectory, context) + relativeResultsForStubsFromRoots(name, context)
   }
-  return null
+  return emptyList()
 }
 
 private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
@@ -226,15 +242,9 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
         sdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, sdk)) {
       return@RootVisitor true
     }
-    val result = resolveInRoot(name, root, context)
-    if (result != null) {
-      results.add(result)
-    }
+    results.addAll(resolveInRoot(name, root, context))
     if (isAcceptRootAsTopLevelPackage(context) && name.matchesPrefix(QualifiedName.fromDottedString(root.name))) {
-      val topLevelResult = resolveInRoot(name, root.parent, context)
-      if (topLevelResult != null) {
-        results.add(topLevelResult)
-      }
+      results.addAll(resolveInRoot(name, root.parent, context))
     }
     return@RootVisitor true
   }
@@ -280,8 +290,8 @@ private fun isAcceptRootAsTopLevelPackage(context: PyQualifiedNameResolveContext
   return false
 }
 
-private fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNameResolveContext): PsiElement? {
-  return if (root.isDirectory) resolveModuleAt(name, context.psiManager.findDirectory(root), context) else null
+private fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  return if (root.isDirectory) resolveModuleAt(name, context.psiManager.findDirectory(root), context) else emptyList()
 }
 
 private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? {
