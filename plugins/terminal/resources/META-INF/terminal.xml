@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <depends optional="true" config-file="terminal-for-remote-servers.xml">com.intellij.modules.remoteServers</depends>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
   <depends>com.intellij.modules.xml</depends>

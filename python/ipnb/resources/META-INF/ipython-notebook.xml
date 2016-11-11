@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager</implementation-class>

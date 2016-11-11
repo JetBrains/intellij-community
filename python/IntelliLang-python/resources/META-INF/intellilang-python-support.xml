@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<idea-plugin version="2">
+<idea-plugin>
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="com.jetbrains.python.intelliLang.PyLanguageInjectionSupport"/>
     <injectionConfig config="resources/pyInjections.xml"/>

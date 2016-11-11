@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
   <vendor>JetBrains</vendor>

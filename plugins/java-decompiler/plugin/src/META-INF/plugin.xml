@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
 
   <id>org.jetbrains.java.decompiler</id>
   <name>Java Bytecode Decompiler</name>
