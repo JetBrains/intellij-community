@@ -15,13 +15,21 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -62,6 +70,70 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public TextRange getHighlightingRange(@NotNull DetectedJavaChangeInfo changeInfo) {
     PsiElement method = changeInfo.getMethod();
     return method != null ? getSignatureRange((PsiMethod)method) : null;
+  }
+
+  @Override
+  public String getMethodSignaturePreview(DetectedJavaChangeInfo initialChangeInfo,
+                                          final List<TextRange> deleteRanges,
+                                          final List<TextRange> newRanges) {
+    StringBuilder buf = new StringBuilder();
+    String visibility = VisibilityUtil.getVisibilityString(initialChangeInfo.getNewVisibility());
+    buf.append(visibility);
+    if (!StringUtil.isEmptyOrSpaces(visibility)) {
+      buf.append(" ");
+    }
+    CanonicalTypes.Type returnType = initialChangeInfo.getNewReturnType();
+    if (returnType != null) {
+      buf.append(returnType.getTypeText()).append(" ");
+    }
+    buf.append(initialChangeInfo.getNewName()).append("(");
+
+    JavaParameterInfo[] newParameters = initialChangeInfo.getNewParameters();
+    boolean first = true;
+    boolean[] toRemove = initialChangeInfo.toRemoveParm();
+    for (int i = 0; i < toRemove.length; i++) {
+      if (first) {
+        first = false;
+      }
+      else {
+        buf.append(", ");
+      }
+
+      if (toRemove[i]) {
+        String deletedParam = initialChangeInfo.getOldParameterTypes()[i] + " " + initialChangeInfo.getOldParameterNames()[i];
+        deleteRanges.add(new TextRange(buf.length(), buf.length() + deletedParam.length()));
+        buf.append(deletedParam);
+      }
+      else {
+        for (JavaParameterInfo parameter : newParameters) {
+          if (parameter.getOldIndex() == i) {
+            buf.append(parameter.getTypeText()).append(" ").append(parameter.getName());
+            break;
+          }
+        }
+      }
+    }
+
+    for (JavaParameterInfo param : newParameters) {
+      if (param.getOldIndex() == -1) {
+        if (first) {
+          first = false;
+        }
+        else {
+          buf.append(", ");
+        }
+        String paramPresentation = param.getTypeText() + " " + ObjectUtils.notNull(param.getName(), "");
+        newRanges.add(new TextRange(buf.length(), buf.length() + paramPresentation.length()));
+        buf.append(paramPresentation);
+      }
+    }
+    buf.append(")");
+    return buf.toString();
+  }
+
+  @Override
+  public FileType getFileType() {
+    return JavaFileType.INSTANCE;
   }
 
   @Override

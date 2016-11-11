@@ -35,13 +35,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -50,6 +49,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -73,6 +73,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.DottedBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
@@ -85,6 +86,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -485,6 +487,32 @@ public abstract class InplaceRefactoring {
   @Nullable
   protected PsiElement getNameIdentifier() {
     return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
+  }
+
+  public static EditorEx createPreviewComponent(Project project, FileType languageFileType) {
+    Document document = EditorFactory.getInstance().createDocument("");
+    UndoUtil.disableUndoFor(document);
+    EditorEx previewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, languageFileType, true);
+    previewEditor.setOneLineMode(true);
+    final EditorSettings settings = previewEditor.getSettings();
+    settings.setAdditionalLinesCount(0);
+    settings.setAdditionalColumnsCount(1);
+    settings.setRightMarginShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setVirtualSpace(false);
+    previewEditor.setHorizontalScrollbarVisible(false);
+    previewEditor.setVerticalScrollbarVisible(false);
+    previewEditor.setCaretEnabled(false);
+    settings.setLineCursorWidth(1);
+
+    final Color bg = previewEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+    previewEditor.setBackgroundColor(bg);
+    previewEditor.setBorder(BorderFactory.createCompoundBorder(new DottedBorder(Color.gray), new LineBorder(bg, 2)));
+
+    return previewEditor;
   }
 
   @Nullable

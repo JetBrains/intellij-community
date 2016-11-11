@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.changeSignature.inplace;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -41,4 +44,10 @@ public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
     final TextRange signatureRange = getHighlightingRange(initialChangeInfo);
     return signatureRange.shiftRight(-signatureRange.getStartOffset()).substring(initialChangeInfo.getMethod().getText());
   }
+
+  default String getMethodSignaturePreview(C info, final List<TextRange> deleteRanges, final List<TextRange> newRanges) {
+    return extractSignature(info);
+  }
+
+  FileType getFileType();
 }

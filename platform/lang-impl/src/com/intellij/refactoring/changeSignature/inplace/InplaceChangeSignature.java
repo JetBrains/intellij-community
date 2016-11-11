@@ -16,14 +16,19 @@
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -44,12 +49,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -67,6 +74,7 @@ public class InplaceChangeSignature implements DocumentListener {
   private StartMarkAction myMarkAction;
   private Balloon myBalloon;
   private boolean myDelegate;
+  private EditorEx myPreview;
 
   public InplaceChangeSignature(Project project, Editor editor, @NotNull PsiElement element) {
     myDocumentManager = PsiDocumentManager.getInstance(project);
@@ -98,8 +106,9 @@ public class InplaceChangeSignature implements DocumentListener {
       highlighter.setGreedyToLeft(true);
     }
     myEditor.getDocument().addDocumentListener(this);
-    showBalloon();
     myEditor.putUserData(INPLACE_CHANGE_SIGNATURE, this);
+    myPreview = InplaceRefactoring.createPreviewComponent(project, myDetector.getFileType());
+    showBalloon();
   }
 
   @Nullable
@@ -166,14 +175,45 @@ public class InplaceChangeSignature implements DocumentListener {
       if (changeInfo == null && myCurrentInfo != null) {
         myStableChange = myCurrentInfo;
       }
+      if (changeInfo != null) {
+        updateMethodSignature(changeInfo);
+      }
       myCurrentInfo = changeInfo;
     });
+  }
+
+  private void updateMethodSignature(ChangeInfo changeInfo) {
+    ArrayList<TextRange> deleteRanges = new ArrayList<>();
+    ArrayList<TextRange> newRanges = new ArrayList<>();
+    String methodSignature = myDetector.getMethodSignaturePreview(changeInfo, deleteRanges, newRanges);
+
+    myPreview.getMarkupModel().removeAllHighlighters();
+    new WriteCommandAction(null) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
+      }
+    }.execute();
+    TextAttributes deprecatedAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    for (TextRange range : deleteRanges) {
+      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     deprecatedAttributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    TextAttributes todoAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
+    for (TextRange range : newRanges) {
+      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     todoAttributes, HighlighterTargetArea.EXACT_RANGE);
+    }
   }
 
   protected void showBalloon() {
     JBCheckBox checkBox = new JBCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> myDelegate = checkBox.isSelected());
-    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(checkBox, null).setSmallVariant(true);
+    JPanel content = new JPanel(new BorderLayout());
+    content.add(myPreview.getComponent(), BorderLayout.NORTH);
+    updateMethodSignature(myStableChange);
+    content.add(checkBox, BorderLayout.SOUTH);
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(content, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
