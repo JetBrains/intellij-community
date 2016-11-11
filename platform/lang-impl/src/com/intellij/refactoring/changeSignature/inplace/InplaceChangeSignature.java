@@ -19,10 +19,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -136,6 +133,7 @@ public class InplaceChangeSignature implements DocumentListener {
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    RangeMarker marker = event.getDocument().createRangeMarker(event.getOffset(), event.getOffset());
     myDocumentManager.performWhenAllCommitted(() -> {
       if (myDetector == null) {
         return;
@@ -144,8 +142,9 @@ public class InplaceChangeSignature implements DocumentListener {
       if (file == null) {
         return;
       }
-      PsiElement element = file.findElementAt(event.getOffset());
-      if (myDetector.ignoreChanges(element)) return;
+      PsiElement element = file.findElementAt(marker.getStartOffset());
+      marker.dispose();
+      if (element == null || myDetector.ignoreChanges(element)) return;
 
       if (element instanceof PsiWhiteSpace) {
         PsiElement method = myStableChange.getMethod();
@@ -177,7 +176,6 @@ public class InplaceChangeSignature implements DocumentListener {
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(checkBox, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
@@ -197,6 +195,7 @@ public class InplaceChangeSignature implements DocumentListener {
     }
     myHighlighters.clear();
     myBalloon.hide();
+    myDetector = null;
     FinishMarkAction.finish(myProject, myEditor, myMarkAction);
     myEditor.putUserData(INPLACE_CHANGE_SIGNATURE, null);
   }

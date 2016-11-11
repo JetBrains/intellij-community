@@ -33,7 +33,7 @@ public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
 
   void performChange(C changeInfo, @NotNull String oldText);
 
-  boolean isChangeSignatureAvailableOnElement(PsiElement element, C currentInfo);
+  boolean isChangeSignatureAvailableOnElement(@NotNull PsiElement element, C currentInfo);
 
   TextRange getHighlightingRange(@NotNull C changeInfo);
 

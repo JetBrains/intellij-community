@@ -42,7 +42,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean isChangeSignatureAvailableOnElement(PsiElement element, DetectedJavaChangeInfo currentInfo) {
+  public boolean isChangeSignatureAvailableOnElement(@NotNull PsiElement element, DetectedJavaChangeInfo currentInfo) {
     final PsiMethod method = currentInfo.getMethod();
     TextRange range = method.getTextRange();
     PsiCodeBlock body = method.getBody();
