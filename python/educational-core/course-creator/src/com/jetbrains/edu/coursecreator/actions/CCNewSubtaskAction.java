@@ -25,7 +25,6 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -50,11 +49,10 @@ public class CCNewSubtaskAction extends DumbAwareAction {
   }
 
   public static void addSubtask(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
-    if (taskFile == null) {
+    Task task = StudyUtils.getTaskForFile(project, virtualFile);
+    if (task == null) {
       return;
     }
-    Task task = taskFile.getTask();
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
