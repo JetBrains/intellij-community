@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.edu.learning.courseFormat.Task
 import java.awt.Font
+import java.awt.event.ItemEvent
 import java.util.*
 import javax.swing.*
 
@@ -41,6 +42,7 @@ class ChoicePanel(task: Task): JScrollPane() {
   init {
     val jPanel = JPanel(VerticalFlowLayout())
     jPanel.background = UIUtil.getEditorPaneBackground()
+    task.choiceAnswer = ArrayList<Boolean>(Collections.nCopies(task.choiceVariants.size, false))
     if (task.isMultichoice) {
       for ((index, variant) in task.choiceVariants.withIndex()) {
         val button: JBCheckBox = JBCheckBox(variant)
@@ -59,7 +61,7 @@ class ChoicePanel(task: Task): JScrollPane() {
         button.font = Font(button.font.name, button.font.style, EditorColorsManager.getInstance().globalScheme.editorFontSize + 2)
         button.isFocusable = false
         button.background = UIUtil.getEditorPaneBackground()
-        button.addItemListener { task.choiceAnswer[index] = button.isSelected }
+        button.addItemListener { task.choiceAnswer[index] = it.stateChange == ItemEvent.SELECTED}
         buttons.add(button)
         buttonGroup.add(button)
         jPanel.add(button)

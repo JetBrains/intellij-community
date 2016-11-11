@@ -430,8 +430,26 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
+  public static Pair<Boolean, String> checkChoiceTask(@NotNull final Project project, @NotNull final Task task) {
+    int attemptId = -1;
+    try {
+      attemptId = getAttemptId(project, task);
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    
+    if (attemptId != -1) {
+      final StepicWrappers.SubmissionToPostWrapper wrapper = new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), 
+                                                                                                        task.getChoiceAnswer());
+      return doAdaptiveCheck(project, wrapper, attemptId);
+    }
+    
+    return new Pair<>(false, "");
+  }
+
   @Nullable
-  public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
+  public static Pair<Boolean, String> checkCodeTask(@NotNull final Project project, @NotNull final Task task) {
     int attemptId = -1;
     try {
       attemptId = getAttemptId(project, task);
@@ -443,26 +461,36 @@ public class EduAdaptiveStepicConnector {
       final Editor editor = StudyUtils.getSelectedEditor(project);
       String language = getLanguageString(task, project);
       if (editor != null && language != null) {
-        final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
-        StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, attemptId, language, editor.getDocument().getText());
-
-        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-        final int id = user.getId();
-        wrapper = getCheckResults(attemptId, id, client, wrapper);
-        if (wrapper.submissions.length == 1) {
-          final String status = wrapper.submissions[0].status;
-      final String hint = wrapper.submissions[0].hint;
-      final boolean isSolved = !status.equals("wrong");
-          return Pair.create(isSolved, hint.isEmpty() ? "Your solution is " + status : hint);
-        }
-        else {
-          LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
-        }
+        final String answer = PYCHARM_COMMENT + editor.getDocument().getText();
+        final StepicWrappers.SubmissionToPostWrapper submissionToPost = new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId),
+                                                                                                                   language, answer);
+        return doAdaptiveCheck(project, submissionToPost, attemptId);
       }
     }
     else {
       LOG.warn("Got an incorrect attempt id: " + attemptId);
     }
+    return Pair.create(false, "");
+  }
+  
+  private static Pair<Boolean, String> doAdaptiveCheck(@NotNull final Project project,
+                                                       @NotNull final StepicWrappers.SubmissionToPostWrapper submission, 
+                                                       final int attemptId) {
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
+    StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
+    final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+    final int id = user.getId();
+    wrapper = getCheckResults(attemptId, id, client, wrapper);
+    if (wrapper.submissions.length == 1) {
+      final String status = wrapper.submissions[0].status;
+      final String hint = wrapper.submissions[0].hint;
+      final boolean isSolved = !status.equals("wrong");
+      return Pair.create(isSolved, hint.isEmpty() ? "Your solution is " + status : hint);
+    }
+    else {
+      LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
+    }
+
     return Pair.create(false, "");
   }
 
@@ -471,8 +499,6 @@ public class EduAdaptiveStepicConnector {
                                                                             StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper) {
     final CloseableHttpResponse response;
     try {
-      final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, PYCHARM_COMMENT + text);
       final HttpPost httpPost = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
       setTimeout(httpPost);
       try {

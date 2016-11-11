@@ -42,7 +42,7 @@ public class Task implements StudyItem {
 
   @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
   @Expose @SerializedName("is_multichoice") private boolean myIsMultichoice;
-  @Expose @SerializedName("choice_answer") private Boolean[] myChoiceAnswer;
+  @Transient @SerializedName("choice_answer") private List<Boolean> myChoiceAnswer = new ArrayList<>();
 
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;
@@ -301,11 +301,11 @@ public class Task implements StudyItem {
     myIsMultichoice = multichoice;
   }
 
-  public Boolean[] getChoiceAnswer() {
+  public List<Boolean> getChoiceAnswer() {
     return myChoiceAnswer;
   }
 
-  public void setChoiceAnswer(Boolean[] choiceAnswer) {
+  public void setChoiceAnswer(List<Boolean> choiceAnswer) {
     this.myChoiceAnswer = choiceAnswer;
   }
 }
