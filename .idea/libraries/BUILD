@@ -1085,3 +1085,57 @@ java_library(
     exports = ["//prebuilts/tools/common/google-api-java-client/1.20.0:google-api-java-client-min-repackaged-1.20.0"],
     runtime_deps = ["//prebuilts/tools/common/google-api-java-client/1.20.0:google-api-java-client-min-repackaged-1.20.0"],
 )
+
+java_library(
+    name = "trilead-ssh2",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = [
+        "//tools:idea/plugins/git4idea/lib/trilead-ssh2",
+        "//tools:idea/plugins/cvs/lib/trilead-ssh2-build213",
+        "//tools:idea/plugins/svn4idea/lib/trilead",
+    ],
+    runtime_deps = [
+        "//tools:idea/plugins/git4idea/lib/trilead-ssh2",
+        "//tools:idea/plugins/cvs/lib/trilead-ssh2-build213",
+        "//tools:idea/plugins/svn4idea/lib/trilead",
+    ],
+)
+
+java_library(
+    name = "purejavacomm",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools:idea/lib/purejavacomm"],
+    runtime_deps = ["//tools:idea/lib/purejavacomm"],
+)
+
+java_library(
+    name = "jsch-agent-proxy",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = [
+        "//tools:idea/lib/jsch.agentproxy.usocket-nc",
+        "//tools:idea/lib/jsch.agentproxy.usocket-jna",
+        "//tools:idea/lib/jsch.agentproxy.sshagent",
+        "//tools:idea/lib/jsch.agentproxy.pageant",
+        "//tools:idea/lib/jsch.agentproxy.core",
+        "//tools:idea/lib/jsch.agentproxy.connector-factory",
+    ],
+    runtime_deps = [
+        "//tools:idea/lib/jsch.agentproxy.usocket-nc",
+        "//tools:idea/lib/jsch.agentproxy.usocket-jna",
+        "//tools:idea/lib/jsch.agentproxy.sshagent",
+        "//tools:idea/lib/jsch.agentproxy.pageant",
+        "//tools:idea/lib/jsch.agentproxy.core",
+        "//tools:idea/lib/jsch.agentproxy.connector-factory",
+    ],
+)
+
+java_library(
+    name = "sqlite",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools:idea/lib/sqlite-jdbc-3.6.20.1"],
+    runtime_deps = ["//tools:idea/lib/sqlite-jdbc-3.6.20.1"],
+)
