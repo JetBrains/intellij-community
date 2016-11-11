@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,6 +275,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
           else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
             resolveInParentScope = true;
+          }
+          else if (PyiUtil.isInsideStubAnnotation(myElement)) {
+            for (PsiElement element : resolvedElements) {
+              resultList.poke(element, getRate(element, typeEvalContext));
+            }
+            return resultList;
           }
           else {
             unreachableLocalDeclaration = true;

@@ -17,6 +17,7 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -35,6 +36,11 @@ import java.util.List;
  */
 public class PyiUtil {
   private PyiUtil() {}
+
+  public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
+    return element.getContainingFile() instanceof PyiFile &&
+           PsiTreeUtil.getParentOfType(element, PyAnnotation.class, true, ScopeOwner.class) != null;
+  }
 
   @Nullable
   public static PsiElement getPythonStub(@NotNull PyElement element) {
