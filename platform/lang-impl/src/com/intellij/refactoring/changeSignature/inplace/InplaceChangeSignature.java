@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -225,6 +226,10 @@ public class InplaceChangeSignature implements DocumentListener {
         return new RelativePoint(myEditor.getContentComponent(), point);
       }
     }, Balloon.Position.above);
+    Disposer.register(myBalloon, () -> {
+      EditorFactory.getInstance().releaseEditor(myPreview);
+      myPreview = null;
+    });
   }
 
   public void detach() {
@@ -238,8 +243,6 @@ public class InplaceChangeSignature implements DocumentListener {
     myDetector = null;
     FinishMarkAction.finish(myProject, myEditor, myMarkAction);
     myEditor.putUserData(INPLACE_CHANGE_SIGNATURE, null);
-    EditorFactory.getInstance().releaseEditor(myPreview);
-    myPreview = null;
   }
 
   public static void temporallyRevertChanges(final TextRange signatureRange,
