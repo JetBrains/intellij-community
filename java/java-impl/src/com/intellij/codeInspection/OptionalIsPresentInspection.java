@@ -163,9 +163,10 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     return ((PsiReferenceExpression)qualifier).isReferenceTo(variable);
   }
 
-  @Contract("null, _ -> false")
-  static boolean isOptionalLambdaCandidate(PsiExpression lambdaCandidate, PsiVariable optionalVariable) {
+  @Contract("_, null, _ -> false")
+  static boolean isOptionalLambdaCandidate(PsiVariable optionalVariable, PsiExpression lambdaCandidate, PsiExpression falseExpression) {
     if (lambdaCandidate == null) return false;
+    if (ExpressionUtils.isReferenceTo(lambdaCandidate, optionalVariable) && OptionalUtil.isOptionalEmptyCall(falseExpression)) return true;
     if (!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return false;
     Ref<Boolean> hasOptionalReference = new Ref<>(Boolean.FALSE);
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
@@ -203,11 +204,15 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
                                        PsiExpression trueValue,
                                        PsiExpression falseValue,
                                        PsiType targetType) {
+    if (ExpressionUtils.isReferenceTo(trueValue, optionalVariable) && OptionalUtil.isOptionalEmptyCall(falseValue)) {
+      trueValue =
+        factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL + ".of(" + optionalVariable.getName() + ".get())", trueValue);
+    }
+    if (ExpressionUtils.isReferenceTo(falseValue, optionalVariable)) {
+      falseValue = factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()", falseValue);
+    }
     String lambdaText = generateOptionalLambda(factory, optionalVariable, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
-    if(ExpressionUtils.isReferenceTo(falseValue, optionalVariable)) {
-      falseValue = factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL+".empty()", falseValue);
-    }
     return OptionalUtil.generateOptionalUnwrap(optionalVariable.getName(), lambda.getParameterList().getParameters()[0],
                                                (PsiExpression)lambda.getBody(), falseValue, targetType, true);
   }
@@ -289,7 +294,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (!ExpressionUtils.isSimpleExpression(falseValue) &&
           !LambdaGenerationUtil.canBeUncheckedLambda(falseValue)) return false;
       PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
-      return isOptionalLambdaCandidate(trueValue, optionalVariable);
+      return isOptionalLambdaCandidate(optionalVariable, trueValue, falseValue);
     }
 
     @Override
@@ -316,7 +321,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
           falseAssignment == null ||
           !EquivalenceChecker.getCanonicalPsiEquivalence()
             .expressionsAreEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) ||
-          !isOptionalLambdaCandidate(trueAssignment.getRExpression(), optionalVariable)) {
+          !isOptionalLambdaCandidate(optionalVariable, trueAssignment.getRExpression(), falseAssignment.getLExpression())) {
         return false;
       }
       return ExpressionUtils.isSimpleExpression(falseAssignment.getRExpression()) ||
@@ -344,9 +349,10 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     @Override
     public boolean isApplicable(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return false;
-      return isOptionalLambdaCandidate((PsiExpression)trueElement, optionalVariable) &&
-             (ExpressionUtils.isSimpleExpression((PsiExpression)falseElement) ||
-              LambdaGenerationUtil.canBeUncheckedLambda((PsiExpression)falseElement));
+      PsiExpression trueExpression = (PsiExpression)trueElement;
+      PsiExpression falseExpression = (PsiExpression)falseElement;
+      return isOptionalLambdaCandidate(optionalVariable, trueExpression, falseExpression) &&
+             (ExpressionUtils.isSimpleExpression(falseExpression) || LambdaGenerationUtil.canBeUncheckedLambda(falseExpression));
     }
 
     @Override
@@ -368,7 +374,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return false;
       if (!(trueElement instanceof PsiExpressionStatement)) return false;
       PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
-      return isOptionalLambdaCandidate(expression, optionalVariable);
+      return isOptionalLambdaCandidate(optionalVariable, expression, null);
     }
 
     @Override

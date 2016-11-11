@@ -113,8 +113,7 @@ public class OptionalUtil {
             condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
         }
       }
-      if(falseExpression instanceof PsiMethodCallExpression &&
-         MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)falseExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0)) {
+      if(isOptionalEmptyCall(falseExpression)) {
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
         if (trueExpression instanceof PsiMethodCallExpression &&
             MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)trueExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "of", 1)) {
@@ -136,6 +135,12 @@ public class OptionalUtil {
     } else {
       return qualifier + ".orElse(" + falseExpression.getText() + ")";
     }
+  }
+
+  @Contract("null -> false")
+  public static boolean isOptionalEmptyCall(PsiExpression expression) {
+    return expression instanceof PsiMethodCallExpression &&
+           MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0);
   }
 
   @NotNull
