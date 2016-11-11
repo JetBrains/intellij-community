@@ -1113,8 +1113,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     BaseInspectionProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
     InspectionProfileImpl source = selectedProfile.getSource();
 
-    // delete by instance, only if from another profile manager or has another name (otherwise will be replaced and we don't need to explicitly delete it)
-    if (source.getProfileManager() != profileManager || !source.getName().equals(selectedProfile.getName())) {
+    if (source.getProfileManager() != profileManager) {
       source.getProfileManager().deleteProfile(source);
     }
 
