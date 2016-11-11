@@ -198,8 +198,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
           }
           else if (shellName.equals("zsh")) {
-            if (StringUtil.isNotEmpty(EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR))) {
-              File zshRc = new File(FileUtil.expandUserHome(envs.get(ZDOTDIR)), ".zshrc");
+            String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+            if (StringUtil.isNotEmpty(zdotdir)) {
+              File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
               if (zshRc.exists()) {
                 envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
               }
