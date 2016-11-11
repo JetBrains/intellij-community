@@ -226,10 +226,17 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         final JsonSchemaObject propertySchema = properties.get(property.getName());
         if (propertySchema != null) {
           checkByScheme(property.getValue(), propertySchema, new HashSet<>());
-        } else if (schema.getAdditionalPropertiesSchema() != null) {
-          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
-        } else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
-          error("Property '" + property.getName() + "' is not allowed", property);
+        }
+        else {
+          final JsonSchemaObject patternSchema = schema.getMatchingPatternPropertySchema(property.getName());
+          if (patternSchema != null) {
+            checkByScheme(property.getValue(), patternSchema, new HashSet<>());
+          } else if (schema.getAdditionalPropertiesSchema() != null) {
+            checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
+          }
+          else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
+            error("Property '" + property.getName() + "' is not allowed", property);
+          }
         }
         validatedProperties.add(property.getName());
       }

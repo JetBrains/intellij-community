@@ -243,6 +243,11 @@ public class JsonSchemaWalker {
       if (child != null) {
         resultConsumer.setSchema(child);
       } else {
+        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+        if (schema != null) {
+          resultConsumer.setSchema(schema);
+          return;
+        }
         if (parent.getAdditionalPropertiesSchema() != null) {
           resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
         } else {
