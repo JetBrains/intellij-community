@@ -429,7 +429,9 @@ public class StudySerializationUtils {
               JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
               for (JsonElement placeholder : placeholders) {
                 convertToAbsoluteOffset(document, placeholder);
-                convertToSubtaskInfo(placeholder.getAsJsonObject());
+                if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
+                  convertToSubtaskInfo(placeholder.getAsJsonObject());
+                }
               }
             }
           }
