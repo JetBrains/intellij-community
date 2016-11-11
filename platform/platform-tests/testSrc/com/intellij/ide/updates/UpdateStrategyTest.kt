@@ -117,7 +117,7 @@ class UpdateStrategyTest {
     assertBuild("145.595", result.newBuild)
   }
 
-  @Test fun `updates can be targeted for specific builds`() {
+  @Test fun `updates can be targeted for specific builds (different builds)`() {
     val channels = """
       <channel id="IDEA_EAP" status="eap" licensing="eap">
         <build number="145.596" version="2016.1.1 EAP" targetSince="145.595" targetUntil="145.*"/> <!-- this build is not for everyone -->
@@ -125,6 +125,16 @@ class UpdateStrategyTest {
       </channel>"""
     assertBuild("145.595", check("IU-145.258", ChannelStatus.EAP, channels).newBuild)
     assertBuild("145.596", check("IU-145.595", ChannelStatus.EAP, channels).newBuild)
+  }
+
+  @Test fun `updates can be targeted for specific builds (same build)`() {
+    val channels = """
+      <channel id="IDEA_EAP" status="release" licensing="release">
+        <build number="163.101" version="2016.3.1" targetSince="163.0" targetUntil="163.*"><message>bug fix</message></build>
+        <build number="163.101" version="2016.3.1"><message>new release</message></build>
+      </channel>"""
+    assertEquals("new release", check("IU-145.258", ChannelStatus.RELEASE, channels).newBuild?.message)
+    assertEquals("bug fix", check("IU-163.50", ChannelStatus.RELEASE, channels).newBuild?.message)
   }
 
   @Test fun `updates from the same baseline are preferred`() {
