@@ -44,7 +44,6 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -338,10 +337,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
-    final boolean insidePythonStub = referenceOwner != null && referenceOwner.getContainingFile() instanceof PyiFile;
-    final boolean insideTypeHintInStub = insidePythonStub &&
-                                         PsiTreeUtil.getParentOfType(myElement, PyAnnotation.class, true, ScopeOwner.class) != null;
-    return resolved == referenceOwner && referenceOwner instanceof PyClass && !insideTypeHintInStub;
+    return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
   private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
