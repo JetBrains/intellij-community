@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitAssignmentExpression(
-    @NotNull PsiAssignmentExpression assignment) {
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
     if (assignedFrom) {
       return;
     }
@@ -51,37 +50,13 @@ class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitDeclarationStatement(
-    @NotNull PsiDeclarationStatement statement) {
-    if (assignedFrom) {
-      return;
-    }
-    super.visitDeclarationStatement(statement);
-    final PsiElement[] declaredElements = statement.getDeclaredElements();
-    for (PsiElement declaredElement : declaredElements) {
-      if (declaredElement instanceof PsiVariable) {
-        final PsiVariable declaredVariable =
-          (PsiVariable)declaredElement;
-        final PsiExpression initializer =
-          declaredVariable.getInitializer();
-        if (initializer != null &&
-            VariableAccessUtils.mayEvaluateToVariable(initializer,
-                                                      variable)) {
-          assignedFrom = true;
-          return;
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitVariable(@NotNull PsiVariable var) {
     if (assignedFrom) {
       return;
     }
     super.visitVariable(var);
-    final PsiExpression arg = var.getInitializer();
-    if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
+    final PsiExpression initializer = var.getInitializer();
+    if (VariableAccessUtils.mayEvaluateToVariable(initializer, variable)) {
       assignedFrom = true;
     }
   }
