@@ -112,7 +112,7 @@ public class InheritanceUtil {
 
     @Override
     public boolean process(PsiClass aClass) {
-      return myCount.updateAndGet(oldCount -> Math.min(myLimit, oldCount + 1)) != myLimit;
+      return myCount.incrementAndGet() < myLimit;
     }
   }
 }
