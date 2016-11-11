@@ -163,7 +163,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       runStartupActivity();
     }
     else {
-      myStartupManager.registerStartupActivity(() -> runStartupActivity());
+      myStartupManager.registerStartupActivity(this::runStartupActivity);
     }
   }
 
@@ -591,7 +591,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
     DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
-    Arrays.sort(backSorted, (a, b) -> getLastCommandTimestamp(a) - getLastCommandTimestamp(b));
+    Arrays.sort(backSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {
       DocumentReference each = backSorted[i];
@@ -634,7 +634,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   public void dropHistoryInTests() {
     flushMergers();
-    LOG.assertTrue(myCommandLevel == 0);
+    LOG.assertTrue(myCommandLevel == 0, myCommandLevel);
 
     myUndoStacksHolder.clearAllStacksInTests();
     myRedoStacksHolder.clearAllStacksInTests();
@@ -643,8 +643,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   private void flushMergers() {
     // Run dummy command in order to flush all mergers...
-    CommandProcessor.getInstance()
-      .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
+    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
 
   @TestOnly
