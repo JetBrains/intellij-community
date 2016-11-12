@@ -1,0 +1,152 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.util.indexing;
+
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Created by Maxim.Mossienko on 11/10/2016.
+ */
+public class VfsEventsMerger {
+  public void recordFileEvent(int fileId, VirtualFile file, boolean contentChange) {
+    updateChange(fileId, file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
+  }
+
+  public void recordBeforeFileEvent(int fileId, VirtualFile file, boolean contentChanged) {
+    updateChange(fileId, file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
+  }
+
+  private void updateChange(int fileId, VirtualFile file, short mask) {
+    ChangeInfo newChangeInfo = new ChangeInfo(file, mask, null);
+    ChangeInfo existingChangeInfo = myChangeInfos.cacheOrGet(fileId, newChangeInfo);
+
+    if (existingChangeInfo != newChangeInfo) {
+      while (true) {
+        newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
+        if (existingChangeInfo == null) {
+          existingChangeInfo = myChangeInfos.cacheOrGet(fileId, newChangeInfo);
+        } else {
+          if (myChangeInfos.replace(fileId, existingChangeInfo, newChangeInfo)) break;
+          existingChangeInfo = myChangeInfos.get(fileId);
+        }
+      }
+    }
+  }
+
+  public interface VfsEventProcessor {
+    boolean process(ChangeInfo changeInfo);
+  }
+
+  // 1. Method can be invoked in several threads
+  // 2. Method processes snapshot of available events at the time of the invokation, it does mean that if events are produced concurrently
+  // with the processing then set of events will be not empty
+  // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
+  public boolean processChanges(VfsEventProcessor eventProcessor) {
+    if (!myChangeInfos.isEmpty()) {
+      int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
+      for (int fileId : fileIds) {
+        ProgressManager.checkCanceled();
+        ChangeInfo info = myChangeInfos.remove(fileId);
+        if (info == null) continue;
+
+        try {
+          if (!eventProcessor.process(info)) return false;
+        }
+        catch (ProcessCanceledException pce) { // todo remove
+          FileBasedIndexImpl.LOG.error(pce);
+          assert false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public boolean hasChanges() {
+    return !myChangeInfos.isEmpty();
+  }
+
+  public int getApproximateChangesCount() {
+    return myChangeInfos.size();
+  }
+
+  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
+
+  private static final short FILE_ADDED = 1;
+  private static final short FILE_REMOVED = 2;
+  private static final short FILE_CONTENT_CHANGED = 4;
+  private static final short BEFORE_FILE_CONTENT_CHANGED = 8;
+
+  public static class ChangeInfo {
+    private final VirtualFile file;
+    private final short eventMask;
+
+    ChangeInfo(VirtualFile file, short eventMask, @Nullable ChangeInfo previous) {
+      this.file = file;
+      this.eventMask = mergeEventMask(previous != null ? previous.eventMask : 0, eventMask);
+    }
+
+    private static short mergeEventMask(short existingOperation, short newOperation) {
+      if (newOperation == FILE_REMOVED) {
+        return newOperation;
+      }
+      return (short)(existingOperation | newOperation);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder builder = new StringBuilder();
+      builder.append("file: ").append(file.getPath()).append("\n")
+        .append("operation: ");
+      if ((eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE-REMOVE ");
+      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
+      if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
+      if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
+      return builder.toString().trim();
+    }
+
+    boolean isBeforeContentChanged() {
+      return (eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0;
+    }
+
+    boolean isContentChanged() {
+      return (eventMask & FILE_CONTENT_CHANGED) != 0;
+    }
+
+    boolean isFileRemoved() {
+      return (eventMask & FILE_REMOVED) != 0;
+    }
+
+    boolean isFileAdded() {
+      return (eventMask & FILE_ADDED) != 0;
+    }
+
+    VirtualFile getFile() {
+      return file;
+    }
+
+    int getFileId() {
+      int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(this.file);
+      if (fileId < 0) fileId = -fileId;
+      return fileId;
+    }
+  }
+
+}

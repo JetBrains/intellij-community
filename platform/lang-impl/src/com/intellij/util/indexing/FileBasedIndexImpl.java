@@ -1925,7 +1925,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return false;
   }
 
-  private static int getIdMaskingNonIdBasedFile(VirtualFile file) {
+  static int getIdMaskingNonIdBasedFile(VirtualFile file) {
     return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
   }
 
