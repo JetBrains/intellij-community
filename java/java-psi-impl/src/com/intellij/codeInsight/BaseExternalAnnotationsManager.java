@@ -158,7 +158,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @NotNull
-  private MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
+  MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
     Pair<MostlySingularMultiMap<String, AnnotationData>, Long> cached = myAnnotationFileToDataAndModStampCache.get(file);
     long fileModificationStamp = file.getModificationStamp();
     if (cached != null && cached.getSecond() == fileModificationStamp) {
@@ -336,16 +336,16 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     throw new UnsupportedOperationException();
   }
 
-  protected void cacheExternalAnnotations(@SuppressWarnings("UnusedParameters") @NotNull String packageName,
-                                          @NotNull PsiFile fromFile,
-                                          @NotNull List<PsiFile> annotationFiles) {
+  void cacheExternalAnnotations(@SuppressWarnings("UnusedParameters") @NotNull String packageName,
+                                @NotNull PsiFile fromFile,
+                                @NotNull List<PsiFile> annotationFiles) {
     VirtualFile virtualFile = fromFile.getVirtualFile();
     if (virtualFile != null) {
       myExternalAnnotationsCache.put(virtualFile, annotationFiles);
     }
   }
 
-  private static class AnnotationData {
+  static class AnnotationData {
     private final String annotationClassFqName;
     private final String annotationParameters;
 
@@ -357,7 +357,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     @NotNull
-    private PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
+    PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
       PsiAnnotation a = myAnnotation;
       if (a == null) {
         String text = "@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "(" + annotationParameters + ")");
