@@ -54,6 +54,10 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
 
   public GuiTestRunner(Class<?> testClass) throws InitializationError {
     super(testClass);
+    //BufferedImage image = UIUtil.createImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+    //Graphics2D graphics = ((Graphics2D)image.getGraphics());
+    //graphics.fill(new Rectangle(0,0,100,100));
+    //Application.getApplication().setDockIconImage(image);
     myScreenshotTaker = canRunGuiTests() ? new ScreenshotTaker() : null;
 
   }

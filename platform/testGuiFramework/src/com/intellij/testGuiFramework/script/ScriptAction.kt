@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.script
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testGuiFramework.impl.GuiTestCase
 import org.fest.swing.core.FastRobot
 
 /**
@@ -28,7 +27,7 @@ class ScriptAction(val scriptName: String) : AnAction("guiTest." + scriptName) {
 
   override fun actionPerformed(e: AnActionEvent?) {
 
-    val myPackage = "com.intellij.tests.gui.test"
+    val myPackage = "com.intellij.testGuiFramework.tests"
     val loadedClass = this.javaClass.classLoader.loadClass("${myPackage}.${scriptName}")
     val guiTest = loadedClass.newInstance() as GuiTestCase
 

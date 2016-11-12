@@ -20,7 +20,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.testGuiFramework.fixtures.*;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
-import com.intellij.testGuiFramework.impl.GuiTestCase;
+import com.intellij.testGuiFramework.script.GuiTestCase;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
 import org.fest.swing.timing.Pause;
