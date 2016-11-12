@@ -15,7 +15,7 @@
  */
 package com.intellij.testGuiFramework.framework;
 
-import com.intellij.testGuiFramework.script.GuiTestCase;
+import com.intellij.testGuiFramework.impl.GuiTestCase;
 import org.fest.swing.image.ScreenshotTaker;
 import org.jetbrains.annotations.NotNull;
 import org.junit.runners.model.FrameworkMethod;

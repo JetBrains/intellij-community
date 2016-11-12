@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.script
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testGuiFramework.impl.GuiTestCase
 import org.fest.swing.core.FastRobot
 
 /**

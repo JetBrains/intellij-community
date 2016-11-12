@@ -21,7 +21,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.script.GuiTestCase
+import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.ui.EditorComboBox
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
