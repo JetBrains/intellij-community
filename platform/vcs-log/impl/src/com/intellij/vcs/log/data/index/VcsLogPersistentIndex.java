@@ -40,11 +40,7 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.util.PersistentSet;
-import com.intellij.vcs.log.util.PersistentSetImpl;
-import com.intellij.vcs.log.util.PersistentUtil;
-import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -416,8 +412,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private static void cleanup(@NotNull String logId) {
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(COMMITS, logId, getVersion()));
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(MESSAGES, logId, MESSAGES_VERSION));
+      IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX, COMMITS, logId, getVersion(), false));
+      IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION, false));
 
       VcsLogMessagesTrigramIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
       VcsLogUserIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
