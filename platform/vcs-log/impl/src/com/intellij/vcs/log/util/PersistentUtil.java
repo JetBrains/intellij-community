@@ -111,11 +111,11 @@ public class PersistentUtil {
                                     @NotNull String kind,
                                     @NotNull String id,
                                     int version,
-                                    boolean cleanup) {
+                                    boolean cleanupOldVersions) {
     File subdir = new File(LOG_CACHE, subdirName);
     String safeLogId = PathUtilRt.suggestFileName(id, true, true);
     File file = new File(subdir, safeLogId + "." + kind + "." + version);
-    if (cleanup && !file.exists()) {
+    if (cleanupOldVersions && !file.exists()) {
       IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId + "." + kind));
     }
     return file;
