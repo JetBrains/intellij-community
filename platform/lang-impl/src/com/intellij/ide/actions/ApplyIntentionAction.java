@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -66,6 +67,7 @@ public class ApplyIntentionAction extends AnAction {
 
   @Nullable
   public static ApplyIntentionAction[] getAvailableIntentions(final Editor editor, final PsiFile file) {
+    if (DumbService.isDumb(file.getProject())) return null;
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
     ApplicationManager.getApplication().runReadAction(() -> ShowIntentionsPass.getActionsToShow(editor, file, info, -1));
     if (info.isEmpty()) return null;

@@ -48,10 +48,10 @@ class MarkerCache {
       return (info1.isForInjected() ? 1 : 0) - (info2.isForInjected() ? 1 : 0);
     }
   };
-  private final SmartPointerManagerImpl.FilePointersList myPointers;
-  private volatile UpdatedRanges myUpdatedRanges;
+  private final SmartPointerTracker myPointers;
+  private UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
+  MarkerCache(SmartPointerTracker pointers) {
     myPointers = pointers;
   }
 
@@ -62,25 +62,19 @@ class MarkerCache {
     UpdatedRanges cache = myUpdatedRanges;
     if (cache != null && cache.myEventCount == eventCount) return cache;
 
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      cache = myUpdatedRanges;
-      if (cache != null && cache.myEventCount == eventCount) return cache;
-
-      UpdatedRanges answer;
-      if (cache != null && cache.myEventCount < eventCount) {
-        // apply only the new events
-        answer = applyEvents(events.subList(cache.myEventCount, eventCount), cache);
-      }
-      else {
-        List<SelfElementInfo> infos = myPointers.getSortedInfos();
-        ManualRangeMarker[] markers = createMarkers(infos);
-        answer = applyEvents(events, new UpdatedRanges(0, frozen, infos, markers));
-      }
-
-      myUpdatedRanges = answer;
-      return answer;
+    UpdatedRanges answer;
+    if (cache != null && cache.myEventCount < eventCount) {
+      // apply only the new events
+      answer = applyEvents(events.subList(cache.myEventCount, eventCount), cache);
     }
+    else {
+      List<SelfElementInfo> infos = myPointers.getSortedInfos();
+      ManualRangeMarker[] markers = createMarkers(infos);
+      answer = applyEvents(events, new UpdatedRanges(0, frozen, infos, markers));
+    }
+
+    myUpdatedRanges = answer;
+    return answer;
   }
 
   @NotNull
@@ -143,7 +137,7 @@ class MarkerCache {
     return new UpdatedRanges(struct.myEventCount + events.size(), frozen, struct.mySortedInfos, resultMarkers);
   }
 
-  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  boolean updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     UpdatedRanges updated = getUpdatedMarkers(frozen, events);
 
     boolean sorted = true;
@@ -155,11 +149,8 @@ class MarkerCache {
       }
     }
 
-    if (!sorted) {
-      myPointers.markUnsorted();
-    }
-
     myUpdatedRanges = null;
+    return sorted;
   }
 
   @Nullable
@@ -172,7 +163,6 @@ class MarkerCache {
 
   void rangeChanged() {
     myUpdatedRanges = null;
-    myPointers.markUnsorted();
   }
 
   private static class UpdatedRanges {

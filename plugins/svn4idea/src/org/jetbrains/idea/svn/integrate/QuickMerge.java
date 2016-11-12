@@ -15,31 +15,41 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.continuation.SeparatePiecesRunner;
-import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
+import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.NestedCopyType;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
-import static com.intellij.util.Functions.identity;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
-import static java.util.Collections.singletonList;
+import java.io.File;
+import java.util.List;
 
-public class QuickMerge {
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
+import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
+
+public class QuickMerge extends BackgroundTaskGroup {
+
+  private static final Logger LOG = Logger.getInstance(QuickMerge.class);
 
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final QuickMergeInteraction myInteraction;
-  @NotNull private final SeparatePiecesRunner myRunner;
+  @NotNull private final Semaphore mySemaphore = new Semaphore();
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
+    super(mergeContext.getProject(), mergeContext.getTitle());
     myMergeContext = mergeContext;
     myInteraction = interaction;
-    myRunner = createRunner();
   }
 
   @NotNull
@@ -52,46 +62,170 @@ public class QuickMerge {
     return myInteraction;
   }
 
-  @NotNull
-  public SeparatePiecesRunner getRunner() {
-    return myRunner;
+  @Override
+  public void showErrors() {
+    if (!myExceptions.isEmpty()) {
+      myInteraction.showErrors(myMergeContext.getTitle(), myExceptions);
+    }
+  }
+
+  @Override
+  public void waitForTasksToFinish() {
+    super.waitForTasksToFinish();
+    mySemaphore.waitFor();
+  }
+
+  @Override
+  public void end() {
+    super.end();
+    mySemaphore.up();
+  }
+
+  @CalledInAny
+  public void end(@NotNull String message, boolean isError) {
+    LOG.info((isError ? "Error: " : "Info: ") + message);
+
+    clear();
+    getApplication().invokeLater(() -> myInteraction.showErrors(message, isError));
+  }
+
+  public boolean is18() {
+    return myMergeContext.getWcInfo().getFormat().isOrGreater(ONE_DOT_EIGHT);
   }
 
   @CalledInAwt
   public void execute() {
-    runMergeTasks(null);
-  }
-
-  @TestOnly
-  @CalledInAwt
-  public void execute(@NotNull TaskDescriptor finalTask) {
-    runMergeTasks(finalTask);
-  }
-
-  @CalledInAwt
-  private void runMergeTasks(@Nullable TaskDescriptor finalTask) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    TaskDescriptor[] tasks = {
-      new MergeInitChecksTask(this),
-      new CheckRepositorySupportsMergeInfoTask(this),
-      finalTask
-    };
+    mySemaphore.down();
+    runInEdt(() -> {
+      if (areInSameHierarchy(createUrl(myMergeContext.getSourceUrl()), myMergeContext.getWcInfo().getUrl())) {
+        end("Cannot merge from self", true);
+      }
+      else if (!hasSwitchedRoots() || myInteraction.shouldContinueSwitchedRootFound()) {
+        runInBackground("Checking repository capabilities", indicator -> {
+          if (supportsMergeInfo()) {
+            runInEdt(this::selectMergeVariant);
+          }
+          else {
+            mergeAll(false);
+          }
+        });
+      }
+    });
+  }
 
-    myRunner.next(mapNotNull(tasks, identity()));
-    myRunner.ping();
+  private void selectMergeVariant() {
+    switch (myInteraction.selectMergeVariant()) {
+      case all:
+        mergeAll(true);
+        break;
+      case showLatest:
+        runInBackground("Loading recent " + myMergeContext.getBranchName() + " revisions", new MergeCalculatorTask(this, null, task ->
+          runInEdt(() -> selectRevisionsToMerge(task, false))));
+        break;
+      case select:
+        runInBackground("Looking for branch origin", new LookForBranchOriginTask(this, false, copyPoint ->
+          runInBackground("Filtering " + myMergeContext.getBranchName() + " revisions", new MergeCalculatorTask(this, copyPoint, task ->
+            runInEdt(() -> selectRevisionsToMerge(task, true))))));
+      case cancel:
+        break;
+    }
+  }
+
+  private void selectRevisionsToMerge(@NotNull MergeCalculatorTask task, boolean allStatusesCalculated) {
+    SelectMergeItemsResult result =
+      myInteraction.selectMergeItems(task.getChangeLists(), task.getMergeChecker(), allStatusesCalculated, task.areAllListsLoaded());
+
+    switch (result.getResultCode()) {
+      case all:
+        mergeAll(true);
+        break;
+      case select:
+      case showLatest:
+        merge(result.getSelectedLists());
+        break;
+      case cancel:
+        break;
+    }
+  }
+
+  private void mergeAll(boolean supportsMergeInfo) {
+    // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
+    // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
+    // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
+    if (supportsMergeInfo && is18()) {
+      runInEdt(() -> checkReintegrateIsAllowedAndMergeAll(null, true));
+    }
+    else {
+      runInBackground("Looking for branch origin", new LookForBranchOriginTask(this, true, copyPoint ->
+        runInEdt(() -> checkReintegrateIsAllowedAndMergeAll(copyPoint, supportsMergeInfo))));
+    }
+  }
+
+  private void checkReintegrateIsAllowedAndMergeAll(@Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
+    boolean reintegrate = copyPoint != null && copyPoint.isInvertedSense();
+
+    if (!reintegrate || myInteraction.shouldReintegrate(copyPoint.inverted().getTarget())) {
+      MergerFactory mergerFactory = createMergeAllFactory(reintegrate, copyPoint, supportsMergeInfo);
+      String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
+
+      merge(title, mergerFactory, null);
+    }
+  }
+
+  private void merge(@NotNull List<SvnChangeList> changeLists) {
+    if (!changeLists.isEmpty()) {
+      ChangeListsMergerFactory mergerFactory = new ChangeListsMergerFactory(changeLists, false, false, true);
+
+      merge(myMergeContext.getTitle(), mergerFactory, changeLists);
+    }
+  }
+
+  private void merge(@NotNull String title, @NotNull MergerFactory mergerFactory, @Nullable List<SvnChangeList> changeLists) {
+    runInEdt(new LocalChangesPromptTask(this, changeLists, () ->
+      runInEdt(new MergeTask(this, () ->
+        newIntegrateTask(title, mergerFactory).queue()))));
   }
 
   @NotNull
-  private SeparatePiecesRunner createRunner() {
-    SeparatePiecesRunner result = new SeparatePiecesRunner(myMergeContext.getProject(), true);
+  private Task newIntegrateTask(@NotNull String title, @NotNull MergerFactory mergerFactory) {
+    return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
+                                       mergerFactory, parseUrl(myMergeContext.getSourceUrl()), title, false,
+                                       myMergeContext.getBranchName()) {
+      @Override
+      public void onFinished() {
+        super.onFinished();
+        mySemaphore.up();
+      }
+    };
+  }
 
-    result.addExceptionHandler(VcsException.class, e -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(e)));
-    result.addExceptionHandler(SVNException.class,
-                               e -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(new VcsException(e))));
-    result.addExceptionHandler(RuntimeException.class, e -> myInteraction
-      .showErrors(notNull(e.getMessage(), e.getClass().getName()), singletonList(new VcsException(e))));
+  private boolean hasSwitchedRoots() {
+    File currentRoot = myMergeContext.getWcInfo().getRootInfo().getIoFile();
 
-    return result;
+    return myMergeContext.getVcs().getAllWcInfos().stream()
+      .filter(info -> NestedCopyType.switched.equals(info.getType()))
+      .anyMatch(info -> FileUtil.isAncestor(currentRoot, info.getRootInfo().getIoFile(), true));
+  }
+
+  private boolean supportsMergeInfo() {
+    return myMergeContext.getWcInfo().getFormat().supportsMergeInfo() &&
+           checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
+  }
+
+  @NotNull
+  private MergerFactory createMergeAllFactory(boolean reintegrate, @Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
+    long revision = copyPoint != null
+                    ? reintegrate ? copyPoint.getWrapped().getTargetRevision() : copyPoint.getWrapped().getSourceRevision()
+                    : -1;
+
+    return (vcs, target, handler, currentBranchUrl, branchName) ->
+      new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate, myMergeContext.getBranchName(),
+                       revision, supportsMergeInfo);
+  }
+
+  private static boolean areInSameHierarchy(@NotNull SVNURL url1, @NotNull SVNURL url2) {
+    return SVNURLUtil.isAncestor(url1, url2) || SVNURLUtil.isAncestor(url2, url1);
   }
 }

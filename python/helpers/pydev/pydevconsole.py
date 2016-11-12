@@ -155,9 +155,8 @@ def set_debug_hook(debug_hook):
     _ProcessExecQueueHelper._debug_hook = debug_hook
 
 
-def process_exec_queue(interpreter):
-
-    from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+def init_mpl_in_console(interpreter):
+    from pydev_ipython.inputhook import set_return_control_callback
 
     def return_control():
         ''' A function that the inputhooks can call (via inputhook.stdin_ready()) to find
@@ -186,6 +185,11 @@ def process_exec_queue(interpreter):
     # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
     import_hook_manager.add_module_name("pylab", activate_pylab)
     import_hook_manager.add_module_name("pyplot", activate_pyplot)
+
+
+def process_exec_queue(interpreter):
+    init_mpl_in_console(interpreter)
+    from pydev_ipython.inputhook import get_inputhook
 
     while 1:
         # Running the request may have changed the inputhook in use

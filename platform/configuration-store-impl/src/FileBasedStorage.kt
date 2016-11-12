@@ -180,7 +180,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
       throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
     }
     else if (StorageUtil.DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
-      StorageUtil.DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}\n---------"
+      StorageUtil.DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
     }
   }
 

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
+    final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(project);
     InspectionProfile current = projectProfileManager.getCurrentProfile();
     for (InspectionProfile profile : projectProfileManager.getProfiles()) {
       addScheme(group, projectProfileManager, current, profile);

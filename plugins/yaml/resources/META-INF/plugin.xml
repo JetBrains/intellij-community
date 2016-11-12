@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>

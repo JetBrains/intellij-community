@@ -37,6 +37,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
@@ -213,6 +214,20 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {
       DumbService.getInstance(myProject).queueTask(task);
+    }
+  }
+
+  @Override
+  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<VirtualFile> acceptFileCondition) {
+    if (fileOrDir.isDirectory()) {
+      for (VirtualFile child : fileOrDir.getChildren()) {
+        if (!child.isDirectory() && acceptFileCondition.value(child)) {
+          filePropertiesChanged(child);
+        }
+      }
+    }
+    else if (acceptFileCondition.value(fileOrDir)) {
+      filePropertiesChanged(fileOrDir);
     }
   }
 

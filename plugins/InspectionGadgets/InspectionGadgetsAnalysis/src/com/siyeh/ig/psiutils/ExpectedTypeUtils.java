@@ -19,7 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -379,13 +379,7 @@ public class ExpectedTypeUtils {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-      final PsiElement method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, PsiLambdaExpression.class);
-      if (method instanceof PsiMethod) {
-        expectedType = ((PsiMethod)method).getReturnType();
-      }
-      else if (method instanceof PsiLambdaExpression) {
-        expectedType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
-      }
+      expectedType = PsiTypesUtil.getMethodReturnType(returnStatement);
     }
 
     @Override

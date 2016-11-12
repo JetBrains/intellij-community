@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +34,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -58,41 +56,28 @@ import java.util.*;
 public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
   @NonNls static final String CLASS_TAG = "class";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String USED_LEVELS = "used_levels";
   public static final String DEFAULT_PROFILE_NAME = "Default";
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
-  private final InspectionToolRegistrar myRegistrar;
-  @NotNull
-  private final Map<String, Element> myUninitializedSettings = new TreeMap<>();
-  protected InspectionProfileImpl mySource;
-  private Map<String, ToolsImpl> myTools = new THashMap<>();
-  private volatile Set<String> myChangedToolNames;
+  protected final InspectionToolRegistrar myRegistrar;
+  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
+  protected Map<String, ToolsImpl> myTools = new THashMap<>();
+  protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
-  private boolean myLockedProfile;
-  private final InspectionProfileImpl myBaseProfile;
+  protected boolean myLockedProfile;
+  protected final InspectionProfileImpl myBaseProfile;
   private volatile String myToolShortName = null;
   private String[] myScopesOrder;
   private String myDescription;
-  private boolean myModified;
   private volatile boolean myInitialized;
 
   private final Object myLock = new Object();
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
-
-  InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
-    this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
-    myUninitializedSettings.putAll(inspectionProfile.myUninitializedSettings);
-
-    setProjectLevel(inspectionProfile.isProjectLevel());
-    myLockedProfile = inspectionProfile.myLockedProfile;
-    mySource = inspectionProfile;
-    copyFrom(inspectionProfile);
-  }
 
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
@@ -157,7 +142,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @NotNull
-  private static InspectionToolWrapper copyToolSettings(@NotNull InspectionToolWrapper toolWrapper) {
+  protected static InspectionToolWrapper copyToolSettings(@NotNull InspectionToolWrapper toolWrapper) {
     final InspectionToolWrapper inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
@@ -172,42 +157,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
 
-  @Override
-  public void setModified(final boolean modified) {
-    myModified = modified;
-  }
-
-  @Override
-  public InspectionProfileImpl getParentProfile() {
-    return mySource;
-  }
-
-  @Override
-  @SuppressWarnings({"SimplifiableIfStatement"})
-  public boolean isChanged() {
-    if (mySource != null && mySource.myLockedProfile != myLockedProfile) return true;
-    return myModified;
-  }
-
-  @Override
-  public boolean isProperSetting(@NotNull String toolId) {
-    if (myBaseProfile != null) {
-      final Tools tools = myBaseProfile.getTools(toolId, null);
-      final Tools currentTools = myTools.get(toolId);
-      return !Comparing.equal(tools, currentTools);
-    }
-    return false;
-  }
-
-  @Override
-  public void resetToBase(@Nullable Project project) {
-    initInspectionTools(project);
-
-    copyToolsConfigurations(myBaseProfile, project);
-    myChangedToolNames = null;
-  }
-
-  @Override
   public void resetToEmpty(Project project) {
     initInspectionTools(project);
     final InspectionToolWrapper[] profileEntries = getInspectionTools(null);
@@ -408,11 +357,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return (T) getUnwrappedTool(shortNameKey.toString(), element);
   }
 
-  @Override
-  public void modifyProfile(@NotNull Consumer<ModifiableModel> modelConsumer) {
-    ModifiableModel model = getModifiableModel();
-    modelConsumer.consume(model);
-    model.commit();
+  public void modifyProfile(@NotNull Consumer<InspectionProfileModifiableModel> modelConsumer) {
+    InspectionProfileModifiableModelKt.edit(this, it -> {
+      modelConsumer.consume(it);
+      return null;
+    });
   }
 
   @Override
@@ -458,18 +407,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  @Override
-  public void save() {
-    InspectionProfileManager.getInstance().fireProfileChanged(this);
-  }
-
   @Nullable
   @Override
   public String getSingleTool() {
     return myToolShortName;
   }
 
-  @Override
   public void setSingleTool(@NotNull final String toolShortName) {
     myToolShortName = toolShortName;
   }
@@ -485,16 +428,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (ScopeToolState toolState : getAllTools(null)) {
       toolState.scopesChanged();
     }
-    InspectionProfileManager.getInstance().fireProfileChanged(this);
+    getProfileManager().fireProfileChanged(this);
   }
 
-  @Override
   @Transient
   public boolean isProfileLocked() {
     return myLockedProfile;
   }
 
-  @Override
   public void lockProfile(boolean isLocked) {
     myLockedProfile = isLocked;
   }
@@ -523,7 +464,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  @Override
   public void disableTool(@NotNull String toolId, @NotNull PsiElement element) {
     getTools(toolId, element.getProject()).disableTool(element);
   }
@@ -562,6 +502,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
+  @NotNull
+  protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
+    return myRegistrar.createTools();
+  }
+
   private void initialize(@Nullable Project project) {
     SchemeDataHolder<? super InspectionProfileImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
@@ -580,12 +525,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
     final List<InspectionToolWrapper> tools;
     try {
-      if (mySource == null) {
-        tools = myRegistrar.createTools();
-      }
-      else {
-        tools = ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
-      }
+      tools = createTools(project);
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -611,15 +551,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       myScopesOrder = ArrayUtil.toStringArray(builder.getSortedNodes());
     }
 
-    if (mySource != null) {
-      copyToolsConfigurations(mySource, project);
-    }
+    copyToolsConfigurations(project);
 
     myInitialized = true;
     if (dataHolder != null) {
       // should be only after set myInitialized
       dataHolder.updateDigest(this);
     }
+  }
+
+  protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
   public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Map<String, List<String>> dependencies) {
@@ -712,41 +653,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return tools.getLevel();
   }
 
-  @Override
   @NotNull
-  public InspectionProfileImpl getModifiableModel() {
-    return new InspectionProfileImpl(this);
-  }
-
-  private void copyToolsConfigurations(@NotNull InspectionProfileImpl profile, @Nullable Project project) {
-    try {
-      for (ToolsImpl toolList : profile.myTools.values()) {
-        final ToolsImpl tools = myTools.get(toolList.getShortName());
-        final ScopeToolState defaultState = toolList.getDefaultState();
-        tools.setDefaultState(copyToolSettings(defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
-        tools.removeAllScopes();
-        final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
-        if (nonDefaultToolStates != null) {
-          for (ScopeToolState state : nonDefaultToolStates) {
-            final InspectionToolWrapper toolWrapper = copyToolSettings(state.getTool());
-            final NamedScope scope = state.getScope(project);
-            if (scope != null) {
-              tools.addTool(scope, toolWrapper, state.isEnabled(), state.getLevel());
-            }
-            else {
-              tools.addTool(state.getScopeName(), toolWrapper, state.isEnabled(), state.getLevel());
-            }
-          }
-        }
-        tools.setEnabled(toolList.isEnabled());
-      }
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+  @TestOnly
+  public InspectionProfileModifiableModel getModifiableModel() {
+    return new InspectionProfileModifiableModel(this);
   }
 
   @Override
@@ -770,7 +680,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  @Override
   public void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project) {
     getTools(inspectionTool, project).enableTool(namedScope, project);
   }
@@ -787,7 +696,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  @Override
   public void disableTool(@NotNull String inspectionTool, @Nullable Project project) {
     ToolsImpl tools = getTools(inspectionTool, project);
     tools.setEnabled(false);
@@ -796,7 +704,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  @Override
   public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project) {
     getTools(key.toString(), project).setLevel(level);
   }
@@ -822,27 +729,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       if (tools.isEnabled()) return true;
     }
     return false;
-  }
-
-  //invoke when isChanged() == true
-  @Override
-  public void commit() {
-    LOG.assertTrue(mySource != null);
-    mySource.commit(this);
-    getProfileManager().updateProfile(mySource);
-    mySource = null;
-  }
-
-  private void commit(@NotNull InspectionProfileImpl model) {
-    setName(model.getName());
-    setDescription(model.getDescription());
-    setProjectLevel(model.isProjectLevel());
-    myLockedProfile = model.myLockedProfile;
-    myChangedToolNames = model.myChangedToolNames;
-    myTools = model.myTools;
-    setProfileManager(model.getProfileManager());
-
-    InspectionProfileManager.getInstance().fireProfileChanged(model);
   }
 
   @Tag
@@ -1020,7 +906,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   @NotNull
   public String toString() {
-    return mySource == null ? getName() : getName() + " (copy)";
+    return getName();
   }
 
   @Override

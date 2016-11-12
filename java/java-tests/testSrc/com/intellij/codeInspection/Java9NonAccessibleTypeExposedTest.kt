@@ -31,22 +31,28 @@ class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTes
     super.setUp()
     myFixture.enableInspections(Java9NonAccessibleTypeExposedInspection())
     addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
-    addFile("apiPkg/PublicApi.java", "package apiPkg; public class PublicApi {}", MAIN)
-    addFile("apiPkg/PackageLocal.java", "package apiPkg; class PackageLocal {}", MAIN)
-    addFile("otherPkg/PublicOther.java", "package otherPkg; public class PublicOther {}", MAIN)
+    addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
+    add("apiPkg", "PublicApi", "public class PublicApi {}")
+    add("apiPkg", "PackageLocal", "class PackageLocal {}")
+    add("otherPkg", "PublicOther", "public class PublicOther {}")
   }
 
   fun testPrimitives() {
     highlight("""package apiPkg;
 public class Highlighted {
   public int i;
-  protected int getInt() {return 1;}
+  public int getInt() {return i;}
+  public void setInt(int n) {i=n;}
+
+  protected Long l;
+  protected Long getLong() {return l;}
+  protected void setLong(Long n) {l=n;}
+
   public void run() {}
 }""")
   }
 
-  fun testImported() {
-    addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
+  fun testExported() {
     addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
 
     highlight("""package apiPkg;
@@ -168,7 +174,7 @@ public interface Highlighted {
   }
 
   fun testNotExportedPackage() {
-    addFile("implPkg/NotExported.java", "package implPkg; public class NotExported {}", MAIN)
+    add("implPkg", "NotExported", "public class NotExported {}")
     highlight("""package apiPkg;
 import implPkg.NotExported;
 public class Highlighted {
@@ -182,11 +188,11 @@ public class Highlighted {
   }
 
   fun testDoubleNested() {
-    addFile("apiPkg/PublicOuter.java", """package apiPkg; public class PublicOuter {
+    add("apiPkg", "PublicOuter", """public class PublicOuter {
   static class PackageLocal {
     public class DoubleNested {}
   }
-}""", MAIN)
+}""")
     highlight("""package apiPkg;
 import apiPkg.PublicOuter.PackageLocal;
 public class Highlighted {
@@ -197,9 +203,164 @@ public class Highlighted {
 """)
   }
 
+  fun testThrows() {
+    add("apiPkg", "PublicException", "public class PublicException extends Exception {}")
+    add("apiPkg", "PackageLocalException", "class PackageLocalException extends Exception {}")
+    add("otherPkg", "OtherException", "public class OtherException extends Exception {}")
+    add("implPkg", "NotExportedException", "public class NotExportedException extends Exception {}")
+    highlight("""package apiPkg;
+import otherPkg.*;
+import implPkg.*;
+public class Highlighted {
+  public void throwsPublic() throws PublicException {}
+  public void throwsPackageLocal() throws <warning descr="The class is not exported from the module">PackageLocalException</warning> {}
+  public void throwsOther() throws OtherException {}
+  public void throwsNotExported() throws <warning descr="The class is not exported from the module">NotExportedException</warning> {}
+}
+""")
+  }
+
+  fun testPublicAnnotation() {
+    add("apiPkg", "MyAnnotation", "public @interface MyAnnotation {}")
+    highlight("""package apiPkg;
+@MyAnnotation
+public class Highlighted {
+  @MyAnnotation public PublicApi field;
+  @MyAnnotation public Highlighted() {}
+  public Highlighted(@MyAnnotation PublicApi s) {field=s;}
+  @MyAnnotation protected void init() {}
+  protected @MyAnnotation PublicApi peek() {return field;}
+  public void set(@MyAnnotation PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testPackageLocalAnnotation() {
+    add("apiPkg", "MyAnnotation", "@interface MyAnnotation {}")
+    highlight("""package apiPkg;
+@<warning descr="The class is not exported from the module">MyAnnotation</warning>
+public class Highlighted {
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
+  public Highlighted(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> protected void init() {}
+  protected @<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi peek() {return field;}
+  public void set(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testNotExportedAnnotation() {
+    add("implPkg", "MyAnnotation", "public @interface MyAnnotation {}")
+    highlight("""package apiPkg;
+import implPkg.MyAnnotation;
+@<warning descr="The class is not exported from the module">MyAnnotation</warning>
+public class Highlighted {
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public PublicApi field;
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> public Highlighted() {}
+  public Highlighted(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+  @<warning descr="The class is not exported from the module">MyAnnotation</warning> protected void init() {}
+  protected @<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi peek() {return field;}
+  public void set(@<warning descr="The class is not exported from the module">MyAnnotation</warning> PublicApi s) {field=s;}
+}
+""")
+  }
+
+  fun testTypeParameterAndUseAnnotation() {
+    highlight("""package apiPkg;
+import java.lang.annotation.*;
+import java.util.*;
+@Highlighted.PublicAnnotation
+@<warning descr="The class is not exported from the module">Highlighted.PackageLocalAnnotation</warning>
+public class Highlighted {
+  @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE}) public @interface PublicAnnotation {}
+  @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE}) @interface PackageLocalAnnotation {}
+
+  public class C1<@PublicAnnotation T> {
+    public List<@PublicAnnotation String> text;
+    public void foo(Set<@PublicAnnotation String> s) {}
+    protected <@PublicAnnotation X> void bar(X x) {}
+    protected Set<@PublicAnnotation T> baz() {return new HashSet<@PublicAnnotation T>();}
+    public List<@PublicAnnotation String> text() {return new ArrayList<@PublicAnnotation String>();}
+  }
+  public class C2<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> T> {
+    public List<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> String> text;
+    public void foo(Set<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> String> s) {}
+    protected <@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> X> void bar(X x) {}
+    protected Set<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> T> baz() {
+      return new HashSet<@PackageLocalAnnotation T>();
+    }
+    public List<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> String> text() {
+      return new ArrayList<@PackageLocalAnnotation String>();
+    }
+  }
+  public interface I1 extends List<@PublicAnnotation Highlighted> {}
+  public interface I2 extends List<@<warning descr="The class is not exported from the module">PackageLocalAnnotation</warning> Highlighted> {}
+}
+""")
+  }
+
+  fun testGenericPublic() {
+    add("apiPkg", "MyInterface", "public interface MyInterface {}")
+    add("apiPkg", "MyClass", "public class MyClass implements MyInterface {}")
+    highlight("""package apiPkg;
+import java.util.*;
+public class Highlighted<T extends MyInterface> {
+  protected Set<T> get1() { return new HashSet<>();}
+  public Set<MyClass> get2() { return new HashSet<MyClass>();}
+  protected Set<? extends MyClass> get3() { return new HashSet<>();}
+  public <X extends Object&MyInterface> Set<X> get4() { return new HashSet<>();}
+  public Map<String, Set<MyInterface>> get5() {return new HashMap<>();}
+  public void copy1(Set<MyInterface> s) {}
+  public void copy2(Set<? super MyClass> s) {}
+
+  public static class Nested1<T extends MyClass&Iterable<MyInterface>> {
+    public Iterator<MyInterface> iterator() {return null;}
+  }
+  public static class Nested2<T extends MyInterface&AutoCloseable> {
+    public void close(){}
+  }
+  public interface Nested3<X extends Iterable<MyInterface>> {}
+  public interface Nested4<X extends Iterable<? extends MyInterface>> {}
+}
+""")
+  }
+
+  fun testGenericNotExported() {
+    add("implPkg", "MyInterface", "public interface MyInterface {}")
+    add("implPkg", "MyClass", "public class MyClass implements MyInterface {}")
+    highlight("""package apiPkg;
+import java.util.*;
+import implPkg.*;
+public class Highlighted<T extends <warning descr="The class is not exported from the module">MyInterface</warning>> {
+  protected Set<T> get1() { return new HashSet<>();}
+  public Set<<warning descr="The class is not exported from the module">MyClass</warning>> get2() { return new HashSet<MyClass>();}
+  protected Set<? extends <warning descr="The class is not exported from the module">MyClass</warning>> get3() { return new HashSet<>();}
+  public <X extends Object&<warning descr="The class is not exported from the module">MyInterface</warning>> Set<X> get4() { return new HashSet<>();}
+  public Map<String, Set<<warning descr="The class is not exported from the module">MyInterface</warning>>> get5() {return new HashMap<>();}
+  public void copy1(Set<<warning descr="The class is not exported from the module">MyInterface</warning>> s) {}
+  public void copy2(Set<? super <warning descr="The class is not exported from the module">MyClass</warning>> s) {}
+
+  public static class Nested1<T extends <warning descr="The class is not exported from the module">MyClass</warning>&
+      Iterable<<warning descr="The class is not exported from the module">MyInterface</warning>>> {
+    public Iterator<<warning descr="The class is not exported from the module">MyInterface</warning>> iterator() {return null;}
+  }
+  public static class Nested2<T extends <warning descr="The class is not exported from the module">MyInterface</warning>&AutoCloseable> {
+    public void close() {}
+  }
+  public interface Nested3<X extends Iterable<<warning descr="The class is not exported from the module">MyInterface</warning>>> {}
+  public interface Nested4<X extends Iterable<? extends <warning descr="The class is not exported from the module">MyInterface</warning>>> {}
+}
+""")
+  }
+
   private fun highlight(@Language("JAVA") @NotNull @NonNls text: String) {
     val file = addFile("apiPkg/Highlighted.java", text, MAIN)
     myFixture.configureFromExistingVirtualFile(file)
     myFixture.checkHighlighting()
+  }
+
+  private fun add(packageName: String, className: String, @Language("JAVA") @NotNull @NonNls text: String) {
+    addFile("$packageName/$className.java", "package $packageName; $text", MAIN)
   }
 }

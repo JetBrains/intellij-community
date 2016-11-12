@@ -117,7 +117,7 @@ class UpdateStrategyTest {
     assertBuild("145.595", result.newBuild)
   }
 
-  @Test fun `updates can be targeted for specific builds`() {
+  @Test fun `updates can be targeted for specific builds (different builds)`() {
     val channels = """
       <channel id="IDEA_EAP" status="eap" licensing="eap">
         <build number="145.596" version="2016.1.1 EAP" targetSince="145.595" targetUntil="145.*"/> <!-- this build is not for everyone -->
@@ -127,10 +127,41 @@ class UpdateStrategyTest {
     assertBuild("145.596", check("IU-145.595", ChannelStatus.EAP, channels).newBuild)
   }
 
-  @Test fun `updates from the same baseline are preferred`() {
-    val result = check("IU-143.2287", ChannelStatus.RELEASE, """
+  @Test fun `updates can be targeted for specific builds (same build)`() {
+    val channels = """
+      <channel id="IDEA_EAP" status="release" licensing="release">
+        <build number="163.101" version="2016.3.1" targetSince="163.0" targetUntil="163.*"><message>bug fix</message></build>
+        <build number="163.101" version="2016.3.1"><message>new release</message></build>
+      </channel>"""
+    assertEquals("new release", check("IU-145.258", ChannelStatus.RELEASE, channels).newBuild?.message)
+    assertEquals("bug fix", check("IU-163.50", ChannelStatus.RELEASE, channels).newBuild?.message)
+  }
+
+  @Test fun `updates from the same baseline are preferred (unified channels)`() {
+    val result = check("IU-143.2287", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="143.2330" version="15.0.5 EAP"/>
+        <build number="145.600" version="2016.1.2 EAP"/>
+      </channel>
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="143.2332" version="15.0.5"/>
+        <build number="145.597" version="2016.1.1"/>
+      </channel>""")
+    assertBuild("143.2332", result.newBuild)
+  }
+
+  @Test fun `updates from the same baseline are preferred (per-release channels)`() {
+    val result = check("IU-143.2287", ChannelStatus.EAP, """
+      <channel id="IDEA_143_EAP" status="eap" licensing="eap">
+        <build number="143.2330" version="15.0.5 EAP"/>
+      </channel>
+      <channel id="IDEA_143_Release" status="release" licensing="release">
+        <build number="143.2332" version="15.0.5"/>
+      </channel>
+      <channel id="IDEA_145_EAP" status="eap" licensing="eap">
+        <build number="145.600" version="2016.1.2 EAP"/>
+      </channel>
+      <channel id="IDEA_Release_145" status="release" licensing="release">
         <build number="145.597" version="2016.1.1"/>
       </channel>""")
     assertBuild("143.2332", result.newBuild)

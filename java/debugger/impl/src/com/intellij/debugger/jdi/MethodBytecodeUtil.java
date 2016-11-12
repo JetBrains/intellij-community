@@ -16,6 +16,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.Patches;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
@@ -23,7 +24,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -244,7 +244,10 @@ public class MethodBytecodeUtil {
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
             if (cls != null) {
-              cls.methodsByName(name, desc).stream().findFirst().ifPresent(methodRef::set);
+              Method method = DebuggerUtils.findMethod(cls, name, desc);
+              if (method != null) {
+                methodRef.setIfNull(method);
+              }
             }
           }
         }, false);
@@ -260,16 +263,23 @@ public class MethodBytecodeUtil {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+          if ("java/lang/AbstractMethodError".equals(owner)) {
+            return;
+          }
           ReferenceType declaringType = method.declaringType();
-          ReferenceType cls = null;
-          if (declaringType.name().equals(owner.replace("/", "."))) {
+          ReferenceType cls;
+          owner = owner.replace("/", ".");
+          if (declaringType.name().equals(owner)) {
             cls = declaringType;
           }
-          else if (!"java/lang/AbstractMethodError".equals(owner)) {
+          else {
             cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
           }
           if (cls != null) {
-            StreamEx.of(cls.methodsByName(name, desc)).findFirst().ifPresent(methodRef::set);
+            Method method = DebuggerUtils.findMethod(cls, name, desc);
+            if (method != null) {
+              methodRef.setIfNull(method);
+            }
           }
         }
       }, false);

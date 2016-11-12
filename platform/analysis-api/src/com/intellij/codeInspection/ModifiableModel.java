@@ -25,52 +25,34 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 /**
  * User: anna
  * Date: 15-Feb-2006
  */
 public interface ModifiableModel extends InspectionProfile {
-
-  InspectionProfile getParentProfile();
-
   void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
 
   void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
 
+  @Override
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey, PsiElement element);
 
+  @Override
   boolean isToolEnabled(HighlightDisplayKey key);
 
+  @Override
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
-  void commit();
-
-  boolean isChanged();
-
-  void setModified(final boolean toolsSettingsChanged);
-
-  boolean isProperSetting(@NotNull String toolId);
-
-  void resetToBase(@Nullable Project project);
-
-  void resetToEmpty(Project project);
-
+  @Override
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
+  @Override
   InspectionToolWrapper[] getInspectionTools(PsiElement element);
 
   /**
    * @see InspectionProfile#getSingleTool()
    */
   void setSingleTool(@NotNull String toolShortName);
-
-  void save() throws IOException;
-
-  boolean isProfileLocked();
-
-  void lockProfile(boolean isLocked);
 
   void disableTool(@NotNull String toolId, @NotNull PsiElement element);
 

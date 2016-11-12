@@ -1,4 +1,4 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
   <!-- Components and extensions declared in this file work ONLY in Python plugin, not in standalone PyCharm.
        Anything related to Python/Java integration must go in this file. -->
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     }
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
-    Location<PsiMethod> methodLocation = getMethodLocation(contextLocation);
-    if (methodLocation == null) return false;
-
-    final PsiMethod psiMethod = methodLocation.getPsiElement();
+    PsiMethod psiMethod = getPsiMethodForLocation(contextLocation);
+    if (psiMethod == null) return false;
     sourceElement.set(psiMethod);
 
     final PsiClass containingClass = psiMethod.getContainingClass();
@@ -77,6 +75,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     return true;
   }
 
+  @Nullable
+  protected PsiMethod getPsiMethodForLocation(Location contextLocation) {
+    Location<PsiMethod> location = getMethodLocation(contextLocation);
+    return location != null ? location.getPsiElement() : null;
+  }
+
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
@@ -86,10 +90,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    Location<PsiMethod> methodLocation = getMethodLocation(contextLocation);
-    if (methodLocation == null) return false;
-
-    final PsiMethod psiMethod = methodLocation.getPsiElement();
+    PsiMethod psiMethod = getPsiMethodForLocation(contextLocation);
+    if (psiMethod == null) return false;
 
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return false;

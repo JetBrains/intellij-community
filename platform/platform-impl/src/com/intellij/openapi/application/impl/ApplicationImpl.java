@@ -217,6 +217,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
+
+    NoSwingUnderWriteAction.watchForEvents(this);
   }
 
   /**

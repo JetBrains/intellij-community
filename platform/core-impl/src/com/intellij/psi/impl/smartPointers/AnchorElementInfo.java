@@ -127,17 +127,18 @@ class AnchorElementInfo extends SelfElementInfo {
 
   private void switchToTree() {
     PsiElement element = restoreElement();
-    if (element != null) {
-      PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-      if (anchor == null) anchor = element;
-      myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
-      setRange(anchor.getTextRange());
-      MarkerCache cache = myManager.getMarkerCache(getVirtualFile());
-      if (cache != null) {
-        cache.rangeChanged();
-      }
-      myStubElementTypeAndId = pack(-1, null);
+    SmartPointerTracker tracker = myManager.getTracker(getVirtualFile());
+    if (element != null && tracker != null) {
+      tracker.switchStubToAst(this, element);
     }
+  }
+
+  void switchToTreeRange(@NotNull PsiElement element) {
+    PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
+    if (anchor == null) anchor = element;
+    myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
+    setRange(anchor.getTextRange());
+    myStubElementTypeAndId = pack(-1, null);
   }
 
   @Override

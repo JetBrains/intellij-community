@@ -18,6 +18,7 @@ package com.intellij.codeInspection.util;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -112,8 +113,7 @@ public class OptionalUtil {
             condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
         }
       }
-      if(falseExpression instanceof PsiMethodCallExpression &&
-         MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)falseExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0)) {
+      if(isOptionalEmptyCall(falseExpression)) {
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
         if (trueExpression instanceof PsiMethodCallExpression &&
             MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)trueExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "of", 1)) {
@@ -127,12 +127,34 @@ public class OptionalUtil {
       }
       trueExpression =
         targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
-      qualifier += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+      String typeArg = getMapTypeArgument(trueExpression, targetType);
+      qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseExpression)) {
       return qualifier + ".orElseGet(() -> " + falseExpression.getText() + ")";
     } else {
       return qualifier + ".orElse(" + falseExpression.getText() + ")";
     }
+  }
+
+  @Contract("null -> false")
+  public static boolean isOptionalEmptyCall(PsiExpression expression) {
+    return expression instanceof PsiMethodCallExpression &&
+           MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0);
+  }
+
+  @NotNull
+  public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
+    if (!(type instanceof PsiClassType)) return "";
+    PsiExpression copy =
+      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
+    PsiType exprType = copy.getType();
+    if (exprType != null &&
+        !exprType.equals(PsiType.NULL) &&
+        !LambdaUtil.notInferredType(exprType) &&
+        TypeConversionUtil.isAssignable(type, exprType)) {
+      return "";
+    }
+    return "<" + type.getCanonicalText() + ">";
   }
 }

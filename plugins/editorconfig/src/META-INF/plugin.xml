@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
   <vendor url="http://editorconfig.org">Kevin Bell, JetBrains</vendor>

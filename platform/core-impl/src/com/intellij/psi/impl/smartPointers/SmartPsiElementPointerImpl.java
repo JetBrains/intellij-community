@@ -46,7 +46,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private final SmartPointerElementInfo myElementInfo;
   private final Class<? extends PsiElement> myElementClass;
   private byte myReferenceCount = 1;
-  @Nullable SmartPointerManagerImpl.PointerReference pointerReference;
+  @Nullable SmartPointerTracker.PointerReference pointerReference;
 
   SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
     this(element, createElementInfo(project, element, containingFile, forInjected), element.getClass());

@@ -28,10 +28,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -61,7 +59,27 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   private final Project myProject;
   private final List<FavoritesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final FavoritesViewSettings myViewSettings = new FavoritesViewSettings();
-  private final Map<String, FavoritesListProvider> myProviders = new HashMap<>();
+  private Map<String, FavoritesListProvider> myProviders;
+
+  @NotNull
+  private Map<String, FavoritesListProvider> getProviders() {
+    if (myProviders != null) return myProviders;
+    myProviders = new HashMap<>();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final FavoritesListProvider[] providers = Extensions.getExtensions(EP_NAME, myProject);
+      for (FavoritesListProvider provider : providers) {
+        myProviders.put(provider.getListName(myProject), provider);
+      }
+      final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
+
+      PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, myProject);
+      if (myName2FavoritesRoots.isEmpty()) {
+        myDescriptions.put(myProject.getName(), "auto-added");
+        createNewList(myProject.getName());
+      }
+    }
+    return myProviders;
+  }
 
   private void rootsChanged() {
     for (FavoritesListener listener : myListeners) {
@@ -93,7 +111,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         @Override
         public boolean canClose(String inputString) {
           inputString = inputString.trim();
-          if (myName2FavoritesRoots.keySet().contains(inputString) || myProviders.keySet().contains(inputString)) {
+          if (myName2FavoritesRoots.keySet().contains(inputString) || getProviders().keySet().contains(inputString)) {
             Messages.showErrorDialog(project, IdeBundle.message("error.favorites.list.already.exists", inputString.trim()),
                                      IdeBundle.message("title.unable.to.add.favorites.list"));
             return false;
@@ -137,7 +155,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     for (String listName : myFavoritesRootsOrder) {
       result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
     }
-    ArrayList<FavoritesListProvider> providers = new ArrayList<>(myProviders.values());
+    ArrayList<FavoritesListProvider> providers = new ArrayList<>(getProviders().values());
     Collections.sort(providers);
     for (FavoritesListProvider provider : providers) {
       result.add(provider.createFavoriteListNode(myProject));
@@ -192,7 +210,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized Comparator<FavoritesTreeNodeDescriptor> getCustomComparator(@NotNull final String name) {
-    return myProviders.get(name);
+    return getProviders().get(name);
   }
 
   private Pair<AbstractUrl, String> createPairForNode(AbstractTreeNode node) {
@@ -417,24 +435,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @Override
   public void projectOpened() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          final FavoritesListProvider[] providers = Extensions.getExtensions(EP_NAME, myProject);
-          for (FavoritesListProvider provider : providers) {
-            myProviders.put(provider.getListName(myProject), provider);
-          }
-          final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
-
-          PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, myProject);
-          if (myName2FavoritesRoots.isEmpty()) {
-            myDescriptions.put(myProject.getName(), "auto-added");
-            createNewList(myProject.getName());
-          }
-        }
-      });
-    }
   }
 
   @Override
@@ -449,7 +449,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @Nullable
   public FavoritesListProvider getListProvider(@Nullable String name) {
-    return myProviders.get(name);
+    return getProviders().get(name);
   }
 
   @Override

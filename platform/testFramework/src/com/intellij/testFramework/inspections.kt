@@ -35,7 +35,7 @@ fun configureInspections(tools: Array<InspectionProfileEntry>,
                          parentDisposable: Disposable): InspectionProfileImpl {
   runInInitMode {
     val profile = InspectionProfileImpl.createSimple(UUID.randomUUID().toString(), project, tools.map { InspectionToolRegistrar.wrapTool(it) })
-    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+    val profileManager = ProjectInspectionProfileManager.getInstance(project)
     // we don't restore old project profile because in tests it must be in any case null - app default profile
     Disposer.register(parentDisposable, Disposable {
       profileManager.deleteProfile(profile)
@@ -97,7 +97,7 @@ fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools
 }
 
 fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*, *>, disposable: Disposable) {
-  val profile = ProjectInspectionProfileManager.getInstanceImpl(project).currentProfile
+  val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
   val shortName = toolWrapper.shortName
   val key = HighlightDisplayKey.find(shortName)
   if (key == null) {

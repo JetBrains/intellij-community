@@ -66,7 +66,6 @@ import org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvide
 import org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEnhancer;
 import org.jetbrains.plugins.groovy.dgm.DGMImplicitPropertyUsageProvider;
 import org.jetbrains.plugins.groovy.dgm.DGMMemberContributor;
-import org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
@@ -359,7 +358,6 @@ public class GroovyCoreEnvironment {
       project.registerService(GroovyPsiManager.class, GroovyPsiManager.class);
       project.registerService(GroovyCodeStyleManager.class, CoreGroovyCodeStyleManager.class);
       project.registerService(GroovyCodeStyleSettingsFacade.class, CoreGroovyCodeStyleSettingsFacade.class);
-      project.registerService(GroovyExtensionProvider.class, GroovyExtensionProvider.class);
       projectEnvironment.addProjectExtension(PsiShortNamesCache.EP_NAME, new GroovyShortNamesCache(project));
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
       TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);

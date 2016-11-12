@@ -1,4 +1,4 @@
-// "Replace anonymous class with constructor accepting lambda" "true"
+// "Replace with constructor accepting lambda" "true"
 public class Main {
   public void testThread() {
       // Comment outside

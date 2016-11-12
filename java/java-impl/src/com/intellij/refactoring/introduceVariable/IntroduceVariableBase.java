@@ -750,29 +750,33 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {
-    boolean skipForStatement = true;
-    final PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class);
-    if (forStatement != null) {
-      Set<PsiVariable> vars = new HashSet<>();
-      SyntaxTraverser.psiTraverser().withRoot(expr)
-        .filter(element -> element instanceof PsiReferenceExpression)
-        .forEach(element -> {
-          final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
-          if (resolve instanceof PsiVariable) {
-            vars.add((PsiVariable)resolve);
-          }
-        });
-      skipForStatement = vars.stream().noneMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true));
-    }
+    Set<PsiVariable> vars = new HashSet<>();
+    SyntaxTraverser.psiTraverser().withRoot(expr)
+      .filter(element -> element instanceof PsiReferenceExpression)
+      .forEach(element -> {
+        final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+        if (resolve instanceof PsiVariable) {
+          vars.add((PsiVariable)resolve);
+        }
+      });
 
     PsiElement containerParent = tempContainer;
     PsiElement lastScope = tempContainer;
     while (true) {
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
-      // allow to find occurrences outside lambda as we allow this for loops, ifs, etc
-      // if (containerParent instanceof PsiLambdaExpression) break;
-      if (!skipForStatement && containerParent instanceof PsiForStatement) break;
+      if (containerParent instanceof PsiLambdaExpression) {
+        PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
+        if (Arrays.stream(parameters).anyMatch(parameter -> vars.contains(parameter))) {
+          break;
+        }
+      }
+      if (containerParent instanceof PsiForStatement) {
+        PsiForStatement forStatement = (PsiForStatement)containerParent;
+        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
+          break;
+        }
+      }
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
         lastScope = containerParent;

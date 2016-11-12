@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.VirtualFileGist;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -59,7 +58,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
     HashMap<Bytes, HEquations> map = new HashMap<>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray()), file.getPresentableUrl());
+      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
       for (Map.Entry<Key, List<Equation>> entry: allEquations.entrySet()) {
         Key methodKey = entry.getKey();
         map.put(compressKey(md, methodKey), convertEquations(md, methodKey, entry.getValue()));

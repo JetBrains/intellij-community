@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -34,6 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import com.sun.tools.jdi.JNITypeParser;
 import com.sun.tools.jdi.TargetVM;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +54,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   // cached data
   private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<>();
+  private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
+
   @NotNull
   private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
@@ -97,12 +101,41 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine;
   }
 
-  public List<ReferenceType> classesByName(String s) {
-    if (myAllClassesByName == null) {
-      myAllClassesByName = new MultiMap<>();
-      allClasses().forEach(t -> myAllClassesByName.putValue(t.name(), t));
+  static final class JNITypeParserReflect {
+    static final Method typeNameToSignatureMethod;
+
+    static {
+      typeNameToSignatureMethod = ReflectionUtil.getDeclaredMethod(JNITypeParser.class, "typeNameToSignature", String.class);
+      if (typeNameToSignatureMethod == null) {
+        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
+      }
     }
-    return (List<ReferenceType>)myAllClassesByName.get(s);
+
+    @Nullable
+    static String typeNameToSignature(@NotNull String name) {
+      if (typeNameToSignatureMethod != null) {
+        try {
+          return (String)typeNameToSignatureMethod.invoke(null, name);
+        }
+        catch (Exception ignored) {
+        }
+      }
+      return null;
+    }
+  }
+
+  public List<ReferenceType> classesByName(String s) {
+    String signature = JNITypeParserReflect.typeNameToSignature(s);
+    if (signature != null) {
+      if (myAllClassesByName == null) {
+        myAllClassesByName = new MultiMap<>();
+        allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
+      }
+      return (List<ReferenceType>)myAllClassesByName.get(signature);
+    }
+    else {
+      return myVirtualMachine.classesByName(s);
+    }
   }
 
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
@@ -326,6 +359,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
+  }
+
+  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+    throws EvaluateException {
+    StringReference reference = myStringLiteralCache.get(s);
+    if (reference != null && !reference.isCollected()) {
+      return reference;
+    }
+    reference = generator.get();
+    myStringLiteralCache.put(s, reference);
+    return reference;
   }
 
   public Process process() {

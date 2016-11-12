@@ -31,9 +31,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -453,6 +451,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, globalContext) :
                              new RefUnreachableFilter(this, globalContext);
     final boolean[] requestAdded = {false};
+    LOG.assertTrue(myProcessedSuspicious != null, "phase: " + myPhase);
 
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
@@ -721,31 +720,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
       }
     }
-  }
-
-  @Override
-  public void initialize(@NotNull GlobalInspectionContext context) {
-    super.initialize(context);
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
-      @Override
-      public void extensionAdded(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        boolean alreadyAdded = ContainerUtil.find(myExtensions, point1 -> point1.getClass().equals(extension.getClass())) != null;
-        if (!alreadyAdded) {
-          try {
-            myExtensions.add(extension.clone());
-          }
-          catch (CloneNotSupportedException e) {
-            LOG.error(e);
-          }
-        }
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ContainerUtil.retainAll(myExtensions, point12 -> !point12.getClass().equals(extension.getClass()));
-      }
-    }, getEntryPointsManager(context));
   }
 
   @TestOnly

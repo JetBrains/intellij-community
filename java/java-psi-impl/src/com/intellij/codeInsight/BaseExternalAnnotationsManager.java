@@ -61,7 +61,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected final PsiManager myPsiManager;
 
   private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<AnnotationData, AnnotationData>();
+  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<AnnotationData, AnnotationData>(); // guarded by myAnnotationDataCache
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
@@ -105,7 +105,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return ContainerUtil.find(map, new Condition<AnnotationData>() {
       @Override
       public boolean value(AnnotationData data) {
-        return data.myFqName.equals(annotationFQN);
+        return data.annotationClassFqName.equals(annotationFQN);
       }
     });
   }
@@ -243,24 +243,24 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       }
     }
 
-    Set<PsiFile> possibleAnnotations = new THashSet<PsiFile>();
+    Set<PsiFile> possibleAnnotationXmls = new THashSet<PsiFile>();
     String relativePath = ((PsiJavaFile)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
       if (ext != null && ext.isValid()) {
         PsiFile psiFile = myPsiManager.findFile(ext);
         if (psiFile != null) {
-          possibleAnnotations.add(psiFile);
+          possibleAnnotationXmls.add(psiFile);
         }
       }
     }
 
-    if (possibleAnnotations.isEmpty()) {
+    if (possibleAnnotationXmls.isEmpty()) {
       myExternalAnnotationsCache.put(virtualFile, NULL_LIST);
       return null;
     }
 
-    List<PsiFile> result = new SmartList<PsiFile>(possibleAnnotations);
+    List<PsiFile> result = new SmartList<PsiFile>(possibleAnnotationXmls);
     // writable go first
     Collections.sort(result, new Comparator<PsiFile>() {
       @Override
@@ -346,22 +346,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   private static class AnnotationData {
-    private final String myFqName;
-    private final String myParameters;
+    private final String annotationClassFqName;
+    private final String annotationParameters;
 
     private volatile PsiAnnotation myAnnotation;
 
     private AnnotationData(@NotNull String fqn, @NotNull String parameters) {
-      myFqName = fqn;
-      myParameters = parameters;
+      annotationClassFqName = fqn;
+      annotationParameters = parameters;
     }
 
     @NotNull
     private PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
       PsiAnnotation a = myAnnotation;
       if (a == null) {
-        String text = "@" + myFqName + (myParameters.isEmpty() ? "" : "(" + myParameters + ")");
-        myAnnotation = a = markAsExternalAnnotation(context.createAnnotationFromText(text));
+        String text = "@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "(" + annotationParameters + ")");
+        myAnnotation = a = context.createAnnotationFromText(text);
       }
       return a;
     }
@@ -373,19 +373,19 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
       AnnotationData data = (AnnotationData)o;
 
-      return myFqName.equals(data.myFqName) && myParameters.equals(data.myParameters);
+      return annotationClassFqName.equals(data.annotationClassFqName) && annotationParameters.equals(data.annotationParameters);
     }
 
     @Override
     public int hashCode() {
-      int result = myFqName.hashCode();
-      result = 31 * result + myParameters.hashCode();
+      int result = annotationClassFqName.hashCode();
+      result = 31 * result + annotationParameters.hashCode();
       return result;
     }
 
     @Override
     public String toString() {
-      return myFqName + "(" + myParameters + ")";
+      return annotationClassFqName + "(" + annotationParameters + ")";
     }
   }
 
@@ -457,7 +457,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       else if ("annotation".equals(qName) && myExternalName != null && myAnnotationFqn != null) {
         String argumentsString = myArguments.length() == 0 ? "" : intern(myArguments.toString());
         for (AnnotationData existingData : myData.get(myExternalName)) {
-          if (existingData.myFqName.equals(myAnnotationFqn)) {
+          if (existingData.annotationClassFqName.equals(myAnnotationFqn)) {
             duplicateError(myFile, myExternalName, "Duplicate annotation '" + myAnnotationFqn + "'");
           }
         }

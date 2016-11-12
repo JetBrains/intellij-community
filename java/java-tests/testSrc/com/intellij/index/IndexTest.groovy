@@ -31,7 +31,12 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -555,29 +560,46 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     })
   }
 
-  void testIndexedFilesListener() throws Throwable {
-    def listener = new IndexedFilesListener() {
+  class RecordingVfsListener extends IndexedFilesListener {
+    def vfsEventMerger = new VfsEventsMerger()
 
-      @Override
-      protected void iterateIndexableFiles(VirtualFile file, ContentIterator iterator) {
-        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-          @Override
-          boolean visitFile(@NotNull VirtualFile visitedFile) {
-            iterator.processFile(visitedFile);
-            return true;
-          }
-        });
-      }
-
-      protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
-        recordFileScheduledForInvalidation(((VirtualFileWithId)file).id, file, contentChange);
-      }
-
-      @Override
-      protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
-        recordFileScheduledForIndexing(((VirtualFileWithId)file).id, file, contentChange)
-      }
+    @Override
+    protected void iterateIndexableFiles(VirtualFile file, ContentIterator iterator) {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        boolean visitFile(@NotNull VirtualFile visitedFile) {
+          iterator.processFile(visitedFile);
+          return true;
+        }
+      });
     }
+
+    protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange);
+    }
+
+    @Override
+    protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
+      vfsEventMerger.recordFileEvent(((VirtualFileWithId)file).id, file, contentChange)
+    }
+
+    String indexingOperation(VirtualFile file) {
+      Ref<String> operation = new Ref<>()
+      vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
+        @Override
+        boolean process(VfsEventsMerger.ChangeInfo info) {
+          operation.set(info.toString());
+          return true
+        }
+      })
+
+      StringUtil.replace(operation.get(), file.getPath(), file.getName());
+    }
+  }
+
+  void testIndexedFilesListener() throws Throwable {
+    def listener = new RecordingVfsListener()
+
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
       VirtualFileManager.VFS_CHANGES,
       listener
@@ -587,37 +609,24 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
 
     assertEquals("file: $fileName\n" +
-                 "operation: ADD UPDATE-REMOVE UPDATE", indexingOperation(listener, testFile))
+                 "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
 
     FileContentUtil.reparseFiles(testFile)
 
     assertEquals("file: $fileName\n" +
-                 "operation: REMOVE ADD", indexingOperation(listener, testFile))
+                 "operation: REMOVE ADD", listener.indexingOperation(testFile))
 
     VfsUtil.saveText(testFile, "foo");
     VfsUtil.saveText(testFile, "bar");
 
     assertEquals("file: $fileName\n" +
-                 "operation: UPDATE-REMOVE UPDATE", indexingOperation(listener, testFile));
+                 "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile));
 
     VfsUtil.saveText(testFile, "baz")
     testFile.delete(null)
 
     assertEquals("file: $fileName\n" +
-                 "operation: REMOVE", indexingOperation(listener, testFile));
-  }
-
-  private static String indexingOperation(IndexedFilesListener listener, VirtualFile file) {
-    Ref<String> operation = new Ref<>()
-    listener.iterateChanges(new Processor<IndexedFilesListener.ChangeInfo>() {
-      @Override
-      boolean process(IndexedFilesListener.ChangeInfo info) {
-        operation.set(info.toString());
-        return true
-      }
-    })
-
-    StringUtil.replace(operation.get(), file.getPath(), file.getName());
+                 "operation: REMOVE", listener.indexingOperation(testFile));
   }
 
   void "test files inside copied directory are indexed"() {

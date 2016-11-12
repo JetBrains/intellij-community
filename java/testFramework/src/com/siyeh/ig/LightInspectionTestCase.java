@@ -52,7 +52,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
 
       final Project project = myFixture.getProject();
       final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
-      final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstanceImpl(project).getCurrentProfile();
+      final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
       final HighlightDisplayLevel errorLevel = currentProfile.getErrorLevel(displayKey, null);
       if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW) {
         currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);

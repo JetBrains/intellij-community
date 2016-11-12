@@ -316,6 +316,50 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schemaText, inputText);
   }
 
+  public void testPatternPropertiesHighlighting() throws Exception {
+    final String schema = "{\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"^A\" : {\n" +
+                          "      \"type\": \"number\"\n" +
+                          "    },\n" +
+                          "    \"B\": {\n" +
+                          "      \"type\": \"boolean\"\n" +
+                          "    },\n" +
+                          "    \"C\": {\n" +
+                          "      \"enum\": [\"test\", \"em\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"Abezjana\": 2,\n" +
+                     "  \"Auto\": <warning descr=\"Type is not allowed\">\"no\"</warning>,\n" +
+                     "  \"ABe\": <warning descr=\"Type is not allowed\">22</warning>,\n" +
+                     "  \"Boloto\": <warning descr=\"Type is not allowed\">2</warning>,\n" +
+                     "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
+                     "}");
+  }
+
+  public void testPatternPropertiesFromIssue() throws Exception {
+    final String schema = "{\n" +
+                          "  \"type\": \"object\",\n" +
+                          "  \"additionalProperties\": false,\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"p[0-9]\": {\n" +
+                          "      \"type\": \"string\"\n" +
+                          "    },\n" +
+                          "    \"a[0-9]\": {\n" +
+                          "      \"enum\": [\"auto!\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"p1\": <warning descr=\"Type is not allowed\">1</warning>,\n" +
+                     "  \"p2\": \"3\",\n" +
+                     "  \"a2\": \"auto!\",\n" +
+                     "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
+                     "}");
+  }
+
   static String schema(final String s) {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
   }

@@ -440,8 +440,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
             new DaemonCodeAnalyzer.DaemonListenerAdapter() {
               @Override
               public void daemonCancelEventOccurred(@NotNull String reason) {
-                stopDaemonReason.compareAndSet(null, new RuntimeException("Some bastard's restarted daemon: " + reason + "\nStorage write log: "+
-                                                                          StorageUtil.DEBUG_LOG));
+                RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
+                                                          "\nStorage write log: ----------\n" +
+                                                          StorageUtil.DEBUG_LOG +"\n--------------");
+                stopDaemonReason.compareAndSet(null, e);
               }
             });
     try {

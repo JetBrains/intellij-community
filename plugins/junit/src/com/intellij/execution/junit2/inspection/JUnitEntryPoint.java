@@ -104,6 +104,7 @@ public class JUnitEntryPoint extends EntryPoint {
   public String[] getIgnoreAnnotations() {
     return new String[]{"org.junit.Rule",
                         "org.junit.ClassRule",
-                        "org.junit.experimental.theories.DataPoint"};
+                        "org.junit.experimental.theories.DataPoint",
+                        "org.junit.experimental.theories.DataPoints"};
   }
 }

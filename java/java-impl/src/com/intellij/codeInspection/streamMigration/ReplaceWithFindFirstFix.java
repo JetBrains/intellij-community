@@ -20,6 +20,7 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
-      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, null);
+      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, PsiTypesUtil.getMethodReturnType(returnStatement));
       restoreComments(loopStatement, body);
       boolean sibling = nextReturnStatement.getParent() == loopStatement.getParent();
       PsiElement replacement = loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));

@@ -180,7 +180,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     if (fileSystem == TEMP_FILE_SYSTEM) {
       // for tests, recreate always
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
-      return new IdentityVirtualFilePointer(found, url);
+      return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
     }
 
     boolean isJar = fileSystem == JAR_FILE_SYSTEM;
@@ -188,7 +188,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
       // if file is null, this pointer will never be alive
-      return getOrCreateIdentity(url, found);
+      return getOrCreateIdentity(url, found, parentDisposable, listener);
     }
 
     if (file == null) {
@@ -209,16 +209,34 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
     // else url has come from VirtualFile.getPath() and is good enough
-
-    VirtualFilePointerImpl pointer = getOrCreate(parentDisposable, listener, path, Pair.create(file, url));
+    VirtualFilePointerImpl pointer = getOrCreate(listener, path, Pair.create(file, url));
     DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     return pointer;
   }
 
   private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>();
   @NotNull
-  private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url, @Nullable VirtualFile found) {
-    return myUrlToIdentity.computeIfAbsent(url, __ -> new IdentityVirtualFilePointer(found, url));
+  private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
+                                                         @Nullable VirtualFile found,
+                                                         @NotNull Disposable parentDisposable,
+                                                         VirtualFilePointerListener listener) {
+    IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
+    if (pointer == null) {
+      pointer = new IdentityVirtualFilePointer(found, url,listener){
+        @Override
+        public void dispose() {
+          synchronized (VirtualFilePointerManagerImpl.this) {
+            super.dispose();
+            myUrlToIdentity.remove(url);
+          }
+        }
+      };
+      myUrlToIdentity.put(url, pointer);
+
+      DelegatingDisposable.registerDisposable(parentDisposable, pointer);
+    }
+    pointer.incrementUsageCount(1);
+    return pointer;
   }
 
   @NotNull
@@ -236,8 +254,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  private VirtualFilePointerImpl getOrCreate(@NotNull Disposable parentDisposable,
-                                             @Nullable VirtualFilePointerListener listener,
+  private VirtualFilePointerImpl getOrCreate(@Nullable VirtualFilePointerListener listener,
                                              @NotNull String path,
                                              @NotNull Pair<VirtualFile, String> fileAndUrl) {
     FilePointerPartNode root = myPointers.get(listener);
@@ -254,10 +271,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     VirtualFilePointerImpl pointer = node.getAnyPointer();
     if (pointer == null) {
-      pointer = new VirtualFilePointerImpl(listener, parentDisposable, fileAndUrl);
+      pointer = new VirtualFilePointerImpl(listener);
       node.associate(pointer, fileAndUrl);
     }
-    pointer.myNode.incrementUsageCount(1);
+    pointer.incrementUsageCount(1);
 
     root.checkConsistency();
     return pointer;
@@ -546,7 +563,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private static class DelegatingDisposable implements Disposable {
     private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
-    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>();
+    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(); // guarded by this
     private final Disposable myParent;
 
     private DelegatingDisposable(@NotNull Disposable parent) {
@@ -573,7 +590,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       ourInstances.remove(myParent);
       synchronized (this) {
         myCounts.forEachEntry((pointer, disposeCount) -> {
-          int after = pointer.myNode.incrementUsageCount(-disposeCount + 1);
+          int after = pointer.incrementUsageCount(-disposeCount + 1);
           LOG.assertTrue(after > 0, after);
           pointer.dispose();
           return true;
@@ -590,8 +607,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     return number;
   }
+
   @TestOnly
   int numberOfListeners() {
     return myPointers.keySet().size();
+  }
+
+  @TestOnly
+  int numberOfCachedUrlToIdentity() {
+    return myUrlToIdentity.size();
   }
 }

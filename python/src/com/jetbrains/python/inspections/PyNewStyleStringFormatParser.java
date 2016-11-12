@@ -244,7 +244,6 @@ public class PyNewStyleStringFormatParser {
     private final List<Field> myNestedFields;
     private final int myRightBraceOffset;
     private final int myEndOffset;
-    private final Integer myAutoPosition;
 
 
     private final int myDepth;
@@ -273,10 +272,9 @@ public class PyNewStyleStringFormatParser {
       setEndIndex(myEndOffset);
       final String name = getFirstName();
       if (name.isEmpty()) {
-        myAutoPosition = autoPosition;
+        setAutoPosition(autoPosition);
       }
       else {
-        myAutoPosition = null;
         try {
           setPosition(Integer.parseInt(name));
         }
@@ -398,17 +396,6 @@ public class PyNewStyleStringFormatParser {
       return Collections.unmodifiableList(result);
     }
 
-    /**
-     * Automatic index of the field if neither mapping key nor explicit index was given, {@code null} otherwise.
-     * <p/>
-     * Basically, it's the number of automatically numbered fields preceding the current one.
-     * Note that this is somewhat unreliable because it's an error to use fields with both explicit
-     * and implicit indexing.
-     */
-    @Nullable
-    public Integer getAutoPosition() {
-      return myAutoPosition;
-    }
     /**
      * The level of how deep this field is nested in the string literal. Level of 0 means a top-level field, level of 1 means a field
      * that is in the format specification of a top-level field, etc.

@@ -41,6 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +107,8 @@ public class CompletionLookupArranger extends LookupArranger {
   @Override
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
                                                                                boolean hideSingleValued) {
-    final LinkedHashMap<LookupElement, List<Pair<String, Object>>> map = ContainerUtil.newLinkedHashMap();
+    //noinspection unchecked
+    final Map<LookupElement, List<Pair<String, Object>>> map = new com.intellij.util.containers.hash.LinkedHashMap(EqualityPolicy.IDENTITY);
     final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
     int sorterNumber = 0;
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {

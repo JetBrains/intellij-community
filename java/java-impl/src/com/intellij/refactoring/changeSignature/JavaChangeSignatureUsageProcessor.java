@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -705,8 +705,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+    final PsiMethod delegate = generateDelegatePrototype(changeInfo);
+    PsiClass targetClass = changeInfo.getMethod().getContainingClass();
+    LOG.assertTrue(targetClass != null);
+    targetClass.addBefore(delegate, changeInfo.getMethod());
+  }
+
+  public static PsiMethod generateDelegatePrototype(JavaChangeInfo changeInfo) {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
-    final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
+    PsiClass targetClass = changeInfo.getMethod().getContainingClass();
     LOG.assertTrue(targetClass != null);
     if (targetClass.isInterface() && delegate.getBody() == null) {
       delegate.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
@@ -715,7 +722,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     ChangeSignatureProcessor.makeEmptyBody(factory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, changeInfo.getNewName());
     addDelegateArguments(changeInfo, factory, callExpression);
-    targetClass.addBefore(delegate, changeInfo.getMethod());
+    return delegate;
   }
 
 

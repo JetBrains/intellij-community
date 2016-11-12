@@ -57,8 +57,15 @@ public class PersistentUtil {
     return mapFile;
   }
 
-  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
-    IOUtil.deleteAllFilesStartingWith(getStorageFile(storageKind, logId, version));
+  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId) {
+    File subdir = new File(LOG_CACHE, storageKind);
+    String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
+    IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId));
+
+    File[] files = subdir.listFiles();
+    if (files != null && files.length == 0) {
+      subdir.delete();
+    }
   }
 
   @NotNull
@@ -74,15 +81,18 @@ public class PersistentUtil {
   }
 
   @NotNull
-  public static <V> PersistentHashMap<Integer, V> createPersistentHashMap(@NotNull DataExternalizer<V> externalizer,
-                                                                          @NotNull String storageKind,
-                                                                          @NotNull String logId,
-                                                                          int version) throws IOException {
-    File storageFile = getStorageFile(storageKind, logId, version);
-
-    return IOUtil.openCleanOrResetBroken(() ->
-                                           new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), externalizer, Page.PAGE_SIZE),
-                                         storageFile);
+  public static File getStorageFile(@NotNull String subdirName,
+                                    @NotNull String kind,
+                                    @NotNull String id,
+                                    int version,
+                                    boolean cleanup) {
+    File subdir = new File(LOG_CACHE, subdirName);
+    String safeLogId = PathUtilRt.suggestFileName(id, true, true);
+    File file = new File(subdir, safeLogId + "." + kind + "." + version);
+    if (cleanup && !file.exists()) {
+      IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId + "." + kind));
+    }
+    return file;
   }
 
   @NotNull

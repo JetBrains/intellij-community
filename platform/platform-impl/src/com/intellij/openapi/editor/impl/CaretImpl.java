@@ -840,6 +840,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public Caret clone(boolean above) {
     assertIsDispatchThread();
     int lineShift = above ? -1 : 1;
+    LogicalPosition oldPosition = getLogicalPosition();
+    int newLine = oldPosition.line + lineShift;
+    if (newLine < 0 || newLine >= myEditor.getDocument().getLineCount()) {
+      return null;
+    }
     final CaretImpl clone = cloneWithoutSelection();
     final int newSelectionStartOffset;
     final int newSelectionEndOffset;
@@ -874,12 +879,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       hasNewSelection = false;
       newSelectionStartColumn = -1;
       newSelectionEndColumn = -1;
-    }
-    LogicalPosition oldPosition = getLogicalPosition();
-    int newLine = oldPosition.line + lineShift;
-    if (newLine < 0 || newLine >= myEditor.getDocument().getLineCount()) {
-      Disposer.dispose(clone);
-      return null;
     }
     clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false);
     clone.myLastColumnNumber = myLastColumnNumber;

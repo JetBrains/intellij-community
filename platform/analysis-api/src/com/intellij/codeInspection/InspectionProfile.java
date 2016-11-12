@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +34,6 @@ import java.util.List;
  * Date: Dec 7, 2004
  */
 public interface InspectionProfile extends Comparable {
-  @Transient
-  boolean isProjectLevel();
-
-  void setProjectLevel(boolean isProjectLevel);
-
   void setName(@NotNull String name);
 
   @NotNull
@@ -65,8 +59,6 @@ public interface InspectionProfile extends Comparable {
   <T extends InspectionProfileEntry>
   T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
 
-  void modifyProfile(@NotNull Consumer<ModifiableModel> modelConsumer);
-
   /**
    * Allows a plugin to modify the settings of the inspection tool with the specified ID programmatically, without going through
    * the settings dialog.
@@ -87,12 +79,6 @@ public interface InspectionProfile extends Comparable {
   InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element);
 
   void cleanup(@NotNull Project project);
-
-  /**
-   * @see #modifyProfile(com.intellij.util.Consumer)
-   */
-  @NotNull
-  ModifiableModel getModifiableModel();
 
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element);
 

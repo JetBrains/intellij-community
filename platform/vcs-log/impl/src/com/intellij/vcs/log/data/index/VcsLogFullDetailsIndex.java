@@ -18,10 +18,13 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -33,34 +36,32 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
+import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
+
 public class VcsLogFullDetailsIndex<T> implements Disposable {
-  @NotNull protected static final String INDEX = "index-";
-  @NotNull protected static final String INDEX_INPUTS = "index-inputs-";
+  protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull private final ID<Integer, T> myID;
   @NotNull private final String myLogId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
+  @NotNull private final FatalErrorHandler myFatalErrorHandler;
 
   public VcsLogFullDetailsIndex(@NotNull String logId,
                                 @NotNull String name,
                                 final int version,
                                 @NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
+                                @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
     myID = ID.create(name);
     myName = name;
     myLogId = logId;
     myIndexer = indexer;
+    myFatalErrorHandler = fatalErrorHandler;
 
-    MyMapReduceIndex result = IOUtil.openCleanOrResetBroken(() -> new MyMapReduceIndex(myIndexer, externalizer, version),
-                                                            () -> {
-                                                              IOUtil.deleteAllFilesStartingWith(getStorageFile(version));
-                                                              IOUtil.deleteAllFilesStartingWith(getInputsStorageFile(version));
-                                                            });
-    if (result == null) throw new IOException("Can not create " + myName + " index for " + myLogId);
-    myMapReduceIndex = result;
+    myMapReduceIndex = new MyMapReduceIndex(myIndexer, externalizer, version);
 
     Disposer.register(disposableParent, this);
   }
@@ -116,42 +117,14 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     myMapReduceIndex.flush();
   }
 
-  public boolean isIndexed(int commit) throws IOException {
-    return myMapReduceIndex.isIndexed(commit);
-  }
-
   @Override
   public void dispose() {
     myMapReduceIndex.dispose();
   }
 
-  protected void onNotIndexableCommit(int commit) throws StorageException {
-  }
-
-  public void markCorrupted() {
-    myMapReduceIndex.markCorrupted();
-  }
-
   @NotNull
-  private File getStorageFile(int version) {
-    return getStorageFile(INDEX + myName, myLogId, version);
-  }
-
-  @NotNull
-  private File getInputsStorageFile(int version) {
-    return PersistentUtil.getStorageFile(INDEX_INPUTS + myName, myLogId, version);
-  }
-
-  @NotNull
-  public static File getStorageFile(@NotNull String kind, @NotNull String id, int version) {
-    File subdir = new File(PersistentUtil.LOG_CACHE, kind);
-    String safeLogId = PathUtilRt.suggestFileName(id, true, true);
-    return new File(subdir, safeLogId + "." + version);
-  }
-
-  @Nullable
-  protected Collection<Integer> getKeysForCommit(int commit) throws IOException {
-    return myMapReduceIndex.getInputsIndex().get(commit);
+  public static File getStorageFile(@NotNull String kind, @NotNull String id) {
+    return PersistentUtil.getStorageFile(INDEX, kind, id, getVersion(), false);
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
@@ -160,38 +133,19 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                             @NotNull DataExternalizer<T> externalizer,
                             int version) throws IOException {
       super(new MyIndexExtension(indexer, externalizer, version),
-            new MapIndexStorage<>(getStorageFile(version),
+            new MapIndexStorage<>(getStorageFile(myName, myLogId),
                                   EnumeratorIntegerDescriptor.INSTANCE,
                                   externalizer, 5000));
     }
 
-    @NotNull
-    public PersistentHashMap<Integer, Collection<Integer>> getInputsIndex() {
-      return myInputsIndex;
-    }
-
-    public boolean isIndexed(int commitId) throws IOException {
-      return myInputsIndex.containsMapping(commitId);
-    }
-
     @Override
     protected PersistentHashMap<Integer, Collection<Integer>> createInputsIndex() throws IOException {
-      IndexExtension<Integer, T, VcsFullCommitDetails> extension = getExtension();
-      return new PersistentHashMap<>(getInputsStorageFile(extension.getVersion()),
-                                     EnumeratorIntegerDescriptor.INSTANCE,
-                                     new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), myID));
+      return null;
     }
 
     @Override
-    protected void updateWithMap(int inputId, @NotNull UpdateData<Integer, T> updateData) throws StorageException {
-      if (((SimpleUpdateData)updateData).getNewData().isEmpty()) {
-        onNotIndexableCommit(inputId);
-      }
-      super.updateWithMap(inputId, updateData);
-    }
-
-    public void markCorrupted() {
-      myInputsIndex.markCorrupted();
+    protected void requestRebuild(@Nullable Exception ex) {
+      myFatalErrorHandler.consume(this, ex != null ? ex : new Exception("Index rebuild requested"));
     }
   }
 

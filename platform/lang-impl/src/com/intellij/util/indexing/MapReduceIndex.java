@@ -57,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
   private static final int NULL_MAPPING = 0;
-  @Nullable private final ID<Key, Value> myIndexId;
+  @NotNull private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
   private final boolean myHasSnapshotMapping;
@@ -72,7 +72,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
-  protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  @Nullable protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -94,7 +94,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         flush();
       } catch (StorageException e) {
         LOG.info(e);
-        FileBasedIndex.getInstance().requestRebuild(myIndexId);
+        requestRebuild(null);
       }
     }
   });
@@ -125,7 +125,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
     }
 
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping) {
       myIndexingTrace = createIndexingTrace();
     }
 
@@ -172,7 +172,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
-    final File saved = myHasSnapshotMapping && myIndexId != null ? new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values") : null;
+    final File saved = myHasSnapshotMapping ? new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values") : null;
 
     if (saved != null) {
       try {
@@ -225,7 +225,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, Integer> createInputSnapshotMapping() throws IOException {
-    assert myIndexId != null;
     final File fileIdToHashIdFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
     try {
       return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE,
@@ -243,7 +242,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, String> createIndexingTrace() throws IOException {
-    assert myIndexId != null;
     final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
     try {
       return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE,
@@ -305,7 +303,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  private static void doForce(PersistentHashMap<?, ?> inputsIndex) {
+  private static void doForce(@Nullable PersistentHashMap<?, ?> inputsIndex) {
     if (inputsIndex != null && inputsIndex.isDirty()) {
       inputsIndex.force();
     }
@@ -350,7 +348,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
   }
 
-  private static void doClose(PersistentHashMap<?, ?> index) {
+  private static void doClose(@Nullable PersistentHashMap<?, ?> index) {
     if (index != null) {
       try {
         index.close();
@@ -585,15 +583,24 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
           // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-          application.invokeLater(() -> FileBasedIndex.getInstance().requestRebuild(myIndexId, ex), ModalityState.any());
+          application.invokeLater(() -> requestRebuild(ex), ModalityState.any());
         } else {
-          FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+          requestRebuild(ex);
         }
         return Boolean.FALSE;
       }
 
       return Boolean.TRUE;
     };
+  }
+
+  protected void requestRebuild(@Nullable Exception ex) {
+    if (ex == null) {
+      FileBasedIndex.getInstance().requestRebuild(myIndexId);
+    }
+    else {
+      FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+    }
   }
 
   protected UpdateData<Key, Value> buildUpdateData(Map<Key, Value> data, NotNullComputable<Collection<Key>> oldKeysGetter, int savedInputId) {
@@ -703,7 +710,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       return keys;
     }
-    return myInputsIndex.get(inputId);
+    return myInputsIndex != null ? myInputsIndex.get(inputId) : null;
   }
 
   private void saveInputKeys(int inputId, int savedInputId, Map<Key, Value> newData) throws IOException {

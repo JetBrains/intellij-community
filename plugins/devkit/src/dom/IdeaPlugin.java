@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,13 @@ public interface IdeaPlugin extends DomElement {
   @Stubbed
   GenericDomValue<String> getId();
 
+  /**
+   * @deprecated Unused.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Attribute("version")
+  @Deprecated
   GenericAttributeValue<Integer> getIdeaPluginVersion();
 
   @NotNull
@@ -88,6 +93,7 @@ public interface IdeaPlugin extends DomElement {
   @Stubbed
   @SubTagList("depends")
   List<Dependency> getDependencies();
+
   @SubTagList("depends")
   Dependency addDependency();
 
@@ -100,12 +106,14 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("extensions")
   @Stubbed
   List<Extensions> getExtensions();
+
   Extensions addExtensions();
 
   @NotNull
   @Stubbed
   @SubTagList("extensionPoints")
   List<ExtensionPoints> getExtensionPoints();
+
   ExtensionPoints addExtensionPoints();
 
 
@@ -132,6 +140,7 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("actions")
   @Stubbed
   List<Actions> getActions();
+
   Actions addActions();
 
 

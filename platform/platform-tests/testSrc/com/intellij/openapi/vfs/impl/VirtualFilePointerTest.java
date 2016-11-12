@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -850,5 +851,25 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
     assertEquals(file, pointer.getFile());
+  }
+
+  public void testAlienVirtualFileSystemPointerRemovedFromUrlToIdentityCacheOnDispose() throws IOException {
+    VirtualFile mockVirtualFile = new MockVirtualFile("test_name", "test_text");
+    Disposable disposable1 = Disposer.newDisposable();
+    final VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(mockVirtualFile, disposable1, null);
+
+    assertInstanceOf(pointer, IdentityVirtualFilePointer.class);
+    assertTrue(pointer.isValid());
+
+    VirtualFile virtualFileWithSameUrl = new MockVirtualFile("test_name", "test_text");
+    VirtualFilePointer updatedPointer = VirtualFilePointerManager.getInstance().create(virtualFileWithSameUrl, disposable1, null);
+
+    assertInstanceOf(updatedPointer, IdentityVirtualFilePointer.class);
+
+    assertEquals(1, ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).numberOfCachedUrlToIdentity());
+
+    Disposer.dispose(disposable1);
+
+    assertEquals(0, ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).numberOfCachedUrlToIdentity());
   }
 }

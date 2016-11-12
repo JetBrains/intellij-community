@@ -46,9 +46,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * Gets the instance of <code>VirtualFileManager</code>.
+   * Gets the instance of {@code VirtualFileManager}.
    *
-   * @return <code>VirtualFileManager</code>
+   * @return {@code VirtualFileManager}
    */
   @NotNull
   public static VirtualFileManager getInstance() {
@@ -89,7 +89,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * file systems.
    *
    * @param url the URL to find file by
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
@@ -107,7 +107,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.
    *
    * @param url the URL
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
@@ -148,7 +148,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * Extracts protocol from the given URL. Protocol is a substring from the beginning of the URL till "://".
    *
    * @param url the URL
-   * @return protocol or <code>null</code> if there is no "://" in the URL
+   * @return protocol or {@code null} if there is no "://" in the URL
    * @see VirtualFileSystem#getProtocol
    */
   @Nullable

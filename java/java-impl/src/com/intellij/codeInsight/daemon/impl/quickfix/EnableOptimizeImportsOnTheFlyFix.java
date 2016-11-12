@@ -55,6 +55,6 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPri
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

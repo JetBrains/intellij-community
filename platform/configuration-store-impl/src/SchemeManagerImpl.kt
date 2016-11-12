@@ -403,11 +403,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       schemes.firstOrNull({ it.name == schemeName})?.let { existingScheme ->
         if (readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
           // so, bundled scheme is shadowed
-          removeFirstScheme({ it === existingScheme }, schemes, scheduleDelete = false)
+          removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
           return true
         }
         else if (processor.isExternalizable(existingScheme) && isOverwriteOnLoad(existingScheme)) {
-          removeFirstScheme({ it === existingScheme }, schemes)
+          removeFirstScheme(schemes) { it === existingScheme }
         }
         else {
           if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
@@ -588,19 +588,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     val newDigest = element!!.digest()
-    if (externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && externalInfo.isDigestEquals(newDigest)) {
-      return
-    }
+    when {
+      externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && externalInfo.isDigestEquals(newDigest) -> return
+      isEqualToBundledScheme(externalInfo, newDigest, scheme) -> return
 
-    // save only if scheme differs from bundled
-    if (isEqualToBundledScheme(externalInfo, newDigest, scheme)) {
-      return
-    }
-
-    // we must check it only here to avoid delete old scheme just because it is empty (old idea save -> new idea delete on open)
-    if (processor is LazySchemeProcessor && processor.isSchemeDefault(scheme, newDigest)) {
-      externalInfo?.scheduleDelete()
-      return
+      // we must check it only here to avoid delete old scheme just because it is empty (old idea save -> new idea delete on open)
+      processor is LazySchemeProcessor && processor.isSchemeDefault(scheme, newDigest) -> {
+        externalInfo?.scheduleDelete()
+        return
+      }
     }
 
     val fileName = fileNameWithoutExtension!! + schemeExtension
@@ -621,8 +617,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       providerPath = null
     }
 
-    // if another new scheme uses old name of this scheme, so, we must not delete it (as part of rename operation)
-    val renamed = externalInfo != null && fileNameWithoutExtension !== currentFileNameWithoutExtension && nameGenerator.value(currentFileNameWithoutExtension)
+    // if another new scheme uses old name of this scheme, we must not delete it (as part of rename operation)
+    val renamed = externalInfo != null && fileNameWithoutExtension !== currentFileNameWithoutExtension && nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
       if (useVfs) {
         var file: VirtualFile? = null
@@ -633,10 +629,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
 
         if (renamed) {
-          file = dir.findChild(externalInfo!!.fileName)
-          if (file != null) {
-            runWriteAction {
-              file!!.rename(this, fileName)
+          val oldFile = dir.findChild(externalInfo!!.fileName)
+          oldFile?.let {
+            // VFS doesn't allow to rename to existing file, so, check it
+            if (dir!!.findChild(fileName) == null) {
+              runWriteAction { it.rename(this, fileName) }
+              file = oldFile
+            }
+            else {
+              externalInfo!!.scheduleDelete()
             }
           }
         }
@@ -646,9 +647,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
 
         runWriteAction {
-          file!!.getOutputStream(this).use {
-            byteOut.writeTo(it)
-          }
+          file!!.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
       else {
@@ -919,13 +918,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  override fun removeScheme(schemeName: String) = removeFirstScheme({it.name == schemeName}, schemes)
+  override fun removeScheme(schemeName: String) = removeFirstScheme(schemes) {it.name == schemeName}
 
-  override fun removeScheme(scheme: T) {
-    removeFirstScheme({ it == scheme }, schemes)
-  }
+  override fun removeScheme(scheme: T) = removeFirstScheme(schemes) { it == scheme } != null
 
-  private fun removeFirstScheme(condition: (T) -> Boolean, schemes: MutableList<T>, scheduleDelete: Boolean = true): T? {
+  private fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {
       if (!condition(scheme)) {

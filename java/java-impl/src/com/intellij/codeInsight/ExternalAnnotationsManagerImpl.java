@@ -22,7 +22,6 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -57,7 +56,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,7 +66,10 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -82,8 +83,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna
@@ -107,12 +110,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     final MyVirtualFileListener fileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(fileListener);
-    Disposer.register(myPsiManager.getProject(), new Disposable() {
-      @Override
-      public void dispose() {
-        VirtualFileManager.getInstance().removeVirtualFileListener(fileListener);
-      }
-    });
+    Disposer.register(myPsiManager.getProject(), () -> VirtualFileManager.getInstance().removeVirtualFileListener(fileListener));
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -167,7 +165,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Nullable
-  protected List<XmlFile> findExternalAnnotationsXmlFiles(@NotNull PsiModifierListOwner listOwner) {
+  private List<XmlFile> findExternalAnnotationsXmlFiles(@NotNull PsiModifierListOwner listOwner) {
     List<PsiFile> psiFiles = findExternalAnnotationsFiles(listOwner);
     if (psiFiles == null) {
       return null;
@@ -274,7 +272,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @NotNull
   private static VirtualFile[] filterByReadOnliness(@NotNull VirtualFile[] files) {
-    List<VirtualFile> result = ContainerUtil.filter(files, file -> file.isInLocalFileSystem());
+    List<VirtualFile> result = ContainerUtil.filter(files, VirtualFile::isInLocalFileSystem);
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
@@ -694,7 +692,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
     private static final String MESSAGE = ProjectBundle.message("external.annotations.suggestion.message");
 
-    public MyExternalPromptDialog(final Project project) {
+    MyExternalPromptDialog(final Project project) {
       super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
@@ -713,7 +711,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     @Override
     @NotNull
-    @SuppressWarnings({"NonStaticInitializer"})
+    @SuppressWarnings("NonStaticInitializer")
     protected Action[] createActions() {
       final Action okAction = getOKAction();
       assignMnemonic(ADD_IN_CODE, okAction);

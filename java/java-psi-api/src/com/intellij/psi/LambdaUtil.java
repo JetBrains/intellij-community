@@ -439,12 +439,7 @@ public class LambdaUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiElement gParent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
-      if (gParent instanceof PsiLambdaExpression) {
-        return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)gParent);
-      } else if (gParent instanceof PsiMethod) {
-        return ((PsiMethod)gParent).getReturnType();
-      }
+      return PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
       return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.jetbrains.edu.coursecreator</id>
   <name>Course Creator Plugin</name>
   <version>2.0.3</version>

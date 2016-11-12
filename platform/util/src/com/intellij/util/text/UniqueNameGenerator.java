@@ -40,7 +40,11 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   @Override
-  public final boolean value(final String candidate) {
+  public final boolean value(String candidate) {
+    return isUnique(candidate);
+  }
+
+  public final boolean isUnique(String candidate) {
     return !myExistingNames.contains(candidate);
   }
 

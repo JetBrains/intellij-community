@@ -39,7 +39,7 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
   private static final Logger LOG = Logger.getInstance(BackgroundTaskGroup.class);
 
-  @NotNull private final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
+  @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
   @NotNull private final Project myProject;
 
   public BackgroundTaskGroup(@NotNull Project project, @NotNull String title) {
@@ -69,11 +69,6 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
       }
 
       @Override
-      public void onSuccess() {
-        continuation.run();
-      }
-
-      @Override
       public void onCancel() {
         end();
       }
@@ -82,6 +77,11 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
       public void onThrowable(@NotNull Throwable e) {
         LOG.error(e);
         end();
+      }
+
+      @Override
+      public void onFinished() {
+        continuation.run();
       }
     }.queue());
   }
@@ -98,12 +98,10 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
         isSuccess = e.isWarning();
       }
       finally {
-        if (isSuccess) {
-          continuation.run();
-        }
-        else {
+        if (!isSuccess) {
           end();
         }
+        continuation.run();
       }
     });
   }

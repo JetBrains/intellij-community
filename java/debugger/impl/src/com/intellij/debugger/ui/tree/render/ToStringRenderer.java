@@ -133,8 +133,8 @@ public class ToStringRenderer extends NodeRendererImpl {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      return ((ClassType)type).methodsByName("toString", "()Ljava/lang/String;").stream()
-        .anyMatch(method -> !CommonClassNames.JAVA_LANG_OBJECT.equals(method.declaringType().name()));
+      return !CommonClassNames.JAVA_LANG_OBJECT
+        .equals(((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;").declaringType().name());
     }
     return false;
   }

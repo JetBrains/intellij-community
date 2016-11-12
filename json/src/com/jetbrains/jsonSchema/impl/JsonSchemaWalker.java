@@ -99,7 +99,8 @@ public class JsonSchemaWalker {
           }
         }
         if (selectedSchema != null) {
-          queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
+          if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, selectedSchema);
+          else queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
         }
       } else {
         List<JsonSchemaObject> list = new ArrayList<>();
@@ -242,6 +243,11 @@ public class JsonSchemaWalker {
       if (child != null) {
         resultConsumer.setSchema(child);
       } else {
+        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+        if (schema != null) {
+          resultConsumer.setSchema(schema);
+          return;
+        }
         if (parent.getAdditionalPropertiesSchema() != null) {
           resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
         } else {

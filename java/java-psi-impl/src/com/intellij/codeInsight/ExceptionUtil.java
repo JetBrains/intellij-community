@@ -454,6 +454,10 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
 
+    if (properties != null) {
+      PsiUtilCore.ensureValid(method);
+    }
+
     final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
     if (thrownExceptions.length == 0) {
       return Collections.emptyList();

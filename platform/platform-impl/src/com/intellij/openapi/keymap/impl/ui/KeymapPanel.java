@@ -306,7 +306,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        editSelection(e);
+        editSelection(e, true);
         return true;
       }
     }.installOn(myActionsTree.getTree());
@@ -316,7 +316,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger()) {
-          editSelection(e);
+          editSelection(e, false);
           e.consume();
         }
       }
@@ -324,7 +324,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void mouseReleased(@NotNull MouseEvent e) {
         if (e.isPopupTrigger()) {
-          editSelection(e);
+          editSelection(e, false);
           e.consume();
         }
       }
@@ -374,7 +374,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        editSelection(e.getInputEvent());
+        editSelection(e.getInputEvent(), false);
       }
     });
 
@@ -767,7 +767,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return keymap == null ? null : keymap.getShortcuts(actionId);
   }
 
-  private void editSelection(InputEvent e) {
+  private void editSelection(InputEvent e, boolean isDoubleClick) {
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -780,7 +780,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         .getComponent()
         .show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
     }
-    else {
+    else if (!isDoubleClick || group.getChildrenCount() == 0) {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Edit Shortcuts",
                                                                             group,

@@ -16,38 +16,38 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
+import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
+
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
-  private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
-  private static final String TRIGRAMS = "trigrams";
-  private static final int VALUE = 239;
+  public static final String TRIGRAMS = "trigrams";
 
-  @NotNull private final PersistentHashMap<Integer, Integer> myNoTrigramsCommits;
+  public VcsLogMessagesTrigramIndex(@NotNull String logId,
+                                    @NotNull FatalErrorHandler fatalErrorHandler,
+                                    @NotNull Disposable disposableParent) throws IOException {
+    super(logId, TRIGRAMS, getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+          fatalErrorHandler, disposableParent);
+  }
 
-  public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
-    super(logId, TRIGRAMS, VcsLogPersistentIndex.getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
-          disposableParent);
-
-    myNoTrigramsCommits =
-      PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId,
-                                             VcsLogPersistentIndex.getVersion());
+  @NotNull
+  public static Collection<File> getStorageFiles(@NotNull String logId) {
+    return Collections.singletonList(getStorageFile(TRIGRAMS, logId));
   }
 
   @Nullable
@@ -58,64 +58,6 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
     if (trigramProcessor.map.isEmpty()) return null;
 
     return getCommitsWithAllKeys(trigramProcessor.map.keySet());
-  }
-
-  @Override
-  protected void onNotIndexableCommit(int commit) throws StorageException {
-    try {
-      myNoTrigramsCommits.put(commit, VALUE);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @Override
-  public boolean isIndexed(int commit) throws IOException {
-    return super.isIndexed(commit) || myNoTrigramsCommits.containsMapping(commit);
-  }
-
-  @Override
-  public void flush() throws StorageException {
-    super.flush();
-    myNoTrigramsCommits.force();
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-    try {
-      myNoTrigramsCommits.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
-
-  @Override
-  public void markCorrupted() {
-    super.markCorrupted();
-    myNoTrigramsCommits.markCorrupted();
-  }
-
-  @NotNull
-  public String getTrigramInfo(int commit) throws IOException {
-    if (myNoTrigramsCommits.containsMapping(commit)) {
-      return "No trigrams";
-    }
-
-    Collection<Integer> keys = getKeysForCommit(commit);
-    assert keys != null;
-
-    StringBuilder builder = new StringBuilder();
-    for (Integer key : keys) {
-      builder.append((char)(key >> 16));
-      builder.append((char)((key >> 8) % 256));
-      builder.append((char)(key % 256));
-      builder.append(" ");
-    }
-
-    return builder.toString();
   }
 
   public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {

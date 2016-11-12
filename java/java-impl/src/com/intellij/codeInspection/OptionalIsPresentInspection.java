@@ -22,12 +22,15 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -160,19 +163,23 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     return ((PsiReferenceExpression)qualifier).isReferenceTo(variable);
   }
 
-  @Contract("null, _ -> false")
-  static boolean isOptionalLambdaCandidate(PsiExpression lambdaCandidate, PsiVariable optionalVariable) {
+  @Contract("_, null, _ -> false")
+  static boolean isOptionalLambdaCandidate(PsiVariable optionalVariable, PsiExpression lambdaCandidate, PsiExpression falseExpression) {
     if (lambdaCandidate == null) return false;
+    if (ExpressionUtils.isReferenceTo(lambdaCandidate, optionalVariable) && OptionalUtil.isOptionalEmptyCall(falseExpression)) return true;
     if (!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return false;
+    Ref<Boolean> hasOptionalReference = new Ref<>(Boolean.FALSE);
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiElement element = ((PsiReferenceExpression)e).resolve();
       if (!(element instanceof PsiVariable)) return true;
       // Check that Optional variable is referenced only in context of get() call and other variables are effectively final
-      return element == optionalVariable
-             ? isOptionalGetCall(e.getParent().getParent(), optionalVariable)
-             : HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
-    });
+      if (element == optionalVariable) {
+        hasOptionalReference.set(Boolean.TRUE);
+        return isOptionalGetCall(e.getParent().getParent(), optionalVariable);
+      }
+      return HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
+    }) && hasOptionalReference.get();
   }
 
   @NotNull
@@ -195,14 +202,19 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
   static String generateOptionalUnwrap(PsiElementFactory factory,
                                        PsiVariable optionalVariable,
                                        PsiExpression trueValue,
-                                       PsiExpression falseValue) {
+                                       PsiExpression falseValue,
+                                       PsiType targetType) {
+    if (ExpressionUtils.isReferenceTo(trueValue, optionalVariable) && OptionalUtil.isOptionalEmptyCall(falseValue)) {
+      trueValue =
+        factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL + ".of(" + optionalVariable.getName() + ".get())", trueValue);
+    }
+    if (ExpressionUtils.isReferenceTo(falseValue, optionalVariable)) {
+      falseValue = factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()", falseValue);
+    }
     String lambdaText = generateOptionalLambda(factory, optionalVariable, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
-    if(ExpressionUtils.isReferenceTo(falseValue, optionalVariable)) {
-      falseValue = factory.createExpressionFromText(CommonClassNames.JAVA_UTIL_OPTIONAL+".empty()", falseValue);
-    }
     return OptionalUtil.generateOptionalUnwrap(optionalVariable.getName(), lambda.getParameterList().getParameters()[0],
-                                               (PsiExpression)lambda.getBody(), falseValue, falseValue.getType(), true);
+                                               (PsiExpression)lambda.getBody(), falseValue, targetType, true);
   }
 
   static class OptionalIfPresentFix implements LocalQuickFix {
@@ -260,6 +272,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
                                factory.createStatementFromText(replacementText, cond);
       PsiElement result = cond.replace(replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
   }
@@ -281,7 +294,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (!ExpressionUtils.isSimpleExpression(falseValue) &&
           !LambdaGenerationUtil.canBeUncheckedLambda(falseValue)) return false;
       PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
-      return isOptionalLambdaCandidate(trueValue, optionalVariable);
+      return isOptionalLambdaCandidate(optionalVariable, trueValue, falseValue);
     }
 
     @Override
@@ -293,7 +306,9 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
       LOG.assertTrue(trueValue != null);
       LOG.assertTrue(falseValue != null);
-      return "return " + generateOptionalUnwrap(factory, optionalVariable, trueValue, falseValue) + ";";
+      return "return " +
+             generateOptionalUnwrap(factory, optionalVariable, trueValue, falseValue, PsiTypesUtil.getMethodReturnType(trueElement)) +
+             ";";
     }
   }
 
@@ -306,7 +321,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
           falseAssignment == null ||
           !EquivalenceChecker.getCanonicalPsiEquivalence()
             .expressionsAreEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) ||
-          !isOptionalLambdaCandidate(trueAssignment.getRExpression(), optionalVariable)) {
+          !isOptionalLambdaCandidate(optionalVariable, trueAssignment.getRExpression(), falseAssignment.getRExpression())) {
         return false;
       }
       return ExpressionUtils.isSimpleExpression(falseAssignment.getRExpression()) ||
@@ -326,7 +341,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       PsiExpression trueValue = trueAssignment.getRExpression();
       PsiExpression falseValue = falseAssignment.getRExpression();
       LOG.assertTrue(falseValue != null);
-      return lValue.getText() + " = " + generateOptionalUnwrap(factory, optionalVariable, trueValue, falseValue) + ";";
+      return lValue.getText() + " = " + generateOptionalUnwrap(factory, optionalVariable, trueValue, falseValue, lValue.getType()) + ";";
     }
   }
 
@@ -334,9 +349,10 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     @Override
     public boolean isApplicable(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return false;
-      return isOptionalLambdaCandidate((PsiExpression)trueElement, optionalVariable) &&
-             (ExpressionUtils.isSimpleExpression((PsiExpression)falseElement) ||
-              LambdaGenerationUtil.canBeUncheckedLambda((PsiExpression)falseElement));
+      PsiExpression trueExpression = (PsiExpression)trueElement;
+      PsiExpression falseExpression = (PsiExpression)falseElement;
+      return isOptionalLambdaCandidate(optionalVariable, trueExpression, falseExpression) &&
+             (ExpressionUtils.isSimpleExpression(falseExpression) || LambdaGenerationUtil.canBeUncheckedLambda(falseExpression));
     }
 
     @Override
@@ -344,9 +360,11 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
                                       PsiVariable optionalVariable,
                                       PsiElement trueElement,
                                       PsiElement falseElement) {
+      PsiExpression ternary = PsiTreeUtil.getParentOfType(trueElement, PsiConditionalExpression.class);
+      LOG.assertTrue(ternary != null);
       PsiExpression trueExpression = (PsiExpression)trueElement;
       PsiExpression falseExpression = (PsiExpression)falseElement;
-      return generateOptionalUnwrap(factory, optionalVariable, trueExpression, falseExpression);
+      return generateOptionalUnwrap(factory, optionalVariable, trueExpression, falseExpression, ternary.getType());
     }
   }
 
@@ -356,7 +374,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return false;
       if (!(trueElement instanceof PsiExpressionStatement)) return false;
       PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
-      return isOptionalLambdaCandidate(expression, optionalVariable);
+      return isOptionalLambdaCandidate(optionalVariable, expression, null);
     }
 
     @Override

@@ -150,17 +150,6 @@ public class VariableAccessUtils {
     return visitor.isVariableValueUsed();
   }
 
-  public static boolean arrayContentsAreAccessed(
-    @NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
-      return false;
-    }
-    final ArrayContentsAccessedVisitor visitor =
-      new ArrayContentsAccessedVisitor(variable);
-    context.accept(visitor);
-    return visitor.isAccessed();
-  }
-
   public static boolean arrayContentsAreAssigned(
     @NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) {

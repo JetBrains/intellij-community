@@ -29,13 +29,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -170,7 +170,7 @@ public class SpecialAnnotationsUtil {
 
       @Override
       public boolean startInWriteAction() {
-        return true;
+        return false;
       }
     };
   }
