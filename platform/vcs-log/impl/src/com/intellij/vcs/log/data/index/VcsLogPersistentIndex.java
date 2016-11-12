@@ -412,12 +412,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private static void cleanup(@NotNull String logId) {
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX, COMMITS, logId, getVersion(), false));
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION, false));
-
-      VcsLogMessagesTrigramIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
-      VcsLogUserIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
-      VcsLogPathsIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
+      if (!PersistentUtil.cleanupStorageFiles(INDEX, logId)) {
+        LOG.error("Could not clean up storage files in " + new File(PersistentUtil.LOG_CACHE, INDEX) + " starting with " + logId);
+      }
     }
   }
 

@@ -45,11 +45,6 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
           fatalErrorHandler, disposableParent);
   }
 
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(TRIGRAMS, logId));
-  }
-
   @Nullable
   public ValueContainer.IntIterator getCommitsForSubstring(@NotNull String string) throws StorageException {
     MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();

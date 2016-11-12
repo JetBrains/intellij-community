@@ -54,11 +54,6 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
   }
 
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(USERS, logId));
-  }
-
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
     Set<Integer> ids = ContainerUtil.newHashSet();
     for (VcsUser user : users) {

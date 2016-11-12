@@ -17,6 +17,7 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
@@ -80,6 +81,31 @@ public class PersistentUtil {
                                          storageFile);
   }
 
+  public static boolean deleteWithRenamingAllFilesStartingWith(@NotNull File baseFile) {
+    File parentFile = baseFile.getParentFile();
+    if (parentFile == null) return false;
+
+    File[] files = parentFile.listFiles(pathname -> pathname.getName().startsWith(baseFile.getName()));
+    if (files == null) return true;
+
+    boolean deleted = true;
+    for (File f : files) {
+      deleted &= FileUtil.deleteWithRenaming(f);
+    }
+    return deleted;
+  }
+
+  // this method cleans up all storage files for a project in a specified subdir
+  // it assumes that these storage files all start with "safeLogId."
+  // as method getStorageFile creates them
+  // so these two methods should be changed in sync
+  public static boolean cleanupStorageFiles(@NotNull String subdirName, @NotNull String id) {
+    File subdir = new File(LOG_CACHE, subdirName);
+    String safeLogId = PathUtilRt.suggestFileName(id, true, true);
+    return deleteWithRenamingAllFilesStartingWith(new File(subdir, safeLogId + "."));
+  }
+
+  // do not forget to change cleanupStorageFiles method when editing this one
   @NotNull
   public static File getStorageFile(@NotNull String subdirName,
                                     @NotNull String kind,

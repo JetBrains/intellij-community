@@ -76,12 +76,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
                                            Page.PAGE_SIZE, null, getVersion());
   }
 
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Arrays.asList(getStorageFile(INDEX_PATHS_IDS, logId),
-                         getStorageFile(PATHS, logId));
-  }
-
   @Override
   public void flush() throws StorageException {
     super.flush();
