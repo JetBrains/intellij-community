@@ -31,12 +31,9 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -50,6 +47,7 @@ import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.EverythingGlobalScope
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.stubs.SerializedStubTree
@@ -645,4 +643,35 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
   }
 
+
+  void "test Vfs Events Processing Performance"() {
+    def filename = 'A.java'
+    myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
+
+    PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", 1000, {
+      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      assert files != null
+      assert files.length == 1
+
+      VirtualFile file = files[0].virtualFile
+
+      def filename2 = 'B.java'
+      def max = 100000
+      List<VFileEvent> eventList = new ArrayList<>(max);
+      def len = max / 2;
+
+      for(int i = 0; i < len; ++i) {
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true)) ;
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true)) ;
+      }
+
+      IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
+      indexedFilesListener.before(eventList);
+      indexedFilesListener.after(eventList);
+
+      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      assert files != null
+      assert files.length == 1
+    }).cpuBound().ioBound().assertTiming();
+  }
 }
