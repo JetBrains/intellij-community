@@ -27,10 +27,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
@@ -43,11 +40,6 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
                                     @NotNull Disposable disposableParent) throws IOException {
     super(logId, TRIGRAMS, getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
           fatalErrorHandler, disposableParent);
-  }
-
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(TRIGRAMS, logId));
   }
 
   @Nullable

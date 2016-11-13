@@ -28,7 +28,7 @@ class ScriptAction(val scriptName: String) : AnAction("guiTest." + scriptName) {
 
   override fun actionPerformed(e: AnActionEvent?) {
 
-    val myPackage = "com.intellij.tests.gui.test"
+    val myPackage = "com.intellij.testGuiFramework.tests"
     val loadedClass = this.javaClass.classLoader.loadClass("${myPackage}.${scriptName}")
     val guiTest = loadedClass.newInstance() as GuiTestCase
 

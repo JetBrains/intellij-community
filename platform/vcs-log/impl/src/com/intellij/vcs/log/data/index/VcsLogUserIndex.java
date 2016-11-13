@@ -30,10 +30,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,11 +49,6 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
           consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
-  }
-
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(USERS, logId));
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {

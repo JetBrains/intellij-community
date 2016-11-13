@@ -51,20 +51,15 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.ui.EdtInvocationManager;
-import org.fest.swing.core.BasicRobot;
-import org.fest.swing.core.ComponentFinder;
-import org.fest.swing.core.GenericTypeMatcher;
+import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
-import org.fest.swing.fixture.ContainerFixture;
-import org.fest.swing.fixture.DialogFixture;
-import org.fest.swing.fixture.JListFixture;
-import org.fest.swing.fixture.JTextComponentFixture;
+import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
-import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -75,8 +70,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -533,6 +526,15 @@ public final class GuiTestUtil {
     clickPopupMenuItemMatching(new PrefixMatcher(labelPrefix), component, robot);
   }
 
+  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot) {
+    if (searchByPrefix) {
+      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot);
+    }
+    else {
+      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot);
+    }
+  }
+
   public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot) {
     // IntelliJ doesn't seem to use a normal JPopupMenu, so this won't work:
     //    JPopupMenu menu = myRobot.findActivePopupMenu();
@@ -559,7 +561,8 @@ public final class GuiTestUtil {
     for (int i = 0; i < model.getSize(); i++) {
       Object elementAt = model.getElementAt(i);
       if (elementAt instanceof PopupFactoryImpl.ActionItem) {
-        PopupFactoryImpl.ActionItem item = (PopupFactoryImpl.ActionItem)elementAt;
+        PopupFactoryImpl.ActionItem
+          item = (PopupFactoryImpl.ActionItem)elementAt;
         String s = item.getText();
         if (labelMatcher.matches(s)) {
           new JListFixture(robot, list).clickItem(i);
@@ -609,15 +612,7 @@ public final class GuiTestUtil {
     final boolean[] checkClick = {false};
     Robot robot = container.robot();
     JButton button = findButton(container, text, robot);
-    button.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        checkClick[0] = true;
-      }
-    });
     robot.click(button);
-    //click button again if previous action is missed
-    if (!checkClick[0]) robot.click(button);
   }
 
 
@@ -658,11 +653,11 @@ public final class GuiTestUtil {
     projectFrame.robot().pressAndReleaseKey(KeyEvent.VK_ENTER);
   }
 
-  private static void typeText(String text, Robot robot, long delayAfterEachCharacterMillis) {
+  public static void typeText(CharSequence text, Robot robot, long delayAfterEachCharacterMillis) {
     robot.waitForIdle();
     for (int i = 0; i < text.length(); ++i) {
       robot.type(text.charAt(i));
-      Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
+      pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -816,6 +811,26 @@ public final class GuiTestUtil {
     }
   }
 
+  private static class EqualsMatcher extends BaseMatcher<String> {
+
+    private final String wanted;
+
+    public EqualsMatcher(String wanted) {
+      this.wanted = wanted;
+    }
+
+    @Override
+    public boolean matches(Object item) {
+      return item instanceof String && ((String)item).equals(wanted);
+    }
+
+    @Override
+    public void describeTo(Description description) {
+      description.appendText("equals to '" + wanted + "'");
+    }
+  }
+
+
   public static String adduction(String s) {
     char ESCAPE_SYMBOL = '\u001B';
     String ESCAPE_SYMBOL_STRING = "" + ESCAPE_SYMBOL;
@@ -832,13 +847,30 @@ public final class GuiTestUtil {
     ArrayList<JdkBundle> bundleList = SwitchBootJdkAction.findJdkPaths().toArrayList();
     //we believe that Idea has at least one bundled jdk
     JdkBundle jdkBundle = bundleList.get(0);
-    String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
+    String homeSubPath = SystemInfo.isMac ? "/Contents/Home/jre" : "";
     return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
 
   @NotNull
   public static JTextComponentFixture findTextField(@NotNull Robot robot, @NotNull final String labelText) {
     return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
+  }
+
+
+  public static JComboBoxFixture findComboBox(@NotNull Robot robot, @NotNull Container container, @NotNull String labelText) {
+    JLabel label = (JLabel)robot.finder().find(container, new ComponentMatcher() {
+      @Override
+      public boolean matches(Component p0) {
+        return (p0 instanceof JLabel && ((JLabel)p0).getText() != null && ((JLabel)p0).getText().equals(labelText));
+      }
+    });
+
+    if (label == null) throw new ComponentLookupException("Unable to find label with text \" + labelText+\"");
+    Container boundedCmp = (Container)label.getLabelFor();
+    if (boundedCmp == null) throw new ComponentLookupException("Unable to find bounded component for label \" + labelText+\"");
+    JComboBox cb = robot.finder().findByType(boundedCmp, JComboBox.class);
+    if (cb == null) throw new ComponentLookupException("Unable to find JComboBox near label \" + labelText+\"");
+    return new JComboBoxFixture(robot, cb);
   }
 
   /**
@@ -857,7 +889,7 @@ public final class GuiTestUtil {
 
     assert keyboardShortcut != null;
     KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
-    LOG.info("Invoking action \"" + actionId +"\" via shortcut " + keyboardShortcut.toString());
+    LOG.info("Invoking action \"" + actionId + "\" via shortcut " + keyboardShortcut.toString());
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
   }
 }

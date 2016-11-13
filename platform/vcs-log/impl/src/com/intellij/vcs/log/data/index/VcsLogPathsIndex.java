@@ -42,7 +42,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -74,12 +73,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     return new PersistentBTreeEnumerator<>(storageFile, SystemInfo.isFileSystemCaseSensitive ? EnumeratorStringDescriptor.INSTANCE
                                                                                              : new ToLowerCaseStringDescriptor(),
                                            Page.PAGE_SIZE, null, getVersion());
-  }
-
-  @NotNull
-  public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Arrays.asList(getStorageFile(INDEX_PATHS_IDS, logId),
-                         getStorageFile(PATHS, logId));
   }
 
   @Override

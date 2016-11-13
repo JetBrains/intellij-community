@@ -42,7 +42,6 @@ import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
-import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.TroveUtil;
 import gnu.trove.TIntHashSet;
@@ -57,7 +56,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.getStorageFile;
+import static com.intellij.vcs.log.util.PersistentUtil.*;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -100,7 +99,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    myIndexStorage = createIndexStorage(fatalErrorsConsumer, PersistentUtil.calcLogId(myProject, providers));
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers));
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());
@@ -394,16 +393,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       // cleanup of old index storage files
       // to remove after 2017.1 release
-      PersistentUtil.cleanupOldStorageFile(MESSAGES, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-no-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-no-" + VcsLogPathsIndex.PATHS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS + "-ids", logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogPathsIndex.PATHS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogUserIndex.USERS, logId);
-      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogUserIndex.USERS, logId);
+      cleanupOldStorageFile(MESSAGES, logId);
+      cleanupOldStorageFile(INDEX + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      cleanupOldStorageFile(INDEX + "-no-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS, logId);
+      cleanupOldStorageFile(INDEX + "-no-" + VcsLogPathsIndex.PATHS, logId);
+      cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS + "-ids", logId);
+      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogPathsIndex.PATHS, logId);
+      cleanupOldStorageFile(INDEX + "-" + VcsLogUserIndex.USERS, logId);
+      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogUserIndex.USERS, logId);
     }
 
     private static void catchAndWarn(@NotNull ThrowableRunnable<IOException> runnable) {
@@ -416,12 +415,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private static void cleanup(@NotNull String logId) {
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(COMMITS, logId, getVersion()));
-      IOUtil.deleteAllFilesStartingWith(getStorageFile(MESSAGES, logId, MESSAGES_VERSION));
-
-      VcsLogMessagesTrigramIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
-      VcsLogUserIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
-      VcsLogPathsIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
+      if (!cleanupStorageFiles(INDEX, logId)) {
+        LOG.error("Could not clean up storage files in " + new File(LOG_CACHE, INDEX) + " starting with " + logId);
+      }
     }
   }
 
