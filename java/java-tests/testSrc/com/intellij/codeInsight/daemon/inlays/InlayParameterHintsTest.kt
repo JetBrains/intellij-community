@@ -20,7 +20,9 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.DocumentUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -89,7 +91,12 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
     val hintNames = hints.map { it.second }
 
     val elements = hintOffsets.mapNotNull { file.findElementAt(it) }
-    assertThat(hints.size).isEqualTo(expectedInlays.size).withFailMessage("Element at offsets: ${elements.joinToString(", ")}")
+    assertThat(hints.size)
+      .withFailMessage("Expected ${expectedInlays.size} elements with hints, Actual elements count ${hints.size}" +
+                         ": ${elements.joinToString(", ")}, file text: \n\n ${file.text} \n\n isCommitted ${isCommitted(file)} \n\n" +
+                         "Psi: \n ${DebugUtil.psiToString(file, true)}")
+
+      .isEqualTo(expectedInlays.size)
 
     val expect = expectedInlays.map { it.substringBefore("->") to it.substringAfter("->") }
     val expectedHintNames = expect.map { it.first }
@@ -99,6 +106,14 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
 
     val wordsAfter = elements.map { it.text }
     assertThat(wordsAfter).isEqualTo(expectedWordsAfter)
+  }
+
+  private fun isCommitted(file: PsiFile): Boolean {
+    val manager = PsiDocumentManager.getInstance(file.project)
+    val document = manager.getDocument(file)
+
+    assertThat(document).isNotNull()
+    return manager.isCommitted(document!!)
   }
 
 }
