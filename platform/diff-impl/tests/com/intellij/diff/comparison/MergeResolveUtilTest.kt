@@ -187,25 +187,31 @@ class MergeResolveUtilTest : DiffTestCase() {
     )
   }
 
+  fun testRegressions() {
+    test(
+      "i\n",
+      "i",
+      "\ni",
+      "i\n",
+      "i"
+    )
+  }
+
   private fun testGreedy(base: String, left: String, right: String, expected: String?) {
-    test(base, left, right, expected, true);
+    test(base, left, right, expected, true)
   }
 
   private fun test(base: String, left: String, right: String, expected: String?, isGreedy: Boolean = false) {
-    val simpleResult = MergeResolveUtil.tryResolve(left, base, right)
-    val magicResult = MergeResolveUtil.tryGreedyResolve(left, base, right);
+    val expectedSimple = if (isGreedy) null else expected
+    val expectedGreedy = expected
+    test(base, left, right, expectedSimple, expectedGreedy)
+  }
 
-    if (expected == null) {
-      assertNull(simpleResult)
-      assertNull(magicResult)
-    }
-    else if (isGreedy) {
-      assertNull(simpleResult)
-      assertEquals(expected, magicResult)
-    }
-    else {
-      assertEquals(expected, simpleResult)
-      assertEquals(expected, magicResult)
-    }
+  private fun test(base: String, left: String, right: String, expectedSimple: String?, expectedGreedy: String?) {
+    val simpleResult = MergeResolveUtil.tryResolve(left, base, right)
+    val greedyResult = MergeResolveUtil.tryGreedyResolve(left, base, right)
+
+    assertEquals(expectedSimple, simpleResult, "Simple")
+    assertEquals(expectedGreedy, greedyResult, "Greedy")
   }
 }

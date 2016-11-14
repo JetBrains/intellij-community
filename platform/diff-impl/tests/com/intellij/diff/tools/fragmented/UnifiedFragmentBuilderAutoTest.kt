@@ -34,8 +34,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
-      var text1 = DocumentImpl(generateText(maxLength))
-      var text2 = DocumentImpl(generateText(maxLength))
+      val text1 = DocumentImpl(generateText(maxLength))
+      val text2 = DocumentImpl(generateText(maxLength))
 
       debugData.put("Text1", textToReadableFormat(text1.charsSequence))
       debugData.put("Text2", textToReadableFormat(text2.charsSequence))

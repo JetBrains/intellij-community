@@ -38,9 +38,7 @@ public class VfsEventsMerger {
     while (true) {
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
-      boolean replaced = existingChangeInfo == null ? myChangeInfos.putIfAbsent(fileId, newChangeInfo) == null
-                                                    : myChangeInfos.replace(fileId, existingChangeInfo, newChangeInfo);
-      if (replaced) break;
+      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) break;
     }
   }
 
