@@ -90,6 +90,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   }
 
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
+    if (!Comparing.equal(ChangesUtil.getBeforePath(change1), ChangesUtil.getBeforePath(change2)) ||
+        !Comparing.equal(ChangesUtil.getAfterPath(change1), ChangesUtil.getAfterPath(change2))) {
+      // we use Change.hashCode(), so removing this check might violate comparison contract
+      return false;
+    }
+
     for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
       ThreeState equals = provider.isEquals(change1, change2);
       if (equals == ThreeState.NO) return false;
