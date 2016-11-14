@@ -391,9 +391,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     myIpnbFile.removeCell(index);
     remove(index);
 
-    int indexToSelect = index < myIpnbPanels.size() ? index : index-1;
-    final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
-    setSelectedCell(panel, false);
+    if (!myIpnbPanels.isEmpty()) {
+      int indexToSelect = index < myIpnbPanels.size() ? index : index - 1;
+      final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
+      setSelectedCell(panel, false);
+    }
   }
 
   public void saveToFile(boolean synchronize) {
