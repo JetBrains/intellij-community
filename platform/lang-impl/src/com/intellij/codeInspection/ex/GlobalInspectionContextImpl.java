@@ -953,6 +953,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
             }
             if (!localDescriptors.isEmpty()) {
+              CleanupInspectionIntention.sortDescriptions(localDescriptors);
               descriptors.addAll(localDescriptors);
               files.add(file);
             }
@@ -977,7 +978,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
-      CleanupInspectionIntention.applyFixes(getProject(), "Code Cleanup", descriptors, null);
+      CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null);
     };
     TransactionGuard.submitTransaction(getProject(), runnable);
   }
