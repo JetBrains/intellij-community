@@ -39,7 +39,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -2003,11 +2002,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void processFilesInReadActionWithYieldingToWriteAction() {
       try {
         while (myVfsEventsMerger.hasChanges()) {
-          boolean result = ProgressIndicatorUtils
-            .runInReadActionWithWriteActionPriority(this::processFilesInReadAction, null);
-          if (!result) {
-            ProgressIndicatorUtils.yieldToPendingWriteActions();
-          }
+          ProgressManager.getInstance().runInReadActionWithWriteActionPriority(this::processFilesInReadAction);
         }
       }
       finally {

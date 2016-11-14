@@ -86,6 +86,7 @@ class ReadMostlyRWLock {
   boolean isReadLockedByThisThread() {
     checkReadThreadAccess();
     Reader status = R.get();
+    throwIfImpatient(status);
     return status.readRequested;
   }
 
@@ -107,9 +108,7 @@ class ReadMostlyRWLock {
     if (iteration > SPIN_TO_WAIT_FOR_LOCK) {
       status.blocked = true;
       try {
-        if (status.impatientReads) {
-          throw new ApplicationUtil.CannotRunReadActionException();
-        }
+        throwIfImpatient(status);
         LockSupport.parkNanos(this, 1000000);  // unparked by writeUnlock
       }
       finally {
@@ -118,6 +117,13 @@ class ReadMostlyRWLock {
     }
     else {
       Thread.yield();
+    }
+  }
+
+  private void throwIfImpatient(Reader status) {
+    // when client explicitly runs in non-cancelable block do not throw from within nested read actions
+    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection()) {
+      throw new ApplicationUtil.CannotRunReadActionException();
     }
   }
 

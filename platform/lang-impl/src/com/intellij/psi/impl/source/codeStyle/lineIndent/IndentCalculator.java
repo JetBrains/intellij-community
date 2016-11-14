@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.formatting.Indent.Type.NORMAL;
 
-class IndentCalculator {
+public class IndentCalculator {
   
   private @NotNull final Project myProject;
   private @NotNull final Editor myEditor;

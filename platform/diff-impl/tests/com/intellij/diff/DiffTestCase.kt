@@ -21,7 +21,6 @@ import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -66,6 +65,10 @@ abstract class DiffTestCase : UsefulTestCase() {
     assertTrue(message, actual)
   }
 
+  fun assertFalse(actual: Boolean, message: String = "") {
+    assertFalse(message, actual)
+  }
+
   fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
     assertEquals(message, expected, actual)
   }
@@ -75,17 +78,33 @@ abstract class DiffTestCase : UsefulTestCase() {
   }
 
   fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
+    if (skipLastNewline && !ignoreSpaces) {
+      assertTrue(StringUtil.equals(chunk1, chunk2) ||
+                   StringUtil.equals(stripNewline(chunk1), chunk2) ||
+                   StringUtil.equals(chunk1, stripNewline(chunk2)))
+    }
+    else {
+      assertTrue(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
+    }
+  }
+
+  fun assertNotEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
+    if (skipLastNewline && !ignoreSpaces) {
+      assertTrue(!StringUtil.equals(chunk1, chunk2) ||
+                   !StringUtil.equals(stripNewline(chunk1), chunk2) ||
+                   !StringUtil.equals(chunk1, stripNewline(chunk2)))
+    }
+    else {
+      assertFalse(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
+    }
+  }
+
+  fun isEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean): Boolean {
     if (ignoreSpaces) {
-      assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2))
-    } else {
-      if (skipLastNewline) {
-        if (StringUtil.equals(chunk1, chunk2)) return
-        if (StringUtil.equals(stripNewline(chunk1), chunk2)) return
-        if (StringUtil.equals(chunk1, stripNewline(chunk2))) return
-        assertTrue(false)
-      } else {
-        assertTrue(StringUtil.equals(chunk1, chunk2))
-      }
+      return StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2)
+    }
+    else {
+      return StringUtil.equals(chunk1, chunk2)
     }
   }
 
@@ -202,14 +221,14 @@ abstract class DiffTestCase : UsefulTestCase() {
   // Helpers
   //
 
-  open class Trio<T : Any>(val data1: T, val data2: T, val data3: T) {
+  open class Trio<out T>(val data1: T, val data2: T, val data3: T) {
     companion object {
-      fun <V : Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
+      fun <V> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
     }
 
-    fun <V : Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
+    fun <V> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
 
-    fun <V : Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
+    fun <V> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
     fun forEach(f: (T, ThreeSide) -> Unit): Unit {
       f(data1, ThreeSide.LEFT)
@@ -228,7 +247,11 @@ abstract class DiffTestCase : UsefulTestCase() {
     }
 
     override fun hashCode(): Int {
-      return data1.hashCode() * 37 * 37 + data2.hashCode() * 37 + data3.hashCode()
+      var h = 0
+      if (data1 != null) h = h * 31 + data1.hashCode()
+      if (data2 != null) h = h * 31 + data2.hashCode()
+      if (data3 != null) h = h * 31 + data3.hashCode()
+      return h
     }
   }
 }

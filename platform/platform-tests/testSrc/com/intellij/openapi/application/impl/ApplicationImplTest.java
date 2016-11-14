@@ -714,4 +714,47 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     readAction2.get();
     readAction1.get();
   }
+
+  public void testReadActionInImpatientModeMustNotThrowWhenThereIsAPendingWriteAndWeAreUnderNonCancelableSection() throws Exception {
+    AtomicBoolean stopRead = new AtomicBoolean();
+    AtomicBoolean readAcquired = new AtomicBoolean();
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    Future<?> readAction1 = app.executeOnPooledThread(() ->
+      app.runReadAction(() -> {
+        readAcquired.set(true);
+        try {
+          while (!stopRead.get()) ;
+        }
+        finally {
+          readAcquired.set(false);
+        }
+      })
+    );
+    while (!readAcquired.get());
+
+    AtomicBoolean executingImpatientReader = new AtomicBoolean();
+
+    Future<?> readAction2 = app.executeOnPooledThread(() -> {
+      // wait for write action attempt to start
+      while (!app.isWriteActionPending());
+      ProgressManager.getInstance().executeNonCancelableSection(()->{
+        app.executeByImpatientReader(() -> {
+          executingImpatientReader.set(true);
+          app.runReadAction(EmptyRunnable.getInstance());
+          // must not throw
+        });
+      });
+    });
+
+    Future<?> readAction1Canceler = app.executeOnPooledThread(() -> {
+      while (!executingImpatientReader.get());
+      TimeoutUtil.sleep(300); // make sure readAction2 does call runReadAction()
+      stopRead.set(true);
+    });
+    app.runWriteAction(EmptyRunnable.getInstance());
+
+    readAction1Canceler.get();
+    readAction2.get();
+    readAction1.get();
+  }
 }

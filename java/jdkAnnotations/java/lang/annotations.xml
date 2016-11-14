@@ -37,12 +37,6 @@
   <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="java.lang.ClassLoader InputStream getResourceAsStream(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
   <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -69,9 +63,6 @@
   </item>
   <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name="java.lang.Runtime Process exec(java.lang.String[]) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />

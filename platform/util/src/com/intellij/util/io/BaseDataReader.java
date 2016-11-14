@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -207,6 +209,15 @@ public abstract class BaseDataReader {
   public void waitFor() throws InterruptedException {
     try {
       myFinishedFuture.get();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+  }
+
+  public void waitFor(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    try {
+      myFinishedFuture.get(timeout, unit);
     }
     catch (ExecutionException e) {
       LOG.error(e);

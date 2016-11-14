@@ -308,7 +308,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       }
       if (outputContent != null) {
         myCell.addCellOutput(outputContent);
-        addOutputPanel(myViewPanel, outputContent, outputContent instanceof IpnbOutOutputCell);
+        final JComponent component = myHideableOutputPanel.getSecondComponent();
+        if (component != null) {
+          addOutputPanel(component, outputContent, outputContent instanceof IpnbOutOutputCell);
+        }
       }
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
       filePanel.revalidateAndRepaint();

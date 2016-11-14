@@ -151,7 +151,7 @@ public interface PydevConsoleRunner {
       }
     }));
 
-    return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PY_PATHS_ENV, path);
+    return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path);
   }
 
   static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {

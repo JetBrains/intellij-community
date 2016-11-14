@@ -18,16 +18,16 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
@@ -53,23 +53,29 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         if (scope.isEmpty()) return;
 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
-        ApplicationManager.getApplication().runReadAction(() -> {
-          FileTypeIndex.processFiles(JsonFileType.INSTANCE, jsonFile -> {
-            final Collection<Pair<VirtualFile, String>> collection = myService.getSchemaFilesByFile(jsonFile);
-            if (collection != null && !collection.isEmpty()) {
-              for (Pair<VirtualFile, String> pair : collection) {
-                if (scope.contains(pair.getFirst())) {
-                  final PsiFile psiFile = PsiManager.getInstance(project).findFile(jsonFile);
-                  if (psiFile != null) {
-                    analyzer.restart(psiFile);
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final Editor[] editors = EditorFactory.getInstance().getAllEditors();
+        for (Editor editor : editors) {
+          if (editor instanceof EditorEx) {
+            final VirtualFile file = ((EditorEx)editor).getVirtualFile();
+            if (JsonFileType.INSTANCE.equals(file.getFileType())) {
+              final Collection<Pair<VirtualFile, String>> collection = myService.getSchemaFilesByFile(file);
+              if (collection != null && !collection.isEmpty()) {
+                for (Pair<VirtualFile, String> pair : collection) {
+                  if (scope.contains(pair.getFirst())) {
+                    ApplicationManager.getApplication().runReadAction(() -> {
+                      final PsiFile psiFile = psiManager.findFile(file);
+                      if (psiFile != null) {
+                        analyzer.restart(psiFile);
+                      }
+                    });
+                    break;
                   }
-                  return true;
                 }
               }
             }
-            return true;
-          }, GlobalSearchScope.projectScope(project));
-        });
+          }
+        }
       };
 
       @Override
@@ -105,10 +111,8 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       private void onFileChange(@NotNull final VirtualFile schemaFile) {
         if (myMappingsProjectConfiguration.isRegisteredSchemaFile(schemaFile)) {
           myService.dropProviderFromCache(schemaFile);
-          if (Registry.is("json.schema.fast.annotation.update")) {
-            myDirtySchemas.add(schemaFile);
-            myUpdater.queue(myRunnable);
-          }
+          myDirtySchemas.add(schemaFile);
+          myUpdater.queue(myRunnable);
         }
       }
     });

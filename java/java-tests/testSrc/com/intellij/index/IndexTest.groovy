@@ -32,6 +32,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
@@ -64,6 +66,7 @@ import com.intellij.util.FileContentUtil
 import com.intellij.util.Processor
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 /**
  * @author Eugene Zhuravlev
@@ -566,14 +569,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         boolean visitFile(@NotNull VirtualFile visitedFile) {
-          iterator.processFile(visitedFile);
-          return true;
+          iterator.processFile(visitedFile)
+          return true
         }
-      });
+      })
     }
 
     protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
-      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange);
+      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange)
     }
 
     @Override
@@ -586,12 +589,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
         @Override
         boolean process(VfsEventsMerger.ChangeInfo info) {
-          operation.set(info.toString());
+          operation.set(info.toString())
           return true
         }
       })
 
-      StringUtil.replace(operation.get(), file.getPath(), file.getName());
+      StringUtil.replace(operation.get(), file.getPath(), file.getName())
     }
   }
 
@@ -601,7 +604,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
       VirtualFileManager.VFS_CHANGES,
       listener
-    );
+    )
 
     def fileName = "test.txt"
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
@@ -614,17 +617,17 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("file: $fileName\n" +
                  "operation: REMOVE ADD", listener.indexingOperation(testFile))
 
-    VfsUtil.saveText(testFile, "foo");
-    VfsUtil.saveText(testFile, "bar");
+    VfsUtil.saveText(testFile, "foo")
+    VfsUtil.saveText(testFile, "bar")
 
     assertEquals("file: $fileName\n" +
-                 "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile));
+                 "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile))
 
     VfsUtil.saveText(testFile, "baz")
     testFile.delete(null)
 
     assertEquals("file: $fileName\n" +
-                 "operation: REMOVE", listener.indexingOperation(testFile));
+                 "operation: REMOVE", listener.indexingOperation(testFile))
   }
 
   void "test files inside copied directory are indexed"() {
@@ -643,35 +646,35 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
   }
 
-
+  @CompileStatic
   void "test Vfs Events Processing Performance"() {
     def filename = 'A.java'
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
     PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", 1000, {
       def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
-      assert files != null
-      assert files.length == 1
+      assert files?.length == 1
 
       VirtualFile file = files[0].virtualFile
 
       def filename2 = 'B.java'
       def max = 100000
-      List<VFileEvent> eventList = new ArrayList<>(max);
-      def len = max / 2;
+      List<VFileEvent> eventList = new ArrayList<>(max)
+      def len = max / 2
 
       for(int i = 0; i < len; ++i) {
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true)) ;
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true)) ;
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
+        eventList.add(new VFileDeleteEvent(null, file, true))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, true))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
-      indexedFilesListener.before(eventList);
-      indexedFilesListener.after(eventList);
+      indexedFilesListener.before(eventList)
+      indexedFilesListener.after(eventList)
 
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
-      assert files != null
-      assert files.length == 1
-    }).cpuBound().ioBound().assertTiming();
+      assert files?.length == 1
+    }).cpuBound().ioBound().assertTiming()
   }
 }

@@ -708,13 +708,16 @@ class Key {
     setup("""
 class Test {
   void test() {
+    xxx(100);
     check(1 + 1);
     int i=1; check(1 + 1 + 1);
   }
   void check(int isShow) {}
+  void xxx(int followTheSum) {}
 }
 """)
-    
+
+    onLineStartingWith("xxx").assertInlays("followTheSum->100")
     onLineStartingWith("check").assertInlays("isShow->1")
     onLineStartingWith("int").assertInlays("isShow->1")
   }

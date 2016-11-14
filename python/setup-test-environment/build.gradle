@@ -18,8 +18,8 @@ envs {
   conda "django18", "2.7", ["django==1.6"], false
   textfile "django18/tags.txt", "django"
 
-//  conda "django17", "2.7", ["django==1.7"], false
-//  textfile "django17/tags.txt", "django\nskeletons"
+  conda "django17", "2.7", ["django==1.7"], false
+  textfile "django17/tags.txt", "django\nskeletons"
 
   conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox>=2.0", "pandas"], true
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
@@ -43,8 +43,12 @@ if (new File(envs.envsDirectory, "django_latest").exists() &&
   delete new File(envs.envsDirectory, "django_latest")
 }
 
-if (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
-    envs.envsDirectory.lastModified()<project.buildscript.sourceFile.lastModified()) {
+def bootstrapDirNotEmpty = envs.bootstrapDirectory.exists() &&
+                        (new File(envs.bootstrapDirectory, "latest_64/bin/conda").exists() ||
+                         new File(envs.bootstrapDirectory, "latest_64/Scripts/conda.exe").exists())
+
+if (!bootstrapDirNotEmpty || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
+    envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
   // clean the cache if the build script if modified later
   println "Cleaning cached environments at " + envs.envsDirectory
   delete envs.envsDirectory

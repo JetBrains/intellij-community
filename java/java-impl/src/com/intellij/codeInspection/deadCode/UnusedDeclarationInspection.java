@@ -25,7 +25,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -34,7 +33,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +41,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
   private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
@@ -155,12 +154,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       final ButtonGroup group = new ButtonGroup();
       group.add(asEntryPoint);
       group.add(asUnused);
-      final ActionListener listener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          setTestEntryPoints(asEntryPoint.isSelected());
-        }
-      };
+      final ActionListener listener = e -> setTestEntryPoints(asEntryPoint.isSelected());
       asEntryPoint.addActionListener(listener);
       asUnused.addActionListener(listener);
 
@@ -187,12 +181,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
 
       myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.main"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
-      myMainsCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected();
-        }
-      });
+      myMainsCheckbox.addActionListener(e -> ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected());
 
 
       add(myMainsCheckbox, gc);
@@ -200,23 +189,13 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
 
       myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.applet"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
-      myAppletToEntries.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected();
-        }
-      });
+      myAppletToEntries.addActionListener(e -> ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected());
       add(myAppletToEntries, gc);
       gc.gridy++;
 
       myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.servlet"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
-      myServletToEntries.addActionListener(new ActionListener(){
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected();
-        }
-      });
+      myServletToEntries.addActionListener(e -> ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected());
       add(myServletToEntries, gc);
       gc.gridy++;
 
@@ -224,12 +203,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         if (extension.showUI()) {
           final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
           extCheckbox.setSelected(extension.isSelected());
-          extCheckbox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              extension.setSelected(extCheckbox.isSelected());
-            }
-          });
+          extCheckbox.addActionListener(e -> extension.setSelected(extCheckbox.isSelected()));
           add(extCheckbox, gc);
           gc.gridy++;
         }
@@ -238,12 +212,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       myNonJavaCheckbox =
       new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.external"));
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
-      myNonJavaCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected();
-        }
-      });
+      myNonJavaCheckbox.addActionListener(e -> ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected());
 
       gc.weighty = 1;
       add(myNonJavaCheckbox, gc);
@@ -267,10 +236,10 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
 
   private class UnusedVariablesGraphAnnotator extends RefGraphAnnotator {
     private final InspectionManager myInspectionManager;
-    private GlobalInspectionContextImpl myContext;
-    private Map<String, Tools> myTools;
+    private final GlobalInspectionContextImpl myContext;
+    private final Map<String, Tools> myTools;
 
-    public UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
+    UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
       myInspectionManager = inspectionManager;
       myContext = (GlobalInspectionContextImpl)((RefManagerImpl)refManager).getContext();
       myTools = myContext.getTools();

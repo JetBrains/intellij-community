@@ -373,6 +373,14 @@ public class PsiTestUtil {
   public static Sdk addJdkAnnotations(@NotNull Sdk sdk) {
     String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations";
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+    return addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), root);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static Sdk addRootsToJdk(@NotNull Sdk sdk,
+                                  @NotNull OrderRootType rootType,
+                                  @NotNull VirtualFile... roots) {
     Sdk clone;
     try {
       clone = (Sdk)sdk.clone();
@@ -381,7 +389,9 @@ public class PsiTestUtil {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
-    sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
+    for (VirtualFile root : roots) {
+      sdkModificator.addRoot(root, rootType);
+    }
     sdkModificator.commitChanges();
     return clone;
   }

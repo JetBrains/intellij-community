@@ -21,4 +21,5 @@ public class SSHUtil {
   public static final Pattern PASSPHRASE_PROMPT = Pattern.compile("Enter passphrase for key \\'(.*)\\':\\s?");
   public static final Pattern PASSWORD_PROMPT = Pattern.compile("(.*)\\'s password:\\s?");
   public static final String PASSWORD_PROMPT_SUFFIX = "password:";
+  public static final String CONFIRM_CONNECTION_PROMPT = "Are you sure you want to continue connecting";
 }

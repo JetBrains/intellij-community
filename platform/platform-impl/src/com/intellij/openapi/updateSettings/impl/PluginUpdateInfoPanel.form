@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog.PluginUpdateInfoPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="63" y="44" width="604" height="510"/>
+      <xy x="63" y="44" width="604" height="522"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -13,7 +13,6 @@
           <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <preferredSize width="268" height="30"/>
           <text resource-bundle="messages/IdeBundle" key="updates.plugins.ready.header"/>
         </properties>
       </component>

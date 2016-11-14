@@ -326,6 +326,12 @@ public final class LanguageConsoleBuilder {
       super.dispose();
     }
 
+    @Override
+    public void scrollToEnd() {
+      getComponent().validate();
+      super.scrollToEnd();
+    }
+
     private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
       private final ConsoleGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
