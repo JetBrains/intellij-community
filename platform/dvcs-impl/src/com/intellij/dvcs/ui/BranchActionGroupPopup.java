@@ -30,24 +30,23 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.ui.filter.FlatSpeedSearchPopup;
+import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.vcs.log.ui.filter.FlatSpeedSearchPopup.createSpeedSearchActionGroupWrapper;
+public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
-public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
-    super(title, new DefaultActionGroup(actions, createSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project), false, false, true, false,
-          null, -1, preselectActionCondition, null);
+    super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
+          preselectActionCondition, true);
   }
 
   @NotNull
-  public static ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+  public static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
     DefaultActionGroup speedSearchActions = new DefaultActionGroup();
     createSpeedSearchActions(actionGroup, speedSearchActions, true);
     return speedSearchActions;
@@ -57,38 +56,28 @@ public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
                                                @NotNull DefaultActionGroup speedSearchActions,
                                                boolean isFirstLevel) {
-
-    
+    // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
     if (!isFirstLevel) speedSearchActions.addSeparator(actionGroup.getTemplatePresentation().getText());
-    internalCreateSpeedSearchActions(actionGroup, speedSearchActions, isFirstLevel);
-  }
-
-  private static void internalCreateSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                                       @NotNull DefaultActionGroup speedSearchActions,
-                                                       boolean isFirstLevel) {
     for (AnAction child : actionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)child;
         if (isFirstLevel) {
           createSpeedSearchActions(childGroup, speedSearchActions, false);
         }
-        else if (!(childGroup instanceof RootAction)) {
+        else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
         }
       }
     }
   }
-  
+
   @Override
   public boolean shouldBeShowing(Object value) {
     if (!super.shouldBeShowing(value)) return false;
     if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
-    //todo check all separated repos if no common branches available
-    return getSpeedSearch().isHoldingFilter() && getListModel().getSize()==0 || !isSpeedsearchAction(((PopupFactoryImpl.ActionItem)value).getAction());
-  }
-
-  private static boolean isSpeedsearchAction(@NotNull AnAction action) {
-    return action instanceof FlatSpeedSearchPopup.SpeedsearchAction;
+    AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+    boolean isSpeedSearchAction = isSpeedsearchAction(action);
+    return getSpeedSearch().isHoldingFilter() || !isSpeedSearchAction;
   }
 
   @Override

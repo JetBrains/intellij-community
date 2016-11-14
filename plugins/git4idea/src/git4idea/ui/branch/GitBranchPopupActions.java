@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -141,7 +142,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for local branches.
    */
-  static class LocalBranchActions extends ActionGroup {
+  static class LocalBranchActions extends BranchActionGroup {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -150,7 +151,6 @@ class GitBranchPopupActions {
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
-      super("", true);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -288,7 +288,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for remote branches
    */
-  static class RemoteBranchActions extends ActionGroup {
+  static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -297,7 +297,6 @@ class GitBranchPopupActions {
 
     RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
-      super("", true);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
