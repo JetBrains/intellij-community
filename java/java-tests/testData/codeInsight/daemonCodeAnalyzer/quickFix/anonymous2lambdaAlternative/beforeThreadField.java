@@ -1,4 +1,4 @@
-// "Replace anonymous class with constructor accepting lambda" "false"
+// "Replace with constructor accepting lambda" "false"
 public class Main {
   public void testThread() {
     new <caret>Thread() {
