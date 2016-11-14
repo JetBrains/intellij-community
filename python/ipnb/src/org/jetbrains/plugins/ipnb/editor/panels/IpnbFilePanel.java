@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
   private final DocumentAdapter myDocumentListener;
   private final Document myDocument;
+  private final MessageBusConnection myBusConnection;
   private IpnbFile myIpnbFile;
   private final Project myProject;
   @NotNull private final IpnbFileEditor myParent;
@@ -98,19 +100,22 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }, 10, ModalityState.stateForComponent(this));
 
     UIUtil.requestFocus(this);
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectEx.ProjectSaved.TOPIC,
-                                                                            new ProjectEx.ProjectSaved() {
-                                                                              @Override
-                                                                              public void saved(@NotNull Project project) {
-                                                                                CommandProcessor.getInstance().runUndoTransparentAction(
-                                                                                  () -> ApplicationManager.getApplication()
-                                                                                    .runWriteAction(() -> saveToFile(false)));
-                                                                              }
-                                                                            });
+    myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myBusConnection.subscribe(ProjectEx.ProjectSaved.TOPIC,
+                              new ProjectEx.ProjectSaved() {
+                                @Override
+                                public void saved(@NotNull Project project) {
+                                  CommandProcessor.getInstance().runUndoTransparentAction(
+                                    () -> ApplicationManager.getApplication()
+                                      .runWriteAction(() -> saveToFile(false)));
+                                }
+                              });
   }
 
+  @Override
   public void dispose() {
     myDocument.removeDocumentListener(myDocumentListener);
+    Disposer.dispose(myBusConnection);
   }
 
   private void readFromFile(boolean showError) {
@@ -622,7 +627,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
       CommandProcessor.getInstance().executeCommand(getProject(),
                                                     () -> ApplicationManager.getApplication().runWriteAction(
-                                                    () -> saveToFile(false)), "Ipnb.runCell", new Object());
+                                                      () -> saveToFile(false)), "Ipnb.runCell", new Object());
     }
   }
 
