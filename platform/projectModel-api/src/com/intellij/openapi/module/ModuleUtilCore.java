@@ -157,8 +157,10 @@ public class ModuleUtilCore {
    * @param result resulted set
    */
   public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<Module> result) {
-    if (result.contains(module)) return;
-    result.add(module);
+    if (!result.add(module)) {
+      return;
+    }
+
     final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
     final List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
     for (final Module dependentModule : dependentModules) {
@@ -169,7 +171,8 @@ public class ModuleUtilCore {
           if (orderEntry.getModule() == module) {
             if (orderEntry.isExported()) {
               collectModulesDependsOn(dependentModule, result);
-            } else {
+            }
+            else {
               result.add(dependentModule);
             }
             break;
