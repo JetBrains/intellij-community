@@ -926,4 +926,9 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     }).cpuBound().assertTiming();
   }
 
+  public void testDifferentHashCodesForDifferentElementsInOneFile() throws Exception {
+    PsiClass clazz = ((PsiJavaFile)createFile("a.java", "class Foo { void foo(); }")).getClasses()[0];
+    assertFalse(createPointer(clazz).hashCode() == createPointer(clazz.getMethods()[0]).hashCode());
+  }
+
 }

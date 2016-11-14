@@ -27,8 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.smartPointers.AnchorTypeInfo;
-import com.intellij.psi.impl.smartPointers.SelfElementInfo;
+import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -47,7 +46,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
-  private volatile Pair<TextRange, AnchorTypeInfo> myMirror;
+  private volatile Pair<TextRange, Identikit.ByType> myMirror;
 
   @Override
   @NotNull
@@ -158,8 +157,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   @Override
   public PsiElement getMirror() {
     PsiFile mirrorFile = ((ClsFileImpl)getContainingFile()).getMirror().getContainingFile();
-    Pair<TextRange, AnchorTypeInfo> mirror = myMirror;
-    return mirror == null ? null : SelfElementInfo.findElementInside(mirrorFile, mirror.first, mirror.second);
+    Pair<TextRange, Identikit.ByType> mirror = myMirror;
+    return mirror == null ? null : mirror.second.findPsiElement(mirrorFile, mirror.first.getStartOffset(), mirror.first.getEndOffset());
   }
 
   @Override
@@ -268,7 +267,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     PsiElement psi = element.getPsi();
     psi.putUserData(COMPILED_ELEMENT, this);
-    myMirror = Pair.create(element.getTextRange(), AnchorTypeInfo.obtainInfo(psi, JavaLanguage.INSTANCE));
+    myMirror = Pair.create(element.getTextRange(), Identikit.fromPsi(psi, JavaLanguage.INSTANCE));
   }
 
   protected static <T extends  PsiElement> void setMirror(@Nullable T stub, @Nullable T mirror) throws InvalidMirrorException {
