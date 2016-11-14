@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -318,7 +319,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement firstElement = elements[0];
     final PsiElement secondElement = elements[1];
 
-    if (firstElement instanceof PsiDeclarationStatement && PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement) {
+    if (firstElement instanceof PsiDocComment) {
+      // might be method with javadoc
+      return true;
+    }
+    else if (firstElement instanceof PsiDeclarationStatement && PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement) {
       // might be method
       return true;
     }
