@@ -600,7 +600,8 @@ public class ByWord {
         Range expanded = expandW(myText1, myText2, range);
         Range trimmed = trim(myText1, myText2, expanded);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEqualsIW(myText1, myText2, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -638,7 +639,8 @@ public class ByWord {
         MergeRange expanded = expandW(myText1, myText2, myText3, range);
         MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEqualsIW(myText1, myText2, myText3, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -690,7 +692,8 @@ public class ByWord {
 
         Range trimmed = new Range(start1, end1, start2, end2);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEquals(myText1, myText2, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -753,7 +756,8 @@ public class ByWord {
 
         MergeRange trimmed = new MergeRange(start1, end1, start2, end2, start3, end3);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEquals(myText1, myText2, myText3, trimmed)) {
           myChanges.add(trimmed);
         }
       }
