@@ -23,6 +23,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
+// unless stated otherwise, the behavior described in cases is true for 162+
 class UpdateStrategyTest {
   @Test fun `channel contains no builds`() {
     val result = check("IU-145.258", ChannelStatus.RELEASE, """<channel id="IDEA_Release" status="release" licensing="release"/>""")
@@ -150,6 +151,7 @@ class UpdateStrategyTest {
     assertBuild("143.2332", result.newBuild)
   }
 
+  // since 163
   @Test fun `updates from the same baseline are preferred (per-release channels)`() {
     val result = check("IU-143.2287", ChannelStatus.EAP, """
       <channel id="IDEA_143_EAP" status="eap" licensing="eap">
