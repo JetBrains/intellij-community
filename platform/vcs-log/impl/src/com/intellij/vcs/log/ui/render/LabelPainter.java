@@ -37,16 +37,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +51,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.vcs.log.impl.SimpleRefGroup.getColors;
 
 public class LabelPainter implements ReferencePainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(1);
@@ -131,7 +131,8 @@ public class LabelPainter implements ReferencePainter {
         }
       }
       else {
-        LabelIcon labelIcon = new LabelIcon(height, background, getGroupColors(group));
+        List<Color> colors = group.getColors();
+        LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
         width += labelIcon.getIconWidth() + MIDDLE_PADDING;
 
         String text = shortenRefName(group.getName(), fontMetrics, availableWidth - width);
@@ -184,30 +185,6 @@ public class LabelPainter implements ReferencePainter {
       return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
     }
     return refName;
-  }
-
-  @NotNull
-  public static Color[] getGroupColors(@NotNull RefGroup group) {
-    MultiMap<VcsRefType, VcsRef> referencesByType = ContainerUtil.groupBy(group.getRefs(), VcsRef::getType);
-    Color[] colors;
-    if (referencesByType.size() == 1) {
-      Map.Entry<VcsRefType, Collection<VcsRef>> firstItem =
-        ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(referencesByType.entrySet()));
-      boolean multiple = firstItem.getValue().size() > 1;
-      Color color = firstItem.getKey().getBackgroundColor();
-      colors = multiple ? new Color[]{color, color} : new Color[]{color};
-    }
-    else {
-      List<Color> colorsList = ContainerUtil.newArrayList();
-      for (VcsRefType type : referencesByType.keySet()) {
-        if (referencesByType.get(type).size() > 1) {
-          colorsList.add(type.getBackgroundColor());
-        }
-        colorsList.add(type.getBackgroundColor());
-      }
-      colors = colorsList.toArray(new Color[colorsList.size()]);
-    }
-    return colors;
   }
 
   public void paint(@NotNull Graphics2D g2, int x, int y, int height) {

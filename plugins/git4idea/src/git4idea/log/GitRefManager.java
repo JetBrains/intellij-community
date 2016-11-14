@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import git4idea.GitBranch;
@@ -155,7 +156,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
       else {
         if (!repository.isOnBranch()) {
-          groups.add(new TableRefGroup("!", Collections.singletonList(head)));
+          groups.add(new SimpleRefGroup("!", Collections.singletonList(head)));
           sortedReferences = sortedReferences.subList(1, sortedReferences.size());
         }
       }
@@ -177,7 +178,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
     }
 
-    groups.add(new TableRefGroup(name, sortedReferences));
+    groups.add(new SimpleRefGroup(name, sortedReferences));
 
     return groups;
   }
@@ -358,8 +359,8 @@ public class GitRefManager implements VcsLogRefManager {
 
     @NotNull
     @Override
-    public Color getBgColor() {
-      return VcsLogStandardColors.Refs.TIP;
+    public List<Color> getColors() {
+      return Collections.singletonList(VcsLogStandardColors.Refs.TIP);
     }
   }
 
@@ -391,41 +392,8 @@ public class GitRefManager implements VcsLogRefManager {
 
     @NotNull
     @Override
-    public Color getBgColor() {
-      return VcsLogStandardColors.Refs.BRANCH_REF;
-    }
-  }
-
-  private static class TableRefGroup implements RefGroup {
-    @NotNull private final String myName;
-    @NotNull private final List<VcsRef> myRefs;
-
-    private TableRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
-      myName = name;
-      myRefs = refs;
-    }
-
-    @Override
-    public boolean isExpanded() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    @Override
-    public List<VcsRef> getRefs() {
-      return myRefs;
-    }
-
-    @NotNull
-    @Override
-    public Color getBgColor() {
-      return myRefs.get(0).getType().getBackgroundColor();
+    public List<Color> getColors() {
+      return Collections.singletonList(VcsLogStandardColors.Refs.BRANCH_REF);
     }
   }
 
