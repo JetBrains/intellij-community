@@ -1,12 +1,14 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 /**
@@ -17,7 +19,7 @@ public class JsonSchemaObject {
   private Map<String, JsonSchemaObject> myDefinitions;
   private Map<String, JsonSchemaObject> myProperties;
   private Map<String, JsonSchemaObject> myPatternProperties;
-  private final SLRUMap<String, String> myCachedPatternProperties = new SLRUMap<>(100, 100);
+  private final PatternCalculator myPatternCalculator = new PatternCalculator();
 
   private String myId;
   private String mySchema;
@@ -81,7 +83,7 @@ public class JsonSchemaObject {
     myProperties = other.myProperties;
     myDefinitions = other.myDefinitions;
     myPatternProperties = other.myPatternProperties;
-    myCachedPatternProperties.clear();
+    myPatternCalculator.clear();
 
     myType = other.myType;
     myDefault = other.myDefault;
@@ -124,7 +126,7 @@ public class JsonSchemaObject {
     myProperties.putAll(other.myProperties);
     myDefinitions = copyMap(myDefinitions, other.myDefinitions);
     myPatternProperties = copyMap(myPatternProperties, other.myPatternProperties);
-    myCachedPatternProperties.clear();
+    myPatternCalculator.clear();
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
@@ -199,7 +201,7 @@ public class JsonSchemaObject {
 
   public void setPatternProperties(Map<String, JsonSchemaObject> patternProperties) {
     myPatternProperties = patternProperties;
-    myCachedPatternProperties.clear();
+    myPatternCalculator.clear();
   }
 
   public JsonSchemaType getType() {
@@ -504,24 +506,7 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
-    if (myPatternProperties == null || myPatternProperties.isEmpty()) return null;
-    final String s = myCachedPatternProperties.get(name);
-    if (s != null) return myPatternProperties.get(s);
-    final List<String> strings = new ArrayList<>(myPatternProperties.keySet());
-    Collections.sort(strings);
-    for (final String pattern : strings) {
-      try {
-        final boolean matches = Pattern.compile(adaptSchemaPattern(pattern)).matcher(StringUtil.newBombedCharSequence(name, 1000)).matches();
-        if (matches) {
-          myCachedPatternProperties.put(name, pattern);
-          return myPatternProperties.get(pattern);
-        }
-      } catch (ProcessCanceledException e) {
-        //ignored
-      }
-    }
-    myCachedPatternProperties.put(name, "");
-    return null;
+    return myPatternCalculator.getMatchingPatternPropertySchema(myPatternProperties, name);
   }
 
   @NotNull
@@ -529,5 +514,85 @@ public class JsonSchemaObject {
     pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
     pattern = pattern.endsWith("+") || pattern.endsWith("*") ? pattern : (pattern + ".*");
     return pattern;
+  }
+
+  private static class PatternCalculator {
+    private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+    private Map<String, Pattern> myCachedPatterns;
+    private SLRUMap<String, String> myCachedPatternProperties;
+
+    @Nullable
+    public JsonSchemaObject getMatchingPatternPropertySchema(@Nullable final Map<String, JsonSchemaObject> patternProperties,
+                                                             @NotNull final String name) {
+      if (patternProperties == null || patternProperties.isEmpty()) return null;
+      myLock.readLock().lock();
+      try {
+        if (myCachedPatterns == null) {
+          initPatternCache(patternProperties);
+        }
+        assert myCachedPatternProperties != null;
+        final String s = myCachedPatternProperties.get(name);
+        if (s != null) return patternProperties.get(s);
+        return matchPatternsToString(name, patternProperties);
+      } finally {
+        myLock.readLock().unlock();
+      }
+    }
+
+    public void clear() {
+      myLock.writeLock().lock();
+      try {
+        myCachedPatterns = null;
+        myCachedPatternProperties = null;
+      } finally {
+        myLock.writeLock().unlock();
+      }
+    }
+
+    private JsonSchemaObject matchPatternsToString(@NotNull final String name, @NotNull final Map<String, JsonSchemaObject> patternProperties) {
+      final List<String> strings = new ArrayList<>(patternProperties.keySet());
+      Collections.sort(strings);
+
+      return underWrite(() -> {
+        for (final String pattern : strings) {
+          try {
+            final Pattern compiledPattern = myCachedPatterns.get(pattern);
+            assert compiledPattern != null;
+            final boolean matches = compiledPattern.matcher(StringUtil.newBombedCharSequence(name, 300)).matches();
+            if (matches) {
+              myCachedPatternProperties.put(name, pattern);
+              return patternProperties.get(pattern);
+            }
+          } catch (ProcessCanceledException e) {
+            //ignored
+          }
+        }
+        myCachedPatternProperties.put(name, "");
+        return null;
+      });
+    }
+
+    private <T> T underWrite(@NotNull final Computable<T> computable) {
+      myLock.readLock().unlock();
+      myLock.writeLock().lock();
+      try {
+        final T t = computable.compute();
+        myLock.readLock().lock();
+        return t;
+      } finally {
+        myLock.writeLock().unlock();
+      }
+    }
+
+    private void initPatternCache(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
+      underWrite(() -> {
+        myCachedPatterns = new HashMap<>(patternProperties.size(), 1.0f);
+        myCachedPatternProperties = new SLRUMap<>(100, 100);
+        for (String pattern : patternProperties.keySet()) {
+          myCachedPatterns.put(pattern, Pattern.compile(adaptSchemaPattern(pattern)));
+        }
+        return true;
+      });
+    }
   }
 }
