@@ -39,6 +39,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -2143,8 +2144,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       long elapsed = System.currentTimeMillis() - start;
 
       assertEquals(0, errors.size());
+      if (!run.get()) {
+        fail(ThreadDumper.dumpThreadsToString());
+      }
       assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
-      assertTrue(run.get());
     }
     finally {
       ExternalLanguageAnnotators.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, annotator);
