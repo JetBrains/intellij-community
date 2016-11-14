@@ -1614,7 +1614,7 @@ public class InferenceSession {
       }
 
       if (methodContainingClass != null) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
+        psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);
         LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass +
                                                "; super: " + methodContainingClass +
                                                "; reference: " + reference.getText() +
@@ -1631,7 +1631,7 @@ public class InferenceSession {
       final PsiType pType = signature.getParameterTypes()[0];
 
       // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
-      // the type to search is the result of capture conversion (5.1.10) applied to T; 
+      // the type to search is the result of capture conversion (5.1.10) applied to T;
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
         PsiType normalizedPType = PsiUtil.captureToplevelWildcards(pType, myContext);
@@ -1646,7 +1646,7 @@ public class InferenceSession {
           mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
 
           if (methodContainingClass != null) {
-            final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, receiverSubstitutor);
+            final PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), receiverSubstitutor);
             LOG.assertTrue(superSubstitutor != null, "mContainingClass: " + methodContainingClass.getName() + "; containingClass: " + containingClass.getName());
             mySiteSubstitutor = mySiteSubstitutor.putAll(superSubstitutor);
           }
@@ -1660,8 +1660,11 @@ public class InferenceSession {
       addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), pType));
 
       if (methodContainingClass != null) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
-        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
+        psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);
+        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass +
+                                               "; super: " + methodContainingClass +
+                                               "; reference: " + reference.getText() +
+                                               "; containingFile: " + reference.getContainingFile().getName());
       }
 
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
