@@ -81,6 +81,8 @@ public class ImmediatePainter {
 
   public static final int DEBUG_PAUSE_DURATION = 1000;
 
+  private static final int CARET_COUNT_THRESHOLD = 5;
+
   // TODO Should be removed when IDEA adopts typing without starting write actions.
   private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
 
@@ -97,6 +99,7 @@ public class ImmediatePainter {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass()) &&
+            myEditor.getCaretModel().getCaretCount() <= CARET_COUNT_THRESHOLD &&
             !(action.getClass() == PasteAction.class && getSelectionModel().hasSelection())) {
           myImmediateEditingInProgress = true;
         }
@@ -141,6 +144,13 @@ public class ImmediatePainter {
     if (isZeroLatencyTypingEnabled() && getDocument().isWritable() && !myEditor.isViewer() && canPaintImmediately(c)) {
       for (Caret caret : getCaretModel().getAllCarets()) {
         paintImmediately(g, caret.getOffset(), c, myEditor.isInsertMode());
+      }
+
+      // flush changes (there can be batching / buffering in video driver)
+      Toolkit.getDefaultToolkit().sync();
+
+      if (isZeroLatencyTypingDebugEnabled()) {
+        pause();
       }
     }
   }
@@ -187,6 +197,7 @@ public class ImmediatePainter {
     return getDocument() instanceof DocumentImpl &&
            getHighlighter() instanceof LexerEditorHighlighter &&
            !getSelectionModel().hasSelection() &&
+           myEditor.getCaretModel().getCaretCount() <= CARET_COUNT_THRESHOLD &&
            arePositionsWithinDocument(getCaretModel().getAllCarets()) &&
            areVisualLinesUnique(getCaretModel().getAllCarets()) &&
            !isInplaceRenamerActive() &&
@@ -267,13 +278,6 @@ public class ImmediatePainter {
     }
     fill(g, newArea, background);
     print(g, newText, point, ascent, font, foreground);
-
-    // flush changes (there can be batching / buffering in video driver)
-    Toolkit.getDefaultToolkit().sync();
-
-    if (isZeroLatencyTypingDebugEnabled()) {
-      pause();
-    }
   }
 
   private static void pause() {
