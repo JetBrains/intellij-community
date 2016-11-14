@@ -28,7 +28,10 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IpnbParser {
   private static final Logger LOG = Logger.getInstance(IpnbParser.class);
@@ -57,7 +60,7 @@ public class IpnbParser {
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
       int nbformat = isIpythonNewFormat(virtualFile) ? 4 : 3;
-      return new IpnbFile(Collections.emptyMap(), nbformat, Lists.newArrayList(), path);
+      return new IpnbFile(new HashMap<>(), nbformat, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
@@ -256,7 +259,7 @@ public class IpnbParser {
     public IpnbCell createCell(boolean isValidSource) {
       final IpnbCell cell;
       if (cell_type.equals("markdown")) {
-        cell = new IpnbMarkdownCell(isValidSource ? source : Collections.emptyList(), metadata);
+        cell = new IpnbMarkdownCell(isValidSource ? source : new ArrayList<>(), metadata);
       }
       else if (cell_type.equals("code")) {
         final List<IpnbOutputCell> outputCells = new ArrayList<>();
@@ -265,14 +268,14 @@ public class IpnbParser {
         }
         final Integer prompt = prompt_number != null ? prompt_number : execution_count;
         cell = new IpnbCodeCell(language == null ? "python" : language,
-                                input == null ? (isValidSource ? source : Collections.emptyList()) : input,
+                                input == null ? (isValidSource ? source : new ArrayList<>()) : input,
                                 prompt, outputCells, metadata);
       }
       else if (cell_type.equals("raw")) {
-        cell = new IpnbRawCell(isValidSource ? source : Collections.emptyList());
+        cell = new IpnbRawCell(isValidSource ? source : new ArrayList<>());
       }
       else if (cell_type.equals("heading")) {
-        cell = new IpnbHeadingCell(isValidSource ? source : Collections.emptyList(), level, metadata);
+        cell = new IpnbHeadingCell(isValidSource ? source : new ArrayList<>(), level, metadata);
       }
       else {
         cell = null;
@@ -303,7 +306,7 @@ public class IpnbParser {
       final CellOutputRaw raw = new CellOutputRaw();
       raw.metadata = outputCell.getMetadata();
       if (raw.metadata == null && !(outputCell instanceof IpnbStreamOutputCell) && !(outputCell instanceof IpnbErrorOutputCell)) {
-        raw.metadata = Collections.emptyMap();
+        raw.metadata = new HashMap<>();
       }
 
       if (outputCell instanceof IpnbPngOutputCell) {
