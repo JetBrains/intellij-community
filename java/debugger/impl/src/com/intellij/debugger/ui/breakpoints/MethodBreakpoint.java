@@ -150,14 +150,17 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
 
     AtomicReference<ProgressIndicator> indicatorRef = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> indicatorRef.set(new ProgressWindowWithNotification(true, myProject)));
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> indicatorRef.set(new ProgressWindowWithNotification(true, false, myProject, "Cancel emulation")));
     ProgressIndicator indicator = indicatorRef.get();
     ProgressManager.getInstance().executeProcessUnderProgress(
       () -> processPreparedSubTypes(baseType, subType -> createRequestForPreparedClassEmulated(debugProcess, subType, false), indicator),
       indicator);
     if (indicator.isCanceled()) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        getProperties().EMULATED = false;
+        fireBreakpointChanged();
+      });
     }
   }
 
