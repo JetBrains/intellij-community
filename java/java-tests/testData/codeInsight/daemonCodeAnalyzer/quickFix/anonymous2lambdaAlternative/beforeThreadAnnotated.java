@@ -1,4 +1,4 @@
-// "Replace anonymous class with constructor accepting lambda" "false"
+// "Replace with constructor accepting lambda" "false"
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
