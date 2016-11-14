@@ -171,7 +171,10 @@ public abstract class BaseDataReader {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      if (!isStopped) LOG.info(e);
+    }
+    catch (InterruptedException e) {
+      if (!isStopped) LOG.info(e);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -199,6 +202,7 @@ public abstract class BaseDataReader {
   public void stop() {
     isStopped = true;
     resumeReading();
+    myFinishedFuture.cancel(true);
   }
 
   public void waitFor() throws InterruptedException {
