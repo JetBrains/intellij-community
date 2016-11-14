@@ -188,6 +188,37 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       ("   " - "     -     ").ignore()
       testAll()
     }
+
+    words {
+      ("_i" - "i_")
+      ("- " - " -").default()
+      ("  " - "  ").trim()
+      testAll()
+    }
+
+    words {
+      ("i_" - "_i")
+      ("- " - " -").default() // TODO
+      testAll()
+    }
+
+    words {
+      ("x_y" - "xy")
+      ("   " - "  ").ignore()
+      testIgnore()
+    }
+
+    words {
+      ("A x_y B" - "a xy b")
+      ("-------" - "------").ignore()
+      testIgnore()
+    }
+
+    words {
+      ("A xy B" - "a xy b")
+      ("-    -" - "-    -").ignore()
+      testIgnore()
+    }
   }
 
   fun testFixedBugs() {
@@ -233,7 +264,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
 
     lines_inner {
       ("x .. z" - "x y .. z")
-      ("      " - " --     ").default() // TODO: looks wrong
+      ("      " - " --     ").default()
       ("      " - "  -     ").ignore()
       testAll()
     }
