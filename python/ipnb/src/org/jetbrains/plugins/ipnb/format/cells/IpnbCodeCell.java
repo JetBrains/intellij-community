@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +61,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
 
   @NotNull
   public static IpnbCodeCell createEmptyCodeCell() {
-    return new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<>(),
-                            Collections.emptyMap());
+    return new IpnbCodeCell("python", new ArrayList<>(), null, new ArrayList<>(),
+                            new HashMap<>());
   }
 }
