@@ -122,6 +122,14 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   @NotNull
+  public Project getProjectOrFail(String projectId) {
+    List<Project> list = myProject2Id.getKeysByValue(projectId);
+    if (list == null || list.isEmpty()) throw new AssertionError(projectId + " project not found: " + myProject2Id.values());
+    if (list.size() != 1) throw new AssertionError(projectId + " is mapped to several projects: " + list);
+    return list.get(0);
+  }
+
+  @NotNull
   public Collection<T> getCachedFiles() {
     return myCachedFiles.notNullValues();
   }
