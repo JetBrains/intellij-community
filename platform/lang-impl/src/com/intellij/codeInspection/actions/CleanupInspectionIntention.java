@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,30 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
                                                     @NotNull String presentationText,
                                                     @NotNull List<ProblemDescriptor> descriptions,
                                                     @Nullable Class quickfixClass) {
+    sortDescriptions(descriptions);
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass);
+  }
+
+  public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                          @NotNull String presentationText,
+                                                          @NotNull List<ProblemDescriptor> descriptions,
+                                                          @Nullable Class quickfixClass) {
+    final SequentialModalProgressTask progressTask =
+      new SequentialModalProgressTask(project, presentationText, true);
+    final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
+    final AbstractPerformFixesTask fixesTask = isBatch ?
+                                               new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass) :
+                                               new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(fixesTask);
+      ProgressManager.getInstance().run(progressTask);
+    }, presentationText, null);
+    return fixesTask;
+  }
+
+  public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
     Collections.sort(descriptions, (o1, o2) -> {
       final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
       final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
@@ -104,20 +128,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       }
       return -elementsDiff;
     });
-
-    final SequentialModalProgressTask progressTask =
-      new SequentialModalProgressTask(project, presentationText, true);
-    final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
-    final AbstractPerformFixesTask fixesTask = isBatch ?
-                  new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass) :
-                  new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass);
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      progressTask.setMinIterationTime(200);
-      progressTask.setTask(fixesTask);
-      ProgressManager.getInstance().run(progressTask);
-    }, presentationText, null);
-    return fixesTask;
   }
 
   @Override
