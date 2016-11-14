@@ -780,7 +780,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         .getComponent()
         .show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
     }
-    else if (!isDoubleClick || group.getChildrenCount() == 0) {
+    else if (!isDoubleClick || !ActionManager.getInstance().isGroup(actionId)) {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Edit Shortcuts",
                                                                             group,
