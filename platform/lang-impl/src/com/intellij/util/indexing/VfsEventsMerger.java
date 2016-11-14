@@ -23,7 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by Maxim.Mossienko on 11/10/2016.
+ * @author Maxim.Mossienko on 11/10/2016.
  */
 public class VfsEventsMerger {
   public void recordFileEvent(int fileId, VirtualFile file, boolean contentChange) {
@@ -35,19 +35,12 @@ public class VfsEventsMerger {
   }
 
   private void updateChange(int fileId, VirtualFile file, short mask) {
-    ChangeInfo newChangeInfo = new ChangeInfo(file, mask, null);
-    ChangeInfo existingChangeInfo = myChangeInfos.cacheOrGet(fileId, newChangeInfo);
-
-    if (existingChangeInfo != newChangeInfo) {
-      while (true) {
-        newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
-        if (existingChangeInfo == null) {
-          existingChangeInfo = myChangeInfos.cacheOrGet(fileId, newChangeInfo);
-        } else {
-          if (myChangeInfos.replace(fileId, existingChangeInfo, newChangeInfo)) break;
-          existingChangeInfo = myChangeInfos.get(fileId);
-        }
-      }
+    while (true) {
+      ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
+      ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
+      boolean replaced = existingChangeInfo == null ? myChangeInfos.putIfAbsent(fileId, newChangeInfo) == null
+                                                    : myChangeInfos.replace(fileId, existingChangeInfo, newChangeInfo);
+      if (replaced) break;
     }
   }
 
@@ -59,6 +52,7 @@ public class VfsEventsMerger {
   // 2. Method processes snapshot of available events at the time of the invokation, it does mean that if events are produced concurrently
   // with the processing then set of events will be not empty
   // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
+  // (without PCE)
   public boolean processChanges(VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
       int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
@@ -148,5 +142,4 @@ public class VfsEventsMerger {
       return fileId;
     }
   }
-
 }
