@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -53,6 +54,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +68,7 @@ public class InplaceChangeSignature implements DocumentListener {
   private ChangeInfo myCurrentInfo;
   private ChangeInfo myStableChange;
   private String myInitialSignature;
+  private String myInitialName;
   private Editor myEditor;
   private LanguageChangeSignatureDetector<ChangeInfo> myDetector;
 
@@ -97,6 +100,7 @@ public class InplaceChangeSignature implements DocumentListener {
     myDetector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
     myStableChange = myDetector.createInitialChangeInfo(element);
     myInitialSignature = myDetector.extractSignature(myStableChange);
+    myInitialName = DescriptiveNameUtil.getDescriptiveName(myStableChange.getMethod());
     TextRange highlightingRange = myDetector.getHighlightingRange(myStableChange);
 
     HighlightManager highlightManager = HighlightManager.getInstance(myProject);
@@ -119,6 +123,10 @@ public class InplaceChangeSignature implements DocumentListener {
 
   public ChangeInfo getCurrentInfo() {
     return myCurrentInfo;
+  }
+
+  public String getInitialName() {
+    return myInitialName;
   }
 
   public String getInitialSignature() {
@@ -211,7 +219,8 @@ public class InplaceChangeSignature implements DocumentListener {
     NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> myDelegate = checkBox.isSelected());
     JPanel content = new JPanel(new BorderLayout());
-    content.add(myPreview.getComponent(), BorderLayout.NORTH);
+    content.add(new JBLabel("Performed signature modifications:"), BorderLayout.NORTH);
+    content.add(myPreview.getComponent(), BorderLayout.CENTER);
     updateMethodSignature(myStableChange);
     content.add(checkBox, BorderLayout.SOUTH);
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(content, null).setSmallVariant(true);

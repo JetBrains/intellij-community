@@ -100,15 +100,23 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         buf.append(", ");
       }
 
+      String oldParamName = initialChangeInfo.getOldParameterNames()[i];
+      String oldParamType = initialChangeInfo.getOldParameterTypes()[i];
       if (toRemove[i]) {
-        String deletedParam = initialChangeInfo.getOldParameterTypes()[i] + " " + initialChangeInfo.getOldParameterNames()[i];
+        String deletedParam = oldParamType + " " + oldParamName;
         deleteRanges.add(new TextRange(buf.length(), buf.length() + deletedParam.length()));
         buf.append(deletedParam);
       }
       else {
         for (JavaParameterInfo parameter : newParameters) {
           if (parameter.getOldIndex() == i) {
-            buf.append(parameter.getTypeText()).append(" ").append(parameter.getName());
+            buf.append(parameter.getTypeText());
+            buf.append(" ");
+            if (!oldParamName.equals(parameter.getName())) {
+              deleteRanges.add(new TextRange(buf.length(), buf.length() + oldParamName.length()));
+              buf.append(oldParamName);
+            }
+            buf.append(parameter.getName());
             break;
           }
         }

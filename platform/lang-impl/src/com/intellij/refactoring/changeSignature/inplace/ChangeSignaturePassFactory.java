@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -92,7 +91,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
         builder.textAttributes(attributes);
         builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
         info = builder.createUnconditionally();
-        QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(DescriptiveNameUtil.getDescriptiveName(element)));
+        QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(currentRefactoring.getInitialName()));
       }
       Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.<HighlightInfo>emptyList();
       UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
