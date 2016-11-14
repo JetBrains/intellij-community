@@ -42,7 +42,7 @@ import java.util.List;
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   @Nullable private final AffixOffsets myAffixOffsets;
-  private final AnchorTypeInfo myType;
+  private final Identikit myType;
   @NotNull
   private final SmartPsiElementPointer<PsiLanguageInjectionHost> myHostContext;
 
@@ -60,7 +60,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
-    myType = AnchorTypeInfo.obtainInfo(injectedElement, LanguageUtil.getRootLanguage(containingFile));
+    myType = Identikit.fromPsi(injectedElement, LanguageUtil.getRootLanguage(containingFile));
 
     int startAffixIndex = -1;
     int startAffixOffset = -1;
@@ -114,7 +114,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi, myAffixOffsets);
     if (rangeInInjected == null) return null;
 
-    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected, myType);
+    return myType.findPsiElement(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset());
   }
 
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,

@@ -34,10 +34,8 @@ import org.jetbrains.annotations.Nullable;
 class AnchorElementInfo extends SelfElementInfo {
   private volatile long myStubElementTypeAndId; // stubId in the lower 32 bits; stubElementTypeIndex in the high 32 bits packed together for atomicity
 
-  AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()),
-          AnchorTypeInfo.obtainInfo(anchor, LanguageUtil.getRootLanguage(containingFile)),
-          containingFile, false);
+  AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, Identikit.ByAnchor identikit) {
+    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
     myStubElementTypeAndId = pack(-1, null);
   }
@@ -47,7 +45,7 @@ class AnchorElementInfo extends SelfElementInfo {
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
     super(containingFile.getProject(), null,
-          AnchorTypeInfo.obtainInfo(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
+          Identikit.fromTypes(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
           containingFile, false);
     myStubElementTypeAndId = pack(stubId, stubElementType);
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
@@ -76,27 +74,7 @@ class AnchorElementInfo extends SelfElementInfo {
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
 
-    Segment psiRange = getPsiRange();
-    if (psiRange == null) return null;
-
-    PsiFile file = restoreFile();
-    if (file == null) return null;
-    PsiElement anchor = findElementInside(file, psiRange, myType);
-    if (anchor == null) return null;
-
-    TextRange range = anchor.getTextRange();
-    if (range == null || range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
-
-    return restoreFromAnchor(anchor);
-  }
-
-  @Nullable
-  static PsiElement restoreFromAnchor(PsiElement anchor) {
-    for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
-      final PsiElement element = provider.restoreElement(anchor);
-      if (element != null) return element;
-    }
-    return anchor;
+    return super.restoreElement();
   }
 
   @Override
@@ -134,10 +112,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   void switchToTreeRange(@NotNull PsiElement element) {
-    PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-    if (anchor == null) anchor = element;
-    myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
-    setRange(anchor.getTextRange());
+    switchToAnchor(element);
     myStubElementTypeAndId = pack(-1, null);
   }
 
