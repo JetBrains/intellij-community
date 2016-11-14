@@ -33,7 +33,6 @@ public abstract class BaseDataReader {
   private static final Logger LOG = Logger.getInstance(BaseDataReader.class);
 
   protected final SleepingPolicy mySleepingPolicy;
-  protected final Object mySleepMonitor = new Object();
   protected volatile boolean isStopped;
 
   private Future<?> myFinishedFuture;
@@ -164,9 +163,8 @@ public abstract class BaseDataReader {
           // if process stopped, there is no sense to sleep,
           // just check if there is unread output in the stream
           beforeSleeping(read);
-          synchronized (mySleepMonitor) {
-            mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
-          }
+          //noinspection BusyWait
+          Thread.sleep(mySleepingPolicy.getTimeToSleep(read));
         }
       }
     }
@@ -191,17 +189,10 @@ public abstract class BaseDataReader {
 
   protected void beforeSleeping(boolean hasJustReadSomething) {}
 
-  private void resumeReading() {
-    synchronized (mySleepMonitor) {
-      mySleepMonitor.notifyAll();
-    }
-  }
-
   protected abstract void close() throws IOException;
 
   public void stop() {
     isStopped = true;
-    resumeReading();
     myFinishedFuture.cancel(true);
   }
 
