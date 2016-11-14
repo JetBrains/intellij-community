@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
@@ -509,10 +510,14 @@ public class JsonSchemaObject {
     final List<String> strings = new ArrayList<>(myPatternProperties.keySet());
     Collections.sort(strings);
     for (final String pattern : strings) {
-      final boolean matches = Pattern.compile(adaptSchemaPattern(pattern)).matcher(StringUtil.newBombedCharSequence(name, 1000)).matches();
-      if (matches) {
-        myCachedPatternProperties.put(name, pattern);
-        return myPatternProperties.get(pattern);
+      try {
+        final boolean matches = Pattern.compile(adaptSchemaPattern(pattern)).matcher(StringUtil.newBombedCharSequence(name, 1000)).matches();
+        if (matches) {
+          myCachedPatternProperties.put(name, pattern);
+          return myPatternProperties.get(pattern);
+        }
+      } catch (ProcessCanceledException e) {
+        //ignored
       }
     }
     myCachedPatternProperties.put(name, "");
