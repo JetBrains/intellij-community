@@ -1429,7 +1429,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> concatIterators(@NotNull Iterator... iterators) {
+  public static <T> Iterator<T> concatIterators(@NotNull Iterator<T>... iterators) {
     return new SequenceIterator<T>(iterators);
   }
 
@@ -1496,7 +1496,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
     @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[lists.size()]);
-    return ContainerUtil.<T>concat(array);
+    return (List<T>) concat(array);
   }
 
   /**

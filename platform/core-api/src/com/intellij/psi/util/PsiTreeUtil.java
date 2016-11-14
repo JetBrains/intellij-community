@@ -224,8 +224,8 @@ public class PsiTreeUtil {
    */
   @Nullable
   @Contract("null, _ -> null")
-  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<T>... classes) {
-    return findChildOfAnyType(element, true, classes);
+  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<? extends T>... classes) {
+    return findChildOfAnyType(element, true, (Class<T>[]) classes);
   }
 
   /**
@@ -241,7 +241,7 @@ public class PsiTreeUtil {
   @Contract("null, _, _ -> null")
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element,
                                                             final boolean strict,
-                                                            @NotNull final Class<T>... classes) {
+                                                            @NotNull final Class<? extends T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
       public boolean execute(@NotNull PsiElement each) {
@@ -265,7 +265,7 @@ public class PsiTreeUtil {
 
   @NotNull
   public static <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable final PsiElement element,
-                                                                           @NotNull final Class... classes) {
+                                                                           @NotNull final Class<? extends T>... classes) {
     if (element == null) {
       return ContainerUtil.emptyList();
     }
@@ -414,7 +414,7 @@ public class PsiTreeUtil {
     return result;
   }
 
-  public static boolean instanceOf(final Object object, final Class... classes) {
+  public static boolean instanceOf(final Object object, final Class<?>... classes) {
     if (classes != null) {
       for (final Class<?> c : classes) {
         if (c.isInstance(object)) return true;
@@ -433,7 +433,7 @@ public class PsiTreeUtil {
    */
   @Nullable
   @Contract("null, _ -> null")
-  public static <T extends PsiElement> T getChildOfAnyType(@Nullable PsiElement element, @NotNull Class... classes) {
+  public static <T extends PsiElement> T getChildOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
     if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       for (Class<? extends T> aClass : classes) {
@@ -525,7 +525,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element,
                                                           @NotNull Class<T> aClass,
                                                           boolean strict,
-                                                          Class... stopAt) {
+                                                          Class<? extends PsiElement>... stopAt) {
     if (element == null) return null;
     if (strict) {
       element = element.getContext();
@@ -549,15 +549,15 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class... classes) {
-    return getContextOfType(element, true, classes);
+  public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
+    return getContextOfType(element, true, (Class<T>[]) classes);
   }
 
   @Nullable
   @Contract("null, _, _ -> null")
   public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element,
                                                           boolean strict,
-                                                          @NotNull Class... classes) {
+                                                          @NotNull Class<? extends T>... classes) {
     if (element == null) return null;
     if (strict) {
       element = element.getContext();
@@ -609,7 +609,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element,
                                                          @NotNull Class<T> aClass,
                                                          boolean strict,
-                                                         @NotNull Class... stopAt) {
+                                                         @NotNull Class<? extends PsiElement>... stopAt) {
     if (element == null) return null;
     if (strict) {
       if (element instanceof PsiFile) return null;
@@ -665,17 +665,17 @@ public class PsiTreeUtil {
   @Nullable
   @Contract("null, _ -> null")
   public static <T extends PsiElement> T getParentOfType(@Nullable final PsiElement element,
-                                                         @NotNull final Class... classes) {
+                                                         @NotNull final Class<? extends T>... classes) {
     if (element == null || element instanceof PsiFile) return null;
     PsiElement parent = element.getParent();
     if (parent == null) return null;
-    return getNonStrictParentOfType(parent, classes);
+    return getNonStrictParentOfType(parent, (Class<T>[]) classes);
   }
 
   @Nullable
   @Contract("null, _ -> null")
   public static <T extends PsiElement> T getNonStrictParentOfType(@Nullable final PsiElement element,
-                                                                  @NotNull final Class... classes) {
+                                                                  @NotNull final Class<? extends T>... classes) {
     PsiElement run = element;
     while (run != null) {
       if (instanceOf(run, classes)) {
@@ -852,7 +852,7 @@ public class PsiTreeUtil {
                                                                                int offset,
                                                                                @NotNull Class<T> clazz,
                                                                                boolean strictStart,
-                                                                               @NotNull Class... stopAt) {
+                                                                               @NotNull Class<? extends PsiElement>... stopAt) {
     final List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
     T result = null;
     for (PsiElement root : psiRoots) {
