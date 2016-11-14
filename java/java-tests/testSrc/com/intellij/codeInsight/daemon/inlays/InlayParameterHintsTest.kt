@@ -88,7 +88,8 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
     val hintOffsets = hints.map { it.first }
     val hintNames = hints.map { it.second }
 
-    assertThat(hints.size).isEqualTo(expectedInlays.size)
+    val elements = hintOffsets.mapNotNull { file.findElementAt(it) }
+    assertThat(hints.size).isEqualTo(expectedInlays.size).withFailMessage("Element at offsets: ${elements.joinToString(", ")}")
 
     val expect = expectedInlays.map { it.substringBefore("->") to it.substringAfter("->") }
     val expectedHintNames = expect.map { it.first }
@@ -96,8 +97,7 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
 
     assertThat(hintNames).isEqualTo(expectedHintNames)
 
-    val wordsAfter = hintOffsets.mapNotNull { file.findElementAt(it) }.map { it.text }
-
+    val wordsAfter = elements.map { it.text }
     assertThat(wordsAfter).isEqualTo(expectedWordsAfter)
   }
 
