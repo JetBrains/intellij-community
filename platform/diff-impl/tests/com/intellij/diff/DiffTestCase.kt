@@ -223,12 +223,12 @@ abstract class DiffTestCase : UsefulTestCase() {
 
   open class Trio<out T>(val data1: T, val data2: T, val data3: T) {
     companion object {
-      fun <V : Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
+      fun <V> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
     }
 
-    fun <V : Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
+    fun <V> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
 
-    fun <V : Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
+    fun <V> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
     fun forEach(f: (T, ThreeSide) -> Unit): Unit {
       f(data1, ThreeSide.LEFT)

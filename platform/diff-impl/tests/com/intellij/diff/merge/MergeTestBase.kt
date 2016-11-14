@@ -99,7 +99,7 @@ abstract class MergeTestBase : DiffTestCase() {
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
 
-    private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
     private val undoManager = UndoManager.getInstance(project!!)
 
     fun change(num: Int): TextMergeChange {
@@ -114,7 +114,7 @@ abstract class MergeTestBase : DiffTestCase() {
     //
 
     fun runActionByTitle(name: String): Boolean {
-      val action = actions.filter { name.equals(it.templatePresentation.text) }
+      val action = actions.filter { name == it.templatePresentation.text }
       assertTrue(action.size == 1, action.toString())
       return runAction(action[0])
     }
@@ -396,7 +396,7 @@ abstract class MergeTestBase : DiffTestCase() {
       if (other !is ViewerState) return false
 
       if (!StringUtil.equals(content, other.content)) return false
-      if (!changes.equals(other.changes)) return false
+      if (changes != other.changes) return false
       return true
     }
 
@@ -411,9 +411,9 @@ abstract class MergeTestBase : DiffTestCase() {
         if (other !is ChangeState) return false
 
         if (!StringUtil.equals(content, other.content)) return false
-        if (!starts.equals(other.starts)) return false
-        if (!ends.equals(other.ends)) return false
-        if (!resolved.equals(other.resolved)) return false
+        if (starts != other.starts) return false
+        if (ends != other.ends) return false
+        if (resolved != other.resolved) return false
         return true
       }
 

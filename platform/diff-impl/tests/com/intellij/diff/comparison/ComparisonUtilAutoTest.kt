@@ -514,11 +514,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
   }
 
   private fun countNonWhitespaceCharacters(line: CharSequence): Int {
-    var count = 0
-    for (i in 0 until line.length) {
-      if (!StringUtil.isWhiteSpace(line[i])) count++
-    }
-    return count
+    return (0 until line.length).count { !StringUtil.isWhiteSpace(line[it]) }
   }
 
   private fun getFirstLastLines(text: Document, start: Int, end: Int): Couple<CharSequence>? {
