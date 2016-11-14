@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 /**
  * @author traff
@@ -39,18 +39,19 @@ class TerminalProjectOptionsProvider(private val myProject: Project) : Persisten
   }
 
   override fun loadState(state: State) {
-    shellPath = state.myShellPath
+    myState.myShellPath = state.myShellPath
     myState.myStartingDirectory = state.myStartingDirectory
   }
 
   class State {
     var myShellPath: String? = null
+
     var myStartingDirectory: String? = null
   }
 
-  var shellPath: String? by ValueWithDefault { defaultShellPath }
+  var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
 
-  var startingDirectory: String? by ValueWithDefault { defaultStartingDirectory }
+  var startingDirectory: String? by ValueWithDefault(State::myStartingDirectory, myState) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
@@ -114,15 +115,15 @@ class TerminalProjectOptionsProvider(private val myProject: Project) : Persisten
 
 }
 
-class ValueWithDefault(val default: () -> String?) {
-  private var _value: String? = null
-
+// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a reciever for
+// to property to apply
+class ValueWithDefault(val prop: KMutableProperty1<TerminalProjectOptionsProvider.State, String?>, val state: TerminalProjectOptionsProvider.State, val default: () -> String?) {
   operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {
-    return if (_value !== null) _value else default()
+    return if (prop.get(state) !== null) prop.get(state) else default()
   }
 
   operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
-    _value = if (value == default() || value.isNullOrEmpty()) null else value
+    prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }
 
