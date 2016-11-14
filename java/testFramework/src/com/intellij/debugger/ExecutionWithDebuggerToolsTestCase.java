@@ -48,6 +48,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -396,6 +397,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           if (breakpoint != null) {
             println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
                     ProcessOutputTypes.SYSTEM);
+
+            String emulated = readValue(comment, "Emulated");
+            if (emulated != null) {
+              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).EMULATED = Boolean.valueOf(emulated);
+              println("Emulated = " + emulated, ProcessOutputTypes.SYSTEM);
+            }
+
           }
         }
         else if (comment.contains("Field")) {
