@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,38 @@ package com.intellij.openapi.components;
 
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface PathMacroSubstitutor {
   String expandPath(String path);
 
-  String collapsePath(@Nullable String path);
+  @NotNull
+  default String collapsePath(@NotNull String text) {
+    return collapsePath(text, false);
+  }
+
+  String collapsePath(@NotNull String text, boolean recursively);
 
   void expandPaths(@NotNull Element element);
 
-  void collapsePaths(@NotNull Element element);
+  /**
+   * Path will be collapsed only if the entire content of an attribute (tag text) is a path, if a path is a substring of an attribute value it won't be collapsed.
+   * @param element
+   */
+  default void collapsePaths(@NotNull Element element) {
+    collapsePaths(element, false);
+  }
+
+  /**
+   * Path will be collapsed even if a path is a substring of an attribute value.
+   * @param element
+   */
+  default void collapsePathsRecursively(@NotNull Element element) {
+    collapsePaths(element, true);
+  }
+
+  void collapsePaths(@NotNull Element element, boolean recursively);
+
+  default String collapsePathsRecursively(@NotNull String string) {
+    return collapsePath(string, true);
+  }
 }

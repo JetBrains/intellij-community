@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
@@ -27,6 +29,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.ide.util.AppPropertiesComponentImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -37,10 +40,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -66,6 +66,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConfigurationsTest extends BaseConfigurationTestCase {
   private final Assertion CHECK = new Assertion();
@@ -253,17 +255,22 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     CHECK.singleOccurence(classPath, getFSPath(findFile(MOCK_JUNIT)));
   }
 
-  public void testExternalizeJUnitConfiguration() throws WriteExternalException, InvalidDataException {
-    JUnitConfiguration configuration = createConfiguration(findTestA(getModule1()));
-    Element element = new Element("cfg");
-    configuration.writeExternal(element);
-    JUnitConfiguration newCfg =
-      new JUnitConfiguration(null, myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+  public void testExternalizeJUnitConfiguration() {
+    Module module = getModule1();
+    JUnitConfiguration oldRc = createConfiguration(findTestA(module));
+    oldRc.setWorkingDirectory(module.getModuleFilePath());
 
-    newCfg.readExternal(element);
-    checkTestObject(configuration.getPersistentData().TEST_OBJECT, newCfg);
-    assertEquals(Collections.singleton(getModule1()), ContainerUtilRt.newHashSet(newCfg.getModules()));
-    checkClassName(configuration.getPersistentData().getMainClassName(), newCfg);
+    RunManagerImpl runManager = new RunManagerImpl(myProject, new AppPropertiesComponentImpl());
+    Element element = new Element("configuration");
+    new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeExternal(element);
+
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(runManager);
+    settings.readExternal(element);
+    JUnitConfiguration newRc = (JUnitConfiguration)settings.getConfiguration();
+
+    checkTestObject(oldRc.getPersistentData().TEST_OBJECT, newRc);
+    assertThat(newRc.getModules()).containsOnly(module);
+    checkClassName(oldRc.getPersistentData().getMainClassName(), newRc);
   }
 
   public void testTestClassPathWhenRunningConfigurations() throws IOException, ExecutionException {
