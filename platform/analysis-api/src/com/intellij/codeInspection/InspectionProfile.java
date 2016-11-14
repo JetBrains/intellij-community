@@ -34,8 +34,6 @@ import java.util.List;
  * Date: Dec 7, 2004
  */
 public interface InspectionProfile extends Comparable {
-  void setName(@NotNull String name);
-
   @NotNull
   String getName();
 
@@ -56,8 +54,7 @@ public interface InspectionProfile extends Comparable {
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
   /** Returns (unwrapped) inspection */
-  <T extends InspectionProfileEntry>
-  T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
+  <T extends InspectionProfileEntry> T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
 
   /**
    * Allows a plugin to modify the settings of the inspection tool with the specified ID programmatically, without going through
