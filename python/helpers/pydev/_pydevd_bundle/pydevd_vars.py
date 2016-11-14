@@ -379,7 +379,7 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if dbg.plugin and value is not SENTINEL_VALUE:
+        if dbg.plugin and value is SENTINEL_VALUE:
             result = dbg.plugin.change_variable(frame, attr, expression)
             if result:
                 return result
