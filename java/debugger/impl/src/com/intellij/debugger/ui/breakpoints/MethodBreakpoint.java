@@ -47,7 +47,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -496,7 +495,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   public boolean isEmulated() {
-    return getProperties().EMULATED && Registry.is("debugger.emulate.method.breakpoints");
+    return getProperties().EMULATED;
   }
 
   private boolean isWatchEntry() {
