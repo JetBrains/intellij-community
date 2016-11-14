@@ -64,7 +64,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -478,6 +477,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
           }
         }
       });
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
         //noinspection unchecked
