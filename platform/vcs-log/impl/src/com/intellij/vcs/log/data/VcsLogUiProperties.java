@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface VcsLogUiProperties {

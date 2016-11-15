@@ -39,7 +39,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
-    public boolean TEXT_FILTER_BY_REGEX = false;
+    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
   }
 
   @NotNull
@@ -178,12 +178,18 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public boolean isFilterByRegexEnabled() {
-    return getState().TEXT_FILTER_BY_REGEX;
+    return getTextFilterSettings().REGEX;
+  }
+
+  @NotNull
+  private TextFilterSettings getTextFilterSettings() {
+    if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    return getState().TEXT_FILTER_SETTINGS;
   }
 
   @Override
   public void setFilterByRegexEnabled(boolean enabled) {
-    getState().TEXT_FILTER_BY_REGEX = enabled;
+    getState().TEXT_FILTER_SETTINGS = getTextFilterSettings().withRegex(enabled);
   }
 
   public static class UserGroup {
@@ -201,6 +207,22 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     @Override
     public int hashCode() {
       return users.hashCode();
+    }
+  }
+
+  public static class TextFilterSettings {
+    public boolean REGEX = false;
+
+    public TextFilterSettings(boolean isFilterByRegexEnabled) {
+      this.REGEX = isFilterByRegexEnabled;
+    }
+
+    public TextFilterSettings() {
+      this(false);
+    }
+
+    public TextFilterSettings withRegex(boolean isRegex) {
+      return new TextFilterSettings(isRegex);
     }
   }
 }
