@@ -400,17 +400,16 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
     applyLibraryOptionsForSelected();
-    List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-    for (LibraryCompositionSettings compositionSettings : list) {
+    for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
       if (!compositionSettings.downloadFiles(parentComponent)) {
-        return true;
+        int answer = Messages.showYesNoDialog(parentComponent,
+                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+        return answer == Messages.YES;
       }
     }
 
-    int answer = Messages.showYesNoDialog(parentComponent,
-                                          ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-    return answer == Messages.YES;
+    return true;
   }
 
   public boolean validate() {
