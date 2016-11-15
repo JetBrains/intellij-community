@@ -29,6 +29,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" group="plugins/Android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-tests/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-tests/android-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
