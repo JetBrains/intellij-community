@@ -1,7 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.8"
+  id "com.jetbrains.python.envs" version "0.0.9"
 }
 
 
@@ -24,12 +24,12 @@ envs {
   conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox>=2.0", "pandas"], true
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
 
+  conda "pyqt_env", "2.7", [install("pyqt=5.6")], true
+  textfile "pyqt_env/tags.txt", "pyqt5"
+
   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
 //    jython "jython25", []
 //    textfile "jython25/tags.txt", "jython"
-    
-//    conda "pyqt5", "2.7", ["python-qt5"]
-//    textfile "pyqt5/tags.txt", "pyqt5"
   }
 
   conda "django_latest", "3.5", ["django"], true
