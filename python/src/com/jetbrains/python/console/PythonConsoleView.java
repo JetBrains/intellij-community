@@ -150,11 +150,18 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
+  public boolean isConsoleEnabledFirstTime() {
+    return myFirstRun && myExecuteActionHandler != null;
+  }
+
+  public void setFirstRun(boolean firstRun) {
+    myFirstRun = firstRun;
+  }
+
   public void showStartMessageForFirstExecution(String startCommand) {
     if (myFirstRun && myExecuteActionHandler != null) {
       setPrompt("");
       executeStatement(startCommand + "\n", ProcessOutputTypes.SYSTEM);
-      myFirstRun = false;
     }
   }
 
