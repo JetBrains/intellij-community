@@ -219,8 +219,7 @@ public class StudySerializationUtils {
             for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
               Element valueElement = new Element(SUBTASK_INFO);
               addChildMap(placeholder, SUBTASK_INFOS, Collections.singletonMap(String.valueOf(0), valueElement));
-              for (String childName : ContainerUtil
-                .list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
+              for (String childName : ContainerUtil.list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
                 Element child = getChildWithName(placeholder, childName);
                 valueElement.addContent(child.clone());
               }

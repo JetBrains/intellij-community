@@ -1,9 +1,11 @@
 package com.jetbrains.edu.coursecreator.actions.placeholder;
 
 import com.intellij.openapi.util.TextRange;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CCActivatePlaceholder extends CCSubtaskPlaceholderAction {
 
@@ -14,9 +16,9 @@ public class CCActivatePlaceholder extends CCSubtaskPlaceholderAction {
   }
 
   @Override
-  protected AnswerPlaceholderSubtaskInfo getInfo(CCState state,
+  protected AnswerPlaceholderSubtaskInfo getInfo(@NotNull CCState state,
                                                  int subtaskIndex,
-                                                 AnswerPlaceholder existingPlaceholder) {
+                                                 @NotNull AnswerPlaceholder existingPlaceholder) {
     int visibleLength = existingPlaceholder.getVisibleLength(subtaskIndex);
     int placeholderOffset = existingPlaceholder.getOffset();
     String possibleAnswer = state.getEditor().getDocument().getText(TextRange.create(placeholderOffset, placeholderOffset + visibleLength));
@@ -31,18 +33,18 @@ public class CCActivatePlaceholder extends CCSubtaskPlaceholderAction {
   }
 
   @Override
-  protected void redoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info) {
+  protected void redoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info) {
     existingPlaceholder.getSubtaskInfos().put(subtaskIndex, info);
   }
 
   @Override
-  protected void undoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info) {
+  protected void undoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info) {
     existingPlaceholder.getSubtaskInfos().remove(subtaskIndex);
   }
 
   @Override
   protected boolean isAvailable(TaskFile taskFile, int offset) {
-    AnswerPlaceholder existingPlaceholder = taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
+    AnswerPlaceholder existingPlaceholder = StudyUtils.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
     return existingPlaceholder != null && !existingPlaceholder.isActive();
   }
 }

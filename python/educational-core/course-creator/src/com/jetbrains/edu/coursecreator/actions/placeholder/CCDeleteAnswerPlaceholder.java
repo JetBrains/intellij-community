@@ -23,20 +23,19 @@ public class CCDeleteAnswerPlaceholder extends CCAnswerPlaceholderAction {
     Project project = state.getProject();
     TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    EduUtils.runUndoableAction(project, "Delete Answer Placeholder", new CCAddAnswerPlaceholder.AddAction(answerPlaceholder, taskFile, state.getEditor()) {
-      @Override
-      public void undo() throws UnexpectedUndoException {
-        super.redo();
-      }
+    EduUtils.runUndoableAction(project, "Delete Answer Placeholder",
+                               new CCAddAnswerPlaceholder.AddAction(answerPlaceholder, taskFile, state.getEditor()) {
+                                 @Override
+                                 public void undo() throws UnexpectedUndoException {
+                                   super.redo();
+                                 }
 
-      @Override
-      public void redo() throws UnexpectedUndoException {
-        super.undo();
-      }
-    });
+                                 @Override
+                                 public void redo() throws UnexpectedUndoException {
+                                   super.undo();
+                                 }
+                               });
   }
-
-
 
   private static boolean canDeletePlaceholder(@NotNull CCState state) {
     if (state.getEditor().getSelectionModel().hasSelection()) {
@@ -59,5 +58,4 @@ public class CCDeleteAnswerPlaceholder extends CCAnswerPlaceholderAction {
       presentation.setEnabledAndVisible(true);
     }
   }
-
 }

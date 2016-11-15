@@ -15,7 +15,7 @@ public class AnswerPlaceholderSubtaskInfo {
   @Expose private List<String> myHints = new ArrayList<>();
 
   @SerializedName("possible_answer")
-  @Expose private String possibleAnswer = "";
+  @Expose private String myPossibleAnswer = "";
 
   @SerializedName("placeholder_text")
   @Expose private String myPlaceholderText;
@@ -60,11 +60,11 @@ public class AnswerPlaceholderSubtaskInfo {
   }
 
   public String getPossibleAnswer() {
-    return possibleAnswer;
+    return myPossibleAnswer;
   }
 
   public void setPossibleAnswer(String possibleAnswer) {
-    this.possibleAnswer = possibleAnswer;
+    myPossibleAnswer = possibleAnswer;
   }
 
   public String getPlaceholderText() {

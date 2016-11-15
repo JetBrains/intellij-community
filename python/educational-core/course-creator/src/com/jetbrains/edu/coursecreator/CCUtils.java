@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -48,7 +50,7 @@ public class CCUtils {
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
 
-  public static int getSubtaskIndex(Project project, VirtualFile file) {
+  public static int getSubtaskIndex(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
     String name = FileUtil.getNameWithoutExtension(fileName);
     boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
@@ -65,7 +67,8 @@ public class CCUtils {
     }
     try {
       return Integer.valueOf(index);
-    } catch (NumberFormatException e) {
+    }
+    catch (NumberFormatException e) {
       return -1;
     }
   }
@@ -147,21 +150,27 @@ public class CCUtils {
       return folder;
     }
     final Ref<VirtualFile> generatedRoot = new Ref<>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       @Override
       public void run() {
-        try {
-          generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
-          VirtualFile contentRootForFile =
-            ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
-          if (contentRootForFile == null) {
-            return;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
+              VirtualFile contentRootForFile =
+                ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
+              if (contentRootForFile == null) {
+                return;
+              }
+              ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(),
+                                                               Collections.singletonList(generatedRoot.get().getUrl()));
+            }
+            catch (IOException e) {
+              LOG.info("Failed to create folder for generated files", e);
+            }
           }
-          ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(), Collections.singletonList(generatedRoot.get().getUrl()));
-        }
-        catch (IOException e) {
-          LOG.info("Failed to create folder for generated files", e);
-        }
+        });
       }
     });
     return generatedRoot.get();
@@ -292,9 +301,9 @@ public class CCUtils {
   }
 
   public static void createTaskContent(@NotNull Project project,
-                                   @Nullable IdeView view,
-                                   @NotNull Course course,
-                                   PsiDirectory taskDirectory) {
+                                       @Nullable IdeView view,
+                                       @NotNull Course course,
+                                       PsiDirectory taskDirectory) {
     CCLanguageManager manager = getStudyLanguageManager(course);
     if (manager == null) {
       return;

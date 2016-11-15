@@ -2,16 +2,15 @@ package com.jetbrains.edu.coursecreator;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DocumentUtil;
-import com.jetbrains.edu.learning.StudyTaskManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
@@ -69,36 +68,21 @@ public class PyCCLanguageManager implements CCLanguageManager {
     if (taskDir == null) {
       return;
     }
-
-    int prevSubtaskIndex = task.getLastSubtaskIndex();
-    String name = prevSubtaskIndex == 0 ? EduNames.TESTS_FILE : getSubtaskTestsFileName(prevSubtaskIndex);
-    VirtualFile testsFile = taskDir.findChild(name);
-    if (testsFile == null) {
-      return;
-    }
-    Document document = FileDocumentManager.getInstance().getDocument(testsFile);
-    if (document == null) {
-      return;
-    }
-    CharSequence prevTestText = document.getCharsSequence();
-    int nextSubtaskIndex = prevSubtaskIndex + 1;
+    int nextSubtaskIndex = task.getLastSubtaskIndex() + 1;
     String nextSubtaskTestsFileName = getSubtaskTestsFileName(nextSubtaskIndex);
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        VirtualFile nextSubtaskTestsFile = taskDir.createChildData(this, nextSubtaskTestsFileName);
-        StudyTaskManager.getInstance(project).addInvisibleFiles(nextSubtaskTestsFile.getPath());
-        Document nextSubtaskDocument = FileDocumentManager.getInstance().getDocument(nextSubtaskTestsFile);
-        if (nextSubtaskDocument == null) {
+        PsiDirectory taskPsiDir = PsiManager.getInstance(project).findDirectory(taskDir);
+        FileTemplate testsTemplate = getTestsTemplate(project);
+        if (taskPsiDir == null || testsTemplate == null) {
           return;
         }
-        String header = "# This is test for subtask " + nextSubtaskIndex + ". We've already copied tests from previous subtask here.\n\n";
-        DocumentUtil.writeInRunUndoTransparentAction(() -> {
-          nextSubtaskDocument.insertString(0, header);
-          nextSubtaskDocument.insertString(header.length(), prevTestText);
-          FileDocumentManager.getInstance().saveDocument(nextSubtaskDocument);
-        });
+        FileTemplateUtil.createFromTemplate(testsTemplate, nextSubtaskTestsFileName, null, taskPsiDir);
       }
       catch (IOException e) {
+        LOG.error(e);
+      }
+      catch (Exception e) {
         LOG.error(e);
       }
     });

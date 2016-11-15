@@ -24,7 +24,7 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
     final int offset = editor.getCaretModel().getOffset();
     TaskFile taskFile = state.getTaskFile();
     int subtaskIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
-    AnswerPlaceholder existingPlaceholder = taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
+    AnswerPlaceholder existingPlaceholder = StudyUtils.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
     if (existingPlaceholder == null) {
       return;
     }
@@ -47,13 +47,13 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
     });
   }
 
-  protected abstract AnswerPlaceholderSubtaskInfo getInfo(CCState state, int subtaskIndex, AnswerPlaceholder existingPlaceholder);
+  protected abstract AnswerPlaceholderSubtaskInfo getInfo(@NotNull CCState state, int subtaskIndex, @NotNull AnswerPlaceholder existingPlaceholder);
 
   protected abstract String getTitle();
 
-  protected abstract void redoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info);
+  protected abstract void redoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info);
 
-  protected abstract void undoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info);
+  protected abstract void undoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info);
 
   @Override
   public void update(AnActionEvent e) {
