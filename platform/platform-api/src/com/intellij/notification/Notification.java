@@ -263,6 +263,10 @@ public class Notification {
   }
 
   public void expire() {
+    if (myExpired) {
+      return;
+    }
+
     NotificationsManager.getNotificationsManager().expire(this);
     hideBalloon();
     myExpired = true;
