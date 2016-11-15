@@ -76,10 +76,13 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final PsiClass[] classes = ((GroovyFile)file).getClasses();
       if (classes.length == 1) {
         if (!moveDestination.equals(file.getContainingDirectory())) {
+          Project project = file.getProject();
           MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
+
+          DumbService.getInstance(project).completeJustSubmittedTasks();
+
           file = moveDestination.findFile(file.getName());
           assert file != null;
-          DumbService.getInstance(file.getProject()).completeJustSubmittedTasks();
           ((PsiClassOwner)file).setPackageName(newPackageName);
         }
         return ((GroovyFile)file).getScriptClass();

@@ -239,9 +239,10 @@ public class MoveClassesOrPackagesUtil {
 
       Project project = file.getProject();
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
-      file = moveDestination.findFile(file.getName());
 
       DumbService.getInstance(project).completeJustSubmittedTasks();
+
+      file = moveDestination.findFile(file.getName());
 
       if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) && !PsiUtil.isModuleFile(file)) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
