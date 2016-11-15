@@ -30,7 +30,6 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
@@ -622,14 +621,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       element.addContent(variableElement);
     }
 
-    try {
-      Element contextElement = new Element(CONTEXT);
-      template.getTemplateContext().writeTemplateContext(contextElement);
-      element.addContent(contextElement);
-    }
-    catch (WriteExternalException e) {
-      LOG.warn(e);
-    }
+    Element contextElement = new Element(CONTEXT);
+    template.getTemplateContext().writeTemplateContext(contextElement);
+    element.addContent(contextElement);
     return element;
   }
 
