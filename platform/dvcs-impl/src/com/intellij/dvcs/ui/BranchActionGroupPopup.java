@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -30,7 +31,6 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,10 +92,14 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Nullable
   private static RootAction getRootAction(Object value) {
+    return getSpecificAction(value, RootAction.class);
+  }
+
+  private static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
     if (value instanceof PopupFactoryImpl.ActionItem) {
       AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-      if (action instanceof RootAction) {
-        return (RootAction)action;
+      if (clazz.isInstance(action)) {
+        return clazz.cast(action);
       }
     }
     return null;
@@ -105,27 +109,28 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   protected ListCellRenderer getListElementRenderer() {
     return new PopupListElementRenderer(this) {
 
-      private ErrorLabel myBranchLabel;
+      private ErrorLabel myInfoLabel;
 
       @Override
       protected void customizeComponent(JList list, Object value, boolean isSelected) {
         super.customizeComponent(list, value, isSelected);
 
-        RootAction rootAction = getRootAction(value);
-        if (rootAction != null) {
-          myBranchLabel.setVisible(true);
-          myBranchLabel.setText(String.format("[%s]", rootAction.getDisplayableBranchText()));
+        PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
+        String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
+        if (infoText != null) {
+          myInfoLabel.setVisible(true);
+          myInfoLabel.setText(infoText);
 
           if (isSelected) {
-            setSelected(myBranchLabel);
+            setSelected(myInfoLabel);
           }
           else {
-            myBranchLabel.setBackground(getBackground());
-            myBranchLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
+            myInfoLabel.setBackground(getBackground());
+            myInfoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
           }
         }
         else {
-          myBranchLabel.setVisible(false);
+          myInfoLabel.setVisible(false);
         }
       }
 
@@ -135,13 +140,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myTextLabel.setOpaque(true);
         myTextLabel.setBorder(JBUI.Borders.empty(1));
 
-        myBranchLabel = new ErrorLabel();
-        myBranchLabel.setOpaque(true);
-        myBranchLabel.setBorder(JBUI.Borders.empty(1, UIUtil.DEFAULT_HGAP, 1, 1));
+        myInfoLabel = new ErrorLabel();
+        myInfoLabel.setOpaque(true);
+        myInfoLabel.setBorder(JBUI.Borders.empty(1, UIUtil.DEFAULT_HGAP, 1, 1));
 
         JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
         compoundPanel.add(myTextLabel, BorderLayout.CENTER);
-        compoundPanel.add(myBranchLabel, BorderLayout.EAST);
+        compoundPanel.add(myInfoLabel, BorderLayout.EAST);
 
         return layoutComponent(compoundPanel);
       }

@@ -17,6 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
+import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
@@ -142,7 +142,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for local branches.
    */
-  static class LocalBranchActions extends BranchActionGroup {
+  static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -160,13 +160,7 @@ class GitBranchPopupActions {
 
     @NotNull
     private String calcBranchText() {
-      String trackedBranch = new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
-      if (trackedBranch != null) {
-        return myBranchName + " " + UIUtil.rightArrow() + " " + trackedBranch;
-      }
-      else {
-        return myBranchName;
-      }
+      return myBranchName;
     }
 
     @NotNull
@@ -192,6 +186,12 @@ class GitBranchPopupActions {
         new RenameBranchAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
+    }
+
+    @Override
+    @Nullable
+    public String getInfoText() {
+     return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
     }
 
     static class CheckoutAction extends DumbAwareAction {
