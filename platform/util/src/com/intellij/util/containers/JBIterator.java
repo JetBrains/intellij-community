@@ -46,16 +46,13 @@ import java.util.NoSuchElementException;
  *
  * @author gregsh
  *
- * @noinspection unchecked, AssignmentToForLoopParameter
+ * @noinspection unchecked, TypeParameterHidesVisibleType, AssignmentToForLoopParameter
  */
 public abstract class JBIterator<E> implements Iterator<E> {
-  private static final Object NONE = new String("#none");
-  private static final Object STOP = new String("#stop");
-  private static final Object SKIP = new String("#skip");
 
   @NotNull
   public static <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
-    return JBIterable.generate(iterator, Functions.<E, E>identity()).takeWhile(ADVANCE);
+    return JBIterable.generate(iterator, Functions.<E>id()).intercept(CURSOR_NEXT);
   }
 
   @NotNull
@@ -73,10 +70,11 @@ public abstract class JBIterator<E> implements Iterator<E> {
     };
   }
 
-  private Object myCurrent = NONE;
-  private Object myNext = NONE;
+  private enum Do {INIT, STOP, SKIP}
+  private Object myCurrent = Do.INIT;
+  private Object myNext = Do.INIT;
 
-  private Op myFirstOp = new Op(null);
+  private Op myFirstOp = new NextOp();
   private Op myLastOp = myFirstOp;
 
   /**
@@ -94,7 +92,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
    */
   @Nullable
   protected final E stop() {
-    myNext = STOP;
+    myNext = Do.STOP;
     return null;
   }
 
@@ -103,14 +101,14 @@ public abstract class JBIterator<E> implements Iterator<E> {
    */
   @Nullable
   protected final E skip() {
-    myNext = SKIP;
+    myNext = Do.SKIP;
     return null;
   }
 
   @Override
   public final boolean hasNext() {
     peekNext();
-    return myNext != STOP;
+    return myNext != Do.STOP;
   }
 
   @Override
@@ -123,11 +121,14 @@ public abstract class JBIterator<E> implements Iterator<E> {
    * Proceeds to the next element if any and returns true; otherwise false.
    */
   public final boolean advance() {
-    myCurrent = NONE;
+    myCurrent = Do.INIT;
     peekNext();
-    if (myNext == STOP) return false;
+    if (myNext == Do.STOP) return false;
     myCurrent = myNext;
-    myNext = NONE;
+    myNext = Do.INIT;
+    if (myFirstOp instanceof JBIterator.CursorOp) {
+      ((CursorOp)myFirstOp).advance(myCurrent);
+    }
     currentChanged();
     return true;
   }
@@ -136,20 +137,22 @@ public abstract class JBIterator<E> implements Iterator<E> {
    * Returns the current element if any; otherwise throws exception.
    */
   public final E current() {
-    if (myCurrent == NONE) throw new NoSuchElementException();
+    if (myCurrent == Do.INIT) {
+      throw new NoSuchElementException();
+    }
     return (E)myCurrent;
   }
 
   private void peekNext() {
-    if (myNext != NONE) return;
-    Object o = NONE;
+    if (myNext != Do.INIT) return;
+    Object o = Do.INIT;
     for (Op op = myFirstOp; op != null; op = op == null ? myFirstOp : op.nextOp) {
-      o = op.impl == null ? nextImpl() : op.apply(o);
-      if (myNext == SKIP) {
-        o = myNext = NONE;
+      o = op.apply(op.impl == null ? nextImpl() : o);
+      if (myNext == Do.STOP) return;
+      if (myNext == Do.SKIP) {
+        o = myNext = Do.INIT;
         op = null;
       }
-      if (myNext == STOP) return;
     }
     myNext = o;
   }
@@ -167,7 +170,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   @NotNull
   public final JBIterator<E> take(int count) {
     // add first so that the underlying iterator stay on 'count' position
-    return addOp(myLastOp.impl != null, new WhileOp<E>(new CountDown<E>(count)));
+    return addOp(!(myLastOp instanceof NextOp), new WhileOp<E>(new CountDown<E>(count)));
   }
 
   @NotNull
@@ -187,7 +190,10 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   private <T> T addOp(boolean last, @NotNull Op op) {
-    if (last) {
+    if (op.impl == null) {
+      myFirstOp = myLastOp = op;
+    }
+    else if (last) {
       myLastOp.nextOp = op;
       myLastOp = myLastOp.nextOp;
     }
@@ -210,8 +216,8 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public String toString() {
-    JBIterable<Op> ops = operationsImpl();
-    return "{cur=" + myCurrent + "; next=" + myNext + (ops.isEmpty() ? "" : "; ops[" + ops.size() + "]=" + ops) + "}";
+    List<Op> ops = operationsImpl().toList();
+    return "{cur=" + myCurrent + "; next=" + myNext + (ops.size() < 2 ? "" : "; ops=" + ops) + "}";
   }
 
   @NotNull
@@ -226,7 +232,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   private JBIterable<Op> operationsImpl() {
-    return JBIterable.generate(myFirstOp.nextOp, new Function<Op, Op>() {
+    return JBIterable.generate(myFirstOp, new Function<Op, Op>() {
       @Override
       public Op fun(Op op) {
         return op.nextOp;
@@ -234,15 +240,20 @@ public abstract class JBIterator<E> implements Iterator<E> {
     });
   }
 
+  @NotNull
   static String toShortString(@NotNull Object o) {
-    String fqn = o.getClass().getName();
-    return StringUtil.replace(o.toString(), fqn, StringUtil.getShortName(fqn, '.'));
+    String name = o.getClass().getName();
+    int idx = name.lastIndexOf('$');
+    if (idx > 0 && idx < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
+      return name.substring(idx + 1);
+    }
+    return name.substring(name.lastIndexOf('.') + 1);
   }
 
-  private static final Condition<JBIterator<?>> ADVANCE = new Condition<JBIterator<?>>() {
+  private static final Function.Mono CURSOR_NEXT = new Function.Mono<JBIterator<?>>() {
     @Override
-    public boolean value(JBIterator<?> it) {
-      return it.advance();
+    public JBIterator<?> fun(JBIterator<?> iterator) {
+      return iterator.addOp(false, iterator.new CursorOp());
     }
   };
 
@@ -260,7 +271,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     @Override
     public String toString() {
-      return impl == null ? "" : toShortString(impl);
+      return toShortString(impl == null ? this : impl);
     }
   }
 
@@ -283,7 +294,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
 
     @Override
-    public Object apply(Object o) {
+    Object apply(Object o) {
       return impl.fun((E)o);
     }
   }
@@ -294,7 +305,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
 
     @Override
-    public Object apply(Object o) {
+    Object apply(Object o) {
       return impl.value((E)o) ? o : skip();
     }
   }
@@ -305,24 +316,54 @@ public abstract class JBIterator<E> implements Iterator<E> {
       super(condition);
     }
     @Override
-    public Object apply(Object o) {
+    Object apply(Object o) {
       return impl.value((E)o) ? o : stop();
     }
   }
 
   private class SkipOp<E> extends Op<Condition<? super E>> {
-    boolean active;
+    boolean active = true;
 
     SkipOp(Condition<? super E> condition) {
       super(condition);
-      active = true;
     }
 
     @Override
-    public Object apply(Object o) {
+    Object apply(Object o) {
       if (active && impl.value((E)o)) return skip();
       active = false;
       return o;
+    }
+  }
+
+  private static class NextOp extends Op<Void> {
+    NextOp() {
+      super(null);
+    }
+
+    @Override
+    Object apply(Object o) {
+      return o;
+    }
+  }
+
+  private class CursorOp extends Op<Void> {
+    boolean advanced;
+
+    CursorOp() {
+      super(null);
+    }
+
+    @Override
+    Object apply(Object o) {
+      JBIterator<?> it = (JBIterator<?>)o;
+      return ((advanced = nextOp != null) ? it.advance() : it.hasNext()) ? it : stop();
+    }
+
+    void advance(Object o) {
+      if (advanced || !(o instanceof JBIterator)) return;
+      ((JBIterator)o).advance();
+      advanced = true;
     }
   }
 }
