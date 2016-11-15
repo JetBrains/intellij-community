@@ -18,7 +18,11 @@ package com.intellij.codeInsight.daemon.inlays
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -82,6 +86,20 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
     assertThat(inlays).hasSize(0)
   }
 
+  private fun getAllInlays(): String {
+    val fileManager = FileEditorManager.getInstance(file.project)
+    val fileEditor: FileEditor = fileManager.getEditors(file.virtualFile).first()!!
+    val editor = ((fileEditor as TextEditor).editor as EditorEx)
+
+    val inlays = editor.inlayModel.getInlineElementsInRange(0, file.textLength)
+
+    val hintManager = ParameterHintsPresentationManager.getInstance()
+    return inlays
+      .filter { hintManager.isParameterHint(it) }
+      .map { it.offset to hintManager.getHintText(it) }
+      .joinToString(",")
+  }
+
   fun assertInlays(vararg expectedInlays: String) {
     assertThat(expectedInlays.size).isNotEqualTo(0)
 
@@ -94,7 +112,8 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
     assertThat(hints.size)
       .withFailMessage("Expected ${expectedInlays.size} elements with hints, Actual elements count ${hints.size}" +
                          ": ${elements.joinToString(", ")}, file text: \n\n ${file.text} \n\n isCommitted ${isCommitted(file)} \n\n" +
-                         "Psi: \n ${DebugUtil.psiToString(file, true)}")
+                         "Psi: \n ${DebugUtil.psiToString(file, true)}\n" +
+                         "All inlays: ${getAllInlays()}")
 
       .isEqualTo(expectedInlays.size)
 
