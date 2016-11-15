@@ -125,12 +125,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot,
                                                                         new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
-    assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().equals("origin/HEAD");
-      }
-    }));
+    assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), ref -> ref.getName().equals("origin/HEAD")));
   }
 
   public void test_support_equally_named_branch_and_tag() throws Exception {
@@ -142,18 +137,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
                                                                        new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
     List<VcsCommitMetadata> expectedLog = log();
     assertOrderedEquals(data.getCommits(), expectedLog);
-    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH;
-      }
-    }));
-    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().equals("build") && ref.getType() == GitRefManager.TAG;
-      }
-    }));
+    assertTrue(ContainerUtil.exists(data.getRefs(), ref -> ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH));
+    assertTrue(ContainerUtil.exists(data.getRefs(), ref -> ref.getName().equals("build") && ref.getType() == GitRefManager.TAG));
   }
 
   public void test_filter_by_branch() throws Exception {
@@ -177,12 +162,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
-    myLogProvider.readAllHashes(myProjectRoot, new Consumer<TimedVcsCommit>() {
-      @Override
-      public void consume(TimedVcsCommit timedVcsCommit) {
-        hashes.add(timedVcsCommit.getId().asString());
-      }
-    });
+    myLogProvider.readAllHashes(myProjectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
     List<? extends VcsShortCommitDetails> shortDetails = myLogProvider.readShortDetails(myProjectRoot, hashes);
 
@@ -195,42 +175,29 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
-    myLogProvider.readAllHashes(myProjectRoot, new Consumer<TimedVcsCommit>() {
-      @Override
-      public void consume(TimedVcsCommit timedVcsCommit) {
-        hashes.add(timedVcsCommit.getId().asString());
-      }
-    });
+    myLogProvider.readAllHashes(myProjectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
     List<? extends VcsFullCommitDetails> fullDetails = myLogProvider.readFullDetails(myProjectRoot, hashes);
 
     // we do not check for changes here
     final Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
-    Function<VcsCommitMetadata, String> metadataToString = new Function<VcsCommitMetadata, String>() {
-      @Override
-      public String fun(VcsCommitMetadata details) {
-        return shortDetailsToString.fun(details) + "\n" + details.getFullMessage();
-      }
-    };
+    Function<VcsCommitMetadata, String> metadataToString = details -> shortDetailsToString.fun(details) + "\n" + details.getFullMessage();
     assertOrderedEquals(ContainerUtil.map(fullDetails, metadataToString), ContainerUtil.map(log, metadataToString));
   }
 
   @NotNull
   private Function<VcsShortCommitDetails, String> getShortDetailsToString() {
-    return new Function<VcsShortCommitDetails, String>() {
-      @Override
-      public String fun(VcsShortCommitDetails details) {
-        String result = "";
+    return details -> {
+      String result = "";
 
-        result += details.getId().toShortString() + "\n";
-        result += details.getAuthorTime() + "\n";
-        result += details.getAuthor() + "\n";
-        result += details.getCommitTime() + "\n";
-        result += details.getCommitter() + "\n";
-        result += details.getSubject();
+      result += details.getId().toShortString() + "\n";
+      result += details.getAuthorTime() + "\n";
+      result += details.getAuthor() + "\n";
+      result += details.getCommitTime() + "\n";
+      result += details.getCommitter() + "\n";
+      result += details.getSubject();
 
-        return result;
-      }
+      return result;
     };
   }
 
@@ -267,12 +234,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
                                          @Nullable VcsLogUserFilter userFilter) throws VcsException {
     VcsLogFilterCollectionImpl filters = new VcsLogFilterCollectionImpl(branchFilter, userFilter, null, null, null, null, null);
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProjectRoot, filters, -1);
-    return ContainerUtil.map(commits, new Function<TimedVcsCommit, String>() {
-      @Override
-      public String fun(TimedVcsCommit commit) {
-        return commit.getId().asString();
-      }
-    });
+    return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
   private static void prepareSomeHistory() {
@@ -311,20 +273,12 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   private List<VcsCommitMetadata> log() {
     String output = git("log --all --date-order --full-history --sparse --pretty='%H|%P|%ct|%s|%B'");
     final VcsUser defaultUser = getDefaultUser();
-    final Function<String, Hash> TO_HASH = new Function<String, Hash>() {
-      @Override
-      public Hash fun(String s) {
-        return HashImpl.build(s);
-      }
-    };
-    return ContainerUtil.map(StringUtil.splitByLines(output), new Function<String, VcsCommitMetadata>() {
-      @Override
-      public VcsCommitMetadata fun(String record) {
-        String[] items = ArrayUtil.toStringArray(StringUtil.split(record, "|", true, false));
-        long time = Long.valueOf(items[2]) * 1000;
-        return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
-                                         myProjectRoot, items[3], defaultUser, items[4], defaultUser, time);
-      }
+    final Function<String, Hash> TO_HASH = s -> HashImpl.build(s);
+    return ContainerUtil.map(StringUtil.splitByLines(output), record -> {
+      String[] items = ArrayUtil.toStringArray(StringUtil.split(record, "|", true, false));
+      long time = Long.valueOf(items[2]) * 1000;
+      return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
+                                       myProjectRoot, items[3], defaultUser, items[4], defaultUser, time);
     });
   }
 }
