@@ -38,16 +38,19 @@ class FileElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
   private final Language myLanguage;
+  private final Class<? extends PsiFile> myFileClass;
 
   public FileElementInfo(@NotNull final PsiFile file) {
     myVirtualFile = file.getVirtualFile();
     myProject = file.getProject();
     myLanguage = LanguageUtil.getRootLanguage(file);
+    myFileClass = file.getClass();
   }
 
   @Override
   public PsiElement restoreElement() {
-    return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    return myFileClass.isInstance(file) ? file : null;
   }
 
   @Override

@@ -195,7 +195,8 @@ public abstract class Identikit {
     @Override
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       PsiElement anchor = myAnchorInfo.findPsiElement(file, startOffset, endOffset);
-      return anchor == null ? null : myAnchorProvider.restoreElement(anchor);
+      PsiElement element = anchor == null ? null : myAnchorProvider.restoreElement(anchor);
+      return element != null && myElementInfo.isAcceptable(element) ? element : null;
     }
 
     @NotNull
