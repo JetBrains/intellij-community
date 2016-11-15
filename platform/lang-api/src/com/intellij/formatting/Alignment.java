@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * alignment object instance from the <code>getAlignment</code> method
  * are aligned with each other.
  *
- * @see com.intellij.formatting.Block#getAlignment()
- * @see com.intellij.formatting.ChildAttributes#getAlignment()
+ * @see Block#getAlignment()
+ * @see ChildAttributes#getAlignment()
  */
 
 public abstract class Alignment {
@@ -36,23 +36,10 @@ public abstract class Alignment {
     myFactory = factory;
   }
 
-  /**
-   * Shorthand for calling {@link #createAlignment(boolean)} with <code>'false'</code>.
-   *
-   * @return      alignment object with default settings
-   */
   public static Alignment createAlignment() {
     return createAlignment(false, Anchor.LEFT);
   }
 
-  /**
-   * Delegates the processing to {@link #createAlignment(boolean, Anchor)} with given <code>'allow backward shift'</code> value
-   * and {@link Anchor#LEFT}.
-   *
-   * @param allowBackwardShift    flag that specifies if former aligned block may be shifted to right in order to align to subsequent
-   *                              aligned block
-   * @return                      alignment object with the given <code>'allow backward shift'</code> setting
-   */
   public static Alignment createAlignment(boolean allowBackwardShift) {
     return createAlignment(allowBackwardShift, Anchor.LEFT);
   }

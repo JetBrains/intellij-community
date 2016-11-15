@@ -33,20 +33,10 @@ public class AlignmentImpl extends Alignment {
   private AlignmentImpl myParentAlignment;
   private ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with <code>'false'</code> as <code>'allows backward shift'</code> argument flag.
-   */
   AlignmentImpl() {
     this(false, Anchor.LEFT);
   }
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with the given <code>'allows backward shift'</code> argument flag.
-   *
-   * @param allowBackwardShift    flag that indicates if it should be possible to shift former aligned block to right
-   *                              in order to align to subsequent aligned block (see {@link Alignment#createAlignment(boolean, Anchor)})
-   * @param anchor                alignment anchor (see {@link Alignment#createAlignment(boolean, Anchor)})
-   */
   AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
     myAnchor = anchor;
