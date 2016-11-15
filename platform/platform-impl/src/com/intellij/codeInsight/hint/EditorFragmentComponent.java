@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(JBUI.scale(-3),0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
