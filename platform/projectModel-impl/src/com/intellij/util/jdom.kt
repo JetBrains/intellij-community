@@ -111,3 +111,10 @@ fun Element.toByteArray(): ByteArray {
   JDOMUtil.writeParent(this, out, "\n")
   return out.toByteArray()
 }
+
+fun Element.addOptionTag(name: String, value: String) {
+  val element = Element("option")
+  element.setAttribute("name", name)
+  element.setAttribute("value", value)
+  addContent(element)
+}
