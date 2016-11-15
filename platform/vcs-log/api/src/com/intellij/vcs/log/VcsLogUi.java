@@ -63,7 +63,16 @@ public interface VcsLogUi {
 
   void setShowDetails(boolean showDetails);
 
-  void setFilterByRegexEnabled(boolean enable);
+  @NotNull
+  TextFilterSettings getTextFilterSettings();
 
-  boolean isFilterByRegexEnabled();
+  interface TextFilterSettings {
+    boolean isFilterByRegexEnabled();
+
+    void setFilterByRegexEnabled(boolean enabled);
+
+    boolean isMatchCaseEnabled();
+
+    void setMatchCaseEnabled(boolean enabled);
+  }
 }

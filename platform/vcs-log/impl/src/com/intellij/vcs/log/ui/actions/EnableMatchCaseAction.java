@@ -22,20 +22,20 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
-public class EnableFilterByRegexAction extends ToggleAction implements DumbAware {
+public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     if (ui == null) return false;
-    return ui.getTextFilterSettings().isFilterByRegexEnabled();
+    return ui.getTextFilterSettings().isMatchCaseEnabled();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     if (ui != null) {
-      ui.getTextFilterSettings().setFilterByRegexEnabled(state);
+      ui.getTextFilterSettings().setMatchCaseEnabled(state);
     }
   }
 

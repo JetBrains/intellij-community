@@ -261,12 +261,18 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @NotNull
-  public TIntHashSet filterMessages(@NotNull String text, boolean isRegex) {
+  public TIntHashSet filterMessages(@NotNull String text, boolean isRegex, boolean isMatchCase) {
     if (myIndexStorage != null) {
       try {
         if (isRegex) {
           try {
-            Pattern pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
+            Pattern pattern;
+            if (isMatchCase) {
+              pattern = Pattern.compile(text);
+            }
+            else {
+              pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
+            }
             return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
           }
           catch (PatternSyntaxException ignored) {
@@ -280,7 +286,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
               try {
                 String value = myIndexStorage.messages.get(commit);
                 if (value != null) {
-                  if (StringUtil.containsIgnoreCase(value, text)) {
+                  if (isMatchCase ? StringUtil.contains(value, text) : StringUtil.containsIgnoreCase(value, text)) {
                     result.add(commit);
                   }
                 }
@@ -299,7 +305,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myFatalErrorsConsumer.consume(this, e);
       }
 
-      return filter(myIndexStorage.messages, message -> StringUtil.containsIgnoreCase(message, text));
+      return filter(myIndexStorage.messages,
+                    message -> isMatchCase ? StringUtil.contains(message, text) : StringUtil.containsIgnoreCase(message, text));
     }
 
     return EmptyIntHashSet.INSTANCE;
@@ -328,7 +335,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     TIntHashSet filteredByMessage = null;
     if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter.getText(), textFilter.isRegex());
+      filteredByMessage = filterMessages(textFilter.getText(), textFilter.isRegex(), textFilter.matchesCase());
     }
 
     TIntHashSet filteredByUser = null;

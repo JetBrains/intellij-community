@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
-    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    public TextFilterSettingsImpl TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
   }
 
   @NotNull
@@ -176,20 +177,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     getState().SHOW_TAG_NAMES = showTags;
   }
 
-  @Override
-  public boolean isFilterByRegexEnabled() {
-    return getTextFilterSettings().REGEX;
-  }
-
   @NotNull
-  private TextFilterSettings getTextFilterSettings() {
-    if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettings();
+  public TextFilterSettingsImpl getTextFilterSettings() {
+    if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
     return getState().TEXT_FILTER_SETTINGS;
-  }
-
-  @Override
-  public void setFilterByRegexEnabled(boolean enabled) {
-    getState().TEXT_FILTER_SETTINGS = getTextFilterSettings().withRegex(enabled);
   }
 
   public static class UserGroup {
@@ -210,19 +201,37 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
   }
 
-  public static class TextFilterSettings {
+  public static class TextFilterSettingsImpl implements VcsLogUi.TextFilterSettings {
     public boolean REGEX = false;
+    public boolean MATCH_CASE = false;
 
-    public TextFilterSettings(boolean isFilterByRegexEnabled) {
-      this.REGEX = isFilterByRegexEnabled;
+    public TextFilterSettingsImpl(boolean isFilterByRegexEnabled, boolean isMatchCaseEnabled) {
+      REGEX = isFilterByRegexEnabled;
+      MATCH_CASE = isMatchCaseEnabled;
     }
 
-    public TextFilterSettings() {
-      this(false);
+    public TextFilterSettingsImpl() {
+      this(false, false);
     }
 
-    public TextFilterSettings withRegex(boolean isRegex) {
-      return new TextFilterSettings(isRegex);
+    @Override
+    public boolean isFilterByRegexEnabled() {
+      return REGEX;
+    }
+
+    @Override
+    public void setFilterByRegexEnabled(boolean enabled) {
+      REGEX = enabled;
+    }
+
+    @Override
+    public boolean isMatchCaseEnabled() {
+      return MATCH_CASE;
+    }
+
+    @Override
+    public void setMatchCaseEnabled(boolean enabled) {
+      MATCH_CASE = enabled;
     }
   }
 }

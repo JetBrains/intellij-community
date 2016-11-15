@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,6 @@ public interface VcsLogUiProperties {
 
   void setShowTagNames(boolean showTags);
 
-  boolean isFilterByRegexEnabled();
-
-  void setFilterByRegexEnabled(boolean enabled);
+  @NotNull
+  VcsLogUi.TextFilterSettings getTextFilterSettings();
 }

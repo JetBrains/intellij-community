@@ -27,23 +27,34 @@ public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilt
 
   @NotNull private final String myText;
   private final boolean myIsRegexAllowed;
+  private final boolean myMatchCase;
 
-  public VcsLogTextFilterImpl(@NotNull String text, boolean isRegexAllowed) {
+  public VcsLogTextFilterImpl(@NotNull String text, boolean isRegexAllowed, boolean matchCase) {
     myText = text;
     myIsRegexAllowed = isRegexAllowed;
+    myMatchCase = matchCase;
   }
 
   // used in upsource
   @SuppressWarnings("unused")
   public VcsLogTextFilterImpl(@NotNull String text) {
-    this(text, false);
+    this(text, false, false);
   }
 
   @Override
   public boolean matches(@NotNull VcsCommitMetadata details) {
     if (isRegex()) {
-      return Pattern.compile(myText, Pattern.CASE_INSENSITIVE).matcher(details.getFullMessage()).find();
+      Pattern pattern;
+      if (myMatchCase) {
+        pattern = Pattern.compile(myText);
+      }
+      else {
+        pattern = Pattern.compile(myText, Pattern.CASE_INSENSITIVE);
+      }
+      return pattern.matcher(details.getFullMessage()).find();
     }
+
+    if (myMatchCase) return details.getFullMessage().contains(myText);
     return details.getFullMessage().toLowerCase().contains(myText.toLowerCase());
   }
 
@@ -59,7 +70,12 @@ public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilt
   }
 
   @Override
+  public boolean matchesCase() {
+    return myMatchCase;
+  }
+
+  @Override
   public String toString() {
-    return (isRegex() ? "matching " : "containing ") + myText;
+    return (isRegex() ? "matching " : "containing ") + myText + " (case " + (myMatchCase ? "sensitive" : "insensitive") + ")";
   }
 }

@@ -65,6 +65,8 @@
             use-shortcut-of="QuickJavaDoc"/>
     <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"
             text="Regex"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"
+            text="Match Case"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
@@ -79,6 +81,7 @@
     </group>
     <group id="Vcs.Log.TextFilterSettings">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
+      <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
@@ -113,6 +116,7 @@
       <separator/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
       <reference ref="Vcs.Log.EnableFilterByRegexAction"/>
+      <reference ref="Vcs.Log.MatchCaseAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

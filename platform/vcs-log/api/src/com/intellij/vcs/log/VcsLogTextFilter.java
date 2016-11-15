@@ -34,4 +34,11 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
    * @return true if this pattern represents a regular expression, false otherwise.
    */
   boolean isRegex();
+
+  /**
+   * Check whether the filter should be case sensitive.
+   *
+   * @return true if case sensitive, false otherwise.
+   */
+  boolean matchesCase();
 }
