@@ -31,6 +31,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
@@ -531,13 +532,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
-  private static void addOptionTag(@NotNull Element parentNode, @NotNull String name, @NotNull String value) {
-    Element element = new Element(OPTION_ELEMENT);
-    element.setAttribute(NAME_ATTR, name);
-    element.setAttribute(VALUE_ELEMENT, value);
-    parentNode.addContent(element);
-  }
-
   public void writeExternal(Element parentNode) {
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
@@ -551,7 +545,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
 
     if (getLineSpacing() != 1) {
-      addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
+      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
     }
 
     // IJ has used a 'single customizable font' mode for ages. That's why we want to support that format now, when it's possible
@@ -559,7 +553,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (useOldFontFormat) {
-      addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
+      JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
     }
     else {
       writeFontPreferences(EDITOR_FONT, parentNode, myFontPreferences);
@@ -568,10 +562,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     
     if (!myFontPreferences.equals(myConsoleFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
-        addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
+        JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
 
         if (getConsoleFontSize() != getEditorFontSize()) {
-          addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(getConsoleFontSize()));
+          JdomKt.addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(getConsoleFontSize()));
         }
       }
       else {
@@ -581,15 +575,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
 
     if (getConsoleLineSpacing() != getLineSpacing()) {
-      addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
+      JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
     }
 
     if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
-      addOptionTag(parentNode, EDITOR_QUICK_JAVADOC_FONT_SIZE, getQuickDocFontSize().toString());
+      JdomKt.addOptionTag(parentNode, EDITOR_QUICK_JAVADOC_FONT_SIZE, getQuickDocFontSize().toString());
     }
 
     if (useOldFontFormat) {
-      addOptionTag(parentNode, EDITOR_FONT_NAME, getEditorFontName());
+      JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, getEditorFontName());
     }
 
     Element colorElements = new Element(COLORS_ELEMENT);
@@ -610,15 +604,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   private static void writeLigaturesPreferences(Element parentNode, FontPreferences preferences, String optionName) {
     if (preferences.useLigatures()) {
-      addOptionTag(parentNode, optionName, String.valueOf(true));
+      JdomKt.addOptionTag(parentNode, optionName, String.valueOf(true));
     }
   }
 
   private static void writeFontPreferences(@NotNull String key, @NotNull Element parent, @NotNull FontPreferences preferences) {
     for (String fontFamily : preferences.getRealFontFamilies()) {
       Element element = new Element(key);
-      addOptionTag(element, EDITOR_FONT_NAME, fontFamily);
-      addOptionTag(element, EDITOR_FONT_SIZE, String.valueOf(preferences.getSize(fontFamily)));
+      JdomKt.addOptionTag(element, EDITOR_FONT_NAME, fontFamily);
+      JdomKt.addOptionTag(element, EDITOR_FONT_SIZE, String.valueOf(preferences.getSize(fontFamily)));
       parent.addContent(element);
     }
   }
@@ -711,7 +705,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     for (ColorKey key : list) {
       if (haveToWrite(key)) {
         Color value = myColorsMap.get(key);
-        addOptionTag(colorElements, key.getExternalName(), value == null ? "" : Integer.toString(value.getRGB() & 0xFFFFFF, 16));
+        String value1 = value == null ? "" : Integer.toString(value.getRGB() & 0xFFFFFF, 16);
+        JdomKt.addOptionTag(colorElements, key.getExternalName(), value1);
       }
     }
   }
