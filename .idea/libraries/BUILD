@@ -86,13 +86,13 @@ java_library(
     exports = [
         "//tools:idea/lib/jsr305",
         "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
-        "//tools/adt/idea:android/lib/jsr305-1.3.9",
+        "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/jsr305",
         "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
-        "//tools/adt/idea:android/lib/jsr305-1.3.9",
+        "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
 )
 
@@ -226,24 +226,24 @@ java_library(
     name = "commons-io-2.4",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea:android/lib/commons-io-2.4"],
-    runtime_deps = ["//tools/adt/idea:android/lib/commons-io-2.4"],
+    exports = ["//tools/adt/idea/android/lib:commons-io-2.4"],
+    runtime_deps = ["//tools/adt/idea/android/lib:commons-io-2.4"],
 )
 
 java_library(
     name = "juniversalchardet-1.0.3",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea:android/lib/juniversalchardet-1.0.3"],
-    runtime_deps = ["//tools/adt/idea:android/lib/juniversalchardet-1.0.3"],
+    exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
+    runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
 )
 
 java_library(
     name = "antlr4-runtime-4.5.3",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea:android/lib/antlr4-runtime-4.5.3"],
-    runtime_deps = ["//tools/adt/idea:android/lib/antlr4-runtime-4.5.3"],
+    exports = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
+    runtime_deps = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
 )
 
 java_library(
@@ -540,15 +540,15 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea:android/lib/asm-5.0.3",
-        "//tools/adt/idea:android/lib/asm-analysis-5.0.3",
-        "//tools/adt/idea:android/lib/asm-tree-5.0.3",
+        "//tools/adt/idea/android/lib:asm-5.0.3",
+        "//tools/adt/idea/android/lib:asm-analysis-5.0.3",
+        "//tools/adt/idea/android/lib:asm-tree-5.0.3",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea:android/lib/asm-5.0.3",
-        "//tools/adt/idea:android/lib/asm-analysis-5.0.3",
-        "//tools/adt/idea:android/lib/asm-tree-5.0.3",
+        "//tools/adt/idea/android/lib:asm-5.0.3",
+        "//tools/adt/idea/android/lib:asm-analysis-5.0.3",
+        "//tools/adt/idea/android/lib:asm-tree-5.0.3",
     ],
 )
 
@@ -564,8 +564,8 @@ java_library(
     name = "android-sdk-tools-jps",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea:android/lib/jarutils"],
-    runtime_deps = ["//tools/adt/idea:android/lib/jarutils"],
+    exports = ["//tools/adt/idea/android/lib:jarutils"],
+    runtime_deps = ["//tools/adt/idea/android/lib:jarutils"],
 )
 
 java_library(
@@ -946,8 +946,8 @@ java_library(
     name = "jgraphx-3.4.0.1",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
-    runtime_deps = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
+    exports = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
+    runtime_deps = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
 )
 
 java_library(
@@ -956,21 +956,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea:android/lib/jogl-all",
-        "//tools/adt/idea:android/lib/jogl-all-natives-linux-amd64",
-        "//tools/adt/idea:android/lib/jogl-all-natives-linux-i586",
-        "//tools/adt/idea:android/lib/jogl-all-natives-macosx-universal",
-        "//tools/adt/idea:android/lib/jogl-all-natives-windows-amd64",
-        "//tools/adt/idea:android/lib/jogl-all-natives-windows-i586",
+        "//tools/adt/idea/android/lib:jogl-all",
+        "//tools/adt/idea/android/lib:jogl-all-natives-linux-amd64",
+        "//tools/adt/idea/android/lib:jogl-all-natives-linux-i586",
+        "//tools/adt/idea/android/lib:jogl-all-natives-macosx-universal",
+        "//tools/adt/idea/android/lib:jogl-all-natives-windows-amd64",
+        "//tools/adt/idea/android/lib:jogl-all-natives-windows-i586",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea:android/lib/jogl-all",
-        "//tools/adt/idea:android/lib/jogl-all-natives-linux-amd64",
-        "//tools/adt/idea:android/lib/jogl-all-natives-linux-i586",
-        "//tools/adt/idea:android/lib/jogl-all-natives-macosx-universal",
-        "//tools/adt/idea:android/lib/jogl-all-natives-windows-amd64",
-        "//tools/adt/idea:android/lib/jogl-all-natives-windows-i586",
+        "//tools/adt/idea/android/lib:jogl-all",
+        "//tools/adt/idea/android/lib:jogl-all-natives-linux-amd64",
+        "//tools/adt/idea/android/lib:jogl-all-natives-linux-i586",
+        "//tools/adt/idea/android/lib:jogl-all-natives-macosx-universal",
+        "//tools/adt/idea/android/lib:jogl-all-natives-windows-amd64",
+        "//tools/adt/idea/android/lib:jogl-all-natives-windows-i586",
     ],
 )
 
@@ -980,21 +980,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea:android/lib/gluegen-rt",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-amd64",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-i586",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-macosx-universal",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-amd64",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-i586",
+        "//tools/adt/idea/android/lib:gluegen-rt",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-amd64",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-i586",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-macosx-universal",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-amd64",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-i586",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea:android/lib/gluegen-rt",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-amd64",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-i586",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-macosx-universal",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-amd64",
-        "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-i586",
+        "//tools/adt/idea/android/lib:gluegen-rt",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-amd64",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-i586",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-macosx-universal",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-amd64",
+        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-i586",
     ],
 )
 
@@ -1004,13 +1004,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea:android/lib/dexlib2-2.0.8-dev",
-        "//tools/adt/idea:android/lib/dexlib2-util-2.0.8-dev",
+        "//tools/adt/idea/android/lib:dexlib2-2.0.8-dev",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.0.8-dev",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea:android/lib/dexlib2-2.0.8-dev",
-        "//tools/adt/idea:android/lib/dexlib2-util-2.0.8-dev",
+        "//tools/adt/idea/android/lib:dexlib2-2.0.8-dev",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.0.8-dev",
     ],
 )
 
