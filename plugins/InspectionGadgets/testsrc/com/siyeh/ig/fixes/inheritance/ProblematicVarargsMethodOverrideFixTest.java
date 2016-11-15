@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.inheritance.ProblematicVarargsMethodOverrideInspection;
 public class ProblematicVarargsMethodOverrideFixTest extends IGQuickFixesTestCase {
 
   public void testOne() { doTest(); }
+  public void testOldStyleArray() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
