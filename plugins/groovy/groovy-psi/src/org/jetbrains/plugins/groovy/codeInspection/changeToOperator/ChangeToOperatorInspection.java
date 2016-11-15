@@ -19,9 +19,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -29,19 +29,17 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.ReplacementData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformation;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 import javax.swing.*;
-import java.util.Map;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
+import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
 public class ChangeToOperatorInspection extends BaseInspection {
-  private static final Map<String, Transformation> TRANSFORMATIONS = Transformations.get();
-
   public boolean useDoubleNegation = true;
   public boolean shouldChangeCompareToEqualityToEquals = true;
 
@@ -51,44 +49,45 @@ public class ChangeToOperatorInspection extends BaseInspection {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-        super.visitMethodCallExpression(methodCallExpression);
-        processMethodCall(methodCallExpression);
-      }
+        GrExpression invokedExpression = methodCallExpression.getInvokedExpression();
+        if (!(invokedExpression instanceof GrReferenceExpression)) return;
 
-      private void processMethodCall(GrMethodCallExpression methodCallExpression) {
+        PsiElement element = ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
+        if (element == null) return;
+
         PsiMethod method = methodCallExpression.resolveMethod();
-        if (!isValid(method)) return;
+        if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) return;
 
         String methodName = method.getName();
         Transformation transformation = TRANSFORMATIONS.get(methodName);
         if (transformation == null) return;
 
-        // TODO apply transformation recursively
         OptionsData optionsData = new OptionsData(useDoubleNegation, shouldChangeCompareToEqualityToEquals);
         ReplacementData replacement = transformation.transform(methodCallExpression, optionsData);
         if (replacement == null) return;
 
-        GrExpression expression = replacement.getExpression();
-        String text = expression.getText();
-        GroovyFix fix = getFix(message("change.to.operator.fix", text), replacement.getReplacement());
-        registerError(expression, message("change.to.operator.message", text), new LocalQuickFix[]{fix}, GENERIC_ERROR_OR_WARNING);
+        GroovyFix fix = getFix(message("replace.with.operator.fix", methodName), replacement);
+        registerError(element, message("replace.with.operator.message", methodName), new LocalQuickFix[]{fix}, GENERIC_ERROR_OR_WARNING);
       }
 
-      private boolean isValid(PsiModifierListOwner method) {
-        return ((method != null) && !method.hasModifierProperty(PsiModifier.STATIC));
-      }
-
-      private GroovyFix getFix(@NotNull final String message, final String replacement) {
+      private GroovyFix getFix(@NotNull final String title, final ReplacementData replacement) {
         return new GroovyFix() {
+
           @NotNull
           @Override
-          public String getName() {
-            return message;
+          public String getFamilyName() {
+            return title;
           }
 
           @Override
           protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            replaceExpression((GrExpression)descriptor.getPsiElement(), replacement);
+            PsiElement element = descriptor.getPsiElement().getParent();
+            if (!(element instanceof GrReferenceExpression)) return;
+
+            PsiElement call = element.getParent();
+            if (!(call instanceof GrMethodCallExpression)) return;
+
+            replaceExpression(replacement.getElementToReplace((GrMethodCallExpression)call), replacement.getReplacement());
           }
         };
       }
@@ -98,8 +97,8 @@ public class ChangeToOperatorInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(message("change.to.operator.double.negation.option"), "useDoubleNegation");
-    optionsPanel.addCheckbox(message("change.to.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
+    optionsPanel.addCheckbox(message("replace.with.operator.double.negation.option"), "useDoubleNegation");
+    optionsPanel.addCheckbox(message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
     return optionsPanel;
   }
 }

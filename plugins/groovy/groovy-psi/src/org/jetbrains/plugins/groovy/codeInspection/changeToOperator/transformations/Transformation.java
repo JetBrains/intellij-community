@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
@@ -24,12 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public abstract class Transformation {
-  @Nullable
-  protected final IElementType operator;
-
-  public Transformation(@Nullable IElementType operator) {
-    this.operator = operator;
-  }
 
   @Nullable
   public ReplacementData transform(GrMethodCallExpression callExpression, OptionsData optionsData) {
@@ -40,10 +34,11 @@ public abstract class Transformation {
     String replacement = getReplacement(methodInfo, optionsData);
     if (replacement == null) return null;
 
-    return new ReplacementData(element, replacement);
+    return new ReplacementData(replacement, this::getExpandedElement);
   }
 
-  protected GrExpression getExpandedElement(GrMethodCallExpression callExpression) {
+  @NotNull
+  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
     return callExpression;
   }
 

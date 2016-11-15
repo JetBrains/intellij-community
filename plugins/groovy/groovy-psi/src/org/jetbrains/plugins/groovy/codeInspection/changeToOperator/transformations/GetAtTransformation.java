@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.Options
 import static java.lang.String.format;
 
 class GetAtTransformation extends Transformation {
-  public GetAtTransformation() {
-    super(null);
-  }
 
   @Override
   @Nullable
@@ -32,7 +29,6 @@ class GetAtTransformation extends Transformation {
     String argument = methodInfo.getArgument(0);
     if (argument == null) return null;
 
-    return format("%s[%s]",
-                  methodInfo.getBase(), argument);
+    return format("%s[%s]", methodInfo.getBase(), argument);
   }
 }

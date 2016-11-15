@@ -15,21 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
+public class SimpleBinaryTransformation extends BinaryTransformation {
 
-class CallTransformation extends UnaryTransformation {
-  public static final String EMPTY_PARENS = mLPAREN.toString() + mRPAREN;
+  private final String myOperator;
 
-  public CallTransformation() {
-    super(null);
+  public SimpleBinaryTransformation(@NotNull IElementType operatorType) {
+    this(operatorType.toString());
   }
 
+  public SimpleBinaryTransformation(@NotNull String operator) {
+    myOperator = operator;
+  }
+
+  @NotNull
   @Override
-  public String getReplacement(MethodCallData call, OptionsData options) {
-    return super.getReplacement(call, options) + EMPTY_PARENS;
+  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
+    return myOperator;
   }
 }

@@ -25,7 +25,6 @@ class PutAtTransformation extends Transformation {
   private final Transformation getAtTransformation;
 
   public PutAtTransformation(Transformation getAtTransformation) {
-    super(null);
     this.getAtTransformation = getAtTransformation;
   }
 

@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
-
-import static com.google.common.base.MoreObjects.firstNonNull;
 
 /**
  * e.g.
@@ -29,8 +28,19 @@ import static com.google.common.base.MoreObjects.firstNonNull;
  * if(a.asBoolean()) → if(a)
  */
 public class UnaryTransformation extends Transformation {
-  public UnaryTransformation(@Nullable IElementType operator) {
-    super(operator);
+
+  private final @NotNull String myOperator;
+
+  public UnaryTransformation(@NotNull IElementType operatorType) {
+    this(operatorType.toString());
+  }
+
+  public UnaryTransformation(@NotNull String operator) {
+    myOperator = operator;
+  }
+
+  public UnaryTransformation() {
+    this("");
   }
 
   @Override
@@ -38,13 +48,13 @@ public class UnaryTransformation extends Transformation {
   public String getReplacement(MethodCallData call, OptionsData options) {
     String prefix = getPrefix(call, options);
     String base = call.getBase();
-    if ((prefix == null) || (base == null)) return null;
+    if (prefix == null) return null;
 
     return prefix + base;
   }
 
   @Nullable
   protected String getPrefix(MethodCallData call, OptionsData optionsData) {
-    return firstNonNull(operator, "").toString();
+    return myOperator;
   }
 }

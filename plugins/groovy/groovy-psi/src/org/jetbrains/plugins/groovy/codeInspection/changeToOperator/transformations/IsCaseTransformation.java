@@ -17,11 +17,11 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-class IsCaseTransformation extends BinaryTransformation {
+class IsCaseTransformation extends SimpleBinaryTransformation {
+
   public IsCaseTransformation() {
-    super(GroovyTokenTypes.kIN);
+    super("in");
   }
 
   @Override
