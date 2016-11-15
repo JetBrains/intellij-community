@@ -399,10 +399,11 @@ class DistributionJARsBuilder {
                                    replace: "<version>${buildNumber}</version>")
     def sinceBuild
     def untilBuild
-    /* Use relaxed build numbers range for EAP/release branches, i.e. plugins for 163.1111.22 build will be marked as compatible with 163.1111.* builds.
-      Usually there are no API changes in EAP/release branches so it's convenient to be able to publish a single plugin for different IDEs built
-      from the same EAP/release branch. */
-    if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+\.\d+/)) {
+    /* Plugins from builds with numbers like 163.1111 (nightly builds) will be marked as compatible with all 163.* builds; it's required to
+       allow us to use such plugins in other nightly builds and in IDEA built from sources (with build number 163.SNAPSHOT).
+       Plugins from builds with numbers like 163.1111.22 (EAP/release builds) will be marked as compatible with all 163.1111.* builds. Usually there are no API changes in EAP/release branches so it's convenient to be able to publish a single plugin for different IDEs built
+       from the same EAP/release branch. */
+    if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
       sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
       untilBuild = sinceBuild + ".*"
     }
