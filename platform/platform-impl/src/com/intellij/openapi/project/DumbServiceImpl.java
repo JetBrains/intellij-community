@@ -401,8 +401,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator(), true));
     }
     finally {
-      if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
-      WriteAction.run(() -> updateFinished(true));
+      if (myState.get() != State.SMART) {
+        if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
+        WriteAction.run(() -> updateFinished(true));
+      }
     }
   }
 
@@ -568,5 +570,26 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private enum State { SMART, SCHEDULED_TASKS, RUNNING_DUMB_TASKS, WAITING_FOR_FINISH }
+  private enum State {
+    /** Non-dumb mode. For all other states, {@link #isDumb()} returns true. */
+    SMART,
+
+    /**
+     * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #runBackgroundProcess}).
+     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all submitted the tasks modally.
+     * This state can happen after {@link #SMART} or {@link #WAITING_FOR_FINISH}. Followed by {@link #RUNNING_DUMB_TASKS}.
+     */
+    SCHEDULED_TASKS,
+
+    /**
+     * Indicates that a background thread is currently executing dumb tasks.
+     */
+    RUNNING_DUMB_TASKS,
+
+    /**
+     * Set after background execution ({@link #RUNNING_DUMB_TASKS}) finishes, until the dumb mode can be exited
+     * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_TASKS}.
+     */
+    WAITING_FOR_FINISH
+  }
 }
