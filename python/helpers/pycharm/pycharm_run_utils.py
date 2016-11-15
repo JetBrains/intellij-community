@@ -33,7 +33,7 @@ def import_system_module(name):
   try:
     f, filename, desc = imp.find_module(name)
     return imp.load_module('pycharm_' + name, f, filename, desc)
-  except:
+  except ImportError:
     # Hack for python files in a zip file. Imp doesnt work correctly in it.
     import importlib
     mod = importlib.import_module(name)
