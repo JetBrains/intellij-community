@@ -18,10 +18,7 @@ package com.intellij.ide.structureView.customRegions;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +38,7 @@ public class CustomRegionStructureUtil {
     }
     Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(originalElements, element -> {
       Object value = element.getValue();
-      return value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
+      return value instanceof PsiElement ? getTextRange((PsiElement)value) : null;
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
     if (customRegions.size() > 0) {
@@ -61,6 +58,21 @@ public class CustomRegionStructureUtil {
       return result;
     }
     return originalElements;
+  }
+
+  /*
+   * Fix cases when a line comment before an element (for example, method) gets inside it as a first child.
+   */
+  private static TextRange getTextRange(@NotNull PsiElement element) {
+    PsiElement first = element.getFirstChild();
+    if (first instanceof PsiComment && !first.textContains('\n')) {
+      PsiElement next = first.getNextSibling();
+      if (next instanceof PsiWhiteSpace) next = next.getNextSibling();
+      if (next != null) {
+        return new TextRange(next.getTextRange().getStartOffset(), element.getTextRange().getEndOffset());
+      }
+    }
+    return element.getTextRange();
   }
 
   private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
@@ -112,7 +124,7 @@ public class CustomRegionStructureUtil {
     }
     return false;
   }
-  
+
   private static boolean isCustomRegionCommentCandidate(@NotNull PsiElement element) {
     return element instanceof PsiComment && !element.textContains('\n');
   }

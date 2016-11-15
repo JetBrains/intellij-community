@@ -133,7 +133,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     Object o = element.getValue();
     if (o instanceof PsiElement) {
       TextRange elementRange = ((PsiElement)o).getTextRange();
-      if(elementRange.getStartOffset() > myStartElement.getTextRange().getStartOffset() && elementRange.getEndOffset() < myEndOffset) {
+      if(elementRange.getStartOffset() >= myStartElement.getTextRange().getStartOffset() && elementRange.getEndOffset() <= myEndOffset) {
         return true;
       }
     }
