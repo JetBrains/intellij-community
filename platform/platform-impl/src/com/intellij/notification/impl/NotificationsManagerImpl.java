@@ -265,11 +265,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
       final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
                                             project != null ? project : ApplicationManager.getApplication());
-      ((BalloonImpl)balloon).traceDispose(true);
 
       if (notification.isExpired()) {
         return null;
       }
+
+      ((BalloonImpl)balloon).traceDispose(true);
 
       layout.add(balloon, layoutDataRef == null ? null : layoutDataRef.get());
       if (layoutDataRef != null && layoutDataRef.get() instanceof BalloonLayoutData) {

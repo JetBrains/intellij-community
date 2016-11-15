@@ -22,6 +22,10 @@ public class StreamProviderWrapper implements StreamProvider {
     return null;
   }
 
+  public StreamProvider getStreamProvider() {
+    return myStreamProvider;
+  }
+
   public void setStreamProvider(@Nullable StreamProvider streamProvider) {
     myStreamProvider = streamProvider;
   }

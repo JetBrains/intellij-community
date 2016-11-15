@@ -178,6 +178,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
                                                                                         this));
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error("an exception during scope without code references calculation", e);
       return null;
@@ -211,7 +214,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     try {
-
       Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
@@ -233,6 +235,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
       }
       return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, myProject, searchFileType, searchType);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error("an exception during hierarchy calculation", e);

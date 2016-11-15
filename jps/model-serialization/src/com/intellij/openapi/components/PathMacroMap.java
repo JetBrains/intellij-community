@@ -31,6 +31,12 @@ public abstract class PathMacroMap {
 
   public abstract String substitute(String text, boolean caseSensitive);
 
+  public final String substitute(String text, boolean caseSensitive, boolean recursively) {
+    return recursively
+           ? substituteRecursively(text, caseSensitive)
+           : substitute(text, caseSensitive);
+  }
+
   public final void substitute(@NotNull Element e, boolean caseSensitive) {
     substitute(e, caseSensitive, false);
   }

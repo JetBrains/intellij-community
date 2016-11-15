@@ -131,20 +131,10 @@ public class BasePathMacroManager extends PathMacroManager {
     return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  @Override
-  public String collapsePath(@Nullable String path) {
-    return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
-  }
-
-  @Override
-  public void collapsePathsRecursively(@NotNull final Element element) {
-    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
-  }
-
   @NotNull
   @Override
-  public String collapsePathsRecursively(@NotNull final String text) {
-    return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);
+  public String collapsePath(@NotNull final String text, boolean recursively) {
+    return getReplacePathMap().substitute(text, SystemInfo.isFileSystemCaseSensitive, recursively);
   }
 
   @Override
@@ -153,8 +143,8 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @Override
-  public void collapsePaths(@NotNull final Element element) {
-    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
+  public void collapsePaths(@NotNull final Element element, boolean recursively) {
+    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively);
   }
 
   @NotNull
@@ -185,8 +175,8 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     @Override
-    public String collapsePath(@Nullable String path) {
-      return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+    public String collapsePath(@Nullable String path, boolean recursively) {
+      return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive, recursively);
     }
 
     @Override
@@ -195,8 +185,8 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     @Override
-    public void collapsePaths(@NotNull final Element element) {
-      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, Holder.FILTER);
+    public void collapsePaths(@NotNull final Element element, boolean recursively) {
+      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.FILTER);
     }
 
     public int hashCode() {

@@ -20,12 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * Gof Template Method for {@link BlockAlignmentProcessor}.
- * 
- * @author Denis Zhdanov
- * @since 4/29/11 11:52 AM
- */
 public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentProcessor {
 
   @Override
