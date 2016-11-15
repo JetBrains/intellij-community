@@ -26,7 +26,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
@@ -126,12 +125,7 @@ class GitBranchPopupActions {
 
     @Override
     public void update(AnActionEvent e) {
-      boolean isFresh = ContainerUtil.and(myRepositories, new Condition<GitRepository>() {
-        @Override
-        public boolean value(GitRepository repository) {
-          return repository.isFresh();
-        }
-      });
+      boolean isFresh = ContainerUtil.and(myRepositories, repository -> repository.isFresh());
       if (isFresh) {
         e.getPresentation().setEnabled(false);
         e.getPresentation().setDescription("Checkout is not possible before the first commit");
