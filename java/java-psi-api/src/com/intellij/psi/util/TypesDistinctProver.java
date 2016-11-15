@@ -145,7 +145,7 @@ public class TypesDistinctProver {
     }
 
     return type2 != null && type1 != null && !type1.equals(type2) &&
-           !(boundClass1.isInterface() && boundClass2.isInterface()) &&
+           !(level == 0 && boundClass1.isInterface() && boundClass2.isInterface()) &&
            (!InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) ||
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));
   }
