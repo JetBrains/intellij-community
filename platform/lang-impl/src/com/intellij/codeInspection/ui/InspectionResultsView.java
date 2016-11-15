@@ -967,14 +967,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           if (elementFromDescriptor == null) {
             final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
             if (node.isValid()) {
-              return null;
+              return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
             }
           } else {
             psiElement = elementFromDescriptor;
           }
-        }
-        else {
-          return null;
         }
       }
 
