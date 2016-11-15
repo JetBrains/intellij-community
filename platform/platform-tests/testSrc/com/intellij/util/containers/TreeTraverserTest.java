@@ -172,14 +172,39 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(1), it.current());
   }
 
-  public void testIteratorContractsCursor() {
+  public void testCursorIterableContract() {
     List<Integer> list = ContainerUtil.newArrayList();
-    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(JBIterable.of(1, 2).iterator()))) {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(orig.iterator()))) {
       it.current();
       it.hasNext();
       list.add(it.current());
     }
-    assertEquals(Arrays.asList(1, 2), list);
+    assertEquals(orig.toList(), list);
+  }
+
+  public void testCursorIteratorContract() {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+    JBIterator<JBIterator<Integer>> it = JBIterator.from(JBIterator.cursor(
+      JBIterator.from(orig.iterator())).iterator());
+    List<Integer> list = ContainerUtil.newArrayList();
+    while (it.advance()) {
+      it.hasNext();
+      list.add(it.current().current());
+    }
+    assertEquals(orig.toList(), list);
+  }
+
+  public void testCursorTransform() {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+
+    List<Integer> expected = ContainerUtil.newArrayList(1, 2, 3, 4, 5);
+    List<Integer> expectedOdd = ContainerUtil.newArrayList(1, 3, 5);
+    assertEquals(expected, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).toList());
+    assertEquals(expected.size(), JBIterator.cursor(JBIterator.from(orig.iterator())).last().current().intValue());
+    assertEquals(expectedOdd, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).filter(IS_ODD).toList());
+    assertEquals(expectedOdd, JBIterator.cursor(JBIterator.from(orig.iterator())).filter(o -> IS_ODD.value(o.current())).transform(o -> o.current()).toList());
+    assertEquals(expected.subList(0, 4), JBIterator.cursor(JBIterator.from(orig.iterator())).filter(o -> o.hasNext()).transform(o -> o.current()).toList());
   }
 
   public void testIteratorContractsSkipAndStop() {
