@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
-
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -88,7 +86,7 @@ public class TemplateContext {
 
   // used during initialization => no sync
   @VisibleForTesting
-  public void readTemplateContext(Element element) {
+  public void readTemplateContext(@NotNull Element element) {
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
