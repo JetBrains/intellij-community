@@ -47,7 +47,7 @@ import java.util.Collection;
  */
 public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTool {
 
-  public boolean mySuggestMapGetOrDefault = true;
+  private boolean mySuggestMapGetOrDefault = false;
   public boolean mySuggestMapComputeIfAbsent = true;
 
   @Nullable
@@ -55,7 +55,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Suggest conversion to Map.computeIfAbsent", "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
+    //panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
     return panel;
   }
 
