@@ -229,9 +229,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<IntentionAction> result = new ArrayList<>();
     IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
-      final IntentionAction action = entry.getKey();
-      if (action.isAvailable(file.getProject(), editor, file))
-        result.add(action);
+      result.add(entry.getKey());
       result.addAll(entry.getValue());
     }
 
