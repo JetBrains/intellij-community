@@ -39,7 +39,13 @@ public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
+  /**
+   * Platform-specific separated list of python interpreters
+   */
   private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
+  /**
+   * Folder with virtual envs (python interpreters).
+   */
   private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
