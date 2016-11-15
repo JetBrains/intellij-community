@@ -26,6 +26,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testFileHeader() = complete("<caret>", "module <caret>")
+  fun testModuleName() = variants("module M<caret>")
   fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "uses", "provides")
   fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
   fun testModuleRef() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
