@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -607,7 +608,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
-        ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
+        ActionUtil.performDumbAwareUpdate(false, action, actionEvent, true);
       }
 
       if (dumb && !action.isDumbAware()) {
@@ -879,7 +880,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                                 ActionManager.getInstance(),
                                                 0);
 
-        ActionUtil.performDumbAwareUpdate(action, event, true);
+        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
         return presentation.isEnabled() && presentation.isVisible();
       })) {
         @Override

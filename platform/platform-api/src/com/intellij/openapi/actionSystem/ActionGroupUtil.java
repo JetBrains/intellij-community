@@ -30,19 +30,26 @@ public class ActionGroupUtil {
     return action2presentation.computeIfAbsent(action, k -> action.getTemplatePresentation().clone());
   }
 
+  @Deprecated
+  // Use #isGroupEmpty with isModalContext instead
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    return isGroupEmpty(actionGroup, e, new HashMap<>());
+    return isGroupEmpty(actionGroup, e, new HashMap<>(), false);
+  }
+
+  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
+    return isGroupEmpty(actionGroup, e, new HashMap<>(), isInModalContext);
   }
 
   private static boolean isGroupEmpty(@NotNull ActionGroup actionGroup,
                                                    @NotNull AnActionEvent e,
-                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
+                                                   @NotNull Map<AnAction, Presentation> action2presentation,
+                                                   boolean inModalContext) {
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof Separator) continue;
-      if (isActionEnabledAndVisible(e, action2presentation, action)) {
+      if (isActionEnabledAndVisible(e, action2presentation, action, inModalContext)) {
         if (action instanceof ActionGroup) {
-          if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+          if (!isGroupEmpty((ActionGroup)action, e, action2presentation, inModalContext)) {
             return false;
           }
           // else continue for-loop
@@ -56,8 +63,8 @@ public class ActionGroupUtil {
   }
 
   @Nullable
-  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<>());
+  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
+    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<>(), isInModalContext);
     if (children.size() == 1) {
       return children.get(0);
     }
@@ -66,17 +73,18 @@ public class ActionGroupUtil {
 
   private static List<AnAction> getEnabledChildren(@NotNull ActionGroup actionGroup,
                                                    @NotNull AnActionEvent e,
-                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
+                                                   @NotNull Map<AnAction, Presentation> action2presentation,
+                                                   boolean isInModalContext) {
     List<AnAction> result = new ArrayList<>();
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof ActionGroup) {
-        if (isActionEnabledAndVisible(e, action2presentation, action)) {
-          result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation));
+        if (isActionEnabledAndVisible(e, action2presentation, action, isInModalContext)) {
+          result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation, isInModalContext));
         }
       }
       else if (!(action instanceof Separator)) {
-        if (isActionEnabledAndVisible(e, action2presentation, action)) {
+        if (isActionEnabledAndVisible(e, action2presentation, action, isInModalContext)) {
           result.add(action);
         }
       }
@@ -86,7 +94,8 @@ public class ActionGroupUtil {
 
   private static boolean isActionEnabledAndVisible(@NotNull final AnActionEvent e,
                                                    @NotNull final Map<AnAction, Presentation> action2presentation,
-                                                   @NotNull final AnAction action) {
+                                                   @NotNull final AnAction action,
+                                                   boolean isInModalContext) {
     Presentation presentation = getPresentation(action, action2presentation);
     AnActionEvent event = new AnActionEvent(e.getInputEvent(),
                                             e.getDataContext(),
@@ -95,7 +104,7 @@ public class ActionGroupUtil {
                                             ActionManager.getInstance(),
                                             e.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.performDumbAwareUpdate(isInModalContext, action, event, false);
 
     return presentation.isEnabled() && presentation.isVisible();
   }

@@ -99,7 +99,7 @@ public class ActionUtil {
    * {@link AnAction#update(AnActionEvent)}
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
     final boolean dumbMode = isDumbMode(e.getProject());
@@ -110,7 +110,7 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware();
+    final boolean notAllowed = dumbMode && !action.isDumbAware() || (isInModalContext && !action.isEnabledInModalContext());
 
     if (insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
@@ -145,6 +145,13 @@ public class ActionUtil {
     
     return false;
   }
+
+  @Deprecated
+  // Use #performDumbAwareUpdate with isModalContext instead
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
+  }
+
   public static class ActionPauses {
     public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
@@ -167,7 +174,7 @@ public class ActionUtil {
   }
 
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
-    performDumbAwareUpdate(action, e, true);
+    performDumbAwareUpdate(false, action, e, true);
 
     final Project project = e.getProject();
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {

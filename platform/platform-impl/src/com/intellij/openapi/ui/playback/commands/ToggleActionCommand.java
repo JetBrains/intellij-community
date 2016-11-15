@@ -18,6 +18,7 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
@@ -88,7 +89,7 @@ public class ToggleActionCommand extends AbstractCommand {
               .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
                             presentation, ActionManager.getInstance(), 0);
 
-      ActionUtil.performDumbAwareUpdate(action, event, false);
+      ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
 
       Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
       if (state.booleanValue() != on) {

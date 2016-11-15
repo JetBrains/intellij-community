@@ -62,7 +62,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
                                                       presentation,
                                                       ActionManager.getInstance(),
                                                       0);
-        ActionUtil.performDumbAwareUpdate(myAction, event, true);
+        ActionUtil.performDumbAwareUpdate(false, myAction, event, true);
         if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
           myAction.actionPerformed(event);
           if (onDone != null) {

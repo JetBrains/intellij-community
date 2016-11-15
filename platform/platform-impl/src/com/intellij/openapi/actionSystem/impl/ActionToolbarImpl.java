@@ -945,7 +945,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
     DataContext dataContext = getDataContext();
 
-    Utils.expandActionGroup(myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
+    Utils.expandActionGroup(false, myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
                             myPlace, myActionManager, transparentOnly);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {

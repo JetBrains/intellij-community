@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -294,7 +295,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), myActionPlace, presentation,
                           ActionManager.getInstance(), 0);
       actionEvent.setInjectedContext(action.isInInjectedContext());
-      ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
+      ActionUtil.performDumbAwareUpdate(false, action, actionEvent, false);
       return presentation;
     }
 
@@ -1060,7 +1061,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       Presentation presentation = getPresentation(action);
       AnActionEvent event = createActionEvent(action);
 
-      ActionUtil.performDumbAwareUpdate(action, event, true);
+      ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
       if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
         String text = presentation.getText();
         if (myShowNumbers) {
