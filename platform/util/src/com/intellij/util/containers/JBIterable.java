@@ -210,7 +210,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   @Override
   public String toString() {
-    return myIterable == this ? super.toString() : String.valueOf(myIterable);
+    return myIterable == this ? JBIterable.class.getSimpleName() : String.valueOf(myIterable);
   }
 
   /**
