@@ -40,10 +40,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   }
 
   @Override
-  public final boolean analyze(@NotNull PsiFile file,
-                               boolean updateWholeFile,
-                               @NotNull HighlightInfoHolder holder,
-                               @NotNull Runnable action) {
+  public boolean analyze(@NotNull PsiFile file,
+                         boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
     myHolder = holder;
     myRainbowHighlighter = new RainbowHighlighter(myHolder.getColorsScheme());
     try {
