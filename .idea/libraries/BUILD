@@ -18,10 +18,12 @@ java_library(
     name = "JUnit4",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/hamcrest-core-1.3",
         "//tools:idea/lib/junit-4.12",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/hamcrest-core-1.3",
         "//tools:idea/lib/junit-4.12",
@@ -80,11 +82,13 @@ java_library(
     name = "jsr305",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/jsr305",
         "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
         "//tools/adt/idea:android/lib/jsr305-1.3.9",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/jsr305",
         "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
@@ -120,12 +124,14 @@ java_library(
     name = "http-client",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/httpcore-4.4.1",
         "//tools:idea/lib/httpmime-4.4.1",
         "//tools:idea/lib/httpclient-4.4.1",
         "//tools:idea/lib/fluent-hc-4.4.1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/httpcore-4.4.1",
         "//tools:idea/lib/httpmime-4.4.1",
@@ -138,10 +144,12 @@ java_library(
     name = "bouncy-castle",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/m2/repository/org/bouncycastle/bcpkix-jdk15on/1.48:jar",
         "//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.48:jar",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/m2/repository/org/bouncycastle/bcpkix-jdk15on/1.48:jar",
         "//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.48:jar",
@@ -160,6 +168,7 @@ java_library(
     name = "Ant",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/ant/lib/ant-commons-net",
         "//tools:idea/lib/ant/lib/ant-jmf",
@@ -181,6 +190,7 @@ java_library(
         "//tools:idea/lib/ant/lib/ant-swing",
         "//tools:idea/lib/ant/lib/ant-javamail",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/ant/lib/ant-commons-net",
         "//tools:idea/lib/ant/lib/ant-jmf",
@@ -270,10 +280,12 @@ java_library(
     name = "hamcrest",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/hamcrest-library-1.3",
         "//tools:idea/lib/hamcrest-core-1.3",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/hamcrest-library-1.3",
         "//tools:idea/lib/hamcrest-core-1.3",
@@ -284,10 +296,12 @@ java_library(
     name = "TestNG",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/testng/lib/testng",
         "//tools:idea/plugins/testng/lib/jcommander",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/testng/lib/testng",
         "//tools:idea/plugins/testng/lib/jcommander",
@@ -298,11 +312,13 @@ java_library(
     name = "Coverage",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/coverage-agent",
         "//tools:idea/lib/coverage-instrumenter",
         "//tools:idea/lib/coverage-util",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/coverage-agent",
         "//tools:idea/lib/coverage-instrumenter",
@@ -338,10 +354,12 @@ java_library(
     name = "jna",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/jna",
         "//tools:idea/lib/jna-platform",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/jna",
         "//tools:idea/lib/jna-platform",
@@ -408,10 +426,12 @@ java_library(
     name = "Xerces",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/xercesImpl",
         "//tools:idea/lib/xml-apis",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/xercesImpl",
         "//tools:idea/lib/xml-apis",
@@ -422,10 +442,12 @@ java_library(
     name = "asm",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/asm",
         "//tools:idea/lib/asm-commons",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/asm",
         "//tools:idea/lib/asm-commons",
@@ -484,6 +506,7 @@ java_library(
     name = "Mocks",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/dev/easymock",
         "//tools:idea/lib/dev/easymockclassextension",
@@ -492,6 +515,7 @@ java_library(
         "//tools:idea/lib/dev/jmock-legacy-2.5.1",
         "//tools:idea/lib/dev/objenesis-1.0",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/dev/easymock",
         "//tools:idea/lib/dev/easymockclassextension",
@@ -514,11 +538,13 @@ java_library(
     name = "asm-tools",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools/adt/idea:android/lib/asm-5.0.3",
         "//tools/adt/idea:android/lib/asm-analysis-5.0.3",
         "//tools/adt/idea:android/lib/asm-tree-5.0.3",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools/adt/idea:android/lib/asm-5.0.3",
         "//tools/adt/idea:android/lib/asm-analysis-5.0.3",
@@ -578,11 +604,13 @@ java_library(
     name = "XmlBeans",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/jsr173_1.0_api",
         "//tools:idea/lib/xbean",
         "//tools:idea/lib/resolver",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/jsr173_1.0_api",
         "//tools:idea/lib/xbean",
@@ -682,10 +710,12 @@ java_library(
     name = "Slf4j",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/slf4j-api-1.7.10",
         "//tools:idea/lib/slf4j-log4j12-1.7.10",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/slf4j-api-1.7.10",
         "//tools:idea/lib/slf4j-log4j12-1.7.10",
@@ -702,12 +732,14 @@ java_library(
     name = "Kryo",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/minlog-1.2",
         "//tools:idea/lib/kryo-2.22",
         "//tools:idea/lib/reflectasm-1.07",
         "//tools:idea/lib/objenesis-1.2",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/minlog-1.2",
         "//tools:idea/lib/kryo-2.22",
@@ -736,6 +768,7 @@ java_library(
     name = "Gradle",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/gradle/lib/gradle-tooling-api-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-core-3.1",
@@ -752,6 +785,7 @@ java_library(
         "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/gradle/lib/gradle-tooling-api-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-core-3.1",
@@ -782,10 +816,12 @@ java_library(
     name = "griffon-rt",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
         "//tools:idea/plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
         "//tools:idea/plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
@@ -812,6 +848,7 @@ java_library(
     name = "GradleToolingExtension",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-build-init-3.1",
         "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-ide-3.1",
@@ -827,6 +864,7 @@ java_library(
         "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-reporting-3.1",
         "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-ear-3.1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-build-init-3.1",
         "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-ide-3.1",
@@ -848,6 +886,7 @@ java_library(
     name = "Maven",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
         "//tools:idea/plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
@@ -855,6 +894,7 @@ java_library(
         "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
         "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
         "//tools:idea/plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
@@ -882,10 +922,12 @@ java_library(
     name = "GradleJnaPosix",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/gradle/lib/jna-3.2.7",
         "//tools:idea/plugins/gradle/lib/native-platform-0.11",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/gradle/lib/jna-3.2.7",
         "//tools:idea/plugins/gradle/lib/native-platform-0.11",
@@ -912,6 +954,7 @@ java_library(
     name = "jogl-all",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools/adt/idea:android/lib/jogl-all",
         "//tools/adt/idea:android/lib/jogl-all-natives-linux-amd64",
@@ -920,6 +963,7 @@ java_library(
         "//tools/adt/idea:android/lib/jogl-all-natives-windows-amd64",
         "//tools/adt/idea:android/lib/jogl-all-natives-windows-i586",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools/adt/idea:android/lib/jogl-all",
         "//tools/adt/idea:android/lib/jogl-all-natives-linux-amd64",
@@ -934,6 +978,7 @@ java_library(
     name = "gluegen-rt",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools/adt/idea:android/lib/gluegen-rt",
         "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-amd64",
@@ -942,6 +987,7 @@ java_library(
         "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-amd64",
         "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-i586",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools/adt/idea:android/lib/gluegen-rt",
         "//tools/adt/idea:android/lib/gluegen-rt-natives-linux-amd64",
@@ -956,10 +1002,12 @@ java_library(
     name = "dexlib2",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools/adt/idea:android/lib/dexlib2-2.0.8-dev",
         "//tools/adt/idea:android/lib/dexlib2-util-2.0.8-dev",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools/adt/idea:android/lib/dexlib2-2.0.8-dev",
         "//tools/adt/idea:android/lib/dexlib2-util-2.0.8-dev",
@@ -978,6 +1026,7 @@ java_library(
     name = "junit5_rt",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
         "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
@@ -986,6 +1035,7 @@ java_library(
         "//tools:idea/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-M1",
         "//tools:idea/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-M1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
         "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
@@ -1008,6 +1058,7 @@ java_library(
     name = "com.twelvemonkeys.imageio_imageio-tiff_3.2.1",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//tools:idea/lib/imageio-tiff-3.2.1",
         "//tools:idea/lib/imageio-core-3.2.1",
@@ -1016,6 +1067,7 @@ java_library(
         "//tools:idea/lib/common-image-3.2.1",
         "//tools:idea/lib/imageio-metadata-3.2.1",
     ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools:idea/lib/imageio-tiff-3.2.1",
         "//tools:idea/lib/imageio-core-3.2.1",
