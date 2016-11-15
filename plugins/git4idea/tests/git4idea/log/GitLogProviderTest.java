@@ -151,8 +151,10 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false);
     VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME), Collections.<VirtualFile, VcsUser>emptyMap(),
-                                                           Collections.<VcsUser>emptySet());
+    VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
+                                                           Collections.emptyMap(),
+                                                           singleton(user));
     List<String> actualHashes = getFilteredHashes(branchFilter, userFilter);
     assertEquals(hashes, actualHashes);
   }
