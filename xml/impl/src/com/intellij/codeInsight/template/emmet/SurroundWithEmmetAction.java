@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +37,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return EmmetOptions.getInstance().isEmmetEnabled() && new ZenCodingTemplate().isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
+    return EmmetOptions.getInstance().isEmmetEnabled() && TemplateManagerImpl.isApplicable(new ZenCodingTemplate(), editor, file, true);
   }
 
   @NotNull
@@ -55,7 +56,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
       ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
       if (emmetCustomTemplate != null) {
-        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, ContainerUtil.<Character>newHashSet()).actionPerformed(null);
+        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, ContainerUtil.newHashSet()).actionPerformed(null);
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HintManager.getInstance().showErrorHint(editor, "Cannot invoke Surround with Emmet in the current context");
