@@ -37,6 +37,8 @@
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
             icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
+    <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
+            icon="VcsLogIcons.GearWithDropDown" text="Text Filter Settings" description="Text Filter Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -62,11 +64,10 @@
             text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
             use-shortcut-of="QuickJavaDoc"/>
     <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"
-            text="Filter by Regex"/>
+            text="Regex"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
-      <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <separator/>
@@ -75,6 +76,9 @@
       <reference id="Vcs.Log.HighlightersActionGroup"/>
       <separator/>
       <reference id="ContextHelp"/>
+    </group>
+    <group id="Vcs.Log.TextFilterSettings">
+      <reference id="Vcs.Log.EnableFilterByRegexAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
@@ -106,6 +110,8 @@
       <reference ref="Vcs.Log.ShowTagNames"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
+      <separator/>
+      <reference ref="Vcs.Log.TextFilterSettings"/>
       <reference ref="Vcs.Log.EnableFilterByRegexAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>

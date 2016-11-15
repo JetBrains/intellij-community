@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 
-public class VcsLogQuickSettingsActions extends VcsLogGearActionGroup {
+public class VcsLogTextFilterSettingsActions extends VcsLogGearActionGroup {
 
-  public VcsLogQuickSettingsActions() {
-    super(VcsLogActionPlaces.SETTINGS_ACTION_GROUP);
+  public VcsLogTextFilterSettingsActions() {
+    super(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP);
   }
 }
