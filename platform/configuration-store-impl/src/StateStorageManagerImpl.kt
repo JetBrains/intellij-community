@@ -60,7 +60,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   var streamProvider: StreamProvider?
     get() = streamWrapper
     set (value) {
-      streamWrapper.setStreamProvider(value)
+      streamWrapper.streamProvider = value
     }
 
   // access under storageLock
