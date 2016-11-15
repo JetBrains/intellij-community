@@ -798,4 +798,15 @@ public class StudyUtils {
       toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, project, true);
     }
   }
+
+  @Nullable public static AnswerPlaceholder getAnswerPlaceholder(int offset, List<AnswerPlaceholder> placeholders) {
+    for (AnswerPlaceholder placeholder : placeholders) {
+      int placeholderStart = placeholder.getOffset();
+      int placeholderEnd = placeholderStart + placeholder.getRealLength();
+      if (placeholderStart <= offset && offset <= placeholderEnd) {
+        return placeholder;
+      }
+    }
+    return null;
+  }
 }

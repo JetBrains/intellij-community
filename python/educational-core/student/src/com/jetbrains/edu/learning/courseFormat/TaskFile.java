@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,18 +88,7 @@ public class TaskFile {
    */
   @Nullable
   public AnswerPlaceholder getAnswerPlaceholder(int offset) {
-    return getAnswerPlaceholder(offset, getActivePlaceholders());
-  }
-
-  @Nullable public AnswerPlaceholder getAnswerPlaceholder(int offset, List<AnswerPlaceholder> placeholders) {
-    for (AnswerPlaceholder placeholder : placeholders) {
-      int placeholderStart = placeholder.getOffset();
-      int placeholderEnd = placeholderStart + placeholder.getRealLength();
-      if (placeholderStart <= offset && offset <= placeholderEnd) {
-        return placeholder;
-      }
-    }
-    return null;
+    return StudyUtils.getAnswerPlaceholder(offset, getActivePlaceholders());
   }
 
   public boolean isTrackLengths() {

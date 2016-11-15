@@ -109,22 +109,22 @@ public class StudyNavigator {
 
   @Nullable
   public static VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
-    VirtualFile shouldBeActive = null;
+    VirtualFile fileToActivate = null;
     for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
       VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
       VirtualFile vf = srcDir == null ? taskDir.findChild(name) : srcDir.findChild(name);
       if (vf != null) {
-        if (shouldBeActive != null) {
+        if (fileToActivate != null) {
           FileEditorManager.getInstance(project).openFile(vf, true);
         }
-        if (shouldBeActive == null && !taskFile.getActivePlaceholders().isEmpty()) {
-          shouldBeActive = vf;
+        if (fileToActivate == null && !taskFile.getActivePlaceholders().isEmpty()) {
+          fileToActivate = vf;
         }
       }
     }
-    return shouldBeActive != null ? shouldBeActive : getFirstTaskFile(taskDir, project);
+    return fileToActivate != null ? fileToActivate : getFirstTaskFile(taskDir, project);
   }
 
   @Nullable
@@ -178,9 +178,10 @@ public class StudyNavigator {
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     EduUsagesCollector.taskNavigation();
-    VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
-
-    updateProjectView(project, shouldBeActive);
+    VirtualFile fileToActivate = getFileToActivate(project, nextTaskFiles, taskDir);
+    if (fileToActivate != null) {
+      updateProjectView(project, fileToActivate);
+    }
 
     StudyUtils.selectFirstAnswerPlaceholder(StudyUtils.getSelectedStudyEditor(project), project);
     ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
@@ -189,38 +190,37 @@ public class StudyNavigator {
     }
   }
 
-  private static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
+  private static void updateProjectView(@NotNull Project project, @NotNull VirtualFile fileToActivate) {
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
-    if (shouldBeActive != null) {
-      ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
-        List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
-        List<TreePath> toCollapse = new ArrayList<>();
-        TreePath selectedPath = tree.getSelectionPath();
-        for (TreePath treePath : paths) {
-          if (treePath.isDescendant(selectedPath)) {
-            continue;
+    ProjectView.getInstance(project).selectCB(fileToActivate, fileToActivate, false).doWhenDone(() -> {
+      List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
+      List<TreePath> toCollapse = new ArrayList<>();
+      TreePath selectedPath = tree.getSelectionPath();
+      for (TreePath treePath : paths) {
+        if (treePath.isDescendant(selectedPath)) {
+          continue;
+        }
+        if (toCollapse.isEmpty()) {
+          toCollapse.add(treePath);
+          continue;
+        }
+        for (int i = 0; i < toCollapse.size(); i++) {
+          TreePath path = toCollapse.get(i);
+          if (treePath.isDescendant(path)) {
+            toCollapse.set(i, treePath);
           }
-          if (toCollapse.isEmpty()) {
-            toCollapse.add(treePath);
-            continue;
-          }
-          for (int i = 0; i < toCollapse.size(); i++) {
-            TreePath path = toCollapse.get(i);
-            if (treePath.isDescendant(path)) {
-              toCollapse.set(i, treePath);
-            }  else {
-              if (!path.isDescendant(treePath)) {
-                toCollapse.add(treePath);
-              }
+          else {
+            if (!path.isDescendant(treePath)) {
+              toCollapse.add(treePath);
             }
           }
         }
-        for (TreePath path : toCollapse) {
-          tree.collapsePath(path);
-          tree.fireTreeCollapsed(path);
-        }
-      });
-      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
-    }
+      }
+      for (TreePath path : toCollapse) {
+        tree.collapsePath(path);
+        tree.fireTreeCollapsed(path);
+      }
+    });
+    FileEditorManager.getInstance(project).openFile(fileToActivate, true);
   }
 }

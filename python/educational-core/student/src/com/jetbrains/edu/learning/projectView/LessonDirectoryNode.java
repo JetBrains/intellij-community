@@ -41,7 +41,6 @@ public class LessonDirectoryNode extends StudyDirectoryNode {
     JBColor color = isSolved ? JBColor.BLACK : LIGHT_GREEN;
     Icon icon = isSolved ? InteractiveLearningIcons.Lesson : InteractiveLearningIcons.LessonCompl;
     updatePresentation(data, myLesson.getName(), color, icon, null);
-
   }
 
   @Override

@@ -114,16 +114,19 @@ public class StudyCheckUtils {
 
   public static void runSmartTestProcess(@NotNull final VirtualFile taskDir,
                                          @NotNull final StudyTestRunner testRunner,
-                                         final String taskFileName,
+                                         @NotNull final String taskFileName,
                                          @NotNull final TaskFile taskFile,
                                          @NotNull final Project project) {
-    final TaskFile answerTaskFile = new TaskFile();
-    answerTaskFile.name = taskFileName;
     final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;
     }
-    final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
+    Pair<VirtualFile, TaskFile> pair = getCopyWithAnswers(taskDir, virtualFile, taskFile);
+    if (pair == null) {
+      return;
+    }
+    VirtualFile answerFile = pair.getFirst();
+    TaskFile answerTaskFile = pair.getSecond();
     for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
@@ -136,36 +139,34 @@ public class StudyCheckUtils {
   }
 
 
-  private static VirtualFile getCopyWithAnswers(@NotNull final VirtualFile taskDir,
+  private static Pair<VirtualFile, TaskFile> getCopyWithAnswers(@NotNull final VirtualFile taskDir,
                                                 @NotNull final VirtualFile file,
-                                                @NotNull final TaskFile source,
-                                                @NotNull TaskFile target) {
-    VirtualFile copy = null;
+                                                @NotNull final TaskFile source) {
     try {
-
-      copy = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
+      VirtualFile answerFile = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      final Document document = documentManager.getDocument(copy);
+      final Document document = documentManager.getDocument(answerFile);
       if (document != null) {
-        target = source.getTask().copy().getTaskFile(file.getName());
-        if (target == null) {
-          return copy;
+        TaskFile answerTaskFile = source.getTask().copy().getTaskFile(file.getName());
+        if (answerTaskFile == null) {
+          return null;
         }
-        EduDocumentListener listener = new EduDocumentListener(target);
+        EduDocumentListener listener = new EduDocumentListener(answerTaskFile);
         document.addDocumentListener(listener);
-        for (AnswerPlaceholder answerPlaceholder : target.getActivePlaceholders()) {
+        for (AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
           final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
         ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(document));
+        return Pair.create(answerFile, answerTaskFile);
       }
     }
     catch (IOException e) {
       LOG.error(e);
     }
-    return copy;
+    return null;
   }
 
 

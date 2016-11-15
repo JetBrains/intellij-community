@@ -119,13 +119,14 @@ public class EduStepicConnector {
     final URI url;
     try {
       url = new URIBuilder(EduStepicNames.COURSES).addParameter("is_idea_compatible", "true").
-          addParameter("page", String.valueOf(pageNumber)).build();
+        addParameter("page", String.valueOf(pageNumber)).build();
     }
     catch (URISyntaxException e) {
       LOG.error(e.getMessage());
       return false;
     }
-    final StepicWrappers.CoursesContainer coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
+    final StepicWrappers.CoursesContainer coursesContainer =
+      EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
     addAvailableCourses(result, coursesContainer);
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
@@ -167,7 +168,8 @@ public class EduStepicConnector {
     try {
       Integer version = Integer.valueOf(versionString);
       return version <= CURRENT_VERSION;
-    } catch (NumberFormatException e) {
+    }
+    catch (NumberFormatException e) {
       LOG.info("Wrong version format", e);
       return false;
     }
@@ -180,7 +182,7 @@ public class EduStepicConnector {
     course.setAdaptive(info.isAdaptive());
     course.setId(info.getId());
     course.setUpdateDate(getCourseUpdateDate(info.getId()));
-    
+
     if (!course.isAdaptive()) {
       String courseType = info.getType();
       course.setName(info.getName());
@@ -216,7 +218,8 @@ public class EduStepicConnector {
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
     final StepicWrappers.SectionContainer
-      sectionContainer = EduStepicClient.getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
+      sectionContainer =
+      EduStepicClient.getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<>();
     for (Integer unitId : unitIds) {
@@ -224,14 +227,16 @@ public class EduStepicConnector {
         unit = EduStepicClient.getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lessonContainer = EduStepicClient.getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
+        lessonContainer =
+        EduStepicClient.getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
       Lesson lesson = lessonContainer.lessons.get(0);
       lesson.taskList = new ArrayList<>();
       for (Integer s : lesson.steps) {
         createTask(lesson, s);
       }
-      if (!lesson.taskList.isEmpty())
+      if (!lesson.taskList.isEmpty()) {
         lessons.add(lesson);
+      }
     }
 
     return lessons;
@@ -260,7 +265,8 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(Integer step) throws IOException {
-    return EduStepicClient.getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0);
+    return EduStepicClient.getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps
+      .get(0);
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @NotNull final Project project) {
@@ -282,7 +288,8 @@ public class EduStepicConnector {
       if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.warn("Failed to make attempt " + attemptResponseString);
       }
-      final StepicWrappers.AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, StepicWrappers.AttemptContainer.class).attempts.get(0);
+      final StepicWrappers.AttemptWrapper.Attempt attempt =
+        new Gson().fromJson(attemptResponseString, StepicWrappers.AttemptContainer.class).attempts.get(0);
 
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
       final ArrayList<StepicWrappers.SolutionFile> files = new ArrayList<>();

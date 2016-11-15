@@ -145,7 +145,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       return !arePlaceholdersIntersect(taskFile, start, end);
     }
     int offset = editor.getCaretModel().getOffset();
-    return taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders()) == null;
+    return StudyUtils.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders()) == null;
   }
 
   protected CCCreateAnswerPlaceholderDialog createDialog(Project project, AnswerPlaceholder answerPlaceholder) {

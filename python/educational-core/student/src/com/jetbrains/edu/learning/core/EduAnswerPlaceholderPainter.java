@@ -16,6 +16,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -37,7 +38,8 @@ public class EduAnswerPlaceholderPainter {
     textAttributes.setEffectColor(color);
     if (placeholder.isActive()) {
       drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
-    } else if (!placeholder.getUseLength()) {
+    }
+    else if (!placeholder.getUseLength()) {
       int offset = placeholder.getOffset();
       drawAnswerPlaceholderFromPrevStep(editor, offset, offset + placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex()));
     }
@@ -45,7 +47,7 @@ public class EduAnswerPlaceholderPainter {
 
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
                                            @NotNull AnswerPlaceholder placeholder,
-                                           TextAttributes textAttributes,
+                                           @Nullable TextAttributes textAttributes,
                                            int placeholdersLayer) {
     int startOffset = placeholder.getOffset();
     if (startOffset == -1) {
@@ -69,16 +71,15 @@ public class EduAnswerPlaceholderPainter {
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
                                            int start,
                                            int end,
-                                           TextAttributes textAttributes,
+                                           @Nullable TextAttributes textAttributes,
                                            int placeholdersLayer) {
     final Project project = editor.getProject();
     assert project != null;
     if (start == -1) {
       return;
     }
-    RangeHighlighter
-      highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, placeholdersLayer,
-                                                                textAttributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, placeholdersLayer,
+                                                                               textAttributes, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

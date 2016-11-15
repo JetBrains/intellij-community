@@ -74,10 +74,10 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
         return color == null ? super.getBackground() : color;
       }
     };
-    String header = isTestFile ? "test" : "task file";
+    String header = (isTestFile ? "test" : "task") + " file";
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;
-    panel.setText("This is " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
+    panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
     panel.createActionLabel(SWITCH_SUBTASK, () -> {
       ArrayList<Integer> values = new ArrayList<>();
       for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {

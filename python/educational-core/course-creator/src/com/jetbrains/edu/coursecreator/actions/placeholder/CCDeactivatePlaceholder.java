@@ -3,6 +3,7 @@ package com.jetbrains.edu.coursecreator.actions.placeholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -14,14 +15,14 @@ public class CCDeactivatePlaceholder extends CCSubtaskPlaceholderAction {
     super(TITLE, TITLE);
   }
 
-  protected void undoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info) {
+  protected void undoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info) {
     existingPlaceholder.getSubtaskInfos().put(subtaskIndex, info);
   }
 
   @Override
-  protected AnswerPlaceholderSubtaskInfo getInfo(CCState state,
+  protected AnswerPlaceholderSubtaskInfo getInfo(@NotNull CCState state,
                                                  int subtaskIndex,
-                                                 AnswerPlaceholder existingPlaceholder) {
+                                                 @NotNull AnswerPlaceholder existingPlaceholder) {
     return existingPlaceholder.getSubtaskInfos().get(subtaskIndex);
   }
 
@@ -30,7 +31,7 @@ public class CCDeactivatePlaceholder extends CCSubtaskPlaceholderAction {
     return TITLE;
   }
 
-  protected void redoAction(AnswerPlaceholder existingPlaceholder, int subtaskIndex, AnswerPlaceholderSubtaskInfo info) {
+  protected void redoAction(@NotNull AnswerPlaceholder existingPlaceholder, int subtaskIndex, @NotNull AnswerPlaceholderSubtaskInfo info) {
     existingPlaceholder.getSubtaskInfos().remove(subtaskIndex);
   }
 

@@ -24,7 +24,8 @@ public class AnswerPlaceholder {
   @SerializedName("offset")
   @Expose private int myOffset = -1;
 
-  @Expose private int length = -1;
+  @SerializedName("length")
+  @Expose private int myLength = -1;
 
   private int myIndex = -1;
   private MyInitialState myInitialState;
@@ -41,7 +42,7 @@ public class AnswerPlaceholder {
   public void initAnswerPlaceholder(final TaskFile file, boolean isRestarted) {
     setTaskFile(file);
     if (!isRestarted) {
-      setInitialState(new MyInitialState(myOffset, length));
+      setInitialState(new MyInitialState(myOffset, myLength));
       for (AnswerPlaceholderSubtaskInfo info : getSubtaskInfos().values()) {
         info.setStatus(file.getTask().getStatus());
       }
@@ -60,11 +61,11 @@ public class AnswerPlaceholder {
    * in actions {@link AnswerPlaceholder#getRealLength()} should be used
    */
   public int getLength() {
-    return length;
+    return myLength;
   }
 
   public void setLength(int length) {
-    this.length = length;
+    myLength = length;
   }
 
   @Transient
@@ -114,7 +115,7 @@ public class AnswerPlaceholder {
    */
   public void reset() {
     myOffset = myInitialState.getOffset();
-    length = myInitialState.getLength();
+    myLength = myInitialState.getLength();
   }
 
   @Transient
@@ -237,13 +238,13 @@ public class AnswerPlaceholder {
     int minIndex = Collections.min(mySubtaskInfos.keySet());
     AnswerPlaceholderSubtaskInfo minInfo = mySubtaskInfos.get(minIndex);
     if (minIndex == subtaskIndex) {
-      return getUseLength() ? length : minInfo.getPossibleAnswer().length();
+      return getUseLength() ? myLength : minInfo.getPossibleAnswer().length();
     }
     if (minIndex > subtaskIndex) {
       return minInfo.isNeedInsertText() ? 0 : minInfo.getPlaceholderText().length();
     }
     int maxIndex = Collections.max(ContainerUtil.filter(mySubtaskInfos.keySet(), i -> i <= subtaskIndex));
-    return getUseLength() ? length : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
+    return getUseLength() ? myLength : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
   }
 
   public void switchSubtask(@NotNull Project project, @NotNull Document document, int fromSubtask, int toSubtask) {
