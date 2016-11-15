@@ -17,9 +17,10 @@ package com.intellij.codeInsight.template.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,17 +123,32 @@ public class TemplateContext {
   }
 
   @VisibleForTesting
-  public void writeTemplateContext(Element element) throws WriteExternalException {
+  public void writeTemplateContext(@NotNull Element element) {
+    if (myContextStates.isEmpty()) {
+      return;
+    }
+
+    Map<String, TemplateContextType> idToType = new THashMap<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      Boolean ownValue = getOwnValue(type);
-      if (ownValue != null) {
+      idToType.put(type.getContextId(), type);
+    }
+
+    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+      Boolean ownValue = entry.getValue();
+      if (ownValue == null) {
+        continue;
+      }
+
+      TemplateContextType type = idToType.get(entry.getKey());
+      if (type == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
+        JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
+      }
+      else {
         TemplateContextType base = type.getBaseContextType();
         boolean baseEnabled = base != null && isEnabled(base);
         if (ownValue != baseEnabled) {
-          Element optionElement = new Element("option");
-          optionElement.setAttribute("name", type.getContextId());
-          optionElement.setAttribute("value", ownValue.toString());
-          element.addContent(optionElement);
+          JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
         }
       }
     }
