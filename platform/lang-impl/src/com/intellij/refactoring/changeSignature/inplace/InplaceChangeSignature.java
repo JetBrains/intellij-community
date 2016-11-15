@@ -176,19 +176,23 @@ public class InplaceChangeSignature implements DocumentListener {
         return;
       }
 
-      if (myCurrentInfo == null) {
-        myCurrentInfo = myStableChange;
-      }
-      String signature = myDetector.extractSignature(myCurrentInfo);
-      ChangeInfo changeInfo = myDetector.createNextChangeInfo(signature, myCurrentInfo, myDelegate);
-      if (changeInfo == null && myCurrentInfo != null) {
-        myStableChange = myCurrentInfo;
-      }
-      if (changeInfo != null) {
-        updateMethodSignature(changeInfo);
-      }
-      myCurrentInfo = changeInfo;
+      updateCurrentInfo();
     });
+  }
+
+  private void updateCurrentInfo() {
+    if (myCurrentInfo == null) {
+      myCurrentInfo = myStableChange;
+    }
+    String signature = myDetector.extractSignature(myCurrentInfo);
+    ChangeInfo changeInfo = myDetector.createNextChangeInfo(signature, myCurrentInfo, myDelegate);
+    if (changeInfo == null && myCurrentInfo != null) {
+      myStableChange = myCurrentInfo;
+    }
+    if (changeInfo != null) {
+      updateMethodSignature(changeInfo);
+    }
+    myCurrentInfo = changeInfo;
   }
 
   private void updateMethodSignature(ChangeInfo changeInfo) {
@@ -217,7 +221,10 @@ public class InplaceChangeSignature implements DocumentListener {
 
   protected void showBalloon() {
     NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
-    checkBox.addActionListener(e -> myDelegate = checkBox.isSelected());
+    checkBox.addActionListener(e -> {
+      myDelegate = checkBox.isSelected();
+      updateCurrentInfo();
+    });
     JPanel content = new JPanel(new BorderLayout());
     content.add(new JBLabel("Performed signature modifications:"), BorderLayout.NORTH);
     content.add(myPreview.getComponent(), BorderLayout.CENTER);
