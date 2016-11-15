@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -103,8 +101,4 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     return new Action[0];
   }
 
-  @Override
-  public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, super::show);
-  }
 }

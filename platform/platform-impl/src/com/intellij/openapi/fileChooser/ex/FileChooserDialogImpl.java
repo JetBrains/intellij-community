@@ -31,8 +31,6 @@ import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -351,8 +349,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL,
-                                                  () -> ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current()));
+          ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
         }
       });
 

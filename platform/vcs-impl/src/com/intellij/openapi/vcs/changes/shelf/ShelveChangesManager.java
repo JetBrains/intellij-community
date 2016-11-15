@@ -35,8 +35,6 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -651,7 +649,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> shelveChangesInSeparatedLists(changes)),
+      () -> shelveChangesInSeparatedLists(changes),
       VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
 
     if (completed) {

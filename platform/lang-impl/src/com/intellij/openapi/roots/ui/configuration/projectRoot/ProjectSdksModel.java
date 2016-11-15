@@ -130,7 +130,7 @@ public class ProjectSdksModel implements SdkModel {
       throw new ConfigurationException(errorString[0]);
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> doApply());
+    doApply();
     myModified = false;
   }
 

@@ -17,15 +17,15 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,20 +59,18 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
     final LibraryEx oldLibrary = (LibraryEx)context.getLibrary(libraryElement.getLibrary().getName(), mySourceConfigurable.getLevel());
     LOG.assertTrue(oldLibrary != null);
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-      final Library newLibrary = doCopy(oldLibrary);
-      if (newLibrary == null) return;
+    final Library newLibrary = doCopy(oldLibrary);
+    if (newLibrary == null) return;
 
-      final Collection<ProjectStructureElementUsage> usages = context.getDaemonAnalyzer().getUsages(libraryElement);
-      for (ProjectStructureElementUsage usage : usages) {
-        usage.replaceElement(new LibraryProjectStructureElement(context, newLibrary));
-      }
+    final Collection<ProjectStructureElementUsage> usages = context.getDaemonAnalyzer().getUsages(libraryElement);
+    for (ProjectStructureElementUsage usage : usages) {
+      usage.replaceElement(new LibraryProjectStructureElement(context, newLibrary));
+    }
 
-      if (!myCopy) {
-        mySourceConfigurable.removeLibrary(libraryElement);
-      }
-      ProjectStructureConfigurable.getInstance(myProject).selectProjectOrGlobalLibrary(newLibrary, true);
-    });
+    if (!myCopy) {
+      mySourceConfigurable.removeLibrary(libraryElement);
+    }
+    ProjectStructureConfigurable.getInstance(myProject).selectProjectOrGlobalLibrary(newLibrary, true);
   }
 
   @Override

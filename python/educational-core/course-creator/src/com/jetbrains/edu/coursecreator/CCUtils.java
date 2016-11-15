@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -118,26 +116,21 @@ public class CCUtils {
       return folder;
     }
     final Ref<VirtualFile> generatedRoot = new Ref<>();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
-              VirtualFile contentRootForFile =
-                ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
-              if (contentRootForFile == null) {
-                return;
-              }
-              ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(), Collections.singletonList(generatedRoot.get().getUrl()));
-            }
-            catch (IOException e) {
-              LOG.info("Failed to create folder for generated files", e);
-            }
+        try {
+          generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
+          VirtualFile contentRootForFile =
+            ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
+          if (contentRootForFile == null) {
+            return;
           }
-        });
+          ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(), Collections.singletonList(generatedRoot.get().getUrl()));
+        }
+        catch (IOException e) {
+          LOG.info("Failed to create folder for generated files", e);
+        }
       }
     });
     return generatedRoot.get();

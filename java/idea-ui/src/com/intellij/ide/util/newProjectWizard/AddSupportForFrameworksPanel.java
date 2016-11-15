@@ -33,8 +33,6 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -43,7 +41,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
@@ -402,27 +399,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
-    final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-      applyLibraryOptionsForSelected();
-      List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-      for (LibraryCompositionSettings compositionSettings : list) {
-        if (!compositionSettings.downloadFiles(parentComponent)) {
-          result.set(false);
-          return;
-        }
-      }
-    });
-
-    if (!result.get()) {
-      int answer = Messages.showYesNoDialog(parentComponent,
-                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-      if (answer != Messages.YES) {
-        return false;
+    applyLibraryOptionsForSelected();
+    List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+    for (LibraryCompositionSettings compositionSettings : list) {
+      if (!compositionSettings.downloadFiles(parentComponent)) {
+        return true;
       }
     }
-    return true;
+
+    int answer = Messages.showYesNoDialog(parentComponent,
+                                          ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+    return answer == Messages.YES;
   }
 
   public boolean validate() {
