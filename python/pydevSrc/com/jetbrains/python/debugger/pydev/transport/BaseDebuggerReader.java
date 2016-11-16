@@ -54,9 +54,11 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
     }
     finally {
       close();
-      myDebugger.fireExitEvent();
+      onExit();
     }
   }
+
+  protected abstract void onExit();
 
   protected abstract void onCommunicationError();
 
