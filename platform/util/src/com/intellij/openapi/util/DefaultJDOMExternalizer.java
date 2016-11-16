@@ -33,7 +33,7 @@ import java.util.List;
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
 
@@ -138,7 +138,7 @@ public class DefaultJDOMExternalizer {
   }
 
   @Nullable
-  public static String filterXMLCharacters(String value) {
+  static String filterXMLCharacters(String value) {
     if (value != null) {
       StringBuilder builder = null;
       for (int i=0; i<value.length();i++) {

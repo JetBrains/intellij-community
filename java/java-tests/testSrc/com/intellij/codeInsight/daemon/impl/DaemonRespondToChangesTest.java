@@ -1336,16 +1336,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     List<HighlightInfo> warns = doHighlighting(HighlightSeverity.WARNING);
     assertOneElement(warns);
-    List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
+    List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> descriptor.getAction().invoke(getProject(), getEditor(), getFile()));
 
     highlightErrors();
-    actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
+    actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
     assertEmpty(actions);
   }
 
-  
+
   public void testApplyErrorInTheMiddle() throws Throwable {
     String text = "class <caret>X { ";
     for (int i = 0; i < 100; i++) {
@@ -1373,7 +1373,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errors);
   }
 
-  
+
   public void testErrorInTheEndOutsideVisibleArea() throws Throwable {
     String text = "<xml> \n" + StringUtil.repeatSymbol('\n', 1000) + "</xml>\nxxxxx<caret>";
     configureByText(StdFileTypes.XML, text);
@@ -1427,7 +1427,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(4, infos.size());
   }
 
-  
+
   public void testTypingNearEmptyErrorElement() throws Throwable {
     String text = "class LQF {\n" +
                   "    public void main() {\n" +
@@ -1446,7 +1446,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
   }
 
-  
+
   public void testLIPGetAllParentsAfterCodeBlockModification() throws Throwable {
     @Language("JAVA")
     String text = "class LQF {\n" +
@@ -1514,7 +1514,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(new HashSet<>(methodAndParents), new HashSet<>(visitedElements));
   }
 
-  
+
   public void testCancelsItSelfOnTypingInAlienProject() throws Throwable {
     String body = StringUtil.repeat("\"String field = null;\"\n", 1000);
     configureByText(StdFileTypes.JAVA, "class X{ void f() {" + body + "<caret>\n} }");

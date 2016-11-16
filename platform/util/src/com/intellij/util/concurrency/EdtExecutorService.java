@@ -25,7 +25,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@link java.util.concurrent.ExecutorService} implementation which delegates tasks for execution to the {@link javax.swing.SwingUtilities#invokeLater(Runnable)}
+ * An {@link ExecutorService} implementation which
+ * delegates tasks to the {@link javax.swing.SwingUtilities#invokeLater(Runnable)} for execution.
  */
 public class EdtExecutorService extends AbstractExecutorService {
   @NotNull

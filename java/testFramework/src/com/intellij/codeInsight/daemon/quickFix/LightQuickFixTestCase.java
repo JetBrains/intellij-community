@@ -55,11 +55,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return false;
   }
 
-  @NotNull
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
-    return ActionHint.parse(file, contents);
-  }
-
   private static void doTestFor(@NotNull String testName, @NotNull QuickFixTestCase quickFixTestCase) {
     final String relativePath = ObjectUtils.notNull(quickFixTestCase.getBasePath(), "") + "/" + BEFORE_PREFIX + testName;
     final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
@@ -239,7 +234,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       @NotNull
       @Override
       public ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
-        return LightQuickFixTestCase.this.parseActionHintImpl(file, contents);
+        return ActionHint.parse(file, contents);
       }
 
       @Override
