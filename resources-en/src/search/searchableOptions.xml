@@ -22958,7 +22958,6 @@
     <option name="groovyenum" hit="GroovyEnum" />
     <option name="groovyinterface" hit="GroovyInterface" />
     <option name="groovyscript" hit="GroovyScript" />
-    <option name="groovyserverpage" hit="GroovyServerPage" />
     <option name="groovystepdefinitionfile" hit="GroovyStepDefinitionFile" />
     <option name="groovystepdefinitionfile1_1" hit="GroovyStepDefinitionFile1_1" />
     <option name="groovytrait" hit="GroovyTrait" />
