@@ -216,9 +216,16 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   public void requestFocusInTheSearchFieldAndSelectContent(Project project) {
-    mySearchTextComponent.setSelectionStart(0);
-    mySearchTextComponent.setSelectionEnd(mySearchTextComponent.getText().length());
+    doSelectAll(mySearchTextComponent);
     IdeFocusManager.getInstance(project).requestFocus(mySearchTextComponent, true);
+    if (myReplaceTextComponent != null) {
+      doSelectAll(myReplaceTextComponent);
+    }
+  }
+
+  private static void doSelectAll(JTextComponent searchTextComponent) {
+    searchTextComponent.setSelectionStart(0);
+    searchTextComponent.setSelectionEnd(searchTextComponent.getText().length());
   }
 
   public void setStatusText(@NotNull String status) {
@@ -346,6 +353,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private void updateReplaceComponent(@NotNull String textToSet) {
     final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
+    boolean wasNull = myReplaceTextComponent == null;
     if (!updateTextComponent(false)) {
       if (!myReplaceTextComponent.getText().equals(textToSet)) {
         myReplaceTextComponent.setText(textToSet);
@@ -366,7 +374,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
 
     //myReplaceTextComponent.setText(myFindModel.getStringToReplace());
-    ApplicationManager.getApplication().invokeLater(() -> myReplaceTextComponent.setCaretPosition(oldCaretPosition));
+    if (!wasNull) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> myReplaceTextComponent.setCaretPosition(Math.min(oldCaretPosition, myReplaceTextComponent.getText().length())));
+    }
 
     new VariantsCompletionAction(myReplaceTextComponent);
     myReplaceFieldWrapper.revalidate();
