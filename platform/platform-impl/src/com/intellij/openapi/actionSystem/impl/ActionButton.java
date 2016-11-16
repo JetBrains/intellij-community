@@ -280,7 +280,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         y++;
       }
 
-      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(x), JBUI.scale(y));
     }
   }
 
