@@ -29,11 +29,13 @@ import org.jetbrains.idea.svn.SvnBaseContentRevision;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
+
+import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
+import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.toSortedStringPresentation;
 
 public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements MarkerVcsContentRevision, PropertyRevision {
   private final VcsRevisionNumber myNumber;
@@ -57,7 +59,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
 
   @Override
   public String getContent() throws VcsException {
-    return AbstractShowPropertiesDiffAction.toSortedStringPresentation(getProperties());
+    return toSortedStringPresentation(getProperties());
   }
 
   private List<PropertyData> loadContent() throws VcsException {
@@ -65,7 +67,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     final Ref<VcsException> exceptionRef = new Ref<>();
     final Runnable runnable = () -> {
       try {
-        ref.set(AbstractShowPropertiesDiffAction.getPropertyList(myVcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
+        ref.set(getPropertyList(myVcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
       }
       catch (VcsException e) {
         exceptionRef.set(e);

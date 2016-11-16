@@ -58,10 +58,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
-public abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
-  protected AbstractShowPropertiesDiffAction(String name) {
-    super(name);
-  }
+public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
