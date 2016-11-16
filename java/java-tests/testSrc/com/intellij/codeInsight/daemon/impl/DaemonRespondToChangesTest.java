@@ -1524,7 +1524,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     DaemonProgressIndicator.setDebug(true);
-    final DaemonProgressIndicator[] indicator = new DaemonProgressIndicator[1];
 
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
@@ -1552,7 +1551,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> {
         if (checked[0]) return;
         checked[0] = true;
-        indicator[0] = myDaemonCodeAnalyzer.getUpdateProgress();
         typeInAlienEditor(alienEditor, 'x');
       });
     }
@@ -1660,7 +1658,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertNull(codeAnalyzer.getUpdateProgress());
+          assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
@@ -1731,7 +1729,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long end = System.currentTimeMillis();
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertNull(codeAnalyzer.getUpdateProgress());
+        assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
         //System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };

@@ -39,7 +39,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
@@ -276,12 +275,7 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
-    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        stopDaemonAndRestartAllFiles("Editor color scheme changed");
-      }
-    });
+    connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
@@ -587,13 +581,15 @@ public class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm, @NonNls @NotNull String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
+    if (myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason)) {
+      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
+    }
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    myDaemonCodeAnalyzer.restart();
+    if (myDaemonCodeAnalyzer.doRestart()) {
+      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
+    }
   }
 
   static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
