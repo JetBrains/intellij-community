@@ -176,6 +176,9 @@ public class RefreshSessionImpl extends RefreshSession {
     }
 
     try (AccessToken ignore = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("RefreshSessionImpl: Events are about to fire: "+myEvents);
+      }
       WriteAction.run(this::fireEventsInWriteAction);
     }
     finally {

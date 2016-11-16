@@ -586,7 +586,7 @@ public class FileTypesTest extends PlatformTestCase {
       file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
 
       ensureRedetected(file, detectorCalled);
-      assertTrue(file.getFileType().toString(), file.getFileType() == stuffType);
+      assertSame(file.getFileType().toString(), file.getFileType(), stuffType);
       log("T: ------");
     }
     finally {

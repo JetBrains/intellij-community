@@ -31,8 +31,7 @@ public class DocumentEventImpl extends DocumentEvent {
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
   private Diff.Change myChange;
-  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null) {
-  };
+  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null);
 
   private final int myInitialStartOffset;
   private final int myInitialOldLength;
@@ -68,6 +67,9 @@ public class DocumentEventImpl extends DocumentEvent {
     myOldTimeStamp = oldTimeStamp;
 
     myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
+    assert initialStartOffset >= 0 : initialStartOffset;
+    assert initialOldLength >= 0 : initialOldLength;
+    assert initialStartOffset+initialOldLength <= document.getTextLength() : "initialStartOffset = " + initialStartOffset + "; initialOldLength = " + initialOldLength+";document.getTextLength() = " + document.getTextLength();
   }
 
   @Override

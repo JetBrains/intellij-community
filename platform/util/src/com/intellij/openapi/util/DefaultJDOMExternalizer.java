@@ -292,7 +292,7 @@ public class DefaultJDOMExternalizer {
         }
       }
       catch (NoSuchFieldException ex) {
-        LOG.debug(ex);
+        LOG.debug("No field '" + fieldName + "' in " + data.getClass(), ex);
       }
       catch (SecurityException ex) {
         throw new InvalidDataException();
