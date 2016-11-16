@@ -181,25 +181,24 @@ public class ConfigFilesTreeBuilder {
       renderer.append(fileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        String path = virtualFile.getPath();
-        final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-        if (i >= 0) {
-          path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-        }
-        renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderPath(renderer, virtualFile);
       }
     }
     else if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      String path = file.getPath();
-      final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (i >= 0) {
-        path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-      }
-      renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderPath(renderer, file);
     }
+  }
+
+  private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
+    String path = virtualFile.getPath();
+    final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (i >= 0) {
+      path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
+    }
+    renderer.append(" (" + path.substring(0, path.length() - virtualFile.getName().length() - 1) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   public static void installSearch(JTree tree) {
