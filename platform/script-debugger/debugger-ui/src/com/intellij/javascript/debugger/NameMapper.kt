@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.javascript.debugger
+package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
 import com.intellij.openapi.editor.Document
