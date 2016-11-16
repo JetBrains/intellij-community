@@ -15,12 +15,19 @@
  */
 package com.intellij.tasks.jira.jql;
 
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.tasks.jira.jql.codeinsight.JqlFieldType;
 import com.intellij.tasks.jira.jql.codeinsight.JqlStandardFunction;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static com.intellij.tasks.jira.jql.codeinsight.JqlStandardField.ALL_FIELD_NAMES;
@@ -36,21 +43,22 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
     return "/plugins/tasks/tasks-tests/testData/jira/jql/completion";
   }
 
-  private String getTestFilePath() {
-    return getTestName(false) + ".jql";
-  }
-
   @Override
   protected boolean isCommunity() {
     return true;
   }
 
-  private void checkCompletionVariants(List<String> initial, String... others) {
-    myFixture.testCompletionVariants(getTestFilePath(),
-                                     ArrayUtil.toStringArray(ContainerUtil.append(initial, others)));
+  private void checkCompletionVariants(List<String> initial, String... others) throws IOException {
+    final Path path = Paths.get(getTestDataPath(), getTestName(false) + ".jql");
+    final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
+    // ".jql" extension is not registered globally anymore
+    myFixture.configureByText(JqlFileType.INSTANCE, StreamUtil.readTextFrom(reader));
+    myFixture.completeBasic();
+    final List<String> lookups = myFixture.getLookupElementStrings();
+    assertSameElements(lookups, ArrayUtil.toStringArray(ContainerUtil.append(initial, others)));
   }
 
-  private void checkCompletionVariants(String... variants) {
+  private void checkCompletionVariants(String... variants) throws IOException {
     checkCompletionVariants(ContainerUtil.<String>emptyList(), variants);
   }
 

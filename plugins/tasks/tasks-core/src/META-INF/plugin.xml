@@ -139,9 +139,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <!-- JQL support -->
-    <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
-    <lang.parserDefinition language="JQL"
-                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
+    <lang.parserDefinition language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
     <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
     <completion.contributor language="JQL"
@@ -152,7 +150,6 @@
 
     <!-- YouTrack support -->
     <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
-    <fileTypeFactory implementation="com.intellij.tasks.youtrack.lang.YouTrackFileTypeFactory"/>
     <lang.parserDefinition language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackParserDefinition"/>
     <completion.contributor language="YouTrack"
                             implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>

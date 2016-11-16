@@ -15,13 +15,17 @@
  */
 package com.intellij.tasks.jira.jql;
 
+import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public class JqlLanguage extends Language {
+public class JqlLanguage extends Language implements DependentLanguage {
   public static final JqlLanguage INSTANCE = new JqlLanguage();
+  
   private JqlLanguage() {
     super("JQL");
   }
@@ -29,5 +33,11 @@ public class JqlLanguage extends Language {
   @Override
   public boolean isCaseSensitive() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public LanguageFileType getAssociatedFileType() {
+    return JqlFileType.INSTANCE;
   }
 }
