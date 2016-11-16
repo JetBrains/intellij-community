@@ -387,8 +387,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangesIntersect(start, true, block.getStartOffset(), block.isGreedyToLeft(), end, true, block.getEndOffset(),
-                          block.isGreedyToRight())) {
+      if (rangesIntersect(start, end, true, true,
+                          block.getStartOffset(), block.getEndOffset(), block.isGreedyToLeft(), block.isGreedyToRight())) {
         return block;
       }
     }
@@ -411,15 +411,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean rangesIntersect(int start0, boolean leftInclusive0,
-                                         int start1, boolean leftInclusive1,
-                                         int end0, boolean rightInclusive0,
-                                         int end1, boolean rightInclusive1) {
-    if (start0 > start1 || start0 == start1 && !leftInclusive0) {
-      if (end1 == start0) return leftInclusive0 && rightInclusive1;
+  private static boolean rangesIntersect(int start0, int end0, boolean start0Inclusive, boolean end0Inclusive,
+                                         int start1, int end1, boolean start1Inclusive, boolean end1Inclusive) {
+    if (start0 > start1 || start0 == start1 && !start0Inclusive) {
+      if (end1 == start0) return start0Inclusive && end1Inclusive;
       return end1 > start0;
     }
-    if (end0 == start1) return leftInclusive1 && rightInclusive0;
+    if (end0 == start1) return start1Inclusive && end0Inclusive;
     return end0 > start1;
   }
 
@@ -558,7 +556,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     final int newStringLength = s.length();
     final CharSequence chars = myText;
     int newStartInString = 0;
-    int newEndInString = newStringLength;
     while (newStartInString < newStringLength &&
            startOffset < endOffset &&
            s.charAt(newStartInString) == chars.charAt(startOffset)) {
@@ -566,6 +563,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newStartInString++;
     }
 
+    int newEndInString = newStringLength;
     while (endOffset > startOffset &&
            newEndInString > newStartInString &&
            s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
@@ -643,14 +641,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    * </ol>
    * </pre>
    * <p/>
-   * There is a possible case that <code>'before change'</code> notification produces new change. We have a problem then - imagine
-   * that initial change was <code>'replace particular range at document end'</code> and <code>'nested change'</code> was to
-   * <code>'remove text at document end'</code>. That means that when initial change will be actually performed, the document may be
+   * There is a possible case that {@code 'before change'} notification produces new change. We have a problem then - imagine
+   * that initial change was {@code 'replace particular range at document end'} and {@code 'nested change'} was to
+   * {@code 'remove text at document end'}. That means that when initial change will be actually performed, the document may be
    * not long enough to contain target range.
    * <p/>
-   * Current method allows to check if document change is a <code>'nested call'</code>.
+   * Current method allows to check if document change is a {@code 'nested call'}.
    *
-   * @throws IllegalStateException if this method is called during a <code>'nested document modification'</code>
+   * @throws IllegalStateException if this method is called during a {@code 'nested document modification'}
    */
   private void assertNotNestedModification() throws IllegalStateException {
     if (myChangeInProgress) {
@@ -777,7 +775,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
+      assert event.getOldFragment().length() ==  event.getOldLength() : "event.getOldFragment().length() = " + event.getOldFragment().length()+"; event.getOldLength() = " + event.getOldLength();
+      assert event.getNewFragment().length() ==  event.getNewLength() : "event.getNewFragment().length() = " + event.getNewFragment().length()+"; event.getNewLength() = " + event.getNewLength();
+      assert prevText.length() + event.getNewLength() - event.getOldLength() == getTextLength() : "prevText.length() = " + prevText.length()+ "; event.getNewLength() = " + event.getNewLength()+ "; event.getOldLength() = " + event.getOldLength()+ "; getTextLength() = " + getTextLength();
+
       myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(), event.isWholeTextReplaced());
+      assert getTextLength() == myLineSet.getLength() : "getTextLength() = " + getTextLength()+ "; myLineSet.getLength() = " + myLineSet.getLength();
+
       myFrozen = null;
       if (myTabTrackingRequestors > 0) {
         updateMightContainTabs(event.getNewFragment());

@@ -107,15 +107,15 @@ class MarkerCache {
     for (DocumentEvent event : events) {
       final FrozenDocument before = frozen;
       final DocumentEvent corrected;
-      if ((event instanceof RetargetRangeMarkers)) {
+      if (event instanceof RetargetRangeMarkers) {
         RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
         corrected = new RetargetRangeMarkers(frozen, retarget.getStartOffset(), retarget.getEndOffset(), retarget.getMoveDestinationOffset());
       }
       else {
-        frozen = frozen.applyEvent(event, 0);
         corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
                                           event.isWholeTextReplaced(),
                                           ((DocumentEventImpl) event).getInitialStartOffset(), ((DocumentEventImpl) event).getInitialOldLength());
+        frozen = frozen.applyEvent(event, 0);
       }
 
       int i = 0;
