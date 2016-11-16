@@ -113,6 +113,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param el2 the tree element for matching
    * @return true if equal and false otherwise
    */
+  @Override
   public boolean match(final PsiElement el1, final PsiElement el2) {
     if (el1 == el2) return true;
     if (el1 == null) {
@@ -174,28 +175,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param nodes2 the tree element for matching
    * @return if they are equal and false otherwise
    */
+  @Override
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
     if (!nodes.hasNext()) {
       return !nodes2.hasNext();
     }
 
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
-      nodes,
-      nodes2,
-      matchContext
-    );
-  }
-
-  public static boolean continueMatchingSequentially(final NodeIterator nodes, final NodeIterator nodes2, MatchContext matchContext) {
-    if (!nodes.hasNext()) {
-      return !nodes2.hasNext();
-    }
-
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
-      nodes,
-      nodes2,
-      matchContext
-    );
+    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(nodes, nodes2, matchContext);
   }
 
   /**
