@@ -128,6 +128,11 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
         return getFamilyName() + " \"" + myName + "\"";
       }
 
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+
       @NotNull
       @Override
       public String getFamilyName() {

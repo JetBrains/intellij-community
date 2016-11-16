@@ -273,6 +273,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       boolean installManagement = false;
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
@@ -357,6 +362,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
         @Override
@@ -412,6 +422,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
@@ -442,6 +457,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
       myModule = module;
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @NotNull
