@@ -13,6 +13,7 @@ import com.intellij.openapi.project.*
 import com.intellij.util.net.ssl.*
 import json.*
 import klogging.*
+import logging.*
 import nl.komponents.kovenant.*
 import org.apache.http.client.utils.*
 import org.jetbrains.hub.oauth2.client.*
