@@ -621,6 +621,10 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrows"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="Java9UnusedRequiresStatement"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
+                     enabledByDefault="true" level="WARNING" displayName="Unused 'requires' statement in module-info"
+                     implementationClass="com.intellij.codeInspection.java19modules.Java9UnusedRequiresStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
