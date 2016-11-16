@@ -20,14 +20,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +39,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
@@ -82,12 +88,24 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    WizardPopup popup = super.createPopup(parent, step, parentValue);
+    WizardPopup popup = createListPopupStep(parent, step, parentValue);
     RootAction rootAction = getRootAction(parentValue);
     if (rootAction != null) {
       popup.setAdText((rootAction).getCaption());
     }
     return popup;
+  }
+
+  private WizardPopup createListPopupStep(WizardPopup parent, PopupStep step, Object parentValue) {
+    if (step instanceof ListPopupStep) {
+      return new ListPopupImpl(parent, (ListPopupStep)step, parentValue) {
+        @Override
+        protected ListCellRenderer getListElementRenderer() {
+          return new MyPopupListElementRenderer(this);
+        }
+      };
+    }
+    return super.createPopup(parent, step, parentValue);
   }
 
   @Nullable
@@ -107,49 +125,74 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected ListCellRenderer getListElementRenderer() {
-    return new PopupListElementRenderer(this) {
+    return new MyPopupListElementRenderer(this);
+  }
 
-      private ErrorLabel myInfoLabel;
+  private static class MyPopupListElementRenderer extends PopupListElementRenderer<Object> {
 
-      @Override
-      protected void customizeComponent(JList list, Object value, boolean isSelected) {
-        super.customizeComponent(list, value, isSelected);
+    private ErrorLabel myInfoLabel;
 
-        PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
-        String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
-        if (infoText != null) {
-          myInfoLabel.setVisible(true);
-          myInfoLabel.setText(infoText);
+    public MyPopupListElementRenderer(ListPopupImpl aPopup) {
+      super(aPopup);
+    }
 
-          if (isSelected) {
-            setSelected(myInfoLabel);
-          }
-          else {
-            myInfoLabel.setBackground(getBackground());
-            myInfoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
-          }
+    @Override
+    protected SeparatorWithText createSeparator() {
+      return new MyTextSeparator();
+    }
+
+    @Override
+    protected void customizeComponent(JList list, Object value, boolean isSelected) {
+      super.customizeComponent(list, value, isSelected);
+
+      PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
+      String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
+      if (infoText != null) {
+        myInfoLabel.setVisible(true);
+        myInfoLabel.setText(infoText);
+
+        if (isSelected) {
+          setSelected(myInfoLabel);
         }
         else {
-          myInfoLabel.setVisible(false);
+          myInfoLabel.setBackground(getBackground());
+          myInfoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
         }
       }
-
-      @Override
-      protected JComponent createItemComponent() {
-        myTextLabel = new ErrorLabel();
-        myTextLabel.setOpaque(true);
-        myTextLabel.setBorder(JBUI.Borders.empty(1));
-
-        myInfoLabel = new ErrorLabel();
-        myInfoLabel.setOpaque(true);
-        myInfoLabel.setBorder(JBUI.Borders.empty(1, UIUtil.DEFAULT_HGAP, 1, 1));
-
-        JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
-        compoundPanel.add(myTextLabel, BorderLayout.CENTER);
-        compoundPanel.add(myInfoLabel, BorderLayout.EAST);
-
-        return layoutComponent(compoundPanel);
+      else {
+        myInfoLabel.setVisible(false);
       }
-    };
+    }
+
+    @Override
+    protected JComponent createItemComponent() {
+      myTextLabel = new ErrorLabel();
+      myTextLabel.setOpaque(true);
+      myTextLabel.setBorder(JBUI.Borders.empty(1));
+
+      myInfoLabel = new ErrorLabel();
+      myInfoLabel.setOpaque(true);
+      myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
+
+      JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
+      compoundPanel.add(myTextLabel, BorderLayout.CENTER);
+      compoundPanel.add(myInfoLabel, BorderLayout.EAST);
+
+      return layoutComponent(compoundPanel);
+    }
+  }
+
+  private static class MyTextSeparator extends SeparatorWithText {
+
+    public MyTextSeparator() {
+      super();
+      setTextForeground(JBColor.BLACK);
+      setCaptionCentered(false);
+      UIUtil.addInsets(this, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
+    }
+
+    @Override
+    protected void paintLine(Graphics g, int x, int y, int width) {
+    }
   }
 }
