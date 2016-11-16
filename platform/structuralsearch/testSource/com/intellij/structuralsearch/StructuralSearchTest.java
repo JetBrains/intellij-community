@@ -154,17 +154,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                     "  /** @serializable */ private int value2; " +
                                     "}" +
                                     "class G { /** @param a*/ void a() {} }";
-  private static final String s57_2 = "/** @author Maxim */ class C { " +
-                                      "} " +
-                                      "class D {" +
-                                      "/** @serializable */ private int value; " +
-                                      "/** @since 1.4 */ void a() {} "+
-                                      "}" +
-                                      "class F { " +
-                                      "/** @since 1.4 */ void a() {} "+
-                                      "/** @serializable */ private int value2; " +
-                                      "}" +
-                                      "class G { /** @param a*/ void a() {} }";
 
   private static final String s59 = "interface A { void B(); }";
 
@@ -1094,11 +1083,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testSearchJavaDoc() {
     final String s58 = "/** @'T '_T2 */ class '_ { }";
-    assertEquals("java doc comment in class", 1, findMatchesCount(s57,s58));
-    assertEquals("java doc comment in class in file", 1, findMatchesCount(s57_2,s58,true));
+    assertEquals("java doc comment in class in file", 1, findMatchesCount(s57,s58,true));
 
     assertEquals("javadoc comment for field", 2, findMatchesCount(s57, "class '_ { /** @serializable '_* */ '_ '_; }"));
     assertEquals("javadoc comment for method", 2, findMatchesCount(s57, "class '_ { /** @'T 1.4 */ '_ '_() {} }"));
+    assertEquals("javadoc comment for method 2", 2, findMatchesCount(s57, "/** @'T 1.4 */ '_t '_m();"));
     assertEquals("just javadoc comment search", 4, findMatchesCount(s57, "/** @'T '_T2 */"));
 
     final String s84 = "    /**\n" +
@@ -1116,8 +1105,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("optional tag value match", 6, findMatchesCount(s57, "/** @'T '_T2? */"));
     assertEquals("multiple tags match +", 2, findMatchesCount(s75, " /** @'_tag+ '_value+ */"));
     assertEquals("multiple tags match *", 3, findMatchesCount(s75, " /** @'_tag* '_value* */"));
-    assertEquals("multiple tags match ?", 3, findMatchesCount(s75, " /** @'_tag? '_value? */ class 't {}"));
-    assertEquals("no infinite loop on javadoc matching", 1, findMatchesCount(s57, "/** 'Text */ class '_ { }"));
+    assertEquals("multiple tags match ?", 3, findMatchesCount(s75, " /** @'_tag? '_value? */ class 't {}", true));
+    assertEquals("no infinite loop on javadoc matching", 1, findMatchesCount(s57, "/** 'Text */ class '_ { }", true));
+
+    final String source = "class outer {\n" +
+                          "  /** bla */\n" +
+                          "  class One {}\n" +
+                          "  class Two {}\n" +
+                          "}";
+    final String pattern = "class '_A { /** '_Text */class 'B {}}";
+    assertEquals("match inner class with javadoc", 1, findMatchesCount(source, pattern));
   }
 
   public void testNamedPatterns() {

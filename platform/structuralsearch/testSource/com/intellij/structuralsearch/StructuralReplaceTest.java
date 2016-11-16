@@ -911,7 +911,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s12 = "public class $a$ {\n" +
                  "  $Other$\n" +
                  "}";
-    String expectedResult4 = "/** @example */\n" +
+    String expectedResult4 = "    /**\n" +
+                             "     * @example\n" +
+                             "     */\n" +
                              "    public class A {\n" +
                              "        class C {\n" +
                              "        }\n\n" +
