@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
@@ -110,7 +111,7 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware() || (isInModalContext && !action.isEnabledInModalContext());
+    final boolean notAllowed = dumbMode && !action.isDumbAware() || (Registry.is("actionSystem.honor.modal.context") && isInModalContext && !action.isEnabledInModalContext());
 
     if (insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();

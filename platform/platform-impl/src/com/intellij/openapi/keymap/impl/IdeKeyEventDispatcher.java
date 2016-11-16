@@ -608,7 +608,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
-        ActionUtil.performDumbAwareUpdate(false, action, actionEvent, true);
+        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
       }
 
       if (dumb && !action.isDumbAware()) {

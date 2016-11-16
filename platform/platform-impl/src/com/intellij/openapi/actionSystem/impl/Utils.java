@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -156,7 +157,7 @@ public class Utils{
       actionManager,
       0
     );
-    if (!doUpdate(false, group, e, presentation)) return;
+    if (!doUpdate(isInModalContext, group, e, presentation)) return;
 
     if (!presentation.isVisible()) { // don't process invisible groups
       return;
@@ -432,7 +433,7 @@ public class Utils{
           if (!component.isShowing()) return;
 
           DataContext context1 = DataManager.getInstance().getDataContext();
-          expandActionGroup(false, group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
+          expandActionGroup(LaterInvocator.isInModalContext(), group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
 
           for (Component each : children) {
             if (each instanceof ActionMenuItem) {
