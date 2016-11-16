@@ -51,6 +51,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.SmartList;
@@ -228,14 +229,20 @@ public abstract class AbstractLayoutCodeProcessor {
     final FutureTask<Boolean> currentTask = prepareTask(file, processChangedTextOnly);
 
     return new FutureTask<>(() -> {
-      if (previousTask != null) {
-        previousTask.run();
-        if (!previousTask.get() || previousTask.isCancelled()) return false;
+      try {
+        if (previousTask != null) {
+          previousTask.run();
+          if (!previousTask.get() || previousTask.isCancelled()) return false;
+        }
+
+        ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
+
+        return currentTask.get() && !currentTask.isCancelled();
       }
-
-      ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
-
-      return currentTask.get() && !currentTask.isCancelled();
+      catch (ExecutionException e) {
+        ExceptionUtil.rethrowUnchecked(e);
+        throw e;
+      }
     });
   }
 
@@ -336,6 +343,12 @@ public abstract class AbstractLayoutCodeProcessor {
         task.get();
       }
       catch (CancellationException ignored) {
+      }
+      catch (ExecutionException e) {
+        if (e.getCause() instanceof IndexNotReadyException) {
+          throw (IndexNotReadyException)e.getCause();
+        }
+        LOG.error(e);
       }
       catch (Exception e) {
         LOG.error(e);
