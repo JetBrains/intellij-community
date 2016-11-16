@@ -114,6 +114,12 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
       start(getClass().getName());
     }
 
+    @Override
+    protected void onExit() {
+      getDebugger().fireExitEvent();
+    }
+
+    @Override
     protected void onCommunicationError() {getDebugger().fireCommunicationError();}
   }
 }

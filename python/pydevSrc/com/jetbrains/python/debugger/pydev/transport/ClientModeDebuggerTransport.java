@@ -252,6 +252,14 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
       start(getClass().getName());
     }
 
+    @Override
+    protected void onExit() {
+      if (myState == State.APPROVED) {
+        getDebugger().fireExitEvent();
+      }
+    }
+
+    @Override
     protected void onCommunicationError() {
       if (myState == State.APPROVED) {
         getDebugger().fireCommunicationError();
