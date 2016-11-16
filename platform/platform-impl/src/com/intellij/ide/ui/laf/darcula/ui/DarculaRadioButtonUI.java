@@ -106,7 +106,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     if (!UIUtil.isUnderDarcula() && selected) {
       final GraphicsConfig fillOvalConf = new GraphicsConfig(g);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      g.fillOval(0, 1, w, h);
+      g.fillOval(0, JBUI.scale(1), w, h);
       fillOvalConf.restore();
     } else {
       if (focus) {
