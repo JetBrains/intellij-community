@@ -16,14 +16,14 @@
 package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
-import com.intellij.lang.InjectableLanguage;
+import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PythonLanguage;
 
 /**
  * User : ktisha
  */
-public class PyDocstringLanguageDialect extends Language implements InjectableLanguage {
+public class PyDocstringLanguageDialect extends Language implements DependentLanguage {
   public static PyDocstringLanguageDialect getInstance() {
     return (PyDocstringLanguageDialect)PyDocstringFileType.INSTANCE.getLanguage();
   }

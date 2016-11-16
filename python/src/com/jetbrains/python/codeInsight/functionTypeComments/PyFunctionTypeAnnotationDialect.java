@@ -15,14 +15,14 @@
  */
 package com.jetbrains.python.codeInsight.functionTypeComments;
 
-import com.intellij.lang.InjectableLanguage;
+import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PythonLanguage;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyFunctionTypeAnnotationDialect extends Language implements InjectableLanguage {
+public class PyFunctionTypeAnnotationDialect extends Language implements DependentLanguage {
   public static final PyFunctionTypeAnnotationDialect INSTANCE = new PyFunctionTypeAnnotationDialect();
 
   protected PyFunctionTypeAnnotationDialect() {
