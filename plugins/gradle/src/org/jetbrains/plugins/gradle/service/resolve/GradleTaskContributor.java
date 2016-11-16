@@ -42,11 +42,11 @@ import java.util.List;
 public class GradleTaskContributor implements GradleMethodContextContributor {
 
   @Override
-  public void process(@NotNull List<String> methodCallInfo,
-                      @NotNull PsiScopeProcessor processor,
-                      @NotNull ResolveState state,
-                      @NotNull PsiElement place) {
-    if (methodCallInfo.isEmpty()) return;
+  public boolean process(@NotNull List<String> methodCallInfo,
+                         @NotNull PsiScopeProcessor processor,
+                         @NotNull ResolveState state,
+                         @NotNull PsiElement place) {
+    if (methodCallInfo.isEmpty()) return true;
 
     if (methodCallInfo.size() == 1) {
       if(GradleResolverUtil.isLShiftElement(place.getParent())) {
@@ -59,28 +59,19 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
         processTaskAddition(methodCallInfo.get(0), GradleCommonClassNames.GRADLE_API_TASK_CONTAINER, processor, state, place);
       }
       else {
-        processTaskTypeParameter(methodCallInfo.get(0), processor, state, place);
+        processTaskTypeParameter(processor, state, place);
       }
 
       GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
     }
     else if (methodCallInfo.size() >= 3) {
-      processTaskTypeParameter(methodCallInfo.get(0), processor, state, place);
-
+      processTaskTypeParameter(processor, state, place);
       GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
-
-      if (place.getText().equals(GradleSourceSetsContributor.SOURCE_SETS) &&
-          StringUtil.startsWith(methodCallInfo.get(0), GradleSourceSetsContributor.SOURCE_SETS + '.')) {
-        GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER);
-      }
-      if (place.getText().equals(GradleDistributionsContributor.DISTRIBUTIONS) &&
-          StringUtil.startsWith(methodCallInfo.get(0), GradleDistributionsContributor.DISTRIBUTIONS + '.')) {
-        GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_DISTRIBUTION_CONTAINER);
-      }
     }
+    return true;
   }
 
-  private static void processTaskTypeParameter(@NotNull String methodCall, @NotNull PsiScopeProcessor processor,
+  private static void processTaskTypeParameter(@NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
     final int taskTypeParameterLevel = 3;
@@ -102,7 +93,7 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
               PsiImmediateClassType immediateClassType = (PsiImmediateClassType)psiType;
               for (PsiType type : immediateClassType.getParameters()) {
                 GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-                GradleResolverUtil.processDeclarations(methodCall, psiManager, processor, state, place, TypesUtil.getQualifiedName(type));
+                GradleResolverUtil.processDeclarations(psiManager, processor, state, place, TypesUtil.getQualifiedName(type));
               }
             }
           }

@@ -78,17 +78,48 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
   );
 
   @Override
-  public void process(@NotNull List<String> methodCallInfo,
-                      @NotNull PsiScopeProcessor processor,
-                      @NotNull ResolveState state,
-                      @NotNull PsiElement place) {
+  public boolean process(@NotNull List<String> methodCallInfo,
+                         @NotNull PsiScopeProcessor processor,
+                         @NotNull ResolveState state,
+                         @NotNull PsiElement place) {
+
+    //Module module = ProjectFileIndex.SERVICE.getInstance(place.getProject()).getModuleForFile(place.getContainingFile().getVirtualFile());
+    //String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    //if (rootProjectPath != null) {
+    //  ExternalProject externalProject = ExternalProjectDataCache.getInstance(place.getProject())
+    //    .getRootExternalProject(GradleConstants.SYSTEM_ID, new File(rootProjectPath));
+    //  if (externalProject != null) {
+    //    Map<String, ExternalProperty> properties = externalProject.getProperties();
+    //
+    //    if (true || ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) {
+    //      String placeText = place.getText();
+    //      ExternalProperty externalProperty = properties.get(placeText);
+    //      if (externalProperty != null) {
+    //        String type = externalProperty.getType() == null ? CommonClassNames.JAVA_LANG_OBJECT : externalProperty.getType();
+    //        //String name = processor.getHint(NameHint.KEY).getName(state);
+    //        LightVariableBuilder variable =
+    //          new LightVariableBuilder(place.getManager(), placeText, TypesUtil.createType(type, place),
+    //                                   GroovyLanguage.INSTANCE);
+    //        if (!processor.execute(variable, state)) return;
+    //        //if (((String)name).let {it == null || it == "hostname" }) {
+    //        //val variable = LightVariableBuilder<LightVariableBuilder<*>>(
+    //        //  place.manager, "hostname", TypesUtil.createType(JAVA_LANG_STRING, place), GroovyLanguage)
+    //        //if (!processor.execute(variable, state)) return
+    //        //}
+    //      }
+    //    }
+    //  }
+    //}
+    if (true) return true;
+
+
     if (methodCallInfo.isEmpty()) {
       checkForAvailableTasks(0, place.getText(), processor, state, place);
-      return;
+      return true;
     }
 
     final String methodCall = getLastItem(methodCallInfo);
-    if (methodCall == null) return;
+    if (methodCall == null) return true;
 
     if (!methodCall.equals("task")) {
       if (methodCallInfo.size() == 1) {
@@ -125,6 +156,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         }
       }
     }
+    return true;
   }
 
   public static void processImplicitDeclarations(@NotNull PsiScopeProcessor processor,
@@ -185,7 +217,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         PsiClass contributorClass =
           psiManager.findClassWithCache(fqName, place.getResolveScope());
         if (contributorClass == null) return;
-        GradleResolverUtil.processMethod(taskName, contributorClass, processor, state, place);
+        //GradleResolverUtil.processMethod(taskName, contributorClass, processor, state, place);
       }
     }
     else {
@@ -203,8 +235,8 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     if (canBeMethodOf(GroovyPropertyUtils.getGetterNameNonBoolean(taskName), gradleApiProjectClass)) return;
     final String className = BUILT_IN_TASKS.get(taskName);
     if (className != null) {
-      GradleResolverUtil.processDeclarations(
-        methodCallInfo.size() > 0 ? methodCallInfo.get(0) : null, psiManager, processor, state, place, className);
+      //GradleResolverUtil.processDeclarations(
+      //  methodCallInfo.size() > 0 ? methodCallInfo.get(0) : null, psiManager, processor, state, place, className);
     }
   }
 }

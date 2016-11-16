@@ -66,9 +66,6 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
          current != null;
          current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class)) {
       GrExpression expression = current.getInvokedExpression();
-      if (expression == null) {
-        continue;
-      }
       String text = expression.getText();
       if (text != null) {
         methodInfo.add(text);
@@ -81,7 +78,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
     }
 
     for (GradleMethodContextContributor contributor : GradleMethodContextContributor.EP_NAME.getExtensions()) {
-      contributor.process(methodInfo, processor, state, place);
+      if (!contributor.process(methodInfo, processor, state, place)) return;
     }
   }
 }
