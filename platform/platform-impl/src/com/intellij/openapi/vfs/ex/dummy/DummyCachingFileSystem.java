@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,8 +125,12 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   @NotNull
   public Project getProjectOrFail(String projectId) {
     List<Project> list = myProject2Id.getKeysByValue(projectId);
-    if (list == null || list.isEmpty()) throw new AssertionError(projectId + " project not found: " + myProject2Id.values());
-    if (list.size() != 1) throw new AssertionError(projectId + " is mapped to several projects: " + list);
+    if (list == null || list.isEmpty()) {
+      throw new AssertionError(projectId + " project not found among: " + ContainerUtil.newArrayList(myProject2Id.values()));
+    }
+    if (list.size() != 1) {
+      throw new AssertionError(projectId + " is mapped to several projects: " + list);
+    }
     return list.get(0);
   }
 
