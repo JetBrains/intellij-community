@@ -115,6 +115,7 @@ public class TemplateState implements Disposable {
   }
 
   private void initListeners() {
+    if (isDisposed()) return;
     myEditorDocumentListener = new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -364,7 +365,7 @@ public class TemplateState implements Disposable {
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
       public void undo() {
-        if (myDocument != null) {
+        if (!isDisposed()) {
           fireTemplateCancelled();
           LookupManager.getInstance(myProject).hideActiveLookup();
           int oldVar = myCurrentVariableNumber;
@@ -563,7 +564,7 @@ public class TemplateState implements Disposable {
   }
 
   private void focusCurrentExpression() {
-    if (isFinished()) {
+    if (isFinished() || isDisposed()) {
       return;
     }
 
@@ -620,8 +621,9 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
+  @Nullable
   PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument) : null;
   }
 
   private void insertSingleItem(List<TemplateExpressionLookupElement> lookupItems) {
@@ -651,7 +653,7 @@ public class TemplateState implements Disposable {
   }
 
   private void runLookup(final List<TemplateExpressionLookupElement> lookupItems, @Nullable String advertisingText) {
-    if (myEditor == null) return;
+    if (isDisposed()) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
@@ -824,13 +826,14 @@ public class TemplateState implements Disposable {
   }
 
   private void recalcSegment(int segmentNumber, boolean isQuick, Expression expressionNode, Expression defaultValue) {
+    if (isDisposed()) return;
     String oldValue = getExpressionString(segmentNumber);
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = getPsiFile();
-    PsiElement element = psiFile.findElementAt(start);
+    PsiElement element = psiFile != null ? psiFile.findElementAt(start) : null;
     if (element != null) {
       PsiUtilCore.ensureValid(element);
     }
@@ -1053,6 +1056,7 @@ public class TemplateState implements Disposable {
   }
 
   private void setFinalEditorState(boolean brokenOff) {
+    if (isDisposed()) return;
     myEditor.getSelectionModel().removeSelection();
     if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
 
@@ -1292,8 +1296,7 @@ public class TemplateState implements Disposable {
             }
           }
           style.reformatText(file, reformatStartOffset, reformatEndOffset);
-          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+          unblockDocument();
 
           if (dummyAdjustLineMarkerRange != null && dummyAdjustLineMarkerRange.isValid()) {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
