@@ -32,7 +32,6 @@ public interface PathMacroSubstitutor {
 
   /**
    * Path will be collapsed only if the entire content of an attribute (tag text) is a path, if a path is a substring of an attribute value it won't be collapsed.
-   * @param element
    */
   default void collapsePaths(@NotNull Element element) {
     collapsePaths(element, false);
@@ -40,7 +39,6 @@ public interface PathMacroSubstitutor {
 
   /**
    * Path will be collapsed even if a path is a substring of an attribute value.
-   * @param element
    */
   default void collapsePathsRecursively(@NotNull Element element) {
     collapsePaths(element, true);
