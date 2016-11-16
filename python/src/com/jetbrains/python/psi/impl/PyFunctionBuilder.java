@@ -87,7 +87,7 @@ public class PyFunctionBuilder {
    */
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
-    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormat(settingsAnchor), 
+    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormatOrPlain(settingsAnchor), 
                                                        PyIndentUtil.getIndentFromSettings(settingsAnchor.getProject()), 
                                                        settingsAnchor);
   }
