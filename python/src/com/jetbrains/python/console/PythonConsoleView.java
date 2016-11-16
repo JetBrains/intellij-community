@@ -89,7 +89,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private final PyHighlighter myPyHighlighter;
   private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
-  private boolean myFirstRun = true;
 
   private XStandaloneVariablesView mySplitView;
   private ActionCallback myInitialized = new ActionCallback();
@@ -144,27 +143,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
+  public PydevConsoleExecuteActionHandler getExecuteActionHandler() {
+    return myExecuteActionHandler;
+  }
+
   public void setConsoleEnabled(boolean flag) {
     if (myExecuteActionHandler != null) {
       myExecuteActionHandler.setEnabled(flag);
     }
   }
-
-  public boolean isConsoleEnabledFirstTime() {
-    return myFirstRun && myExecuteActionHandler != null;
-  }
-
-  public void setFirstRun(boolean firstRun) {
-    myFirstRun = firstRun;
-  }
-
-  public void showStartMessageForFirstExecution(String startCommand) {
-    if (myFirstRun && myExecuteActionHandler != null) {
-      setPrompt("");
-      executeStatement(startCommand + "\n", ProcessOutputTypes.SYSTEM);
-    }
-  }
-
 
   public void inputRequested() {
     if (myExecuteActionHandler != null) {
