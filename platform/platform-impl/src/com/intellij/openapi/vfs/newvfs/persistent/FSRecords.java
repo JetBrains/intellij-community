@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -41,6 +40,7 @@ import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
-public class FSRecords implements Forceable {
+public class FSRecords {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
@@ -541,7 +541,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public FSRecords() {
+  private FSRecords() {
   }
 
   public static void connect() {
@@ -755,13 +755,13 @@ public class FSRecords implements Forceable {
     }
   }
 
-  @Override
-  public void force() {
+  @TestOnly
+  public static void force() {
     DbConnection.force();
   }
 
-  @Override
-  public boolean isDirty() {
+  @TestOnly
+  public static boolean isDirty() {
     return DbConnection.isDirty();
   }
 
