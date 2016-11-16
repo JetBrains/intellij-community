@@ -89,7 +89,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public GeneralCommandLine generateCommandLine()  {
+  public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -103,14 +103,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
-    final String workingDirectory = myConfiguration.getWorkingDirectory();
-    if (!StringUtil.isEmptyOrSpaces(workingDirectory)) {
-      cmd.withWorkDirectory(workingDirectory);
+    String workingDirectory = myConfiguration.getWorkingDirectory();
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
+      workingDirectory = myConfiguration.getWorkingDirectorySafe();
     }
-    else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
-      final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)myConfiguration;
-      cmd.withWorkDirectory(configuration.getWorkingDirectorySafe());
-    }
+    cmd.withWorkDirectory(workingDirectory);
   }
 
   @Override
@@ -134,10 +131,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return executionResult;
   }
 
-  protected void addBeforeParameters(GeneralCommandLine cmd)  {}
+  protected void addBeforeParameters(GeneralCommandLine cmd) {}
+
   protected void addAfterParameters(GeneralCommandLine cmd) {}
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
+  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert scriptParams != null;
     getRunner().addToGroup(scriptParams, cmd);
@@ -153,6 +151,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract HelperPackage getRunner();
+
   @NotNull
   protected abstract List<String> getTestSpecs();
 }
