@@ -269,6 +269,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   @Override
   public String getElementName(Object element) {
+    if (!(element instanceof NavigationItem)) {
+      throw new AssertionError(element + " of " + element.getClass());
+    }
     return ((NavigationItem)element).getName();
   }
 
