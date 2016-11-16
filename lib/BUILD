@@ -1,0 +1,622 @@
+java_import(
+    name = "protobuf-2.5.0",
+    jars = ["protobuf-2.5.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "hamcrest-core-1.3",
+    jars = ["hamcrest-core-1.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "junit-4.12",
+    jars = ["junit-4.12.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "guava-18.0",
+    jars = ["guava-18.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gson-2.5",
+    jars = ["gson-2.5.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "trove4j",
+    jars = ["trove4j.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsr305",
+    jars = ["jsr305.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "junit",
+    jars = ["junit.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "commons-compress-1.10",
+    jars = ["commons-compress-1.10.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "httpcore-4.4.1",
+    jars = ["httpcore-4.4.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "httpmime-4.4.1",
+    jars = ["httpmime-4.4.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "httpclient-4.4.1",
+    jars = ["httpclient-4.4.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fluent-hc-4.4.1",
+    jars = ["fluent-hc-4.4.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xmlrpc-2.0",
+    jars = ["xmlrpc-2.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gherkin-2.12.2",
+    jars = ["gherkin-2.12.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cucumber-jvm-deps-1.0.3",
+    jars = ["cucumber-jvm-deps-1.0.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cucumber-core-1.2.4",
+    jars = ["cucumber-core-1.2.4.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cucumber-java-1.2.4",
+    jars = ["cucumber-java-1.2.4.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "asm-all",
+    jars = ["asm-all.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jdom",
+    jars = ["jdom.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jgoodies-forms",
+    jars = ["jgoodies-forms.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "hamcrest-library-1.3",
+    jars = ["hamcrest-library-1.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "coverage-agent",
+    jars = ["coverage-agent.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "coverage-instrumenter",
+    jars = ["coverage-instrumenter.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "coverage-util",
+    jars = ["coverage-util.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "eawtstub",
+    jars = ["eawtstub.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "log4j",
+    jars = ["log4j.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jna",
+    jars = ["jna.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jna-platform",
+    jars = ["jna-platform.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "oromatcher",
+    jars = ["oromatcher.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "snappy-in-java-0.5.1",
+    jars = ["snappy-in-java-0.5.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "imgscalr-lib-4.2",
+    jars = ["imgscalr-lib-4.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "batik-all",
+    jars = ["batik-all.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xmlgraphics-commons-1.5",
+    jars = ["xmlgraphics-commons-1.5.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xml-apis-ext",
+    jars = ["xml-apis-ext.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xstream-1.4.8",
+    jars = ["xstream-1.4.8.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "picocontainer",
+    jars = ["picocontainer.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xercesImpl",
+    jars = ["xercesImpl.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xml-apis",
+    jars = ["xml-apis.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "automaton",
+    jars = ["automaton.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "asm",
+    jars = ["asm.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "asm-commons",
+    jars = ["asm-commons.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cglib-2.2.2",
+    jars = ["cglib-2.2.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "nanoxml-2.2.3",
+    jars = ["nanoxml-2.2.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "commons-codec-1.9",
+    jars = ["commons-codec-1.9.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "netty-all-4.1.2.Final",
+    jars = ["netty-all-4.1.2.Final.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "proxy-vole_20131209",
+    jars = ["proxy-vole_20131209.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "pty4j-0.7.1",
+    jars = ["pty4j-0.7.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "microba",
+    jars = ["microba.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jaxen-1.1.3",
+    jars = ["jaxen-1.1.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsr173_1.0_api",
+    jars = ["jsr173_1.0_api.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xbean",
+    jars = ["xbean.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "resolver",
+    jars = ["resolver.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jcip-annotations",
+    jars = ["jcip-annotations.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "swingx-core-1.6.2",
+    jars = ["swingx-core-1.6.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "sanselan-0.98-snapshot",
+    jars = ["sanselan-0.98-snapshot.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "velocity",
+    jars = ["velocity.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "xpp3-1.1.4-min",
+    jars = ["xpp3-1.1.4-min.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cli-parser-1.1",
+    jars = ["cli-parser-1.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "commons-logging-1.2",
+    jars = ["commons-logging-1.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jh",
+    jars = ["jh.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "winp-1.23",
+    jars = ["winp-1.23.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "miglayout-swing",
+    jars = ["miglayout-swing.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jayatana-1.2.4",
+    jars = ["jayatana-1.2.4.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "slf4j-api-1.7.10",
+    jars = ["slf4j-api-1.7.10.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "slf4j-log4j12-1.7.10",
+    jars = ["slf4j-log4j12-1.7.10.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "imageio-tiff-3.2.1",
+    jars = ["imageio-tiff-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "imageio-core-3.2.1",
+    jars = ["imageio-core-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "common-lang-3.2.1",
+    jars = ["common-lang-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "common-io-3.2.1",
+    jars = ["common-io-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "common-image-3.2.1",
+    jars = ["common-image-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "imageio-metadata-3.2.1",
+    jars = ["imageio-metadata-3.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "groovy-all-2.4.6",
+    jars = ["groovy-all-2.4.6.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch-0.1.53",
+    jars = ["jsch-0.1.53.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "purejavacomm",
+    jars = ["purejavacomm.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "serviceMessages",
+    jars = ["serviceMessages.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.usocket-nc",
+    jars = ["jsch.agentproxy.usocket-nc.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.usocket-jna",
+    jars = ["jsch.agentproxy.usocket-jna.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.sshagent",
+    jars = ["jsch.agentproxy.sshagent.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.pageant",
+    jars = ["jsch.agentproxy.pageant.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.core",
+    jars = ["jsch.agentproxy.core.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.connector-factory",
+    jars = ["jsch.agentproxy.connector-factory.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "sqlite-jdbc-3.6.20.1",
+    jars = ["sqlite-jdbc-3.6.20.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "minlog-1.2",
+    jars = ["minlog-1.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "kryo-2.22",
+    jars = ["kryo-2.22.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "reflectasm-1.07",
+    jars = ["reflectasm-1.07.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "objenesis-1.2",
+    jars = ["objenesis-1.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "ecj-4.5.2",
+    jars = ["ecj-4.5.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "nekohtml-1.9.14",
+    jars = ["nekohtml-1.9.14.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
