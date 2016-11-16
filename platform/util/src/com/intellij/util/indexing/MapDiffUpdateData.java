@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -44,7 +43,7 @@ public abstract class MapDiffUpdateData<Key, Value> extends UpdateData<Key, Valu
                                                            Map<Key, Value> data) throws StorageException {
     if (data instanceof THashMap) {
       // such map often (from IdIndex) contain 100x (avg ~240) of entries, also THashMap have no Entry inside so we optimize for gc too
-      final Ref<StorageException> exceptionRef = new Ref<>();
+      final Ref<StorageException> exceptionRef = new Ref<StorageException>();
       final boolean b = ((THashMap<Key, Value>)data).forEachEntry(new TObjectObjectProcedure<Key, Value>() {
         @Override
         public boolean execute(Key key, Value value) {
@@ -81,8 +80,6 @@ public abstract class MapDiffUpdateData<Key, Value> extends UpdateData<Key, Valu
     iterateRemovedKeys(removedOrChangedKeys.keySet(), inputId, consumer);
   }
 
-  private static final boolean DO_INFO_DUMP = ApplicationManager.getApplication().isInternal();
-
   private void calcDiff() throws StorageException {
     if (removedOrChangedKeys != null) return;
 
@@ -103,10 +100,10 @@ public abstract class MapDiffUpdateData<Key, Value> extends UpdateData<Key, Valu
           if (!Comparing.equal(newValueForKey, e.getValue()) ||
               newValueForKey == null && !newValue.containsKey(e.getKey())
             ) {
-            if (removedOrChangedKeys == null) removedOrChangedKeys = new THashMap<>();
+            if (removedOrChangedKeys == null) removedOrChangedKeys = new THashMap<Key, Value>();
             removedOrChangedKeys.put(e.getKey(), e.getValue());
             if (newValue.containsKey(e.getKey())) {
-              if (addedKeys == null) addedKeys = new THashMap<>();
+              if (addedKeys == null) addedKeys = new THashMap<Key, Value>();
               addedKeys.put(e.getKey(), newValueForKey);
             }
           }
@@ -130,7 +127,7 @@ public abstract class MapDiffUpdateData<Key, Value> extends UpdateData<Key, Valu
         }
         for (Map.Entry<Key, Value> e : newValue.entrySet()) {
           if (!currentValue.containsKey(e.getKey())) {
-            if (addedKeys == null) addedKeys = new THashMap<>();
+            if (addedKeys == null) addedKeys = new THashMap<Key, Value>();
             addedKeys.put(e.getKey(), e.getValue());
           }
         }
@@ -145,7 +142,7 @@ public abstract class MapDiffUpdateData<Key, Value> extends UpdateData<Key, Valu
       incrementalAdditions.addAndGet(addedKeys.size());
       incrementalRemovals.addAndGet(removedOrChangedKeys.size());
 
-      if ((totalRequests & 0xFFF) == 0 && DO_INFO_DUMP) {
+      if ((totalRequests & 0xFFF) == 0 && DebugAssertions.DEBUG) {
         Logger.getInstance(getClass()).info("Incremental index diff update:"+requests +
                                             ", removals:" + totalRemovals + "->" + incrementalRemovals +
                                             ", additions:" +totalAdditions + "->" +incrementalAdditions);

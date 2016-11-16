@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class InputIndexDataExternalizer<K> implements DataExternalizer<Collectio
   public Collection<K> read(@NotNull DataInput in) throws IOException {
     try {
       final int size = DataInputOutputUtil.readINT(in);
-      final List<K> list = new ArrayList<>(size);
+      final List<K> list = new ArrayList<K>(size);
       for (int idx = 0; idx < size; idx++) {
         list.add(myKeyDescriptor.read(in));
       }

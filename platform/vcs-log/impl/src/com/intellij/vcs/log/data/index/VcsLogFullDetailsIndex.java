@@ -144,7 +144,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    protected void requestRebuild(@Nullable Exception ex) {
+    public void requestRebuild(@Nullable Exception ex) {
       myFatalErrorHandler.consume(this, ex != null ? ex : new Exception("Index rebuild requested"));
     }
   }

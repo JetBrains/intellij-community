@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -46,72 +45,43 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
+public class MapReduceIndex<Key, Value, Input> extends MapReduceIndexBase<Key,Value, Input> implements UpdatableIndex<Key,Value, Input>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
   private static final int NULL_MAPPING = 0;
-  @NotNull private final ID<Key, Value> myIndexId;
-  private final DataIndexer<Key, Value, Input> myIndexer;
-  @NotNull protected final IndexStorage<Key, Value> myStorage;
   private final boolean myHasSnapshotMapping;
 
-  private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final boolean myIsPsiBackedIndex;
-  private final IndexExtension<Key, Value, Input> myExtension;
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final AtomicLong myModificationStamp = new AtomicLong();
   private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<>();
 
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
-  @Nullable protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
-  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      try {
-        if (myStorage instanceof MemoryIndexStorage) {
-          Lock writeLock = getWriteLock();
-          if (writeLock.tryLock()) {
-            try {
-              ((MemoryIndexStorage<Key, Value>)myStorage).clearCaches();
-            } finally {
-              writeLock.unlock();
-            }
-          }
-        }
-        flush();
-      } catch (StorageException e) {
-        LOG.info(e);
-        requestRebuild(null);
-      }
+  static {
+    if (!DebugAssertions.DEBUG) {
+      final Application app = ApplicationManager.getApplication();
+      DebugAssertions.DEBUG = app.isEAP() || app.isInternal();
     }
-  });
+  }
 
   public MapReduceIndex(IndexExtension<Key, Value, Input> extension,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    myIndexId = extension.getName();
-    myExtension = extension;
+    super(extension, storage, false);
+
     SharedIndicesData.registerIndex(myIndexId, extension);
-    myIndexer = extension.getIndexer();
-    myStorage = storage;
     myHasSnapshotMapping = extension instanceof FileBasedIndexExtension &&
                            ((FileBasedIndexExtension<Key, Value>)extension).hasSnapshotMapping() &&
                            IdIndex.ourSnapshotMappingsEnabled;
 
     mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension, myIndexId, extension.getKeyDescriptor());
-    myValueExternalizer = extension.getValueExternalizer();
     myIsPsiBackedIndex = extension instanceof PsiDependentIndex;
 
     myContents = createContentsIndex(); // todo
@@ -146,21 +116,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension,
-                                                                           ID<K, ?> indexId,
-                                                                           KeyDescriptor<K> keyDescriptor) {
-    DataExternalizer<Collection<K>> externalizer;
-    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
-      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
-    } else {
-      externalizer = new InputIndexDataExternalizer<>(keyDescriptor, indexId);
-    }
-    return externalizer;
-  }
-
   @NotNull
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension <K, ?, ?> extension,
-                                                                                      @NotNull MemoryIndexStorage<K, ?> storage)
+  private <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension <K, ?, ?> extension,
+                                                                                @NotNull MemoryIndexStorageBase<K, ?, ?> storage)
     throws IOException {
     ID<K, ?> indexId = extension.getName();
     KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
@@ -186,41 +144,19 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  @NotNull
-  public IndexStorage<Key, Value> getStorage() {
-    return myStorage;
-  }
-
   @Override
-  public void clear() throws StorageException {
-    try {
-      getWriteLock().lock();
-      myStorage.clear();
-      if (myInputsIndex != null) {
-        cleanMapping(myInputsIndex);
-        myInputsIndex = createInputsIndex();
-      }
-      if (myInputsSnapshotMapping != null) {
-        cleanMapping(myInputsSnapshotMapping);
-        myInputsSnapshotMapping = createInputSnapshotMapping();
-      }
-      if (myIndexingTrace != null) {
-        cleanMapping(myIndexingTrace);
-        myIndexingTrace = createIndexingTrace();
-      }
-      if (myContents != null) {
-        cleanMapping(myContents);
-        myContents = createContentsIndex();
-      }
+  protected void cleanMappings() throws IOException {
+    if (myInputsSnapshotMapping != null) {
+      cleanMapping(myInputsSnapshotMapping);
+      myInputsSnapshotMapping = createInputSnapshotMapping();
     }
-    catch (StorageException e) {
-      LOG.error(e);
+    if (myIndexingTrace != null) {
+      cleanMapping(myIndexingTrace);
+      myIndexingTrace = createIndexingTrace();
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      getWriteLock().unlock();
+    if (myContents != null) {
+      cleanMapping(myContents);
+      myContents = createContentsIndex();
     }
   }
 
@@ -265,72 +201,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  private static void cleanMapping(@NotNull PersistentHashMap<?, ?> index) {
-    final File baseFile = index.getBaseFile();
-    try {
-      index.close();
-    }
-    catch (Throwable ignored) {
-    }
-
-    IOUtil.deleteAllFilesStartingWith(baseFile);
+  @Override
+  protected void doForce() {
+    doForce(myInputsSnapshotMapping);
+    doForce(myIndexingTrace);
+    doForce(myContents);
   }
 
   @Override
-  public void flush() throws StorageException{
-    try {
-      getReadLock().lock();
-      doForce(myInputsIndex);
-      doForce(myInputsSnapshotMapping);
-      doForce(myIndexingTrace);
-      doForce(myContents);
-      myStorage.flush();
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        throw new StorageException(cause);
-      }
-      else {
-        throw e;
-      }
-    }
-    finally {
-      getReadLock().unlock();
-    }
-  }
-
-  private static void doForce(@Nullable PersistentHashMap<?, ?> inputsIndex) {
-    if (inputsIndex != null && inputsIndex.isDirty()) {
-      inputsIndex.force();
-    }
-  }
-
-  @Override
-  public void dispose() {
-    myLowMemoryFlusher.stop();
-    final Lock lock = getWriteLock();
-    try {
-      lock.lock();
-      try {
-        myStorage.close();
-      }
-      finally {
-        doClose(myInputsIndex);
-        doClose(myInputsSnapshotMapping);
-        doClose(myIndexingTrace);
-        doClose(myContents);
-      }
-    }
-    catch (StorageException e) {
-      LOG.error(e);
-    }
-    finally {
-      lock.unlock();
-    }
+  protected void doClose() {
+    doClose(myInputsSnapshotMapping);
+    doClose(myIndexingTrace);
+    doClose(myContents);
   }
 
   @Override
@@ -348,35 +230,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
   }
 
-  private static void doClose(@Nullable PersistentHashMap<?, ?> index) {
-    if (index != null) {
-      try {
-        index.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  @NotNull
-  @Override
-  public final Lock getReadLock() {
-    return myLock.readLock();
-  }
-
-  @NotNull
-  @Override
-  public final Lock getWriteLock() {
-    return myLock.writeLock();
-  }
-
   @Override
   public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
-      return myStorage.processKeys(processor, scope, idFilter);
+      return ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter);
     }
     finally {
       lock.unlock();
@@ -384,22 +243,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  @NotNull
-  public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
-    final Lock lock = getReadLock();
-    try {
-      lock.lock();
-      ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-      return myStorage.read(key);
-    }
-    finally {
-      ValueContainerImpl.ourDebugIndexInfo.set(null);
-      lock.unlock();
-    }
-  }
-
   protected PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
-    return createIdToDataKeysIndex(myExtension, (MemoryIndexStorage<Key, ?>)myStorage);
+    return createIdToDataKeysIndex(myExtension, (MemoryIndexStorageBase<Key, ?, ?>)myStorage);
   }
 
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
@@ -457,9 +302,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (data == null) {
       data = content != null ? myIndexer.map(content) : Collections.emptyMap();
-      if (DebugAssertions.DEBUG) {
-        checkValuesHaveProperEqualsAndHashCode(data);
-      }
+      checkValuesHaveProperEqualsAndHashCode(data);
     }
 
     if (hashId != null && !havePersistentData) {
@@ -477,7 +320,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         }
       }
     }
-    ProgressManager.checkCanceled();
+    myStorage.checkCanceled();
 
     UpdateData<Key, Value> optimizedUpdateData = null;
     final NotNullComputable<Collection<Key>> oldKeysGetter;
@@ -559,15 +402,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         throw new RuntimeException(ex);
       }
     } else {
-      oldKeysGetter = () -> {
-        try {
-          Collection<Key> oldKeys = readInputKeys(inputId);
-          return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      };
+      oldKeysGetter = createOldKeysGetterByInputIndex(inputId);
       savedInputId = inputId;
     }
 
@@ -580,13 +415,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       catch (StorageException|ProcessCanceledException ex) {
         LOG.info("Exception during updateWithMap:" + ex);
-        Application application = ApplicationManager.getApplication();
-        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-          // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-          application.invokeLater(() -> requestRebuild(ex), ModalityState.any());
-        } else {
-          requestRebuild(ex);
-        }
+        requestRebuild(ex);
         return Boolean.FALSE;
       }
 
@@ -594,15 +423,35 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     };
   }
 
-  protected void requestRebuild(@Nullable Exception ex) {
-    if (ex == null) {
-      FileBasedIndex.getInstance().requestRebuild(myIndexId);
-    }
-    else {
-      FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+  @Override
+  public void requestRebuild(@Nullable Exception ex) {
+    Runnable action = () -> {
+      if (ex == null) {
+        FileBasedIndex.getInstance().requestRebuild(myIndexId);
+      }
+      else {
+        FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+      }
+    };
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
+      application.invokeLater(action, ModalityState.any());
+    } else {
+      action.run();
     }
   }
 
+  @Override
+  protected <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension,
+                                                                              ID<K, ?> indexId,
+                                                                              KeyDescriptor<K> keyDescriptor) {
+    return extension instanceof CustomInputsIndexFileBasedIndexExtension ?
+           ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer() :
+           super.createInputsIndexExternalizer(extension, indexId, keyDescriptor);
+  }
+
+  @Override
   protected UpdateData<Key, Value> buildUpdateData(Map<Key, Value> data, NotNullComputable<Collection<Key>> oldKeysGetter, int savedInputId) {
     return new SimpleUpdateData(myIndexId, savedInputId, data, oldKeysGetter);
   }
@@ -678,7 +527,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.put(inputId, savedInputId);
   }
 
-  private Collection<Key> readInputKeys(int inputId) throws IOException {
+  @Override
+  protected Collection<Key> readInputKeys(int inputId) throws IOException {
     if (myInMemoryMode.get()) {
       synchronized (myInMemoryKeys) {
         Collection<Key> keys = myInMemoryKeys.get(inputId);
@@ -710,10 +560,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       return keys;
     }
-    return myInputsIndex != null ? myInputsIndex.get(inputId) : null;
+    return super.readInputKeys(inputId);
   }
 
-  private void saveInputKeys(int inputId, int savedInputId, Map<Key, Value> newData) throws IOException {
+  @Override
+  protected void saveInputKeys(int inputId, int savedInputId, Map<Key, Value> newData) throws IOException {
     if (myInMemoryMode.get()) {
       synchronized (myInMemoryKeys) {
         myInMemoryKeys.put(inputId, newData.keySet());
@@ -722,45 +573,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       if (myHasSnapshotMapping) {
         saveInputHashId(inputId, savedInputId);
       } else {
-        if (myInputsIndex != null) {
-          if (newData.size() > 0) {
-            myInputsIndex.put(inputId, newData.keySet());
-          }
-          else {
-            myInputsIndex.remove(inputId);
-          }
-        }
+        super.saveInputKeys(inputId, savedInputId, newData);
 
         if (SharedIndicesData.ourFileSharedIndicesEnabled) {
           Set<Key> newKeys = newData.keySet();
           if (newKeys.size() == 0) newKeys = null;
           SharedIndicesData.associateFileData(inputId, myIndexId, newKeys, mySnapshotIndexExternalizer);
-        }
-      }
-    }
-  }
-
-  private void checkValuesHaveProperEqualsAndHashCode(Map<Key, Value> data) {
-    for(Map.Entry<Key, Value> e: data.entrySet()) {
-      final Value value = e.getValue();
-      if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
-        LOG.error("Index " + myIndexId.toString() + " violates equals / hashCode contract for Value parameter");
-      }
-
-      if (myValueExternalizer != null) {
-        try {
-          final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-          DataOutputStream outputStream = new DataOutputStream(out);
-          myValueExternalizer.save(outputStream, value);
-          outputStream.close();
-          final Value deserializedValue =
-            myValueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
-
-          if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + myIndexId.toString() + " deserialization violates equals / hashCode contract for Value parameter");
-          }
-        } catch (IOException ex) {
-          LOG.error(ex);
         }
       }
     }
@@ -906,84 +724,4 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
   private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
-
-  public IndexExtension<Key, Value, Input> getExtension() {
-    return myExtension;
-  }
-
-  public long getModificationStamp() {
-    return myModificationStamp.get();
-  }
-
-  public class SimpleUpdateData extends UpdateData<Key, Value> {
-    private final int savedInputId;
-    private final @NotNull Map<Key, Value> newData;
-    protected final @NotNull NotNullComputable<Collection<Key>> oldKeysGetter;
-
-    public SimpleUpdateData(ID<Key,Value> indexId, int id, @NotNull Map<Key, Value> data, @NotNull NotNullComputable<Collection<Key>> getter) {
-      super(indexId);
-      savedInputId = id;
-      newData = data;
-      oldKeysGetter = getter;
-    }
-
-    public void iterateRemovedOrUpdatedKeys(int inputId, RemovedOrUpdatedKeyProcessor<Key> consumer) throws StorageException {
-      MapDiffUpdateData.iterateRemovedKeys(oldKeysGetter.compute(), inputId, consumer);
-    }
-
-    public void iterateAddedKeys(final int inputId, final AddedKeyProcessor<Key, Value> consumer) throws StorageException {
-      MapDiffUpdateData.iterateAddedKeyAndValues(inputId, consumer, newData);
-    }
-
-    @Override
-    public void save(int inputId) throws IOException {
-      saveInputKeys(inputId, savedInputId, newData);
-    }
-
-    public @NotNull Map<Key, Value> getNewData() {
-      return newData;
-    }
-  }
-
-  private final MapDiffUpdateData.RemovedOrUpdatedKeyProcessor<Key>
-    myRemoveStaleKeyOperation = new MapDiffUpdateData.RemovedOrUpdatedKeyProcessor<Key>() {
-    @Override
-    public void process(Key key, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
-      myStorage.removeAllValues(key, inputId);
-    }
-  };
-
-  private final MapDiffUpdateData.AddedKeyProcessor<Key, Value> myAddedKeyProcessor = new MapDiffUpdateData.AddedKeyProcessor<Key, Value>() {
-    @Override
-    public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
-      myStorage.addValue(key, inputId, value);
-    }
-  };
-
-  protected void updateWithMap(final int inputId,
-                               @NotNull UpdateData<Key, Value> updateData) throws StorageException {
-    getWriteLock().lock();
-    try {
-      try {
-        ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-        updateData.iterateRemovedOrUpdatedKeys(inputId, myRemoveStaleKeyOperation);
-        updateData.iterateAddedKeys(inputId, myAddedKeyProcessor);
-        updateData.save(inputId);
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce; // extra care
-      }
-      catch (Throwable e) { // e.g. IOException, AssertionError
-        throw new StorageException(e);
-      }
-      finally {
-        ValueContainerImpl.ourDebugIndexInfo.set(null);
-      }
-    }
-    finally {
-      getWriteLock().unlock();
-    }
-  }
 }
