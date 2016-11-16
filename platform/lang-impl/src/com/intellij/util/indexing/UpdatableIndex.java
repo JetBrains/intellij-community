@@ -16,33 +16,39 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public interface UpdatableIndex<Key, Value, Input> extends AbstractUpdatableIndex<Key,Value, Input> {
-  boolean processAllKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Value> {
+
+  void clear() throws StorageException;
+
+  void flush() throws StorageException;
+
+  /**
+   * @param inputId *positive* id of content.
+   */
+  @NotNull
+  Computable<Boolean> update(int inputId, @Nullable Input content);
+
+  @NotNull
+  Lock getReadLock();
+
+  @NotNull
+  Lock getWriteLock();
+  
+  void dispose();
 
   void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
   void resetIndexedStateForFile(int fileId);
 
   boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file);
-
-  @Override
-  default boolean processAllKeys(@NotNull Processor<Key> processor) throws StorageException {
-    return processAllKeys(processor, null, null);
-  }
-
-  @NotNull
-  @Override
-  default Class<? extends RuntimeException> getProcessCanceledExceptionClass() {
-    return ProcessCanceledException.class;
-  }
 }

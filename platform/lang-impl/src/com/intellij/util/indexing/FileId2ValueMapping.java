@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class FileId2ValueMapping<Value> {
   private boolean myOnePerFileValidationEnabled = true;
 
   FileId2ValueMapping(ValueContainerImpl<Value> _valueContainer) {
-    id2ValueMap = new TIntObjectHashMap<Value>();
+    id2ValueMap = new TIntObjectHashMap<>();
     valueContainer = _valueContainer;
 
     TIntArrayList removedFileIdList = null;
@@ -45,7 +45,7 @@ class FileId2ValueMapping<Value> {
         if (previousValue != null) {  // delay removal of duplicated id -> value mapping since it will affect valueIterator we are using
           if (removedFileIdList == null) {
             removedFileIdList = new TIntArrayList();
-            removedValueList = new SmartList<Value>();
+            removedValueList = new SmartList<>();
           }
           removedFileIdList.add(id);
           removedValueList.add(previousValue);

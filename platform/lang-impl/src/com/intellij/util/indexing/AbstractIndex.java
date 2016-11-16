@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.util.indexing;
 
-import com.intellij.util.CommonProcessors;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Dec 24, 2007
+ */
+public interface AbstractIndex<Key, Value> {
+  @NotNull
+  ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
-class CancelableCollectProcessor<T> extends CommonProcessors.CollectProcessor<T> {
-  private final Runnable myCancelChecker;
-
-  public CancelableCollectProcessor(@NotNull Collection<T> collection, @NotNull Runnable cancelChecker) {
-    super(collection);
-    myCancelChecker = cancelChecker;
-  }
-
-  @Override
-  public boolean process(T o) {
-    myCancelChecker.run();
-    return super.process(o);
-  }
+  boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 }

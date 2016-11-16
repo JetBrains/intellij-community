@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile
                     ) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
+    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -48,7 +48,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   @Override
   protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
-      final ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
+      ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
 
       // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
       // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
@@ -83,7 +83,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     @NotNull
     @Override
     public ValueContainerImpl<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
+      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
 
       valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
       return valueContainer;

@@ -25,10 +25,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectAndLibrariesScope;
 import com.intellij.psi.search.ProjectScopeImpl;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
@@ -37,18 +39,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
   private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.no.cashed.hashids", true);
   private final boolean myBuildKeyHashToVirtualFileMapping;
+  private PersistentMap<Key, ValueContainer<Value>> myMap;
   private AppendableStorageBackedByResizableMappedFile myKeyHashToVirtualFileMapping;
+  private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private volatile int myLastScannedId;
+  private final File myBaseStorageFile;
+  private final KeyDescriptor<Key> myKeyDescriptor;
+  private final int myCacheSize;
 
+  private final Lock l = new ReentrantLock();
+  private final DataExternalizer<Value> myDataExternalizer;
+  private final boolean myKeyIsUniqueForIndexedFile;
   private static final ConcurrentIntObjectMap<Boolean> ourInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
 
   public MapIndexStorage(@NotNull File storageFile,
@@ -65,16 +80,83 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile,
                          boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile);
+    myBaseStorageFile = storageFile;
+    myKeyDescriptor = keyDescriptor;
+    myCacheSize = cacheSize;
+    myDataExternalizer = valueExternalizer;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping && FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
 
-  @Override
-  protected void initMapAndCache() throws IOException {
-    super.initMapAndCache();
+  private static final PersistentHashMapValueStorage.ExceptionalIOCancellationCallback ourProgressManagerCheckCancelledIOCanceller =
+    new PersistentHashMapValueStorage.ExceptionalIOCancellationCallback() {
+      @Override
+      public void checkCancellation() {
+        ProgressManager.checkCanceled();
+      }
+  };
+  private void initMapAndCache() throws IOException {
+    final ValueContainerMap<Key, Value> map;
+    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(ourProgressManagerCheckCancelledIOCanceller);
+    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+    try {
+      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile);
+    } finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
+      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
+    }
+    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
+      @Override
+      @NotNull
+      public ChangeTrackingValueContainer<Value> createValue(final Key key) {
+        return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
+          @NotNull
+          @Override
+          public Object getLock() {
+            return map.getDataAccessLock();
+          }
+
+          @Nullable
+          @Override
+          public ValueContainer<Value> compute() {
+            ValueContainer<Value> value;
+            try {
+              value = map.get(key);
+              if (value == null) {
+                value = new ValueContainerImpl<>();
+              }
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            return value;
+          }
+        });
+      }
+
+      @Override
+      protected void onDropFromCache(final Key key, @NotNull final ChangeTrackingValueContainer<Value> valueContainer) {
+        if (valueContainer.isDirty()) {
+          try {
+            map.put(key, valueContainer);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    };
+
+    myMap = map;
+
     myKeyHashToVirtualFileMapping = myBuildKeyHashToVirtualFileMapping ?
                                     new AppendableStorageBackedByResizableMappedFile(getProjectFile(), 4096, null, PagedFileStorage.MB, true) : null;
+  }
+
+  @NotNull
+  private File getStorageFile() {
+    return new File(myBaseStorageFile.getPath() + ".storage");
   }
 
   @NotNull
@@ -90,12 +172,14 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
       myKeyHashToVirtualFileMapping.getPagedFileStorage().unlock();
     }
   }
-
   @Override
   public void flush() {
     l.lock();
     try {
-      super.flush();
+      if (!myMap.isClosed()) {
+        myCache.clear();
+        if (myMap.isDirty()) myMap.force();
+      }
       if (myKeyHashToVirtualFileMapping != null && myKeyHashToVirtualFileMapping.isDirty()) {
         withLock(() -> myKeyHashToVirtualFileMapping.force());
       }
@@ -107,34 +191,57 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
 
   @Override
   public void close() throws StorageException {
-    super.close();
     try {
+      flush();
       if (myKeyHashToVirtualFileMapping != null) {
         withLock(() -> myKeyHashToVirtualFileMapping.close());
       }
+      myMap.close();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
     }
     catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
     }
   }
 
   @Override
   public void clear() throws StorageException{
     try {
+      myMap.close();
       if (myKeyHashToVirtualFileMapping != null) {
         withLock(() -> myKeyHashToVirtualFileMapping.close());
       }
     }
-    catch (RuntimeException e) {
+    catch (IOException|RuntimeException e) {
       LOG.error(e);
     }
     try {
+      IOUtil.deleteAllFilesStartingWith(getStorageFile());
       if (myKeyHashToVirtualFileMapping != null) IOUtil.deleteAllFilesStartingWith(getProjectFile());
+      initMapAndCache();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
     }
     catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
     }
-    super.clear();
   }
 
   @Override
@@ -195,13 +302,20 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
           return processor.process(key);
         });
       }
-      return processKeys(processor);
+      return myMap.processKeys(processor);
     }
     catch (IOException e) {
       throw new StorageException(e);
     }
     catch (RuntimeException e) {
-      return unwrapCauseAndRethrow(e);
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
     }
     finally {
       l.unlock();
@@ -292,6 +406,36 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
     return new File(getSessionDir(), getProjectFile().getName() + "." + project.hashCode() + "." + id + "." + scope.isSearchInLibraries());
   }
 
+  @NotNull
+  @Override
+  public Collection<Key> getKeys() throws StorageException {
+    List<Key> keys = new ArrayList<>();
+    processKeys(Processors.cancelableCollectProcessor(keys), null, null);
+    return keys;
+  }
+
+  @Override
+  @NotNull
+  public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+    l.lock();
+    try {
+      return myCache.get(key);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
+    }
+    finally {
+      l.unlock();
+    }
+  }
+
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     try {
@@ -303,7 +447,41 @@ public final class MapIndexStorage<Key, Value> extends MapIndexStorageBase<Key, 
           myLastScannedId = 0;
         }
       }
-      super.addValue(key, inputId, value);
+
+      myMap.markDirty();
+      if (!myKeyIsUniqueForIndexedFile) {
+        read(key).addValue(inputId, value);
+        return;
+      }
+
+      ChangeTrackingValueContainer<Value> cached;
+      try {
+        l.lock();
+        cached = myCache.getIfCached(key);
+      } finally {
+        l.unlock();
+      }
+
+      if (cached != null) {
+        cached.addValue(inputId, value);
+        return;
+      }
+      // do not pollute the cache with keys unique to indexed file
+      ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
+      valueContainer.addValue(inputId, value);
+      myMap.put(key, valueContainer);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  @Override
+  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    try {
+      myMap.markDirty();
+      // important: assuming the key exists in the index
+      read(key).removeAssociatedValue(inputId);
     }
     catch (IOException e) {
       throw new StorageException(e);
