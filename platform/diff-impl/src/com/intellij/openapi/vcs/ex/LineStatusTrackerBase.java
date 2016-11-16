@@ -34,10 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER;
@@ -65,7 +62,11 @@ public abstract class LineStatusTrackerBase {
   private boolean myAnathemaThrown;
   private boolean myReleased;
 
-  @NotNull private List<Range> myRanges;
+  @NotNull private List<Range> myRanges = Collections.emptyList();
+
+  // operation delayed till the end of write action
+  @NotNull private final Set<Range> myToBeDestroyedRanges = ContainerUtil.newIdentityTroveSet();
+  @NotNull private final Set<Range> myToBeInstalledRanges = ContainerUtil.newIdentityTroveSet();
 
   @Nullable private DirtyRange myDirtyRange;
 
@@ -81,8 +82,6 @@ public abstract class LineStatusTrackerBase {
 
     myApplicationListener = new MyApplicationListener();
     myApplication.addApplicationListener(myApplicationListener);
-
-    myRanges = new ArrayList<>();
 
     myVcsDocument = new DocumentImpl("", true);
     myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -161,9 +160,15 @@ public abstract class LineStatusTrackerBase {
   private void destroyRanges() {
     removeAnathema();
     for (Range range : myRanges) {
+      range.invalidate();
+      disposeHighlighter(range);
+    }
+    for (Range range : myToBeDestroyedRanges) {
       disposeHighlighter(range);
     }
     myRanges = Collections.emptyList();
+    myToBeDestroyedRanges.clear();
+    myToBeInstalledRanges.clear();
     myDirtyRange = null;
   }
 
@@ -183,7 +188,6 @@ public abstract class LineStatusTrackerBase {
   @CalledInAwt
   private void disposeHighlighter(@NotNull Range range) {
     try {
-      range.invalidate();
       RangeHighlighter highlighter = range.getHighlighter();
       if (highlighter != null) {
         range.setHighlighter(null);
@@ -311,10 +315,25 @@ public abstract class LineStatusTrackerBase {
     }
   }
 
+  @CalledInAwt
+  private void updateRangeHighlighters() {
+    myToBeInstalledRanges.removeAll(myToBeDestroyedRanges);
+
+    for (Range range : myToBeDestroyedRanges) {
+      disposeHighlighter(range);
+    }
+    for (Range range : myToBeInstalledRanges) {
+      createHighlighter(range);
+    }
+    myToBeDestroyedRanges.clear();
+    myToBeInstalledRanges.clear();
+  }
+
   private class MyApplicationListener extends ApplicationAdapter {
     @Override
     public void afterWriteActionFinished(@NotNull Object action) {
       updateRanges();
+      updateRangeHighlighters();
     }
   }
 
@@ -484,11 +503,10 @@ public abstract class LineStatusTrackerBase {
         myRanges.addAll(rangesAfter);
 
         for (Range range : changedRanges) {
-          disposeHighlighter(range);
+          range.invalidate();
         }
-        for (Range range : newChangedRanges) {
-          createHighlighter(range);
-        }
+        myToBeDestroyedRanges.addAll(changedRanges);
+        myToBeInstalledRanges.addAll(newChangedRanges);
 
         if (myRanges.isEmpty()) {
           fireFileUnchanged();
@@ -725,6 +743,7 @@ public abstract class LineStatusTrackerBase {
         int beforeTotalLines = getLineCount(myDocument) - shift;
 
         doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
+        updateRangeHighlighters();
       }
     });
   }
