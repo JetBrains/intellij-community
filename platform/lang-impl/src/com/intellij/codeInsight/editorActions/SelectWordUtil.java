@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -259,10 +260,7 @@ public class SelectWordUtil {
     }
     long stamp = editor.getDocument().getModificationStamp();
     for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
-      List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
-      if (stamp != editor.getDocument().getModificationStamp()) {
-        throw new AssertionError("Selectioner " + selectioner + " has changed the document");
-      }
+      List<TextRange> ranges = askSelectioner(element, text, cursorOffset, editor, stamp, selectioner);
       if (ranges == null) continue;
 
       for (TextRange range : ranges) {
@@ -273,6 +271,25 @@ public class SelectWordUtil {
     }
 
     return stop;
+  }
+
+  @Nullable
+  private static List<TextRange> askSelectioner(@NotNull PsiElement element,
+                                                CharSequence text,
+                                                int cursorOffset,
+                                                Editor editor,
+                                                long stamp,
+                                                ExtendWordSelectionHandler selectioner) {
+    try {
+      List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
+      if (stamp != editor.getDocument().getModificationStamp()) {
+        throw new AssertionError("Selectioner " + selectioner + " has changed the document");
+      }
+      return ranges;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   public static void addWordHonoringEscapeSequences(CharSequence editorText,
