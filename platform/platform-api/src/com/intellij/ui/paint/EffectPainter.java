@@ -233,7 +233,7 @@ public enum EffectPainter implements RegionPainter<Font> {
 
       @Override
       int getPeriod(int height) {
-        return (Registry.is("ide.text.effect.new.metrics") ? height : getMaxHeight(height)) - 1;
+        return Math.max((Registry.is("ide.text.effect.new.metrics") ? height : getMaxHeight(height)) - 1, 1);
       }
 
       @Override
