@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,6 +200,31 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
+    String message = null;
+    try {
+      for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<PsiElement, String> entry = iterator.next();
+        if (entry.getKey() instanceof PsiFile) {
+          final PsiFile file = (PsiFile)entry.getKey();
+          final PsiDirectory containingDirectory = file.getContainingDirectory();
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
+            iterator.remove();
+            continue;
+          }
+        }
+        RenameUtil.checkRename(entry.getKey(), entry.getValue());
+      }
+    }
+    catch (IncorrectOperationException e) {
+      message = e.getMessage();
+    }
+
+    if (message != null) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
+      return false;
+    }
+
     final Set<UsageInfo> usagesSet = ContainerUtil.newLinkedHashSet(usagesIn);
     usagesSet.addAll(variableUsages);
     final List<UnresolvableCollisionUsageInfo> conflictUsages = RenameUtil.removeConflictUsages(usagesSet);
@@ -350,31 +375,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   public void performRefactoring(@NotNull UsageInfo[] usages) {
-    final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
-    String message = null;
-    try {
-      for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
-        Map.Entry<PsiElement, String> entry = iterator.next();
-        if (entry.getKey() instanceof PsiFile) {
-          final PsiFile file = (PsiFile)entry.getKey();
-          final PsiDirectory containingDirectory = file.getContainingDirectory();
-          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
-            iterator.remove();
-            continue;
-          }
-        }
-        RenameUtil.checkRename(entry.getKey(), entry.getValue());
-      }
-    }
-    catch (IncorrectOperationException e) {
-      message = e.getMessage();
-    }
-
-    if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
-      return;
-    }
-
     List<Runnable> postRenameCallbacks = new ArrayList<>();
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);

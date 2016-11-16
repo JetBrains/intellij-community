@@ -21,6 +21,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -331,7 +332,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
 
       if (selection == 0 && file != existing) {
-        existing.delete();
+        WriteAction.run(() -> existing.delete());
       }
       else {
         return true;
