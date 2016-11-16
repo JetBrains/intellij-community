@@ -46,6 +46,11 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
       final Editor editor = editorManager.getSelectedTextEditor();
