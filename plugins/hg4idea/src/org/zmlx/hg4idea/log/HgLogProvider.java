@@ -275,7 +275,17 @@ public class HgLogProvider implements VcsLogProvider {
 
     if (filterCollection.getTextFilter() != null) {
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      if (filterCollection.getTextFilter().isRegex()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + textFilter + "')");
+      }
+      else if (filterCollection.getTextFilter().matchesCase()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + StringUtil.escapeChars(textFilter, UserNameRegex.EXTENDED_REGEX_CHARS) + "')");
+      }
+      else {
+        filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      }
     }
 
     if (filterCollection.getStructureFilter() != null) {
