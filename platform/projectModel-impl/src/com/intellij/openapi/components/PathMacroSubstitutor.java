@@ -18,7 +18,15 @@ package com.intellij.openapi.components;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Provides methods to convert paths from absolute to portable form and vice versa.
+ *
+ * @see com.intellij.openapi.application.PathMacros
+ */
 public interface PathMacroSubstitutor {
+  /**
+   * Convert path to absolute by replacing all names of path variables by its values
+   */
   String expandPath(String path);
 
   @NotNull
@@ -26,24 +34,31 @@ public interface PathMacroSubstitutor {
     return collapsePath(text, false);
   }
 
+  /**
+   * Convert paths inside {@code text} to portable form by replacing all values of path variables by their names.
+   * @param recursively if {@code true} all occurrences of paths inside {@code text} will be processed, otherwise {@code text} will be converted
+   *                    only if its entire content is a path (or URL)
+   */
   String collapsePath(@NotNull String text, boolean recursively);
 
+  /**
+   * Process sub tags of {@code element} recursively and convert paths to absolute forms in all tag texts and attribute values.
+   */
   void expandPaths(@NotNull Element element);
 
-  /**
-   * Path will be collapsed only if the entire content of an attribute (tag text) is a path, if a path is a substring of an attribute value it won't be collapsed.
-   */
   default void collapsePaths(@NotNull Element element) {
     collapsePaths(element, false);
   }
 
-  /**
-   * Path will be collapsed even if a path is a substring of an attribute value.
-   */
   default void collapsePathsRecursively(@NotNull Element element) {
     collapsePaths(element, true);
   }
 
+  /**
+   * Process sub tags of {@code element} recursively and convert paths to portable forms in all tag texts and attribute values.
+   * @param recursively if {@code true} all occurrences of paths inside tag texts and attribute values will be processed, otherwise
+   * they will be converted only if their entire content is a path (or URL)
+   */
   void collapsePaths(@NotNull Element element, boolean recursively);
 
   default String collapsePathsRecursively(@NotNull String string) {
