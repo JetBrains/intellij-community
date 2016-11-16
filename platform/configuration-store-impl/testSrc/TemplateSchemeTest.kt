@@ -29,7 +29,7 @@ class TemplateSchemeTest {
     <templateSet group="Groovy">
       <template name="serr" value="System.err.println(&quot;$\END$&quot;)dwed" description="Prints a string to System.errwefwe" toReformat="true" toShortenFQNames="true" deactivated="true">
         <context>
-          <option name="GROOVY_STATEMENT" value="true" />
+          <option name="__DO_NOT_DELETE_ME__" value="true" />
         </context>
       </template>
     </templateSet>""".trimIndent()
