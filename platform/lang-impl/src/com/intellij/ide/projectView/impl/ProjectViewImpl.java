@@ -601,6 +601,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void createToolbarActions() {
+    if (myActionGroup == null) return;
     List<AnAction> titleActions = ContainerUtil.newSmartList();
     myActionGroup.removeAll();
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
