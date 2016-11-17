@@ -132,10 +132,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
       myHandlers.put(homePath, handler);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        VirtualFile modules = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
-        if (modules != null && modules.isDirectory()) modules.getChildren();
-      }, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(
+        () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/release"),
+        ModalityState.defaultModalityState());
     }
     return handler;
   }
@@ -152,11 +151,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem && event instanceof VFileContentChangeEvent) {
             VirtualFile file = event.getFile();
-            if (file != null) {
-              String homePath = null;
-              if ("modules".equals(file.getName())) homePath = file.getParent().getParent().getPath();
-              else if ("jimage".equals(file.getExtension())) homePath = file.getParent().getParent().getParent().getPath();
-              if (homePath != null && myHandlers.remove(homePath) != null) {
+            if (file != null && "release".equals(file.getName())) {
+              String homePath = file.getParent().getPath();
+              if (myHandlers.remove(homePath) != null) {
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();
