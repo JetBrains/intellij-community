@@ -258,9 +258,8 @@ public class SelectWordUtil {
         availableSelectioners.add(selectioner);
       }
     }
-    long stamp = editor.getDocument().getModificationStamp();
     for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
-      List<TextRange> ranges = askSelectioner(element, text, cursorOffset, editor, stamp, selectioner);
+      List<TextRange> ranges = askSelectioner(element, text, cursorOffset, editor, selectioner);
       if (ranges == null) continue;
 
       for (TextRange range : ranges) {
@@ -278,9 +277,9 @@ public class SelectWordUtil {
                                                 CharSequence text,
                                                 int cursorOffset,
                                                 Editor editor,
-                                                long stamp,
                                                 ExtendWordSelectionHandler selectioner) {
     try {
+      long stamp = editor.getDocument().getModificationStamp();
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
       if (stamp != editor.getDocument().getModificationStamp()) {
         throw new AssertionError("Selectioner " + selectioner + " has changed the document");
