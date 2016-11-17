@@ -665,9 +665,9 @@ public class JavaSdkImpl extends JavaSdk {
     if (!srcArc.exists()) srcArc = new File(jdkHome, srcName + ".zip");
     if (!srcArc.exists()) srcArc = new File(jdkHome, "lib/" + srcName + ".zip");
     if (srcArc.exists()) {
-      VirtualFile vFile = findInJar(srcArc, "src");
-      if (vFile == null) vFile = findInJar(srcArc, "");
-      return vFile;
+      VirtualFile srcRoot = findInJar(srcArc, "src");
+      if (srcRoot == null) srcRoot = findInJar(srcArc, "");
+      return srcRoot;
     }
 
     File srcDir = new File(jdkHome, "src");
