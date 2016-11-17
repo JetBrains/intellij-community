@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,7 +23,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Condition;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListSpeedSearch;
@@ -52,6 +52,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   private final String myDisplayName;
   private final String myHelpTopic;
   private final Map<Module, T> myModuleConfigurables = new HashMap<>();
+  private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
 
   public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, String helpTopic) {
     myProject = project;
@@ -85,29 +86,56 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     }
     final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
                                                       module -> isSuitableForModule(module));
-    if (modules.size() == 1) {
+
+    final T projectConfigurable = createProjectConfigurable();
+
+    if (modules.size() == 1 && projectConfigurable == null) {
       Module module = modules.get(0);
       final T configurable = createModuleConfigurable(module);
       myModuleConfigurables.put(module, configurable);
       return configurable.createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
-    final JBList moduleList = new JBList(new CollectionListModel<>(modules));
+    CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
+    final JBList moduleList = new JBList(listDataModel);
     new ListSpeedSearch(moduleList, new Function<Object, String>() {
       @Override
       public String fun(Object o) {
-        if (o instanceof Module) {
+        if (o == null) {
+          return getProjectConfigurableItemName();
+        }
+        else if (o instanceof Module) {
           return ((Module)o).getName();
         }
         return null;
       }
     });
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    moduleList.setCellRenderer(new ModuleListCellRenderer());
+    moduleList.setCellRenderer(new ModuleListCellRenderer() {
+      @Override
+      public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
+        if (module == null) {
+          setText(getProjectConfigurableItemName());
+          setIcon(getProjectConfigurableItemIcon());
+        }
+        else {
+          super.customize(list, module, index, selected, hasFocus);
+        }
+      }
+    });
     splitter.setFirstComponent(new JBScrollPane(moduleList));
     final CardLayout layout = new CardLayout();
     final JPanel cardPanel = new JPanel(layout);
     splitter.setSecondComponent(cardPanel);
+
+
+    if (projectConfigurable != null) {
+      myModuleConfigurables.put(null, projectConfigurable);
+      final JComponent component = projectConfigurable.createComponent();
+      cardPanel.add(component, PROJECT_ITEM_KEY);
+      listDataModel.add(0, null);
+    }
+
     for (Module module : modules) {
       final T configurable = createModuleConfigurable(module);
       myModuleConfigurables.put(module, configurable);
@@ -118,12 +146,14 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       @Override
       public void valueChanged(ListSelectionEvent e) {
         final Module value = (Module)moduleList.getSelectedValue();
-        layout.show(cardPanel, value.getName());
+        layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
       }
     });
-    if (modules.size() > 0) {
+
+    if (moduleList.getItemsCount() > 0) {
       moduleList.setSelectedIndex(0);
-      layout.show(cardPanel, modules.get(0).getName());
+      Module module = listDataModel.getElementAt(0);
+      layout.show(cardPanel, module == null ? PROJECT_ITEM_KEY : module.getName());
     }
     return splitter;
   }
@@ -131,6 +161,32 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   @Nullable
   protected T createDefaultProjectConfigurable() {
     return null;
+  }
+
+  /**
+   * This configurable is for project-wide settings
+   *
+   * @return configurable or null if none
+   */
+  @Nullable
+  protected T createProjectConfigurable() {
+    return null;
+  }
+
+  /**
+   * @return Name for project-wide settings in modules list
+   */
+  @NotNull
+  protected String getProjectConfigurableItemName() {
+    return myProject.getName();
+  }
+
+  /**
+   * @return Icon for project-wide sttings in modules list
+   */
+  @Nullable
+  protected Icon getProjectConfigurableItemIcon() {
+    return AllIcons.Nodes.Project;
   }
 
   @NotNull

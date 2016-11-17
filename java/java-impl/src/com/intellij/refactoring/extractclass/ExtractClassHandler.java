@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,9 @@ public class ExtractClassHandler implements ElementsHandler {
     }
     if (classIsTrivial(containingClass)) {
       return RefactorJBundle.message("the.selected.class.has.no.members.to.extract");
+    }
+    if (!containingClass.getManager().isInProject(containingClass)) {
+      return "The selected class should belong to project sources";
     }
     return null;
   }

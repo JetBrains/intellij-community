@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -73,19 +74,33 @@ public class Utils{
     }
   }
 
-  /**
-   * @param list this list contains expanded actions.
-   * @param actionManager manager
-   */
+  @Deprecated
+  // Use #expandActionGroup with isModalContext instead
   public static void expandActionGroup(@NotNull ActionGroup group,
                                        List<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        @NotNull DataContext context,
                                        String place,
                                        ActionManager actionManager){
-    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
+    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
   }
 
+  /**
+   * @param list this list contains expanded actions.
+   * @param actionManager manager
+   */
+  public static void expandActionGroup(boolean isInModalContext,
+                                       @NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       @NotNull DataContext context,
+                                       String place,
+                                       ActionManager actionManager){
+    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
+  }
+
+  @Deprecated
+  // Use #expandActionGroup with isModalContext instead
   public static void expandActionGroup(@NotNull ActionGroup group,
                                        List<AnAction> list,
                                        PresentationFactory presentationFactory,
@@ -93,14 +108,39 @@ public class Utils{
                                        @NotNull String place,
                                        ActionManager actionManager,
                                        boolean transparentOnly) {
-    expandActionGroup(group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
+    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
+  }
+
+  public static void expandActionGroup(boolean isInModalContext,
+                                       @NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
+                                       boolean transparentOnly) {
+    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
+  }
+
+  @Deprecated
+  // Use #expandActionGroup with isModalContext instead
+  public static void expandActionGroup(@NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
+                                       boolean transparentOnly,
+                                       boolean hideDisabled) {
+    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, transparentOnly, hideDisabled);
   }
 
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
    */
-  public static void expandActionGroup(@NotNull ActionGroup group,
+  public static void expandActionGroup(boolean isInModalContext,
+                                       @NotNull ActionGroup group,
                                        List<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
@@ -117,7 +157,7 @@ public class Utils{
       actionManager,
       0
     );
-    if (!doUpdate(group, e, presentation)) return;
+    if (!doUpdate(isInModalContext, group, e, presentation)) return;
 
     if (!presentation.isVisible()) { // don't process invisible groups
       return;
@@ -136,7 +176,7 @@ public class Utils{
       e1.setInjectedContext(child.isInInjectedContext());
 
       if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
-        if (!doUpdate(child, e1, presentation)) continue;
+        if (!doUpdate(isInModalContext, child, e1, presentation)) continue;
       }
 
       if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
@@ -161,7 +201,7 @@ public class Utils{
           list.add(child);
         }
         else {
-          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
+          expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
         }
       }
       else if (child instanceof Separator) {
@@ -178,14 +218,20 @@ public class Utils{
     }
   }
 
+  @Deprecated
+  // Use #doUpdate with isModalContext instead
+  private static boolean doUpdate(final AnAction action, final AnActionEvent e, final Presentation presentation) {
+    return doUpdate(false, action, e, presentation);
+  }
+
   // returns false if exception was thrown and handled
-  private static boolean doUpdate(final AnAction action, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
+  private static boolean doUpdate(boolean isInModalContext, final AnAction action, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
     if (ApplicationManager.getApplication().isDisposed()) return false;
 
     long startTime = System.currentTimeMillis();
     final boolean result;
     try {
-      result = !ActionUtil.performDumbAwareUpdate(action, e, false);
+      result = !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, false);
     }
     catch (ProcessCanceledException ex) {
       throw ex;
@@ -262,7 +308,20 @@ public class Utils{
   public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
     AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
     event1.setInjectedContext(anAction.isInInjectedContext());
-    doUpdate(anAction, event1, presentation);
+    doUpdate(false, anAction, event1, presentation);
+  }
+
+  @Deprecated
+  // Use #expandActionGroup with isModalContext instead
+  public static void fillMenu(@NotNull final ActionGroup group,
+                              final JComponent component,
+                              final boolean enableMnemonics,
+                              final PresentationFactory presentationFactory,
+                              @NotNull DataContext context,
+                              final String place,
+                              final boolean isWindowMenu,
+                              final boolean mayDataContextBeInvalid) {
+    fillMenu(group, component, enableMnemonics, presentationFactory, context, place, isWindowMenu, mayDataContextBeInvalid, false);
   }
 
   public static void fillMenu(@NotNull final ActionGroup group,
@@ -272,12 +331,13 @@ public class Utils{
                               @NotNull DataContext context,
                               final String place,
                               final boolean isWindowMenu,
-                              final boolean mayDataContextBeInvalid){
+                              final boolean mayDataContextBeInvalid,
+                              boolean isInModalContext) {
     final ActionCallback menuBuilt = new ActionCallback();
     final boolean checked = group instanceof CheckedActionGroup;
 
     final ArrayList<AnAction> list = new ArrayList<>();
-    expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
+    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, ActionManager.getInstance());
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
@@ -373,7 +433,7 @@ public class Utils{
           if (!component.isShowing()) return;
 
           DataContext context1 = DataManager.getInstance().getDataContext();
-          expandActionGroup(group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
+          expandActionGroup(LaterInvocator.isInModalContext(), group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
 
           for (Component each : children) {
             if (each instanceof ActionMenuItem) {

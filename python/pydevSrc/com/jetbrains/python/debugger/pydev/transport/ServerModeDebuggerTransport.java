@@ -108,12 +108,24 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
   }
 
+  @Override
+  protected void onSocketException() {
+    myDebugger.disconnect();
+    myDebugger.fireCommunicationError();
+  }
+
   public static class DebuggerReader extends BaseDebuggerReader {
     public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
       super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }
 
+    @Override
+    protected void onExit() {
+      getDebugger().fireExitEvent();
+    }
+
+    @Override
     protected void onCommunicationError() {getDebugger().fireCommunicationError();}
   }
 }

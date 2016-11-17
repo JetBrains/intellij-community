@@ -34,7 +34,10 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,8 +50,8 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
     Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
     String home = jdk.getHomeDirectory().getParent().getPath();
-    String toolsPath = home + "/lib/tools.jar!/";
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
+    String toolsPath = home + "/lib/tools.jar!/";
     VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
 
     Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
@@ -60,22 +63,22 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
                    LocalFileSystem.getInstance() .findFileByPath(FileUtil.toSystemIndependentName(path)))
       .toArray(VirtualFile[]::new);
 
-    Sdk result = PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
-    return result;
+    return PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
   }
 
-  public void testBundledAnnotationXmls() {
+  public void testBundledAnnotationXmlSyntax() {
     String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
-    findAnnotationsXmlAndCheck(root);
+    findAnnotationsXmlAndCheckSyntax(root);
   }
 
-  private void findAnnotationsXmlAndCheck(String root) {
+  private void findAnnotationsXmlAndCheckSyntax(String root) {
     VirtualFile jdkAnnoRoot = LocalFileSystem.getInstance().findFileByPath(root);
     VfsUtilCore.visitChildrenRecursively(jdkAnnoRoot, new VirtualFileVisitor() {
                                            @Override
                                            public boolean visitFile(@NotNull VirtualFile file) {
                                              if (file.getName().equals("annotations.xml")) {
-                                               check(file);
+                                               String assumedPackage = PathUtil.getRelative(root, file.getParent().getPath()).replaceAll("/",".");
+                                               checkSyntax(file, assumedPackage);
                                              }
                                              return true;
                                            }
@@ -95,27 +98,27 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
       .setProjectSdk(PsiTestUtil.addRootsToJdk(getTestProjectJdk(), OrderRootType.CLASSES, androidJars)));
 
     String root = PathManagerEx.getCommunityHomePath() + "/android/android/annotations";
-    findAnnotationsXmlAndCheck(root);
+    findAnnotationsXmlAndCheckSyntax(root);
   }
 
-  private void check(VirtualFile file) {
+  private void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
     //System.out.println("file = " + file);
     ExternalAnnotationsManagerImpl manager = (ExternalAnnotationsManagerImpl)ExternalAnnotationsManager.getInstance(getProject());
     PsiFile psiFile = getPsiManager().findFile(file);
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> map = manager.getDataFromFile(psiFile);
     for (String externalName : map.keySet()) {
-      checkExternalName(psiFile, externalName);
+      checkExternalName(psiFile, externalName, assumedPackage);
 
       // 'annotation name="org.jetbrains.annotations.NotNull"' should have FQN
       for (BaseExternalAnnotationsManager.AnnotationData annotationData : map.get(externalName)) {
         PsiAnnotation annotation = annotationData.getAnnotation(manager);
         String nameText = annotation.getNameReferenceElement().getText();
-        assertClassFqn(nameText, psiFile, externalName);
+        assertClassFqn(nameText, psiFile, externalName, null);
       }
     }
   }
 
-  private PsiClass assertClassFqn(String text, PsiFile psiFile, String externalName) {
+  private PsiClass assertClassFqn(@NotNull String text, @NotNull PsiFile psiFile, @NotNull String externalName, @Nullable("null means can be any") String assumedPackage) {
     if (!PsiNameHelper.getInstance(getProject()).isQualifiedName(text) || !text.contains(".")) {
       fail("'" + text + "' doesn't seem like a FQN", psiFile, externalName);
     }
@@ -124,21 +127,26 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
     if (aClass == null) {
       fail("'" + text + "' doesn't resolve to a class", psiFile, externalName);
     }
+    String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
+    if (assumedPackage != null && !assumedPackage.equals(packageName)) {
+      fail("Wrong package for class '"+text+"'. Expected: '"+assumedPackage+"' but was: '"+packageName+"'", psiFile, externalName);
+    }
     return aClass;
   }
 
+  @Contract("_,_,_-> fail")
   private static void fail(String error, PsiFile psiFile, String externalName) {
     int offset = psiFile.getText().indexOf(XmlUtil.escape(externalName));
     int line = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile).getLineNumber(offset);
     fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
   }
 
-  private void checkExternalName(PsiFile psiFile, String externalName) {
+  private void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
     // 'item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0"' should have all FQNs
     String unescaped = StringUtil.unescapeXml(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
-    PsiClass aClass = assertClassFqn(className, psiFile, externalName);
+    PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
     if (words.size() == 1) return;
 
     String rest = unescaped.substring(className.length() + " ".length());

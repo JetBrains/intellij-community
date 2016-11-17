@@ -1,11 +1,13 @@
 """Skeleton for 'pathlib' stdlib module."""
 
 import pathlib
+import os
 
 
 class PurePath(object):
     def __new__(cls, *pathsegments):
         """
+        :type pathsegments: tuple[str | bytes | os.PathLike]
         :rtype: pathlib.PurePath
         """
         return cls.__new__(*pathsegments)
@@ -130,6 +132,12 @@ class PurePath(object):
         """
         return pathlib.PurePath()
 
+    def __fspath__(self):
+        """
+        :rtype: str
+        """
+        pass
+
 class PurePosixPath(pathlib.PurePath):
     pass
 
@@ -141,6 +149,7 @@ class PureWindowsPath(pathlib.PurePath):
 class Path(pathlib.PurePath):
     def __new__(cls, *pathsegments):
         """
+        :type pathsegments: tuple[str | bytes | os.PathLike]
         :rtype: pathlib.Path
         """
         return cls.__new__(*pathsegments)

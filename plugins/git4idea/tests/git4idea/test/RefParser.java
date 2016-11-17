@@ -48,7 +48,7 @@ class RefParser {
     String strHash = input.substring(0, firstSpaceIndex);
     Hash hash = HashImpl.build(strHash);
     String refPaths = input.substring(firstSpaceIndex + 2, input.length() - 1);
-    String[] longRefPaths = refPaths.split(", ");
+    String[] longRefPaths = refPaths.split("(, )|( -> )");
     List<VcsRef> refs = new ArrayList<>();
     for (String longRefPatch : longRefPaths) {
       VcsRef ref = createRef(hash, longRefPatch, root);

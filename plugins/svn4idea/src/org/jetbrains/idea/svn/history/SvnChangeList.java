@@ -561,7 +561,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
                                                                 @Nullable ContentRevision revision,
                                                                 @NotNull SVNURL url) {
-    return revision == null ? null : new SvnLazyPropertyContentRevision(filePath, revision.getRevisionNumber(), myVcs.getProject(), url);
+    return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
   }
 
   @NotNull

@@ -130,6 +130,11 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   private String getPath(VirtualFile file) {
     String path = file.getPresentableUrl() + File.separator + getDescriptionFolderName() + File.separator + myFilename;
     if (isFixedDescriptionFilename()) {

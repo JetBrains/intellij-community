@@ -7,8 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.learning.StudySerializationUtils;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -69,8 +67,11 @@ public class EduStepicClient {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
-    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).
-      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+    return deserializeStepicResponse(container, responseString);
+  }
+
+  static <T> T deserializeStepicResponse(Class<T> container, String responseString) {
+    Gson gson = new GsonBuilder().registerTypeAdapter(StepicWrappers.StepOptions.class, new StudySerializationUtils.Json.StepicStepOptionsAdapter()).
       setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").
       setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);

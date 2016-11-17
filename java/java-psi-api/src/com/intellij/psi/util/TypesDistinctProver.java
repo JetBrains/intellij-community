@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,12 @@ public class TypesDistinctProver {
       if (level < 2) return false;
     }
 
+    if (boundClass1 == null || boundClass2 == null) {
+      return type1 != null && type2 != null && !type1.equals(type2);
+    }
+
     return type2 != null && type1 != null && !type1.equals(type2) &&
+           !(level == 0 && boundClass1.isInterface() && boundClass2.isInterface()) &&
            (!InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) ||
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));
   }

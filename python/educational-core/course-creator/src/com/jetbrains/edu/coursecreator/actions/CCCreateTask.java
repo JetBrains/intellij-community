@@ -1,23 +1,14 @@
 package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.settings.CCSettings;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -32,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class CCCreateTask extends CCCreateStudyItemActionBase {
-  private static final Logger LOG = Logger.getInstance(CCCreateTask.class.getName());
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
 
   public CCCreateTask() {
@@ -40,23 +30,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   }
 
 
-  private static void createFromTemplate(@NotNull final PsiDirectory taskDirectory,
-                                         @Nullable final FileTemplate template,
-                                         @Nullable IdeView view, boolean open) {
-    if (template == null) {
-      return;
-    }
-    try {
-      final PsiElement file = FileTemplateUtil.createFromTemplate(template, template.getName(), null, taskDirectory);
-      if (view != null && open) {
-        EditorHelper.openInEditor(file, false);
-        view.selectElement(file);
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
+
 
   @Nullable
   @Override
@@ -96,18 +70,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
       String taskDirName = EduNames.TASK + item.getIndex();
       taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
       if (taskDirectory.get() != null) {
-        CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-        if (manager == null) {
-          return;
-        }
-        createFromTemplate(taskDirectory.get(), manager.getTestsTemplate(project), view, false);
-        createFromTemplate(taskDirectory.get(), FileTemplateManager.getInstance(project)
-          .getInternalTemplate(StudyUtils.getTaskDescriptionFileName(CCSettings.getInstance().useHtmlAsDefaultTaskFormat())), view, false);
-        String defaultExtension = manager.getDefaultTaskFileExtension();
-        if (defaultExtension != null) {
-          FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
-          createFromTemplate(taskDirectory.get(), taskFileTemplate, view, true);
-        }
+        CCUtils.createTaskContent(project, view, course, taskDirectory.get());
       }
     });
     return taskDirectory.get();

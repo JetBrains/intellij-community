@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -41,6 +40,7 @@ import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
-public class FSRecords implements Forceable {
+public class FSRecords {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
@@ -541,7 +541,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public FSRecords() {
+  private FSRecords() {
   }
 
   public static void connect() {
@@ -755,13 +755,13 @@ public class FSRecords implements Forceable {
     }
   }
 
-  @Override
-  public void force() {
+  @TestOnly
+  public static void force() {
     DbConnection.force();
   }
 
-  @Override
-  public boolean isDirty() {
+  @TestOnly
+  public static boolean isDirty() {
     return DbConnection.isDirty();
   }
 
@@ -1001,21 +1001,16 @@ public class FSRecords implements Forceable {
   }
 
   private static void incModCount(int id) {
-    DbConnection.markDirty();
-    ourLocalModificationCount++;
+    incLocalModCount();
     final int count = getModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
 
-    int parent = id;
-    int depth = 10000;
-    while (parent != 0) {
-      setModCount(parent, count);
-      parent = getParent(parent);
-      if (depth -- == 0) {
-        LOG.error("Cyclic parent child relation? file: " + getName(id));
-        return;
-      }
-    }
+    setModCount(id, count);
+  }
+
+  private static void incLocalModCount() {
+    DbConnection.markDirty();
+    ourLocalModificationCount++;
   }
 
   static int getLocalModCount() {
@@ -1226,8 +1221,12 @@ public class FSRecords implements Forceable {
   public static void setLength(int id, long len) {
     w.lock();
     try {
-      incModCount(id);
-      getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
+      ResizeableMappedFile records = getRecords();
+      int lengthOffset = getOffset(id, LENGTH_OFFSET);
+      if (records.getLong(lengthOffset) != len) {
+        incModCount(id);
+        records.putLong(lengthOffset, len);
+      }
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
@@ -1250,8 +1249,12 @@ public class FSRecords implements Forceable {
   public static void setTimestamp(int id, long value) {
     w.lock();
     try {
-      incModCount(id);
-      getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
+      int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
+      ResizeableMappedFile records = getRecords();
+      if (records.getLong(timeStampOffset) != value) {
+        incModCount(id);
+        records.putLong(timeStampOffset, value);
+      }
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
@@ -1645,8 +1648,6 @@ public class FSRecords implements Forceable {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
-        incModCount(myFileId);
-
         checkFileIsValid(myFileId);
 
         int page;
@@ -1654,8 +1655,10 @@ public class FSRecords implements Forceable {
         if (weHaveContentHashes) {
           page = findOrCreateContentRecord(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
 
-          incModCount(myFileId);
-          checkFileIsValid(myFileId);
+          if (page < 0 || getContentId(myFileId) != page) {
+            incModCount(myFileId);
+            setContentRecordId(myFileId, page > 0 ? page : -page);
+          }
 
           setContentRecordId(myFileId, page > 0 ? page : -page);
 
@@ -1663,6 +1666,7 @@ public class FSRecords implements Forceable {
           page = -page;
           fixedSize = true;
         } else {
+          incModCount(myFileId);
           page = getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
             page = contentStorage.acquireNewRecord();
@@ -1782,7 +1786,7 @@ public class FSRecords implements Forceable {
           w.lock();
           try {
             rewriteDirectoryRecordWithAttrContent(_out);
-            incModCount(myFileId);
+            incLocalModCount();
           }
           finally {
             w.unlock();
@@ -1791,7 +1795,7 @@ public class FSRecords implements Forceable {
         else {
           w.lock();
           try {
-            incModCount(myFileId);
+            incLocalModCount();
             int page = findAttributePage(myFileId, myAttribute, true);
             if (inlineAttributes && page < 0) {
               rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());

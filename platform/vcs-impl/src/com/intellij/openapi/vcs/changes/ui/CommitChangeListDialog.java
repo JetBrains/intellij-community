@@ -27,8 +27,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
@@ -688,12 +686,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               new Runnable() {
                 @Override
                 public void run() {
-                  DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-                    @Override
-                    public void run() {
-                      session.execute(getIncludedChanges(), getCommitMessage());
-                    }
-                  });
+                  session.execute(getIncludedChanges(), getCommitMessage());
                 }
               }, commitExecutor.getActionText(), true, getProject());
 
@@ -1053,30 +1046,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
         return new RefreshablePanel() {
           @Override
-          public boolean refreshDataSynch() {
-            return false;
-          }
-
-          @Override
-          public void dataChanged() {
-          }
-
-          @Override
           public void refresh() {
           }
 
           @Override
           public JPanel getPanel() {
             return panel;
-          }
-
-          @Override
-          public void away() {
-          }
-
-          @Override
-          public boolean isStillValid(Object o) {
-            return false;
           }
 
           @Override

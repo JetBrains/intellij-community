@@ -202,7 +202,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
             VcsDescriptor probableVcs = null;
 
             @Override
-            protected void doInAwtIfFail(Exception e) {
+            protected void doInAwtIfFail(@NotNull Exception e) {
             }
 
             @Override

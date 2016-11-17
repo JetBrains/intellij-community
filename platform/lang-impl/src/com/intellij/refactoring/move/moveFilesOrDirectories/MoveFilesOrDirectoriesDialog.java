@@ -27,7 +27,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -208,7 +207,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
       Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
       return;
     }
-    
+
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final Runnable action = () -> {
         String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
@@ -220,25 +219,18 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
         }
       };
 
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-        ApplicationManager.getApplication().runWriteAction(action);
-        if (myTargetDirectory == null) {
-          CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                                 RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-          return;
-        }
-        myCallback.run(this);
-      });
+      ApplicationManager.getApplication().runWriteAction(action);
+      if (myTargetDirectory == null) {
+        CommonRefactoringUtil.showErrorMessage(getTitle(),
+                                               RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
+        return;
+      }
+      myCallback.run(this);
     }, RefactoringBundle.message("move.title"), null);
   }
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
-  }
-
-  @Override
-  public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> super.show());
   }
 
 }

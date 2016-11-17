@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -38,16 +37,14 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.toUpperCase;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static java.util.Collections.reverseOrder;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
@@ -57,16 +54,14 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
-  @NotNull private final AreaMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
+  @NotNull private final NavigableMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
   @NotNull private final Object myMergeInfoLock;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
     myPartiallyMerged = newHashMap();
     myMergeInfoLock = new Object();
-    // TODO: Rewrite without AreaMap usage
-    myMergeInfoMap =
-      AreaMap.create((parentUrl, childUrl) -> ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl)));
+    myMergeInfoMap = new TreeMap<>(reverseOrder());
   }
 
   @Override
@@ -118,15 +113,30 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
     if (sourceRelativePath != null) {
       InfoProcessor processor = new InfoProcessor(sourceRelativePath, myMergeContext.getRepositoryRelativeSourcePath(), revisionNumber);
+      String key = toKey(sourceRelativePath);
 
       synchronized (myMergeInfoLock) {
-        myMergeInfoMap.getSimiliar(toKey(sourceRelativePath), processor);
+        Map<String, SVNMergeRangeList> mergeInfo = myMergeInfoMap.get(key);
+        if (mergeInfo != null) {
+          processor.process(key, mergeInfo);
+        }
+        else {
+          for (Map.Entry<String, Map<String, SVNMergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
+            if (isUnder(entry.getKey(), key) && processor.process(entry.getKey(), entry.getValue())) {
+              break;
+            }
+          }
+        }
       }
 
       result = MergeCheckResult.getInstance(processor.isMerged());
     }
 
     return result;
+  }
+
+  private static boolean isUnder(@NotNull String parentUrl, @NotNull String childUrl) {
+    return ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
   }
 
   private static class InfoProcessor implements PairProcessor<String, Map<String, SVNMergeRangeList>> {

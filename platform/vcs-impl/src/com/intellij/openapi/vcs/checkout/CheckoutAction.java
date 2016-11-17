@@ -31,14 +31,9 @@ public class CheckoutAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        Project project = e.getData(CommonDataKeys.PROJECT);
-        project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
-        myProvider.doCheckout(project, getListener(project));
-      }
-    });
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
+    myProvider.doCheckout(project, getListener(project));
   }
 
   protected CheckoutProvider.Listener getListener(Project project) {

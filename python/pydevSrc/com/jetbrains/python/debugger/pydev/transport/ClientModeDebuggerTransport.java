@@ -17,6 +17,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link DebuggerTransport} implementation that expects a debugging script to behave as a server. The main process of the debugging script
@@ -73,10 +74,6 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
     }
 
-    doConnect();
-  }
-
-  private void doConnect() throws IOException {
     synchronized (mySocketObject) {
       if (mySocket != null) {
         try {
@@ -126,6 +123,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           beforeHandshake.countDown();
           try {
             myDebugger.handshake();
+            myDebuggerReader.connectionApproved();
             return true;
           }
           catch (PyDebuggerException e) {
@@ -195,6 +193,14 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   }
 
   @Override
+  protected void onSocketException() {
+    myDebugger.disconnect();
+    if (myState == State.APPROVED) {
+      myDebugger.fireCommunicationError();
+    }
+  }
+
+  @Override
   public void close() {
     try {
       DebuggerReader debuggerReader = myDebuggerReader;
@@ -246,16 +252,33 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     DISCONNECTED
   }
 
-  public class DebuggerReader extends BaseDebuggerReader {
+  public static class DebuggerReader extends BaseDebuggerReader {
+    /**
+     * Indicates that the debugger connection has been approved within this {@link DebuggerReader}.
+     */
+    private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
+
     public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
       super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }
 
+    @Override
+    protected void onExit() {
+      if (myConnectionApproved.get()) {
+        getDebugger().fireExitEvent();
+      }
+    }
+
+    @Override
     protected void onCommunicationError() {
-      if (myState == State.APPROVED) {
+      if (myConnectionApproved.get()) {
         getDebugger().fireCommunicationError();
       }
+    }
+
+    public void connectionApproved() {
+      myConnectionApproved.set(true);
     }
   }
 }

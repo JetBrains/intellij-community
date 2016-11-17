@@ -42,6 +42,9 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
+  private int myActiveSubtaskIndex = 0;
+  @Expose private int myLastSubtaskIndex = 0;
+
   public Task() {}
 
   public Task(@NotNull final String name) {
@@ -141,7 +144,12 @@ public class Task implements StudyItem {
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
       if (lessonDir != null) {
-        return lessonDir.findChild(taskDirName);
+        VirtualFile taskDir = lessonDir.findChild(taskDirName);
+        if (taskDir == null) {
+          return null;
+        }
+        VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+        return srcDir != null ? srcDir : taskDir;
       }
     }
     return null;
@@ -152,7 +160,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -217,12 +225,15 @@ public class Task implements StudyItem {
   }
   
   public void setStatus(StudyStatus status) {
-    myStatus = status;
     for (TaskFile taskFile : taskFiles.values()) {
-      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         placeholder.setStatus(status);
       }
     }
+    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+      return;
+    }
+    myStatus = status;
   }
 
   public Task copy() {
@@ -249,5 +260,25 @@ public class Task implements StudyItem {
     if (date == null) return true;
     if (myUpdateDate == null) return false;
     return !date.after(myUpdateDate);
+  }
+
+  public int getActiveSubtaskIndex() {
+    return myActiveSubtaskIndex;
+  }
+
+  public void setActiveSubtaskIndex(int activeSubtaskIndex) {
+    myActiveSubtaskIndex = activeSubtaskIndex;
+  }
+
+  public int getLastSubtaskIndex() {
+    return myLastSubtaskIndex;
+  }
+
+  public void setLastSubtaskIndex(int lastSubtaskIndex) {
+    myLastSubtaskIndex = lastSubtaskIndex;
+  }
+
+  public boolean hasSubtasks() {
+    return myLastSubtaskIndex > 0;
   }
 }

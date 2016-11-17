@@ -633,7 +633,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return null;
   }
 
-  private void storeSecure(String key, String value) {
+  private void storeSecure(String key, @Nullable String value) {
+    if (value == null) {
+      removeSecure(key);
+      return;
+    }
+
     try {
       //PasswordSafe.getInstance().storePassword(null, HttpConfigurable.class, key, value);
       synchronized (myProxyCredentials) {

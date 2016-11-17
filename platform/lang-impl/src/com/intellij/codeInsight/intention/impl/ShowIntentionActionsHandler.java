@@ -108,7 +108,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  // returns editor,file where the action is available or null if there are none
   public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull IntentionAction action) {
     if (!psiFile.isValid()) return false;
 

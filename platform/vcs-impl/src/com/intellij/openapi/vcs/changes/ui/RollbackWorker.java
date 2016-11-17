@@ -21,8 +21,6 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -102,7 +100,7 @@ public class RollbackWorker {
       ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, rollbackAction);
+            rollbackAction.run();
           }
         });
     }

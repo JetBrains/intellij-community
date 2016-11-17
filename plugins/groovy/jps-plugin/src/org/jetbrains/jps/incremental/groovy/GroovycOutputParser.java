@@ -205,7 +205,7 @@ public class GroovycOutputParser {
   public boolean shouldRetry() {
     for (CompilerMessage message : compilerMessages) {
       String text = message.getMessageText();
-      if (text.contains("java.lang.NoClassDefFoundError") || text.contains("unable to resolve class")) {
+      if (text.contains("java.lang.NoClassDefFoundError") || text.contains("java.lang.TypeNotPresentException") || text.contains("unable to resolve class")) {
         LOG.debug("Resolve issue: " + message);
         return true;
       }

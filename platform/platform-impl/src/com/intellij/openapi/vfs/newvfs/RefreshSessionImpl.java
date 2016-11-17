@@ -17,8 +17,6 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +46,6 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
   private final ModalityState myModalityState;
-  private final DumbModePermission myDumbModePermission;
   private final Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
@@ -68,11 +65,9 @@ public class RefreshSessionImpl extends RefreshSession {
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
 
     if (modalityState == ModalityState.NON_MODAL) {
-      myDumbModePermission = null;
       myStartTrace = null;
     }
     else {
-      myDumbModePermission = DumbServiceImpl.getExplicitPermission();
       myStartTrace = new Throwable(); // please report exceptions here to peter
     }
   }
@@ -181,13 +176,10 @@ public class RefreshSessionImpl extends RefreshSession {
     }
 
     try (AccessToken ignore = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace)) {
-      WriteAction.run(() -> {
-        if (myDumbModePermission != null) {
-          DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
-        } else {
-          fireEventsInWriteAction();
-        }
-      });
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("RefreshSessionImpl: Events are about to fire: "+myEvents);
+      }
+      WriteAction.run(this::fireEventsInWriteAction);
     }
     finally {
       mySemaphore.up();

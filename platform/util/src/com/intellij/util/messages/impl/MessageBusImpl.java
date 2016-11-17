@@ -279,6 +279,22 @@ public class MessageBusImpl implements MessageBus {
     myDisposed = true;
   }
 
+  @Override
+  public boolean hasUndeliveredEvents(@NotNull Topic<?> topic) {
+    if (!isDispatchingAnything()) return false;
+
+    for (MessageBusConnectionImpl connection : getTopicSubscribers(topic)) {
+      if (connection.containsMessage(topic)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isDispatchingAnything() {
+    return getRootBus().myWaitingBuses.get() != null;
+  }
+
   private void checkNotDisposed() {
     if (myDisposed) {
       LOG.error("Already disposed: " + this);
@@ -306,13 +322,7 @@ public class MessageBusImpl implements MessageBus {
 
   private void postMessage(Message message) {
     checkNotDisposed();
-    final Topic topic = message.getTopic();
-    List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
-    if (topicSubscribers == null) {
-      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
-      calcSubscribers(topic, topicSubscribers);
-      mySubscriberCache.put(topic, topicSubscribers);
-    }
+    List<MessageBusConnectionImpl> topicSubscribers = getTopicSubscribers(message.getTopic());
     if (!topicSubscribers.isEmpty()) {
       for (MessageBusConnectionImpl subscriber : topicSubscribers) {
         subscriber.getBus().myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
@@ -320,6 +330,17 @@ public class MessageBusImpl implements MessageBus {
         subscriber.scheduleMessageDelivery(message);
       }
     }
+  }
+
+  @NotNull
+  private List<MessageBusConnectionImpl> getTopicSubscribers(Topic topic) {
+    List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
+    if (topicSubscribers == null) {
+      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
+      calcSubscribers(topic, topicSubscribers);
+      mySubscriberCache.put(topic, topicSubscribers);
+    }
+    return topicSubscribers;
   }
 
   private void notifyPendingJobChange(int delta) {

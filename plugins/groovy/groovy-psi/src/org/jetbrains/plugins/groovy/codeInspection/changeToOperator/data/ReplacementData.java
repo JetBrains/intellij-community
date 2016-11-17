@@ -15,23 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data;
 
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public final class ReplacementData {
-  private final GrExpression element;
-  private final String replacement;
 
-  public ReplacementData(@NotNull GrExpression element, @NotNull String replacement) {
-    this.element = element;
-    this.replacement = replacement;
+  private final String myReplacement;
+  private final NotNullFunction<GrMethodCallExpression, GrExpression> myElementToReplace;
+
+  public ReplacementData(@NotNull String replacement, @Nullable NotNullFunction<GrMethodCallExpression, GrExpression> elementToReplace) {
+    this.myReplacement = replacement;
+    this.myElementToReplace = elementToReplace;
   }
 
-  public GrExpression getExpression() {
-    return element;
-  }
-
+  @NotNull
+  @Contract(pure = true)
   public String getReplacement() {
-    return replacement;
+    return myReplacement;
+  }
+
+  @NotNull
+  public GrExpression getElementToReplace(@NotNull GrMethodCallExpression call) {
+    return myElementToReplace == null ? call : myElementToReplace.fun(call);
   }
 }

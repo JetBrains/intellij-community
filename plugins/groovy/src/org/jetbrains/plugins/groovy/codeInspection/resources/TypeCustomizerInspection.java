@@ -101,6 +101,11 @@ public class TypeCustomizerInspection extends BaseInspection {
       return GroovyInspectionBundle.message("add.to.resources");
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {

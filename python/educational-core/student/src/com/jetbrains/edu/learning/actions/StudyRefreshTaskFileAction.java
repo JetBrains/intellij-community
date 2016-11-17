@@ -20,10 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.learning.StudyActionListener;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -44,7 +41,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
 
   public StudyRefreshTaskFileAction() {
-    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Refresh current task",
+    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")",
+          "Refresh current task",
           InteractiveLearningIcons.ResetTaskFile);
   }
 
@@ -63,13 +61,20 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static void refreshFile(@NotNull final StudyState studyState, @NotNull final Project project) {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
-    if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
-      Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
-      return;
+    if (taskFile.getTask().hasSubtasks()) {
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        StudySubtaskUtils.refreshPlaceholder(project, editor, placeholder);
+      }
+    }
+    else {
+      if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
+        Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
+        return;
+      }
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    StudyUtils.drawAllWindows(editor, taskFile);
+    StudyUtils.drawAllAnswerPlaceholders(editor, taskFile);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     ApplicationManager.getApplication().invokeLater(
       () -> IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true));
@@ -104,7 +109,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
 
   private static void resetAnswerPlaceholders(TaskFile selectedTaskFile, Project project) {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getActivePlaceholders()) {
       answerPlaceholder.reset();
       taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }

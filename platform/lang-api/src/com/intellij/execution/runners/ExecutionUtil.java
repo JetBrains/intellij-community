@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -38,6 +37,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -110,8 +110,8 @@ public class ExecutionUtil {
       LOG.error(fullMessage, e);
     }
 
-    if (listener == null && e instanceof HyperlinkListener) {
-      listener = (HyperlinkListener)e;
+    if (listener == null) {
+      listener = ExceptionUtil.findCause(e, HyperlinkListener.class);
     }
 
     final HyperlinkListener finalListener = listener;
@@ -129,9 +129,8 @@ public class ExecutionUtil {
       else {
         Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
       }
-      NotificationListener notificationListener = finalListener == null ? null : new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      NotificationListener notificationListener = finalListener == null ? null : (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           finalListener.hyperlinkUpdate(event);
         }
       };
@@ -203,7 +202,7 @@ public class ExecutionUtil {
           GraphicsUtil.setupAAPainting(g2d);
           g2d.setColor(Color.GREEN);
           Ellipse2D.Double shape =
-            new Ellipse2D.Double(x + getIconWidth() - JBUI.scale(iSize), y + getIconHeight() - iSize, iSize, iSize);
+            new Ellipse2D.Double(x + getIconWidth() - iSize, y + getIconHeight() - iSize, iSize, iSize);
           g2d.fill(shape);
           g2d.setColor(ColorUtil.withAlpha(Color.BLACK, .40));
           g2d.draw(shape);

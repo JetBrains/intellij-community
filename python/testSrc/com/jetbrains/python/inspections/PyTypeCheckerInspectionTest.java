@@ -346,4 +346,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testMapArgumentsInOppositeOrder() {
     doTest();
   }
+
+  public void testPositionalArguments() {
+    doTest();
+  }
 }

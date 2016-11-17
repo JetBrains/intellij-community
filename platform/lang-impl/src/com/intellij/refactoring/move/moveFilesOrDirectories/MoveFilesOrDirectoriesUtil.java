@@ -22,7 +22,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
@@ -153,13 +152,7 @@ public class MoveFilesOrDirectoriesUtil {
             for (final PsiElement psiElement : newElements) {
               if (psiElement instanceof PsiFile) {
                 final PsiFile file = (PsiFile)psiElement;
-                final boolean fileExist = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-                  @Override
-                  public Boolean compute() {
-                    return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory1, choice, file, file.getName(), "Move");
-                  }
-                });
-                if (fileExist) continue;
+                if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory1, choice, file, file.getName(), "Move")) continue;
               }
               checkMove(psiElement, targetDirectory1);
               els.add(psiElement);

@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -203,24 +204,40 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();
         final PyExpression arg = entry.getKey();
-        if (param.isPositionalContainer() || param.isKeywordContainer()) {
+        if (param.isKeywordContainer()) {
           continue;
         }
-        final PyType paramType = myTypeEvalContext.getType(param);
-        if (paramType == null) {
+        final PyType expectedArgType = getExpectedArgumentType(param);
+        if (expectedArgType == null) {
           continue;
         }
-        final PyType argType = myTypeEvalContext.getType(arg);
+        final PyType actualArgType = myTypeEvalContext.getType(arg);
         if (!genericsCollected) {
           substitutions.putAll(PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext));
           genericsCollected = true;
         }
-        final Pair<String, ProblemHighlightType> problem = checkTypes(paramType, argType, myTypeEvalContext, substitutions);
+        final Pair<String, ProblemHighlightType> problem = checkTypes(expectedArgType, actualArgType, myTypeEvalContext, substitutions);
         if (problem != null) {
           problems.put(arg, problem);
         }
       }
       return problems;
+    }
+
+    @Nullable
+    private PyType getExpectedArgumentType(@NotNull PyNamedParameter param) {
+      final PyType paramType = myTypeEvalContext.getType(param);
+
+      if (param.isPositionalContainer()) {
+        if (paramType == PyBuiltinCache.getInstance(param).getTupleType()) {
+          return null;
+        }
+        else if (paramType instanceof PyCollectionType) {
+          return ((PyCollectionType)paramType).getIteratedItemType();
+        }
+      }
+
+      return paramType;
     }
 
     @Nullable

@@ -217,6 +217,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

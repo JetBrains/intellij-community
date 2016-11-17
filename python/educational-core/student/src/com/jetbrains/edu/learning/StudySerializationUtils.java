@@ -9,18 +9,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +74,6 @@ public class StudySerializationUtils {
     public static final String MY_LINE = "myLine";
     public static final String MY_START = "myStart";
     public static final String MY_LENGTH = "myLength";
-    public static final String HINTS = "hints";
     public static final String HINT = "hint";
     public static final String AUTHOR_TITLED = "Author";
     public static final String FIRST_NAME = "first_name";
@@ -82,6 +84,13 @@ public class StudySerializationUtils {
     public static final String TASK_WINDOWS = "taskWindows";
     public static final String RESOURCE_PATH = "resourcePath";
     public static final String COURSE_DIRECTORY = "courseDirectory";
+    public static final String SUBTASK_INFO = "AnswerPlaceholderSubtaskInfo";
+    public static final String SUBTASK_INFOS = "subtaskInfos";
+    public static final String ADDITIONAL_HINTS = "additionalHints";
+    public static final String POSSIBLE_ANSWER = "possibleAnswer";
+    public static final String SELECTED = "selected";
+    public static final String TASK_TEXT = "taskText";
+    public static final String PLACEHOLDER_TEXT = "placeholderText";
 
     private Xml() {
     }
@@ -199,6 +208,37 @@ public class StudySerializationUtils {
       return state;
     }
 
+    public static Element convertToForthVersion(Element state) throws StudyUnrecognizedFormatException {
+      Element taskManagerElement = state.getChild(MAIN_ELEMENT);
+      Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
+          for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
+            Element taskFileElement = entry.getValue();
+            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
+              Element valueElement = new Element(SUBTASK_INFO);
+              addChildMap(placeholder, SUBTASK_INFOS, Collections.singletonMap(String.valueOf(0), valueElement));
+              for (String childName : ContainerUtil.list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
+                Element child = getChildWithName(placeholder, childName);
+                valueElement.addContent(child.clone());
+              }
+              renameElement(getChildWithName(valueElement, TASK_TEXT), PLACEHOLDER_TEXT);
+              List<Element> additionalHints = ContainerUtil.map(getChildList(valueElement, ADDITIONAL_HINTS), Element::clone);
+              Element hint = getChildWithName(valueElement, HINT);
+              Element firstHint = new Element(OPTION).setAttribute(VALUE, hint.getAttributeValue(VALUE));
+              List<Element> newHints = new ArrayList<>();
+              newHints.add(firstHint);
+              newHints.addAll(additionalHints);
+              addChildList(valueElement, "hints", newHints);
+            }
+          }
+        }
+      }
+
+      return state;
+    }
+
     public static String addStatus(XMLOutputter outputter,
                                    Map<String, String> placeholderTextToStatus,
                                    String taskStatus,
@@ -272,6 +312,20 @@ public class StudySerializationUtils {
       return addChildWithName(parent, name, listElement);
     }
 
+    public static Element addChildMap(Element parent, String name, Map<String, Element> value) {
+      Element mapElement = new Element(MAP);
+      for (Map.Entry<String, Element> entry : value.entrySet()) {
+        Element entryElement = new Element("entry");
+        mapElement.addContent(entryElement);
+        String key = entry.getKey();
+        entryElement.setAttribute("key", key);
+        Element valueElement = new Element("value");
+        valueElement.addContent(entry.getValue());
+        entryElement.addContent(valueElement);
+      }
+      return addChildWithName(parent, name, mapElement);
+    }
+
     public static List<Element> getChildList(Element parent, String name) throws StudyUnrecognizedFormatException {
       return getChildList(parent, name, false);
     }
@@ -333,6 +387,11 @@ public class StudySerializationUtils {
 
     public static final String TASK_LIST = "task_list";
     public static final String TASK_FILES = "task_files";
+    public static final String FILES = "files";
+    public static final String HINTS = "hints";
+    public static final String SUBTASK_INFOS = "subtask_infos";
+    public static final String FORMAT_VERSION = "format_version";
+    public static final String INDEX = "index";
 
     private Json() {
     }
@@ -368,90 +427,165 @@ public class StudySerializationUtils {
               JsonObject taskFileObject = taskFile.getValue().getAsJsonObject();
               JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
               for (JsonElement placeholder : placeholders) {
-                JsonObject placeholderObject = placeholder.getAsJsonObject();
-                if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
-                  break;
+                convertToAbsoluteOffset(document, placeholder);
+                if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
+                  convertToSubtaskInfo(placeholder.getAsJsonObject());
                 }
-                int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-                int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-                int offset = document.getLineStartOffset(line) + start;
-                placeholderObject.addProperty(OFFSET, offset);
               }
             }
           }
         }
         return new GsonBuilder().create().fromJson(json, Course.class);
       }
+
+      private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
+        JsonObject placeholderObject = placeholder.getAsJsonObject();
+        if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
+          return;
+        }
+        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
+        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
+        int offset = document.getLineStartOffset(line) + start;
+        placeholderObject.addProperty(OFFSET, offset);
+      }
     }
 
-    public static class StepicTaskFileAdapter implements JsonDeserializer<TaskFile> {
-
+    public static class StepicStepOptionsAdapter implements JsonDeserializer<StepicWrappers.StepOptions> {
       @Override
-      public TaskFile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        JsonObject taskFileObject = json.getAsJsonObject();
-        JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-        for (JsonElement placeholder : placeholders) {
-          JsonObject placeholderObject = placeholder.getAsJsonObject();
-          int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-          int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-          if (line == -1) {
-            placeholderObject.addProperty(OFFSET, start);
-          }
-          else {
-            Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
-            placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
-          }
-          final String hintString = placeholderObject.getAsJsonPrimitive(HINT).getAsString();
-          final JsonArray hintsArray = new JsonArray();
+      public StepicWrappers.StepOptions deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+        throws JsonParseException {
+        JsonObject stepOptionsJson = json.getAsJsonObject();
+        JsonPrimitive versionJson = stepOptionsJson.getAsJsonPrimitive(FORMAT_VERSION);
+        int version = 1;
+        if (versionJson != null) {
+          version = versionJson.getAsInt();
+        }
+        switch (version) {
+          case 1:
+            stepOptionsJson = convertToSecondVersion(stepOptionsJson);
+            // uncomment for future versions
+            //case 2:
+            //  stepOptionsJson = convertToThirdVersion(stepOptionsJson);
+        }
+        convertSubtaskInfosToMap(stepOptionsJson);
+        StepicWrappers.StepOptions stepOptions =
+          new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()
+            .fromJson(stepOptionsJson, StepicWrappers.StepOptions.class);
+        stepOptions.formatVersion = EduStepicConnector.CURRENT_VERSION;
+        return stepOptions;
+      }
 
-          try {
-            final Type listType = new TypeToken<List<String>>() {}.getType();
-            final List<String> hints = gson.fromJson(hintString, listType);
-            if (hints != null && !hints.isEmpty()) {
-              for (int i = 0; i < hints.size(); i++) {
-                if (i == 0) {
-                  placeholderObject.addProperty(HINT, hints.get(0));
-                  continue;
-                }
-                hintsArray.add(hints.get(i));
-              }
-              placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
+      private static JsonObject convertSubtaskInfosToMap(JsonObject stepOptionsJson) {
+        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
+          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+          for (JsonElement placeholder : placeholders) {
+            JsonObject placeholderObject = placeholder.getAsJsonObject();
+            JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
+            Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
+            for (JsonElement info : infos) {
+              JsonObject object = info.getAsJsonObject();
+              int index = object.getAsJsonPrimitive(INDEX).getAsInt();
+              objectsToInsert.put(index, object);
             }
-            else {
-              placeholderObject.addProperty(HINT, "");
+            placeholderObject.remove(SUBTASK_INFOS);
+            JsonObject newInfos = new JsonObject();
+            placeholderObject.add(SUBTASK_INFOS, newInfos);
+            for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
+              newInfos.add(entry.getKey().toString(), entry.getValue());
             }
-          }
-          catch (JsonParseException e) {
-            hintsArray.add(hintString);
           }
         }
-
-        return gson.fromJson(json, TaskFile.class);
+        return stepOptionsJson;
       }
+
+      private static JsonObject convertToSecondVersion(JsonObject stepOptionsJson) {
+        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
+          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+          for (JsonElement placeholder : placeholders) {
+            JsonObject placeholderObject = placeholder.getAsJsonObject();
+            convertToAbsoluteOffset(taskFileObject, placeholderObject);
+            convertMultipleHints(gson, placeholderObject);
+            convertToSubtaskInfo(placeholderObject);
+          }
+        }
+        return stepOptionsJson;
+      }
+
+      private static void convertMultipleHints(Gson gson, JsonObject placeholderObject) {
+        final String hintString = placeholderObject.getAsJsonPrimitive(HINT).getAsString();
+        final JsonArray hintsArray = new JsonArray();
+
+        try {
+          final Type listType = new TypeToken<List<String>>() {
+          }.getType();
+          final List<String> hints = gson.fromJson(hintString, listType);
+          if (hints != null && !hints.isEmpty()) {
+            for (int i = 0; i < hints.size(); i++) {
+              if (i == 0) {
+                placeholderObject.addProperty(HINT, hints.get(0));
+                continue;
+              }
+              hintsArray.add(hints.get(i));
+            }
+            placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
+          }
+          else {
+            placeholderObject.addProperty(HINT, "");
+          }
+        }
+        catch (JsonParseException e) {
+          hintsArray.add(hintString);
+        }
+      }
+
+      private static void convertToAbsoluteOffset(JsonObject taskFileObject, JsonObject placeholderObject) {
+        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
+        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
+        if (line == -1) {
+          placeholderObject.addProperty(OFFSET, start);
+        }
+        else {
+          Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
+          placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
+        }
+      }
+    }
+
+    private static void convertToSubtaskInfo(JsonObject placeholderObject) {
+      JsonArray subtaskInfos = new JsonArray();
+      placeholderObject.add(SUBTASK_INFOS, subtaskInfos);
+      JsonArray hintsArray = new JsonArray();
+      hintsArray.add(placeholderObject.getAsJsonPrimitive(HINT).getAsString());
+      JsonArray additionalHints = placeholderObject.getAsJsonArray(ADDITIONAL_HINTS);
+      if (additionalHints != null) {
+        hintsArray.addAll(additionalHints);
+      }
+      JsonObject subtaskInfo = new JsonObject();
+      subtaskInfos.add(subtaskInfo);
+      subtaskInfo.add(INDEX, new JsonPrimitive(0));
+      subtaskInfo.add(HINTS, hintsArray);
+      subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
     }
 
     public static class StepicAnswerPlaceholderAdapter implements JsonSerializer<AnswerPlaceholder> {
       @Override
-      public JsonElement serialize(AnswerPlaceholder src, Type typeOfSrc, JsonSerializationContext context) {
-        final List<String> hints = src.getHints();
-
-        final int length = src.getLength();
-        final int start = src.getOffset();
-        final String possibleAnswer = src.getPossibleAnswer();
-        int line = -1;
-
-        final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        final JsonObject answerPlaceholder = new JsonObject();
-        answerPlaceholder.addProperty(LINE, line);
-        answerPlaceholder.addProperty(START, start);
-        answerPlaceholder.addProperty(LENGTH, length);
-        answerPlaceholder.addProperty(POSSIBLE_ANSWER, possibleAnswer);
-
-        final String jsonHints = gson.toJson(hints);
-        answerPlaceholder.addProperty(HINT, jsonHints);
-
-        return answerPlaceholder;
+      public JsonElement serialize(AnswerPlaceholder placeholder, Type typeOfSrc, JsonSerializationContext context) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        JsonElement answerPlaceholderJson = gson.toJsonTree(placeholder);
+        JsonObject answerPlaceholderObject = answerPlaceholderJson.getAsJsonObject();
+        JsonObject subtaskInfos = answerPlaceholderObject.getAsJsonObject(SUBTASK_INFOS);
+        JsonArray infosArray = new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : subtaskInfos.entrySet()) {
+          JsonObject subtaskInfo = entry.getValue().getAsJsonObject();
+          subtaskInfo.add(INDEX, new JsonPrimitive(Integer.valueOf(entry.getKey())));
+          infosArray.add(subtaskInfo);
+        }
+        answerPlaceholderObject.remove(SUBTASK_INFOS);
+        answerPlaceholderObject.add(SUBTASK_INFOS, infosArray);
+        return answerPlaceholderJson;
       }
     }
   }

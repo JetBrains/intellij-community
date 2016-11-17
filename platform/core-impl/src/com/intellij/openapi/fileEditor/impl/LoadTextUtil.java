@@ -98,17 +98,7 @@ public final class LoadTextUtil {
       detectedLineSeparator = "\n";
     }
 
-    CharSequence result;
-    if (buffer.length() == dst) {
-      result = buffer;
-    }
-    else {
-      // in Mac JDK CharBuffer.subSequence() signature differs from Oracle's
-      // more than that, the signature has changed between jd6 and jdk7,
-      // so use more generic CharSequence.subSequence() just in case
-      @SuppressWarnings("UnnecessaryLocalVariable") CharSequence seq = buffer;
-      result = seq.subSequence(0, dst);
-    }
+    CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
     return Pair.create(result, detectedLineSeparator);
   }
 
@@ -142,13 +132,9 @@ public final class LoadTextUtil {
 
   @NotNull
   public static Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    return doDetectCharsetAndSetBOM(virtualFile, content, true).getFirst();
+    return doDetectCharsetAndSetBOM(virtualFile, content, true, virtualFile.getFileType()).getFirst();
   }
 
-  @NotNull
-  private static Pair.NonNull<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
-    return doDetectCharsetAndSetBOM(virtualFile, content, saveBOM, virtualFile.getFileType());
-  }
   @NotNull
   private static Pair.NonNull<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM, @NotNull FileType fileType) {
     @NotNull Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content,fileType);

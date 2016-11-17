@@ -34,10 +34,10 @@ import java.util.Map;
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
-  public static final int CURRENT_VERSION = 3;
+  public static final int CURRENT_VERSION = 4;
   private StepicUser myUser = new StepicUser();
   private Course myCourse;
-  public int VERSION = 3;
+  public int VERSION = 4;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
@@ -97,6 +97,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public JBColor getColor(@NotNull final AnswerPlaceholder placeholder) {
+    if (!placeholder.getUseLength() && placeholder.isActive() && placeholder.getActiveSubtaskInfo().isNeedInsertText()) {
+      return JBColor.LIGHT_GRAY;
+    }
     final StudyStatus status = placeholder.getStatus();
     if (status == StudyStatus.Solved) {
       return JBColor.GREEN;
@@ -108,7 +111,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
-    return taskFile.getAnswerPlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
+    return taskFile.getActivePlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
   }
 
   @Nullable
@@ -137,8 +140,10 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToSecondVersion(state);
         case 2:
           state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
+        case 3:
+          state = StudySerializationUtils.Xml.convertToForthVersion(state);
           //uncomment for future versions
-          //case 3:
+          //case 4:
           //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
       }
       XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));

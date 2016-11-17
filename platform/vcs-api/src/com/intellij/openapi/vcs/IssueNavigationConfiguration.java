@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
@@ -92,22 +93,27 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
 
   public List<LinkMatch> findIssueLinks(CharSequence text) {
     final List<LinkMatch> result = new ArrayList<>();
-    for (IssueNavigationLink link : myLinks) {
-      Pattern issuePattern = link.getIssuePattern();
-      Matcher m = issuePattern.matcher(text);
-      while (m.find()) {
-        try {
-          String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
-          addMatch(result, new TextRange(m.start(), m.end()), replacement);
-        }
-        catch (Exception e) {
-          LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
+    try {
+      for (IssueNavigationLink link : myLinks) {
+        Pattern issuePattern = link.getIssuePattern();
+        Matcher m = issuePattern.matcher(text);
+        while (m.find()) {
+          try {
+            String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
+            addMatch(result, new TextRange(m.start(), m.end()), replacement);
+          }
+          catch (Exception e) {
+            LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
+          }
         }
       }
+      Matcher m = URLUtil.URL_PATTERN.matcher(text);
+      while (m.find()) {
+        addMatch(result, new TextRange(m.start(), m.end()), m.group());
+      }
     }
-    Matcher m = URLUtil.URL_PATTERN.matcher(text);
-    while (m.find()) {
-      addMatch(result, new TextRange(m.start(), m.end()), m.group());
+    catch (ProcessCanceledException e) {
+      //skip too long processing completely
     }
     Collections.sort(result);
     return result;

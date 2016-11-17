@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -331,7 +332,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     public void selectedComponentChanged(final GuiEditor source) {
-      finishInplaceEditing();
+      TransactionGuard.submitTransaction(myEditor.getEditor(), () -> finishInplaceEditing());
     }
   }
 

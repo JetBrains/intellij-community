@@ -46,7 +46,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -317,27 +316,6 @@ public class IdeEventQueue extends EventQueue {
     return myCurrentEvent;
   }
 
-  private static class InertialMouseRouter {
-    private static final int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
-    private static Component wheelDestinationComponent;
-    private static long lastMouseWheel;
-
-    @NotNull
-    private static AWTEvent changeSourceIfNeeded(@NotNull AWTEvent awtEvent) {
-      if (SystemInfo.isMac && Registry.is("ide.inertial.mouse.fix") && awtEvent instanceof MouseWheelEvent) {
-        MouseWheelEvent mwe = (MouseWheelEvent) awtEvent;
-        if (mwe.getWhen() - lastMouseWheel > MOUSE_WHEEL_RESTART_THRESHOLD) {
-          wheelDestinationComponent = SwingUtilities.getDeepestComponentAt(mwe.getComponent(), mwe.getX(), mwe.getY());
-        }
-        lastMouseWheel = System.currentTimeMillis();
-
-        int modifiers = mwe.getModifiers() | mwe.getModifiersEx();
-        return MouseEventAdapter.convert(mwe, wheelDestinationComponent, mwe.getID(), lastMouseWheel, modifiers, mwe.getX(), mwe.getY());
-      }
-      return awtEvent;
-    }
-  }
-
   private static boolean ourAppIsLoaded;
 
   private static boolean appIsLoaded() {
@@ -365,8 +343,6 @@ public class IdeEventQueue extends EventQueue {
       }
       return;
     }
-
-    e = InertialMouseRouter.changeSourceIfNeeded(e);
 
     e = fixNonEnglishKeyboardLayouts(e);
 

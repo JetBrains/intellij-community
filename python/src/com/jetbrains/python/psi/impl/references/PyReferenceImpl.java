@@ -187,20 +187,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         ret.poke(definition, getRate(definition, context));
       }
     }
+
     final ResolveResultList results = new ResolveResultList();
     for (RatedResolveResult r : ret) {
       final PsiElement e = r.getElement();
-      if (e == element) {
+      if (e == element || element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
-      if (element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
-        continue;
-      }
-      else {
-        results.add(r);
-      }
+      results.add(r);
     }
-
     return results;
   }
 
@@ -228,37 +223,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   protected List<RatedResolveResult> resolveInner() {
-    final ResolveResultList ret = new ResolveResultList();
-
-    final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return ret;
-
-    if (myElement instanceof PyTargetExpression) {
-      if (PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
-        ret.poke(myElement, getRate(myElement, myContext.getTypeEvalContext()));
-        return ret;
-      }
+    final ResolveResultList overriddenResult = resolveByOverridingReferenceResolveProviders();
+    if (!overriddenResult.isEmpty()) {
+      return overriddenResult;
     }
 
-    // resolve implicit __class__ inside class function
-    if (myElement instanceof PyReferenceExpression &&
-        PyNames.__CLASS__.equals(referencedName) &&
-        LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
-      final PyFunction containingFunction = PsiTreeUtil.getParentOfType(myElement, PyFunction.class);
+    final String referencedName = myElement.getReferencedName();
+    if (referencedName == null) return Collections.emptyList();
 
-      if (containingFunction != null) {
-        final PyClass containingClass = containingFunction.getContainingClass();
-
-        if (containingClass != null) {
-          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
-          PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
-
-          if (processor.getElements().isEmpty()) {
-            ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, containingClass));
-            return ret;
-          }
-        }
-      }
+    if (myElement instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
+      return ResolveResultList.to(myElement);
     }
 
     // here we have an unqualified expr. it may be defined:
@@ -271,21 +245,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
 
-    final List<RatedResolveResult> resultsFromProcessor = getResultsFromProcessor(referencedName, processor, realContext, roof);
-
-    // resolve to module __doc__
-    if (resultsFromProcessor.isEmpty() && referencedName.equals(PyNames.DOC)) {
-      ret.addAll(
-        Optional
-          .ofNullable(PyBuiltinCache.getInstance(myElement).getObjectType())
-          .map(type -> type.resolveMember(referencedName, myElement, AccessDirection.of(myElement), myContext))
-          .orElse(Collections.emptyList())
-      );
-
-      return ret;
-    }
-
-    return resultsFromProcessor;
+    return getResultsFromProcessor(referencedName, processor, realContext, roof);
   }
 
   protected List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
@@ -379,10 +339,28 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @NotNull
+  private ResolveResultList resolveByOverridingReferenceResolveProviders() {
+    final ResolveResultList results = new ResolveResultList();
+    final TypeEvalContext context = myContext.getTypeEvalContext();
+
+    Arrays
+      .stream(Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME))
+      .filter(PyOverridingReferenceResolveProvider.class::isInstance)
+      .map(provider -> provider.resolveName(myElement, context))
+      .forEach(results::addAll);
+
+    return results;
+  }
+
+  @NotNull
   private ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
+    final TypeEvalContext context = myContext.getTypeEvalContext();
     for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
-      results.addAll(provider.resolveName(myElement));
+      if (provider instanceof PyOverridingReferenceResolveProvider) {
+        continue;
+      }
+      results.addAll(provider.resolveName(myElement, context));
     }
     return results;
   }
@@ -643,9 +621,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
-                                          (PyQualifiedExpression)originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
     // include our own names
@@ -668,11 +645,18 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (underscores >= 2) {
       // if we're a normal module, add module's attrs
-      PsiFile f = realContext.getContainingFile();
-      if (f instanceof PyFile) {
+      if (realContext.getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
           ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
         }
+      }
+
+      // if we're inside method, add implicit __class__
+      if (LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
+        Optional
+          .ofNullable(PsiTreeUtil.getParentOfType(myElement, PyFunction.class))
+          .map(PyFunction::getContainingClass)
+          .ifPresent(pyClass -> ret.add(LookupElementBuilder.create(PyNames.__CLASS__)));
       }
     }
 

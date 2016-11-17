@@ -352,6 +352,7 @@ public class GitImpl implements Git {
                                        @NotNull String newName,
                                        @NotNull GitLineHandlerListener... listeners) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.setStdoutSuppressed(false);
     h.addParameters("-m", currentName, newName);
     return run(h);

@@ -184,7 +184,7 @@ public class StudyProjectGenerator {
       final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
       if (virtualFile != null) {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
-        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+        if (!taskFile.getActivePlaceholders().isEmpty()) {
           activeVirtualFile = virtualFile;
         }
       }

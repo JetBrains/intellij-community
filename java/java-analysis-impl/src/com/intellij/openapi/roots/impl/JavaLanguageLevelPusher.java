@@ -107,7 +107,16 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
-    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, f -> isJavaLike(f.getFileType()));
+    // Todo: GwtLanguageLevelPusher changes java language level for single files without firing filePropertiesChanged
+    // so code below doesn't work.
+    // Uncomment it and remove older code once the problem is fixed
+    //PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, f -> isJavaLike(f.getFileType()));
+
+    for (VirtualFile child : fileOrDir.getChildren()) {
+      if (!child.isDirectory() && isJavaLike(child.getFileType())) {
+        PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
+      }
+    }
   }
 
   private static boolean isJavaLike(FileType type) {

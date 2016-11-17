@@ -228,12 +228,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   protected boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {
-    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || !parser.shouldRetry()) {
+    if (CHUNK_REBUILD_ORDERED.get(context) != null) {
+      CHUNK_REBUILD_ORDERED.set(context, null);
       return false;
     }
 
-    if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-      CHUNK_REBUILD_ORDERED.set(context, null);
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || !parser.shouldRetry()) {
       return false;
     }
 

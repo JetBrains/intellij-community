@@ -46,18 +46,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
-  private final Class<? extends PsiElement> myElementClass;
   private byte myReferenceCount = 1;
   @Nullable SmartPointerTracker.PointerReference pointerReference;
 
   SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
-    this(element, createElementInfo(project, element, containingFile, forInjected), element.getClass());
+    this(element, createElementInfo(project, element, containingFile, forInjected));
   }
   SmartPsiElementPointerImpl(@NotNull E element,
-                             @NotNull SmartPointerElementInfo elementInfo,
-                             @NotNull Class<? extends PsiElement> elementClass) {
+                             @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myElementClass = elementClass;
     myElementInfo = elementInfo;
     cacheElement(element);
   }
@@ -93,7 +90,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   E doRestoreElement() {
     //noinspection unchecked
     E element = (E)myElementInfo.restoreElement();
-    if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
+    if (element != null && !element.isValid()) {
       return null;
     }
     return element;

@@ -16,19 +16,22 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class SeparatorWithText extends JComponent {
 
-  private String myCaption = "";
+  private String myCaption;
   private int myPrefWidth;
-  private boolean myCaptionCentered = true;
+  private int myAlignment;
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
@@ -45,37 +48,29 @@ public class SeparatorWithText extends JComponent {
   }
 
   public void setCaptionCentered(boolean captionCentered) {
-    myCaptionCentered = captionCentered;
+    myAlignment = captionCentered ? CENTER : LEFT;
   }
 
   public Dimension getPreferredSize() {
-    final Dimension size = getPreferredFontSize();
-    size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
-    return size;
+    return isPreferredSizeSet() ? super.getPreferredSize() : getPreferredFontSize();
   }
 
   private Dimension getPreferredFontSize() {
-    if (hasCaption()) {
+    Dimension size = new Dimension(myPrefWidth < 0 ? 0 : myPrefWidth, 1);
+    String caption = getCaption();
+    if (caption != null) {
       FontMetrics fm = getFontMetrics(getFont());
-      int preferredHeight = fm.getHeight();
-      int preferredWidth = getPreferredWidth(fm);
-
-      return new Dimension(preferredWidth, preferredHeight + getVgap() * 2);
+      size.height = fm.getHeight();
+      if (myPrefWidth < 0) {
+        size.width = 2 * getHgap() + fm.stringWidth(caption);
+      }
     }
-
-    return new Dimension(0, getVgap() * 2 + 1);
-  }
-
-  private int getPreferredWidth(FontMetrics fm) {
-    return fm.stringWidth(myCaption) + 2 * getHgap();
-  }
-
-  private boolean hasCaption() {
-    return myCaption != null && !myCaption.trim().isEmpty();
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
   public Dimension getMinimumSize() {
-    return getPreferredSize();
+    return isMinimumSizeSet() ? super.getMinimumSize() : getPreferredFontSize();
   }
 
   public void setMinimumWidth(int width) {
@@ -85,34 +80,44 @@ public class SeparatorWithText extends JComponent {
   protected void paintComponent(Graphics g) {
     g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
 
-    if (hasCaption()) {
-      Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+
+    String caption = getCaption();
+    if (caption != null) {
+      int hGap = getHgap();
+      bounds.x += hGap;
+      bounds.width -= hGap + hGap;
+
       Rectangle iconR = new Rectangle();
       Rectangle textR = new Rectangle();
-      String s = SwingUtilities
-        .layoutCompoundLabel(g.getFontMetrics(), myCaption, null, CENTER,
-                             myCaptionCentered ? CENTER : LEFT,
-                             CENTER,
-                             myCaptionCentered ? CENTER : LEFT,
-                             viewR, iconR, textR, 0);
-      final int lineY = textR.y + textR.height / 2;
-      if (s.equals(myCaption) && viewR.width - textR.width > 2 * getHgap()) {
-        if (myCaptionCentered) {
-          g.drawLine(0, lineY, textR.x - getHgap(), lineY);
-        }
-        g.drawLine(textR.x + textR.width + getHgap(), lineY, getWidth() - 1, lineY);
+      FontMetrics fm = g.getFontMetrics();
+      String label = layoutCompoundLabel(fm, caption, null, CENTER, myAlignment, CENTER, myAlignment, bounds, iconR, textR, 0);
+      textR.y += fm.getAscent();
+      if (caption.equals(label)) {
+        int y = textR.y + (int)fm.getLineMetrics(label, g).getStrikethroughOffset();
+        paintLinePart(g, bounds.x, textR.x, -hGap, y);
+        paintLinePart(g, textR.x + textR.width, bounds.x + bounds.width, hGap, y);
       }
       UISettings.setupAntialiasing(g);
       g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
-      g.drawString(s, textR.x, textR.y + g.getFontMetrics().getAscent());
+      g.drawString(label, textR.x, textR.y);
     }
     else {
-      g.drawLine(0, getVgap(), getWidth() - 1, getVgap());
+      paintLine(g, bounds.x, bounds.y, bounds.width);
     }
   }
 
+  protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) {
+    if (xMax > xMin) paintLine(g, xMin + hGap, y, xMax - xMin);
+  }
+
+  protected void paintLine(Graphics g, int x, int y, int width) {
+    FILL.paint((Graphics2D)g, x, y, width, 1, null);
+  }
+
   protected String getCaption() {
-    return myCaption;
+    return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
   public void setCaption(String captionAboveOf) {

@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +35,84 @@ import java.util.Collection;
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
 
+  private static final String DEFAULT_COMMAND_NAME = "Undefined";
+  private static final String DEFAULT_GROUP_ID = null;
+
+  public interface Builder {
+    @NotNull Builder withName(@Nullable String name);
+    @NotNull Builder withGroupId(@Nullable String groupId);
+
+    <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E;
+    <R, E extends Throwable> R compute(@NotNull ThrowableComputable<R, E> action) throws E;
+  }
+
+  private static class BuilderImpl implements Builder {
+    private final Project myProject;
+    private final PsiFile[] myFiles;
+    private String myCommandName = DEFAULT_COMMAND_NAME;
+    private String myGroupId = DEFAULT_GROUP_ID;
+
+    private BuilderImpl(Project project, PsiFile... files) {
+      myProject = project;
+      myFiles = files;
+    }
+
+    @NotNull
+    @Override
+    public Builder withName(String name) {
+      myCommandName = name;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public Builder withGroupId(String groupId) {
+      myGroupId = groupId;
+      return this;
+    }
+
+    @Override
+    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) throws E {
+      new WriteCommandAction(myProject, myCommandName, myGroupId, myFiles) {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          action.run();
+        }
+      }.execute();
+    }
+
+    @Override
+    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) throws E {
+      return new WriteCommandAction<R>(myProject, myCommandName, myGroupId, myFiles) {
+        @Override
+        protected void run(@NotNull Result<R> result) throws Throwable {
+          result.setResult(action.compute());
+        }
+      }.execute().getResultObject();
+    }
+  }
+
+  @NotNull
+  public static Builder writeCommandAction(Project project) {
+    return new BuilderImpl(project);
+  }
+
+  @NotNull
+  public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
+    return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
+  }
+
   private final String myCommandName;
   private final String myGroupID;
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
 
   protected WriteCommandAction(@Nullable Project project, /*@NotNull*/ PsiFile... files) {
-    this(project, "Undefined", files);
+    this(project, DEFAULT_COMMAND_NAME, files);
   }
 
   protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, /*@NotNull*/ PsiFile... files) {
-    this(project, commandName, null, files);
+    this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
   protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, /*@NotNull*/ PsiFile... files) {
@@ -186,7 +255,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
-    runWriteCommandAction(project, "Undefined", null, runnable);
+    runWriteCommandAction(project, DEFAULT_COMMAND_NAME, DEFAULT_GROUP_ID, runnable);
   }
 
   public static void runWriteCommandAction(Project project,

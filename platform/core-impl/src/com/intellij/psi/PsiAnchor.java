@@ -453,14 +453,9 @@ public abstract class PsiAnchor {
       if (myProject.isDisposed() || !myVirtualFile.isValid()) {
         return null;
       }
-      final PsiFile file = PsiManager.getInstance(myProject).findFile(myVirtualFile);
-      if (file == null) {
-        return null;
-      }
-      if (file.getLanguage() == myLanguage) {
-        return file;
-      }
-      return file.getViewProvider().getPsi(myLanguage);
+      FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
+      PsiFile file = viewProvider == null ? null : viewProvider.getPsi(myLanguage);
+      return file instanceof PsiFileWithStubSupport ? file : null;
     }
 
     @Override

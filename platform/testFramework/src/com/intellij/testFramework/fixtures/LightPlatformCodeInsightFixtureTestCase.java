@@ -42,9 +42,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
   public LightPlatformCodeInsightFixtureTestCase() { }
 
-  /** @deprecated call {@link #LightPlatformCodeInsightFixtureTestCase()} instead (to be removed in IDEA 16) */
-  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) { }
-
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
 

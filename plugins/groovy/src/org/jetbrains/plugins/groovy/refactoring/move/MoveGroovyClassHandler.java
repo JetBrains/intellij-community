@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -75,8 +76,13 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final PsiClass[] classes = ((GroovyFile)file).getClasses();
       if (classes.length == 1) {
         if (!moveDestination.equals(file.getContainingDirectory())) {
+          Project project = file.getProject();
           MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
+
+          DumbService.getInstance(project).completeJustSubmittedTasks();
+
           file = moveDestination.findFile(file.getName());
+          assert file != null;
           ((PsiClassOwner)file).setPackageName(newPackageName);
         }
         return ((GroovyFile)file).getScriptClass();

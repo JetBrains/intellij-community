@@ -5,26 +5,26 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyPluginConfigurator;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
 
@@ -189,8 +189,47 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+        boolean hasMoreSubtasks = myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
+        int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          int subtaskSize = myTask.getLastSubtaskIndex() + 1;
+          String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
+          StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
+          if (hasMoreSubtasks) {
+            int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+            StudySubtaskUtils.switchStep(myProject, myTask, nextSubtaskIndex);
+            rememberAnswers(nextSubtaskIndex);
+          }
+        });
+      }
+    }
+  }
+
+  private void rememberAnswers(int nextSubtaskIndex) {
+    VirtualFile taskDir = myTask.getTaskDir(myProject);
+    if (taskDir == null) {
+      return;
+    }
+    VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+    if (srcDir != null) {
+      taskDir = srcDir;
+    }
+    for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+      TaskFile taskFile = entry.getValue();
+      VirtualFile virtualFile = taskDir.findChild(entry.getKey());
+      if (virtualFile == null) {
+        continue;
+      }
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      if (document == null) {
+        continue;
+      }
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        if (placeholder.getSubtaskInfos().containsKey(nextSubtaskIndex - 1)) {
+          int offset = placeholder.getOffset();
+          String answer = document.getText(TextRange.create(offset, offset + placeholder.getRealLength()));
+          placeholder.getSubtaskInfos().get(nextSubtaskIndex - 1).setAnswer(answer);
+        }
       }
     }
   }

@@ -60,6 +60,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +74,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -85,10 +85,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -105,14 +102,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final DaemonCodeAnalyzerSettings mySettings;
   @NotNull private final EditorTracker myEditorTracker;
   @NotNull private final PsiDocumentManager myPsiDocumentManager;
-  private DaemonProgressIndicator myUpdateProgress; //guarded by this
+  private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
   // use scheduler instead of Alarm because the latter requires ModalityState.current() which is obtainable from EDT only which requires too many invokeLaters
   private final ScheduledExecutorService myAlarm = EdtExecutorService.getScheduledExecutorInstance();
   @NotNull
-  private volatile Future myUpdateRunnableFuture = new FixedFuture<>(null);
+  private volatile ScheduledFuture<?> myUpdateRunnableFuture = myAlarm.schedule(EmptyRunnable.getInstance(), 0, TimeUnit.NANOSECONDS);
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<>();
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<>();
@@ -165,8 +162,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Override
-  public void dispose() {
-
+  public synchronized void dispose() {
+    myUpdateProgress = null; // leak of highlight session via user data
+    myUpdateRunnableFuture.cancel(true);
   }
 
   @NotNull
@@ -569,8 +567,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void restart() {
+    doRestart();
+  }
+
+  // return true if the progress was really canceled
+  boolean doRestart() {
     myFileStatusMap.markAllFilesDirty("Global restart");
-    stopProcess(true, "Global restart");
+    return stopProcess(true, "Global restart");
   }
 
   @Override
@@ -618,7 +621,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   synchronized boolean isRunning() {
-    return myUpdateProgress != null && !myUpdateProgress.isCanceled();
+    return !myUpdateProgress.isCanceled();
   }
   
   @TestOnly
@@ -627,22 +630,29 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return isRunning() || !myUpdateRunnableFuture.isDone();
   }
 
-  synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
-    cancelUpdateProgress(toRestartAlarm, reason);
-    myUpdateRunnableFuture.cancel(false);
+  // return true if the progress really was canceled
+  synchronized boolean stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
+    boolean canceled = cancelUpdateProgress(toRestartAlarm, reason);
+    // optimisation: this check is to avoid too many re-schedules in case of thousands of events spikes
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
-    if (restart) {
+    if (restart && myUpdateRunnableFuture.isDone()) {
+      myUpdateRunnableFuture.cancel(false);
       myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
     }
+
+    return canceled;
   }
 
-  private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    if (myUpdateProgress != null) {
-      PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
+  // return true if the progress really was canceled
+  private synchronized boolean cancelUpdateProgress(boolean toRestartAlarm, @NonNls String reason) {
+    boolean wasCanceled = myUpdateProgress.isCanceled();
+    myPassExecutorService.cancelAll(false);
+    if (!wasCanceled) {
+      PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, toRestartAlarm);
       myUpdateProgress.cancel();
-      myPassExecutorService.cancelAll(false);
-      myUpdateProgress = null;
+      return true;
     }
+    return false;
   }
 
 
@@ -885,7 +895,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NotNull
   private synchronized DaemonProgressIndicator createUpdateProgress() {
     DaemonProgressIndicator old = myUpdateProgress;
-    if (old != null && !old.isCanceled()) {
+    if (!old.isCanceled()) {
       old.cancel();
     }
     DaemonProgressIndicator progress = new DaemonProgressIndicator() {
@@ -909,6 +919,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @TestOnly
+  @NotNull
   synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }

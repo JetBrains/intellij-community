@@ -21,7 +21,6 @@ import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -202,14 +201,14 @@ public class SafeDeleteDialog extends DialogWrapper {
       return;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
+    NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
       if (myCallback != null && isSafeDelete()) {
         myCallback.run(this);
       }
       else {
         super.doOKAction();
       }
-    }));
+    });
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     if (myCbSafeDelete != null) {

@@ -16,179 +16,193 @@
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.intellij.lang.annotations.Language
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 
-import java.util.regex.Pattern
-
-import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_FILE_TYPE
-import static org.jetbrains.plugins.groovy.util.TestUtils.CARET_MARKER
-
+@CompileStatic
 class GrChangeToOperatorTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
-  def inspection = new ChangeToOperatorInspection()
+  final ChangeToOperatorInspection inspection = new ChangeToOperatorInspection()
+
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    fixture.with {
+      addFileToProject 'Operators.groovy', '''\
+class Operators {
+  def bitwiseNegate() { null }
+  def negative() { null }
+  def positive() { null }
+  def call() { null }
+  def next() { null }
+  def previous() { null }
+  def plus(b) { null }
+  def minus(b) { null }
+  def multiply(b) { null }
+  def power(b) { null }
+  def div(b) { null }
+  def mod(b) { null }
+  def or(b) { null }
+  def and(b) { null }
+  def xor(b) { null }
+  def leftShift(b) { null }
+  def rightShift(b) { null }
+  def rightShiftUnsigned(b) { null }
+  def asType(b) { null }
+  def getAt(b) { null }
+  def putAt(b, c) { null }
+  boolean asBoolean() { true }
+  boolean isCase(b) { true }
+  boolean equals(b) { true }
+  int compareTo(b) { 0 }
+}
+'''
+      enableInspections inspection
+    }
+  }
 
   void testSimpleUnaryExpression() {
-    assertValid(/a.bitwiseNegate()/, /~a/)
-    assertValid(/a.negative()/, /-a/)
-    assertValid(/a.positive()/, /+a/)
-//    assertValid(/a.call()/, /a()/)
-    assertValid(/a.next()/, /++a/)
-    assertValid(/a.previous()/, /--a/)
+    doTest "a.bitwiseNegate()", "~a"
+    doTest "a.negative()", "-a"
+    doTest "a.positive()", "+a"
+    doTest "a.next()", "++a"
+    doTest "a.previous()", "--a"
   }
 
   void testNegatableUnaryExpression() {
-    assertValid(/a.asBoolean()/, /!!a/)
-    assertValid(/!a.asBoolean()/, /!a/)
-
-    assertValid(/if (${_}a.asBoolean()${_});/, /a/)
-    assertValid(/if (${_}!a.asBoolean()${_});/, /!a/)
-  }
-
-  void testComplexNegatableUnaryExpression() {
-    assertValid(/if (${_}'a'.intern().asBoolean()${_});/, /'a'.intern()/)
+    doTest "a.asBoolean()", "!!a"
+    doTest "!a.asBoolean()", "!a"
+    doTest "if (a.asBoo<caret>lean());", "if (a);"
+    doTest "if (!a.asBo<caret>olean());", "if (!a);"
+    doTest "if ('a'.intern().as<caret>Boolean());", "if ('a'.intern());"
   }
 
   void testNegatedOption() {
     inspection.useDoubleNegation = false
-
-    assertValid(/a.asBoolean()/)
-    assertValid(/!a.asBoolean()/, /!a/)
-
-    assertValid(/if (${_}a.asBoolean()${_});/, /a/)
-    assertValid(/if (${_}!a.asBoolean()${_});/, /!a/)
-  }
-
-  void testComplexNegatedOption() {
-    inspection.useDoubleNegation = false
-
-    assertValid(/if (${_}'a'.intern().asBoolean()${_});/, /'a'.intern()/)
+    doTest "a.asBoolean()"
+    doTest "!a.asBoolean()", "!a"
+    doTest "if (a.as<caret>Boolean());", "if (a);"
+    doTest "if (!a.asB<caret>oolean());", "if (!a);"
+    doTest "if ('a'.intern().asBool<caret>ean());", "if ('a'.intern());"
   }
 
   void testSimpleBinaryExpression() {
-    assertValid(/a.minus(b)/, /a - b/)
-    assertValid(/a.plus(b)/, /a + b/)
-    assertValid(/a.power(b)/, /a**b/)
-    assertValid(/a.div(b)/, $/a / b/$)
-    assertValid(/a.mod(b)/, /a % b/)
-    assertValid(/a.or(b)/, /a | b/)
-    assertValid(/a.and(b)/, /a & b/)
-    assertValid(/a.xor(b)/, /a ^ b/)
-    assertValid(/a.leftShift(b)/, /a << b/)
-    assertValid(/a.rightShift(b)/, /a >> b/)
-    assertValid(/a.rightShiftUnsigned(b)/, /a >>> b/)
-
-    assertValid(/a.asType(String)/, /a as String/)
-    assertValid(/a.multiply(b)/, /a * b/)
-
-    assertValid(/(a.toString() as Operators).minus(b.hashCode())/, /(a.toString() as Operators) - b.hashCode()/)
-
-    assertValid(/!${_}a.asType(String)${_}/, /(a as String)/)
-
-    assertValid(/${_}a.xor((a.b+1) == b)${_} == a/, /(a ^ ((a.b + 1) == b))/)
+    [
+      "a.plus(b)"              : "a + b",
+      "a.minus(b)"             : "a - b",
+      "a.multiply(b)"          : "a * b",
+      "a.div(b)"               : "a / b",
+      "a.power(b)"             : "a**b",
+      "a.mod(b)"               : "a % b",
+      "a.or(b)"                : "a | b",
+      "a.and(b)"               : "a & b",
+      "a.xor(b)"               : "a ^ b",
+      "a.leftShift(b)"         : "a << b",
+      "a.rightShift(b)"        : "a >> b",
+      "a.rightShiftUnsigned(b)": "a >>> b",
+      "a.asType(String)"       : "a as String",
+      "!a.asType(String)"      : "!(a as String)",
+    ].each {
+      doTest it.key, it.value
+    }
   }
 
   void testComplexBinaryExpression() {
-    assertValid(/b.isCase(a)/, /a in b/)
-    assertValid(/if (${_}[1, 2, 3].isCase(2-1)${_});/, /(2 - 1) in [1, 2, 3]/)
-    assertValid(/def x = ${_}"1".plus(1)${_}/, /"1" + 1/)
-    assertValid(/("1" + 1).plus(1)/, /("1" + 1) + 1/)
-    assertValid(/!a.toString().asBoolean()/, /!a.toString()/)
+    [
+      "(a.toString() as Operators).minus(b.hashCode())": "(a.toString() as Operators) - b.hashCode()",
+      "b.isCase(a)"                                    : "a in b",
+      "if ([1, 2, 3].is<caret>Case(2-1));"             : "if ((2 - 1) in [1, 2, 3]);",
+      'def x = "1".p<caret>lus(1)'                     : 'def x = "1" + 1',
+      '("1" + 1).plus(1)'                              : '("1" + 1) + 1',
+      '!a.toString().asBoolean()'                      : '!a.toString()',
+      "a.xor((a.b + 1) == b) == a"                     : "(a ^ ((a.b + 1) == b)) == a",
+    ].each {
+      doTest it.key, it.value
+    }
   }
 
   void testNegatableBinaryExpression() {
-    assertValid(/a.equals(b)/, /a == b/)
-    assertValid(/!a.equals(b)/, /a != b/)
+    doTest "a.equals(b)", "a == b"
+    doTest "!a.equals(b)", "a != b"
   }
 
   void testComplexNegatableBinaryExpression() {
-    assertValid(/!(1.toString().replace('1', '2')+"").equals(2.toString())/, /(1.toString().replace('1', '2') + "") != 2.toString()/)
+    doTest(/!(1.toString().replace('1', '2')+"").equals(2.toString())/, /(1.toString().replace('1', '2') + "") != 2.toString()/)
   }
 
   void testCompareTo() {
-    assertValid(/a.compareTo(b)/, /a <=> b/)
-    assertValid(/a.compareTo(b) < 0/, /a < b/)
-    assertValid(/a.compareTo(b) <= 0/, /a <= b/)
-    assertValid(/a.compareTo(b) == 0/, /a == b/)
-    assertValid(/a.compareTo(b) != 0/, /a != b/)
-    assertValid(/a.compareTo(b) >= 0/, /a >= b/)
-    assertValid(/a.compareTo(b) > 0/, /a > b/)
-
-    assertValid(/if (${_}(2-1).compareTo(3) > 0${_});/, /(2 - 1) > 3/)
+    doTest "a.compareTo(b)", "a <=> b"
+    doTest "a.compareTo(b) < 0", "a < b"
+    doTest "a.compareTo(b) <= 0", "a <= b"
+    doTest "a.compareTo(b) == 0", "a == b"
+    doTest "a.compareTo(b) != 0", "a != b"
+    doTest "a.compareTo(b) >= 0", "a >= b"
+    doTest "a.compareTo(b) > 0", "a > b"
+    doTest "if ((2-1).compa<caret>reTo(3) > 0);", /if ((2 - 1) > 3);/
   }
 
   void testCompareToOption() {
     inspection.shouldChangeCompareToEqualityToEquals = false
-    assertValid(/a.compareTo(b) == 0/)
-    assertValid(/a.compareTo(b) != 0/)
+    doTest "a.compareTo(b) == 0"
+    doTest "a.compareTo(b) != 0"
   }
 
   void testGetAndPut() {
-    assertValid(/a.getAt(b)/, /a[b]/)
-    assertValid(/a.putAt(b, 'c')/, /a[b] = 'c'/)
-
-    assertValid(/a.putAt(b, 'c'*2)/, /a[b] = ('c' * 2)/)
+    doTest "a.getAt(b)", "a[b]"
+    doTest "a.putAt(b, 'c')", "a[b] = 'c'"
+    doTest "a.putAt(b, 'c'*2)", "a[b] = ('c' * 2)"
   }
 
-  final _ = '/*placeholder*/'
-  @Language('Groovy') final DECLARATIONS = '''
-    @SuppressWarnings("GrMethodMayBeStatic")
-    class Operators {
-      def bitwiseNegate() { null }
-      def negative() { null }
-      def positive() { null }
-      def call() { null }
-      def next() { null }
-      def previous() { null }
-      def plus(b) { null }
-      def minus(b) { null }
-      def multiply(b) { null }
-      def power(b) { null }
-      def div(b) { null }
-      def mod(b) { null }
-      def or(b) { null }
-      def and(b) { null }
-      def xor(b) { null }
-      def leftShift(b) { null }
-      def rightShift(b) { null }
-      def rightShiftUnsigned(b) { null }
-      def asType(b) { null }
-      def getAt(b) { null }
-      def putAt(b, c) { null }
+  final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'
 
-      boolean asBoolean() { true }
-      boolean isCase(b) { true }
-      boolean equals(b) { true }
-      int compareTo(b) { 0 }
+  private void doTest(String before, String after = null) {
+    fixture.with {
+      configureByText '_.groovy', "$DECLARATIONS$before"
+      moveCaret()
+      def intentions = filterAvailableIntentions('Replace ')
+      if (after) {
+        assert intentions
+        launchAction intentions.first()
+        checkResult "$DECLARATIONS$after"
+      }
+      else {
+        assert !intentions
+      }
+    }
+  }
+
+  private void moveCaret() {
+    def statement = (fixture.file as GroovyFile).statements.last()
+    GrMethodCall call = null
+
+    if (statement instanceof GrMethodCall) {
+      call = statement as GrMethodCall
+    }
+    else if (statement instanceof GrUnaryExpression) {
+      def operand = (statement as GrUnaryExpression).operand
+      if (operand instanceof GrMethodCall) {
+        call = operand as GrMethodCall
+      }
+    }
+    else if (statement instanceof GrBinaryExpression) {
+      def left = (statement as GrBinaryExpression).leftOperand
+      if (left instanceof GrMethodCall) {
+        call = left as GrMethodCall
+      }
     }
 
-    def (Operators a, Operators b) = [null, null]
-  '''
-
-  private void assertValid(@Language('Groovy') String text, @Language('Groovy') String methodReplacement) {
-    def (prefix, method, suffix) = getMessage(text)
-    configure("${prefix}${CARET_MARKER}${method}${suffix}")
-    myFixture.launchAction(myFixture.findSingleIntention("Change '"))
-    myFixture.checkResult("${DECLARATIONS}  ${prefix}${methodReplacement}${suffix}")
-  }
-
-  private void assertValid(@Language('Groovy') String text) {
-    configure(text)
-    assertEmpty myFixture.getAvailableIntentions()
-  }
-
-  private configure(@Language('Groovy') String text) {
-    myFixture.enableInspections(inspection)
-    myFixture.configureByText(GROOVY_FILE_TYPE, "${DECLARATIONS}  ${text}")
-  }
-
-  private getMessage(String text) {
-    def _ = Pattern.quote(_)
-    def (__, prefix, method, suffix) = (text =~ /^(?:(.*?)${_})?(.+?)(?:${_}(.*?))?$/)[0]
-    [prefix ?: '', method, suffix ?: '']
+    if (call) {
+      def invoked = call.invokedExpression as GrReferenceExpression
+      fixture.editor.caretModel.moveToOffset(invoked.referenceNameElement.textRange.startOffset)
+    }
   }
 }

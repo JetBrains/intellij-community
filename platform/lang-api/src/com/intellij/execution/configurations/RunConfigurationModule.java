@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public void readExternal(@NotNull Element element) {
     List<Element> modules = element.getChildren(ELEMENT);
     if (!modules.isEmpty()) {
@@ -97,7 +96,8 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @Nullable
   @Transient
   public Module getModule() {
-    if (myModuleName != null) { //caching
+    //caching
+    if (myModuleName != null) {
       myModule = findModule(myModuleName);
     }
     if (myModule != null && myModule.isDisposed()) {
@@ -107,18 +107,11 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   @Nullable
-  public Module findModule(final String moduleName) {
+  public Module findModule(@NotNull String moduleName) {
     if (myProject.isDisposed()) {
       return null;
     }
-
-    return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-      @Nullable
-      @Override
-      public Module compute() {
-        return getModuleManager().findModuleByName(moduleName);
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<Module>)() -> getModuleManager().findModuleByName(moduleName));
   }
 
   public void setModule(final Module module) {

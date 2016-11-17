@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
@@ -27,16 +26,13 @@ import static java.lang.String.format;
  * a.equals(b)  → (a == b)
  * !a.equals(b) → (a != b)
  */
-public class BinaryTransformation extends Transformation {
-  public BinaryTransformation(@Nullable IElementType operator) {
-    super(operator);
-  }
+abstract class BinaryTransformation extends Transformation {
 
   @Override
   @Nullable
   public String getReplacement(MethodCallData methodInfo, OptionsData optionsData) {
     String lhs = getLhs(methodInfo);
-    IElementType operator = getOperator(methodInfo, optionsData);
+    String operator = getOperator(methodInfo, optionsData);
     String rhs = getRhs(methodInfo);
     if (lhs == null || operator == null || rhs == null) return null;
 
@@ -49,9 +45,7 @@ public class BinaryTransformation extends Transformation {
   }
 
   @Nullable
-  protected IElementType getOperator(MethodCallData methodInfo, OptionsData optionsData) {
-    return operator;
-  }
+  protected abstract String getOperator(MethodCallData methodInfo, OptionsData optionsData);
 
   @Nullable
   protected String getRhs(MethodCallData methodInfo) {

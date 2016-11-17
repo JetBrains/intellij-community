@@ -64,16 +64,17 @@ public abstract class LeafElement extends TreeElement {
   @NotNull
   @Override
   public String getText() {
-    if (myText.length() > 1000 && !(myText instanceof String)) { // e.g. a large text file
-      String text = SoftReference.dereference(getUserData(CACHED_TEXT));
-      if (text == null) {
-        text = myText.toString();
-        putUserData(CACHED_TEXT, new SoftReference<String>(text));
+    CharSequence text = myText;
+    if (text.length() > 1000 && !(text instanceof String)) { // e.g. a large text file
+      String cachedText = SoftReference.dereference(getUserData(CACHED_TEXT));
+      if (cachedText == null) {
+        cachedText = text.toString();
+        putUserData(CACHED_TEXT, new SoftReference<String>(cachedText));
       }
-      return text;
+      return cachedText;
     }
 
-    return myText.toString();
+    return text.toString();
   }
 
   public char charAt(int position) {
@@ -99,10 +100,10 @@ public abstract class LeafElement extends TreeElement {
   @Override
   public boolean textContains(char c) {
     final CharSequence text = myText;
-    final int len = myText.length();
+    final int len = text.length();
 
     if (len > TEXT_MATCHES_THRESHOLD) {
-      char[] chars = CharArrayUtil.fromSequenceWithoutCopying(myText);
+      char[] chars = CharArrayUtil.fromSequenceWithoutCopying(text);
       if (chars != null) {
         for (char aChar : chars) {
           if (aChar == c) return true;
@@ -121,8 +122,7 @@ public abstract class LeafElement extends TreeElement {
   @Override
   protected int textMatches(@NotNull CharSequence buffer, int start) {
     assert start >= 0 : start;
-    final CharSequence text = myText;
-    return leafTextMatches(text, buffer, start);
+    return leafTextMatches(myText, buffer, start);
   }
 
   static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {

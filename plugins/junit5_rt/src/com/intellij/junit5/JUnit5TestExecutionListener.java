@@ -16,6 +16,7 @@
 package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
+import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
@@ -34,7 +35,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
@@ -158,20 +158,20 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       else if (status == TestExecutionResult.Status.ABORTED) {
         messageName = MapSerializerUtil.TEST_IGNORED;
       }
-      if (messageName != null && myFinishCount == 0) {
+      if (messageName != null) {
+        if (status == TestExecutionResult.Status.FAILED) {
+          myPrintStream.println("\n##teamcity[testStarted name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
+          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, JUnit4TestListener.CLASS_CONFIGURATION, messageName, throwableOptional, 0, reason, true);
+          myPrintStream.println("\n##teamcity[testFinished name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
+        }
+
         final Set<TestIdentifier> descendants = myTestPlan.getDescendants(testIdentifier);
-        if (!descendants.isEmpty()) {
+        if (!descendants.isEmpty() && myFinishCount == 0) {
           for (TestIdentifier childIdentifier : descendants) {
             testStarted(childIdentifier);
-            testFailure(childIdentifier, messageName, throwableOptional, 0, reason, true);
+            testFailure(childIdentifier, MapSerializerUtil.TEST_IGNORED, status == TestExecutionResult.Status.ABORTED ? throwableOptional : null, 0, reason, status == TestExecutionResult.Status.ABORTED);
             testFinished(childIdentifier, 0);
           }
-        }
-        else {
-          testStarted(testIdentifier);
-          testFailure(testIdentifier, messageName, throwableOptional, 0, reason, true);
-          testFinished(testIdentifier, 0);
-          myFinishCount++;
         }
       }
       myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "\']");
@@ -189,16 +189,26 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private void testFinished(TestIdentifier testIdentifier, long duration) {
     myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
   }
-  
+
   private void testFailure(TestIdentifier testIdentifier,
-                           String messageName, 
+                           String messageName,
                            Throwable ex,
-                           long duration, 
+                           long duration,
+                           String reason,
+                           boolean includeThrowable) {
+    testFailure(testIdentifier.getDisplayName(), testIdentifier.getUniqueId().toString(), messageName, ex, duration, reason, includeThrowable);
+  }
+
+  private void testFailure(String methodName,
+                           String id,
+                           String messageName,
+                           Throwable ex,
+                           long duration,
                            String reason,
                            boolean includeThrowable) {
     final Map<String, String> attrs = new HashMap<>();
-    attrs.put("name", testIdentifier.getDisplayName());
-    attrs.put("id", testIdentifier.getUniqueId().toString());
+    attrs.put("name", methodName);
+    attrs.put("id", id);
     if (duration > 0) {
       attrs.put("duration", Long.toString(duration));
     }
@@ -210,7 +220,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         ComparisonFailureData failureData = null;
         if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
           for (AssertionError assertionError : ((MultipleFailuresError)ex).getFailures()) {
-            testFailure(testIdentifier, messageName, assertionError, duration, reason, false);
+            testFailure(methodName, id, messageName, assertionError, duration, reason, false);
           }
         }
         else if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {

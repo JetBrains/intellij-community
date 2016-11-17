@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +79,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     ActionManager manager = ActionManager.getInstance();
     List<AnAction> actions = ContainerUtil.newArrayList();
 
-    Utils.expandActionGroup(getUnversionedActionGroup(), actions, new PresentationFactory(), dataContext, "", manager);
+    Utils.expandActionGroup(LaterInvocator.isInModalContext(), getUnversionedActionGroup(), actions, new PresentationFactory(), dataContext, "", manager);
     for (AnAction action : actions) {
       action.registerCustomShortcutSet(action.getShortcutSet(), component);
     }

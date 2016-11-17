@@ -93,7 +93,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
             return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
-      else if (getPosition(editor, offset + 1).isAt(BlockClosingBrace)) {
+      else if (getPosition(editor, offset + 1).matchesRule(
+        position -> position.isAt(BlockClosingBrace) && !position.after().afterOptional(Whitespace).isAt(Comma))) {
         return myFactory.createIndentCalculator(
           NONE,
           position -> {
@@ -133,7 +134,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(BlockOpeningBrace)
+        position -> position.before().isAt(BlockOpeningBrace) && !position.before().beforeOptional(Whitespace).isAt(LeftParenthesis)
       )) {
         SemanticEditorPosition position = getPosition(editor, offset).before();
         return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, position), this::getBlockStatementStartOffset);

@@ -72,14 +72,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
-  /** todo remove in IDEA 16 */
-  @Deprecated public boolean AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
-
-  /** todo remove in IDEA 16 */
-  @Deprecated
-  public boolean SHOW_STATIC_AFTER_INSTANCE;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 

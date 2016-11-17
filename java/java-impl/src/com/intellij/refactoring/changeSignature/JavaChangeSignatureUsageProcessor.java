@@ -827,11 +827,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           parameter.getNameIdentifier().replace(newIdentifier);
         }
 
-        final PsiTypeElement typeElement = parameter.getTypeElement();
+        PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
+          parameter.normalizeDeclaration();
+          typeElement = parameter.getTypeElement();
           String oldType = oldParameterTypes[index];
           if (!oldType.equals(info.getTypeText())) {
-            parameter.normalizeDeclaration();
             PsiType newType =
               substitutor.substitute(info.createType(changeInfo.getMethod().getParameterList(), changeInfo.getMethod().getManager()));
             typeElement.replace(factory.createTypeElement(newType));

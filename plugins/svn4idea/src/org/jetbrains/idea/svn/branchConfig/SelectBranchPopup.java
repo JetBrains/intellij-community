@@ -197,9 +197,9 @@ public class SelectBranchPopup {
     @Nullable
     private void loadBranches(final String selectedBranchesHolder, final Runnable runnable) {
       final ProgressManager pm = ProgressManager.getInstance();
-      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches")) {
+      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
         @Override
-        protected void doInAwtIfFail(Exception e) {
+        protected void doInAwtIfFail(@NotNull Exception e) {
           runnable.run();
         }
 

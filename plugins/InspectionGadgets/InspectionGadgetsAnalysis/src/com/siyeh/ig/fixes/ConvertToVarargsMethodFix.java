@@ -75,6 +75,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     }
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiParameter lastParameter = parameters[parameters.length - 1];
+    lastParameter.normalizeDeclaration();
     final PsiType type = lastParameter.getType();
     if (!(type instanceof PsiArrayType)) {
       return;

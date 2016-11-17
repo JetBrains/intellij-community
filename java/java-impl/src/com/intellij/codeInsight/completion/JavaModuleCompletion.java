@@ -88,18 +88,21 @@ class JavaModuleCompletion {
   }
 
   private static void addModuleReferences(PsiElement context, Consumer<LookupElement> result) {
-    PsiJavaModule host = PsiTreeUtil.getParentOfType(context, PsiJavaModule.class);
-    if (host != null) {
-      String hostName = host.getModuleName();
-      Project project = context.getProject();
-      JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
-      GlobalSearchScope scope = ProjectScope.getAllScope(project);
-      index.processAllKeys(project, name -> {
-        if (!name.equals(hostName) && index.get(name, project, scope).size() == 1) {
-          result.consume(new OverrideableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
-        }
-        return true;
-      });
+    PsiElement statement = context.getParent();
+    if (!(statement instanceof PsiJavaModule)) {
+      PsiElement host = statement.getParent();
+      if (host instanceof PsiJavaModule) {
+        String hostName = ((PsiJavaModule)host).getModuleName();
+        Project project = context.getProject();
+        JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
+        GlobalSearchScope scope = ProjectScope.getAllScope(project);
+        index.processAllKeys(project, name -> {
+          if (!name.equals(hostName) && index.get(name, project, scope).size() == 1) {
+            result.consume(new OverrideableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
+          }
+          return true;
+        });
+      }
     }
   }
 

@@ -1670,23 +1670,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClass(PsiClass clazz) {
+    PsiClass clazz2 = (PsiClass)myMatchingVisitor.getElement();
     if (clazz.hasTypeParameters()) {
-      myMatchingVisitor
-        .setResult(
-          myMatchingVisitor.match(clazz.getTypeParameterList(), ((PsiClass)myMatchingVisitor.getElement()).getTypeParameterList()));
-
+      myMatchingVisitor.setResult(myMatchingVisitor.match(clazz.getTypeParameterList(), clazz2.getTypeParameterList()));
       if (!myMatchingVisitor.getResult()) return;
     }
 
-    PsiClass clazz2;
-
-    if (myMatchingVisitor.getElement() instanceof PsiDeclarationStatement &&
-        myMatchingVisitor.getElement().getFirstChild() instanceof PsiClass
-      ) {
-      clazz2 = (PsiClass)myMatchingVisitor.getElement().getFirstChild();
-    }
-    else {
-      clazz2 = (PsiClass)myMatchingVisitor.getElement();
+    final PsiDocComment comment = clazz.getDocComment();
+    if (comment != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(comment, clazz2));
+      if (!myMatchingVisitor.getResult()) return;
     }
 
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(clazz.getNameIdentifier());

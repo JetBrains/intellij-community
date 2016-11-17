@@ -30,6 +30,8 @@ public abstract class EqualityOperatorComparesObjectsInspectionTestBase extends 
   public void testPrimitiveComparison() { assertQuickfixNotAvailable(); }
   public void testSimpleObjectComparison() { doTest(true, false); }
   public void testNegatedObjectComparison() { doTest(false, false); }
+  public void testCompareThisInEqualsMethod() { assertQuickfixNotAvailable(); }
+  public void testCompareFieldInEqualsMethod() { doTest(true, false); }
 
   @Override
   protected void setUp() throws Exception {

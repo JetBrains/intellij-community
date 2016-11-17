@@ -107,15 +107,19 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract, boolean checkRunWith) {
+    return isTestMethod(location, checkAbstract, checkRunWith, true);
+  }
+
+  public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract, boolean checkRunWith, boolean checkClass) {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
-    if (aClass == null || !isTestClass(aClass, checkAbstract, true)) return false;
+    if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
     if (isTestAnnotated(psiMethod)) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
-    if (checkRunWith) {
+    if (checkClass && checkRunWith) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
       if (annotation != null) {
         return !isParameterized(annotation);
@@ -124,8 +128,11 @@ public class JUnitUtil {
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
-    PsiClass testCaseClass = getTestCaseClassOrNull(location);
-    return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true) && PsiType.VOID.equals(psiMethod.getReturnType());
+    if (checkClass) {
+      PsiClass testCaseClass = getTestCaseClassOrNull(location);
+      if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
+    }
+    return PsiType.VOID.equals(psiMethod.getReturnType());
   }
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {

@@ -50,13 +50,15 @@ public class StudySmartChecker {
       if (windowDocument != null) {
         final File resourceFile =
           StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
-        final TaskFile windowTaskFile = new TaskFile();
-        TaskFile.copy(answerTaskFile, windowTaskFile);
+        TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(virtualFile.getName());
+        if (windowTaskFile == null) {
+          return;
+        }
         EduDocumentListener listener = new EduDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = placeholder.getOffset();
         int end = start + placeholder.getRealLength();
-        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(placeholder.getIndex());
+        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getActivePlaceholders().get(placeholder.getIndex());
         int userStart = userAnswerPlaceholder.getOffset();
         int userEnd = userStart + userAnswerPlaceholder.getRealLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));

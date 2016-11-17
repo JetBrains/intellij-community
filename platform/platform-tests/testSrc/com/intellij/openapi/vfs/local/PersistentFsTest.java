@@ -15,20 +15,29 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.jar.JarFile;
 
 public class PersistentFsTest extends PlatformTestCase {
@@ -168,5 +177,79 @@ public class PersistentFsTest extends PlatformTestCase {
     }
 
     assertEquals(1, logCount[0]);
+  }
+
+  public void testModCountIncreases() throws IOException {
+    VirtualFile vFile = setupFile();
+    ManagingFS managingFS = ManagingFS.getInstance();
+    int globalModCount = managingFS.getFilesystemModificationCount();
+    final int parentModCount = managingFS.getModificationCount(vFile.getParent());
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      vFile.setWritable(false);
+      return null;
+    });
+
+    assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount + 1, managingFS.getFilesystemModificationCount());
+    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+
+    FSRecords.force();
+    assertTrue(!FSRecords.isDirty());
+    ++globalModCount;
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      vFile.setWritable(true);  // 1
+      vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // 1 + timestamp + length
+      return null;
+    });
+
+    assertEquals(globalModCount + 4, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount + 4, managingFS.getFilesystemModificationCount());
+    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+  }
+
+  @NotNull
+  private static VirtualFile setupFile() throws IOException {
+    File file = IoTestUtil.createTestFile("file.txt");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    return vFile;
+  }
+
+  public void testModCountNotIncreases() throws IOException {
+    VirtualFile vFile = setupFile();
+    ManagingFS managingFS = ManagingFS.getInstance();
+    final int globalModCount = managingFS.getFilesystemModificationCount();
+    final int parentModCount = managingFS.getModificationCount(vFile.getParent());
+
+    FSRecords.force();
+    assertTrue(!FSRecords.isDirty());
+
+    FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      try(DataOutputStream output = attribute.writeAttribute(vFile)) {
+        DataInputOutputUtil.writeINT(output, 1);
+      }
+      return null;
+    });
+
+    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
+    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+
+    assertTrue(FSRecords.isDirty());
+    FSRecords.force();
+    assertTrue(!FSRecords.isDirty());
+
+    //
+    int fileId = ((VirtualFileWithId)vFile).getId();
+    FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
+    FSRecords.setLength(fileId, FSRecords.getLength(fileId));
+
+    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
+    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+    assertTrue(!FSRecords.isDirty());
   }
 }

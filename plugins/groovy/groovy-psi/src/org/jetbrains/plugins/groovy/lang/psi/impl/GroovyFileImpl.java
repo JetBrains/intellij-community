@@ -70,7 +70,8 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author ilyas
  */
-public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
+public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
+
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
@@ -439,7 +440,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (currentPackage != null) {
       final ASTNode currNode = currentPackage.getNode();
       fileNode.replaceChild(currNode, newNode);
-    } else {
+    }
+    else {
       ASTNode anchor = fileNode.getFirstChildNode();
       if (anchor != null && anchor.getElementType() == GroovyTokenTypes.mSH_COMMENT) {
         anchor = anchor.getTreeNext();
@@ -542,8 +544,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   @Override
+  public boolean shouldChangeModificationCount(PsiElement place) {
+    // 1. We actually should never get GrTypeDefinition as a parent, because it is a PsiClass,
+    //    and PsiClasses prevent to go up in a tree any further
+    // 2. If place is under a variable then @BaseScript or @Field may be changed,
+    //    which actually is a change in Java Structure
+    return !isScript() || PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, GrVariableDeclaration.class) != null;
+  }
+
+  @Override
   public String toString() {
-    if (ApplicationManager.getApplication().isUnitTestMode()){
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       return super.toString();
     }
     return "GroovyFileImpl:" + getName();

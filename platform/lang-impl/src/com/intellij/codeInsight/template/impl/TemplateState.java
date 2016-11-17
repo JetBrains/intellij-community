@@ -115,6 +115,7 @@ public class TemplateState implements Disposable {
   }
 
   private void initListeners() {
+    if (isDisposed()) return;
     myEditorDocumentListener = new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -364,7 +365,7 @@ public class TemplateState implements Disposable {
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
       public void undo() {
-        if (myDocument != null) {
+        if (!isDisposed()) {
           fireTemplateCancelled();
           LookupManager.getInstance(myProject).hideActiveLookup();
           int oldVar = myCurrentVariableNumber;
@@ -439,7 +440,7 @@ public class TemplateState implements Disposable {
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
       calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
-      doReformat(null);
+      doReformat();
 
       int nextVariableNumber = getNextVariableNumber(-1);
 
@@ -468,14 +469,7 @@ public class TemplateState implements Disposable {
            "\ntemplateString: " + myTemplate;
   }
 
-  private void doReformat(final TextRange range) {
-    RangeMarker rangeMarker = null;
-    if (range != null) {
-      rangeMarker = myDocument.createRangeMarker(range);
-      rangeMarker.setGreedyToLeft(true);
-      rangeMarker.setGreedyToRight(true);
-    }
-    final RangeMarker finalRangeMarker = rangeMarker;
+  private void doReformat() {
     final Runnable action = () -> {
       IntArrayList indices = initEmptyVariables();
       mySegments.setSegmentsGreedy(false);
@@ -483,7 +477,7 @@ public class TemplateState implements Disposable {
                      "template key: " + myTemplate.getKey() + "; " +
                      "template text" + myTemplate.getTemplateText() + "; " +
                      "variable number: " + getCurrentVariableNumber());
-      reformat(finalRangeMarker);
+      reformat();
       mySegments.setSegmentsGreedy(true);
       restoreEmptyVariables(indices);
     };
@@ -570,7 +564,7 @@ public class TemplateState implements Disposable {
   }
 
   private void focusCurrentExpression() {
-    if (isFinished()) {
+    if (isFinished() || isDisposed()) {
       return;
     }
 
@@ -627,8 +621,9 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
+  @Nullable
   PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument) : null;
   }
 
   private void insertSingleItem(List<TemplateExpressionLookupElement> lookupItems) {
@@ -658,7 +653,7 @@ public class TemplateState implements Disposable {
   }
 
   private void runLookup(final List<TemplateExpressionLookupElement> lookupItems, @Nullable String advertisingText) {
-    if (myEditor == null) return;
+    if (isDisposed()) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
@@ -831,13 +826,14 @@ public class TemplateState implements Disposable {
   }
 
   private void recalcSegment(int segmentNumber, boolean isQuick, Expression expressionNode, Expression defaultValue) {
+    if (isDisposed()) return;
     String oldValue = getExpressionString(segmentNumber);
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = getPsiFile();
-    PsiElement element = psiFile.findElementAt(start);
+    PsiElement element = psiFile != null ? psiFile.findElementAt(start) : null;
     if (element != null) {
       PsiUtilCore.ensureValid(element);
     }
@@ -912,7 +908,7 @@ public class TemplateState implements Disposable {
     if (previousVariableNumber >= 0) {
       focusCurrentHighlighter(false);
       calcResults(false);
-      doReformat(null);
+      doReformat();
       setCurrentVariableNumber(previousVariableNumber);
       focusCurrentExpression();
       currentVariableChanged(oldVar);
@@ -933,13 +929,13 @@ public class TemplateState implements Disposable {
     int nextVariableNumber = getNextVariableNumber(oldVar);
     if (nextVariableNumber == -1) {
       calcResults(false);
-      ApplicationManager.getApplication().runWriteAction(() -> reformat(null));
+      ApplicationManager.getApplication().runWriteAction(() -> reformat());
       finishTemplateEditing();
       return;
     }
     focusCurrentHighlighter(false);
     calcResults(false);
-    doReformat(null);
+    doReformat();
     setCurrentVariableNumber(nextVariableNumber);
     focusCurrentExpression();
     currentVariableChanged(oldVar);
@@ -1033,7 +1029,7 @@ public class TemplateState implements Disposable {
     LookupManager.getInstance(myProject).hideActiveLookup();
     calcResults(false);
     if (!brokenOff) {
-      doReformat(null);
+      doReformat();
     }
     setFinalEditorState(brokenOff);
     cleanupTemplateState(brokenOff);
@@ -1060,6 +1056,7 @@ public class TemplateState implements Disposable {
   }
 
   private void setFinalEditorState(boolean brokenOff) {
+    if (isDisposed()) return;
     myEditor.getSelectionModel().removeSelection();
     if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
 
@@ -1252,7 +1249,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void reformat(RangeMarker rangeMarkerToReformat) {
+  private void reformat() {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
@@ -1284,10 +1281,6 @@ public class TemplateState implements Disposable {
           }
           int reformatStartOffset = myTemplateRange.getStartOffset();
           int reformatEndOffset = myTemplateRange.getEndOffset();
-          if (rangeMarkerToReformat != null) {
-            reformatStartOffset = rangeMarkerToReformat.getStartOffset();
-            reformatEndOffset = rangeMarkerToReformat.getEndOffset();
-          }
           if (dummyAdjustLineMarkerRange == null && endVarOffset >= 0) {
             // There is a possible case that indent marker element was not inserted (e.g. because there is no blank line
             // at the target offset). However, we want to reformat white space adjacent to the current template (if any).
@@ -1303,8 +1296,7 @@ public class TemplateState implements Disposable {
             }
           }
           style.reformatText(file, reformatStartOffset, reformatEndOffset);
-          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+          unblockDocument();
 
           if (dummyAdjustLineMarkerRange != null && dummyAdjustLineMarkerRange.isValid()) {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!

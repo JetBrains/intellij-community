@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -420,7 +421,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (SystemInfo.isMac) {
       boolean keyTyped = e.getID() == KeyEvent.KEY_TYPED;
       boolean hasMnemonicsInWindow = e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
-                  keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
+                                     keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
       boolean imEnabled = IdeEventQueue.getInstance().isInputMethodEnabled();
 
       if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || !imEnabled && keyTyped))  {
@@ -496,29 +497,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    final Container container = getContainer(focusOwner);
+    final Container container = UIUtil.getWindow(focusOwner);
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
-  }
-
-  @Nullable
-  private static Container getContainer(@Nullable final Component focusOwner) {
-    if (focusOwner == null) return null;
-    if (focusOwner.isLightweight()) {
-      Container container = focusOwner.getParent();
-      while (container != null) {
-        final Container parent = container.getParent();
-        if (parent instanceof JLayeredPane) break;
-        if (parent != null && parent.isLightweight()) {
-          container = parent;
-        }
-        else {
-          break;
-        }
-      }
-      return container;
-    }
-
-    return SwingUtilities.windowForComponent(focusOwner);
   }
 
   private static boolean hasMnemonic(final Container container, final int keyCode) {
@@ -529,7 +509,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (component instanceof AbstractButton) {
         final AbstractButton button = (AbstractButton)component;
         if (button instanceof JBOptionButton) {
-          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics()) return true;
+          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
+              button.getMnemonic() == keyCode)
+          {
+            return true;
+          }
         } else {
           if (button.getMnemonic() == keyCode) return true;
         }
@@ -607,7 +591,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
-        ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
+        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
       }
 
       if (dumb && !action.isDumbAware()) {
@@ -879,7 +863,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                                 ActionManager.getInstance(),
                                                 0);
 
-        ActionUtil.performDumbAwareUpdate(action, event, true);
+        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
         return presentation.isEnabled() && presentation.isVisible();
       })) {
         @Override

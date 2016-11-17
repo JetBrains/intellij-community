@@ -272,11 +272,6 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
-  // TODO: To be removed in IDEA 16.
-  @Deprecated
-  @Nullable
-  public abstract VcsEventsListenerManager getVcsEventsListenerManager();
-
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);

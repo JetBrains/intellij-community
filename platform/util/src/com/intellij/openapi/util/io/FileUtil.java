@@ -647,12 +647,6 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.toSystemIndependentName(aFileName);
   }
 
-  /** @deprecated to be removed in IDEA 17 */
-  @SuppressWarnings({"unused", "StringToUpperCaseOrToLowerCaseWithoutLocale"})
-  public static String nameToCompare(@NotNull String name) {
-    return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
-  }
-
   /**
    * Converts given path to canonical representation by eliminating '.'s, traversing '..'s, and omitting duplicate separators.
    * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from

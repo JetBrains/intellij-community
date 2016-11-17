@@ -50,7 +50,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
     final StudyState studyState = new StudyState(selectedEditor);
-    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(studyState.getTaskDir());
+    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, studyState.getTaskDir());
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
       return;

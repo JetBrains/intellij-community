@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
-
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +87,7 @@ public class TemplateContext {
 
   // used during initialization => no sync
   @VisibleForTesting
-  public void readTemplateContext(Element element) {
+  public void readTemplateContext(@NotNull Element element) {
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
@@ -124,20 +123,53 @@ public class TemplateContext {
   }
 
   @VisibleForTesting
-  public void writeTemplateContext(Element element) throws WriteExternalException {
+  @Nullable
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
+    if (myContextStates.isEmpty()) {
+      return null;
+    }
+
+    Map<String, TemplateContextType> idToType = new THashMap<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      Boolean ownValue = getOwnValue(type);
-      if (ownValue != null) {
-        TemplateContextType base = type.getBaseContextType();
-        boolean baseEnabled = base != null && isEnabled(base);
-        if (ownValue != baseEnabled) {
-          Element optionElement = new Element("option");
-          optionElement.setAttribute("name", type.getContextId());
-          optionElement.setAttribute("value", ownValue.toString());
-          element.addContent(optionElement);
-        }
+      idToType.put(type.getContextId(), type);
+    }
+
+    Element element = new Element(TemplateSettings.CONTEXT);
+    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+      Boolean ownValue = entry.getValue();
+      if (ownValue == null) {
+        continue;
+      }
+
+      TemplateContextType type = idToType.get(entry.getKey());
+      if (type == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
+        JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
+      }
+      else if (isNotDefault(ownValue, type, defaultContext)) {
+        JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
       }
     }
+    return element;
+  }
+
+  /**
+   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * Base value is `false`.
+   *
+   * If default value is defined (as in our example) — we must not take base value in account.
+   * Because on init `setDefaultContext` will be called and we will have own value.
+   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * See TemplateSchemeTest.
+   */
+  boolean isNotDefault(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    if (defaultValue == null) {
+      TemplateContextType base = type.getBaseContextType();
+      boolean baseEnabled = base != null && isEnabled(base);
+      return ownValue != baseEnabled;
+    }
+    return !ownValue.equals(defaultValue);
   }
 
   @Override

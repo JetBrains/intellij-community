@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -208,9 +209,28 @@ public abstract class DumbService {
     return new ArrayList<T>(collection);
   }
 
+  /**
+   * Queues a task to be executed in "dumb mode", where access to indices is forbidden. Tasks are executed sequentially
+   * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.<p/>
+   *
+   * Tasks can specify custom "equality" policy via their constructor. Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
+   */
   public abstract void queueTask(@NotNull DumbModeTask task);
-  
+
+  /**
+   * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
+   * will throw {@link com.intellij.openapi.progress.ProcessCanceledException}.
+   */
   public abstract void cancelTask(@NotNull DumbModeTask task);
+
+  /**
+   * Runs the "just submitted" tasks under a modal dialog. "Just submitted" means that tasks were queued for execution
+   * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment. Otherwise this method does nothing.<p/>
+   *
+   * This functionality can be useful in refactorings (invoked in "smart mode"), when after VFS or root changes
+   * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").
+   */
+  public abstract void completeJustSubmittedTasks();
 
   public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
 
@@ -279,19 +299,13 @@ public abstract class DumbService {
   public abstract boolean isAlternativeResolveEnabled();
 
   /**
-   * By default, dumb mode tasks (including indexing) are allowed in non-modal state only. The reason is that
-   * when some code shows a dialog, it probably does't expect that after the dialog is closed the dumb mode will be on.
-   * Therefore any dumb mode started within a dialog is considered a mistake, performed under modal progress and reported as an exception.<p/>
-   *
-   * If the dialog (e.g. Project Structure) starting background dumb mode is an expected situation, the dumb mode should be started inside the runnable
-   * passed to this method. This will suppress the exception and allow either modal or background indexing. Note that this will only affect the invocation time
-   * modality state, so showing other dialogs from within the runnable and starting dumb mode from them would still result in an assertion failure.<p/>
-   *
-   * If this exception occurs inside invokeLater call which happens to run when a modal dialog is shown, the correct fix is supplying an explicit modality state
-   * in {@link com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState)}.
+   * Obsolete, does nothing, just executes the passed runnable.
+   * @see #completeJustSubmittedTasks()
    */
+  @SuppressWarnings({"deprecation", "unused"})
+  @Deprecated
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
-    ServiceManager.getService(DumbPermissionService.class).allowStartingDumbModeInside(permission, runnable);
+    runnable.run();
   }
 
   /**

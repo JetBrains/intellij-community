@@ -741,16 +741,6 @@ public abstract class UsefulTestCase extends TestCase {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
-  /** @deprecated use {@link PlatformTestUtil#lowercaseFirstLetter(String, boolean)} (to be removed in IDEA 17) */
-  public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
-    return PlatformTestUtil.lowercaseFirstLetter(name, lowercaseFirstLetter);
-  }
-
-  /** @deprecated use {@link PlatformTestUtil#isAllUppercaseName(String)} (to be removed in IDEA 17) */
-  public static boolean isAllUppercaseName(String name) {
-    return PlatformTestUtil.isAllUppercaseName(name);
-  }
-
   protected String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
