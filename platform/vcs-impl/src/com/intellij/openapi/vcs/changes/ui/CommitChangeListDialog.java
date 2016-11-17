@@ -83,12 +83,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final CommitMessage myCommitMessageArea;
-  private Splitter mySplitter;
+  @NotNull private final Splitter mySplitter;
   @Nullable private final JPanel myAdditionalOptionsPanel;
 
   @NotNull private final ChangesBrowserBase<?> myBrowser;
 
-  private CommitLegendPanel myLegend;
+  @NotNull private final CommitLegendPanel myLegend;
   @NotNull private final MyChangeProcessor myDiffDetails;
 
   @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = ContainerUtil.newArrayList();
@@ -114,7 +114,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final Map<String, String> myListComments;
   private String myLastSelectedListName;
-  private ChangeInfoCalculator myChangesInfoCalculator;
+  @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
 
   @NotNull private final PseudoMap<Object, Object> myAdditionalData;
   @Nullable private final String myHelpId;
@@ -122,7 +122,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private SplitterWithSecondHideable myDetailsSplitter;
   private final String myOkActionText;
   @Nullable private final CommitAction myCommitAction;
-  @Nullable private CommitResultHandler myResultHandler;
+  @Nullable private final CommitResultHandler myResultHandler;
 
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
@@ -313,6 +313,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myCommitMessageArea = new CommitMessage(project);
 
+    mySplitter = new Splitter(true);
+    mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setFirstComponent(myBrowser);
+    mySplitter.setSecondComponent(myCommitMessageArea);
+    initMainSplitter();
+
+    myChangesInfoCalculator = new ChangeInfoCalculator();
+    myLegend = new CommitLegendPanel(myChangesInfoCalculator);
+    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
+
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       setComment(initialSelection, comment);
     }
@@ -441,6 +451,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myWarningLabel = new JLabel();
     myWarningLabel.setUI(new MultiLineLabelUI());
     myWarningLabel.setForeground(JBColor.RED);
+    myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
 
     updateWarning();
 
@@ -949,17 +960,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    mySplitter = new Splitter(true);
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setFirstComponent(myBrowser);
-    mySplitter.setSecondComponent(myCommitMessageArea);
-    initMainSplitter();
-
-    myChangesInfoCalculator = new ChangeInfoCalculator();
-    myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-
-    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
-
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
       JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
@@ -972,7 +972,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       mainPanel = mySplitter;
     }
 
-    myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
 
