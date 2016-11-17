@@ -310,6 +310,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
 
     myCommitMessageArea = new CommitMessage(project);
+    myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(myProject, myCommitMessageArea));
 
     mySplitter = new Splitter(true);
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -325,12 +326,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(this));
-
     final String actionName = getCommitActionName();
     final String borderTitleName = actionName.replace("_", "").replace("&", "");
 
     JPanel optionsPanel = createOptionsPanel(project, borderTitleName);
+    restoreState();
 
     if (myShowVcsCommit) {
       setTitle(TITLE);
@@ -338,8 +338,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     else {
       setTitle(trimEllipsis(myExecutors.get(0).getActionText()));
     }
-
-    restoreState();
 
     if (myShowVcsCommit) {
       myCommitAction = new CommitAction(actionName);
@@ -1214,9 +1212,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
-    public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
-      super(dialog.getProject());
-      getEditorField().setDocument(dialog.myCommitMessageArea.getEditorField().getDocument());
+    public DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
+      super(project);
+      getEditorField().setDocument(commitMessage.getEditorField().getDocument());
     }
 
     @Override
