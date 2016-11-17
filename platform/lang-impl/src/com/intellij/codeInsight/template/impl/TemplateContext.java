@@ -146,7 +146,7 @@ public class TemplateContext {
         // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
         JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
       }
-      else if (isNotDefault(ownValue, type, defaultContext)) {
+      else if (isValueChanged(ownValue, type, defaultContext)) {
         JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
       }
     }
@@ -162,7 +162,7 @@ public class TemplateContext {
    * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.
    */
-  boolean isNotDefault(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
+  private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
     Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
     if (defaultValue == null) {
       TemplateContextType base = type.getBaseContextType();
