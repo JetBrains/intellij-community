@@ -477,28 +477,20 @@ public class StudyUtils {
 
   @Nullable
   public static String getTaskTextFromTask(@Nullable final VirtualFile taskDirectory, @Nullable final Task task) {
-    if (task == null) {
+    if (task == null || task.getLesson() == null || task.getLesson().getCourse() == null) {
       return null;
     }
-    String text = task.getText();
-    final Lesson lesson = task.getLesson();
-    if (lesson == null) return null;
-    final Course course = lesson.getCourse();
-    if (course != null && course.isAdaptive()) {
-      text += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
-    }
+    final Course course = task.getLesson().getCourse();
+    String text = task.getText() != null ? task.getText() : getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
+    
+    if (text == null) return null;
+    if (course.isAdaptive()) text = wrapAdaptiveCourseText(text);
 
-    if (text != null && !text.isEmpty()) {
-      return wrapTextToDisplayLatex(text);
-    }
-    if (taskDirectory != null) {
-      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
-      if (taskTextFileHtml != null) return wrapTextToDisplayLatex(taskTextFileHtml);
-      
-      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
-      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));      
-    }
-    return null;
+    return wrapTextToDisplayLatex(text);
+  }
+
+  private static String wrapAdaptiveCourseText(@NotNull String text) {
+    return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
   }
 
   public static String wrapTextToDisplayLatex(String taskTextFileHtml) {
@@ -507,9 +499,11 @@ public class StudyUtils {
   }
 
   @Nullable
-  private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+  private static String getTaskTextFromTaskName(@Nullable VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    if (taskDirectory == null) return null;
     taskDirectory.refresh(false, true);
-    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
+    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(EduNames.TASK_HTML), 
+                                                         taskDirectory.findChild(EduNames.TASK_MD));
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
       if (srcDir != null) {
