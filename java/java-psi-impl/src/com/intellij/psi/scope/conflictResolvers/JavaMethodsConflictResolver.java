@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -553,6 +553,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final int max = Math.max(Math.max(params1.length, params2.length), argsLength);
     PsiType[] types1 = PsiType.createArray(max);
     PsiType[] types2 = PsiType.createArray(max);
+    boolean[] varargs = new boolean[max];
     final boolean varargsPosition = applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
     for (int i = 0; i < max; i++) {
       ProgressManager.checkCanceled();
@@ -561,13 +562,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (varargsPosition) {
         if (type1 instanceof PsiEllipsisType && type2 instanceof PsiEllipsisType &&
             params1.length == params2.length &&
-            class1 != null && (!JavaVersionService.getInstance().isAtLeast(class1, JavaSdkVersion.JDK_1_7) || ((PsiArrayType)type1).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || ((PsiArrayType)type2).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
+            (((PsiArrayType)type1).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || ((PsiArrayType)type2).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
           type1 = ((PsiEllipsisType)type1).toArrayType();
           type2 = ((PsiEllipsisType)type2).toArrayType();
         }
         else {
           type1 = type1 instanceof PsiEllipsisType ? ((PsiArrayType)type1).getComponentType() : type1;
           type2 = type2 instanceof PsiEllipsisType ? ((PsiArrayType)type2).getComponentType() : type2;
+          varargs[i] = true;
         }
       }
 
@@ -582,6 +584,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     for (int i = 0; i < types1.length; i++) {
       ProgressManager.checkCanceled();
+      if (varargs[i]) continue;
       final PsiExpression arg = args != null && i < args.length ? args[i] : null;
       final PsiType argType = myActualParameterTypes != null && i < getActualParametersLength() ? myActualParameterTypes[i] : null;
       if (arg == null && argType == null) continue;
