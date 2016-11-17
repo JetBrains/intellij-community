@@ -25,7 +25,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -156,7 +155,7 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
-  private boolean isTheSameFrame(SuspendContextImpl context) {
+  protected boolean isTheSameFrame(SuspendContextImpl context) {
     if (mySteppedOut) return false;
     final ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
@@ -186,6 +185,10 @@ public class RequestHint {
       return ((ActionMethodFilter)filter).onReached(context, this);
     }
     return STOP;
+  }
+
+  protected boolean isSteppedOut() {
+    return mySteppedOut;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
