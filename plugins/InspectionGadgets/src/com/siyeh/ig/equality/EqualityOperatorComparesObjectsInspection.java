@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -207,6 +208,12 @@ public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
       final PsiType rhsType = rhs.getType();
       if (rhsType == null || rhsType instanceof PsiPrimitiveType || TypeConversionUtil.isEnumType(rhsType)) {
         return;
+      }
+      if (lhs instanceof PsiThisExpression || rhs instanceof PsiThisExpression) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        if (method != null && "equals".equals(method.getName())) {
+          return;
+        }
       }
       final String operationText = expression.getOperationSign().getText();
       final String prefix = tokenType.equals(JavaTokenType.NE) ? "!" : "";
