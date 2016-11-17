@@ -1001,21 +1001,16 @@ public class FSRecords {
   }
 
   private static void incModCount(int id) {
-    DbConnection.markDirty();
-    ourLocalModificationCount++;
+    incLocalModCount();
     final int count = getModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
 
-    int parent = id;
-    int depth = 10000;
-    while (parent != 0) {
-      setModCount(parent, count);
-      parent = getParent(parent);
-      if (depth -- == 0) {
-        LOG.error("Cyclic parent child relation? file: " + getName(id));
-        return;
-      }
-    }
+    setModCount(id, count);
+  }
+
+  private static void incLocalModCount() {
+    DbConnection.markDirty();
+    ourLocalModificationCount++;
   }
 
   static int getLocalModCount() {
@@ -1226,8 +1221,12 @@ public class FSRecords {
   public static void setLength(int id, long len) {
     w.lock();
     try {
-      incModCount(id);
-      getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
+      ResizeableMappedFile records = getRecords();
+      int lengthOffset = getOffset(id, LENGTH_OFFSET);
+      if (records.getLong(lengthOffset) != len) {
+        incModCount(id);
+        records.putLong(lengthOffset, len);
+      }
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
@@ -1250,8 +1249,12 @@ public class FSRecords {
   public static void setTimestamp(int id, long value) {
     w.lock();
     try {
-      incModCount(id);
-      getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
+      int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
+      ResizeableMappedFile records = getRecords();
+      if (records.getLong(timeStampOffset) != value) {
+        incModCount(id);
+        records.putLong(timeStampOffset, value);
+      }
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
@@ -1645,8 +1648,6 @@ public class FSRecords {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
-        incModCount(myFileId);
-
         checkFileIsValid(myFileId);
 
         int page;
@@ -1654,8 +1655,10 @@ public class FSRecords {
         if (weHaveContentHashes) {
           page = findOrCreateContentRecord(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
 
-          incModCount(myFileId);
-          checkFileIsValid(myFileId);
+          if (page < 0 || getContentId(myFileId) != page) {
+            incModCount(myFileId);
+            setContentRecordId(myFileId, page > 0 ? page : -page);
+          }
 
           setContentRecordId(myFileId, page > 0 ? page : -page);
 
@@ -1663,6 +1666,7 @@ public class FSRecords {
           page = -page;
           fixedSize = true;
         } else {
+          incModCount(myFileId);
           page = getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
             page = contentStorage.acquireNewRecord();
@@ -1782,7 +1786,7 @@ public class FSRecords {
           w.lock();
           try {
             rewriteDirectoryRecordWithAttrContent(_out);
-            incModCount(myFileId);
+            incLocalModCount();
           }
           finally {
             w.unlock();
@@ -1791,7 +1795,7 @@ public class FSRecords {
         else {
           w.lock();
           try {
-            incModCount(myFileId);
+            incLocalModCount();
             int page = findAttributePage(myFileId, myAttribute, true);
             if (inlineAttributes && page < 0) {
               rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
