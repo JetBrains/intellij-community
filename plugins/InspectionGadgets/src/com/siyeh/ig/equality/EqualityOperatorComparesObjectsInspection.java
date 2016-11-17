@@ -32,6 +32,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
 
@@ -211,13 +212,24 @@ public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
       }
       if (lhs instanceof PsiThisExpression || rhs instanceof PsiThisExpression) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-        if (method != null && "equals".equals(method.getName())) {
-          return;
+        if (method != null && "equals".equals(method.getName()) && method.getParameterList().getParametersCount() == 1) {
+          final PsiClass containingClass = method.getContainingClass();
+          if (isThisQualifier(lhs, containingClass) || isThisQualifier(rhs, containingClass)) {
+            return;
+          }
         }
       }
       final String operationText = expression.getOperationSign().getText();
       final String prefix = tokenType.equals(JavaTokenType.NE) ? "!" : "";
       registerError(expression, operationText, prefix);
+    }
+
+    private static boolean isThisQualifier(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
+      if (expression instanceof PsiThisExpression) {
+        final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)expression).getQualifier();
+        return qualifier == null || psiClass != null && qualifier.isReferenceTo(psiClass);
+      }
+      return false;
     }
   }
 }

@@ -31,6 +31,8 @@ public abstract class EqualityOperatorComparesObjectsInspectionTestBase extends 
   public void testSimpleObjectComparison() { doTest(true, false); }
   public void testNegatedObjectComparison() { doTest(false, false); }
   public void testCompareThisInEqualsMethod() { assertQuickfixNotAvailable(); }
+  public void testCompareSameQualifiedThisInEqualsMethod() { assertQuickfixNotAvailable(); }
+  public void testCompareOtherQualifiedThisInEqualsMethod() { doTest(true, false); }
   public void testCompareFieldInEqualsMethod() { doTest(true, false); }
 
   @Override
