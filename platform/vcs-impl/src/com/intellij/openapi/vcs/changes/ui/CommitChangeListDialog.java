@@ -377,12 +377,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     JPanel mainPanel;
     if (optionsPanel != null) {
-      JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(optionsPanel, true);
-      JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
-
-      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, JBUI.scale(150), JBUI.scale(400)));
+      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, optionsPanel, JBUI.scale(150), JBUI.scale(400)));
       mainPanel.add(mySplitter);
-      mainPanel.add(infoPanel);
+      mainPanel.add(optionsPanel);
     }
     else {
       mainPanel = mySplitter;
@@ -456,7 +453,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   private JPanel createOptionsPanel(@NotNull Project project, @NotNull String borderTitleName) {
-    Box optionsBox = Box.createVerticalBox();
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
     for (AbstractVcs vcs : ContainerUtil.sorted(getAffectedVcses(), VCS_COMPARATOR)) {
@@ -476,11 +472,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           hasVcsOptions = true;
         }
       }
-    }
-
-    if (hasVcsOptions) {
-      vcsCommitOptions.add(Box.createVerticalGlue());
-      optionsBox.add(vcsCommitOptions);
     }
 
     boolean beforeVisible = false;
@@ -507,6 +498,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
+    if (!hasVcsOptions && !beforeVisible && !afterVisible) return null;
+
+    Box optionsBox = Box.createVerticalBox();
+    if (hasVcsOptions) {
+      vcsCommitOptions.add(Box.createVerticalGlue());
+      optionsBox.add(vcsCommitOptions);
+    }
+
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
       JPanel beforePanel = new JPanel(new BorderLayout());
@@ -525,16 +524,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       optionsBox.add(afterPanel);
     }
 
-    JPanel optionsPanel;
-    if (hasVcsOptions || beforeVisible || afterVisible) {
-      optionsBox.add(Box.createVerticalGlue());
-      optionsPanel = new JPanel(new BorderLayout());
-      optionsPanel.add(optionsBox, BorderLayout.NORTH);
-    }
-    else {
-      optionsPanel = null;
-    }
-    return optionsPanel;
+    optionsBox.add(Box.createVerticalGlue());
+    JPanel additionalOptionsPanel = new JPanel(new BorderLayout());
+    additionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
+
+    JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(additionalOptionsPanel, true);
+    return JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
   }
 
   @Nullable
