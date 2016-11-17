@@ -34,11 +34,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -209,9 +208,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.setJdk(usedIdeaJdk);
 
         if (fromIdeaProject) {
-          for (String url : usedIdeaJdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-            String s = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-            params.getClassPath().add(toSystemDependentName(s));
+          OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+          for (VirtualFile file : enumerator.getAllLibrariesAndSdkClassesRoots()) {
+            params.getClassPath().add(file);
           }
         }
         else {
