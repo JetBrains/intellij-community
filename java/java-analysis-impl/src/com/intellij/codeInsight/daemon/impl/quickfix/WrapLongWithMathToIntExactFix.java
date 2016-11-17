@@ -114,7 +114,7 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     @Nullable
     @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      return areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
+      return areSameTypes(expression.getType(), PsiType.LONG) && areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
     }
 
     @Override
