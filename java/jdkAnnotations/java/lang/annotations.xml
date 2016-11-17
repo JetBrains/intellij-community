@@ -61,7 +61,12 @@
   <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
+    <item name='java.lang.Object java.lang.Class&lt;?&gt; getClass()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
