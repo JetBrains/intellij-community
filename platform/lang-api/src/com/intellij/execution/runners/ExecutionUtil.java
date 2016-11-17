@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -109,8 +110,8 @@ public class ExecutionUtil {
       LOG.error(fullMessage, e);
     }
 
-    if (listener == null && e instanceof HyperlinkListener) {
-      listener = (HyperlinkListener)e;
+    if (listener == null) {
+      listener = ExceptionUtil.findCause(e, HyperlinkListener.class);
     }
 
     final HyperlinkListener finalListener = listener;
