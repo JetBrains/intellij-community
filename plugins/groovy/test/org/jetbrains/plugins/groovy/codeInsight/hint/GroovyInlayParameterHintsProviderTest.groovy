@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
-  String prefix
 
   @Override
   void setUp() {
@@ -45,82 +44,109 @@ class Foo {
 '''
   }
 
-  private void testInlays(String text, Map<Integer, String> expectedParameterHints) {
-    fixture.configureByText '_.groovy', prefix ? prefix + text : text
+  private void testInlays(String text) {
+    def configuredText = text.replaceAll(/<hint name="([.\w]*)">/, "")
+    fixture.configureByText '_.groovy', configuredText
     fixture.doHighlighting()
+
     def manager = ParameterHintsPresentationManager.instance
     def inlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-    def parameterHinInlays = inlays.findAll {
+    Map<Integer, String> actualParameterHints = inlays.findAll {
       manager.isParameterHint(it)
+    }.collectEntries {
+      [(it.offset): manager.getHintText(it)]
     }
-    int prefixLength = prefix?.length() ?: 0
-    def actualParameterHints = parameterHinInlays.collectEntries {
-      [(it.offset - prefixLength): manager.getHintText(it)]
+
+    def actualText = new StringBuilder(configuredText)
+    def offset = 0
+    actualParameterHints.each { hintOffset, hintName ->
+      def hintString = /<hint name="$hintName">/
+      actualText.insert(hintOffset + offset, hintString)
+      offset += hintString.length()
     }
-    assert actualParameterHints == expectedParameterHints
+
+    assertEquals(text, actualText.toString())
   }
 
   void 'test method call expressions'() {
-    prefix = '''\
+    testInlays '''\
+def aa = new Object()
 def foo = new Foo()
-foo.'''
-    testInlays 'simple(null)', [7: 'a']
-    testInlays 'defaultArgs(1, 2)', [12: 'a', 15: 'c']
-    testInlays 'defaultArgs(1, 2, 3)', [12: 'a', 15: 'b', 18: 'c']
-    testInlays 'mapArgs(foo: 1, null, bar: 2)', [16: 'a']
-    testInlays 'varArgs(1, 2, 3, 4)', [8: 'a', 11: '...b']
-    testInlays 'combo(1, foo: 10, 2, 3, 4, bar: 20, 5)', [6: 'a', 18: 'b', 21: '...c']
+foo.with {
+  simple(<hint name="a">null)
+  simple(aa)
+  defaultArgs(<hint name="a">1, <hint name="c">2)
+  defaultArgs(<hint name="a">1, <hint name="b">2, <hint name="c">3)
+  mapArgs(foo: 1, <hint name="a">null, bar: 2)
+  varArgs(<hint name="a">1, <hint name="...b">2, 3, 4)
+  varArgs(<hint name="a">1, <hint name="...b">2, aa)
+  varArgs(<hint name="a">1, <hint name="...b">aa, 3)
+  varArgs(<hint name="a">1, aa, aa)
+  combo(<hint name="a">1, foo: 10, <hint name="b">2, <hint name="...c">3, 4, bar: 20, 5)
+}
+'''
   }
 
   void 'test method call applications'() {
-    prefix = '''\
+    testInlays '''\
+def aa = new Object()
 def foo = new Foo()
-foo.'''
-    testInlays 'simple null', [7: 'a']
-    testInlays 'defaultArgs 1, 2', [12: 'a', 15: 'c']
-    testInlays 'defaultArgs 1, 2, 3', [12: 'a', 15: 'b', 18: 'c']
-    testInlays 'mapArgs foo: 1, null, bar: 2 ', [16: 'a']
-    testInlays 'varArgs 1, 2, 3, 4 ', [8: 'a', 11: '...b']
-    testInlays 'combo 1, foo: 10, 2, 3, 4, bar: 20, 5', [6: 'a', 18: 'b', 21: '...c']
+foo.with {
+  simple <hint name="a">null
+  simple aa
+  defaultArgs <hint name="a">1, <hint name="c">2
+  defaultArgs <hint name="a">1, <hint name="b">2, <hint name="c">3
+  mapArgs foo: 1, <hint name="a">null, bar: 2
+  varArgs <hint name="a">1, <hint name="...b">2, 3, 4
+  varArgs <hint name="a">1, <hint name="...b">2, aa
+  varArgs <hint name="a">1, <hint name="...b">aa, 3
+  varArgs <hint name="a">1, aa, aa
+  combo <hint name="a">1, foo: 10, <hint name="b">2, <hint name="...c">3, 4, bar: 20, 5
+}
+'''
   }
 
   void 'test index expression'() {
-    testInlays 'new Foo()[1]', [10: 'a']
+    testInlays 'new Foo()[<hint name="a">1]'
   }
 
   void 'test new expression'() {
-    testInlays 'new Foo(1, 2, 4)', [8: 'a', 11: 'b', 14: 'c']
+    testInlays 'new Foo(<hint name="a">1, <hint name="b">2, <hint name="c">4)'
   }
 
   void 'test constructor invocation'() {
     testInlays '''\
 class Bar {
   Bar() {
-    this(1, 4, 5)
+    this(<hint name="a">1, <hint name="b">4, <hint name="c">5)
   }
 
   Bar(a, b, c) {}
 }
-''', [31: 'a', 34: 'b', 37: 'c']
+'''
   }
 
   void 'test enum constants'() {
     testInlays '''\
 enum Baz {
-  ONE(1, 2),
-  TWO(4, 3)
+  ONE(<hint name="a">1, <hint name="b">2),
+  TWO(<hint name="a">4, <hint name="b">3)
   Baz(a, b) {}
 }
-''', [17: 'a', 20: 'b', 30: 'a', 33: 'b']
+'''
   }
 
   void 'test no DGM inlays'() {
-    testInlays '[].each {}', [:]
+    testInlays '[].each {}'
   }
 
   void 'test closure arguments'() {
-    testInlays 'new Foo().simple {}', [:]
-    testInlays 'new Foo().simple({})', [17: 'a']
-    testInlays 'new Foo().simple null, {}', [17: 'a', 23: 'b']
+    testInlays '''\
+new Foo().with {
+  simple {}
+  simple(<hint name="a">{})
+  simple <hint name="a">null, <hint name="b">{}
+}
+'''
   }
 }
