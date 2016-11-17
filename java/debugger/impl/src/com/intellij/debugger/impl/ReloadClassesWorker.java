@@ -182,8 +182,7 @@ class ReloadClassesWorker {
     SwingUtilities.invokeLater(() -> {
       try {
         if (!project.isDisposed()) {
-          final BreakpointManager breakpointManager1 = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-          breakpointManager1.reloadBreakpoints();
+          breakpointManager.reloadBreakpoints();
           debugProcess.getRequestsManager().clearWarnings();
           if (LOG.isDebugEnabled()) {
             LOG.debug("requests updated");
