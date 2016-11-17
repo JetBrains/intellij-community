@@ -18,11 +18,20 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.List;
+
 public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
+  @NotNull
+  private static final String MATCH_CASE = "Match Case";
 
   @Override
   public boolean isSelected(AnActionEvent e) {
@@ -41,7 +50,30 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
+    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (ui == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      boolean regexEnabled = ui.getTextFilterSettings().isFilterByRegexEnabled();
+      if (!regexEnabled) {
+        e.getPresentation().setEnabledAndVisible(true);
+        e.getPresentation().setText(MATCH_CASE);
+      }
+      else {
+        Collection<VcsLogProvider> providers = ContainerUtil.newLinkedHashSet(ui.getDataPack().getLogProviders().values());
+        List<VcsLogProvider> supported =
+          ContainerUtil.filter(providers, p -> VcsLogProperties.get(p, VcsLogProperties.CASE_INSENSITIVE_REGEX));
+        e.getPresentation().setEnabledAndVisible(!supported.isEmpty());
+        if (providers.size() == supported.size()) {
+          e.getPresentation().setText(MATCH_CASE);
+        }
+        else {
+          String supportedText = StringUtil.join(ContainerUtil.map(supported, p -> p.getSupportedVcs().getName().toLowerCase()), ", ");
+          e.getPresentation().setText(MATCH_CASE + " (" + supportedText + " only)");
+        }
+      }
+    }
 
     super.update(e);
   }
