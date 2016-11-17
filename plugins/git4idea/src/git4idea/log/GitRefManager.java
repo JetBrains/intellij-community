@@ -171,21 +171,29 @@ public class GitRefManager implements VcsLogRefManager {
         LOG.warn("No repository for root: " + firstRef.getRoot());
       }
       else {
-        GitBranchTrackInfo trackInfo =
-          ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(firstRef.getName()));
-        if (trackInfo != null) {
-          VcsRef trackedRef = ContainerUtil
-            .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
-          if (trackedRef != null) {
-            name = trackInfo.getRemote().getName() + " & " + firstRef.getName();
-          }
-        }
+        name = getCombinedTrackedName(repository, references, firstRef);
       }
     }
 
     groups.add(new TableRefGroup(name, sortedReferences));
 
     return groups;
+  }
+
+  @NotNull
+  private static String getCombinedTrackedName(@NotNull GitRepository repository,
+                                               @NotNull Collection<VcsRef> references,
+                                               @NotNull VcsRef localRef) {
+    GitBranchTrackInfo trackInfo =
+      ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(localRef.getName()));
+    if (trackInfo != null) {
+      VcsRef trackedRef = ContainerUtil.find(references, ref -> ref.getType().equals(REMOTE_BRANCH) &&
+                                                                ref.getName().equals(trackInfo.getRemoteBranch().getName()));
+      if (trackedRef != null) {
+        return trackInfo.getRemote().getName() + " & " + localRef.getName();
+      }
+    }
+    return localRef.getName();
   }
 
   @Override
