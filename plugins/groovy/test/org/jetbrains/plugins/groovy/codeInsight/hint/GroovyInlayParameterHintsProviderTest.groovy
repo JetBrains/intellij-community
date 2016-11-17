@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
@@ -44,9 +46,20 @@ class Foo {
 '''
   }
 
+  @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void tearDown() throws Exception {
+    ParameterNameHintsSettings.getInstance().myAddedPatterns.clear()
+    ParameterNameHintsSettings.getInstance().myRemovedPatterns.clear()
+    super.tearDown()
+  }
+
   private void testInlays(String text) {
-    def configuredText = text.replaceAll(/<hint name="([.\w]*)">/, "")
-    fixture.configureByText '_.groovy', configuredText
+    fixture.configureByText '_.groovy', text.replaceAll(/<hint name="([.\w]*)">/, "")
+    checkResult text.replaceAll("<caret>", "")
+  }
+
+  private void checkResult(String expected) {
     fixture.doHighlighting()
 
     def manager = ParameterHintsPresentationManager.instance
@@ -57,15 +70,17 @@ class Foo {
       [(it.offset): manager.getHintText(it)]
     }
 
-    def actualText = new StringBuilder(configuredText)
+    def actualText = new StringBuilder(fixture.file.text)
     def offset = 0
     actualParameterHints.each { hintOffset, hintName ->
-      def hintString = /<hint name="$hintName">/
-      actualText.insert(hintOffset + offset, hintString)
-      offset += hintString.length()
+      if (hintName != null) {
+        def hintString = /<hint name="$hintName">/
+        actualText.insert(hintOffset + offset, hintString)
+        offset += hintString.length()
+      }
     }
 
-    assertEquals(text, actualText.toString())
+    assertEquals(expected, actualText.toString())
   }
 
   void 'test method call expressions'() {
@@ -146,6 +161,24 @@ new Foo().with {
   simple {}
   simple(<hint name="a">{})
   simple <hint name="a">null, <hint name="b">{}
+}
+'''
+  }
+
+  void 'test method with default arguments blacklist'() {
+    testInlays '''\
+new Foo().with {
+   defaultArgs(<hint name="a">1, <hint name="c">2)
+   defaultArgs(aa, <hint name="b"><caret>2, <hint name="c">3)
+}
+'''
+    def intention = fixture.getAvailableIntention("Do not show hints for current method")
+    assert intention
+    fixture.launchAction intention
+    checkResult '''\
+new Foo().with {
+   defaultArgs(1, 2)
+   defaultArgs(aa, 2, 3)
 }
 '''
   }

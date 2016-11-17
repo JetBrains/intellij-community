@@ -22,11 +22,11 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMirrorElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ArgInfo
 
@@ -48,7 +48,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     // leave only regular literal arguments and varargs which contain literals
     fun ArgInfo<PsiElement>.shouldShowHint(): Boolean {
-      if (args.none { it is GrLiteral || it is GrClosableBlock}) return false // do not show non-literals
+      if (args.none { it is GrLiteral || it is GrClosableBlock }) return false // do not show non-literals
       if (isMultiArg) return args.none { it is GrNamedArgument } //  do not show named arguments
       if (closureArgument == null) return true
       return closureArgument !in args // do not show closure argument
@@ -73,7 +73,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
   override fun getMethodInfo(element: PsiElement): MethodInfo? {
     val call = element as? GrCall
     val resolved = call?.resolveMethod()
-    val method = (resolved as? GrGdkMethod)?.staticMethod ?: resolved
+    val method = (resolved as? PsiMirrorElement)?.prototype as? PsiMethod ?: resolved
     return method?.getMethodInfo()
   }
 
