@@ -52,6 +52,7 @@ import java.io.FileFilter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
@@ -642,7 +643,14 @@ public class JavaSdkImpl extends JavaSdk {
   private static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");
     if (jdkSrc != null) {
-      sdkModificator.addRoot(jdkSrc, OrderRootType.SOURCES);
+      if (jdkSrc.findChild("java.base") != null) {
+        Stream.of(jdkSrc.getChildren())
+          .filter(VirtualFile::isDirectory)
+          .forEach(root -> sdkModificator.addRoot(root, OrderRootType.SOURCES));
+      }
+      else {
+        sdkModificator.addRoot(jdkSrc, OrderRootType.SOURCES);
+      }
     }
 
     VirtualFile fxSrc = findSources(jdkHome, "javafx-src");
@@ -655,6 +663,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static VirtualFile findSources(File jdkHome, String srcName) {
     File srcArc = new File(jdkHome, srcName + ".jar");
     if (!srcArc.exists()) srcArc = new File(jdkHome, srcName + ".zip");
+    if (!srcArc.exists()) srcArc = new File(jdkHome, "lib/" + srcName + ".zip");
     if (srcArc.exists()) {
       VirtualFile vFile = findInJar(srcArc, "src");
       if (vFile == null) vFile = findInJar(srcArc, "");
