@@ -153,11 +153,6 @@ public class ImportModuleAction extends AnAction {
     return createImportWizard(project, dialogParent, file, providers);
   }
 
-  /** @deprecated to be removed in IDEA 16 */
-  public static String getFileChooserDescription(@Nullable final Project project) {
-    return getFileChooserDescription(getProviders(project));
-  }
-
   private static String getFileChooserDescription(List<ProjectImportProvider> providers) {
     StringBuilder builder = new StringBuilder("<html>Select ");
     boolean first = true;

@@ -482,8 +482,6 @@
                     serviceImplementation="com.intellij.psi.impl.JavaPsiImplementationHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"
                     serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.JavaCodeInsightSettingsFacade"
-                    serviceImplementation="com.intellij.codeInsight.JavaCodeInsightSettingsFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.migration.PsiMigrationManager"
                     serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
     <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"

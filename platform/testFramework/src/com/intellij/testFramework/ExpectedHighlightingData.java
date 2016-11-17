@@ -142,8 +142,6 @@ public class ExpectedHighlightingData {
     }
     registerHighlightingType(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
     registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
-
-    initAdditionalHighlightingTypes();
   }
 
   public void init() {
@@ -610,9 +608,4 @@ public class ExpectedHighlightingData {
     return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
   }
 
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  protected final Map<String, ExpectedHighlightingSet> highlightingTypes = myHighlightingTypes;
-
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  protected void initAdditionalHighlightingTypes() { }
 }
