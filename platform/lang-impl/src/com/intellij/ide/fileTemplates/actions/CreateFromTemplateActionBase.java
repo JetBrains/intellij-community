@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
       template.addVariable(variable, null, "\"" + variable + "\"", true);
     }
     WriteCommandAction.runWriteCommandAction(project, () -> editor.getDocument().setText(template.getTemplateText()));
+    //ensure caret at the start of the template
+    editor.getCaretModel().moveToOffset(0);
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
