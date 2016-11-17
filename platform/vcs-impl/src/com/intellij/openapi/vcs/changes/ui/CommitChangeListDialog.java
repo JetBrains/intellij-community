@@ -78,6 +78,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
+  private static final Comparator<AbstractVcs> VCS_COMPARATOR = Comparator.comparing(it -> it.getKeyInstanceMethod().getName(),
+                                                                                     String::compareToIgnoreCase);
+
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
@@ -322,14 +325,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
-    final List<AbstractVcs> vcses = ContainerUtil.sorted(getAffectedVcses(), new Comparator<AbstractVcs>() {
-      @Override
-      public int compare(@NotNull AbstractVcs o1, @NotNull AbstractVcs o2) {
-        return o1.getKeyInstanceMethod().getName().compareToIgnoreCase(o2.getKeyInstanceMethod().getName());
-      }
-    });
     myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
-    for (AbstractVcs vcs : vcses) {
+    for (AbstractVcs vcs : ContainerUtil.sorted(getAffectedVcses(), VCS_COMPARATOR)) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
         final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
