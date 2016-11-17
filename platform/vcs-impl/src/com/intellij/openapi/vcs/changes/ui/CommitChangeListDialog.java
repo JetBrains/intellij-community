@@ -109,7 +109,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private boolean myUpdateDisabled = false;
   @NotNull private final JLabel myWarningLabel;
 
-  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
+  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
 
   @NotNull private final Map<String, String> myListComments;
   private String myLastSelectedListName;
@@ -329,89 +329,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(this));
 
     myActionName = VcsBundle.message("commit.dialog.title");
-
-    Box optionsBox = Box.createVerticalBox();
-
-    boolean hasVcsOptions = false;
-    Box vcsCommitOptions = Box.createVerticalBox();
-    myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
-    for (AbstractVcs vcs : ContainerUtil.sorted(getAffectedVcses(), VCS_COMPARATOR)) {
-      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-      if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
-        if (options != null) {
-          JPanel vcsOptions = new JPanel(new BorderLayout());
-          vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
-          vcsOptions.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), true));
-          vcsCommitOptions.add(vcsOptions);
-          myPerVcsOptionsPanels.put(vcs, vcsOptions);
-          myAdditionalComponents.add(options);
-          if (options instanceof CheckinChangeListSpecificComponent) {
-            myCheckinChangeListSpecificComponents.put(vcs.getName(), (CheckinChangeListSpecificComponent) options);
-          }
-          hasVcsOptions = true;
-        }
-      }
-    }
-
-    if (hasVcsOptions) {
-      vcsCommitOptions.add(Box.createVerticalGlue());
-      optionsBox.add(vcsCommitOptions);
-    }
-
-    boolean beforeVisible = false;
-    boolean afterVisible = false;
-    Box beforeBox = Box.createVerticalBox();
-    Box afterBox = Box.createVerticalBox();
-    for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
-      final CheckinHandler handler = factory.createHandler(this, myCommitContext);
-      if (CheckinHandler.DUMMY.equals(handler)) continue;
-
-      myHandlers.add(handler);
-      final RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
-      if (beforePanel != null) {
-        beforeBox.add(beforePanel.getComponent());
-        beforeVisible = true;
-        myAdditionalComponents.add(beforePanel);
-      }
-
-      final RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(getDisposable());
-      if (afterPanel != null) {
-        afterBox.add(afterPanel.getComponent());
-        afterVisible = true;
-        myAdditionalComponents.add(afterPanel);
-      }
-    }
-
     final String actionName = getCommitActionName();
     final String borderTitleName = actionName.replace("_", "").replace("&", "");
-    if (beforeVisible) {
-      beforeBox.add(Box.createVerticalGlue());
-      JPanel beforePanel = new JPanel(new BorderLayout());
-      beforePanel.add(beforeBox);
-      beforePanel.setBorder(IdeBorderFactory.createTitledBorder(
-        VcsBundle.message("border.standard.checkin.options.group", borderTitleName), true));
-      optionsBox.add(beforePanel);
-    }
 
-    if (afterVisible) {
-      afterBox.add(Box.createVerticalGlue());
-      JPanel afterPanel = new JPanel(new BorderLayout());
-      afterPanel.add(afterBox);
-      afterPanel.setBorder(IdeBorderFactory.createTitledBorder(
-        VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), true));
-      optionsBox.add(afterPanel);
-    }
-
-    JPanel optionsPanel;
-    if (hasVcsOptions || beforeVisible || afterVisible) {
-      optionsBox.add(Box.createVerticalGlue());
-      optionsPanel = new JPanel(new BorderLayout());
-      optionsPanel.add(optionsBox, BorderLayout.NORTH);
-    }
-    else {
-      optionsPanel = null;
-    }
+    JPanel optionsPanel = createOptionsPanel(project, borderTitleName);
 
     myOkActionText = actionName;
 
@@ -531,6 +452,89 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     showDetailsIfSaved();
+  }
+
+  @Nullable
+  private JPanel createOptionsPanel(@NotNull Project project, @NotNull String borderTitleName) {
+    Box optionsBox = Box.createVerticalBox();
+    boolean hasVcsOptions = false;
+    Box vcsCommitOptions = Box.createVerticalBox();
+    for (AbstractVcs vcs : ContainerUtil.sorted(getAffectedVcses(), VCS_COMPARATOR)) {
+      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+      if (checkinEnvironment != null) {
+        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
+        if (options != null) {
+          JPanel vcsOptions = new JPanel(new BorderLayout());
+          vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
+          vcsOptions.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), true));
+          vcsCommitOptions.add(vcsOptions);
+          myPerVcsOptionsPanels.put(vcs, vcsOptions);
+          myAdditionalComponents.add(options);
+          if (options instanceof CheckinChangeListSpecificComponent) {
+            myCheckinChangeListSpecificComponents.put(vcs.getName(), (CheckinChangeListSpecificComponent)options);
+          }
+          hasVcsOptions = true;
+        }
+      }
+    }
+
+    if (hasVcsOptions) {
+      vcsCommitOptions.add(Box.createVerticalGlue());
+      optionsBox.add(vcsCommitOptions);
+    }
+
+    boolean beforeVisible = false;
+    boolean afterVisible = false;
+    Box beforeBox = Box.createVerticalBox();
+    Box afterBox = Box.createVerticalBox();
+    for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
+      final CheckinHandler handler = factory.createHandler(this, myCommitContext);
+      if (CheckinHandler.DUMMY.equals(handler)) continue;
+
+      myHandlers.add(handler);
+      final RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
+      if (beforePanel != null) {
+        beforeBox.add(beforePanel.getComponent());
+        beforeVisible = true;
+        myAdditionalComponents.add(beforePanel);
+      }
+
+      final RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(getDisposable());
+      if (afterPanel != null) {
+        afterBox.add(afterPanel.getComponent());
+        afterVisible = true;
+        myAdditionalComponents.add(afterPanel);
+      }
+    }
+
+    if (beforeVisible) {
+      beforeBox.add(Box.createVerticalGlue());
+      JPanel beforePanel = new JPanel(new BorderLayout());
+      beforePanel.add(beforeBox);
+      beforePanel.setBorder(IdeBorderFactory.createTitledBorder(
+        VcsBundle.message("border.standard.checkin.options.group", borderTitleName), true));
+      optionsBox.add(beforePanel);
+    }
+
+    if (afterVisible) {
+      afterBox.add(Box.createVerticalGlue());
+      JPanel afterPanel = new JPanel(new BorderLayout());
+      afterPanel.add(afterBox);
+      afterPanel.setBorder(IdeBorderFactory.createTitledBorder(
+        VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), true));
+      optionsBox.add(afterPanel);
+    }
+
+    JPanel optionsPanel;
+    if (hasVcsOptions || beforeVisible || afterVisible) {
+      optionsBox.add(Box.createVerticalGlue());
+      optionsPanel = new JPanel(new BorderLayout());
+      optionsPanel.add(optionsBox, BorderLayout.NORTH);
+    }
+    else {
+      optionsPanel = null;
+    }
+    return optionsPanel;
   }
 
   @Nullable
