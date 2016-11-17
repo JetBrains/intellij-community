@@ -302,9 +302,10 @@ public abstract class DumbService {
    * Obsolete, does nothing, just executes the passed runnable.
    * @see #completeJustSubmittedTasks()
    */
+  @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
-    ServiceManager.getService(DumbPermissionService.class).allowStartingDumbModeInside(permission, runnable);
+    runnable.run();
   }
 
   /**
