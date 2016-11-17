@@ -1185,3 +1185,11 @@ java_library(
     exports = ["//tools/idea/plugins/git4idea/lib/ini4j:ini4j-0.5.2-patched"],
     runtime_deps = ["//tools/idea/plugins/git4idea/lib/ini4j:ini4j-0.5.2-patched"],
 )
+
+java_library(
+    name = "tightvnc",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
+)
