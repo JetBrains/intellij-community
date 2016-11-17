@@ -339,11 +339,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
       return (JPanel)myPreviewEditor.getPanel();
     }
 
-    @Override
-    public void dispose() {
-      disposeUIResources();
-    }
-
     public void updateColorSchemePreview(final boolean recalculateDialogSize) {
       if (!myWrapper.isVisible()) return;
 

@@ -1031,10 +1031,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           public JPanel getPanel() {
             return panel;
           }
-
-          @Override
-          public void dispose() {
-          }
         };
       }
 
