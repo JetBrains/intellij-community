@@ -31,7 +31,10 @@ import javax.imageio.ImageIO;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 
 public class EduUtils {
   private EduUtils() {
@@ -39,7 +42,7 @@ public class EduUtils {
 
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static final Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
+  public static final Comparator<StudyItem> INDEX_COMPARATOR = Comparator.comparingInt(StudyItem::getIndex);
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();

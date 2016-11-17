@@ -283,7 +283,7 @@ public class EduAdaptiveStepicConnector {
         final VirtualFile taskDir = VfsUtil
           .findFileByIoFile(new File(lessonDir.getCanonicalPath(), EduNames.TASK + unsolvedTask.getIndex()), true);
         final File resourceRoot = new File(course.getCourseDirectory(), lessonDir.getName());
-        File newResourceRoot = null;
+        File newResourceRoot;
         if (taskDir != null) {
           newResourceRoot = new File(resourceRoot, taskDir.getName());
           File[] filesInTask = newResourceRoot.listFiles();

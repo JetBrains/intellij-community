@@ -122,6 +122,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     else {
       addCoursesToCombobox(myAvailableCourses);
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      if (selectedCourse == null) return;
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
       myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myDescriptionPane.setText(selectedCourse.getDescription());
@@ -270,7 +271,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myCoursesComboBox.removeAllItems();
 
     addCoursesToCombobox(courses);
-    myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
+    final CourseInfo selectedCourse = StudyUtils.getFirst(courses);
+    if (selectedCourse == null) return;
+    myGenerator.setSelectedCourse(selectedCourse);
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
