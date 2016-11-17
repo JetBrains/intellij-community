@@ -420,8 +420,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if (SystemInfo.isMac) {
       boolean keyTyped = e.getID() == KeyEvent.KEY_TYPED;
-      boolean hasMnemonicsInWindow = e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
-                  keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
+      boolean hasMnemonicsInWindow = (e.getID() == KeyEvent.KEY_PRESSED
+                                      || e.getID() == KeyEvent.KEY_RELEASED)
+                                     && hasMnemonicInWindow(focusOwner, e.getKeyCode());
+
       boolean imEnabled = IdeEventQueue.getInstance().isInputMethodEnabled();
 
       if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || !imEnabled && keyTyped))  {
@@ -497,29 +499,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    final Container container = getContainer(focusOwner);
+    final Container container = SwingUtilities.getWindowAncestor(focusOwner);
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
-  }
-
-  @Nullable
-  private static Container getContainer(@Nullable final Component focusOwner) {
-    if (focusOwner == null) return null;
-    if (focusOwner.isLightweight()) {
-      Container container = focusOwner.getParent();
-      while (container != null) {
-        final Container parent = container.getParent();
-        if (parent instanceof JLayeredPane) break;
-        if (parent != null && parent.isLightweight()) {
-          container = parent;
-        }
-        else {
-          break;
-        }
-      }
-      return container;
-    }
-
-    return SwingUtilities.windowForComponent(focusOwner);
   }
 
   private static boolean hasMnemonic(final Container container, final int keyCode) {
@@ -530,7 +511,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (component instanceof AbstractButton) {
         final AbstractButton button = (AbstractButton)component;
         if (button instanceof JBOptionButton) {
-          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics()) return true;
+          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
+              button.getMnemonic() == keyCode)
+          {
+            return true;
+          }
         } else {
           if (button.getMnemonic() == keyCode) return true;
         }
