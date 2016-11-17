@@ -201,7 +201,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
-    String message = null;
     try {
       for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
         Map.Entry<PsiElement, String> entry = iterator.next();
@@ -217,11 +216,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
     catch (IncorrectOperationException e) {
-      message = e.getMessage();
-    }
-
-    if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), getHelpID(), myProject);
       return false;
     }
 
