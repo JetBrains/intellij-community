@@ -30,6 +30,7 @@ class TemplateSchemeTest {
       <template name="serr" value="System.err.println(&quot;$\END$&quot;)dwed" description="Prints a string to System.errwefwe" toReformat="true" toShortenFQNames="true" deactivated="true">
         <context>
           <option name="__DO_NOT_DELETE_ME__" value="true" />
+          <option name="GROOVY_STATEMENT" value="false" />
         </context>
       </template>
     </templateSet>""".trimIndent()

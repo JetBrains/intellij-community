@@ -83,7 +83,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls private static final String DEFAULT_VALUE = "defaultValue";
   @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls private static final String CONTEXT = "context";
+  @NonNls static final String CONTEXT = "context";
   @NonNls private static final String TO_REFORMAT = "toReformat";
   @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
   @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
@@ -214,8 +214,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         templateSetElement.setAttribute(GROUP, template.getName());
 
         for (TemplateImpl t : template.getElements()) {
-          if (differsFromDefault(t)) {
-            templateSetElement.addContent(serializeTemplate(t));
+          TemplateImpl defaultTemplate = getDefaultTemplate(t);
+          if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+            templateSetElement.addContent(serializeTemplate(t, defaultTemplate));
           }
         }
 
@@ -582,7 +583,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template) {
+  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -621,9 +622,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       element.addContent(variableElement);
     }
 
-    Element contextElement = new Element(CONTEXT);
-    template.getTemplateContext().writeTemplateContext(contextElement);
-    element.addContent(contextElement);
+    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext());
+    if (contextElement != null) {
+      element.addContent(contextElement);
+    }
     return element;
   }
 
