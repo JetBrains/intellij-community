@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -129,9 +128,8 @@ public class ExecutionUtil {
       else {
         Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
       }
-      NotificationListener notificationListener = finalListener == null ? null : new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      NotificationListener notificationListener = finalListener == null ? null : (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           finalListener.hyperlinkUpdate(event);
         }
       };
