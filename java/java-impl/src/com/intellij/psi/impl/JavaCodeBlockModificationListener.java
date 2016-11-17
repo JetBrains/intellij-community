@@ -51,7 +51,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
       case CHILDREN_CHANGED:
         // general childrenChanged() event after each change
         if (!event.isGenericChange()) {
-          processChange(event.getParent(), event.getParent(), null);
+          processChange(event.getParent(), null, null);
         }
         break;
 
