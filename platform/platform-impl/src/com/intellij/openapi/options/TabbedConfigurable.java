@@ -16,9 +16,9 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,15 +30,11 @@ import static com.intellij.openapi.options.ex.ConfigurableCardPanel.createConfig
 public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> implements Configurable.NoScroll,
                                                                                                 Configurable.NoMargin {
   protected TabbedPaneWrapper myTabbedPane;
-  private final Disposable myParentDisposable;
-
-  protected TabbedConfigurable(@NotNull Disposable parentDisposable) {
-    myParentDisposable = parentDisposable;
-  }
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   @Override
   public JComponent createComponent() {
-    myTabbedPane = new TabbedPaneWrapper(myParentDisposable);
+    myTabbedPane = new TabbedPaneWrapper(myDisposable);
     createConfigurableTabs();
     final JComponent component = myTabbedPane.getComponent();
     component.setBorder(JBUI.Borders.emptyTop(5));
@@ -54,11 +50,8 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
 
   @Override
   public void disposeUIResources() {
-    myTabbedPane = null;
     super.disposeUIResources();
-  }
-
-  public Disposable getParentDisposable() {
-    return myParentDisposable;
+    Disposer.dispose(myDisposable);
+    myTabbedPane = null;
   }
 }

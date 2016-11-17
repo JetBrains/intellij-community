@@ -20,7 +20,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +30,6 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -211,8 +209,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
-                  Disposable disposable = Disposer.newDisposable();
-                  Configurable composite = new TabbedConfigurable(disposable) {
+                  Configurable composite = new TabbedConfigurable() {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
@@ -242,7 +239,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                     };
 
                     ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, () -> ui.selectItem(ToStringTemplatesManager.getInstance().getDefaultTemplate()));
-                  Disposer.dispose(disposable);
+                  composite.disposeUIResources();
                 }
             });
 
