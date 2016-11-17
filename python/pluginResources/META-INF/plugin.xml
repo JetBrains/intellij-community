@@ -16,13 +16,15 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 ]]></description>
 
   <version>@@PYCHARM_VERSION@@</version>
-  <depends>com.intellij.modules.java</depends>
 
 
   <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
   <xi:include href="/META-INF/python-core-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/python-community-plugin-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="python-plugin-minor-ide.xml">com.intellij.modules.clion</depends>
+  <depends optional="true" config-file="python-plugin-minor-ide.xml">com.intellij.modules.rider</depends>
 
   <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary
      plugins are loaded as separate plugins) and another is used for the real release build (when auxiliary
