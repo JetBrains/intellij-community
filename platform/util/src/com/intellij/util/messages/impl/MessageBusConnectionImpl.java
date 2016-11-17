@@ -138,6 +138,15 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myPendingMessages.get().offer(message);
   }
 
+  boolean containsMessage(@NotNull Topic topic) {
+    for (Message message : myPendingMessages.get()) {
+      if (message.getTopic() == topic) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public String toString() {
     return mySubscriptions.toString();
   }
