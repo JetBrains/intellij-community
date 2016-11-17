@@ -216,16 +216,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   public void requestFocusInTheSearchFieldAndSelectContent(Project project) {
-    doSelectAll(mySearchTextComponent);
+    mySearchTextComponent.selectAll();
     IdeFocusManager.getInstance(project).requestFocus(mySearchTextComponent, true);
     if (myReplaceTextComponent != null) {
-      doSelectAll(myReplaceTextComponent);
+      myReplaceTextComponent.selectAll();
     }
-  }
-
-  private static void doSelectAll(JTextComponent searchTextComponent) {
-    searchTextComponent.setSelectionStart(0);
-    searchTextComponent.setSelectionEnd(searchTextComponent.getText().length());
   }
 
   public void setStatusText(@NotNull String status) {
@@ -308,8 +303,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
 
   private void updateSearchComponent(@NotNull String textToSet) {
-    final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
-    boolean wasNull = mySearchTextComponent == null;
     if (!updateTextComponent(true)) {
       if (!mySearchTextComponent.getText().equals(textToSet)) {
         mySearchTextComponent.setText(textToSet);
@@ -317,12 +310,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       return;
     }
 
-    if (!mySearchTextComponent.getText().equals(textToSet)) {
-      mySearchTextComponent.setText(textToSet);
-      if (wasNull) {
-        mySearchTextComponent.selectAll();
-      }
-    }
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -343,17 +330,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                    }
                                                  }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
-    if (!wasNull) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> mySearchTextComponent.setCaretPosition(Math.min(oldCaretPosition, mySearchTextComponent.getText().length())));
-    }
 
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
   }
 
   private void updateReplaceComponent(@NotNull String textToSet) {
-    final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
-    boolean wasNull = myReplaceTextComponent == null;
     if (!updateTextComponent(false)) {
       if (!myReplaceTextComponent.getText().equals(textToSet)) {
         myReplaceTextComponent.setText(textToSet);
@@ -371,12 +352,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     if (!isMultiline()) {
       installReplaceOnEnterAction(myReplaceTextComponent);
-    }
-
-    //myReplaceTextComponent.setText(myFindModel.getStringToReplace());
-    if (!wasNull) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> myReplaceTextComponent.setCaretPosition(Math.min(oldCaretPosition, myReplaceTextComponent.getText().length())));
     }
 
     new VariantsCompletionAction(myReplaceTextComponent);
