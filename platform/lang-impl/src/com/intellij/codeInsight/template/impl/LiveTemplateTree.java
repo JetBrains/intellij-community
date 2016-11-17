@@ -88,10 +88,11 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
   public void performCopy(@NotNull DataContext dataContext) {
     final Set<TemplateImpl> templates = myConfigurable.getSelectedTemplates().keySet();
 
-
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
     CopyPasteManager.getInstance().setContents(
       new StringSelection(StringUtil.join(templates,
-                                          template -> JDOMUtil.writeElement(TemplateSettings.serializeTemplate(template)),
+                                          template -> JDOMUtil.writeElement(
+                                            TemplateSettings.serializeTemplate(template, templateSettings.getDefaultTemplate(template))),
                                           SystemProperties.getLineSeparator())));
     
   }

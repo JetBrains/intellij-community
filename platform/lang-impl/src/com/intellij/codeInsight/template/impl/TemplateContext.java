@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,9 +123,10 @@ public class TemplateContext {
   }
 
   @VisibleForTesting
-  public void writeTemplateContext(@NotNull Element element) {
+  @Nullable
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
     if (myContextStates.isEmpty()) {
-      return;
+      return null;
     }
 
     Map<String, TemplateContextType> idToType = new THashMap<>();
@@ -133,6 +134,7 @@ public class TemplateContext {
       idToType.put(type.getContextId(), type);
     }
 
+    Element element = new Element(TemplateSettings.CONTEXT);
     for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
       Boolean ownValue = entry.getValue();
       if (ownValue == null) {
@@ -144,14 +146,30 @@ public class TemplateContext {
         // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
         JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
       }
-      else {
-        TemplateContextType base = type.getBaseContextType();
-        boolean baseEnabled = base != null && isEnabled(base);
-        if (ownValue != baseEnabled) {
-          JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
-        }
+      else if (isNotDefault(ownValue, type, defaultContext)) {
+        JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
       }
     }
+    return element;
+  }
+
+  /**
+   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * Base value is `false`.
+   *
+   * If default value is defined (as in our example) — we must not take base value in account.
+   * Because on init `setDefaultContext` will be called and we will have own value.
+   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * See TemplateSchemeTest.
+   */
+  boolean isNotDefault(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    if (defaultValue == null) {
+      TemplateContextType base = type.getBaseContextType();
+      boolean baseEnabled = base != null && isEnabled(base);
+      return ownValue != baseEnabled;
+    }
+    return !ownValue.equals(defaultValue);
   }
 
   @Override

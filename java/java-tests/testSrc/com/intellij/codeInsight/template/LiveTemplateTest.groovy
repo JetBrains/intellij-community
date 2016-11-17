@@ -664,14 +664,12 @@ class Outer {
 
     def copy = defContext.createCopy()
 
-    def write = new Element("context")
-    copy.writeTemplateContext(write)
+    def write = copy.writeTemplateContext(null)
     assert write.children.size() == 2 : JDOMUtil.writeElement(write)
 
     copy.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
 
-    write = new Element("context")
-    copy.writeTemplateContext(write)
+    write = copy.writeTemplateContext(null)
     assert write.children.size() == 3 : JDOMUtil.writeElement(write)
   }
 
@@ -699,8 +697,7 @@ class Outer {
     def javaContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic)
     context.setEnabled(javaContext, true)
 
-    def saved = new Element('context')
-    context.writeTemplateContext(saved)
+    def saved = context.writeTemplateContext(null)
 
     context = new TemplateContext()
     context.readTemplateContext(saved)
