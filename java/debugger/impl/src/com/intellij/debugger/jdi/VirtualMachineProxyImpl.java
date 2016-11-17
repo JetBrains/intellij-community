@@ -127,6 +127,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public List<ReferenceType> classesByName(String s) {
     String signature = JNITypeParserReflect.typeNameToSignature(s);
     if (signature != null) {
+      boolean firstCall = myAllClassesByName == null;
+      boolean allClassesWereReady = myAllClasses != null;
       if (myAllClassesByName == null) {
         myAllClassesByName = new MultiMap<>();
         allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
@@ -136,7 +138,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       if (res.isEmpty()) {
         List<ReferenceType> types = myVirtualMachine.classesByName(s);
         if (!types.isEmpty()) {
-          LOG.error("Obsolete classes cache does not contain " + s + ", while the real vm does");
+          LOG.error("Obsolete classes cache does not contain " + s + ", while the real vm does" +
+                    ", firstCall=" + firstCall +
+                    ", allClassesWereReady=" + allClassesWereReady);
           clearCaches();
         }
         return types;
