@@ -34,9 +34,6 @@ public interface ProjectFileIndex extends FileIndex {
   class SERVICE {
     private SERVICE() { }
 
-    /**
-     * @deprecated use {@link ProjectFileIndex#getInstance(Project)} instead
-     */
     public static ProjectFileIndex getInstance(Project project) {
       return ProjectFileIndex.getInstance(project);
     }
