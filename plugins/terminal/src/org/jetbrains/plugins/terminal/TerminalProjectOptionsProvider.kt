@@ -68,7 +68,7 @@ class TerminalProjectOptionsProvider(private val myProject: Project) : Persisten
         }
       }
 
-      return currentProjectFolder()
+      return directory ?: currentProjectFolder()
     }
 
 
