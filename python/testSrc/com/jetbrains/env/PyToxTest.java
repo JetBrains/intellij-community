@@ -125,10 +125,10 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py26", new InterpreterExpectations("", true)),
+                                                       Pair.create("py26", new InterpreterExpectations("", false)),
                                                        Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
-                                                       Pair.create("py32", new InterpreterExpectations("", true)),
-                                                       Pair.create("py34", new InterpreterExpectations("", true))
+                                                       Pair.create("py32", new InterpreterExpectations("", false)),
+                                                       Pair.create("py34", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
