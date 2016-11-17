@@ -316,7 +316,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
-    initMainSplitter();
+    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
@@ -1018,10 +1018,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable
   protected JComponent createCenterPanel() {
     return myDetailsSplitter.getComponent();
-  }
-
-  private void initMainSplitter() {
-    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
   }
 
   @NotNull
