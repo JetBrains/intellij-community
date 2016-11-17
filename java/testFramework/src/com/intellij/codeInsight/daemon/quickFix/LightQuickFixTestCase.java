@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -143,7 +144,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
     handler.setClearReadOnlyInTests(true);
     try {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText());
+      ApplicationManager.getApplication().invokeLater(() ->
+        ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText()));
       UIUtil.dispatchAllInvocationEvents();
     }
     finally {
