@@ -300,6 +300,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     else if (ref instanceof RefPackage) {
       return PACKAGE;
     }
+    else if (ref instanceof RefJavaModule) {
+      return JAVA_MODULE;
+    }
     return null;
   }
 

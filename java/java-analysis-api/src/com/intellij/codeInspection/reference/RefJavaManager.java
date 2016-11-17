@@ -37,6 +37,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls public static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   @NonNls public static final String FIELD = "field";
   @NonNls public static final String PARAMETER = "parameter";
+  @NonNls public static final String JAVA_MODULE = "java.module";
   //used in OfflineProjectDescriptor
   @NonNls public static final String PACKAGE = "package";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
