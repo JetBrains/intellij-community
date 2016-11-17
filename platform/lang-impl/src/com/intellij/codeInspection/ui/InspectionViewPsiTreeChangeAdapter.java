@@ -111,7 +111,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                 if (needUpdateUI[0]) {
                   myAlarm.cancelAllRequests();
                   myAlarm.addRequest(() -> {
-                    resetTree(myView);
+                    myView.resetTree();
                   }, 100, ModalityState.NON_MODAL);
                 }
               }
@@ -166,15 +166,6 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
   @Override
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     processEventFileOrDir(event, false);
-  }
-
-  public static void resetTree(@NotNull InspectionResultsView view) {
-    final InspectionTree tree = view.getTree();
-    final TreePath[] selectionPath = tree.getSelectionPaths();
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
-    ((DefaultTreeModel)tree.getModel()).reload();
-    TreeUtil.restoreExpandedPaths(tree, expandedPaths);
-    tree.setSelectionPaths(selectionPath);
   }
 
   private void processEventFileOrDir(@NotNull PsiTreeChangeEvent event, boolean eagerEvaluateFiles) {
