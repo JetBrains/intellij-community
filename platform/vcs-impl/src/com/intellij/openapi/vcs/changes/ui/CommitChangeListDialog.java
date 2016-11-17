@@ -84,7 +84,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final CommitMessage myCommitMessageArea;
   @NotNull private final Splitter mySplitter;
-  @Nullable private final JPanel myAdditionalOptionsPanel;
 
   @NotNull private final ChangesBrowserBase<?> myBrowser;
 
@@ -119,7 +118,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final PseudoMap<Object, Object> myAdditionalData;
   @Nullable private final String myHelpId;
 
-  private SplitterWithSecondHideable myDetailsSplitter;
+  @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
   private final String myOkActionText;
   @Nullable private final CommitAction myCommitAction;
   @Nullable private final CommitResultHandler myResultHandler;
@@ -404,13 +403,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       optionsBox.add(afterPanel);
     }
 
+    JPanel optionsPanel;
     if (hasVcsOptions || beforeVisible || afterVisible) {
       optionsBox.add(Box.createVerticalGlue());
-      myAdditionalOptionsPanel = new JPanel(new BorderLayout());
-      myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
+      optionsPanel = new JPanel(new BorderLayout());
+      optionsPanel.add(optionsBox, BorderLayout.NORTH);
     }
     else {
-      myAdditionalOptionsPanel = null;
+      optionsPanel = null;
     }
 
     myOkActionText = actionName;
@@ -452,8 +452,72 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myWarningLabel.setUI(new MultiLineLabelUI());
     myWarningLabel.setForeground(JBColor.RED);
     myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
-
     updateWarning();
+
+    JPanel mainPanel;
+    if (optionsPanel != null) {
+      JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(optionsPanel, true);
+      JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
+
+      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, JBUI.scale(150), JBUI.scale(400)));
+      mainPanel.add(mySplitter);
+      mainPanel.add(infoPanel);
+    }
+    else {
+      mainPanel = mySplitter;
+    }
+
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
+
+    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
+
+    // TODO: there are no reason to use such heavy interface for a simple task.
+    myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
+                                                       new SplitterWithSecondHideable.OnOffListener<Integer>() {
+                                                         @Override
+                                                         public void on(Integer integer) {
+                                                           if (integer == 0) return;
+                                                           myDiffDetails.refresh();
+                                                           mySplitter.skipNextLayouting();
+                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           final Dimension dialogSize = getSize();
+                                                           setSize(dialogSize.width, dialogSize.height + integer);
+                                                           repaint();
+                                                         }
+
+                                                         @Override
+                                                         public void off(Integer integer) {
+                                                           if (integer == 0) return;
+                                                           myDiffDetails.clear(); // TODO: we may want to keep it in memory
+                                                           mySplitter.skipNextLayouting();
+                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           final Dimension dialogSize = getSize();
+                                                           setSize(dialogSize.width, dialogSize.height - integer);
+                                                           repaint();
+                                                         }
+                                                       }) {
+      @Override
+      protected RefreshablePanel createDetails() {
+        final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
+        return new RefreshablePanel() {
+          @Override
+          public void refresh() {
+          }
+
+          @Override
+          public JPanel getPanel() {
+            return panel;
+          }
+        };
+      }
+
+      @Override
+      protected float getSplitterInitialProportion() {
+        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
+        return value <= 0.05 || value >= 0.95 ? DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT : value;
+      }
+    };
 
     init();
     updateButtons();
@@ -960,70 +1024,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel mainPanel;
-    if (myAdditionalOptionsPanel != null) {
-      JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-      JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
-
-      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, JBUI.scale(150), JBUI.scale(400)));
-      mainPanel.add(mySplitter);
-      mainPanel.add(infoPanel);
-    } else {
-      mainPanel = mySplitter;
-    }
-
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
-
-    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
-
-    // TODO: there are no reason to use such heavy interface for a simple task.
-    myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
-                                                       new SplitterWithSecondHideable.OnOffListener<Integer>() {
-                                                         @Override
-                                                         public void on(Integer integer) {
-                                                           if (integer == 0) return;
-                                                           myDiffDetails.refresh();
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
-                                                           final Dimension dialogSize = getSize();
-                                                           setSize(dialogSize.width, dialogSize.height + integer);
-                                                           repaint();
-                                                         }
-
-                                                         @Override
-                                                         public void off(Integer integer) {
-                                                           if (integer == 0) return;
-                                                           myDiffDetails.clear(); // TODO: we may want to keep it in memory
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
-                                                           final Dimension dialogSize = getSize();
-                                                           setSize(dialogSize.width, dialogSize.height - integer);
-                                                           repaint();
-                                                         }
-                                                       }) {
-      @Override
-      protected RefreshablePanel createDetails() {
-        final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
-        return new RefreshablePanel() {
-          @Override
-          public void refresh() {
-          }
-
-          @Override
-          public JPanel getPanel() {
-            return panel;
-          }
-        };
-      }
-
-      @Override
-      protected float getSplitterInitialProportion() {
-        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
-        return value <= 0.05 || value >= 0.95 ? DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT : value;
-      }
-    };
-
     return myDetailsSplitter.getComponent();
   }
 
