@@ -112,7 +112,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final Color background = button.getBackground();
     ourIconRect.x -= JBUI.scale(2);
     ourTextRect.x -= JBUI.scale(2);
-    final int off = JBUI.scale(1);
+    final int off = 1;
     if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-off, 0);
       if (anchor.isHorizontal()) g2.translate(0, -off);
