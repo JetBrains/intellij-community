@@ -51,6 +51,7 @@ public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock, PsiModi
 
   @Override
   public boolean shouldChangeModificationCount(PsiElement place) {
-    return !isTopControlFlowOwner();
+    final PsiElement parent = getParent();
+    return !(parent instanceof GrMethod) && !(parent instanceof GrClassInitializer);
   }
 }
