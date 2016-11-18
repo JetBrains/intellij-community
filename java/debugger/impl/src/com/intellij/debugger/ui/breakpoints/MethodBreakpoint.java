@@ -146,6 +146,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (request != null) {
       requestsManager.registerRequest(this, request);
       request.enable();
+      debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
 
     AtomicReference<ProgressIndicator> indicatorRef = new AtomicReference<>();

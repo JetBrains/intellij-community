@@ -318,6 +318,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       registerRequest(requestor, prepareRequest);
       prepareRequest.enable();
     }
+    myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
   }
 
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
@@ -330,6 +331,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       if (LOG.isDebugEnabled()) {
         LOG.debug("classOrPatternToBeLoaded = " + classOrPatternToBeLoaded);
       }
+      myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
   }
 
