@@ -102,30 +102,6 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
-      super.visitAnnotation(annotation);
-      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
-      if (referenceElement != null) {
-        PsiElement resolved = referenceElement.resolve();
-        if (resolved instanceof PsiClass) {
-          PsiClass annotationClass = (PsiClass)resolved;
-          if (isInModuleSource(annotationClass) && !isModulePublicApi(annotationClass)) {
-            PsiAnnotationOwner owner = annotation.getOwner();
-            if (isModulePublicApi(owner)) {
-              registerProblem(referenceElement);
-            }
-            if (owner instanceof PsiParameter) {
-              PsiElement parent = ((PsiParameter)owner).getParent();
-              if (parent instanceof PsiMember && isModulePublicApi((PsiMember)parent)) {
-                registerProblem(referenceElement);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
       if (isModulePublicApi(aClass)) {
