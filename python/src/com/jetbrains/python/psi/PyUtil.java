@@ -1032,7 +1032,8 @@ public class PyUtil {
         return true;
       }
     }
-    return PyNames.INIT_DOT_PY.equals(file.getName()) || PyNames.INIT_DOT_PYI.equals(name);
+    final String name = file.getName();
+    return PyNames.INIT_DOT_PY.equals(name) || PyNames.INIT_DOT_PYI.equals(name);
   }
 
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
