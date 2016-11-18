@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -41,15 +42,11 @@ public abstract class ManagingFS implements FileSystemInterface {
   @NotNull
   public abstract DataOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
-  public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
-
   /**
-   * @deprecated to be removed in IDEA 16
-   * @see #getModificationCount() 
+   * @return a number that's incremented every time something changes for the file: name, size, flags, content.
+   * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap.
    */
-  public int getCheapFileSystemModificationCount() {
-    return getModificationCount();
-  }
+  public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents. 
@@ -67,10 +64,10 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract int getStructureModificationCount();
 
   /**
-   * @deprecated to be removed in IDEA 16
-   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
+   * @return a number that's incremented every time modification count for some file is advanced, @see {@link #getModificationCount(VirtualFile)}.
    * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap. 
    */
+  @TestOnly
   public abstract int getFilesystemModificationCount();
 
   public abstract long getCreationTimestamp();
