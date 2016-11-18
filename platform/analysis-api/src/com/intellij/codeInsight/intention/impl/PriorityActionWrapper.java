@@ -61,6 +61,11 @@ public abstract class PriorityActionWrapper extends LocalQuickFixAndIntentionAct
     return fix.startInWriteAction();
   }
 
+  @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return fix.shouldMakeCurrentFileWritable();
+  }
+
   @NotNull
   @Override
   public String getText() {

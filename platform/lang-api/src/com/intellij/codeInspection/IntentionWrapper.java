@@ -70,6 +70,11 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   }
 
   @Override
+  public final boolean shouldMakeCurrentFileWritable() {
+    return myAction.shouldMakeCurrentFileWritable();
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return myAction.startInWriteAction();
   }
