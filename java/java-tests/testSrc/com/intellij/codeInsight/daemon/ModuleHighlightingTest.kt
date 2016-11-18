@@ -167,6 +167,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testLinearModuleGraphBug() {
+    addFile("module-info.java", "module M { requires M6; }")
+    addFile("module-info.java", "module M6 { requires M7; }", M6)
+    addFile("module-info.java", "module M7 { }", M7)
+    highlight("module M { requires M6; }")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
