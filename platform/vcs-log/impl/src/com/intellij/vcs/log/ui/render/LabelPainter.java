@@ -77,9 +77,11 @@ public class LabelPainter {
   @NotNull private Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;
   @NotNull private Color myForeground = UIUtil.getTableForeground();
+  private boolean myShowTagNames;
 
-  public LabelPainter(@NotNull VcsLogData data) {
+  public LabelPainter(@NotNull VcsLogData data, boolean showTagNames) {
     myLogData = data;
+    myShowTagNames = showTagNames;
   }
 
   @Nullable
@@ -106,7 +108,7 @@ public class LabelPainter {
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
 
     VcsLogRefManager manager = getRefManager(myLogData, references);
-    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
+    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references, myShowTagNames);
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
@@ -245,6 +247,10 @@ public class LabelPainter {
   public Font getReferenceFont() {
     Font font = RectanglePainter.getFont();
     return font.deriveFont(font.getSize() - 1f);
+  }
+
+  public void setShowTagNames(boolean showTagNames) {
+    myShowTagNames = showTagNames;
   }
 }
 

@@ -192,6 +192,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myUiProperties.setShowDetails(showDetails);
   }
 
+  @Override
+  public boolean isShowTagNames() {
+    return myUiProperties.isShowTagNames();
+  }
+
+  @Override
+  public void setShowTagNames(boolean show) {
+    myUiProperties.setShowTagNames(show);
+    myMainFrame.getGraphTable().setShowTagNames(show);
+  }
+
   @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();

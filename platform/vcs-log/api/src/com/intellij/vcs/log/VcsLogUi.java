@@ -32,6 +32,10 @@ public interface VcsLogUi {
 
   boolean areGraphActionsEnabled();
 
+  boolean isShowTagNames();
+
+  void setShowTagNames(boolean show);
+
   boolean isMultipleRoots();
 
   boolean isShowRootNames();

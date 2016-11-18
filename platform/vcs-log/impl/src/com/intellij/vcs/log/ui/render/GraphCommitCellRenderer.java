@@ -37,13 +37,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
-                                 @NotNull VcsLogGraphTable table) {
+                                 @NotNull VcsLogGraphTable table,
+                                 boolean showTagNames) {
     myLogData = logData;
     myGraphTable = table;
 
-    myTooltipPainter = new LabelPainter(myLogData);
-    myComponent = new MyComponent(logData, painter, table);
-    myTemplateComponent = new MyComponent(logData, painter, table);
+    myTooltipPainter = new LabelPainter(myLogData, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, showTagNames);
+    myTemplateComponent = new MyComponent(logData, painter, table, showTagNames);
   }
 
   @Override
@@ -110,6 +111,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
   }
 
+  public void setShowTagsNames(boolean showTagNames) {
+    myComponent.getReferencePainter().setShowTagNames(showTagNames);
+  }
+
   private static class MyComponent extends SimpleColoredRenderer {
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
@@ -121,12 +126,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private Font myFont;
     private int myHeight;
 
-    public MyComponent(@NotNull VcsLogData data, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table) {
+    public MyComponent(@NotNull VcsLogData data, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table, boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(myLogData);
+      myReferencePainter = new LabelPainter(myLogData, showTags);
 
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
       myFont = RectanglePainter.getFont();

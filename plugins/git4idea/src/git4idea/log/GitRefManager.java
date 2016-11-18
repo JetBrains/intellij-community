@@ -141,7 +141,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean showTagNames) {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
     Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
     Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ContainerUtil.getFirstItem(groupedRefs);
@@ -166,7 +166,7 @@ public class GitRefManager implements VcsLogRefManager {
 
     VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
     VcsRefType firstRefType = firstGroup.getKey();
-    String name = firstRefType.isBranch() && !firstRefType.equals(HEAD) ? firstRef.getName() : "";
+    String name = (showTagNames || firstRefType.isBranch()) && !firstRefType.equals(HEAD) ? firstRef.getName() : "";
 
     if (firstRefType.equals(LOCAL_BRANCH)) {
       GitRepository repository = myRepositoryManager.getRepositoryForRoot(firstRef.getRoot());

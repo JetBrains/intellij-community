@@ -56,4 +56,8 @@ public interface VcsLogUiProperties {
 
   @Nullable
   List<String> getFilterValues(@NotNull String filterName);
+
+  boolean isShowTagNames();
+
+  void setShowTagNames(boolean showTags);
 }

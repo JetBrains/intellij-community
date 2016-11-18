@@ -112,7 +112,7 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
     Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
     Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup =
@@ -129,8 +129,9 @@ public class HgRefManager implements VcsLogRefManager {
     VcsRefType firstRefType = firstGroup.getKey();
 
     groups.add(
-      new SimpleRefGroup(firstRefType.isBranch() && !firstRefType.equals(TIP) && !firstRefType.equals(HEAD) ? firstRef.getName() : "",
-                         sortedReferences));
+      new SimpleRefGroup(
+        (showTagNames || firstRefType.isBranch()) && !firstRefType.equals(TIP) && !firstRefType.equals(HEAD) ? firstRef.getName() : "",
+        sortedReferences));
 
     return groups;
   }

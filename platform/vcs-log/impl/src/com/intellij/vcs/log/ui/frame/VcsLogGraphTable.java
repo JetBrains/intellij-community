@@ -112,7 +112,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, ui.isShowTagNames());
     myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
@@ -422,6 +422,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void showTooltip(int row) {
     myController.showTooltip(row);
+  }
+
+  public void setShowTagNames(boolean showTagsNames) {
+    myGraphCommitCellRenderer.setShowTagsNames(showTagsNames);
+    repaint();
   }
 
   static class Selection {
