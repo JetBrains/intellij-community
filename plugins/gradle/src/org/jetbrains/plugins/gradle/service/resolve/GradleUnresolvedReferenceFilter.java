@@ -16,17 +16,23 @@
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_EXTRA_PROPERTIES_EXTENSION;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createGenericType;
 
 /**
  * @author Vladislav.Soroka
@@ -44,6 +50,21 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
   @Override
   public boolean isReject(@NotNull GrReferenceExpression expression) {
     final PsiType psiType = GradleResolverUtil.getTypeOf(expression);
+    if (psiType == null) {
+      PsiElement child = expression.getFirstChild();
+      if (child == null) return false;
+      PsiReference reference = child.getReference();
+      if (reference instanceof GrReferenceExpression) {
+        PsiType type = ((GrReferenceExpression)reference).getType();
+        if (type != null) {
+          PsiClassType extType = createGenericType(GRADLE_API_EXTRA_PROPERTIES_EXTENSION, expression, null);
+          ConversionResult result = TypesUtil.canCast(extType, type, expression);
+          return result == ConversionResult.OK;
+        }
+      }
+      return false;
+    }
+
     Set<String> toIgnore = new HashSet<>(IGNORE_SET);
     GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsContributor.Companion.getExtensionsFor(expression);
     if (extensionsData != null) {
@@ -53,6 +74,6 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
         }
       }
     }
-    return psiType != null && toIgnore.contains(TypesUtil.getQualifiedName(psiType));
+    return toIgnore.contains(TypesUtil.getQualifiedName(psiType));
   }
 }
