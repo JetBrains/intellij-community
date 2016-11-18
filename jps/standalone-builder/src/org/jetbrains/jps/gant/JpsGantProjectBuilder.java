@@ -48,6 +48,8 @@ import java.util.*;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
+ * It doesn't make sense to have this class in the common jps-standalone-builder module, it should be moved to platform-build-scripts module.
+ *
  * @author nik
  */
 public class JpsGantProjectBuilder {
