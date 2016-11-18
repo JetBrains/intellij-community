@@ -58,6 +58,7 @@ public class Highlighted {
     highlight("""package apiPkg;
 import m2Pkg.Exported;
 public class Highlighted {
+  static { Exported tmp = new Exported(); System.out.println(tmp);}
   public Exported myVar;
   protected Highlighted() {}
   public Highlighted(Exported var) {
@@ -71,6 +72,7 @@ public class Highlighted {
   fun testPackageLocalExposed() {
     highlight("""package apiPkg;
 public class Highlighted {
+  static { PackageLocal tmp = new PackageLocal(); System.out.println(tmp);}
   public <warning descr="The class is not exported from the module">PackageLocal</warning> myVar;
   protected Highlighted() {}
   public Highlighted(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {
@@ -85,6 +87,7 @@ public class Highlighted {
   fun testPackageLocalEncapsulated() {
     highlight("""package apiPkg;
 public class Highlighted {
+  static { PackageLocal tmp = new PackageLocal(); System.out.println(tmp);}
   private PackageLocal myVar;
   private Highlighted() {}
   Highlighted(PackageLocal var) {
@@ -99,6 +102,7 @@ public class Highlighted {
   fun testPackageLocalUsedLocally() {
     highlight("""package apiPkg;
 class Highlighted {
+  static { PackageLocal tmp = new PackageLocal(); System.out.println(tmp);}
   public PackageLocal myVar;
   protected Highlighted() {}
   public Highlighted(PackageLocal var) {
@@ -113,6 +117,7 @@ class Highlighted {
   fun testPublicApi() {
     highlight("""package apiPkg;
 public class Highlighted {
+  static { PublicApi tmp = new PublicApi(); System.out.println(tmp);}
   public PublicApi myVar;
   protected Highlighted() {}
   public Highlighted(PublicApi var) {
@@ -128,6 +133,7 @@ public class Highlighted {
     highlight("""package apiPkg;
 import otherPkg.PublicOther;
 public class Highlighted {
+  static { PublicOther tmp = new PublicOther(); System.out.println(tmp);}
   public PublicOther myVar;
   protected Highlighted() {}
   public Highlighted(PublicOther var) {
@@ -143,6 +149,7 @@ public class Highlighted {
     highlight("""package apiPkg;
 public class Highlighted {
   public class PublicNested {}
+  { PublicNested tmp = new PublicNested(); System.out.println(tmp);}
   public PublicNested myVar;
   protected Highlighted() {}
   public Highlighted(PublicNested var) {
@@ -158,6 +165,7 @@ public class Highlighted {
     highlight("""package apiPkg;
 public class Highlighted {
   class PackageLocalNested {}
+  { PackageLocalNested tmp = new PackageLocalNested(); System.out.println(tmp);}
   public <warning descr="The class is not exported from the module">PackageLocalNested</warning> myVar;
   protected Highlighted() {}
   public Highlighted(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {
