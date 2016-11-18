@@ -16,30 +16,29 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Max Medvedev
  */
 public class ConditionInstruction extends InstructionImpl implements Instruction {
-  private final Set<ConditionInstruction> myDependent = new HashSet<>();
 
-  public ConditionInstruction(@NotNull PsiElement element) {
+  private final Set<ConditionInstruction> myDependent;
+
+  public ConditionInstruction(@NotNull PsiElement element, @NotNull Collection<ConditionInstruction> dependent) {
     super(element);
+    myDependent = new HashSet<>(dependent);
     myDependent.add(this);
   }
 
   @Override
   protected String getElementPresentation() {
     return "Condition " + getElement();
-  }
-
-  void addDependent(ConditionInstruction i) {
-    myDependent.add(i);
   }
 
   public Set<ConditionInstruction> getDependentConditions() {
