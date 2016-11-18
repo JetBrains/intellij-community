@@ -55,6 +55,8 @@ class GradleJavaContributor : GradleMethodContextContributor {
       groovyClosure().withAncestor(2, sourceSetClosure),
       groovyClosure().inMethod(or(psiMethod(GRADLE_API_SOURCE_SET, "java"),
                                   psiMethod(GRADLE_API_SOURCE_SET, "resources"))))
+
+    val sourceDirectorySetClosureCandidate = groovyClosure().inMethod(psiMethodInClass(GRADLE_API_SOURCE_SET))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
@@ -93,9 +95,17 @@ class GradleJavaContributor : GradleMethodContextContributor {
           if (!processor.execute(methodBuilder, state)) return false
         }
       }
-      if (place.parent is GrReferenceExpression || psiElement.withTreeParent(sourceSetsClosure).accepts(place)) {
+
+      if (!psiElement.inside(sourceDirectorySetClosureCandidate).accepts(place)
+        && (place.parent is GrReferenceExpression || psiElement.withTreeParent(sourceSetsClosure).accepts(place))) {
         val variable = GrLightVariable(place.manager, name, GRADLE_API_SOURCE_SET, place)
         if (!processor.execute(variable, state)) return false
+      }
+
+      if (psiElement.inside(sourceDirectorySetClosureCandidate).accepts(place)) {
+        if (!GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_SOURCE_DIRECTORY_SET)) {
+          return false
+        }
       }
     }
 

@@ -24,6 +24,7 @@ import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint.KEY
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 
 /**
  * @author Vladislav.Soroka
@@ -68,3 +69,5 @@ class ComponentProcessor(val delegate: PsiScopeProcessor, val place: PsiElement,
     null
   }
 }
+
+fun psiMethodInClass(containingClass: String) = GroovyPatterns.psiMethod().definedInClass(containingClass)
