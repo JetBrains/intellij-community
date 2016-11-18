@@ -128,6 +128,10 @@ public class JUnitUtil {
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
+    if (checkClass) {
+      PsiClass testCaseClass = getTestCaseClassOrNull(location);
+      if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
+    }
     return PsiType.VOID.equals(psiMethod.getReturnType());
   }
 
