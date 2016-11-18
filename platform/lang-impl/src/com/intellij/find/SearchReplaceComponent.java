@@ -141,7 +141,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     myLeftPanel = new NonOpaquePanel(new BorderLayout());
     myLeftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
-    myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.CENTER);
+    myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
 
     mySearchActionsToolbar1 = createSearchToolbar1(searchToolbar1Actions);
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
@@ -419,9 +419,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private boolean updateTextComponent(boolean search) {
     JTextComponent oldComponent = search ? mySearchTextComponent : myReplaceTextComponent;
-    Color oldBackground = oldComponent != null ? oldComponent.getBackground() : null;
-    final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
     if (oldComponent != null) return false;
+    final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
 
     final JTextComponent textComponent;
       SearchTextArea textArea = new SearchTextArea(search);
@@ -453,12 +452,15 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     wrapper.setContent(textArea);
 
     UIUtil.addUndoRedoActions(textComponent);
-    Utils.setSmallerFont(textComponent);
+
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
+      textComponent.setFont(UIManager.getFont("Textfield.font"));
+    } else {
+      Utils.setSmallerFont(textComponent);
+    }
 
     textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    if (oldBackground != null) {
-      textComponent.setBackground(oldBackground);
-    }
+    textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(final FocusEvent e) {
@@ -485,6 +487,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (myReplaceTextComponent instanceof JTextArea) {
       adjustRows((JTextArea)myReplaceTextComponent);
     }
+    myReplaceActionsToolbar2.invalidate();
+    doLayout();
     myEventDispatcher.getMulticaster().replaceFieldDocumentChanged();
   }
 
@@ -493,7 +497,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private static void adjustRows(@NotNull JTextArea area) {
-    area.setRows(Math.max(2, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
+    area.setRows(Math.max(1, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
   }
 
   private static boolean isMultiline(@NotNull JTextComponent component) {
