@@ -35,8 +35,13 @@ public interface ProjectFileIndex extends FileIndex {
     private SERVICE() { }
 
     public static ProjectFileIndex getInstance(Project project) {
-      return ServiceManager.getService(project, ProjectFileIndex.class);
+      return ProjectFileIndex.getInstance(project);
     }
+  }
+
+  @NotNull
+  static ProjectFileIndex getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ProjectFileIndex.class);
   }
 
   /**
