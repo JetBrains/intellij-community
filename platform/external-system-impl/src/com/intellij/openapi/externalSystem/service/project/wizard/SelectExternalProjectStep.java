@@ -56,15 +56,21 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
 
   @Override
   public boolean validate() throws ConfigurationException {
-    myControl.apply();
+    WizardContext wizardContext = getWizardContext();
+    boolean isDefaultFormat = true;
     if (myControl.getProjectFormatPanel() != null) {
-      myControl.getProjectFormatPanel().updateData(getWizardContext());
+      isDefaultFormat = myControl.getProjectFormatPanel().isDefault();
     }
+    if (!myControl.validate(wizardContext, isDefaultFormat)) return false;
     AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return false;
     }
-    builder.ensureProjectIsDefined(getWizardContext());
+    myControl.apply();
+    if (myControl.getProjectFormatPanel() != null) {
+      myControl.getProjectFormatPanel().updateData(wizardContext);
+    }
+    builder.ensureProjectIsDefined(wizardContext);
     return true;
   }
 
