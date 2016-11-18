@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class BackspaceAction extends TextComponentEditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
-      MacUIUtil.hideCursor();
+      EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       if (editor instanceof EditorWindow) {
         // manipulate actual document/editor instead of injected
