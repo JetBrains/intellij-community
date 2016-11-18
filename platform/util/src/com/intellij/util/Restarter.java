@@ -19,10 +19,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.jna.IntegerType;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
-import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +126,7 @@ public class Restarter {
     //
     // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
     char buffer[] = new char[32767];
-    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
+    if (kernel32.GetModuleFileNameW(null, buffer, new Kernel32.DWORD(buffer.length)).intValue() > 0) {
       argv[0] = Native.toString(buffer);
     }
 
@@ -212,7 +212,33 @@ public class Restarter {
 
     Pointer LocalFree(Pointer pointer);
 
-    WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
+    DWORD GetModuleFileNameW(Pointer hModule, char[] lpFilename, DWORD nSize);
+
+    /**
+     * 32-bit unsigned integer.
+     */
+    class DWORD extends IntegerType {
+      /**
+       * The Constant SIZE.
+       */
+      public static final int SIZE = 4;
+
+      /**
+       * Instantiates a new dword.
+       */
+      public DWORD() {
+        this(0);
+      }
+
+      /**
+       * Instantiates a new dword.
+       *
+       * @param value the value
+       */
+      public DWORD(long value) {
+        super(SIZE, value, true);
+      }
+    }
   }
 
   private interface Shell32 extends StdCallLibrary {
