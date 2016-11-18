@@ -111,7 +111,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     createStatusBar(frame);
 
     updateStatusBarVisibility();
-    updateToolbar();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
