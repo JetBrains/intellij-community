@@ -2022,7 +2022,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       restoreCaretRelativePosition();
     }
 
-    if (EMPTY_CURSOR != null && !myIsViewer) {
+    if (!myIsViewer &&
+        !SystemInfo.isMac && // Mac case is handled separately (see ide.mac.hide.cursor.when.typing registry key)
+         Registry.is("ide.hide.cursor.when.typing") &&
+        EMPTY_CURSOR != null) {
       myEditorComponent.setCursor(EMPTY_CURSOR);
     }
   }
