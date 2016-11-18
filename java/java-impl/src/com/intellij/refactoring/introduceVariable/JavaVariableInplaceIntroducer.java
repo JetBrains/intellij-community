@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -158,7 +159,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     super.performCleanup();
     PsiVariable variable = getVariable();
     if (variable != null) {
-      super.restoreState(variable);
+      CommandProcessor.getInstance().executeCommand(myProject, () -> super.restoreState(variable), null, null);
     }
   }
 

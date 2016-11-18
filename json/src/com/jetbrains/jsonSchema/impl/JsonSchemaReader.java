@@ -138,6 +138,7 @@ public class JsonSchemaReader {
                                  Set<JsonSchemaObject> objects,
                                  @Nullable JsonSchemaExportedDefinitions definitions) {
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
+    queue.add(root);
     queue.addAll(objects);
     int control = 10000;
 

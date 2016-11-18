@@ -95,6 +95,11 @@ public class QuickFixWrapper implements IntentionAction {
     return getFix().startInWriteAction();
   }
 
+  @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return getFix().shouldMakeCurrentFileWritable();
+  }
+
   public LocalQuickFix getFix() {
     return (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
   }

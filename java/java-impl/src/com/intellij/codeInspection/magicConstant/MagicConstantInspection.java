@@ -22,7 +22,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -210,12 +209,15 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       }
 
       @Override
+      public boolean shouldMakeCurrentFileWritable() {
+        return false;
+      }
+
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          SdkModificator modificator = finalJdk.getSdkModificator();
-          JavaSdkImpl.attachJdkAnnotations(modificator);
-          modificator.commitChanges();
-        });
+        SdkModificator modificator = finalJdk.getSdkModificator();
+        JavaSdkImpl.attachJdkAnnotations(modificator);
+        modificator.commitChanges();
       }
     });
   }
