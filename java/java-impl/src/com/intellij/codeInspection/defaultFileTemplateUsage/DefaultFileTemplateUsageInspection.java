@@ -19,7 +19,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -98,16 +97,14 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final FileTemplateConfigurable configurable = new FileTemplateConfigurable(project);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        configurable.setTemplate(myTemplateToEdit, null);
-        boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-        if (ok) {
-          WriteCommandAction.runWriteCommandAction(project, () -> {
-            FileTemplateManager.getInstance(project).saveAllTemplates();
-            myReplaceTemplateFix.applyFix(project, descriptor);
-          });
-        }
-      });
+      configurable.setTemplate(myTemplateToEdit, null);
+      boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+      if (ok) {
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+          FileTemplateManager.getInstance(project).saveAllTemplates();
+          myReplaceTemplateFix.applyFix(project, descriptor);
+        });
+      }
     }
   }
 }

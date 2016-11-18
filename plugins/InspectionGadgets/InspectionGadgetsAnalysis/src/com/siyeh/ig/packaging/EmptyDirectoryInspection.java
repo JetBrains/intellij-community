@@ -126,11 +126,6 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
       this.name = name;
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
     @NotNull
     @Override
     public String getName() {
