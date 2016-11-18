@@ -345,7 +345,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
-    FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
 
@@ -411,14 +410,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      String log = FileStatusMap.getAndClearLog();
       fileStatusMap.allowDirt(true);
-      try {
-        waitForTermination();
-      }
-      catch (Throwable e) {
-        LOG.error(log, e);
-      }
+      waitForTermination();
     }
   }
 

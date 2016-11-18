@@ -394,7 +394,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(commitThread.isEnabled());
     WriteCommandAction.runWriteCommandAction(null, () -> {
       if (commitThread.isEnabled()) {
-        System.err.println("commitThread: "+commitThread + ";\n"+commitThread.log+";\n"+ThreadDumper.dumpThreadsToString());
+        System.err.println("commitThread: "+commitThread + ";\n"+ThreadDumper.dumpThreadsToString());
       }
       assertFalse(commitThread.isEnabled());
       WriteCommandAction.runWriteCommandAction(null, () -> assertFalse(commitThread.isEnabled()));

@@ -21,7 +21,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class FileStatusMap implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
@@ -159,8 +160,10 @@ public class FileStatusMap implements Disposable {
 
   void markAllFilesDirty(@NotNull @NonNls Object reason) {
     assertAllowModifications();
-    log("Mark all dirty: ", reason);
     synchronized (myDocumentToStatusMap) {
+      if (!myDocumentToStatusMap.isEmpty()) {
+        log("Mark all dirty: ", reason);
+      }
       myDocumentToStatusMap.clear();
     }
   }
@@ -176,11 +179,7 @@ public class FileStatusMap implements Disposable {
 
   public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
-        status = new FileStatus(myProject);
-        myDocumentToStatusMap.put(document, status);
-      }
+      FileStatus status = myDocumentToStatusMap.computeIfAbsent(document, k -> new FileStatus(myProject));
       status.defensivelyMarked=false;
       if (passId == Pass.WOLF) {
         status.wolfPassFinished = true;
@@ -350,25 +349,10 @@ public class FileStatusMap implements Disposable {
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
-  private static final StringBuilder log = new StringBuilder();
-  private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
   public static void log(@NonNls @NotNull Object... info) {
-    if (IN_TESTS) {
-      synchronized (log) {
-        if (log.length() > 10000) {
-          log.replace(0, log.length()-5000, "");
-        }
-        String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-        log.append(s);
-      }
-    }
-  }
-  @NotNull
-  static String getAndClearLog() {
-    synchronized (log) {
-      String l = log.toString();
-      log.setLength(0);
-      return l;
+    if (LOG.isDebugEnabled()) {
+      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
+      LOG.debug(s);
     }
   }
 }
