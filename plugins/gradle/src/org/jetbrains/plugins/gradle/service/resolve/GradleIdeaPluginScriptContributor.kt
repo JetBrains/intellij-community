@@ -18,6 +18,8 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
+import com.intellij.psi.scope.ElementClassHint
+import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -68,13 +70,13 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
+    val classHint = processor.getHint(ElementClassHint.KEY)
     val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-    if (shouldProcessMethods && processor.getHint(
-      com.intellij.psi.scope.NameHint.KEY)?.getName(state) == IDEA_METHOD) {
+    if (shouldProcessMethods && processor.getHint(NameHint.KEY)?.getName(state) == IDEA_METHOD) {
       val psiManager = GroovyPsiManager.getInstance(place.project)
-      val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, place.resolveScope) ?: return true
-      val returnClass = psiManager.createTypeByFQClassName(IDEA_MODEL_FQN, place.resolveScope) ?: return true
+      val resolveScope = place.resolveScope
+      val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, resolveScope) ?: return true
+      val returnClass = psiManager.createTypeByFQClassName(IDEA_MODEL_FQN, resolveScope) ?: return true
       val methodBuilder = GrLightMethodBuilder(place.manager, IDEA_METHOD).apply {
         containingClass = projectClass
         returnType = returnClass

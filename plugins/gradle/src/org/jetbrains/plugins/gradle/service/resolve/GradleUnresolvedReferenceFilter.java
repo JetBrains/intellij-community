@@ -15,12 +15,15 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
@@ -41,6 +44,15 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
   @Override
   public boolean isReject(@NotNull GrReferenceExpression expression) {
     final PsiType psiType = GradleResolverUtil.getTypeOf(expression);
-    return psiType != null && IGNORE_SET.contains(TypesUtil.getQualifiedName(psiType));
+    Set<String> toIgnore = new HashSet<>(IGNORE_SET);
+    GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsContributor.Companion.getExtensionsFor(expression);
+    if (extensionsData != null) {
+      for (GradleExtensionsSettings.GradleExtension extension : extensionsData.extensions) {
+        if (StringUtil.isNotEmpty(extension.namedObjectTypeFqn)) {
+          toIgnore.add(extension.namedObjectTypeFqn);
+        }
+      }
+    }
+    return psiType != null && toIgnore.contains(TypesUtil.getQualifiedName(psiType));
   }
 }

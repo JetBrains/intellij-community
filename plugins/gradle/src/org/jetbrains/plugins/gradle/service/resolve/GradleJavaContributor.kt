@@ -88,8 +88,7 @@ class GradleJavaContributor : GradleMethodContextContributor {
     if (psiElement.inside(sourceSetsClosure).accepts(place)) {
       val name = place.text
       if (place.parent is GrMethodCallExpression) {
-        val methodBuilder = GradleResolverUtil.createMethodWithClosure(
-          name, GRADLE_API_SOURCE_SET, null, place, psiManager)
+        val methodBuilder = GradleResolverUtil.createMethodWithClosure(name, GRADLE_API_SOURCE_SET, null, place, psiManager)
         if (methodBuilder != null) {
           if (!processor.execute(methodBuilder, state)) return false
         }

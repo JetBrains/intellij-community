@@ -67,6 +67,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
@@ -282,6 +283,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
     buildScriptClasspathData.setGradleHomeDir(buildScriptClasspathModel != null ? buildScriptClasspathModel.getGradleHomeDir() : null);
     ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
+
+    GradleExtensions gradleExtensions = resolverCtx.getExtraProject(gradleModule, GradleExtensions.class);
+    if (gradleExtensions != null) {
+      ideModule.createChild(GradleExtensionsDataService.KEY, new DefaultGradleExtensions(gradleExtensions));
+    }
   }
 
   @Override
@@ -581,6 +587,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public Set<Class> getExtraProjectModelClasses() {
     Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ModuleExtendedModel.class);
     result.add(BuildScriptClasspathModel.class);
+    result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
     return result;
   }

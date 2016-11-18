@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -85,6 +87,17 @@ public class NamedDomainObjectCollectionTypeEnhancer extends GrReferenceTypeEnha
       else if (GradleCommonClassNames.GRADLE_API_DISTRIBUTION_CONTAINER.equals(fqName)) {
         final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(ref.getProject());
         return psiManager.createTypeByFQClassName(GradleCommonClassNames.GRADLE_API_DISTRIBUTION, ref.getResolveScope());
+      }
+      else {
+        GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsContributor.Companion.getExtensionsFor(ref);
+        if (extensionsData != null) {
+          for (GradleExtensionsSettings.GradleExtension extension : extensionsData.extensions) {
+            if (StringUtil.isNotEmpty(extension.namedObjectTypeFqn) && extension.rootTypeFqn.equals(fqName)) {
+              final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(ref.getProject());
+              return psiManager.createTypeByFQClassName(extension.namedObjectTypeFqn, ref.getResolveScope());
+            }
+          }
+        }
       }
     }
 
