@@ -31,7 +31,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
  * @author Rustam Vishnyakov
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
-  
-  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("DetectableIndentOptionsProvider pool",1);
+  private static final ExecutorService BOUNDED_EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DetectableIndentOptionsProvider pool");
   
   private boolean myIsEnabledInTest;
   private final List<VirtualFile> myAcceptedFiles = new WeakList<>();
