@@ -1504,6 +1504,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = foo(a=1, b=\"2\")");
   }
 
+  // PY-21474
+  public void testReassigningOptionalListWithDefaultValue() {
+    doTest("Union[List[str], list]",
+           "def x(things):\n" +
+           "    \"\"\"\n" +
+           "    :type things: None | list[str]\n" +
+           "    \"\"\"\n" +
+           "    expr = things if things else []");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

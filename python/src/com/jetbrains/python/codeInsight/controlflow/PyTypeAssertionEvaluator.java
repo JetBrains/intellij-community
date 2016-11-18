@@ -83,7 +83,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
-    if (node.getParent() instanceof PyIfPart) {
+    if (isUnderIf(node)) {
       pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
@@ -193,6 +193,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     };
 
     myStack.push(new Assertion(target, typeCallback));
+  }
+
+  private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
+    final PsiElement parent = node.getParent();
+    return parent instanceof PyIfPart ||
+           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition();
   }
 
   static class Assertion {
