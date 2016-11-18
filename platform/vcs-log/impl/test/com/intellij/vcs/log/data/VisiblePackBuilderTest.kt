@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -30,7 +29,6 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -99,16 +97,14 @@ class VisiblePackBuilderTest {
       4()              +null
     }
 
-    val func = object : Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      override fun `fun`(param: VcsLogFilterCollection?): MutableList<TimedVcsCommit>? {
-        return ArrayList(listOf(2, 3, 4).map {
-          val id = it
-          val commit = graph.commits.firstOrNull {
-            it.id == id
-          }
-          commit!!.toVcsCommit(graph.hashMap)
-        })
-      }
+    val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
+      ArrayList(listOf(2, 3, 4).map {
+        val id = it
+        val commit = graph.commits.firstOrNull {
+          it.id == id
+        }
+        commit!!.toVcsCommit(graph.hashMap)
+      })
     }
 
     graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
@@ -138,7 +134,7 @@ class VisiblePackBuilderTest {
       val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys).mapValues { CompressedRefs(it.value, hashMap) }, providers, hashMap, true)
       val detailsCache = TopCommitsCache(hashMap)
       detailsCache.storeDetails(ArrayList(data.entries.mapNotNull {
-        val hash = hashMap.getCommitId(it.key.id)!!.hash
+        val hash = hashMap.getCommitId(it.key.id).hash
         if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
