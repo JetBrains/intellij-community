@@ -320,7 +320,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     systemSettings.copyFrom(myControl.getSystemSettings());
     Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();
-    systemSettings.setLinkedProjectsSettings(Collections.singleton(getCurrentExternalProjectSettings()));
+    Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+    projects.add(getCurrentExternalProjectSettings());
+    systemSettings.setLinkedProjectsSettings(projects);
+
     try {
       task.run();
     }
