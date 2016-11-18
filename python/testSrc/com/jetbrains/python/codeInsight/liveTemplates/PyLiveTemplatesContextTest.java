@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PyLiveTemplatesTest extends PyTestCase {
+public class PyLiveTemplatesContextTest extends PyTestCase {
 
   @Override
   protected String getTestDataPath() {
