@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
