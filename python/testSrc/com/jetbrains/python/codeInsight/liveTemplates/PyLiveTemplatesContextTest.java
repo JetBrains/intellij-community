@@ -16,12 +16,11 @@
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,63 +32,56 @@ public class PyLiveTemplatesContextTest extends PyTestCase {
   }
 
   public void testNotPython() {
-    doTest(Collections.emptyList(), "html");
+    doTest("html");
   }
 
   // PY-12212
   public void testAfterDot() {
-    doTest(Collections.emptyList());
+    doTest();
   }
 
   // PY-13076
   public void testInComment() {
-    doTest(Collections.emptyList());
+    doTest();
   }
 
   // PY-12349
   public void testInStringLiteral() {
-    doTest(Collections.emptyList());
+    doTest();
   }
 
   // PY-12395
   public void testInParameterList() {
-    doTest(Collections.emptyList());
+    doTest();
   }
 
   public void testGeneral() {
-    doTest(
-      Collections.singletonList(PythonTemplateContextType.General.class)
-    );
+    doTest(PythonTemplateContextType.General.class);
   }
 
   // PY-12396
   public void testClass() {
-    doTest(
-      Arrays.asList(PythonTemplateContextType.Class.class, PythonTemplateContextType.General.class)
-    );
+    doTest(PythonTemplateContextType.Class.class, PythonTemplateContextType.General.class);
   }
 
-  private void doTest(@NotNull List<Class<? extends PythonTemplateContextType>> expectedContextTypes) {
-    doTest(expectedContextTypes, "py");
+  private void doTest(@NotNull Class<? extends PythonTemplateContextType>... expectedContextTypes) {
+    doTest("py", expectedContextTypes);
   }
 
-  private void doTest(@NotNull List<Class<? extends PythonTemplateContextType>> expectedContextTypes, @NotNull String extension) {
+  private void doTest(@NotNull String extension, @NotNull Class<? extends PythonTemplateContextType>... expectedContextTypes) {
     myFixture.configureByFile(getTestName(true) + "." + extension);
 
-    UsefulTestCase.assertSameElements(
-      calculateEnabledContextTypes(getRegisteredContextTypes()),
-      expectedContextTypes
-    );
+    final List<Class<? extends PythonTemplateContextType>> actualContextTypes = calculateEnabledContextTypes(getRegisteredContextTypes());
+    assertSameElements(actualContextTypes, expectedContextTypes);
   }
 
   @NotNull
   private List<Class<? extends PythonTemplateContextType>> calculateEnabledContextTypes(@NotNull List<PythonTemplateContextType> registeredContextTypes) {
-    //noinspection Convert2MethodRef
     return registeredContextTypes
       .stream()
       .filter(type -> type.isInContext(myFixture.getFile(), myFixture.getCaretOffset()))
-      .map(type -> type.getClass())
-      .sorted((o1, o2) -> o1.getSimpleName().compareTo(o2.getSimpleName()))
+      .map(PythonTemplateContextType::getClass)
+      .sorted(Comparator.comparing(Class::getSimpleName))
       .collect(Collectors.toList());
   }
 
@@ -97,8 +89,8 @@ public class PyLiveTemplatesContextTest extends PyTestCase {
   private static List<PythonTemplateContextType> getRegisteredContextTypes() {
     return Arrays
       .stream(TemplateContextType.EP_NAME.getExtensions())
-      .filter(type -> type instanceof PythonTemplateContextType)
-      .map(type -> (PythonTemplateContextType)type)
+      .filter(PythonTemplateContextType.class::isInstance)
+      .map(PythonTemplateContextType.class::cast)
       .collect(Collectors.toList());
   }
 }
