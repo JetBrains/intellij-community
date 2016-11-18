@@ -44,88 +44,77 @@ import java.util.concurrent.TimeUnit;
 public class _LastInSuiteTest extends TestCase {
   public void testProjectLeak() throws Exception {
     boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
-    if (!guiTestMode) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            LightPlatformTestCase
-              .initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
-          }
-          catch (RuntimeException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+    if (guiTestMode) {
+      final Application application = ApplicationManager.getApplication();
 
-          // disposes default projects too
-          PlatformTestUtil.cleanupAllProjects();
-          ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-          System.out.println(application.writeActionStatistics());
-          System.out.println(ActionUtil.ActionPauses.STAT.statistics());
-          System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
-          System.out.println("ProcessIOExecutorService threads created: " +
-                             ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
-
-          application.setDisposeInProgress(true);
-          LightPlatformTestCase.disposeApplication();
-          UIUtil.dispatchAllInvocationEvents();
-        }
-      });
-
+      application.invokeAndWait(() -> {
+        IdeEventQueue.getInstance().flushQueue();
+        ((ApplicationImpl)application).exit(true, true, false, false);
+      }, ModalityState.any());
+      ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
+      return;
+    }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        LeakHunter.checkProjectLeak();
-        Disposer.assertIsEmpty(true);
+        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
       }
-      catch (AssertionError | Exception e) {
-        captureMemorySnapshot();
-        throw e;
-      }
-      try {
-        Disposer.assertIsEmpty(true);
-      }
-      catch (AssertionError e) {
-        captureMemorySnapshot();
+      catch (RuntimeException e) {
         throw e;
       }
       catch (Exception e) {
-        captureMemorySnapshot();
-        throw e;
+        throw new RuntimeException(e);
       }
-    } else{
-        final Application application = ApplicationManager.getApplication();
 
-        application.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().flushQueue();
-            ((ApplicationImpl)application).exit(true, true, false, false);
-          }
-        }, ModalityState.any());
-        ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
-      }
-    }
+      // disposes default projects too
+      PlatformTestUtil.cleanupAllProjects();
+      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+      System.out.println(application.writeActionStatistics());
+      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
+      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+      System.out.println("ProcessIOExecutorService threads created: " +
+                         ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
 
-    @SuppressWarnings("UseOfSystemOutOrSystemErr")
-    public void testStatistics () throws Exception {
-      if (_FirstInSuiteTest.suiteStarted != 0) {
-        long testSuiteDuration = System.nanoTime() - _FirstInSuiteTest.suiteStarted;
-        System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']",
-                                         testSuiteDuration / 1000000));
-      }
-      LightPlatformTestCase.reportTestExecutionStatistics();
+      application.setDisposeInProgress(true);
+      LightPlatformTestCase.disposeApplication();
+      UIUtil.dispatchAllInvocationEvents();
+    });
+
+    try {
+      LeakHunter.checkProjectLeak();
+      Disposer.assertIsEmpty(true);
     }
+    catch (AssertionError | Exception e) {
+      captureMemorySnapshot();
+      throw e;
+    }
+    try {
+      Disposer.assertIsEmpty(true);
+    }
+    catch (AssertionError | Exception e) {
+      captureMemorySnapshot();
+      throw e;
+    }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void testStatistics() throws Exception {
+    if (_FirstInSuiteTest.suiteStarted != 0) {
+      long testSuiteDuration = System.nanoTime() - _FirstInSuiteTest.suiteStarted;
+      System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']", testSuiteDuration / 1000000));
+    }
+    LightPlatformTestCase.reportTestExecutionStatistics();
+  }
 
   private static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "forceCaptureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
       if (snapshot != null) {
-        snapshot.invoke(null);
-        System.out.println("Memory snapshot captured");
+        Object path = snapshot.invoke(null);
+        System.out.println("Memory snapshot captured to '"+path+"'");
       }
     }
-    catch (Exception ignored) {
+    catch (Exception e) {
+      e.printStackTrace();
     }
   }
 }
