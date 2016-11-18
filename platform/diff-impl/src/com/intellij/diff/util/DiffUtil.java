@@ -154,7 +154,7 @@ public class DiffUtil {
       SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
-    if (file != null) {
+    if (file != null && file.isValid()) {
       if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
