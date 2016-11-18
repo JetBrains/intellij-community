@@ -41,10 +41,10 @@ public class JsonSchemaObject {
   private Integer myMinLength;
   private String myPattern;
 
-  private Boolean myAdditionalPropertiesAllowed = true;
+  private Boolean myAdditionalPropertiesAllowed;
   private JsonSchemaObject myAdditionalPropertiesSchema;
 
-  private Boolean myAdditionalItemsAllowed = true;
+  private Boolean myAdditionalItemsAllowed;
   private JsonSchemaObject myAdditionalItemsSchema;
 
   private JsonSchemaObject myItemsSchema;
@@ -53,7 +53,7 @@ public class JsonSchemaObject {
   private Integer myMaxItems;
   private Integer myMinItems;
 
-  private boolean myUniqueItems;
+  private Boolean myUniqueItems;
 
   private Integer myMaxProperties;
   private Integer myMinProperties;
@@ -152,7 +152,7 @@ public class JsonSchemaObject {
     myItemsSchemaList = copyList(myItemsSchemaList, other.myItemsSchemaList);
     if (other.myMaxItems != null) myMaxItems = other.myMaxItems;
     if (other.myMinItems != null) myMinItems = other.myMinItems;
-    if (other.myUniqueItems) myUniqueItems = other.myUniqueItems;
+    if (other.myUniqueItems != null) myUniqueItems = other.myUniqueItems;
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
     myRequired = copyList(myRequired, other.myRequired);
@@ -277,7 +277,7 @@ public class JsonSchemaObject {
   }
 
   public Boolean getAdditionalPropertiesAllowed() {
-    return myAdditionalPropertiesAllowed;
+    return myAdditionalPropertiesAllowed == null || myAdditionalPropertiesAllowed;
   }
 
   public void setAdditionalPropertiesAllowed(Boolean additionalPropertiesAllowed) {
@@ -293,7 +293,7 @@ public class JsonSchemaObject {
   }
 
   public Boolean getAdditionalItemsAllowed() {
-    return myAdditionalItemsAllowed;
+    return myAdditionalItemsAllowed == null || myAdditionalItemsAllowed;
   }
 
   public void setAdditionalItemsAllowed(Boolean additionalItemsAllowed) {
@@ -341,7 +341,7 @@ public class JsonSchemaObject {
   }
 
   public boolean isUniqueItems() {
-    return myUniqueItems;
+    return Boolean.TRUE.equals(myUniqueItems);
   }
 
   public void setUniqueItems(boolean uniqueItems) {

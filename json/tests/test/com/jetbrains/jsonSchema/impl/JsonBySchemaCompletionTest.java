@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -125,6 +126,11 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
                           "  }\n" +
                           "}";
     testImpl(schema, "{\"Cyan\": <caret>}", "\"em\"", "\"test\"");
+  }
+
+  public void testRootObjectRedefined() throws Exception {
+    testImpl(JsonSchemaHighlightingTest.rootObjectRedefinedSchema(), "{<caret>}",
+             "\"r1\"", "\"r2\"");
   }
 
   @NotNull
