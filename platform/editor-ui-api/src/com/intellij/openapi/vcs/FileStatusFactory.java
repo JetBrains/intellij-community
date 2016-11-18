@@ -75,7 +75,7 @@ public class FileStatusFactory {
 
     @Override
     public Color getColor() {
-      return EditorColorsManager.getInstance().getGlobalScheme().getColor(getColorKey());
+      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
     }
 
     @NotNull

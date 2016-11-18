@@ -375,6 +375,19 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   @NotNull
+  @Override
+  public EditorColorsScheme getSchemeForCurrentUITheme() {
+    String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+    EditorColorsScheme scheme = myDefaultColorSchemeManager.getScheme(schemeName);
+    assert scheme != null : "The default scheme '" + schemeName + "' not found";
+    if (((DefaultColorsScheme)scheme).hasEditableCopy()) {
+      EditorColorsScheme editableCopy = getScheme(((DefaultColorsScheme)scheme).getEditableCopyName());
+      if (editableCopy != null) return editableCopy;
+    }
+    return scheme;
+  }
+
+  @NotNull
   public SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
   }
