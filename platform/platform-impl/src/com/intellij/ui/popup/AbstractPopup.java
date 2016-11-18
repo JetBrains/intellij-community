@@ -1356,6 +1356,8 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myContent != null) {
+      Container parent = myContent.getParent();
+      if (parent != null) parent.remove(myContent);
       myContent.removeAll();
       myContent.removeKeyListener(mySearchKeyListener);
     }
