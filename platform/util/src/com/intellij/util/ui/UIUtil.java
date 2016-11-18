@@ -1974,6 +1974,9 @@ public class UIUtil {
         eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class).invoke(eventQueue, event);
       }
     }
+    catch (InvocationTargetException e) {
+      LOG.error(e.getCause());
+    }
     catch (Exception e) {
       LOG.error(e);
     }
