@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaModule;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,19 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Pavel.Dolgov
  */
 public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
+  private static final Logger LOG = Logger.getInstance(RefJavaModuleImpl.class);
 
-  protected RefJavaModuleImpl(@NotNull String name, @NotNull RefElement owner) {
-    super(name, owner);
-  }
-
-  protected RefJavaModuleImpl(@NotNull PsiFile file, @NotNull RefManager manager) {
-    super(file, manager);
-  }
-
-  protected RefJavaModuleImpl(@NotNull String name,
-                              @NotNull PsiElement element,
-                              @NotNull RefManager manager) {
-    super(name, element, manager);
+  public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
+    super(javaModule.getModuleName(), javaModule, manager);
   }
 
   @Override
@@ -45,9 +36,62 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   }
 
+  @Override
+  public void accept(@NotNull RefVisitor visitor) {
+    if (visitor instanceof RefJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitJavaModule(this));
+    }
+    else {
+      super.accept(visitor);
+    }
+  }
+
   @Nullable
   @Override
   public PsiJavaModule getElement() {
     return (PsiJavaModule)super.getElement();
+  }
+
+  @Override
+  public void buildReferences() {
+    PsiJavaModule javaModule = getElement();
+    if (javaModule != null) {
+      LOG.warn("buildReferences " + javaModule.getModuleName());
+      for (PsiRequiresStatement statement : javaModule.getRequires()) {
+        PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
+        if (referenceElement != null) {
+          PsiPolyVariantReference moduleReference = referenceElement.getReference();
+          addReference(moduleReference);
+        }
+      }
+      for (PsiExportsStatement statement : javaModule.getExports()) {
+        PsiJavaCodeReferenceElement packageReference = statement.getPackageReference();
+        addReference(packageReference);
+        for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
+          if (referenceElement != null) {
+            PsiPolyVariantReference moduleReference = referenceElement.getReference();
+            addReference(moduleReference);
+          }
+        }
+      }
+      getRefManager().fireBuildReferences(this);
+    }
+  }
+
+  private void addReference(PsiPolyVariantReference reference) {
+    if (reference != null) {
+      ResolveResult[] resolveResults = reference.multiResolve(false);
+      for (ResolveResult resolveResult : resolveResults) {
+        PsiElement element = resolveResult.getElement();
+        if (element != null) {
+          RefElement refElement = getRefManager().getReference(element);
+          if (refElement != null) {
+            LOG.warn("addReference " + this.getName() + " -> " + refElement.getName());
+            addOutReference(refElement);
+            ((RefElementImpl)refElement).addInReference(this);
+          }
+        }
+      }
+    }
   }
 }

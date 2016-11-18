@@ -44,4 +44,8 @@ public class RefJavaVisitor extends RefVisitor {
   public void visitPackage(@NotNull RefPackage aPackage) {
     visitElement(aPackage);
   }
+
+  public void visitJavaModule(RefJavaModule javaModule) {
+    visitElement(javaModule);
+  }
 }

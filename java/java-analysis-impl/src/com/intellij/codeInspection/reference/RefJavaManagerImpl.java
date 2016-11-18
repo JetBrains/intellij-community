@@ -252,6 +252,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     else if (elem instanceof PsiJavaFile) {
       return new RefJavaFileImpl((PsiJavaFile)elem, myRefManager);
     }
+    else if (elem instanceof PsiJavaModule) {
+      return new RefJavaModuleImpl(((PsiJavaModule)elem), myRefManager);
+    }
     return null;
   }
 
@@ -544,6 +547,16 @@ public class RefJavaManagerImpl extends RefJavaManager {
             refClass.addInstanceReference(ownerClass);
           }
         }
+      }
+    }
+
+    @Override
+    public void visitModule(PsiJavaModule javaModule) {
+      super.visitModule(javaModule);
+      LOG.warn("visitModule " + javaModule.getModuleName());
+      RefElement refElement = myRefManager.getReference(javaModule);
+      if (refElement != null) {
+        ((RefJavaModuleImpl)refElement).buildReferences();
       }
     }
   }
