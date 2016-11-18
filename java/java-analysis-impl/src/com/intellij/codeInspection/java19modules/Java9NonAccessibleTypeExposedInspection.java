@@ -80,30 +80,24 @@ public class Java9NonAccessibleTypeExposedInspection extends BaseJavaLocalInspec
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
-      super.visitMethod(method);
-      if (isModulePublicApi(method)) {
-        if (!method.isConstructor()) {
-          checkType(method.getReturnType(), method.getReturnTypeElement());
-        }
-        checkTypeParameters(method.getTypeParameterList());
-        for (PsiParameter parameter : method.getParameterList().getParameters()) {
-          checkType(parameter.getType(), parameter.getTypeElement());
-        }
-        for (PsiJavaCodeReferenceElement referenceElement : method.getThrowsList().getReferenceElements()) {
-          PsiElement resolved = referenceElement.resolve();
-          if (resolved instanceof PsiClass) {
-            checkType((PsiClass)resolved, referenceElement);
-          }
-        }
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      PsiElement parent = reference.getParent();
+      PsiElement grandParent = null;
+      if (parent instanceof PsiTypeElement) {
+        grandParent = PsiTreeUtil.skipParentsOfType(reference, PsiTypeElement.class,
+                                                    PsiParameter.class, PsiParameterList.class,
+                                                    PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
       }
-    }
-
-    @Override
-    public void visitField(PsiField field) {
-      super.visitField(field);
-      if (isModulePublicApi(field)) {
-        checkType(field.getType(), field.getTypeElement());
+      else if (parent instanceof PsiReferenceList) {
+        grandParent = PsiTreeUtil.skipParentsOfType(reference, PsiReferenceList.class,
+                                                    PsiTypeParameter.class, PsiTypeParameterList.class);
+      }
+      if ((grandParent instanceof PsiField || grandParent instanceof PsiMethod) && isModulePublicApi((PsiMember)grandParent)) {
+        PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiClass) {
+          checkType((PsiClass)resolved, reference);
+        }
       }
     }
 

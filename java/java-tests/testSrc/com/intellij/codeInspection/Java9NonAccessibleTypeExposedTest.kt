@@ -60,7 +60,9 @@ import m2Pkg.Exported;
 public class Highlighted {
   public Exported myVar;
   protected Highlighted() {}
-  public Highlighted(Exported var) {setVar(var);}
+  public Highlighted(Exported var) {
+    Exported tmp = new Exported(); myVar = var!= null ? var : tmp;
+  }
   public Exported getVar() {return myVar;}
   protected void setVar(Exported var) {myVar = var;}
 }""")
@@ -71,7 +73,9 @@ public class Highlighted {
 public class Highlighted {
   public <warning descr="The class is not exported from the module">PackageLocal</warning> myVar;
   protected Highlighted() {}
-  public Highlighted(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {setVar(var);}
+  public Highlighted(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {
+    PackageLocal tmp = new PackageLocal(); myVar = var!= null ? var : tmp;
+  }
   public <warning descr="The class is not exported from the module">PackageLocal</warning> getVar() {return myVar;}
   protected void setVar(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {myVar = var;}
 }
@@ -83,7 +87,9 @@ public class Highlighted {
 public class Highlighted {
   private PackageLocal myVar;
   private Highlighted() {}
-  Highlighted(PackageLocal var) {setVar(var);}
+  Highlighted(PackageLocal var) {
+    PackageLocal tmp = new PackageLocal(); myVar = var!= null ? var : tmp;
+  }
   PackageLocal getVar() {return myVar;}
   private void setVar(PackageLocal var) {myVar = var;}
 }
@@ -95,7 +101,9 @@ public class Highlighted {
 class Highlighted {
   public PackageLocal myVar;
   protected Highlighted() {}
-  public Highlighted(PackageLocal var) {setVar(var);}
+  public Highlighted(PackageLocal var) {
+    PackageLocal tmp = new PackageLocal(); myVar = var!= null ? var : tmp;
+  }
   public PackageLocal getVar() {return myVar;}
   protected void setVar(PackageLocal var) {myVar = var;}
 }
@@ -107,7 +115,9 @@ class Highlighted {
 public class Highlighted {
   public PublicApi myVar;
   protected Highlighted() {}
-  public Highlighted(PublicApi var) {setVar(var);}
+  public Highlighted(PublicApi var) {
+    PublicApi tmp = new PublicApi(); myVar = var!= null ? var : tmp;
+  }
   public PublicApi getVar() {return myVar;}
   protected void setVar(PublicApi var) {myVar = var;}
 }
@@ -120,7 +130,9 @@ import otherPkg.PublicOther;
 public class Highlighted {
   public PublicOther myVar;
   protected Highlighted() {}
-  public Highlighted(PublicOther var) {setVar(var);}
+  public Highlighted(PublicOther var) {
+    PublicOther tmp = new PublicOther(); myVar = var!= null ? var : tmp;
+  }
   public PublicOther getVar() {return myVar;}
   protected void setVar(PublicOther var) {myVar = var;}
 }
@@ -133,7 +145,9 @@ public class Highlighted {
   public class PublicNested {}
   public PublicNested myVar;
   protected Highlighted() {}
-  public Highlighted(PublicNested var) {setVar(var);}
+  public Highlighted(PublicNested var) {
+    PublicNested tmp = new PublicNested(); myVar = var!= null ? var : tmp;
+  }
   public PublicNested getVar() {return myVar;}
   protected void setVar(PublicNested var) {myVar = var;}
 }
@@ -146,7 +160,9 @@ public class Highlighted {
   class PackageLocalNested {}
   public <warning descr="The class is not exported from the module">PackageLocalNested</warning> myVar;
   protected Highlighted() {}
-  public Highlighted(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {setVar(var);}
+  public Highlighted(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {
+    PackageLocalNested tmp = new PackageLocalNested(); myVar = var!= null ? var : tmp;
+  }
   public <warning descr="The class is not exported from the module">PackageLocalNested</warning> getVar() {return myVar;}
   protected void setVar(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {myVar = var;}
 }
@@ -201,6 +217,34 @@ public class Highlighted {
   protected void setVar(<warning descr="The class is not exported from the module">PackageLocal.DoubleNested</warning> var) {myVar = var;}
 }
 """)
+  }
+
+  fun testExportedArray() {
+    addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
+    highlight("""package apiPkg;
+import m2Pkg.Exported;
+import java.util.*;
+public class Highlighted {
+  public Exported[] myVar;
+  protected Highlighted(List<Exported[]> list) {Iterator<Exported[]> it = list.iterator(); myVar = it.next();}
+  public Highlighted(Exported[] var) {myVar = var;}
+  public Exported[] getVar() {return myVar;}
+  protected void setVar(Exported[][] var) {myVar = var[0];}
+}""")
+  }
+
+  fun testNotExportedArray() {
+    add("implPkg", "NotExported", "public class NotExported {}")
+    highlight("""package apiPkg;
+import implPkg.NotExported;
+import java.util.*;
+public class Highlighted {
+  public <warning descr="The class is not exported from the module">NotExported</warning>[] myVar;
+  protected Highlighted(List<<warning descr="The class is not exported from the module">NotExported</warning>[]> list) {Iterator<NotExported[]> it = list.iterator(); myVar = it.next();}
+  public Highlighted(<warning descr="The class is not exported from the module">NotExported</warning>[] var) {myVar = var;}
+  public <warning descr="The class is not exported from the module">NotExported</warning>[] getVar() {return myVar;}
+  protected void setVar(<warning descr="The class is not exported from the module">NotExported</warning>[][] var) {myVar = var[0];}
+}""")
   }
 
   fun testThrows() {
