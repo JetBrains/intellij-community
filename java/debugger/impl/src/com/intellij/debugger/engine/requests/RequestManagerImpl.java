@@ -315,8 +315,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
 
     for (ClassPrepareRequest prepareRequest : prepareRequests) {
-      registerRequest(requestor, prepareRequest);
-      prepareRequest.enable();
+      if (prepareRequest != null) {
+        registerRequest(requestor, prepareRequest);
+        prepareRequest.enable();
+      }
     }
     myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
   }
