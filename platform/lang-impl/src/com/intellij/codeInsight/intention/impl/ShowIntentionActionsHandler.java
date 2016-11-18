@@ -178,8 +178,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor,
-                                                                                         (psiFile, editor) -> availableFor(psiFile, editor, action)) : Pair.<PsiFile, Editor>create(hostFile, null);
+    final Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
     if (pair == null) return false;
 
     CommandProcessor.getInstance().executeCommand(project, () -> TransactionGuard.getInstance().submitTransactionAndWait(() -> {
@@ -199,5 +198,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }), text, null);
     return true;
+  }
+
+
+  static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                   @Nullable Editor hostEditor,
+                                                   @NotNull IntentionAction action) {
+    return hostEditor == null ? Pair.create(hostFile, null) :
+           chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
   }
 }
