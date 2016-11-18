@@ -82,8 +82,8 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public void typeAheadUntil(ActionCallback done) {
-    getGlobalInstance().typeAheadUntil(done);
+  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
+    getGlobalInstance().typeAheadUntil(callback, cause);
   }
 
 

@@ -293,7 +293,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
-      fm.typeAheadUntil(typeAhead);
+      fm.typeAheadUntil(typeAhead, getText());
       fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),

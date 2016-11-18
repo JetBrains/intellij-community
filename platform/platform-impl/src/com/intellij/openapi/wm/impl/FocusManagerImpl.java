@@ -736,7 +736,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   @Override
-  public void typeAheadUntil(@NotNull ActionCallback callback) {
+  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
     if (!isTypeaheadEnabled()) return;
 
     final long currentTime = System.currentTimeMillis();
@@ -767,7 +767,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
                                             new Exception() {
                                               @Override
                                               public String getMessage() {
-                                                return "Time: " + (System.currentTimeMillis() - currentTime);
+                                                return "Time: " + (System.currentTimeMillis() - currentTime) + "; cause: " + cause;
                                               }
                                             },
                                             true).doWhenProcessed(() -> {
