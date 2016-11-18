@@ -32,6 +32,10 @@ public interface VcsLogUi {
 
   boolean areGraphActionsEnabled();
 
+  boolean isCompactReferencesView();
+
+  void setCompactReferencesView(boolean compact);
+
   boolean isShowTagNames();
 
   void setShowTagNames(boolean show);

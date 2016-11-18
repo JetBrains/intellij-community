@@ -57,6 +57,10 @@ public interface VcsLogUiProperties {
   @Nullable
   List<String> getFilterValues(@NotNull String filterName);
 
+  boolean isCompactReferencesView();
+
+  void setCompactReferencesView(boolean compact);
+
   boolean isShowTagNames();
 
   void setShowTagNames(boolean showTags);

@@ -41,6 +41,7 @@
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
+    <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowTagNamesAction" id="Vcs.Log.ShowTagNames"/>
     <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
@@ -63,6 +64,7 @@
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
+      <reference id="Vcs.Log.CompactReferencesView"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
@@ -97,6 +99,7 @@
       <reference ref="Vcs.Log.ShowLongEdges"/>
       <separator/>
       <reference ref="Vcs.Log.QuickSettings"/>
+      <reference ref="Vcs.Log.CompactReferencesView"/>
       <reference ref="Vcs.Log.ShowTagNames"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>

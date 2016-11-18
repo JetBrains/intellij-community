@@ -77,10 +77,12 @@ public class LabelPainter {
   @NotNull private Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;
   @NotNull private Color myForeground = UIUtil.getTableForeground();
+  private boolean myCompact;
   private boolean myShowTagNames;
 
-  public LabelPainter(@NotNull VcsLogData data, boolean showTagNames) {
+  public LabelPainter(@NotNull VcsLogData data, boolean compact, boolean showTagNames) {
     myLogData = data;
+    myCompact = compact;
     myShowTagNames = showTagNames;
   }
 
@@ -251,6 +253,10 @@ public class LabelPainter {
 
   public void setShowTagNames(boolean showTagNames) {
     myShowTagNames = showTagNames;
+  }
+
+  public void setCompact(boolean compact) {
+    myCompact = compact;
   }
 }
 

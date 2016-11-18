@@ -193,6 +193,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
+  public boolean isCompactReferencesView() {
+    return myUiProperties.isCompactReferencesView();
+  }
+
+  @Override
+  public void setCompactReferencesView(boolean compact) {
+    myUiProperties.setCompactReferencesView(compact);
+    myMainFrame.getGraphTable().setCompactReferencesView(compact);
+  }
+
+  @Override
   public boolean isShowTagNames() {
     return myUiProperties.isShowTagNames();
   }
