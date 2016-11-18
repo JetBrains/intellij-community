@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class OnOffButton extends JToggleButton {
       int buttonArc = JBUI.scale(5);
       int vGap = JBUI.scale(4);
       int hGap = JBUI.scale(3);
-      int border = JBUI.scale(1);
+      int border = 1;
 
       final OnOffButton button = (OnOffButton)c;
       final Dimension size = button.getSize();
