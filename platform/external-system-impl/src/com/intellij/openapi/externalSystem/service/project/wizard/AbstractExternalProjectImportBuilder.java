@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * GoF builder for gradle-backed projects.
+ * GoF builder for external system backed projects.
  * 
  * @author Denis Zhdanov
  * @since 8/1/11 1:29 PM
@@ -91,7 +91,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @Override
-  public void setList(List<DataNode<ProjectData>> gradleProjects) {
+  public void setList(List<DataNode<ProjectData>> externalSystemProjects) {
   }
 
   @Override
@@ -248,7 +248,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * Asks current builder to ensure that target external project is defined.
    *
    * @param wizardContext             current wizard context
-   * @throws ConfigurationException   if gradle project is not defined and can't be constructed
+   * @throws ConfigurationException   if external project is not defined and can't be constructed
    */
   @SuppressWarnings("unchecked")
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {

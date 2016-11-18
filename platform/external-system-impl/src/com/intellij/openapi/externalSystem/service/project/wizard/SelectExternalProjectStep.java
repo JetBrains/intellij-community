@@ -26,7 +26,7 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
 
   @NotNull private AbstractImportFromExternalSystemControl myControl;
 
-  private boolean myGradleSettingsInitialised;
+  private boolean myExternalSystemSettingsInitialised;
 
   public SelectExternalProjectStep(@NotNull WizardContext context) {
     super(context);
@@ -39,7 +39,7 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
 
   @Override
   public void updateStep() {
-    if (!myGradleSettingsInitialised) {
+    if (!myExternalSystemSettingsInitialised) {
       initExternalProjectSettingsControl();
     }
   }
@@ -82,6 +82,6 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
     builder.prepare(getWizardContext());
     myControl = builder.getControl(getWizardContext().getProject());
     myComponent.add(myControl.getComponent());
-    myGradleSettingsInitialised = true;
+    myExternalSystemSettingsInitialised = true;
   }
 }

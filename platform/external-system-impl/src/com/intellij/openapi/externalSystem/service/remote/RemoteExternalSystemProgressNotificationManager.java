@@ -8,7 +8,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * Defines interface for the entity that manages notifications about progress of long-running operations performed at Gradle API side.
+ * Defines interface for the entity that manages notifications about progress of long-running operations performed at external system API side.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 

@@ -123,7 +123,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         orphanFiles.remove(created.getModuleFilePath());
       }
 
-      // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
+      // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
       modifiableRootModel.inheritSdk();
 

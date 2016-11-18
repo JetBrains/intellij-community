@@ -163,7 +163,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         params.setMainClass(MAIN_CLASS_NAME);
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true");
 
-        // It may take a while for gradle api to resolve external dependencies. Default RMI timeout
+        // It may take a while for external system api to resolve external dependencies. Default RMI timeout
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(

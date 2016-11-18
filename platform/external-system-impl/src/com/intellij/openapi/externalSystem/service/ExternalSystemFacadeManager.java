@@ -104,7 +104,7 @@ public class ExternalSystemFacadeManager {
   }
 
   /**
-   * @return gradle api facade to use
+   * @return external system api facade to use
    * @throws Exception    in case of inability to return the facade
    */
   @NotNull
