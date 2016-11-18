@@ -281,7 +281,11 @@ public class PluginManagerCore {
   }
 
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+    saveDisabledPlugins(PathManager.getConfigPath(), ids, append);
+  }
+
+  public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> ids, boolean append) throws IOException {
+    File plugins = new File(configPath, DISABLED_PLUGINS_FILENAME);
     savePluginsList(ids, append, plugins);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
