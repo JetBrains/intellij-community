@@ -103,11 +103,16 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
         if (!processor.execute(methodBuilder, state)) return false
       }
 
-      val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: continue
+      val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null }
       val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
       val placeText = place.text
       val psiElement = psiElement()
       if (psiElement.inside(extensionClosure).accepts(place)) {
+        if (shouldProcessMethods && !GradleResolverUtil.processDeclarations(psiManager, processor, state, place, extension.rootTypeFqn)) {
+          return false
+        }
+
+        if(objectTypeFqn == null) continue
         if (place.parent is GrMethodCallExpression) {
           val methodBuilder = GradleResolverUtil.createMethodWithClosure(placeText, objectTypeFqn, null, place, psiManager)
           if (methodBuilder != null) {
