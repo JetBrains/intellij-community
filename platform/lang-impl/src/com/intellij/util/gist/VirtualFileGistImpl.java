@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -39,7 +40,7 @@ import java.util.Map;
  */
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.gist.VirtualFileGist");
-  private static final int ourInternalVersion = 1;
+  private static final int ourInternalVersion = 2;
 
   @NotNull private final String myId;
   private final int myVersion;
@@ -60,10 +61,10 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
 
     if (!(file instanceof VirtualFileWithId)) return myCalculator.calcData(project, file);
 
-    long stamp = file.getTimeStamp() + ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
+    int stamp = PersistentFS.getInstance().getModificationCount(file) + ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
 
     try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
-      if (stream != null && DataInputOutputUtil.readTIME(stream) == stamp) {
+      if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
         return stream.readBoolean() ? myExternalizer.read(stream) : null;
       }
     }
@@ -76,9 +77,9 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     return result;
   }
 
-  private void cacheResult(long modCount, @Nullable Data result, Project project, VirtualFile file) {
+  private void cacheResult(int modCount, @Nullable Data result, Project project, VirtualFile file) {
     try (DataOutputStream out = getFileAttribute(project).writeAttribute(file)) {
-      DataInputOutputUtil.writeTIME(out, modCount);
+      DataInputOutputUtil.writeINT(out, modCount);
       out.writeBoolean(result != null);
       if (result != null) {
         myExternalizer.save(out, result);
