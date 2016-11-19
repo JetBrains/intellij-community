@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
@@ -55,6 +56,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
+import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -363,6 +365,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) throws IOException {
+    ProgressIndicator indicator = ObjectUtils.assertNotNull(ProgressManager.getInstance().getProgressIndicator());
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
@@ -386,12 +389,15 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         return !isUltimate || contentUrl.contains("/community/");
       })
       .toList();
+    indicator.setIndeterminate(false);
+    double delta = 1 / (2 * Math.max(0.5, modules.size()));
     for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
         ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        if (library == null) continue;
-        if (library.getType() instanceof JpsJavaLibraryType) continue;
+        JpsLibraryType<?> libraryType = library == null ? null : library.getType();
+        if (!(libraryType instanceof JpsJavaLibraryType)) continue;
         JpsJavaDependencyExtension extension = javaService.getDependencyExtension(dep);
         if (extension == null) continue;
 
@@ -409,6 +415,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
     }
     for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
       String outputUrl = javaService.getOutputUrl(o, false);
       VirtualFile outputRoot = outputUrl == null ? null : vfsManager.findFileByUrl(outputUrl);
       if (outputRoot == null) continue;
@@ -420,6 +427,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         sdkModificator.addRoot(root, OrderRootType.SOURCES);
       }
     }
+    indicator.setFraction(1.0);
   }
 
   static String getDefaultSandbox() {
