@@ -49,7 +49,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
       return
     }
 
-    val stateAfterLoad: S?
+    var stateAfterLoad: S?
     try {
       stateAfterLoad = component.state
     }
