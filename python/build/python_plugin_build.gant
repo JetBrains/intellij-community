@@ -37,11 +37,13 @@ target('default': "Build Python Plugin") {
     "IntelliLang-python",
     "ipnb",
     "python-openapi",
+    "python-community-configure",
     "python-community-plugin-core",
     "python-community-plugin-java",
     "python-psi-api",
     "python-pydev",
     "python-community-ide-resources",
+    "python-community-plugin-resources",
     "python-community"
   ]
 
@@ -123,6 +125,7 @@ target('default': "Build Python Plugin") {
           communityModules.each {
             module(it) {
               exclude(name: "**/plugin.xml")
+              exclude(name: "**/python-community-configure-ide.xml")
               exclude(name: "**/python-plugin-dependencies.xml")
             }
           }
