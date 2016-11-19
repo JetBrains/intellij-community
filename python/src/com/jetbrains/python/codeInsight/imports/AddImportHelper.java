@@ -464,7 +464,7 @@ public class AddImportHelper {
         final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
         final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
         existingImport.add(importElement);
-        return false;
+        return true;
       }
     }
     addFromImportStatement(file, from, name, asName, priority, anchor);

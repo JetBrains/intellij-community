@@ -361,6 +361,16 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "b.py");
   }
 
+  // PY-21292
+  public void testStaleFromImportsRemovedWhenSeveralMovedSymbolsUsedInSameModule() {
+    doMoveSymbolsTest("b.py", "A", "B");
+  }
+
+  // PY-21292
+  public void testStaleFromImportRemovedWhenNewImportCombinedWithExistingImport() {
+    doMoveSymbolTest("A", "b.py");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
