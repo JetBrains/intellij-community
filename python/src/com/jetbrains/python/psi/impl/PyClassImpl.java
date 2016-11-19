@@ -527,6 +527,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static class NameFinder<T extends PyElement> implements Processor<T> {
     private T myResult;
     private final String[] myNames;
+    private int myLastResultIndex = -1;
+    private PyClass myLastVisitedClass = null;
 
     public NameFinder(String... names) {
       myNames = names;
@@ -537,11 +539,26 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return myResult;
     }
 
+    @Nullable
+    protected PyClass getContainingClass(@NotNull T element) {
+      return null;
+    }
+
     public boolean process(T target) {
-      final String targetName = target.getName();
-      for (String name : myNames) {
-        if (name.equals(targetName)) {
-          myResult = target;
+      final PyClass currentClass = getContainingClass(target);
+      // Stop when the current class changes and there was a result
+      if (myLastVisitedClass != null && myLastVisitedClass != currentClass && myResult != null) {
+        return false;
+      }
+
+      myLastVisitedClass = currentClass;
+
+      final int index = ArrayUtil.indexOf(myNames, target.getName());
+      // Do not depend on the order in which elements appear, always try to find the first one
+      if (index >= 0 && (myLastResultIndex == -1 || index < myLastResultIndex)) {
+        myLastResultIndex = index;
+        myResult = target;
+        if (index == 0) {
           return false;
         }
       }
@@ -570,7 +587,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findInitOrNew(boolean inherited, final @Nullable TypeEvalContext context) {
     NameFinder<PyFunction> proc;
     if (isNewStyleClass(context)) {
-      proc = new NameFinder<>(PyNames.INIT, PyNames.NEW);
+      proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW) {
+        @Nullable
+        @Override
+        protected PyClass getContainingClass(@NotNull PyFunction element) {
+          return element.getContainingClass();
+        }
+      };
     }
     else {
       proc = new NameFinder<>(PyNames.INIT);

@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
@@ -68,6 +69,22 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PyFunction);
     assertEquals(PyNames.INIT, ((PyFunction)target).getName());
+  }
+
+  public void testInitOrNewReturnsInitWhenNewIsFirst() {
+    doTestInitOrNewReturnsInit();
+  }
+  
+  public void testInitOrNewReturnsInitWhenNewIsLast() {
+    doTestInitOrNewReturnsInit();
+  }
+
+  private void doTestInitOrNewReturnsInit() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    final PyClass pyClass = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyClass.class);
+    assertNotNull(pyClass);
+    final PyFunction init = pyClass.findInitOrNew(false, TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile()));
+    assertEquals(PyNames.INIT, init.getName());
   }
 
   public void testToConstructorInherited() {

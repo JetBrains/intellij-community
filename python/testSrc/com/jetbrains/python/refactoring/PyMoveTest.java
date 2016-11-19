@@ -376,6 +376,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("FOO", "b.py");
   }
 
+  // PY-21220
+  public void testReferenceToClassWithNewInMovedSymbol() {
+    doMoveSymbolTest("fnToMove", "toFile.py");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
