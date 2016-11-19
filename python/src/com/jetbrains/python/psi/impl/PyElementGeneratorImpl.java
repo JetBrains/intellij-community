@@ -299,8 +299,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PyImportElement createImportElement(final LanguageLevel languageLevel, String name) {
-    return createFromText(languageLevel, PyImportElement.class, "from foo import " + name, new int[]{0, 6});
+  public PyImportElement createImportElement(@NotNull final LanguageLevel languageLevel, @NotNull String name, @Nullable String alias) {
+    final String importStatement = "from foo import " + name + (alias != null ? " as " + alias : "");
+    return createFromText(languageLevel, PyImportElement.class, importStatement, new int[]{0, 6});
   }
 
   @Override

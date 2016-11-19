@@ -200,7 +200,7 @@ public class ImportFromExistingAction implements QuestionAction {
     PsiElement parent = src.getParent();
     if (parent instanceof PyFromImportStatement) {
       // add another import element right after the one we got
-      PsiElement newImportElement = gen.createImportElement(LanguageLevel.getDefault(), myName);
+      PsiElement newImportElement = gen.createImportElement(LanguageLevel.getDefault(), myName, null);
       parent.add(newImportElement);
     }
     else { // just 'import'

@@ -356,6 +356,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("use_foo", "c.py");
   }
 
+  // PY-21366
+  public void testFromImportAliases() {
+    doMoveSymbolTest("func", "b.py");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
