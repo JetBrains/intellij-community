@@ -76,16 +76,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                      @Nullable Condition<Sdk> filter,
                      @Nullable Condition<SdkTypeId> creationFilter,
                      boolean addSuggestedItems) {
-    this(jdkModel, sdkTypeFilter, filter, creationFilter, null, addSuggestedItems);
-  }
-
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                     @Nullable Condition<Sdk> filter,
-                     @Nullable Condition<SdkTypeId> creationFilter,
-                     @Nullable Comparator<Sdk> mySdkComparator,
-                     boolean addSuggestedItems) {
-    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems, mySdkComparator));
+    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
     myFilter = filter;
     mySdkTypeFilter = sdkTypeFilter;
     myCreationFilter = creationFilter;
@@ -292,12 +283,8 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    @NotNull
-    private final Comparator<Sdk> mySdkComparator;
-
     public JdkComboBoxModel(@NotNull final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested, @Nullable Comparator<Sdk> sdkComparator) {
-      mySdkComparator = sdkComparator != null ? sdkComparator : (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName());
+                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       reload(null, jdksModel, sdkTypeFilter, sdkFilter, addSuggested);
     }
 
@@ -310,7 +297,6 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       if (firstItem != null) addElement(firstItem);
 
       Sdk[] jdks = sortSdks(jdksModel);
-      //Arrays.sort(jdks, mySdkComparator);
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
           addElement(new ActualJdkComboBoxItem(jdk));
