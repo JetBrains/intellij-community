@@ -192,13 +192,18 @@ public class PyMoveSymbolProcessor {
    */
   private static void insertQualifiedImportAndReplaceReference(@NotNull PsiNamedElement targetElement,
                                                                @NotNull PyQualifiedExpression expression) {
-    final PsiFile file = targetElement.getContainingFile();
-    final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(file, expression);
-    PyClassRefactoringUtil.insertImport(expression, file, null, false);
     final PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
-    final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expression),
-                                                                      qualifier + "." + expression.getReferencedName());
-    expression.replace(generated);
+    final PsiFile srcFile = targetElement.getContainingFile();
+    final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
+    if (srcFile != expression.getContainingFile()) {
+      final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(srcFile, expression);
+      PyClassRefactoringUtil.insertImport(expression, srcFile, null, false);
+      final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
+      expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+    }
+    else {
+      expression.replace(generator.createExpressionFromText(languageLevel, expression.getReferencedName()));
+    }
   }
 
   private static boolean resolvesToLocalStarImport(@NotNull PsiElement usage) {
