@@ -30,15 +30,11 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -112,19 +108,24 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    AbstractVcsLogUi ui = createLogUi(logId, contentTabName, null);
+    AbstractVcsLogUi ui = createLogUi(logId, contentTabName);
     return new VcsLogPanel(this, ui);
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
-    MainVcsLogUiProperties properties = myUiProperties.createProperties(logId);
-    VisiblePackRefresherImpl filterer =
-      new VisiblePackRefresherImpl(myProject, myLogData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
-    VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
-    if (filter != null) {
-      ui.getFilterUi().setFilter(filter);
-    }
+  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
+    return createLogUi(contentTabName, getMainLogUiFactory(logId));
+  }
+
+  @NotNull
+  public VcsLogUiFactory<? extends VcsLogUiImpl> getMainLogUiFactory(@NotNull String logId) {
+    return new MainVcsLogUiFactory(logId);
+  }
+
+  @NotNull
+  public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
+                                                    @NotNull VcsLogUiFactory<U> factory) {
+    U ui = factory.createLogUi(myProject, myLogData, myColorManager);
 
     Disposable disposable;
     if (contentTabName != null) {
@@ -243,6 +244,30 @@ public class VcsLogManager implements Disposable {
     @Override
     public void displayFatalErrorMessage(@NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+    }
+  }
+
+  @FunctionalInterface
+  public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData,
+                  @NotNull VcsLogColorManager colorManager);
+  }
+
+  private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
+    private final String myLogId;
+
+    public MainVcsLogUiFactory(@NotNull String logId) {
+      myLogId = logId;
+    }
+
+    @Override
+    public VcsLogUiImpl createLogUi(@NotNull Project project,
+                                    @NotNull VcsLogData logData,
+                                    @NotNull VcsLogColorManager manager) {
+      MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
+      VisiblePackRefresherImpl refresher =
+        new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
+      return new VcsLogUiImpl(logData, project, manager, properties, refresher);
     }
   }
 }

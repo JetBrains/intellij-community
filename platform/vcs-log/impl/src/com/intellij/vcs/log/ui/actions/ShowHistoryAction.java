@@ -24,19 +24,16 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.history.FileHistoryUiFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
-public class ShowGraphHistoryAction extends DumbAwareAction {
+public class ShowHistoryAction extends DumbAwareAction {
+  @NotNull
+  public static final String TAB_NAME = "History";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -45,8 +42,7 @@ public class ShowGraphHistoryAction extends DumbAwareAction {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
     assert logManager != null;
-    VcsLogContentProvider
-      .openLogTab(project, logManager, VcsLogContentProvider.TAB_NAME, file.getName(), new VcsLogUiWithFileFilterFactory(logManager, file));
+    VcsLogContentProvider.openLogTab(project, logManager, TAB_NAME, file.getName(), new FileHistoryUiFactory(VcsUtil.getFilePath(file)));
   }
 
   @Override
@@ -72,25 +68,6 @@ public class ShowGraphHistoryAction extends DumbAwareAction {
           presentation.setEnabled(dataManager.getIndex().isIndexed(root));
         }
       }
-    }
-  }
-
-  private static class VcsLogUiWithFileFilterFactory implements VcsLogManager.VcsLogUiFactory<AbstractVcsLogUi> {
-    private final VcsLogManager myLogManager;
-    private final VirtualFile myFile;
-
-    public VcsLogUiWithFileFilterFactory(@NotNull VcsLogManager logManager, @NotNull VirtualFile file) {
-      myLogManager = logManager;
-      myFile = file;
-    }
-
-    @Override
-    public AbstractVcsLogUi createLogUi(@NotNull Project project,
-                                        @NotNull VcsLogData logData,
-                                        @NotNull VcsLogColorManager colorManager) {
-      VcsLogUiImpl ui = myLogManager.getMainLogUiFactory(myFile.getName()).createLogUi(project, logData, colorManager);
-      ui.getFilterUi().setFilter(new VcsLogStructureFilterImpl(Collections.singleton(VcsUtil.getFilePath(myFile))));
-      return ui;
     }
   }
 }

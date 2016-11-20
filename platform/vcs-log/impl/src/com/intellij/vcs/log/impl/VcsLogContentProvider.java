@@ -29,12 +29,11 @@ import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,25 +94,24 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    openLogTab(logManager, project, generateShortName(toolWindow), null);
+    String name = generateShortName(toolWindow);
+    openLogTab(project, logManager, TAB_NAME, name, logManager.getMainLogUiFactory(name));
   }
 
-  public static AbstractVcsLogUi openLogTab(@NotNull VcsLogManager logManager,
-                                            @NotNull Project project,
-                                            @NotNull String shortName,
-                                            @Nullable VcsLogFilter filter) {
+  public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
+                                                             @NotNull String tabGroupName, @NotNull String shortName,
+                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
-    String name = ContentUtilEx.getFullName(TAB_NAME, shortName);
+    String name = ContentUtilEx.getFullName(tabGroupName, shortName);
 
-    AbstractVcsLogUi logUi = logManager.createLogUi(name, name, filter);
+    U logUi = logManager.createLogUi(name, factory);
 
     ContentUtilEx
-      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
+      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), tabGroupName, shortName, true, logUi);
     toolWindow.activate(null);
 
     logManager.scheduleInitialization();
-    return logUi;
   }
 
   @NotNull

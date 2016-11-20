@@ -69,7 +69,7 @@ public class VcsProjectLog {
 
   @NotNull
   public JComponent initMainLog(@NotNull String contentTabName) {
-    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName, null);
+    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
     return new VcsLogPanel(myLogManager.getValue(), myUi);
   }
 
