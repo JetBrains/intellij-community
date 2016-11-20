@@ -16,13 +16,16 @@
 package com.intellij.vcs.log.ui.history;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
+import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +47,28 @@ public class FileHistoryPanel extends JPanel implements Disposable {
     myGraphTable = new VcsLogGraphTable(ui, logData, visiblePack);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
+    ProgressStripe progressStripe =
+      new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (myDecorator != null && myLogData.getProgress().isRunning()) startLoadingImmediately();
+        }
+      };
+    myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
+      @Override
+      public void progressStarted() {
+        progressStripe.startLoading();
+      }
+
+      @Override
+      public void progressStopped() {
+        progressStripe.stopLoading();
+      }
+    }, this);
+
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    myDetailsSplitter.setFirstComponent(setupScrolledGraph());
+    myDetailsSplitter.setFirstComponent(progressStripe);
     myDetailsSplitter.setSecondComponent(ui.isShowDetails() ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
