@@ -35,6 +35,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.CommitPanel;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
@@ -56,13 +57,13 @@ import java.util.Collections;
  */
 public class GraphTableController {
   @NotNull private final VcsLogGraphTable myTable;
-  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final GraphCellPainter myGraphCellPainter;
   @NotNull private final GraphCommitCellRenderer myCommitRenderer;
 
   public GraphTableController(@NotNull VcsLogGraphTable table,
-                              @NotNull VcsLogUiImpl ui,
+                              @NotNull AbstractVcsLogUi ui,
                               @NotNull VcsLogData logData,
                               @NotNull GraphCellPainter graphCellPainter,
                               @NotNull GraphCommitCellRenderer commitRenderer) {
@@ -119,7 +120,7 @@ public class GraphTableController {
       }
     }
 
-    myUi.repaintUI(); // in case of repaintUI doing something more than just repainting this table in some distant future
+    myTable.repaint();
 
     if (answer == null) {
       return;
@@ -214,10 +215,12 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    MainVcsLogUiProperties properties = myUi.getProperties();
-    if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
-      VcsLogUtil.triggerUsage("RootColumnClick");
-      properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
+    if (myUi instanceof VcsLogUiImpl) {
+      MainVcsLogUiProperties properties = ((VcsLogUiImpl)myUi).getProperties();
+      if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
+        VcsLogUtil.triggerUsage("RootColumnClick");
+        properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
+      }
     }
   }
 

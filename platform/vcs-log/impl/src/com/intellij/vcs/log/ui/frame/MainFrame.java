@@ -313,10 +313,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myTextFilter;
   }
 
-  public boolean areGraphActionsEnabled() {
-    return myGraphTable.getRowCount() > 0;
-  }
-
   @NotNull
   private static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
     return new TextRevisionNumber(hash.asString(), hash.toShortString());

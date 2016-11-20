@@ -35,6 +35,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -111,7 +112,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    VcsLogUiImpl ui = createLogUi(logId, contentTabName, null);
+    AbstractVcsLogUi ui = createLogUi(logId, contentTabName, null);
     return new VcsLogPanel(this, ui);
   }
 

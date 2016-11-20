@@ -27,10 +27,10 @@ import java.awt.*;
 public class VcsLogPanel extends JBPanel implements DataProvider {
   @NotNull private final VcsLogManager myManager;
 
-  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiImpl logUi) {
+  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull AbstractVcsLogUi logUi) {
     super(new BorderLayout());
     myManager = manager;
-    add(logUi.getMainFrame().getMainComponent(), BorderLayout.CENTER);
+    add(logUi.getMainComponent(), BorderLayout.CENTER);
   }
 
   @Nullable

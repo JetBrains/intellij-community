@@ -48,10 +48,10 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -86,7 +86,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
-  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
@@ -99,7 +99,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
     getEmptyText().setText("Changes Log");
 
@@ -583,12 +583,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
-    @NotNull private final VcsLogUiImpl myUi;
+    @NotNull private final AbstractVcsLogUi myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
 
-    RootCellRenderer(@NotNull VcsLogUiImpl ui) {
+    RootCellRenderer(@NotNull AbstractVcsLogUi ui) {
       super("", CENTER);
       myUi = ui;
     }

@@ -30,8 +30,8 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,15 +98,15 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     openLogTab(logManager, project, generateShortName(toolWindow), null);
   }
 
-  public static VcsLogUiImpl openLogTab(@NotNull VcsLogManager logManager,
-                                        @NotNull Project project,
-                                        @NotNull String shortName,
-                                        @Nullable VcsLogFilter filter) {
+  public static AbstractVcsLogUi openLogTab(@NotNull VcsLogManager logManager,
+                                            @NotNull Project project,
+                                            @NotNull String shortName,
+                                            @Nullable VcsLogFilter filter) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
     String name = ContentUtilEx.getFullName(TAB_NAME, shortName);
 
-    VcsLogUiImpl logUi = logManager.createLogUi(name, name, filter);
+    AbstractVcsLogUi logUi = logManager.createLogUi(name, name, filter);
 
     ContentUtilEx
       .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
