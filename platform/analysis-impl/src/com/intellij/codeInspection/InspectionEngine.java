@@ -84,7 +84,11 @@ public class InspectionEngine {
   }
 
   private static boolean intersect(@NotNull Set<String> ids1, @NotNull Set<String> ids2) {
-    if (ids1.size() > ids2.size()) return intersect(ids2, ids1);
+    if (ids1.size() > ids2.size()) {
+      Set<String> tmp = ids1;
+      ids1 = ids2;
+      ids2 = tmp;
+    }
     for (String id : ids1) {
       if (ids2.contains(id)) return true;
     }
