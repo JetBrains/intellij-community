@@ -64,9 +64,6 @@ class InitializationDependencyUtils {
       }
     }
     final List<RefEntity> children = element.getChildren();
-    if (children == null) {
-      return;
-    }
     for (RefEntity child : children) {
       if (child instanceof RefElement) {
         tabulateInitializationDependencyClasses((RefElement)child,
@@ -138,9 +135,6 @@ class InitializationDependencyUtils {
       }
     }
     final List<RefEntity> children = element.getChildren();
-    if (children == null) {
-      return;
-    }
     for (RefEntity child : children) {
       if (child instanceof RefElement) {
         tabulateInitializationDependentClasses((RefElement)child,
