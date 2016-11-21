@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -102,14 +101,13 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   void closeView(String displayName) {
-    final CoverageView oldView = myViews.get(displayName);
+    final CoverageView oldView = myViews.remove(displayName);
     if (oldView != null) {
       final Content content = myContentManager.getContent(oldView);
       final Runnable runnable = () -> {
         if (content != null) {
-          myContentManager.removeContent(content, true);
+          myContentManager.removeContent(content, false);
         }
-        Disposer.dispose(oldView);
       };
       ApplicationManager.getApplication().invokeLater(runnable);
     }
