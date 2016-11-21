@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -78,28 +79,31 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;
     panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
-    panel.createActionLabel(SWITCH_SUBTASK, () -> {
-      ArrayList<Integer> values = new ArrayList<>();
-      for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {
-        values.add(i);
-      }
-      values.add(ADD_SUBTASK_ID);
-      JBPopupFactory.getInstance().createListPopup(new SwitchSubtaskPopupStep(SWITCH_SUBTASK, values, task, file))
-        .show(RelativePoint.getSouthEastOf(panel));
-    });
+    panel.createActionLabel(SWITCH_SUBTASK, () -> createPopup(task, myProject).show(RelativePoint.getSouthEastOf(panel)));
     return panel;
   }
 
-  private class SwitchSubtaskPopupStep extends BaseListPopupStep<Integer> {
+  @NotNull
+  public static ListPopup createPopup(@NotNull Task task, @NotNull Project project) {
+    ArrayList<Integer> values = new ArrayList<>();
+    for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {
+      values.add(i);
+    }
+    values.add(ADD_SUBTASK_ID);
+    return JBPopupFactory.getInstance().createListPopup(new SwitchSubtaskPopupStep(SWITCH_SUBTASK, values, task, project));
+  }
+
+  public static class SwitchSubtaskPopupStep extends BaseListPopupStep<Integer> {
     private final Task myTask;
-    private final VirtualFile myFile;
+    private final Project myProject;
 
     public SwitchSubtaskPopupStep(@Nullable String title,
                                   List<Integer> values,
-                                  Task task, VirtualFile file) {
+                                  @NotNull Task task,
+                                  @NotNull Project project) {
       super(title, values);
       myTask = task;
-      myFile = file;
+      myProject = project;
     }
 
     @NotNull
@@ -120,13 +124,13 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     public PopupStep onChosen(Integer selectedValue, boolean finalChoice) {
       if (finalChoice) {
         if (selectedValue.equals(ADD_SUBTASK_ID)) {
-          return doFinalStep(() -> CCNewSubtaskAction.addSubtask(myFile, myProject));
+          return doFinalStep(() -> CCNewSubtaskAction.addSubtask(myTask, myProject));
         }
         StudySubtaskUtils.switchStep(myProject, myTask, selectedValue);
       }
       else {
         if (hasSubstep(selectedValue)) {
-          return new ActionsPopupStep(myTask, selectedValue);
+          return new ActionsPopupStep(myTask, selectedValue, myProject);
         }
       }
       return super.onChosen(selectedValue, false);
@@ -149,17 +153,19 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     }
   }
 
-  private class ActionsPopupStep extends BaseListPopupStep<String> {
+  private static class ActionsPopupStep extends BaseListPopupStep<String> {
 
     public static final String SELECT = "Select";
     public static final String DELETE = "Delete";
     private final Task myTask;
     private final int mySubtaskIndex;
+    private final Project myProject;
 
-    public ActionsPopupStep(Task task, int subtaskIndex) {
+    public ActionsPopupStep(@NotNull Task task, int subtaskIndex, @NotNull Project project) {
       super(null, Arrays.asList(SELECT, DELETE));
       myTask = task;
       mySubtaskIndex = subtaskIndex;
+      myProject = project;
     }
 
     @Override

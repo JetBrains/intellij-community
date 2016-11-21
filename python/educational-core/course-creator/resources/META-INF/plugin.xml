@@ -59,6 +59,7 @@
     <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
 
     <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
+      <action id="CC.SwitchSubtask" class="com.jetbrains.edu.coursecreator.actions.CCSwitchSubtask" />
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
