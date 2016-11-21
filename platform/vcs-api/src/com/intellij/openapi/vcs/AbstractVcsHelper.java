@@ -74,8 +74,6 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
 
-  public abstract void showDifferences(final VcsFileRevision cvsVersionOn, final VcsFileRevision cvsVersionOn1, final File file);
-
   public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
 
   public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {

@@ -80,10 +80,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showDifferences(cvsVersionOn: VcsFileRevision, cvsVersionOn1: VcsFileRevision, file: File) {
-    throw UnsupportedOperationException()
-  }
-
   override fun showChangesListBrowser(changelist: CommittedChangeList, title: String) {
     throw UnsupportedOperationException()
   }

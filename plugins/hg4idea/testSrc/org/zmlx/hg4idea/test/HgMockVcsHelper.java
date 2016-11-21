@@ -78,10 +78,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showDifferences(VcsFileRevision cvsVersionOn, VcsFileRevision cvsVersionOn1, File file) {
-  }
-
-  @Override
   public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
   }
 
