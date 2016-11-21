@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -90,15 +91,18 @@ public class Bootstrap {
     log("Cleaning up...");
     try {
       final Path file = Files.createTempFile("", "");
-      Files.list(file.getParent()).forEach((p) -> {
-        if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) try {
-          log("Deleting " + p.toString());
-          Files.delete(p);
-        } catch (IOException e) {
-          log("Can't delete " + p.toString());
-          log(e);
-        }
-      });
+      try (Stream<Path> listing = Files.list(file.getParent())) {
+        listing.forEach((p) -> {
+          if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) try {
+            log("Deleting " + p.toString());
+            Files.delete(p);
+          }
+          catch (IOException e) {
+            log("Can't delete " + p.toString());
+            log(e);
+          }
+        });
+      }
       Files.delete(file);
     } catch (IOException e) {
       log(e);
