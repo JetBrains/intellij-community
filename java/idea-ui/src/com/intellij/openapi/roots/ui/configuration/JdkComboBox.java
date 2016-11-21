@@ -43,9 +43,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
@@ -319,11 +321,9 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
 
-      final List<Sdk> orderedSdkList = ContainerUtil.newSmartList();
-      for (Comparator<Sdk> comparator : comparatorToSdkMap.keySet()) {
-        orderedSdkList.addAll(comparatorToSdkMap.get(comparator).stream().sorted(comparator).collect(Collectors.toList()));
-      }
-      return orderedSdkList.toArray(new Sdk[0]);
+      return comparatorToSdkMap.entrySet().stream().flatMap(
+        (Function<Map.Entry<Comparator<Sdk>, Collection<Sdk>>, Stream<?>>)entry -> ContainerUtil.sorted(entry.getValue(), entry.getKey())
+          .stream()).toArray(size -> new Sdk[size]);
     }
 
     protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {
