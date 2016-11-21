@@ -48,14 +48,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable, UserDataHolder {
+public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
   public static final int MAX_RIGHT_MARGIN = 1000;
   
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
 
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<>();
-  
-  private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
   @NonNls private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
@@ -97,17 +95,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     initGeneralLocalVariable(PARAMETER_TYPE_TO_NAME);
     initGeneralLocalVariable(LOCAL_VARIABLE_TYPE_TO_NAME);
     PARAMETER_TYPE_TO_NAME.addPair("*Exception", "e");
-  }
-
-  @Nullable
-  @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return myUserDataHolder.getUserData(key);
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myUserDataHolder.putUserData(key, value);
   }
 
   private static void initGeneralLocalVariable(@NonNls TypeToNameMap map) {

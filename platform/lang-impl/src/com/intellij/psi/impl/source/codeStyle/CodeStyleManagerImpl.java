@@ -68,6 +68,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   };
 
+  private final ThreadLocal<FormattingMode> myCurrentFormattingMode = ThreadLocal.withInitial(() -> FormattingMode.REFORMAT);
+
   private final FormatterTagHandler myTagHandler;
 
   private final Project myProject;
@@ -328,7 +330,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
     DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, false);
     return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(
-      () -> doAdjustLineIndentByOffset(file, offset));
+      () -> doAdjustLineIndentByOffset(file, offset, FormattingMode.ADJUST_INDENT));
   }
 
   @Nullable
@@ -347,7 +349,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public int adjustLineIndent(@NotNull final Document document, final int offset) {
+  public int adjustLineIndent(@NotNull final Document document, final int offset, FormattingMode mode) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(() -> {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
       documentManager.commitDocument(document);
@@ -355,12 +357,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       PsiFile file = documentManager.getPsiFile(document);
       if (file == null) return offset;
 
-      return doAdjustLineIndentByOffset(file, offset);
+      return doAdjustLineIndentByOffset(file, offset, mode);
     });
   }
 
-  private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset) {
-    final Integer result = new CodeStyleManagerRunnable<Integer>(this, FormattingMode.ADJUST_INDENT) {
+  private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset, FormattingMode mode) {
+    final Integer result = new CodeStyleManagerRunnable<Integer>(this, mode) {
       @Override
       protected Integer doPerform(int offset, TextRange range) {
         return FormatterEx.getInstanceEx().adjustLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
@@ -873,5 +875,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     result = result.grown(delta);
     return result;
+  }
+
+  @Override
+  public FormattingMode getCurrentFormattingMode() {
+    return myCurrentFormattingMode.get();
+  }
+  
+  void setCurrentFormattingMode(@NotNull FormattingMode mode) {
+    myCurrentFormattingMode.set(mode);
   }
 }

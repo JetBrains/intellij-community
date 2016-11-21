@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -180,9 +181,18 @@ public abstract class CodeStyleManager  {
    *
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
+   * @param mode   the current formatting mode to be used when adjusting line indent.
    * @throws IncorrectOperationException if the file is read-only.
+   * @see FormattingMode
    */
-  public abstract int adjustLineIndent(@NotNull Document document, int offset);
+  public abstract int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode);
+
+  /**
+   * The same as {@link #adjustLineIndent(Document, int, FormattingMode)} but uses {@link FormattingMode#ADJUST_INDENT} as formatting mode.
+   */
+  public final int adjustLineIndent(@NotNull Document document, int offset) {
+    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
+  }
 
   /**
    * @deprecated this method is not intended to be used by plugins.
@@ -264,4 +274,6 @@ public abstract class CodeStyleManager  {
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
+
+  public abstract FormattingMode getCurrentFormattingMode();
 }
