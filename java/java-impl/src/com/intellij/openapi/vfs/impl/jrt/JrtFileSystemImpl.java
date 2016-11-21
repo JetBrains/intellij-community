@@ -63,28 +63,31 @@ public class JrtFileSystemImpl extends JrtFileSystem {
   }
 
   private static void scheduleConfiguredSdkCheck() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    Application app = ApplicationManager.getApplication();
+    final MessageBusConnection connection = app.getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appStarting(Project project) {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-          Stream.of(sdk.getRootProvider().getUrls(OrderRootType.CLASSES))
-            .filter(url -> url.startsWith(PROTOCOL_PREFIX))
-            .findFirst()
-            .ifPresent(url -> {
-              if (!isSupported()) {
-                String title = LangBundle.message("jrt.not.available.title", sdk.getName());
-                String message = LangBundle.message("jrt.not.available.message");
-                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
-              }
-              else if (url.endsWith(SEPARATOR)) {
-                String title = LangBundle.message("jrt.outdated.title", sdk.getName());
-                String message = LangBundle.message("jrt.outdated.message");
-                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
-              }
-            });
-        }
-        connection.disconnect();
+        app.invokeLater(() -> {
+          for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+            Stream.of(sdk.getRootProvider().getUrls(OrderRootType.CLASSES))
+              .filter(url -> url.startsWith(PROTOCOL_PREFIX))
+              .findFirst()
+              .ifPresent(url -> {
+                if (!isSupported()) {
+                  String title = LangBundle.message("jrt.not.available.title", sdk.getName());
+                  String message = LangBundle.message("jrt.not.available.message");
+                  Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
+                }
+                else if (url.endsWith(SEPARATOR)) {
+                  String title = LangBundle.message("jrt.outdated.title", sdk.getName());
+                  String message = LangBundle.message("jrt.outdated.message");
+                  Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
+                }
+              });
+          }
+          connection.disconnect();
+        }, app.getDisposed());
       }
     });
   }
