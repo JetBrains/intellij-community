@@ -66,6 +66,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -419,11 +420,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void addFlushRequest(@NotNull MyFlushRunnable flushRunnable, final int millis) {
-    synchronized (myCurrentRequests) {
-      if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
-        myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      synchronized (myCurrentRequests) {
+        if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
+          myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
+        }
       }
-    }
+    });
   }
 
   @Override
