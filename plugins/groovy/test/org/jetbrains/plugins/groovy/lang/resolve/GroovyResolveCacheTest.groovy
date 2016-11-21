@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -52,12 +50,9 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     assert clazz.methods.size() == 1
     assert counter == 1
 
-    new WriteCommandAction<Void>(project) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        clazz.methods.first().delete()
-      }
-    }.execute()
+    WriteCommandAction.runWriteCommandAction(project) {
+      clazz.methods.first().delete()
+    }
 
     assert counter == 1
     assert clazz.methods.size() == 0
@@ -79,12 +74,9 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     assert (clazz.methods.first() as GrMethod).block.statements.size() == 1
     assert counter == 1
 
-    new WriteCommandAction<Void>(project) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        (clazz.methods.first() as GrMethod).block.statements.first().delete()
-      }
-    }.execute()
+    WriteCommandAction.runWriteCommandAction(project) {
+      (clazz.methods.first() as GrMethod).block.statements.first().delete()
+    }
 
     assert counter == 1
     assert clazz.methods.size() == 1
