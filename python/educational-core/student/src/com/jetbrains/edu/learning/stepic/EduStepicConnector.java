@@ -102,7 +102,7 @@ public class EduStepicConnector {
   }
 
   public static Date getTaskUpdateDate(final int taskId) {
-    final String url = EduStepicNames.STEPS + "/" + String.valueOf(taskId);
+    final String url = EduStepicNames.STEPS + String.valueOf(taskId);
     try {
       List<StepicWrappers.StepSource> steps = EduStepicClient.getFromStepic(url, StepicWrappers.StepContainer.class).steps;
       if (!steps.isEmpty()) {
@@ -138,7 +138,7 @@ public class EduStepicConnector {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
       if (canBeOpened(info)) {
         for (Integer instructor : info.instructors) {
-          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor),
+          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor), 
                                                                   StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
@@ -273,9 +273,8 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(@NotNull Project project, int step) throws IOException {
-    return EduStepicAuthorizedClient.getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), 
-                                                   StepicWrappers.StepContainer.class, project).steps
-      .get(0);
+    return EduStepicAuthorizedClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step), 
+                                                   StepicWrappers.StepContainer.class, project).steps.get(0);
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @NotNull final Project project) {
