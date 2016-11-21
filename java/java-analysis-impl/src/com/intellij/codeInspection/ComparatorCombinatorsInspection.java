@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
@@ -82,18 +83,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
             if (args.length == 2 && method != null && method.getName().equals("compare")) {
               PsiClass compareClass = method.getContainingClass();
               if (compareClass != null) {
-                if (CommonClassNames.JAVA_LANG_DOUBLE.equals(compareClass.getQualifiedName())) {
-                  methodName = "comparingDouble";
-                }
-                else if (CommonClassNames.JAVA_LANG_INTEGER.equals(compareClass.getQualifiedName())) {
-                  methodName = "comparingInt";
-                }
-                else if (CommonClassNames.JAVA_LANG_LONG.equals(compareClass.getQualifiedName())) {
-                  methodName = "comparingLong";
-                }
-                else {
-                  return;
-                }
+                methodName = getComparingMethodName(compareClass.getQualifiedName());
                 if (!areEquivalent(parameters, args[0], args[1])) return;
               }
             }
@@ -102,7 +92,9 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           PsiBinaryExpression binOp = (PsiBinaryExpression)body;
           if (binOp.getOperationTokenType().equals(JavaTokenType.MINUS) &&
               areEquivalent(parameters, binOp.getLOperand(), binOp.getROperand())) {
-            methodName = "comparingInt";
+            PsiType opType = binOp.getLOperand().getType();
+            if(opType == null) return;
+            methodName = getComparingMethodName(opType.getCanonicalText());
           }
         }
         if (methodName != null) {
@@ -112,6 +104,24 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         }
       }
     };
+  }
+
+  @Contract(value = "null -> null", pure = true)
+  @Nullable
+  private static String getComparingMethodName(String type) {
+    if(type == null) return null;
+    switch(PsiTypesUtil.unboxIfPossible(type)) {
+      case "int":
+      case "short":
+      case "byte":
+      case "char":
+        return "comparingInt";
+      case "long":
+        return "comparingLong";
+      case "double":
+        return "comparingDouble";
+    }
+    return null;
   }
 
   @Contract("_, null, _ -> false; _, !null, null -> false")
@@ -193,19 +203,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
                 PsiExpression[] args = methodCall.getArgumentList().getExpressions();
                 if (args.length != 2) return;
                 keyExtractor = args[0];
-                switch (className) {
-                  case CommonClassNames.JAVA_LANG_LONG:
-                    methodName = "comparingLong";
-                    break;
-                  case CommonClassNames.JAVA_LANG_INTEGER:
-                    methodName = "comparingInt";
-                    break;
-                  case CommonClassNames.JAVA_LANG_DOUBLE:
-                    methodName = "comparingDouble";
-                    break;
-                  default:
-                    return;
-                }
+                methodName = getComparingMethodName(className);
               }
             }
           }
@@ -213,8 +211,10 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       } else if(body instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)body;
         if(!binOp.getOperationTokenType().equals(JavaTokenType.MINUS)) return;
-        methodName = "comparingInt";
         keyExtractor = binOp.getLOperand();
+        PsiType type = keyExtractor.getType();
+        if(type == null) return;
+        methodName = getComparingMethodName(type.getCanonicalText());
       }
       if (methodName == null || keyExtractor == null) return;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;

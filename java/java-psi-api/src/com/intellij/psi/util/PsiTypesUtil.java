@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +95,7 @@ public class PsiTypesUtil {
    * @param type boxed java type name
    * @return unboxed type name if available; same value otherwise
    */
+  @Contract("null -> null; !null -> !null")
   @Nullable
   public static String unboxIfPossible(final String type) {
     if (type == null) return null;
@@ -106,6 +108,7 @@ public class PsiTypesUtil {
    * @param type primitive java type name
    * @return boxed type name if available; same value otherwise
    */
+  @Contract("null -> null; !null -> !null")
   @Nullable
   public static String boxIfPossible(final String type) {
     if (type == null) return null;
