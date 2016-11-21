@@ -574,7 +574,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       myMultiCaster.fileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
     }
 
-    if (!isDocumentUnsaved(document)) {
+    if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
       reloadFromDisk(document);
     }
   }
