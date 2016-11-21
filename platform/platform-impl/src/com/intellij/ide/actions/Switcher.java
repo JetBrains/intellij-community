@@ -615,6 +615,8 @@ public class Switcher extends AnAction implements DumbAware {
         .setMovable(pinned)
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
+          Container popupFocusAncestor = getPopupFocusAncestor();
+          if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
           SWITCHER = null;
           return true;
         }).createPopup();
@@ -646,8 +648,7 @@ public class Switcher extends AnAction implements DumbAware {
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       myPopup.showInCenterOf(window);
 
-      Container popupFocusAncestor = myPopup.getContent().getFocusCycleRootAncestor();
-
+      Container popupFocusAncestor = getPopupFocusAncestor();
       popupFocusAncestor.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
@@ -655,6 +656,11 @@ public class Switcher extends AnAction implements DumbAware {
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
 
+    }
+
+    private Container getPopupFocusAncestor() {
+      JComponent content = myPopup.getContent();
+      return content == null ? null : content.getFocusCycleRootAncestor();
     }
 
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
