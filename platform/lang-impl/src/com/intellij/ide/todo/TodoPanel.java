@@ -34,7 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -50,7 +50,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -417,15 +420,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     alarm.cancelAllRequests();
     alarm.addRequest(() -> {
       final Set<VirtualFile> files = new HashSet<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
-        try {
-          myTodoTreeBuilder.collectFiles(virtualFile -> {
-            files.add(virtualFile);
-            return true;
-          });
-        }
-        catch (IndexNotReadyException ignore) {
-        }
+      DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        myTodoTreeBuilder.collectFiles(virtualFile -> {
+          files.add(virtualFile);
+          return true;
+        });
       });
       final Runnable runnable = () -> {
         myTodoTreeBuilder.rebuildCache(files);

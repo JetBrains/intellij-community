@@ -24,8 +24,10 @@ import com.intellij.ide.todo.nodes.ToDoRootNode;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
@@ -41,8 +43,12 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
     if (!psiFile.isValid()) return false;
     boolean isAffected = false;
     SearchScope scope = myScopes.getSelectedScope();
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+
     if (scope instanceof GlobalSearchScope) {
-      isAffected = ((GlobalSearchScope)scope).contains(psiFile.getVirtualFile());
+      isAffected = ((GlobalSearchScope)scope).contains(virtualFile);
+    } else if (scope instanceof LocalSearchScope) {
+      isAffected = ((LocalSearchScope)scope).isInScope(virtualFile);
     }
     return isAffected && (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
                           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
