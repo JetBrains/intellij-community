@@ -48,8 +48,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     this(null);
   }
 
-  public abstract boolean contains(@NotNull VirtualFile file);
-
   @Nullable
   @Override
   public Project getProject() {
