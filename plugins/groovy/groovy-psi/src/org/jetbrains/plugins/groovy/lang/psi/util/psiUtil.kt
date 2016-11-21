@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOLON
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
@@ -45,4 +47,8 @@ fun modifierListMayBeEmpty(owner: PsiElement?): Boolean = when (owner) {
   is GrVariable -> owner.typeElementGroovy != null
   is GrVariableDeclaration -> owner.typeElementGroovy != null
   else -> true
+}
+
+fun GrModifierList.hasOtherModifiers(modifierElementType: IElementType): Boolean {
+  return modifiers.any { it.node.elementType != modifierElementType }
 }

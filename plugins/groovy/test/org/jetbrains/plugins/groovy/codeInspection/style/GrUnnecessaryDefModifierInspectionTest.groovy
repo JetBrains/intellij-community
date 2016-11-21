@@ -37,6 +37,8 @@ def baw(<warning descr="Modifier 'def' is not necessary">def</warning> a) {}
 
 def <T> T bax() {}
 
+synchronized <warning descr="Modifier 'def' is not necessary">def</warning> <T> T baxx(Class<T> c) {}
+
 <warning descr="Modifier 'def' is not necessary">def</warning> Object bar
 
 def baf
@@ -63,6 +65,8 @@ def baw(a) {}
 boolean baz(a) {}
 
 def <T> T bax() {}
+
+synchronized <T> T baxx(Class<T> c) {}
 
 Object bar
 
