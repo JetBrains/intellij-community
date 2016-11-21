@@ -7,6 +7,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebTestNGTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
+
+    <delegatesToProvider implementation="org.jetbrains.plugins.groovy.geb.GebBrowserDelegatesToProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
