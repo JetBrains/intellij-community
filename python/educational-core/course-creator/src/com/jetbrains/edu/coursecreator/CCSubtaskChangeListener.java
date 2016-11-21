@@ -1,5 +1,8 @@
 package com.jetbrains.edu.coursecreator;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,9 +51,22 @@ public class CCSubtaskChangeListener implements StudySubtaskChangeListener {
     if (testFiles.isEmpty()) {
       return;
     }
+    Editor selectedTextEditor = editorManager.getSelectedTextEditor();
     for (VirtualFile testFile : testFiles) {
       editorManager.closeFile(testFile);
     }
-    editorManager.openFile(newTestFile, false);
+    editorManager.openFile(newTestFile, true);
+    if (selectedTextEditor != null) {
+      reopenSelectedEditor(editorManager, selectedTextEditor);
+    }
+  }
+
+  private static void reopenSelectedEditor(FileEditorManager editorManager, Editor selectedTextEditor) {
+    Document document = selectedTextEditor.getDocument();
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || !editorManager.isFileOpen(virtualFile)) {
+      return;
+    }
+    editorManager.openFile(virtualFile, true);
   }
 }
