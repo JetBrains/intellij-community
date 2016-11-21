@@ -157,10 +157,9 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     if (call.getArgumentList().getExpressions().length != 0) return false;
-    if (!"get".equals(call.getMethodExpression().getReferenceName())) return false;
-    PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-    if (!(qualifier instanceof PsiReferenceExpression)) return false;
-    return ((PsiReferenceExpression)qualifier).isReferenceTo(variable);
+    PsiReferenceExpression methodExpression = call.getMethodExpression();
+    return "get".equals(methodExpression.getReferenceName()) &&
+           ExpressionUtils.isReferenceTo(methodExpression.getQualifierExpression(), variable);
   }
 
   @Contract("_, null, _ -> false")
@@ -374,7 +373,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return false;
       if (!(trueElement instanceof PsiExpressionStatement)) return false;
       PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
-      return isOptionalLambdaCandidate(optionalVariable, expression, null);
+      return isOptionalLambdaCandidate(optionalVariable, expression, null) && !isOptionalGetCall(expression, optionalVariable);
     }
 
     @Override
