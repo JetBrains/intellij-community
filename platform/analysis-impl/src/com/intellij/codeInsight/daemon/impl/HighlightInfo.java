@@ -107,6 +107,7 @@ public class HighlightInfo implements Segment {
     setFlag(FROM_INJECTION_MASK, fromInjection);
   }
 
+  @Nullable
   public String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;

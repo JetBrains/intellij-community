@@ -223,7 +223,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                 info.getGutterIconRenderer(), info.quickFixActionRanges,
-                                                                                project, psiFile, ((TextEditor)fileEditor).getEditor());
+                                                                                project, psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
         manager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
