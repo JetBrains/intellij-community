@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,12 +42,11 @@ public class LabelUtil {
         if (g instanceof Graphics2D) {
           Graphics2D g2d = (Graphics2D)g;
           g2d.setColor(bg);
-          Rectangle textRect = getTextRect(getText(), g2d);
+          int textHeight = LabelUtil.getHeight(getText(), g2d);
           Insets borderInsets = emptyBorder.getBorderInsets();
-          // base line - coordinate right under text -> so we have to shift 1px up
-          int baselineIncludeOffset = getBaseline(0, 0)+1;
-          RectanglePainter.FILL.paint(g2d, 0, getHeight() - baselineIncludeOffset + textRect.y - borderInsets.top, getWidth(),
-                                      textRect.height + borderInsets.top + borderInsets.bottom, roundWidth);
+          int baseline = getBaseline(getWidth(), getHeight());
+          RectanglePainter.FILL.paint(g2d, 0, baseline - textHeight - borderInsets.top, getWidth(),
+                                      textHeight + borderInsets.top + borderInsets.bottom, roundWidth);
           super.paintComponent(g);
         }
       }
@@ -58,8 +58,9 @@ public class LabelUtil {
     return label;
   }
 
-  private static Rectangle getTextRect(@NotNull String text, @NotNull Graphics2D g2d) {
+  private static int getHeight(@NotNull String text, @NotNull Graphics2D g2d) {
     FontRenderContext frc = g2d.getFontRenderContext();
-    return g2d.getFont().createGlyphVector(frc, text).getPixelBounds(frc, 0, 0);
+    int height = g2d.getFont().createGlyphVector(frc, text).getPixelBounds(frc, 0, 0).height;
+    return UIUtil.isRetina(g2d) ? (int)Math.ceil(height / 2) : height;
   }
 }
