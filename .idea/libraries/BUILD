@@ -951,54 +951,6 @@ java_library(
 )
 
 java_library(
-    name = "jogl-all",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/adt/idea/android/lib:jogl-all",
-        "//tools/adt/idea/android/lib:jogl-all-natives-linux-amd64",
-        "//tools/adt/idea/android/lib:jogl-all-natives-linux-i586",
-        "//tools/adt/idea/android/lib:jogl-all-natives-macosx-universal",
-        "//tools/adt/idea/android/lib:jogl-all-natives-windows-amd64",
-        "//tools/adt/idea/android/lib:jogl-all-natives-windows-i586",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/adt/idea/android/lib:jogl-all",
-        "//tools/adt/idea/android/lib:jogl-all-natives-linux-amd64",
-        "//tools/adt/idea/android/lib:jogl-all-natives-linux-i586",
-        "//tools/adt/idea/android/lib:jogl-all-natives-macosx-universal",
-        "//tools/adt/idea/android/lib:jogl-all-natives-windows-amd64",
-        "//tools/adt/idea/android/lib:jogl-all-natives-windows-i586",
-    ],
-)
-
-java_library(
-    name = "gluegen-rt",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/adt/idea/android/lib:gluegen-rt",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-amd64",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-i586",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-macosx-universal",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-amd64",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-i586",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/adt/idea/android/lib:gluegen-rt",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-amd64",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-linux-i586",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-macosx-universal",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-amd64",
-        "//tools/adt/idea/android/lib:gluegen-rt-natives-windows-i586",
-    ],
-)
-
-java_library(
     name = "dexlib2",
     tags = ["managed"],
     visibility = ["//visibility:public"],
