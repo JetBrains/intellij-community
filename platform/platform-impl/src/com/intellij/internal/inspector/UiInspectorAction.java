@@ -793,7 +793,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       putClientProperty("html.disable", Boolean.TRUE);
     }
     public JComponent setValue(@NotNull final Object value) {
-      setText(String.valueOf(value).replace('\n', ' '));
+      String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
+      setText(toString.replace('\n', ' '));
       return this;
     }
   }
