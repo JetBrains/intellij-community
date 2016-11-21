@@ -33,5 +33,5 @@ public interface KeymapExtension {
   @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.keymapExtension");
 
   @Nullable
-  KeymapGroup createGroup(Condition<AnAction> filtered, Project project);
+  KeymapGroup createGroup(Condition<AnAction> filtered, @Nullable Project project);
 }
