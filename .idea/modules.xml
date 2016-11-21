@@ -251,7 +251,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/repository/repository.iml" filepath="$PROJECT_DIR$/../base/repository/repository.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/rpclib/rpclib.iml" filepath="$PROJECT_DIR$/../base/rpclib/rpclib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" filepath="$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" group="android/sdktools" />
