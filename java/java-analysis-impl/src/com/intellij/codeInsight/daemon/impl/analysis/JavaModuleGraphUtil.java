@@ -29,6 +29,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.OutboundSemiGraph;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +97,7 @@ public class JavaModuleGraphUtil {
       }
 
       if (!relations.isEmpty()) {
-        Graph<PsiJavaModule> graph = new SourceSemiGraph(relations);
+        Graph<PsiJavaModule> graph = new ChameleonGraph<>(relations, false);
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
@@ -130,7 +132,7 @@ public class JavaModuleGraphUtil {
         .ifPresent(m -> visit(m, relations, publicEdges));
     }
 
-    GraphGenerator<PsiJavaModule> graph = GraphGenerator.create(new RequiresSemiGraph(relations));
+    Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));
     return new RequiresGraph(graph, publicEdges);
   }
 
@@ -149,10 +151,10 @@ public class JavaModuleGraphUtil {
   }
 
   private static class RequiresGraph {
-    private final Graph<PsiJavaModule> myGraph;
+    private final OutboundSemiGraph<PsiJavaModule> myGraph;
     private final Set<String> myPublicEdges;
 
-    public RequiresGraph(Graph<PsiJavaModule> graph, Set<String> publicEdges) {
+    public RequiresGraph(OutboundSemiGraph<PsiJavaModule> graph, Set<String> publicEdges) {
       myGraph = graph;
       myPublicEdges = publicEdges;
     }
@@ -176,46 +178,34 @@ public class JavaModuleGraphUtil {
     }
   }
 
-  //<editor-fold desc="Helpers.">
-  private static class SourceSemiGraph implements Graph<PsiJavaModule> {
-    private final MultiMap<PsiJavaModule, PsiJavaModule> myMap;
+  private static class ChameleonGraph<N> implements Graph<N> {
+    private final Set<N> myNodes;
+    private final MultiMap<N, N> myEdges;
+    private final boolean myInbound;
 
-    public SourceSemiGraph(MultiMap<PsiJavaModule, PsiJavaModule> map) {
-      myMap = map;
+    public ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+      myNodes = new THashSet<>();
+      edges.entrySet().forEach(e -> {
+        myNodes.add(e.getKey());
+        myNodes.addAll(e.getValue());
+      });
+      myEdges = edges;
+      myInbound = inbound;
     }
 
     @Override
-    public Collection<PsiJavaModule> getNodes() {
-      return myMap.keySet();
+    public Collection<N> getNodes() {
+      return myNodes;
     }
 
     @Override
-    public Iterator<PsiJavaModule> getIn(PsiJavaModule n) {
-      throw new UnsupportedOperationException();
+    public Iterator<N> getIn(N n) {
+      return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
     @Override
-    public Iterator<PsiJavaModule> getOut(PsiJavaModule n) {
-      return myMap.get(n).iterator();
+    public Iterator<N> getOut(N n) {
+      return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();
     }
   }
-
-  private static class RequiresSemiGraph implements GraphGenerator.SemiGraph<PsiJavaModule> {
-    private final MultiMap<PsiJavaModule, PsiJavaModule> myMap;
-
-    public RequiresSemiGraph(MultiMap<PsiJavaModule, PsiJavaModule> map) {
-      myMap = map;
-    }
-
-    @Override
-    public Collection<PsiJavaModule> getNodes() {
-      return myMap.keySet();
-    }
-
-    @Override
-    public Iterator<PsiJavaModule> getIn(PsiJavaModule n) {
-      return myMap.get(n).iterator();
-    }
-  }
-  //</editor-fold>
 }

@@ -163,11 +163,6 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
       for (OrderEntry entry : model.getOrderEntries()) {

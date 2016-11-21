@@ -74,4 +74,9 @@ public abstract class EditorColorsManager {
   public abstract boolean isUseOnlyMonospacedFonts();
 
   public abstract void setUseOnlyMonospacedFonts(boolean b);
+
+  @NotNull
+  public EditorColorsScheme getSchemeForCurrentUITheme() {
+    return getGlobalScheme();
+  }
 }

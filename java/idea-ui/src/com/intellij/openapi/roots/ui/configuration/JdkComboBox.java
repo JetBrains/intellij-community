@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +43,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -74,16 +76,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                      @Nullable Condition<Sdk> filter,
                      @Nullable Condition<SdkTypeId> creationFilter,
                      boolean addSuggestedItems) {
-    this(jdkModel, sdkTypeFilter, filter, creationFilter, null, addSuggestedItems);
-  }
-
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                     @Nullable Condition<Sdk> filter,
-                     @Nullable Condition<SdkTypeId> creationFilter,
-                     @Nullable Comparator<Sdk> mySdkComparator,
-                     boolean addSuggestedItems) {
-    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems, mySdkComparator));
+    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
     myFilter = filter;
     mySdkTypeFilter = sdkTypeFilter;
     myCreationFilter = creationFilter;
@@ -290,12 +283,8 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    @NotNull
-    private final Comparator<Sdk> mySdkComparator;
-
     public JdkComboBoxModel(@NotNull final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested, @Nullable Comparator<Sdk> sdkComparator) {
-      mySdkComparator = sdkComparator != null ? sdkComparator : (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName());
+                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       reload(null, jdksModel, sdkTypeFilter, sdkFilter, addSuggested);
     }
 
@@ -307,8 +296,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       removeAllElements();
       if (firstItem != null) addElement(firstItem);
 
-      Sdk[] jdks = jdksModel.getSdks();
-      Arrays.sort(jdks, mySdkComparator);
+      Sdk[] jdks = sortSdks(jdksModel);
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
           addElement(new ActualJdkComboBoxItem(jdk));
@@ -317,6 +305,25 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       if (addSuggested) {
         addSuggestedItems(sdkTypeFilter, jdks);
       }
+    }
+
+    @NotNull
+    private static Sdk[] sortSdks(@NotNull final ProjectSdksModel jdksModel) {
+      MultiMap<Comparator<Sdk>, Sdk> comparatorToSdkMap = new MultiMap<>();
+      for (Sdk sdk : jdksModel.getSdks()) {
+        final SdkTypeId sdkType = sdk.getSdkType();
+        if (sdkType instanceof SdkType) {
+          comparatorToSdkMap.putValue(((SdkType)sdkType).getComparator(), sdk);
+        } else {
+          comparatorToSdkMap.putValue(SdkType.ALPHABETICAL_COMPARATOR, sdk);
+        }
+      }
+
+      final List<Sdk> orderedSdkList = ContainerUtil.newSmartList();
+      for (Comparator<Sdk> comparator : comparatorToSdkMap.keySet()) {
+        orderedSdkList.addAll(comparatorToSdkMap.get(comparator).stream().sorted(comparator).collect(Collectors.toList()));
+      }
+      return orderedSdkList.toArray(new Sdk[0]);
     }
 
     protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {

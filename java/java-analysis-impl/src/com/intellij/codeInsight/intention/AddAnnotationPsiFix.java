@@ -22,6 +22,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -116,6 +117,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @NotNull PsiElement startElement,
@@ -137,10 +143,14 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) return;
-      removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
-      PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, modifierList);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+      WriteAction.run(() -> {
+        removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
+
+        PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, modifierList);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+      });
+
       if (containingFile != file) {
         UndoUtil.markPsiFileForUndo(file);
       }

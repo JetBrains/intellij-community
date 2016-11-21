@@ -286,6 +286,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
+      if (((PsiMethodReferenceExpression)getParent()).isConstructor()) {
+        PsiElement classNameElement = getReferenceNameElement();
+        if (classNameElement == null) {
+          return JavaResolveResult.EMPTY_ARRAY;
+        }
+        return resolveToClass(classNameElement, containingFile);
+      }
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 

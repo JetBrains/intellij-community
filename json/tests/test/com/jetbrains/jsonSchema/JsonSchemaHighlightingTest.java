@@ -360,6 +360,33 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                      "}");
   }
 
+  public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
+    testImpl(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
+                                          "\"r1\": \"allowed!\"}");
+  }
+
+  public static String rootObjectRedefinedSchema() {
+    return "{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "  \"type\": \"object\",\n" +
+           "  \"$ref\" : \"#/definitions/root\",\n" +
+           "  \"definitions\": {\n" +
+           "    \"root\" : {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"additionalProperties\": false,\n" +
+           "      \"properties\": {\n" +
+           "        \"r1\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"r2\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        }\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}\n";
+  }
+
   static String schema(final String s) {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
   }

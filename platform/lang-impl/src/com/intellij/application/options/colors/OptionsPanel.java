@@ -16,7 +16,11 @@
 
 package com.intellij.application.options.colors;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.util.Set;
 
 
@@ -34,4 +38,6 @@ public interface OptionsPanel {
   void selectOption(String typeToSelect);
 
   Set<String> processListOptions();
+  
+  default void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {}
 }

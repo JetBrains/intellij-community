@@ -535,7 +535,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static void initScheme(@NotNull MyColorScheme scheme) {
     List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<>();
     initPluggedDescriptions(descriptions, scheme);
-    initFileStatusDescriptors(descriptions, scheme);
+    EditorColorsScheme original = scheme.getOriginal();
+    if (original != null && original instanceof  DefaultColorsScheme) {
+      initFileStatusDescriptors(descriptions, scheme);
+    }
     initScopesDescriptors(descriptions, scheme);
 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));

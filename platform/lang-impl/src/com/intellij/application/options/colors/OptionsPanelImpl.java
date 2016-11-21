@@ -19,13 +19,14 @@ package com.intellij.application.options.colors;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -35,6 +36,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
@@ -218,5 +220,9 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
       void onHyperLinkClicked(HyperlinkEvent e);
     }
+  }
+  
+  public void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {
+    myOptionsTree.setEmptyText(text, linkListener);
   }
 }

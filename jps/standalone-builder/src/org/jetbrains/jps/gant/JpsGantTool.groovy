@@ -28,7 +28,10 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+
 /**
+ * This class is replaced by type-safe org.jetbrains.intellij.build.impl.LayoutBuilder.
+ *
  * @author nik
  */
 final class JpsGantTool {

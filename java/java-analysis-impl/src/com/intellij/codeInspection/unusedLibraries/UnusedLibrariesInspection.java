@@ -27,7 +27,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -131,11 +130,6 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     @NotNull
     public String getFamilyName() {
       return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
@@ -145,27 +139,25 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor descriptor) {
       final Module module = myRefModule.getModule();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (OrderEntry entry : model.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
-            if (myFiles == null) {
-              model.removeOrderEntry(entry);
-            }
-            else {
-              final Library library = ((LibraryOrderEntry)entry).getLibrary();
-              if (library != null) {
-                final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-                for (VirtualFile file : myFiles) {
-                  modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
-                }
-                modifiableModel.commit();
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
+          if (myFiles == null) {
+            model.removeOrderEntry(entry);
+          }
+          else {
+            final Library library = ((LibraryOrderEntry)entry).getLibrary();
+            if (library != null) {
+              final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+              for (VirtualFile file : myFiles) {
+                modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
               }
+              modifiableModel.commit();
             }
           }
         }
-        model.commit();
-      });
+      }
+      model.commit();
     }
   }
 

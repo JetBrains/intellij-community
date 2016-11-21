@@ -32,6 +32,7 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -127,16 +128,15 @@ open class DirectoryBasedStorage(private val dir: Path,
       }
       else {
         val stateAndFileNameList = storage.splitter.splitState(element!!)
+        val existingFiles = THashSet<String>(stateAndFileNameList.size)
         for (pair in stateAndFileNameList) {
           doSetState(pair.second, pair.first)
+          existingFiles.add(pair.second)
         }
 
-        outerLoop@
         for (key in originalStates.keys()) {
-          for (pair in stateAndFileNameList) {
-            if (pair.second == key) {
-              continue@outerLoop
-            }
+          if (existingFiles.contains(key)) {
+            continue
           }
 
           if (copiedStorageData == null) {

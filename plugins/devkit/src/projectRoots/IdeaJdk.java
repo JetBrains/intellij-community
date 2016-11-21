@@ -18,6 +18,9 @@ package org.jetbrains.idea.devkit.projectRoots;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -26,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -52,6 +56,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
+import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -334,7 +339,20 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     if (isFromIDEAProject(sdkHome)) {
-      return setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);
+      try {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
+          setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);
+          return null;
+        }, "Scanning for Roots", true, null);
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        Messages.showErrorDialog(e.toString(), DevKitBundle.message("sdk.title"));
+        return false;
+      }
     }
     else  {
       VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
@@ -342,28 +360,21 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
       }
       addSources(new File(sdkHome), sdkModificator);
-      return true;
     }
+    return true;
   }
 
-  private static boolean setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
+  private static void setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) throws IOException {
+    ProgressIndicator indicator = ObjectUtils.assertNotNull(ProgressManager.getInstance().getProgressIndicator());
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
-    JpsModel model;
-    try {
-      model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-      Messages.showErrorDialog(e.toString(), DevKitBundle.message("sdk.title"));
-      return false;
-    }
+    JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
     String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
     Sdk internalJava = sdkModel.findSdk(sdkName);
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
-    Set<String> addedLibs = ContainerUtil.newTroveSet();
+    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
     VirtualFileManager vfsManager = VirtualFileManager.getInstance();
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
@@ -378,41 +389,45 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         return !isUltimate || contentUrl.contains("/community/");
       })
       .toList();
+    indicator.setIndeterminate(false);
+    double delta = 1 / (2 * Math.max(0.5, modules.size()));
     for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
+        ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        if (library == null) continue;
-        if (library.getType() != JpsJavaLibraryType.INSTANCE) continue;
-        // module-library: name starts with '#'
-        if (!library.getName().startsWith("#") && !addedLibs.add(library.getName())) continue;
+        JpsLibraryType<?> libraryType = library == null ? null : library.getType();
+        if (!(libraryType instanceof JpsJavaLibraryType)) continue;
         JpsJavaDependencyExtension extension = javaService.getDependencyExtension(dep);
         if (extension == null) continue;
 
         // do not check extension.getScope(), plugin projects need tests too
         for (JpsLibraryRoot jps : library.getRoots(JpsOrderRootType.COMPILED)) {
           VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
-          if (root == null) continue;
+          if (root == null || !addedRoots.add(root)) continue;
           sdkModificator.addRoot(root, OrderRootType.CLASSES);
         }
         for (JpsLibraryRoot jps : library.getRoots(JpsOrderRootType.SOURCES)) {
           VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
-          if (root == null) continue;
+          if (root == null || !addedRoots.add(root)) continue;
           sdkModificator.addRoot(root, OrderRootType.SOURCES);
         }
       }
     }
     for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
       String outputUrl = javaService.getOutputUrl(o, false);
       VirtualFile outputRoot = outputUrl == null ? null : vfsManager.findFileByUrl(outputUrl);
       if (outputRoot == null) continue;
       sdkModificator.addRoot(outputRoot, OrderRootType.CLASSES);
       for (JpsModuleSourceRoot jps : o.getSourceRoots()) {
+        ProgressManager.checkCanceled();
         VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
-        if (root == null) continue;
+        if (root == null || !addedRoots.add(root)) continue;
         sdkModificator.addRoot(root, OrderRootType.SOURCES);
       }
     }
-    return true;
+    indicator.setFraction(1.0);
   }
 
   static String getDefaultSandbox() {

@@ -16,4 +16,11 @@ class Test {
     return 0;
   }
 
+  private int foo() {
+    final I i = () -> {
+      return foo();
+    };
+    return 0;
+  }
+
 }

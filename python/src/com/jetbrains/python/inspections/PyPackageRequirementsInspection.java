@@ -88,11 +88,19 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-      if (module != null) {
-        if (isRunningPackagingTasks(module)) {
-          return;
-        }
+      checkPackagesHaveBeenInstalled(node, ModuleUtilCore.findModuleForPsiElement(node));
+    }
+
+    @Override
+    public void visitPlainTextFile(PsiPlainTextFile file) {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+      if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
+        checkPackagesHaveBeenInstalled(file, module);
+      }
+    }
+
+    private void checkPackagesHaveBeenInstalled(@NotNull PsiElement file, @Nullable Module module) {
+      if (module != null && !isRunningPackagingTasks(module)) {
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
           final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk, myIgnoredPackages);
@@ -109,7 +117,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
             quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
-            registerProblem(node, msg,
+            registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
                             quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }

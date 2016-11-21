@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -29,13 +30,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
+  public static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
 
   private final String myName;
 
@@ -92,6 +91,17 @@ public abstract class SdkType implements SdkTypeId {
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
   public void setupSdkPaths(@NotNull Sdk sdk) {}
+
+  /**
+   * Comparator is used to order sdks in project or module settings combo boxes.
+   * If different sdk types return the same comparator object than they are sorted simultaneously.
+   *
+   * @return comparator what orders sdks of given sdkType
+   */
+
+  public Comparator<Sdk> getComparator(){
+    return ALPHABETICAL_COMPARATOR;
+  }
 
   public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     setupSdkPaths(sdk);
