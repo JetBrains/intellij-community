@@ -237,7 +237,7 @@ public class ChangeListChooserPanel extends JPanel {
       super(PREF_WIDTH);
       myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       JBColor fg = new JBColor(0x00b53d, 0x24953c);
-      JLabel label = createLabelWithRoundCorners("new", fg, ColorUtil.toAlpha(fg, 40), .8F, 4, 2, 2);
+      JLabel label = createLabelWithRoundCorners("New", fg, ColorUtil.toAlpha(fg, 40), .8F, 4, 2, 2);
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(true);
       panel.setBackground(myEditorTextField.getBackground());
