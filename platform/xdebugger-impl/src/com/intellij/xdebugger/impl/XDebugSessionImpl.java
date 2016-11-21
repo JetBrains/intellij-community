@@ -507,8 +507,8 @@ public class XDebugSessionImpl implements XDebugSession {
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    handler.startStepInto(variant);
+    final XSuspendContext context = doResume();
+    handler.startStepInto(variant, context);
   }
 
   @Override
