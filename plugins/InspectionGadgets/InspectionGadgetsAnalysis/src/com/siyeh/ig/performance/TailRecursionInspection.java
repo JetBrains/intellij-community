@@ -221,44 +221,52 @@ public class TailRecursionInspection extends BaseInspection {
           out.append('{');
         }
         final Graph<Integer> graph = buildGraph(parameters, arguments);
+        // When replacing recursion with iteration, new values are assigned to the parameters,
+        // instead of calling the method with the new values. Care needs to be taken to not clobber
+        // the value of a parameter which is used later (in some expression assigned to a different
+        // parameter). To achieve this a simple graph of the dependencies between the parameters is
+        // built and analysed/ordered. If the graph is a directed acyclic graph, the assignments
+        // are ordered in such a way that making a defensive copy is unnecessary (topological
+        // ordering). If the graph has a cycle, a copy of the value of at least one parameter needs
+        // to be made before assigning a new value.
         final DFSTBuilder<Integer> builder = new DFSTBuilder<>(graph);
-        final Collection<Collection<Integer>> componentOrdering = builder.getComponents();
+        final List<Integer> sortedNodes = builder.getSortedNodes();
         final Set<Integer> seen = new HashSet<>();
         final Map<PsiElement, String> replacements = new HashMap<>();
-        for (Collection<Integer> component : componentOrdering) {
-          for (Integer index : component) {
-            final Iterator<Integer> in = graph.getIn(index);
-            final PsiParameter parameter = parameters[index];
-            final String parameterName = parameter.getName();
-            assert parameterName != null;
-            final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[index]);
-            assert argument != null;
-            if (argument instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
-              if (parameter.equals(referenceExpression.resolve())) {
-                continue;
-              }
+        for (Integer index : sortedNodes) {
+          final PsiParameter parameter = parameters[index];
+          final String parameterName = parameter.getName();
+          assert parameterName != null;
+          final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[index]);
+          assert argument != null;
+          if (argument instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+            if (parameter.equals(referenceExpression.resolve())) {
+              // parameter keeps same value
+              continue;
             }
-            boolean copy = false;
-            while (in.hasNext()) {
-              if (!seen.contains(in.next())) {
-                // if 'in' was some collection instead of an iterator this would have been a nice containsAll expression
-                copy = true;
-                break;
-              }
-            }
-            if (copy) {
-              final String variableName =
-                JavaCodeStyleManager.getInstance(method.getProject()).suggestUniqueVariableName(parameterName, element, false);
-              out.append(parameter.getType().getCanonicalText()).append(' ').append(variableName).append('=');
-              out.append(parameterName).append(';');
-              replacements.put(parameter, variableName);
-            }
-            out.append(parameterName).append('=');
-            buildText(argument, replacements, out);
-            out.append(';');
-            seen.add(index);
           }
+          final Iterator<Integer> dependants = graph.getIn(index); // parameters which depend on parameter 'index'
+          boolean copy = false;
+          while (dependants.hasNext()) {
+            if (!seen.contains(dependants.next())) {
+              // current parameter which depends on value of parameter 'index' has not yet received its value (cycle)
+              // if 'dependants' was some collection instead of an iterator this would have been a nice containsAll expression
+              copy = true;
+              break;
+            }
+          }
+          if (copy) {
+            final String variableName =
+              JavaCodeStyleManager.getInstance(method.getProject()).suggestUniqueVariableName(parameterName, element, false);
+            out.append(parameter.getType().getCanonicalText()).append(' ').append(variableName).append('=');
+            out.append(parameterName).append(';');
+            replacements.put(parameter, variableName);
+          }
+          out.append(parameterName).append('=');
+          buildText(argument, replacements, out);
+          out.append(';');
+          seen.add(index);
         }
         if (thisVariableName != null) {
           final PsiReferenceExpression methodExpression = call.getMethodExpression();

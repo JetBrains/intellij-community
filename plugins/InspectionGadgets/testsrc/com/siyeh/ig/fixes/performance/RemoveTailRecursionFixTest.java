@@ -36,6 +36,8 @@ public class RemoveTailRecursionFixTest extends IGQuickFixesTestCase {
   public void testCallOnOtherInstance2() { doTest(); }
   public void testDependency1() { doTest(); }
   public void testDependency2() { doTest(); }
+  public void testDependency3() { doTest(); }
+  public void testDependency4() { doTest(); }
   public void testThisVariable() { doTest(); }
   public void testUnmodifiedParameter() { doTest(); }
 }
