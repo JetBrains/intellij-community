@@ -234,8 +234,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
                            OutputConsumer outputConsumer,
-                           JavaCompilingTool compilingTool)
-    throws Exception {
+                           JavaCompilingTool compilingTool) throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
     final boolean hasSourcesToCompile = !files.isEmpty();
@@ -247,8 +246,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
-    final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false);
+    final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
 
     // begin compilation round
     final OutputFilesSink outputSink =
@@ -366,6 +365,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
       final boolean shouldForkJavac = shouldForkCompilerProcess(context, targetLanguageLevel);
+      final boolean hasModules = targetLanguageLevel >= 9 && getJavaModuleIndex(context).hasJavaModules(modules);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
       Pair<String, Integer> forkSdk = null;
@@ -377,9 +377,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
           return true;
         }
       }
-      
+
       final int compilerSdkVersion = forkSdk == null? getCompilerSdkVersion(context) : forkSdk.getSecond();
-      
+
       final List<String> options = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
@@ -395,11 +395,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       if (!_platformCp.isEmpty()) {
+        if (hasModules) {
+          String text = "The project has boot classpath dependencies (" + _platformCp + "). Please convert them into regular ones.";
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, text));
+          return true;
+        }
+
         final int chunkSdkVersion = getChunkSdkVersion(chunk);
         if (chunkSdkVersion >= 9) {
           // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
           // because platform classes are stored in jimage binary files with unknown format.
-          // Because of this we are clearing platform classpath so that javac will resolve against its own bootclasspath
+          // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
           // and prepending additional jars from the JDK configuration to compilation classpath
           final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
           joined.addAll(_platformCp);
@@ -423,9 +429,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       Collection<File> modulePath = Collections.emptyList();
-      if (targetLanguageLevel >= 9 && getJavaModuleIndex(context).hasJavaModules(modules)) {
+      if (hasModules) {
         // in Java 9, named modules are not allowed to read classes from the classpath
-        modulePath = classpath;
+        // moreover, the compiler requires all transitive dependencies to be on the module path
+        modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
         classpath = Collections.emptyList();
       }
 
