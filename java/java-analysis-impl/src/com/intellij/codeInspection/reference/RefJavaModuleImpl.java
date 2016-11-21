@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import gnu.trove.THashMap;
@@ -32,18 +31,14 @@ import java.util.Map;
  * @author Pavel.Dolgov
  */
 public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
-  private static final Logger LOG = Logger.getInstance(RefJavaModuleImpl.class);
-
-  private final RefModule myModule;
+  private final RefModule myRefModule;
 
   private Map<String, List<String>> myExportedPackageNames;
   private Map<String, Boolean> myRequiredModuleNames;
 
-  //private Set<RefJavaModule> myRequiredModules;
-
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getModuleName(), javaModule, manager);
-    myModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
+    myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
   }
 
   @Override
@@ -70,8 +65,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   @Nullable
   @Override
   public RefModule getModule() {
-    //return super.getModule();
-    return myModule;
+    return myRefModule;
   }
 
   @NotNull
@@ -90,7 +84,6 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   public void buildReferences() {
     PsiJavaModule javaModule = getElement();
     if (javaModule != null) {
-      LOG.warn("buildReferences " + javaModule.getModuleName());
       for (PsiRequiresStatement statement : javaModule.getRequires()) {
         PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
         if (referenceElement != null) {
@@ -118,7 +111,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
             PsiElement moduleElement = addReference(moduleReference);
             if (packageName != null && moduleElement instanceof PsiJavaModule) {
               List<String> toModuleNames = myExportedPackageNames.get(packageName);
-              if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<String>(1));
+              if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<>(1));
               toModuleNames.add(((PsiJavaModule)moduleElement).getModuleName());
             }
           }
@@ -138,7 +131,6 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
           resolvedElements.add(element);
           RefElement refElement = getRefManager().getReference(element);
           if (refElement != null) {
-            LOG.warn("addReference " + this.getName() + " -> " + refElement.getName());
             addOutReference(refElement);
             ((RefElementImpl)refElement).addInReference(this);
           }

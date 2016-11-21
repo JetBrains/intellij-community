@@ -21,16 +21,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -39,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -48,7 +45,7 @@ import java.util.Set;
 public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java9UnusedRequiresStatementInspection.class);
 
-  private static final Key<Map<String, JavaModuleInfo>> MODULES_IN_PROJECT = Key.create("modules_in_project");
+  private static final Key<Optional<JavaModuleInfo>> JAVA_MODULE_INFO = Key.create("java_module_info");
 
   @Override
   public void runInspection(@NotNull AnalysisScope scope,
@@ -61,6 +58,17 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
       @Override
       public void visitJavaModule(@NotNull RefJavaModule javaModule) {
         super.visitJavaModule(javaModule);
+
+        RefModule refModule = javaModule.getModule();
+        if (refModule != null) {
+          JavaModuleInfo javaModuleInfo = getJavaModuleInfo(refModule, false);
+          if (javaModuleInfo != null) {
+            CommonProblemDescriptor[] descriptors = checkRequiredModules(javaModuleInfo, manager);
+            if (descriptors != null) {
+              problemDescriptionsProcessor.addProblemElement(javaModule, descriptors);
+            }
+          }
+        }
       }
     });
   }
@@ -71,64 +79,70 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull InspectionManager manager,
                                                 @NotNull GlobalInspectionContext globalContext) {
-    // We depend here on the traversal order of the reference graph, unfortunately. The classes are walked before the modules.
     if (refEntity instanceof RefClass) {
-      PsiClass aClass = ((RefClass)refEntity).getElement();
-      PsiElement parent = aClass != null ? aClass.getParent() : null;
-      if (parent instanceof PsiJavaFile) {
-        checkJavaFile((PsiJavaFile)parent, refEntity.getRefManager());
-      }
-    }
-    else if (refEntity instanceof RefModule) {
-      RefModule refModule = (RefModule)refEntity;
-      JavaModuleInfo javaModuleInfo = getJavaModuleInfo(refModule.getModule(), refModule.getRefManager());
-      if (javaModuleInfo != null) {
-        return checkRequiredModules(javaModuleInfo, manager);
+      RefModule refModule = ((RefClass)refEntity).getModule();
+      if (refModule != null) {
+        PsiClass aClass = ((RefClass)refEntity).getElement();
+        PsiElement parent = aClass != null ? aClass.getParent() : null;
+        if (parent instanceof PsiJavaFile) {
+          checkJavaFile((PsiJavaFile)parent, refModule);
+        }
       }
     }
     return null;
   }
 
-  private static void checkJavaFile(@NotNull PsiJavaFile file, @NotNull RefManager refManager) {
+  private static void checkJavaFile(@NotNull PsiJavaFile file, @NotNull RefModule refModule) {
     PsiImportList importList = file.getImportList();
-    PsiImportStatementBase[] statements =
-      importList != null ? importList.getAllImportStatements() : PsiImportStatementBase.EMPTY_ARRAY;
+    PsiImportStatementBase[] statements = importList != null ? importList.getAllImportStatements() : PsiImportStatementBase.EMPTY_ARRAY;
     if (statements.length != 0) {
-      Module moduleForFile = ProjectFileIndex.SERVICE.getInstance(file.getProject()).getModuleForFile(file.getVirtualFile());
-      if (moduleForFile != null) {
-        JavaModuleInfo javaModuleInfo = getJavaModuleInfo(moduleForFile, refManager);
-        if (javaModuleInfo != null) {
-          for (PsiImportStatementBase statement : statements) {
-            PsiElement resolved = statement.resolve();
-            String packageName = null;
-            if (resolved instanceof PsiPackage) {
-              packageName = ((PsiPackage)resolved).getQualifiedName();
+      JavaModuleInfo javaModuleInfo = getJavaModuleInfo(refModule, true);
+      if (javaModuleInfo != null) {
+        for (PsiImportStatementBase statement : statements) {
+          PsiElement resolved = statement.resolve();
+          String packageName = null;
+          if (resolved instanceof PsiPackage) {
+            packageName = ((PsiPackage)resolved).getQualifiedName();
+          }
+          else if (resolved instanceof PsiMember) {
+            PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
+            if (parentFile != null) {
+              packageName = parentFile.getPackageName();
             }
-            else if (resolved instanceof PsiMember) {
-              PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
-              if (parentFile != null) {
-                packageName = parentFile.getPackageName();
-              }
-            }
-            if (!StringUtil.isEmpty(packageName)) {
-              javaModuleInfo.importedPackageNames.add(packageName);
-            }
+          }
+          if (!StringUtil.isEmpty(packageName)) {
+            javaModuleInfo.add(packageName);
           }
         }
       }
     }
   }
 
+  @Nullable
+  private static JavaModuleInfo getJavaModuleInfo(@NotNull RefModule refModule, boolean addIfMissing) {
+    Optional<JavaModuleInfo> optionalInfo = refModule.getUserData(JAVA_MODULE_INFO);
+    if (optionalInfo == null) {
+      optionalInfo = Optional
+        .ofNullable(addIfMissing ? refModule : null)
+        .map(RefModule::getModule)
+        .map(JavaModuleGraphUtil::findDescriptorByModule)
+        .map(JavaModuleInfo::new);
+      refModule.putUserData(JAVA_MODULE_INFO, optionalInfo);
+    }
+    return optionalInfo.orElse(null);
+  }
+
   private static CommonProblemDescriptor[] checkRequiredModules(@NotNull JavaModuleInfo javaModuleInfo,
                                                                 @NotNull InspectionManager manager) {
     List<CommonProblemDescriptor> problems = new ArrayList<>();
-    String moduleName = javaModuleInfo.javaModule.getModuleName();
-    for (PsiRequiresStatement statement : javaModuleInfo.javaModule.getRequires()) {
+    PsiJavaModule javaModule = javaModuleInfo.javaModule;
+    String moduleName = javaModule.getModuleName();
+    for (PsiRequiresStatement statement : javaModule.getRequires()) {
       PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), false);
-      if (dependency != null && isDependencyModuleUnused(dependency, javaModuleInfo.importedPackageNames, moduleName)) {
+      if (dependency != null && isDependencyUnused(dependency, javaModuleInfo.importedPackageNames, moduleName)) {
         String[] transitiveDependencyNames = getTransitiveDependencies(javaModuleInfo, dependency);
         ProblemDescriptor descriptor =
-          manager.createProblemDescriptor(statement, "Unused 'requires' statement",
+          manager.createProblemDescriptor(statement, "Unused statement 'requires " + dependency.getModuleName() + "'",
                                           new RemoveUnusedRequiresStatementFix(transitiveDependencyNames),
                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
         problems.add(descriptor);
@@ -137,9 +151,9 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
     return problems.isEmpty() ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static boolean isDependencyModuleUnused(@NotNull PsiJavaModule dependencyModule,
-                                                  @NotNull Set<String> importedPackageNames,
-                                                  @NotNull String contextModuleName) {
+  private static boolean isDependencyUnused(@NotNull PsiJavaModule dependencyModule,
+                                            @NotNull Set<String> importedPackageNames,
+                                            @NotNull String contextModuleName) {
     for (PsiExportsStatement exportsStatement : dependencyModule.getExports()) {
       List<String> exportedToModules = exportsStatement.getModuleNames();
       if (!exportedToModules.isEmpty() && !exportedToModules.contains(contextModuleName)) {
@@ -172,33 +186,6 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
       }
     }
     return ArrayUtil.toStringArray(result);
-  }
-
-  @NotNull
-  private static Map<String, JavaModuleInfo> getModulesInProject(@NotNull RefManager refManager) {
-    RefProject refProject = refManager.getRefProject();
-    Map<String, JavaModuleInfo> javaModules = refProject.getUserData(MODULES_IN_PROJECT);
-    if (javaModules == null) {
-      javaModules = new THashMap<>();
-      refProject.putUserData(MODULES_IN_PROJECT, javaModules);
-    }
-    return javaModules;
-  }
-
-  private static JavaModuleInfo getJavaModuleInfo(@NotNull Module module, @NotNull RefManager refManager) {
-    Map<String, JavaModuleInfo> modulesInProject = getModulesInProject(refManager);
-    String moduleName = module.getName();
-    JavaModuleInfo javaModuleInfo = modulesInProject.get(moduleName);
-    if (javaModuleInfo != null) {
-      return javaModuleInfo;
-    }
-    if (modulesInProject.containsKey(moduleName)) {
-      return null;
-    }
-    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(module);
-    javaModuleInfo = javaModule != null ? new JavaModuleInfo(javaModule) : null;
-    modulesInProject.put(moduleName, javaModuleInfo);
-    return javaModuleInfo;
   }
 
   private static class RemoveUnusedRequiresStatementFix implements LocalQuickFix {
@@ -262,6 +249,10 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
     private JavaModuleInfo(@NotNull PsiJavaModule javaModule) {
       this.javaModule = javaModule;
       this.importedPackageNames = new THashSet<>();
+    }
+
+    private void add(String packageName) {
+      importedPackageNames.add(packageName);
     }
   }
 }
