@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +137,7 @@ public class LoadingOrder {
       if (!order.myBefore.isEmpty()) hasBefore.add(o);
     }
 
-    GraphGenerator.SemiGraph<Orderable> graph = new GraphGenerator.SemiGraph<Orderable>() {
+    InboundSemiGraph<Orderable> graph = new InboundSemiGraph<Orderable>() {
       @Override
       public Collection<Orderable> getNodes() {
         List<Orderable> list = ContainerUtil.newArrayList(orderable);
@@ -183,7 +184,7 @@ public class LoadingOrder {
       }
     };
 
-    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(graph)));
+    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(GraphGenerator.generate(CachingSemiGraph.cache(graph)));
 
     if (!builder.isAcyclic()) {
       Couple<Orderable> p = builder.getCircularDependency();

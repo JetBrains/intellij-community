@@ -51,10 +51,12 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
   }
 
   //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
   public static <T> CachingSemiGraph<T> create(GraphGenerator.SemiGraph<T> original) {
     return new CachingSemiGraph<T>((InboundSemiGraph<T>)original);
   }
 
+  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
   public CachingSemiGraph(GraphGenerator.SemiGraph<Node> original) {
     this((InboundSemiGraph<Node>)original);
   }

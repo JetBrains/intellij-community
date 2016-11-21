@@ -24,7 +24,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class DFSTBuilderTest {
   @Test
@@ -44,7 +44,7 @@ public class DFSTBuilderTest {
     map.put(nE, new TestNode[]{nC});
     map.put(nF, new TestNode[]{nB});
 
-    GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
+    Graph<TestNode> graph = graphByNodes(allNodes, map);
     DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
       fail("Acyclic graph expected");
@@ -60,8 +60,8 @@ public class DFSTBuilderTest {
     assertTrue(comparator.compare(nB, nF) < 0);
   }
 
-  private static GraphGenerator<TestNode> graphByNodes(TestNode[] allNodes, Map<TestNode, TestNode[]> mapIn) {
-    return new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+  private static Graph<TestNode> graphByNodes(TestNode[] allNodes, Map<TestNode, TestNode[]> mapIn) {
+    return GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(allNodes);
@@ -90,9 +90,9 @@ public class DFSTBuilderTest {
   }
 
   private static void checkCircularDependencyDetected(TestNode[] allNodes, Map<TestNode, TestNode[]> map) {
-    GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
+    Graph<TestNode> graph = graphByNodes(allNodes, map);
     DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph);
-    assertTrue (builder.getCircularDependency() != null);
+    assertTrue(builder.getCircularDependency() != null);
   }
 
   @Test
@@ -131,7 +131,7 @@ public class DFSTBuilderTest {
     map.put(nB, new TestNode[]{nA});
     map.put(nC, new TestNode[]{nB});
     map.put(nD, new TestNode[]{nB});
-    GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
+    Graph<TestNode> graph = graphByNodes(allNodes, map);
     DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph);
     assertFalse(builder.isAcyclic());
     Comparator<TestNode> comparator = builder.comparator();
@@ -151,7 +151,7 @@ public class DFSTBuilderTest {
       }
     }
     map.put(allNodes[0], new TestNode[]{allNodes[allNodes.length - 1]});
-    GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
+    Graph<TestNode> graph = graphByNodes(allNodes, map);
     DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph);
     assertFalse(builder.isAcyclic());
   }
@@ -167,13 +167,13 @@ public class DFSTBuilderTest {
     TestNode[] allNodes = {main, dep, d, d2, resMain, resDep};
     Map<TestNode, TestNode[]> mapIn = new HashMap<>();
     mapIn.put(main, new TestNode[]{d, resMain});
-    mapIn.put(dep, new TestNode[]{main,resDep});
+    mapIn.put(dep, new TestNode[]{main, resDep});
     mapIn.put(d, new TestNode[]{d2});
     mapIn.put(d2, new TestNode[]{dep, d});
-    GraphGenerator<TestNode> graph = graphByNodes(allNodes, mapIn);
+    Graph<TestNode> graph = graphByNodes(allNodes, mapIn);
 
     DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph);
-    assertTrue (!builder.isAcyclic());
+    assertTrue(!builder.isAcyclic());
     Comparator<TestNode> comparator = builder.comparator();
     assertTrue(comparator.compare(resMain, main) < 0);
     assertTrue(comparator.compare(resMain, d) < 0);
@@ -188,20 +188,20 @@ public class DFSTBuilderTest {
     TestNode a = new TestNode("a");
     TestNode b = new TestNode("b");
     TestNode c = new TestNode("c");
-    for (int oIndex = 0; oIndex<4; oIndex++) {
+    for (int oIndex = 0; oIndex < 4; oIndex++) {
       List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o);
       TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
 
       Map<TestNode, TestNode[]> mapIn = new HashMap<>();
-      mapIn.put(o, new TestNode[]{a,b,c});
+      mapIn.put(o, new TestNode[]{a, b, c});
 
       DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graphByNodes(allNodes, mapIn));
-      assertTrue (builder.isAcyclic());
+      assertTrue(builder.isAcyclic());
       Comparator<TestNode> comparator = builder.comparator();
       TestNode[] sorted = allNodes.clone();
       Arrays.sort(sorted, comparator);
-      assertEquals("All nodes: "+list, Arrays.asList(c,b,a,o), Arrays.asList(sorted));
+      assertEquals("All nodes: " + list, Arrays.asList(c, b, a, o), Arrays.asList(sorted));
     }
   }
 
@@ -212,28 +212,28 @@ public class DFSTBuilderTest {
     TestNode a = new TestNode("a");
     TestNode b = new TestNode("b");
     TestNode c = new TestNode("c");
-    for (int oIndex = 0; oIndex<4; oIndex++) {
+    for (int oIndex = 0; oIndex < 4; oIndex++) {
       List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o1);
       list.add(oIndex, o2);
       TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
 
       Map<TestNode, TestNode[]> mapIn = new HashMap<>();
-      mapIn.put(o1, new TestNode[]{a,b,c,o2});
+      mapIn.put(o1, new TestNode[]{a, b, c, o2});
       mapIn.put(o2, new TestNode[]{o1});
 
       DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graphByNodes(allNodes, mapIn));
       assertFalse(builder.isAcyclic());
       Comparator<TestNode> comparator = builder.comparator();
-      assertTrue("All nodes: "+list,comparator.compare(b, a) < 0); //reversed loading order
-      assertTrue("All nodes: "+list,comparator.compare(c, a) < 0); //reversed loading order
-      assertTrue("All nodes: "+list,comparator.compare(c, b) < 0); //reversed loading order
-      assertTrue("All nodes: "+list,comparator.compare(a, o1) < 0);
-      assertTrue("All nodes: "+list,comparator.compare(a, o2) < 0);
-      assertTrue("All nodes: "+list,comparator.compare(b, o1) < 0);
-      assertTrue("All nodes: "+list,comparator.compare(b, o2) < 0);
-      assertTrue("All nodes: "+list,comparator.compare(c, o1) < 0);
-      assertTrue("All nodes: "+list,comparator.compare(c, o2) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(b, a) < 0); //reversed loading order
+      assertTrue("All nodes: " + list, comparator.compare(c, a) < 0); //reversed loading order
+      assertTrue("All nodes: " + list, comparator.compare(c, b) < 0); //reversed loading order
+      assertTrue("All nodes: " + list, comparator.compare(a, o1) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(a, o2) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(b, o1) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(b, o2) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(c, o1) < 0);
+      assertTrue("All nodes: " + list, comparator.compare(c, o2) < 0);
     }
   }
 }

@@ -47,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,15 +252,15 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public List<Module> getAllDependentModules(@NotNull Module module) {
     final ArrayList<Module> list = new ArrayList<>();
-    final Graph<Module> graph = getModuleGraph(true);
+    final Graph<Module> graph = getModuleGraph();
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
       list.add(i.next());
     }
     return list;
   }
 
-  private Graph<Module> getModuleGraph(final boolean includeTests) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+  private Graph<Module> getModuleGraph() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
       @Override
       public Collection<Module> getNodes() {
         return ContainerUtil.list(getModules());
@@ -267,7 +268,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
       @Override
       public Iterator<Module> getIn(Module m) {
-        Module[] dependentModules = getModifiableRootModel(m).getModuleDependencies(includeTests);
+        Module[] dependentModules = getModifiableRootModel(m).getModuleDependencies(true);
         return Arrays.asList(dependentModules).iterator();
       }
     }));

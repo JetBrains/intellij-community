@@ -21,10 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -320,8 +317,7 @@ public class TailRecursionInspection extends BaseInspection {
     }
 
     private static Graph<Integer> buildGraph(PsiParameter[] parameters, PsiExpression[] arguments) {
-      final GraphGenerator.SemiGraph<Integer> graph = new GraphGenerator.SemiGraph<Integer>() {
-
+      final InboundSemiGraph<Integer> graph = new InboundSemiGraph<Integer>() {
         @Override
         public Collection<Integer> getNodes() {
           final List<Integer> result = new ArrayList<>();
@@ -344,7 +340,7 @@ public class TailRecursionInspection extends BaseInspection {
           return result.iterator();
         }
       };
-      return GraphGenerator.create(CachingSemiGraph.create(graph));
+      return GraphGenerator.generate(CachingSemiGraph.cache(graph));
     }
 
     private static boolean isImplicitCallOnThis(PsiElement element, PsiMethod containingMethod) {

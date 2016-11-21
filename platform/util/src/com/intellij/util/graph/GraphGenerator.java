@@ -75,10 +75,12 @@ public class GraphGenerator<Node> implements Graph<Node> {
     Iterator<Node> getIn(Node n);
   }
 
+  /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
   public GraphGenerator(SemiGraph<Node> graph) {
     this((InboundSemiGraph<Node>)graph);
   }
 
+  /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
   public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
     return new GraphGenerator<T>((InboundSemiGraph<T>)graph);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -242,8 +240,8 @@ public class ConversionServiceImpl extends ConversionService {
         runners.add(new ConversionRunner(provider, context));
       }
     }
-    final CachingSemiGraph<ConverterProvider> graph = CachingSemiGraph.create(new ConverterProvidersGraph(providers));
-    final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<>(GraphGenerator.create(graph));
+    final Graph<ConverterProvider> graph = GraphGenerator.generate(CachingSemiGraph.cache(new ConverterProvidersGraph(providers)));
+    final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
       final Pair<ConverterProvider,ConverterProvider> pair = builder.getCircularDependency();
       LOG.error("cyclic dependencies between converters: " + pair.getFirst().getId() + " and " + pair.getSecond().getId());
@@ -384,7 +382,7 @@ public class ConversionServiceImpl extends ConversionService {
     public Map<String, Long> myProjectFilesTimestamps = new HashMap<>();
   }
 
-  private static class ConverterProvidersGraph implements GraphGenerator.SemiGraph<ConverterProvider> {
+  private static class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {
     private final ConverterProvider[] myProviders;
 
     public ConverterProvidersGraph(ConverterProvider[] providers) {

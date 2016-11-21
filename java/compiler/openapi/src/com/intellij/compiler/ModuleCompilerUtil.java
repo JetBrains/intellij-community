@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.Application;
@@ -25,10 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.Chunk;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +46,7 @@ public final class ModuleCompilerUtil {
   }
 
   public static Graph<Module> createModuleGraph(final Module[] modules) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
       public Collection<Module> getNodes() {
         return Arrays.asList(modules);
       }
@@ -109,9 +106,8 @@ public final class ModuleCompilerUtil {
     }
   }
 
-
-  public static <T extends ModuleRootModel> GraphGenerator<T> createGraphGenerator(final Map<Module, T> models) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<T>() {
+  public static <T extends ModuleRootModel> Graph<T> createGraphGenerator(final Map<Module, T> models) {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<T>() {
       public Collection<T> getNodes() {
         return models.values();
       }
@@ -187,7 +183,7 @@ public final class ModuleCompilerUtil {
   }
 
   private static Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(final RootModelProvider provider) {
-    return GraphGenerator.create(new CachingSemiGraph<>(new GraphGenerator.SemiGraph<ModuleSourceSet>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleSourceSet>() {
       @Override
       public Collection<ModuleSourceSet> getNodes() {
         Module[] modules = provider.getModules();

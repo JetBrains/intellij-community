@@ -44,10 +44,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -782,7 +779,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private Graph<Module> moduleGraph(final boolean includeTests) {
-      return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+      return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
         @Override
         public Collection<Module> getNodes() {
           return myModules.values();
