@@ -27,11 +27,13 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,11 +134,20 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @Nullable
   public String getFullName(final Object element) {
     if (element instanceof PsiFileSystemItem) {
-      final VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
-      return virtualFile != null ? GotoFileCellRenderer.getRelativePath(virtualFile, myProject) : null;
+      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+      VirtualFile root = getTopLevelRoot(file);
+      return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root) : null;
     }
 
     return getElementName(element);
+  }
+
+  private VirtualFile getTopLevelRoot(VirtualFile file) {
+    return JBIterable.generate(getContentRoot(file), r -> getContentRoot(r.getParent())).last();
+  }
+
+  private VirtualFile getContentRoot(@Nullable VirtualFile file) {
+    return file == null ? null : ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(file);
   }
 
   @Override

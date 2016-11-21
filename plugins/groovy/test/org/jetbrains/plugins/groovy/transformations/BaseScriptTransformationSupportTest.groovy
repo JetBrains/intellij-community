@@ -41,7 +41,7 @@ import groovy.transform.BaseScript
 
 $text
 """) as GroovyFileImpl
-    file.treeElementPointer = null
+    assert !file.contentsLoaded
 
     def clazz = fixture.findClass('Zzz')
     assert clazz instanceof GroovyScriptClass

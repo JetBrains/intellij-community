@@ -34,9 +34,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -536,7 +536,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       addTool(project, toolWrapper, dependencies);
     }
 
-    DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+    DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
         return dependencies.keySet();
@@ -546,7 +546,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       public Iterator<String> getIn(String n) {
         return dependencies.get(n).iterator();
       }
-    })));
+    }));
     if (builder.isAcyclic()) {
       myScopesOrder = ArrayUtil.toStringArray(builder.getSortedNodes());
     }

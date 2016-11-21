@@ -15,7 +15,11 @@
   -->
 <idea-plugin>
   <actions>
-    <group id="ScrollPaneActions">
+    <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
+    <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
+    <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
+
+    <group id="ScrollPaneActions" text="Scroll">
       <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
       <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
       <action id="ScrollPane-unitScrollUp" text="Scroll Up" class="com.intellij.ui.ScrollPaneActions$Up"/>
@@ -26,6 +30,8 @@
       <action id="ScrollPane-scrollDown" text="Scroll Page Down" class="com.intellij.ui.ScrollPaneActions$PageDown"/>
       <action id="ScrollPane-scrollLeft" text="Scroll Page Left" class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
       <action id="ScrollPane-scrollRight" text="Scroll Page Right" class="com.intellij.ui.ScrollPaneActions$PageRight"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
@@ -162,9 +168,6 @@
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
-
-    <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
-    <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
     <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->

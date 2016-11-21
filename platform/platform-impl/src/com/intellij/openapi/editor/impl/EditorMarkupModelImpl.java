@@ -638,6 +638,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
         myCachedHeight = componentBounds.height;
         myDirtyYPositions = docRange;
+        dimensionsAreValid = false;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
       if (myDirtyYPositions == WHOLE_DOCUMENT) {

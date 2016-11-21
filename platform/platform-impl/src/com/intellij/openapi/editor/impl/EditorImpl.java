@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -1203,7 +1204,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
-    MacUIUtil.hideCursor();
+    EditorUIUtil.hideCursorInEditor(this);
     processKeyTypedNormally(c, context);
 
     return true;
@@ -2033,8 +2034,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
+  }
 
-    if (!myIsViewer && EMPTY_CURSOR != null && EMPTY_CURSOR != myEditorComponent.getCursor()) {
+  public void hideCursor() {
+    if (!myIsViewer && Registry.is("ide.hide.cursor.when.typing") &&
+        EMPTY_CURSOR != null && EMPTY_CURSOR != myEditorComponent.getCursor()) {
       myEditorComponent.setCursor(EMPTY_CURSOR);
     }
   }

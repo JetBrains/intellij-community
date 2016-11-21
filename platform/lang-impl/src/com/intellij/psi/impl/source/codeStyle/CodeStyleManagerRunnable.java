@@ -99,19 +99,30 @@ abstract class CodeStyleManagerRunnable<T> {
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
       myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
 
-      myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
-
-      if (document != null && useDocumentBaseFormattingModel()) {
-        myModel = new DocumentBasedFormattingModel(myModel, document, myCodeStyleManager.getProject(), mySettings,
-                                                   file.getFileType(), file);
+      FormattingMode currentMode = myCodeStyleManager.getCurrentFormattingMode();
+      myCodeStyleManager.setCurrentFormattingMode(myMode);
+      try {
+        myModel = buildModel(builder, file, document);
+        T result = doPerform(offset, range);
+        if (result != null) {
+          return result;
+        }
       }
-
-      final T result = doPerform(offset, range);
-      if (result != null) {
-        return result;
+      finally {
+        myCodeStyleManager.setCurrentFormattingMode(currentMode);
       }
     }
     return defaultValue;
+  }
+
+  @NotNull
+  private FormattingModel buildModel(@NotNull FormattingModelBuilder builder, @NotNull PsiFile file, @Nullable Document document) {
+    FormattingModel model = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
+    if (document != null && useDocumentBaseFormattingModel()) {
+      model = new DocumentBasedFormattingModel(model, document, myCodeStyleManager.getProject(), mySettings,
+                                               file.getFileType(), file);
+    }
+    return model;
   }
 
   protected boolean useDocumentBaseFormattingModel() {
@@ -150,9 +161,11 @@ abstract class CodeStyleManagerRunnable<T> {
     }
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
-    if (textRange != null) {
-      return textRange;
+    if (builder != null) {
+      final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
+      if (textRange != null) {
+        return textRange;
+      }
     }
 
     final TextRange elementRange = elementAtOffset.getTextRange();

@@ -25,9 +25,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.MouseEventHandler;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -371,9 +369,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     CustomLineBorder border = null;
     if (borderWidth > 0) {
       border = new CustomLineBorder(getBorderColor(), borderWidth, 0, borderWidth, borderWidth);
-      location.y -= borderWidth;
-      size.width += borderWidth;
-      size.height += borderWidth + borderWidth;
+      Insets insets = border.getBorderInsets(myTipComponent);
+      location.y -= insets.top;
+      JBInsets.addTo(size, insets);
     }
 
     g.dispose();

@@ -787,4 +787,13 @@ class ContainerUtil extends ContainerUtilRt {
     checkPreferredItems 0, 'catch', 'finally'
   }
 
+  void testPreselectClosestExactPrefixItem() {
+    UISettings.instance.SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    myFixture.addClass 'package pack1; public class SameNamed {}'
+    myFixture.addClass 'package pack2; public class SameNamed {}'
+    checkPreferredItems 1, 'SameNamed', 'SameNamed'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('pack1')
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
+  }
+
 }

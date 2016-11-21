@@ -178,4 +178,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testMapArgumentsInOppositeOrder() {
     doTest();
   }
+
+  // PY-21350
+  public void testBuiltinInputPy3() {
+    doTest();
+  }
 }

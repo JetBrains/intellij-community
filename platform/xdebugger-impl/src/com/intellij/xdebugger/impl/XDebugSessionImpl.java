@@ -507,8 +507,8 @@ public class XDebugSessionImpl implements XDebugSession {
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    handler.startStepInto(variant);
+    final XSuspendContext context = doResume();
+    handler.startStepInto(variant, context);
   }
 
   @Override
@@ -876,8 +876,10 @@ public class XDebugSessionImpl implements XDebugSession {
         }
 
         if (mySessionTab != null) {
-          ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
-          mySessionTab.detachFromSession();
+          AppUIUtil.invokeOnEdt(() -> {
+            ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
+            mySessionTab.detachFromSession();
+          });
         }
         else if (myConsoleView != null) {
           AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));

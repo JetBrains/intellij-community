@@ -15,19 +15,9 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.lang.LangBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,44 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 public class JrtFileSystemImpl extends JrtFileSystem {
   private final Map<String, ArchiveHandler> myHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
-
-  public JrtFileSystemImpl() {
-    scheduleConfiguredSdkCheck();
-  }
-
-  private static void scheduleConfiguredSdkCheck() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-      @Override
-      public void appStarting(Project project) {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-          Stream.of(sdk.getRootProvider().getUrls(OrderRootType.CLASSES))
-            .filter(url -> url.startsWith(PROTOCOL_PREFIX))
-            .findFirst()
-            .ifPresent(url -> {
-              if (!isSupported()) {
-                String title = LangBundle.message("jrt.not.available.title", sdk.getName());
-                String message = LangBundle.message("jrt.not.available.message");
-                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
-              }
-              else if (url.endsWith(SEPARATOR)) {
-                String title = LangBundle.message("jrt.outdated.title", sdk.getName());
-                String message = LangBundle.message("jrt.outdated.message");
-                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
-              }
-            });
-        }
-        connection.disconnect();
-      }
-    });
-  }
 
   @NotNull
   @Override
@@ -132,10 +89,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
       myHandlers.put(homePath, handler);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        VirtualFile modules = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
-        if (modules != null && modules.isDirectory()) modules.getChildren();
-      }, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(
+        () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/release"),
+        ModalityState.defaultModalityState());
     }
     return handler;
   }
@@ -152,11 +108,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem && event instanceof VFileContentChangeEvent) {
             VirtualFile file = event.getFile();
-            if (file != null) {
-              String homePath = null;
-              if ("modules".equals(file.getName())) homePath = file.getParent().getParent().getPath();
-              else if ("jimage".equals(file.getExtension())) homePath = file.getParent().getParent().getParent().getPath();
-              if (homePath != null && myHandlers.remove(homePath) != null) {
+            if (file != null && "release".equals(file.getName())) {
+              String homePath = file.getParent().getPath();
+              if (myHandlers.remove(homePath) != null) {
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();

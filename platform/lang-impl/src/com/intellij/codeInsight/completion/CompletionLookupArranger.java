@@ -39,6 +39,7 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -391,31 +392,40 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     }
 
+    LookupElement exactMatch = getBestExactMatch(lookup, items);
+    return Math.max(0, ContainerUtil.indexOfIdentity(items, exactMatch != null ? exactMatch : mostRelevant));
+  }
+
+  private List<LookupElement> getExactMatches(LookupImpl lookup, List<LookupElement> items) {
     String selectedText = lookup.getTopLevelEditor().getSelectionModel().getSelectedText();
-    int exactMatchIndex = -1;
+    List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
       if (isPrefixItem(item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
         if (item instanceof LiveTemplateLookupElement) {
           // prefer most recent live template lookup item
-          exactMatchIndex = i;
-          break;
+          return Collections.singletonList(item);
         }
-        if (exactMatchIndex == -1) {
-          // prefer most recent item
-          exactMatchIndex = i;
-        }
+        exactMatches.add(item);
       }
       else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), this)) {
-        return 0;
+        return Collections.singletonList(item);
       }
     }
-    if (exactMatchIndex >= 0) {
-      return exactMatchIndex;
+    return exactMatches;
+  }
+
+  @Nullable
+  private LookupElement getBestExactMatch(LookupImpl lookup, List<LookupElement> items) {
+    List<LookupElement> exactMatches = getExactMatches(lookup, items);
+    if (exactMatches.isEmpty()) return null;
+
+    if (exactMatches.size() == 1) {
+      return exactMatches.get(0);
     }
 
-    return Math.max(0, ContainerUtil.indexOfIdentity(items, mostRelevant));
+    return sortByRelevance(groupItemsBySorter(exactMatches)).iterator().next();
   }
 
   @Nullable

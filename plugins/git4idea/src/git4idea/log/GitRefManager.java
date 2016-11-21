@@ -42,6 +42,8 @@ public class GitRefManager implements VcsLogRefManager {
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
+  private static final String REMOTE_TABLE_SEPARATOR = " & ";
+  private static final String SEPARATOR = "/";
 
   protected enum RefType {
     OTHER,
@@ -171,21 +173,40 @@ public class GitRefManager implements VcsLogRefManager {
         LOG.warn("No repository for root: " + firstRef.getRoot());
       }
       else {
-        GitBranchTrackInfo trackInfo =
-          ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(firstRef.getName()));
-        if (trackInfo != null) {
-          VcsRef trackedRef = ContainerUtil
-            .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
-          if (trackedRef != null) {
-            name = trackInfo.getRemote().getName() + " & " + firstRef.getName();
-          }
-        }
+        name = getCombinedTrackedName(repository, references, firstRef);
       }
     }
 
     groups.add(new TableRefGroup(name, sortedReferences));
 
     return groups;
+  }
+
+  @NotNull
+  private static String getCombinedTrackedName(@NotNull GitRepository repository,
+                                               @NotNull Collection<VcsRef> references,
+                                               @NotNull VcsRef localRef) {
+    List<VcsRef> remoteBranches = ContainerUtil.filter(references, ref -> ref.getType().equals(REMOTE_BRANCH));
+
+    GitBranchTrackInfo trackInfo =
+      ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(localRef.getName()));
+    if (trackInfo != null) {
+      VcsRef trackedRef = ContainerUtil.find(remoteBranches, ref -> ref.getName().equals(trackInfo.getRemoteBranch().getName()));
+      if (trackedRef != null) {
+        return trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName();
+      }
+    }
+
+    List<VcsRef> trackingCandidates = ContainerUtil.filter(remoteBranches, ref -> ref.getName().endsWith(SEPARATOR + localRef.getName()));
+    for (GitRemote remote : repository.getRemotes()) {
+      for (VcsRef candidate : trackingCandidates) {
+        if (candidate.getName().equals(remote.getName() + SEPARATOR + localRef.getName())) {
+          return remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName();
+        }
+      }
+    }
+
+    return localRef.getName();
   }
 
   @Override

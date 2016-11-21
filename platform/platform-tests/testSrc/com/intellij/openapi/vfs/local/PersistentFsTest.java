@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -182,30 +181,32 @@ public class PersistentFsTest extends PlatformTestCase {
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = setupFile();
     ManagingFS managingFS = ManagingFS.getInstance();
+    int inSessionModCount = managingFS.getModificationCount();
     int globalModCount = managingFS.getFilesystemModificationCount();
     final int parentModCount = managingFS.getModificationCount(vFile.getParent());
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(false);
-      return null;
-    });
+    WriteAction.run(() -> vFile.setWritable(false));
 
     assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount + 1, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
     FSRecords.force();
-    assertTrue(!FSRecords.isDirty());
+    assertFalse(FSRecords.isDirty());
     ++globalModCount;
+    ++inSessionModCount;
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(true);  // 1
-      vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // 1 + timestamp + length
-      return null;
+    final long timestamp = vFile.getTimeStamp();
+    WriteAction.run(() -> {
+      vFile.setWritable(true);  // 1 change
+      vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
     });
 
-    assertEquals(globalModCount + 4, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount + 4, managingFS.getFilesystemModificationCount());
+    final int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
+    assertEquals(globalModCount + changesCount, managingFS.getModificationCount(vFile));
+    assertEquals(globalModCount + changesCount, managingFS.getFilesystemModificationCount());
+    assertEquals(inSessionModCount + changesCount, managingFS.getModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
   }
 
@@ -222,25 +223,26 @@ public class PersistentFsTest extends PlatformTestCase {
     ManagingFS managingFS = ManagingFS.getInstance();
     final int globalModCount = managingFS.getFilesystemModificationCount();
     final int parentModCount = managingFS.getModificationCount(vFile.getParent());
+    int inSessionModCount = managingFS.getModificationCount();
 
     FSRecords.force();
-    assertTrue(!FSRecords.isDirty());
+    assertFalse(FSRecords.isDirty());
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+    WriteAction.run(() -> {
       try(DataOutputStream output = attribute.writeAttribute(vFile)) {
         DataInputOutputUtil.writeINT(output, 1);
       }
-      return null;
     });
 
     assertEquals(globalModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
     assertTrue(FSRecords.isDirty());
     FSRecords.force();
-    assertTrue(!FSRecords.isDirty());
+    assertFalse(FSRecords.isDirty());
 
     //
     int fileId = ((VirtualFileWithId)vFile).getId();
@@ -250,6 +252,7 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(globalModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertTrue(!FSRecords.isDirty());
+    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertFalse(FSRecords.isDirty());
   }
 }

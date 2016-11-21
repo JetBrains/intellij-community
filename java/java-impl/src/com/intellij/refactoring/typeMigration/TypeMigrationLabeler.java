@@ -49,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,8 +205,8 @@ public class TypeMigrationLabeler {
   }
 
   private TypeMigrationUsageInfo[] sortMigratedUsages(TypeMigrationUsageInfo[] infos) {
-    final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.create(
-      new GraphGenerator.SemiGraph<TypeMigrationUsageInfo>() {
+    final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(
+      new InboundSemiGraph<TypeMigrationUsageInfo>() {
         @Override
         public Collection<TypeMigrationUsageInfo> getNodes() {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<>();

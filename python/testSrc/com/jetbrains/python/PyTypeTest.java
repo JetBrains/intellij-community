@@ -1398,6 +1398,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = float.fromhex(\"0.5\")");
   }
 
+  // PY-20409
+  public void testGetFromDictWithDefaultNoneValue() {
+    doTest("Any",
+           "d = {}\n" +
+           "expr = d.get(\"abc\", None)");
+  }
+
   // PY-20757
   public void testMinOrNone() {
     doTest("Union[None, Any]",
@@ -1407,6 +1414,18 @@ public class PyTypeTest extends PyTestCase {
            "    else:\n" +
            "        return None\n" +
            "expr = get_value([])");
+  }
+
+  // PY-21350
+  public void testBuiltinInput() {
+    doTest("Any",
+           "expr = input()");
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
+    doTest("str",
+           "expr = raw_input()");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

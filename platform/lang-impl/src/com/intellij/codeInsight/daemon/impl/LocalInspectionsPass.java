@@ -33,7 +33,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -247,7 +246,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       pair -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds));
+        runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
       };
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, processor);

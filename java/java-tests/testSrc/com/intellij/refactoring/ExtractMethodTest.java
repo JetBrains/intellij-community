@@ -864,7 +864,15 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  public void testLocalVariableAnnotationsOrder()  throws Exception {
+  public void testLocalVariableAnnotationsOrder() throws Exception {
+    doTest();
+  }
+
+  public void testDifferentAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testSameAnnotations() throws Exception {
     doTest();
   }
 

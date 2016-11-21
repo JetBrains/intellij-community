@@ -305,10 +305,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       InspectionToolPresentation presentation = getPresentation(toolWrapper);
       presentation.ignoreCurrentElement(refElement);
       final List<RefEntity> children = refElement.getChildren();
-      if (children != null) {
-        for (RefEntity child : children) {
-          ignoreElementRecursively(toolWrapper, child);
-        }
+      for (RefEntity child : children) {
+        ignoreElementRecursively(toolWrapper, child);
       }
     }
   }

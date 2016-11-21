@@ -169,6 +169,11 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       myAction.invoke(project, null, getPsiFile(descriptor));
     }
 
+    @Override
+    public boolean shouldMakeCurrentFileWritable() {
+      return myAction.shouldMakeCurrentFileWritable();
+    }
+
     @Nullable
     private static PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
       PsiElement startElement = descriptor.getStartElement();

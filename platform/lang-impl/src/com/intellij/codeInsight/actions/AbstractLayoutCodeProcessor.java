@@ -240,7 +240,7 @@ public abstract class AbstractLayoutCodeProcessor {
         return currentTask.get() && !currentTask.isCancelled();
       }
       catch (ExecutionException e) {
-        ExceptionUtil.rethrowUnchecked(e);
+        ExceptionUtil.rethrowUnchecked(e.getCause());
         throw e;
       }
     });

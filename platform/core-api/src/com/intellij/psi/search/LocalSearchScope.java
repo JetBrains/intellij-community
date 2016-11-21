@@ -217,6 +217,11 @@ public class LocalSearchScope extends SearchScope {
     return ((GlobalSearchScope)scope).union(this);
   }
 
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
+    return isInScope(file);
+  }
+
   @NotNull
   public SearchScope union(@NotNull LocalSearchScope scope2) {
     if (equals(scope2)) return this;

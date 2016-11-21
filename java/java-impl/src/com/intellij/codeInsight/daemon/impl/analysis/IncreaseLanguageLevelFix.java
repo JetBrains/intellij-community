@@ -74,6 +74,11 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   }
 
   @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return false;
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

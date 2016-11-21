@@ -31,6 +31,7 @@ import java.util.Collection;
 public class RefCollectorCompilerToolExtension extends JavaCompilerToolExtension{
   public static final String ID = "ASTReferenceCollector";
 
+  @NotNull
   @Override
   public String getId() {
     return ID;

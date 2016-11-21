@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
@@ -25,7 +27,6 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
-  String prefix
 
   @Override
   void setUp() {
@@ -45,82 +46,140 @@ class Foo {
 '''
   }
 
-  private void testInlays(String text, Map<Integer, String> expectedParameterHints) {
-    fixture.configureByText '_.groovy', prefix ? prefix + text : text
+  @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void tearDown() throws Exception {
+    ParameterNameHintsSettings.getInstance().myAddedPatterns.clear()
+    ParameterNameHintsSettings.getInstance().myRemovedPatterns.clear()
+    super.tearDown()
+  }
+
+  private void testInlays(String text) {
+    fixture.configureByText '_.groovy', text.replaceAll(/<hint name="([.\w]*)">/, "")
+    checkResult text.replaceAll("<caret>", "")
+  }
+
+  private void checkResult(String expected) {
     fixture.doHighlighting()
+
     def manager = ParameterHintsPresentationManager.instance
     def inlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-    def parameterHinInlays = inlays.findAll {
+    Map<Integer, String> actualParameterHints = inlays.findAll {
       manager.isParameterHint(it)
+    }.collectEntries {
+      [(it.offset): manager.getHintText(it)]
     }
-    int prefixLength = prefix?.length() ?: 0
-    def actualParameterHints = parameterHinInlays.collectEntries {
-      [(it.offset - prefixLength): manager.getHintText(it)]
+
+    def actualText = new StringBuilder(fixture.file.text)
+    def offset = 0
+    actualParameterHints.each { hintOffset, hintName ->
+      if (hintName != null) {
+        def hintString = /<hint name="$hintName">/
+        actualText.insert(hintOffset + offset, hintString)
+        offset += hintString.length()
+      }
     }
-    assert actualParameterHints == expectedParameterHints
+
+    assertEquals(expected, actualText.toString())
   }
 
   void 'test method call expressions'() {
-    prefix = '''\
+    testInlays '''\
+def aa = new Object()
 def foo = new Foo()
-foo.'''
-    testInlays 'simple(null)', [7: 'a']
-    testInlays 'defaultArgs(1, 2)', [12: 'a', 15: 'c']
-    testInlays 'defaultArgs(1, 2, 3)', [12: 'a', 15: 'b', 18: 'c']
-    testInlays 'mapArgs(foo: 1, null, bar: 2)', [16: 'a']
-    testInlays 'varArgs(1, 2, 3, 4)', [8: 'a', 11: '...b']
-    testInlays 'combo(1, foo: 10, 2, 3, 4, bar: 20, 5)', [6: 'a', 18: 'b', 21: '...c']
+foo.with {
+  simple(<hint name="a">null)
+  simple(aa)
+  defaultArgs(<hint name="a">1, <hint name="c">2)
+  defaultArgs(<hint name="a">1, <hint name="b">2, <hint name="c">3)
+  mapArgs(foo: 1, <hint name="a">null, bar: 2)
+  varArgs(<hint name="a">1, <hint name="...b">2, 3, 4)
+  varArgs(<hint name="a">1, <hint name="...b">2, aa)
+  varArgs(<hint name="a">1, <hint name="...b">aa, 3)
+  varArgs(<hint name="a">1, aa, aa)
+  combo(<hint name="a">1, foo: 10, <hint name="b">2, <hint name="...c">3, 4, bar: 20, 5)
+}
+'''
   }
 
   void 'test method call applications'() {
-    prefix = '''\
+    testInlays '''\
+def aa = new Object()
 def foo = new Foo()
-foo.'''
-    testInlays 'simple null', [7: 'a']
-    testInlays 'defaultArgs 1, 2', [12: 'a', 15: 'c']
-    testInlays 'defaultArgs 1, 2, 3', [12: 'a', 15: 'b', 18: 'c']
-    testInlays 'mapArgs foo: 1, null, bar: 2 ', [16: 'a']
-    testInlays 'varArgs 1, 2, 3, 4 ', [8: 'a', 11: '...b']
-    testInlays 'combo 1, foo: 10, 2, 3, 4, bar: 20, 5', [6: 'a', 18: 'b', 21: '...c']
+foo.with {
+  simple <hint name="a">null
+  simple aa
+  defaultArgs <hint name="a">1, <hint name="c">2
+  defaultArgs <hint name="a">1, <hint name="b">2, <hint name="c">3
+  mapArgs foo: 1, <hint name="a">null, bar: 2
+  varArgs <hint name="a">1, <hint name="...b">2, 3, 4
+  varArgs <hint name="a">1, <hint name="...b">2, aa
+  varArgs <hint name="a">1, <hint name="...b">aa, 3
+  varArgs <hint name="a">1, aa, aa
+  combo <hint name="a">1, foo: 10, <hint name="b">2, <hint name="...c">3, 4, bar: 20, 5
+}
+'''
   }
 
   void 'test index expression'() {
-    testInlays 'new Foo()[1]', [10: 'a']
+    testInlays 'new Foo()[<hint name="a">1]'
   }
 
   void 'test new expression'() {
-    testInlays 'new Foo(1, 2, 4)', [8: 'a', 11: 'b', 14: 'c']
+    testInlays 'new Foo(<hint name="a">1, <hint name="b">2, <hint name="c">4)'
   }
 
   void 'test constructor invocation'() {
     testInlays '''\
 class Bar {
   Bar() {
-    this(1, 4, 5)
+    this(<hint name="a">1, <hint name="b">4, <hint name="c">5)
   }
 
   Bar(a, b, c) {}
 }
-''', [31: 'a', 34: 'b', 37: 'c']
+'''
   }
 
   void 'test enum constants'() {
     testInlays '''\
 enum Baz {
-  ONE(1, 2),
-  TWO(4, 3)
+  ONE(<hint name="a">1, <hint name="b">2),
+  TWO(<hint name="a">4, <hint name="b">3)
   Baz(a, b) {}
 }
-''', [17: 'a', 20: 'b', 30: 'a', 33: 'b']
+'''
   }
 
   void 'test no DGM inlays'() {
-    testInlays '[].each {}', [:]
+    testInlays '[].each {}'
   }
 
   void 'test closure arguments'() {
-    testInlays 'new Foo().simple {}', [:]
-    testInlays 'new Foo().simple({})', [17: 'a']
-    testInlays 'new Foo().simple null, {}', [17: 'a', 23: 'b']
+    testInlays '''\
+new Foo().with {
+  simple {}
+  simple(<hint name="a">{})
+  simple <hint name="a">null, <hint name="b">{}
+}
+'''
+  }
+
+  void 'test method with default arguments blacklist'() {
+    testInlays '''\
+new Foo().with {
+   defaultArgs(<hint name="a">1, <hint name="c">2)
+   defaultArgs(aa, <hint name="b"><caret>2, <hint name="c">3)
+}
+'''
+    def intention = fixture.getAvailableIntention("Do not show hints for current method")
+    assert intention
+    fixture.launchAction intention
+    checkResult '''\
+new Foo().with {
+   defaultArgs(1, 2)
+   defaultArgs(aa, 2, 3)
+}
+'''
   }
 }

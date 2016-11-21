@@ -350,4 +350,14 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testPositionalArguments() {
     doTest();
   }
+
+  // PY-21350
+  public void testBuiltinInputPy2() {
+    doTest();
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
+    doTest();
+  }
 }

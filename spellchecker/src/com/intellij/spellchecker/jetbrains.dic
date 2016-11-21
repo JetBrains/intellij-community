@@ -65,6 +65,7 @@ captcha
 ccflags
 cdata
 cglib
+chai
 changelog
 changelist
 charset
@@ -694,6 +695,7 @@ varargs
 varbinary
 varchar
 varcharacter
+variadic
 varray
 verdana
 versa

@@ -208,6 +208,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if file failed to be renamed
    */
   public void rename(Object requestor, @NotNull String newName) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     if (!getFileSystem().isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
@@ -451,6 +452,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if file failed to be deleted
    */
   public void delete(Object requestor) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(isValid(), "Deleting invalid file");
     getFileSystem().deleteFile(requestor, this);
   }
@@ -466,6 +468,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if file failed to be moved
    */
   public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }

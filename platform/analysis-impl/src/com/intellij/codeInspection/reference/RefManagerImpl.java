@@ -659,11 +659,9 @@ public class RefManagerImpl extends RefManager {
   @Override
   public void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs) {
     List<RefEntity> children = refElement.getChildren();
-    if (children != null) {
-      RefElement[] refElements = children.toArray(new RefElement[children.size()]);
-      for (RefElement refChild : refElements) {
-        removeRefElement(refChild, deletedRefs);
-      }
+    RefElement[] refElements = children.toArray(new RefElement[children.size()]);
+    for (RefElement refChild : refElements) {
+      removeRefElement(refChild, deletedRefs);
     }
 
     ((RefManagerImpl)refElement.getRefManager()).removeReference(refElement);

@@ -175,7 +175,6 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
     for (int i = 0; i < components.length; i ++) {
       c.gridx = i + 1;
-      components[i].setBackground(getBackground());
       add(components[i], c);
     }
 

@@ -202,8 +202,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     }
   }
 
-  final StringBuilder log = new StringBuilder();
-
   @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "StringConcatenationInLoop"})
   public void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
     if (true) return;
@@ -256,14 +254,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
     }
 
-    System.out.println(s);
-
-    synchronized (log) {
-      log.append(s).append("\n");
-      if (log.length() > 100000) {
-        log.delete(0, log.length()-50000);
-      }
-    }
+    LOG.debug(s);
   }
 
 
@@ -294,14 +285,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   public void clearQueue() {
     synchronized (lock) {
       cancelAll();
-      clearLog();
       wakeUpQueue();
     }
-  }
-
-  @TestOnly // under lock
-  private void clearLog() {
-    log.setLength(0);
   }
 
   private void cancelAndRemoveCurrentTask(@NotNull CommitTask newTask, @NotNull Object reason) {
@@ -411,7 +396,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       failureReason = e;
     }
     catch (Throwable e) {
-      LOG.error(log.toString(), e);
       cancel(e);
       failureReason = ExceptionUtil.getThrowableText(e);
     }
@@ -618,30 +602,24 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           }
         }
 
-        try {
-          boolean changeStillValid = task.isStillValid();
-          boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
-          if (synchronously) {
-            assert success;
-          }
-          if (!changeStillValid) {
-            log(project, "document changed; ignore", task);
-            return;
-          }
-          if (synchronously || success) {
-            assert !documentManager.isInUncommittedSet(document);
-          }
-          if (success) {
-            log(project, "Commit finished", task);
-          }
-          else {
-            // add document back to the queue
-            commitAsynchronously(project, document, "Re-added back", task.myCreationModalityState);
-          }
+        boolean changeStillValid = task.isStillValid();
+        boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
+        if (synchronously) {
+          assert success;
         }
-        catch (Error e) {
-          System.err.println("Log:" + log);
-          throw e;
+        if (!changeStillValid) {
+          log(project, "document changed; ignore", task);
+          return;
+        }
+        if (synchronously || success) {
+          assert !documentManager.isInUncommittedSet(document);
+        }
+        if (success) {
+          log(project, "Commit finished", task);
+        }
+        else {
+          // add document back to the queue
+          commitAsynchronously(project, document, "Re-added back", task.myCreationModalityState);
         }
       }
     };
@@ -744,7 +722,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       return result;
     }
 
-    public boolean isStillValid() {
+    boolean isStillValid() {
       Document document = getDocument();
       return ((DocumentEx)document).getModificationSequence() == modificationSequence;
     }
@@ -960,13 +938,4 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     return lock != null ? lock : ((UserDataHolderEx)document).putUserDataIfAbsent(DOCUMENT_LOCK, new ReentrantLock());
   }
   private static final Key<Lock> DOCUMENT_LOCK = Key.create("DOCUMENT_LOCK");
-
-  @TestOnly
-  int documentsToCommit() {
-    return documentsToCommit.size();
-  }
-  @TestOnly
-  int documentsToApplyInEDT() {
-    return documentsToApplyInEDT.size();
-  }
 }

@@ -84,7 +84,11 @@ public class InspectionEngine {
   }
 
   private static boolean intersect(@NotNull Set<String> ids1, @NotNull Set<String> ids2) {
-    if (ids1.size() > ids2.size()) return intersect(ids2, ids1);
+    if (ids1.size() > ids2.size()) {
+      Set<String> tmp = ids1;
+      ids1 = ids2;
+      ids2 = tmp;
+    }
     for (String id : ids1) {
       if (ids2.contains(id)) return true;
     }
@@ -92,13 +96,11 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
-                                                @NotNull final PsiFile file,
-                                                @NotNull final InspectionManager iManager,
-                                                final boolean isOnTheFly,
-                                                boolean failFastOnAcquireReadAction,
-                                                @NotNull final ProgressIndicator indicator) {
-    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator);
+  private static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
+                                                 @NotNull final PsiFile file,
+                                                 @NotNull final InspectionManager iManager,
+                                                 @NotNull final ProgressIndicator indicator) {
+    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, false, false, indicator);
 
     final List<ProblemDescriptor> result = new ArrayList<>();
     for (List<ProblemDescriptor> group : problemDescriptors.values()) {
@@ -178,7 +180,7 @@ public class InspectionEngine {
     refManager.inspectionReadActionStarted();
     try {
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
-        return inspect(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, inspectionManager, false, false, new EmptyProgressIndicator());
+        return inspect(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, inspectionManager, new EmptyProgressIndicator());
       }
       if (toolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();

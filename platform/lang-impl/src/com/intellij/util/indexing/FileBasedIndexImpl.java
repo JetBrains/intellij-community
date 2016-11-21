@@ -1755,7 +1755,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
 
         // the file is for sure not a dir and it was previously indexed by at least one index
-        if (!isTooLarge(file)) myChangedFilesCollector.scheduleForUpdate(file);
+        if (file.isValid() && !isTooLarge(file)) myChangedFilesCollector.scheduleForUpdate(file);
       }
     }
     else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index

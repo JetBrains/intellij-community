@@ -67,6 +67,30 @@ public class JavaFunctionalExpressionPresentationTest extends CodeInsightTestCas
 
   }
 
+  public void testLambdaEllipsisParameter() {
+    doTest("import java.util.*;" +
+           "import java.util.function.Function;" +
+           "class A { Function<?, ?> f = " +
+           "(String... s) -> s;}",
+           "(String... s) -> {...}");
+  }
+
+  public void testLambdaArrayParameter() {
+    doTest("import java.util.*;" +
+           "import java.util.function.Function;" +
+           "class A { Function<?, ?> f = " +
+           "(String[] is) -> null;}",
+           "(String[] is) -> {...}");
+  }
+
+  public void testLambdaWithPrimitiveParameter() {
+    doTest("import java.util.*;" +
+           "import java.util.function.Function;" +
+           "class A { Function<?, ?> f = " +
+           "(int[] i) -> null;}",
+           "(int[] i) -> {...}");
+  }
+
   public void testMethodReferencePresentation() {
     doTest("import java.util.Supplier; " +
            "class A { Supplier<String> s = java.util.Collections.<String>emptyEnumeration()::toString; }",

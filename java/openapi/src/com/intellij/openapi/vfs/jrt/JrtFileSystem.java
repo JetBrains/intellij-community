@@ -36,7 +36,7 @@ public abstract class JrtFileSystem extends ArchiveFileSystem {
   }
 
   public static boolean isModularJdk(@NotNull String homePath) {
-    return new File(homePath, "lib/modules").exists() && new File(homePath, "jrt-fs.jar").isFile();
+    return new File(homePath, "lib/jrt-fs.jar").isFile() || new File(homePath, "jrt-fs.jar").isFile();
   }
 
   public static boolean isRoot(@NotNull VirtualFile file) {

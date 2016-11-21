@@ -16,5 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.psi.PsiType
+import groovy.lang.Closure
 
-class DelegatesToInfo(val typeToDelegate: PsiType?, val strategy: Int)
+class DelegatesToInfo(val typeToDelegate: PsiType?, val strategy: Int = Closure.OWNER_FIRST)

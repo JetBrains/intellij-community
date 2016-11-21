@@ -1730,4 +1730,9 @@ class Bar {
 
   void testCopyConstructor() { doTest('\n') }
 
+  void testGetClassType() {
+    configure()
+    assert 'Class<? extends Number>' == LookupElementPresentation.renderElement(myFixture.lookupElements[0]).typeText
+  }
+
 }

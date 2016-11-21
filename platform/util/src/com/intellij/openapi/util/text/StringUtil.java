@@ -139,7 +139,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static Function<String, String> TRIMMER = new Function<String, String>() {
+  public static final Function<String, String> TRIMMER = new Function<String, String>() {
     @Nullable
     @Override
     public String fun(@Nullable String s) {

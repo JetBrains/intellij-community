@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -58,7 +56,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -246,24 +243,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         AddAnnotationPsiFix.addPhysicalAnnotation(overrideAnnotationName, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
       }
     }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass);
-    final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
-    final Project project = targetClass.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-      for (String annotation : each.getAnnotations(project)) {
-        if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
-        if (AnnotationUtil.isAnnotated(overridden, annotation, false, false) && !AnnotationUtil.isAnnotated(method, annotation, false, false)) {
-          PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(overridden, annotation);
-          if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
-            continue;
-          }
-
-          AddAnnotationPsiFix.removePhysicalAnnotations(method, each.annotationsToRemove(project, annotation));
-          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
-        }
-      }
-    }
+    OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(overridden, targetClass, method);
   }
 
   public static void annotate(@NotNull PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {

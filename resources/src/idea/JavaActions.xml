@@ -125,6 +125,7 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      <add-to-group group-id="XDebugger.Actions"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
@@ -206,12 +207,15 @@
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
+
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
+      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
     </group>
 
     <group id="Debugger.Representation">
-      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
+      <reference ref="Debugger.CreateRenderer"/>
       <separator/>
-      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
+      <reference ref="Debugger.AutoRenderer"/>
     </group>
 
     <group id="EditorPopupMenuDebugJava">

@@ -83,11 +83,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     super.add(child);
   }
 
+  @NotNull
   @Override
   public List<RefEntity> getChildren() {
     List<RefEntity> superChildren = super.getChildren();
     if (myParameters == null) return superChildren;
-    if (superChildren == null || superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
+    if (superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
     
     List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);

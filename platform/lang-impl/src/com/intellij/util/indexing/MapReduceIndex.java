@@ -74,6 +74,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   @Nullable protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
+  private volatile boolean myDisposed;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
@@ -329,6 +330,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       LOG.error(e);
     }
     finally {
+      myDisposed = true;
       lock.unlock();
     }
   }
@@ -389,6 +391,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final Lock lock = getReadLock();
     try {
       lock.lock();
+      if (myDisposed) {
+        return new ValueContainerImpl<>();
+      }
       ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
       return myStorage.read(key);
     }

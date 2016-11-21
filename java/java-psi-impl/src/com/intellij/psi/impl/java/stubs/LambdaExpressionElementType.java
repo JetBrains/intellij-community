@@ -141,7 +141,19 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
         buf.append("? ");
       }
       else if (ElementType.KEYWORD_BIT_SET.contains(tokenType)) {
-        buf.append(RecordUtil.intern(tree.getCharTable(), node)).append(" ");
+        buf.append(RecordUtil.intern(tree.getCharTable(), node));
+        if (!ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
+          buf.append(" ");
+        }
+      }
+      else if (tokenType == JavaTokenType.ELLIPSIS) {
+        buf.append("...");
+      }
+      else if (tokenType == JavaTokenType.RBRACKET) {
+        buf.append("]");
+      }
+      else if (tokenType == JavaTokenType.LBRACKET) {
+        buf.append("[");
       }
     }
   }

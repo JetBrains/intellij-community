@@ -79,7 +79,7 @@ public class Java8ListSortInspection extends BaseJavaBatchLocalInspectionTool {
           PsiExpression list = args[0];
           PsiExpression comparator = args[1];
           String replacement =
-            ParenthesesUtils.getText(list, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".sort(" + comparator.getText() + ")";
+            ParenthesesUtils.getText(list, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".sort(" + comparator.getText() + ")";
           if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
           methodCallExpression
             .replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, methodCallExpression));

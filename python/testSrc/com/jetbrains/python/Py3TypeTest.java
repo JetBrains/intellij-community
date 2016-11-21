@@ -443,7 +443,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20073
   public void testMapReturnType() {
-    doTest("int", 
+    doTest("int",
            "for x in map(lambda x: 42, 'foo'):\n" +
            "    expr = x");
   }
@@ -457,6 +457,12 @@ public class Py3TypeTest extends PyTestCase {
            "    else:\n" +
            "        return None\n" +
            "expr = get_value([])");
+  }
+
+  // PY-21350
+  public void testBuiltinInput() {
+    doTest("str",
+           "expr = input()");
   }
 
   private void doTest(final String expectedType, final String text) {

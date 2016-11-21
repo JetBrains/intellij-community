@@ -17,11 +17,15 @@ package com.intellij.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -212,6 +216,79 @@ class Test implements A {
       class C implements I {
           @Override
           public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] @TA(3) [] p2) throws @TA IllegalArgumentException {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
+  void testNoCustomOverrideImplementsHandler() {
+    myFixture.addClass """package a; public @interface A { }"""
+
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          @Override
+          public List<String> i(String p) {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
+  void testCustomOverrideImplementsHandler() throws Exception {
+    myFixture.addClass """package a; public @interface A { }"""
+
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
+      @Override
+      String[] getAnnotations(Project project) {
+        return ["a.A"]
+      }
+    }, getTestRootDisposable())
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          @A
+          @Override
+          public List<String> i(@A String p) {
               return null;
           }
       }""".stripIndent()

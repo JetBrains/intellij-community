@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
@@ -31,17 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.transformations.TransformationResult;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
+import static com.intellij.psi.util.PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
-  private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Arrays.asList(myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  private final Collection<?> myDependencies = Collections.singletonList(JAVA_STRUCTURE_MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);
@@ -50,10 +48,6 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   public GrTypeDefinitionMembersCache(@NotNull T definition, @NotNull GrCodeMembersProvider<? super T> provider) {
     myDefinition = definition;
     myCodeMembersProvider = provider;
-  }
-
-  public void dropCaches() {
-    myTreeChangeTracker.incModificationCount();
   }
 
   public GrTypeDefinition[] getCodeInnerClasses() {

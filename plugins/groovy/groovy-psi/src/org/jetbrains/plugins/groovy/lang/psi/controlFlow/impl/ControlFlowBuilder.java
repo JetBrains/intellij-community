@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -75,8 +76,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * stack of current conditions
    */
-  private final Deque<ConditionInstruction> myConditions = new ArrayDeque<>();
-
+  private FList<ConditionInstruction> myConditions = FList.emptyList();
 
   /**
    * count of finally blocks surrounding current statement
@@ -444,14 +444,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return;
     }
 
-    ConditionInstruction cond = new ConditionInstruction(expression);
+    FList<ConditionInstruction> conditionsBefore = myConditions;
+    ConditionInstruction cond = registerCondition(expression);
     addNodeAndCheckPending(cond);
-    registerCondition(cond);
 
     operand.accept(this);
     visitCall(expression);
 
-    myConditions.removeFirstOccurrence(cond);
+    myConditions = conditionsBefore;
 
     List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(expression);
 
@@ -578,9 +578,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return;
     }
 
-    ConditionInstruction condition = new ConditionInstruction(expression);
+    FList<ConditionInstruction> conditionsBefore = myConditions;
+    ConditionInstruction condition = registerCondition(expression);
     addNodeAndCheckPending(condition);
-    registerCondition(condition);
 
     left.accept(this);
 
@@ -617,15 +617,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (head != null) myHead = head;
       //addNode(new NegatingGotoInstruction(expression, myInstructionNumber++, condition));
     }
-    myConditions.removeFirstOccurrence(condition);
+    myConditions = conditionsBefore;
 
     right.accept(this);
   }
 
   private void processInstanceOf(GrExpression expression) {
-    ConditionInstruction cond = new ConditionInstruction(expression);
+    ConditionInstruction cond = registerCondition(expression);
     addNodeAndCheckPending(cond);
-    registerCondition(cond);
 
     addNode(new InstanceOfInstruction(expression, cond));
     NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
@@ -635,8 +634,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
-    //handlePossibleReturn(expression);
-    myConditions.removeFirstOccurrence(cond);
   }
 
   /**
@@ -663,6 +660,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
     InstructionImpl ifInstruction = startNode(ifStatement);
+    FList<ConditionInstruction> conditionsBefore = myConditions;
 
     final GrCondition condition = ifStatement.getCondition();
     final GrStatement thenBranch = ifStatement.getThenBranch();
@@ -716,14 +714,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     }
 
+    myConditions = conditionsBefore;
     finishNode(ifInstruction);
   }
 
-  private void registerCondition(ConditionInstruction conditionStart) {
-    for (ConditionInstruction condition : myConditions) {
-      condition.addDependent(conditionStart);
-    }
-    myConditions.push(conditionStart);
+  @NotNull
+  private ConditionInstruction registerCondition(@NotNull PsiElement element) {
+    ConditionInstruction condition = new ConditionInstruction(element, myConditions);
+    myConditions = myConditions.prepend(condition);
+    return condition;
   }
 
   private void acceptNullable(@Nullable GroovyPsiElement element) {

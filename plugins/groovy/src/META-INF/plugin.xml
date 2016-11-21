@@ -100,14 +100,6 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebSpockTestMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebPageMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebModuleMemberContributor"/>
-
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebTestNGTestMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
-
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.XmlMarkupBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.JsonBuilderContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.JsonDelegateContributor"/>
@@ -280,8 +272,6 @@
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy"/>
 
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
-
-    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.geb.GebContentDeclarationSearcher"/>
 
     <itemPresentationProvider forClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl"
                               implementationClass="org.jetbrains.plugins.groovy.findUsages.GrFileItemPresentationProvider"/>
@@ -481,8 +471,6 @@
                            id="groovyAdvanced" order="after groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments"
                            id="groovyComments"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.geb.GebPageFieldNameCompletionContributor"/>
-
     <cantBeStatic implementation="org.jetbrains.plugins.groovy.codeInspection.declaration.GrCategoryMethodsCantBeStaticExtension"/>
 
     <psi.referenceContributor language="Properties" implementation="org.jetbrains.plugins.groovy.dgm.DGMReferenceContributor"/>
@@ -586,7 +574,7 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex"/>
-    
+
     <hierarchy.indexer implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy.GrStubIndexer"/>
 
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
@@ -1137,7 +1125,7 @@
                      groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GrUnresolvedAccess" displayName="Access to unresolved expression"
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrUnresolvedAccess" displayName="Access to unresolved expression" unfair="true"
                      groupName="Probable bugs"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
@@ -1177,7 +1165,7 @@
 
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleResolveScopeProvider"/>
-    
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1720,14 +1708,14 @@
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    
+
     <action id="Groovy.Console"
             class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
             text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    
+
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
@@ -1788,4 +1776,5 @@
   <xi:include href="groovy-dynamic-members.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="geb-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

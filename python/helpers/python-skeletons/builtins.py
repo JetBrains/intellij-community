@@ -2577,3 +2577,11 @@ class __method(object):
     def __init__(self):
         self.__func__ = None
         self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

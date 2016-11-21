@@ -149,7 +149,7 @@ public class ImplementationSearcher {
         return null;
       }
       PsiElement foundElement = result[0];
-      return foundElement != null ? new PsiElement[] {foundElement} : null;
+      return foundElement != null ? new PsiElement[] {foundElement} : PsiElement.EMPTY_ARRAY;
     }
 
     protected boolean canShowPopupWithOneItem(PsiElement element) {

@@ -38,10 +38,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.GridBagConstraints;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Comparator;
 
 import static java.awt.GridBagConstraints.*;
 
@@ -58,15 +58,14 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<SdkTypeId> sdkTypeIdFilter) {
-    this(settingsStep, moduleBuilder, sdkTypeIdFilter, null, null);
+    this(settingsStep, moduleBuilder, sdkTypeIdFilter, null);
   }
 
   public SdkSettingsStep(SettingsStep settingsStep,
                          @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<SdkTypeId> sdkTypeIdFilter,
-                         @Nullable Condition<Sdk> sdkFilter,
-                         @Nullable Comparator<Sdk> sdkComparator) {
-    this(settingsStep.getContext(), moduleBuilder, sdkTypeIdFilter, sdkFilter, sdkComparator);
+                         @Nullable Condition<Sdk> sdkFilter) {
+    this(settingsStep.getContext(), moduleBuilder, sdkTypeIdFilter, sdkFilter);
     if (!isEmpty()) {
       settingsStep.addSettingsField(getSdkFieldLabel(settingsStep.getContext().getProject()), myJdkPanel);
     }
@@ -75,8 +74,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
   public SdkSettingsStep(WizardContext context,
                          @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<SdkTypeId> sdkTypeIdFilter,
-                         @Nullable Condition<Sdk> sdkFilter,
-                         @Nullable Comparator<Sdk> mySdkComparator) {
+                         @Nullable Condition<Sdk> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
     myWizardContext = context;
@@ -88,7 +86,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       sdkFilter = JdkComboBox.getSdkFilter(sdkTypeIdFilter);
     }
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, mySdkComparator, true);
+    myJdkComboBox = new JdkComboBox(myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, true);
     myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);

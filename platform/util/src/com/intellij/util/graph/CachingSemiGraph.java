@@ -23,10 +23,14 @@ import java.util.*;
  * @author dsl
  */
 public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
+  public static <T> InboundSemiGraph<T> cache(InboundSemiGraph<T> original) {
+    return new CachingSemiGraph<T>(original);
+  }
+
   private final Set<Node> myNodes;
   private final Map<Node, Set<Node>> myIn;
 
-  public CachingSemiGraph(GraphGenerator.SemiGraph<Node> original) {
+  private CachingSemiGraph(InboundSemiGraph<Node> original) {
     myNodes = ContainerUtil.newLinkedHashSet(original.getNodes());
     myIn = new LinkedHashMap<Node, Set<Node>>();
     for (Node node : myNodes) {
@@ -34,10 +38,6 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
       ContainerUtil.addAll(value, original.getIn(node));
       myIn.put(node, value);
     }
-  }
-
-  public static <T> CachingSemiGraph<T> create(GraphGenerator.SemiGraph<T> original) {
-    return new CachingSemiGraph<T>(original);
   }
 
   @Override
@@ -49,4 +49,16 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
   public Iterator<Node> getIn(Node n) {
     return myIn.get(n).iterator();
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  public static <T> CachingSemiGraph<T> create(GraphGenerator.SemiGraph<T> original) {
+    return new CachingSemiGraph<T>((InboundSemiGraph<T>)original);
+  }
+
+  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  public CachingSemiGraph(GraphGenerator.SemiGraph<Node> original) {
+    this((InboundSemiGraph<Node>)original);
+  }
+  //</editor-fold>
 }

@@ -81,7 +81,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
       }
     }
 
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
       @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;

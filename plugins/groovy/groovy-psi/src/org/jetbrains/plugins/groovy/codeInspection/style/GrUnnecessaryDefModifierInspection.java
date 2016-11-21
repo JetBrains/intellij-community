@@ -25,12 +25,13 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
-public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool{
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEF;
+
+public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool {
 
   private static final GrModifierFix FIX = new GrRemoveModifierFix(GrModifier.DEF);
 
@@ -40,13 +41,13 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement modifier) {
-        if (modifier.getNode().getElementType() != GroovyTokenTypes.kDEF) return;
+        if (modifier.getNode().getElementType() != kDEF) return;
 
         PsiElement list = modifier.getParent();
         if (!(list instanceof GrModifierList)) return;
 
         PsiElement owner = list.getParent();
-        if (!PsiUtilKt.modifierListMayBeEmpty(owner)) return;
+        if (!PsiUtilKt.modifierListMayBeEmpty(owner) && !PsiUtilKt.hasOtherModifiers((GrModifierList)list, kDEF)) return;
 
         holder.registerProblem(
           modifier,

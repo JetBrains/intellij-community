@@ -64,6 +64,17 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     popup.close(false)
   }
 
+  void "test paths relative to topmost module"() {
+    PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm1', myFixture.tempDirFixture.findOrCreateDir("foo"))
+    PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm2', myFixture.tempDirFixture.findOrCreateDir("foo/bar"))
+    def file = myFixture.addFileToProject('foo/bar/goo/doo.txt', '')
+    def popup = ReadAction.compute { ChooseByNamePopup.createPopup(project, new GotoFileModel(project), file) }
+    assert ChooseByNameTest.calcPopupElements(popup, "doo", false) == [file]
+    assert ChooseByNameTest.calcPopupElements(popup, "goo/doo", false) == [file]
+    assert ChooseByNameTest.calcPopupElements(popup, "bar/goo/doo", false) == [file]
+    assert ChooseByNameTest.calcPopupElements(popup, "foo/bar/goo/doo", false) == [file]
+  }
+
   @Override
   protected boolean runInDispatchThread() {
     return false

@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,7 @@ public class FrameworkSupportUtil {
 
   public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportInModuleProvider> types) {
     DFSTBuilder<FrameworkSupportInModuleProvider>
-      builder = new DFSTBuilder<>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(types))));
+      builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new ProvidersGraph(types))));
     if (!builder.isAcyclic()) {
       Couple<FrameworkSupportInModuleProvider> pair = builder.getCircularDependency();
       LOG.error("Circular dependency between types '" + pair.getFirst().getFrameworkType().getId() + "' and '" + pair.getSecond().getFrameworkType().getId() + "' was found.");
@@ -122,7 +123,7 @@ public class FrameworkSupportUtil {
     return null;
   }
 
-  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportInModuleProvider> {
+  private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
     public ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {

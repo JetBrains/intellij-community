@@ -57,6 +57,11 @@ public abstract class PriorityIntentionActionWrapper implements IntentionAction 
   }
 
   @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return action.shouldMakeCurrentFileWritable();
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return action.startInWriteAction();
   }

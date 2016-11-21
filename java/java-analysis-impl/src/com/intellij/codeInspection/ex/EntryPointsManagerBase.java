@@ -230,12 +230,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
             }
             else {
               List<RefEntity> children = refClass.getChildren();
-              if (children != null) {
-                for (RefEntity entity : children) {
-                  if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
-                    ((RefMethodImpl)entity).setEntry(true);
-                    ((RefMethodImpl)entity).setPermanentEntry(true);
-                  }
+              for (RefEntity entity : children) {
+                if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
+                  ((RefMethodImpl)entity).setEntry(true);
+                  ((RefMethodImpl)entity).setPermanentEntry(true);
                 }
               }
             }

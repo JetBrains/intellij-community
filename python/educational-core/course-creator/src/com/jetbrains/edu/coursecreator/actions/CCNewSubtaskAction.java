@@ -45,14 +45,14 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     if (virtualFile == null || project == null || editor == null) {
       return;
     }
-    addSubtask(virtualFile, project);
-  }
-
-  public static void addSubtask(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     Task task = StudyUtils.getTaskForFile(project, virtualFile);
     if (task == null) {
       return;
     }
+    addSubtask(task, project);
+  }
+
+  public static void addSubtask(@NotNull Task task, @NotNull Project project) {
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;

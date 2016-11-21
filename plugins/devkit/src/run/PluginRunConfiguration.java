@@ -34,11 +34,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -166,8 +165,11 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();
         boolean fromIdeaProject = IdeaJdk.isFromIDEAProject(ideaJdkHome);
-        String bootPath = !fromIdeaProject ? "/lib/boot.jar" : IdeaJdk.OUT_CLASSES + "/boot";
-        vm.add("-Xbootclasspath/a:" + ideaJdkHome + toSystemDependentName(bootPath));
+
+        if (!fromIdeaProject) {
+          String bootPath = "/lib/boot.jar";
+          vm.add("-Xbootclasspath/a:" + ideaJdkHome + toSystemDependentName(bootPath));
+        }
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
         vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
@@ -209,9 +211,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.setJdk(usedIdeaJdk);
 
         if (fromIdeaProject) {
-          for (String url : usedIdeaJdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-            String s = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-            params.getClassPath().add(toSystemDependentName(s));
+          OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+          for (VirtualFile file : enumerator.getAllLibrariesAndSdkClassesRoots()) {
+            params.getClassPath().add(file);
           }
         }
         else {

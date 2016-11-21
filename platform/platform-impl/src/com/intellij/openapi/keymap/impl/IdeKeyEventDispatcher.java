@@ -497,7 +497,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    final Container container = UIUtil.getWindow(focusOwner);
+    final Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
   }
 

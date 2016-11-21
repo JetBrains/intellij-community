@@ -17,7 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.xmlb.annotations.Transient;
 
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
  * @author Max Medvedev
@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  */
 @Transient
 public class SimpleModificationTracker implements ModificationTracker {
-  private static final AtomicIntegerFieldUpdater<SimpleModificationTracker> UPDATER =
-    AtomicIntegerFieldUpdater.newUpdater(SimpleModificationTracker.class, "myCounter");
+  private static final AtomicLongFieldUpdater<SimpleModificationTracker> UPDATER =
+    AtomicLongFieldUpdater.newUpdater(SimpleModificationTracker.class, "myCounter");
 
   @SuppressWarnings("unused")
-  private volatile int myCounter;
+  private volatile long myCounter;
 
   @Override
   public long getModificationCount() {

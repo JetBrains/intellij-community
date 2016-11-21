@@ -85,6 +85,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testInnerArrayConstructorRef() { doTest(true); }
+
   public void testNoConstraintsWildcard() throws Exception {
     doTest();
   }
@@ -200,9 +202,9 @@ public void testConvertToObjectStream() {
     doTest(true);
   }
 
-  private void doTest(boolean checkItems) {
+  private void doTest(boolean insertSelectedItem) {
     configureByFile("/" + getTestName(false) + ".java");
-    if (checkItems) {
+    if (insertSelectedItem) {
       assertNotNull(myItems);
       assertTrue(myItems.length > 0);
       final Lookup lookup = getLookup();

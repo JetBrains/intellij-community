@@ -131,17 +131,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         myAllClassesByName = new MultiMap<>();
         allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
       }
-      Collection<ReferenceType> res = myAllClassesByName.get(signature);
-      // TODO: Below is extra logging for IDEA-164040, remove when fixed
-      if (res.isEmpty()) {
-        List<ReferenceType> types = myVirtualMachine.classesByName(s);
-        if (!types.isEmpty()) {
-          LOG.error("Obsolete classes cache does not contain " + s + ", while the real vm does");
-          clearCaches();
-        }
-        return types;
-      }
-      return (List<ReferenceType>)res;
+      return (List<ReferenceType>)myAllClassesByName.get(signature);
     }
     else {
       return myVirtualMachine.classesByName(s);

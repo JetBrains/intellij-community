@@ -89,11 +89,17 @@ public abstract class IdeFocusManager implements FocusRequestor {
    */
   public abstract boolean dispatch(@NotNull KeyEvent e);
 
+  @Deprecated
+  // use #typeAheadUntil(ActionCallback, String) instead
+  public void typeAheadUntil(ActionCallback done) {
+    typeAheadUntil(done, "No cause has been provided");
+  }
+
   /**
    * Aggregates all key events until given callback object is processed
    * @param done action callback
    */
-  public abstract void typeAheadUntil(ActionCallback done);
+  public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
    * Reports if any focus activity is being done

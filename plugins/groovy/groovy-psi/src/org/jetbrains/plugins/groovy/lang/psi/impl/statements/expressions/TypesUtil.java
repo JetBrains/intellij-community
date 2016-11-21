@@ -29,7 +29,6 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -54,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
@@ -179,6 +179,15 @@ public class TypesUtil {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 9);
   }
 
+  private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
+    PsiType.BYTE,
+    PsiType.SHORT,
+    PsiType.INT,
+    PsiType.LONG,
+    PsiType.FLOAT,
+    PsiType.DOUBLE
+  );
+
   static {
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE);
@@ -189,21 +198,6 @@ public class TypesUtil {
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT);
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE);
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_VOID, PsiType.VOID);
-  }
-
-
-  private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
-
-  static {
-    RANK_TO_TYPE.put(1, CommonClassNames.JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(2, CommonClassNames.JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(3, CommonClassNames.JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(4, CommonClassNames.JAVA_LANG_LONG);
-    RANK_TO_TYPE.put(5, GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER);
-    RANK_TO_TYPE.put(6, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
-    RANK_TO_TYPE.put(7, CommonClassNames.JAVA_LANG_DOUBLE);
-    RANK_TO_TYPE.put(8, CommonClassNames.JAVA_LANG_DOUBLE);
-    RANK_TO_TYPE.put(9, CommonClassNames.JAVA_LANG_NUMBER);
   }
 
   /**
@@ -499,6 +493,10 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, PsiManager manager) {
+    {
+      PsiType numericLUB = getNumericLUB(type1, type2);
+      if (numericLUB != null) return numericLUB;
+    }
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;
       GrTupleType tuple2 = (GrTupleType)type2;
@@ -563,6 +561,21 @@ public class TypesUtil {
       return type1;
     }
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
+  }
+
+  @Nullable
+  private static PsiType getNumericLUB(@Nullable PsiType type1, @Nullable PsiType type2) {
+    PsiPrimitiveType unboxedType1 = PsiPrimitiveType.getUnboxedType(type1);
+    PsiPrimitiveType unboxedType2 = PsiPrimitiveType.getUnboxedType(type2);
+    if (unboxedType1 != null && unboxedType2 != null) {
+      int i1 = LUB_NUMERIC_TYPES.indexOf(unboxedType1);
+      int i2 = LUB_NUMERIC_TYPES.indexOf(unboxedType2);
+      if (i1 >= 0 && i2 >= 0) {
+        if (i1 > i2) return type1;
+        if (i2 > i1) return type2;
+      }
+    }
+    return null;
   }
 
   private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {

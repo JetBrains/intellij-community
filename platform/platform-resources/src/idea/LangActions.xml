@@ -428,7 +428,7 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <group id="Bookmarks">
+    <group id="Bookmarks" text="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -456,6 +456,7 @@
       <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark8Action"/>
       <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark9Action"/>
 
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
@@ -715,23 +716,10 @@
       <add-to-group group-id="RunMenu" anchor="last"/>
     </group>
 
-    <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
-    <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
-
-    <group id="EditorPopupMenuDebug">
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="RunToCursor"/>
-      <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <reference ref="Debugger.EvaluateInConsole"/>
-      <separator/>
-
-      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
-    </group>
-
-
     <group id="XDebugger.Actions">
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
+
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -762,6 +750,18 @@
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+    </group>
+
+    <group id="EditorPopupMenuDebug">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.EvaluateInConsole"/>
+      <separator/>
+
+      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">

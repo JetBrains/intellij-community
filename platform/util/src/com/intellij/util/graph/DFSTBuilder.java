@@ -30,7 +30,7 @@ import java.util.*;
  * @author dsl, ven
  */
 public class DFSTBuilder<Node> {
-  private final Graph<Node> myGraph;
+  private final OutboundSemiGraph<Node> myGraph;
   private final TObjectIntHashMap<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
   private final Node[] myInvN; // node number in topological order [0..size) -> node
   private Couple<Node> myBackEdge;
@@ -42,8 +42,12 @@ public class DFSTBuilder<Node> {
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
 
-  @SuppressWarnings("unchecked")
   public DFSTBuilder(@NotNull Graph<Node> graph) {
+    this((OutboundSemiGraph<Node>)graph);
+  }
+
+  @SuppressWarnings("unchecked")
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph) {
     myAllNodes = (Node[])graph.getNodes().toArray();
     myGraph = graph;
     int size = graph.getNodes().size();

@@ -100,4 +100,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
       nnnManager.setNullables();
     });
   }
+
+  public void testCapturedWildcardNotNull() { doTest(); }
 }

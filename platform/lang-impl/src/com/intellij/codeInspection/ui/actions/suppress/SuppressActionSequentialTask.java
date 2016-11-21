@@ -150,10 +150,8 @@ public class SuppressActionSequentialTask implements SequentialTask {
               suppressedNodes.add(entity);
             }
             final List<RefEntity> children = entity.getChildren();
-            if (children != null) {
-              for (RefEntity child : children) {
-                toIgnoreInView.addLast(child);
-              }
+            for (RefEntity child : children) {
+              toIgnoreInView.addLast(child);
             }
           }
         }

@@ -56,7 +56,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @Nullable final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      @NotNull final Project project,
                                      @NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor) {
+                                     @NotNull final Editor editor, @Nullable String tooltip) {
     myProject = project;
     myBackground = getColor(severity);
 
@@ -79,6 +79,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
+    myLabel.setToolTipText(tooltip);
     if (gutterMark != null) {
       myLabel.setIcon(gutterMark.getIcon());
     }

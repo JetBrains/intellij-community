@@ -18,14 +18,17 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.*;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
@@ -63,6 +66,18 @@ public class ColorOptionsTree extends Tree {
       }
     }
     myTreeModel.setRoot(root);
+  }
+
+  public void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {
+    StatusText statusText = getEmptyText();
+    if (linkListener != null) {
+      statusText.clear();
+      statusText.appendText(text + ' ');
+      statusText.appendText("More...", SimpleTextAttributes.LINK_ATTRIBUTES, linkListener);
+    }
+    else {
+      statusText.setText(text);
+    }
   }
 
   private static TreeModel createTreeModel()  {

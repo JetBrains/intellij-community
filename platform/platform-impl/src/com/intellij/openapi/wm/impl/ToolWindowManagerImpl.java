@@ -425,6 +425,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Disposer.register(myProject, myToolWindowsPane);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
+    ((IdeRootPane)myFrame.getRootPane()).updateToolbar();
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent) {
@@ -503,7 +504,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       toolWindow.ensureContentInitialized();
     };
-    if (visible || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (visible) {
       runnable.run();
     }
     else {
@@ -742,7 +743,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       @NotNull List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    autoFocusContents &= FocusManagerImpl.getInstance().isUnforcedRequestAllowed() || forced;
+    autoFocusContents &= forced || FocusManagerImpl.getInstance().isUnforcedRequestAllowed();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");

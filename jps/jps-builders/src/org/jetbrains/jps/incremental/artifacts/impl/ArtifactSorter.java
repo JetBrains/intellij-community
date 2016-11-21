@@ -18,9 +18,7 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.model.JpsModel;
@@ -57,7 +55,7 @@ public class ArtifactSorter {
   }
 
   private List<JpsArtifact> doGetSortedArtifacts() {
-    GraphGenerator<JpsArtifact> graph = createArtifactsGraph();
+    Graph<JpsArtifact> graph = createArtifactsGraph();
     DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
     List<JpsArtifact> names = new ArrayList<JpsArtifact>();
     names.addAll(graph.getNodes());
@@ -67,7 +65,7 @@ public class ArtifactSorter {
 
   private Map<JpsArtifact, JpsArtifact> computeArtifactToSelfIncludingNameMap() {
     final Map<JpsArtifact, JpsArtifact> result = new HashMap<JpsArtifact, JpsArtifact>();
-    final GraphGenerator<JpsArtifact> graph = createArtifactsGraph();
+    final Graph<JpsArtifact> graph = createArtifactsGraph();
     for (JpsArtifact artifact : graph.getNodes()) {
       final Iterator<JpsArtifact> in = graph.getIn(artifact);
       while (in.hasNext()) {
@@ -134,8 +132,8 @@ public class ArtifactSorter {
     });
   }
 
-  private GraphGenerator<JpsArtifact> createArtifactsGraph() {
-    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myModel)));
+  private Graph<JpsArtifact> createArtifactsGraph() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new ArtifactsGraph(myModel)));
   }
 
   private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<JpsArtifact> consumer) {
@@ -154,7 +152,7 @@ public class ArtifactSorter {
     });
   }
 
-  private static class ArtifactsGraph implements GraphGenerator.SemiGraph<JpsArtifact> {
+  private static class ArtifactsGraph implements InboundSemiGraph<JpsArtifact> {
     private final Set<JpsArtifact> myArtifactNodes;
 
     public ArtifactsGraph(final JpsModel model) {
@@ -181,5 +179,4 @@ public class ArtifactSorter {
       return included.iterator();
     }
   }
-
 }

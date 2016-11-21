@@ -141,7 +141,26 @@ public final class ImportUtils {
     if (containsConflictingClass(fqName, file)) {
       return false;
     }
-    return !containsConflictingClassName(fqName, file);
+    if (containsConflictingClassName(fqName, file)) {
+      return false;
+    }
+    return !containsConflictingTypeParameter(fqName, context);
+  }
+
+  private static boolean containsConflictingTypeParameter(String fqName, PsiElement context) {
+    final String shortName = ClassUtil.extractClassName(fqName);
+    PsiElement parent = context.getParent();
+    while (parent != null && !(parent instanceof PsiFile)) {
+      if (parent instanceof PsiTypeParameterListOwner) {
+        for (PsiTypeParameter parameter : ((PsiTypeParameterListOwner)parent).getTypeParameters()) {
+          if (shortName.equals(parameter.getName())) {
+            return true;
+          }
+        }
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 
   private static boolean containsConflictingClassName(String fqName, PsiJavaFile file) {

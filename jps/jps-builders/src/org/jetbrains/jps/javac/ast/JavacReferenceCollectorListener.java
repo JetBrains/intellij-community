@@ -16,7 +16,6 @@
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.ReflectionUtil;
-import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
@@ -27,8 +26,9 @@ import com.sun.tools.javac.util.Name;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
-import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -95,8 +95,8 @@ final class JavacReferenceCollectorListener implements TaskListener {
         boolean isFileDataComplete = true;
         boolean submitImportsOnlyData = true;
         JCTree declarationToProcess = null;
-        final Set<JavacRefSymbol> collectedReferences;
-        final List<JavacRefSymbol> collectedDefinitions;
+        final Set<JavacRef.JavacSymbolRefBase> collectedReferences;
+        final List<JavacDef> collectedDefinitions;
         final TypeElement analyzedElement = e.getTypeElement();
 
         switch (size) {
@@ -144,12 +144,12 @@ final class JavacReferenceCollectorListener implements TaskListener {
         if (myFullASTListeners.length == 0) return;
         JavacTreeScannerSink sink = new JavacTreeScannerSink() {
           @Override
-          public void sinkReference(JavacRefSymbol ref) {
+          public void sinkReference(JavacRef.JavacSymbolRefBase ref) {
             collectedReferences.add(ref);
           }
 
           @Override
-          public void sinkDeclaration(JavacRefSymbol def) {
+          public void sinkDeclaration(JavacDef def) {
             collectedDefinitions.add(def);
           }
         };
@@ -178,7 +178,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     return myAsterisk;
   }
 
-  private void scanImports(JCTree.JCCompilationUnit compilationUnit, Set<JavacRefSymbol> symbols) {
+  private void scanImports(JCTree.JCCompilationUnit compilationUnit, Set<JavacRef.JavacSymbolRefBase> symbols) {
     for (JCTree.JCImport anImport : compilationUnit.getImports()) {
       final JCTree.JCFieldAccess id = (JCTree.JCFieldAccess)anImport.getQualifiedIdentifier();
       final Symbol sym = id.sym;
@@ -192,7 +192,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
             // member import
             for (Symbol memberSymbol : ownerSym.members().getElements()) {
               if (memberSymbol.getSimpleName() == name) {
-                symbols.add(new JavacRefSymbol(memberSymbol, Tree.Kind.IMPORT));
+                symbols.add(JavacRef.JavacSymbolRefBase.fromSymbol(memberSymbol));
               }
             }
           }
@@ -205,39 +205,39 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private static void collectClassImports(Symbol baseImport, Set<JavacRefSymbol> collector) {
+  private static void collectClassImports(Symbol baseImport, Set<JavacRef.JavacSymbolRefBase> collector) {
     for (Symbol symbol = baseImport;
          symbol != null && symbol.getKind() != ElementKind.PACKAGE;
          symbol = symbol.owner) {
-      collector.add(new JavacRefSymbol(symbol, Tree.Kind.IMPORT));
+      collector.add(JavacRef.JavacSymbolRefBase.fromSymbol(symbol));
     }
   }
 
   private static class IncompletelyProcessedFile {
-    private final Set<JavacRefSymbol> collectedReferences = createReferenceHolder();
-    private final List<JavacRefSymbol> collectedDefinitions = createDefinitionHolder();
+    private final Set<JavacRef.JavacSymbolRefBase> collectedReferences = createReferenceHolder();
+    private final List<JavacDef> collectedDefinitions = createDefinitionHolder();
     private int remainDeclarations;
 
     private IncompletelyProcessedFile(int remainDeclarations) {
       this.remainDeclarations = remainDeclarations;
     }
 
-    private static Set<JavacRefSymbol> createReferenceHolder() {
-      return new THashSet<JavacRefSymbol>(new TObjectHashingStrategy<JavacRefSymbol>() {
+    private static Set<JavacRef.JavacSymbolRefBase> createReferenceHolder() {
+      return new THashSet<JavacRef.JavacSymbolRefBase>(new TObjectHashingStrategy<JavacRef.JavacSymbolRefBase>() {
         @Override
-        public int computeHashCode(JavacRefSymbol ref) {
-          return ref.getSymbol().hashCode();
+        public int computeHashCode(JavacRef.JavacSymbolRefBase ref) {
+          return ref.getOriginalElement().hashCode();
         }
 
         @Override
-        public boolean equals(JavacRefSymbol r1, JavacRefSymbol r2) {
-          return r1.getSymbol() == r2.getSymbol();
+        public boolean equals(JavacRef.JavacSymbolRefBase r1, JavacRef.JavacSymbolRefBase r2) {
+          return r1.getOriginalElement() == r2.getOriginalElement();
         }
       });
     }
 
-    private static List<JavacRefSymbol> createDefinitionHolder() {
-      return new ArrayList<JavacRefSymbol>();
+    private static List<JavacDef> createDefinitionHolder() {
+      return new ArrayList<JavacDef>();
     }
   }
 }

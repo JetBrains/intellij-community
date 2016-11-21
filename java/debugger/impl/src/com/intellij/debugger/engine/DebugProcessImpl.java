@@ -1563,7 +1563,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class StepOverCommand extends StepCommand {
+  public class StepOverCommand extends StepCommand {
     private final boolean myIsIgnoreBreakpoints;
     private final int myStepSize;
 
@@ -1573,17 +1573,34 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myStepSize = stepSize;
     }
 
-    @Override
-    public void contextAction() {
-      showStatusText(DebuggerBundle.message("status.step.over"));
-      final SuspendContextImpl suspendContext = getSuspendContext();
-      final ThreadReferenceProxyImpl stepThread = getContextThread();
+    protected int getStepSize() {
+      return StepRequest.STEP_OVER;
+    }
+
+    @NotNull
+    protected String getStatusText() {
+      return DebuggerBundle.message("status.step.over");
+    }
+
+    @NotNull
+    protected RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread) {
       // need this hint while stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
       RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
       hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
+      return hint;
+    }
+
+    @Override
+    public void contextAction() {
+      showStatusText(getStatusText());
+
+      SuspendContextImpl suspendContext = getSuspendContext();
+      ThreadReferenceProxyImpl stepThread = getContextThread();
+
+      RequestHint hint = getHint(suspendContext, stepThread);
 
       applyThreadFilter(stepThread);
 
@@ -1592,7 +1609,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         rvWatcher.enable(stepThread.getThreadReference());
       }
 
-      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_OVER, hint);
+      doStep(suspendContext, stepThread, myStepSize, getStepSize(), hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);

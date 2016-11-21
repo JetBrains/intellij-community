@@ -223,7 +223,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                 info.getGutterIconRenderer(), info.quickFixActionRanges,
-                                                                                project, psiFile, ((TextEditor)fileEditor).getEditor());
+                                                                                project, psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
         manager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
@@ -345,7 +345,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
-    FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
 
@@ -411,14 +410,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      String log = FileStatusMap.getAndClearLog();
       fileStatusMap.allowDirt(true);
-      try {
-        waitForTermination();
-      }
-      catch (Throwable e) {
-        LOG.error(log, e);
-      }
+      waitForTermination();
     }
   }
 

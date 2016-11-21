@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +167,7 @@ public class ResourceBundlePropertiesUpdateManager {
   @Nullable
   private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
         final Set<String> nodes = new LinkedHashSet<>();

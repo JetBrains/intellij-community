@@ -29,7 +29,7 @@ public class GraphGeneratorTest {
   @Test
   public void testEmptyGraph() {
     TestNode node = new TestNode("A");
-    GraphGenerator<TestNode> graphGenerator = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Collections.singletonList(node);
@@ -41,7 +41,7 @@ public class GraphGeneratorTest {
       }
     });
 
-    assertFalse(graphGenerator.getOut(node).hasNext());
+    assertFalse(graph.getOut(node).hasNext());
   }
 
   @Test
@@ -52,7 +52,7 @@ public class GraphGeneratorTest {
     TestNode[] inA = {nodeB};
     TestNode[] inB = {nodeA};
 
-    GraphGenerator<TestNode> graph = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(nodes);

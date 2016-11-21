@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -65,6 +64,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  @Nullable private Disposable myCancelOnProjectDisposal;
 
   public interface Listener {
     void progressWindowCreated(ProgressWindow pw);
@@ -120,6 +120,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
     });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+
+    if (myProject != null) {
+      myCancelOnProjectDisposal = () -> {
+        if (isRunning()) {
+          cancel();
+        }
+      };
+      Disposer.register(myProject, myCancelOnProjectDisposal);
+    }
   }
 
   @Override
@@ -389,6 +398,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void dispose() {
     stopSystemActivity();
+    if (myCancelOnProjectDisposal != null) {
+      Disposer.dispose(myCancelOnProjectDisposal);
+    }
   }
 
   @Override

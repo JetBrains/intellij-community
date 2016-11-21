@@ -52,6 +52,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
+    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
     Files.copy(myTestData.resolve("jrt-fs.jar"), myTempDir.getRoot().toPath().resolve("jrt-fs.jar"));
     Path lib = Files.createDirectory(myTempDir.getRoot().toPath().resolve("lib"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
@@ -94,6 +95,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
     Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
     Files.copy(myTestData.resolve("image2"), modules, StandardCopyOption.REPLACE_EXISTING);
+    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
 
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();

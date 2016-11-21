@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileEditor;
+package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.mock.MockVirtualFile;
@@ -21,7 +21,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -35,6 +37,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -50,16 +53,25 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myReloadFromDisk = Boolean.TRUE;
+    myReloadFromDisk = null;
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
-    impl.setAskReloadFromDisk(getTestRootDisposable(), (file, document) -> {
-      if (myReloadFromDisk == null) {
-        fail();
-        return false;
+    impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
+      @Override
+      boolean askReloadFromDisk(VirtualFile file, Document document) {
+        if (myReloadFromDisk == null) {
+          fail();
+          return false;
+        }
+        return myReloadFromDisk.booleanValue();
       }
-      return myReloadFromDisk.booleanValue();
     });
     myDocumentManager = impl;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myReloadFromDisk = null;
+    super.tearDown();
   }
 
   public void testGetCachedDocument_Cached() throws Exception {
@@ -372,6 +384,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     myReloadFromDisk = Boolean.TRUE;
     setFileText(file, "xxx");
+    UIUtil.dispatchAllInvocationEvents();
 
     assertEquals("xxx", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
@@ -388,6 +401,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     long oldDocumentStamp = document.getModificationStamp();
 
     setBinaryContent(file, "xxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+    UIUtil.dispatchAllInvocationEvents();
 
     assertEquals("old test", document.getText());
     assertEquals(oldDocumentStamp, document.getModificationStamp());

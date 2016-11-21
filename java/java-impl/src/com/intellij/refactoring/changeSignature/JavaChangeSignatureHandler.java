@@ -95,7 +95,10 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
 
-    boolean isInplace = Registry.is("inplace.change.signature") && editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (initialChange == null || initialChange.getMethod() != method);
+    boolean isInplace = Registry.is("inplace.change.signature") &&
+                        editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
+                        (initialChange == null || initialChange.getMethod() != method) &&
+                        refExpr == null;
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     LOG.assertTrue(nameIdentifier != null);
     if (isInplace) {

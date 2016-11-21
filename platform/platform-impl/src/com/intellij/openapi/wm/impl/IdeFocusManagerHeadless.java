@@ -79,10 +79,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
-  public void typeAheadUntil(ActionCallback done) {
-  }
-
-  @Override
   public boolean isFocusBeingTransferred() {
     return false;
   }

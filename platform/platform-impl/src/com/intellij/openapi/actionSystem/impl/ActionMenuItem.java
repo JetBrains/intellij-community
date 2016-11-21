@@ -293,7 +293,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
-      fm.typeAheadUntil(typeAhead);
+      fm.typeAheadUntil(typeAhead, getText());
       fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
@@ -303,7 +303,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
-          fm.doWhenFocusSettlesDown(() -> typeAhead.setDone());
+          fm.doWhenFocusSettlesDown(typeAhead::setDone);
           ActionUtil.performActionDumbAware(menuItemAction, event);
           actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
         }

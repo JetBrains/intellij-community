@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.javac.ast.api;
+package e;
+import static e.E.<caret>A;
 
-import com.sun.source.tree.Tree;
-import com.sun.tools.javac.code.Symbol;
+enum E {
+  A;
+}
 
-public class JavacRefSymbol {
-
-  private final Symbol mySymbol;
-  private final Tree.Kind myPlaceKind;
-
-  public JavacRefSymbol(Symbol symbol, Tree.Kind kind) {
-    mySymbol = symbol;
-    myPlaceKind = kind;
+class Main {
+  static void test(E en) {
+    switch (en) {
+      case A:
+        break;
+    }
   }
-
-  public Symbol getSymbol() {
-    return mySymbol;
-  }
-
-  public Tree.Kind getPlaceKind() {
-    return myPlaceKind;
+  static public void main() {
+    test(A);
   }
 }

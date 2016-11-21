@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -38,7 +39,7 @@ import javax.swing.*;
 /**
  * @author Maxim.Medvedev
  */
-public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTool {
+public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   private static final String SHORT_NAME = "GrUnresolvedAccess";
 
   public boolean myHighlightIfGroovyObjectOverridden = true;

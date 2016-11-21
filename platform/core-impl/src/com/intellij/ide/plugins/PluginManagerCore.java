@@ -36,10 +36,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.JDOMXIncluder;
@@ -281,7 +278,11 @@ public class PluginManagerCore {
   }
 
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+    saveDisabledPlugins(PathManager.getConfigPath(), ids, append);
+  }
+
+  public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> ids, boolean append) throws IOException {
+    File plugins = new File(configPath, DISABLED_PLUGINS_FILENAME);
     savePluginsList(ids, append, plugins);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
@@ -618,7 +619,7 @@ public class PluginManagerCore {
         return o2.getIdString().compareTo(o1.getIdString());
       }
     });
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<PluginId>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PluginId>() {
       @Override
       public Collection<PluginId> getNodes() {
         return ids;

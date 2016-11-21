@@ -148,9 +148,15 @@ public abstract class AstPath extends SubstrateRef {
     @Override
     public CompositeElement getNode() {
       CompositeElement parentNode = myParent.getNode();
+      //noinspection ResultOfMethodCallIgnored
       parentNode.getFirstChildNode(); // expand chameleons, populate PATH_CHILDREN array
       CompositeElement[] children = parentNode.getUserData(PATH_CHILDREN);
-      assert children != null : parentNode + " of " + parentNode.getClass();
+      if (children == null) {
+        throw new AssertionError(parentNode + " of " + parentNode.getClass());
+      }
+      if (myIndex >= children.length) {
+        throw new AssertionError(myIndex + " >= " + children.length + "; " + parentNode + " of " + parentNode.getClass());
+      }
       return children[myIndex];
     }
 

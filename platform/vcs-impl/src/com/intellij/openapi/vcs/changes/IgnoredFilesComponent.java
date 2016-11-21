@@ -102,19 +102,33 @@ public class IgnoredFilesComponent {
           return;
         }
       }
-      List<IgnoredFileBean> toRemove = new ArrayList<>();
-      for (IgnoredFileBean bean : myFilesToIgnore) {
-        if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
-            FileUtil.isAncestor(path, bean.getPath(), false)) {
-          toRemove.add(bean);
-        }
-      }
-      myFilesToIgnore.removeAll(toRemove);
+      doRemoveFilesToIgnore(path, true);
       myFilesToIgnore.add(IgnoredBeanFactory.ignoreUnderDirectory(path, project));
     }
     finally {
       myWriteLock.unlock();
     }
+  }
+  
+  public void removeImplicitlyIgnoredDirectory(@NotNull String path, @NotNull Project project) {
+    myWriteLock.lock();
+    try {
+      doRemoveFilesToIgnore(path, false);
+    }
+    finally {
+      myWriteLock.unlock();
+    }
+  }
+
+  private void doRemoveFilesToIgnore(@NotNull String path, boolean includingSubpaths) {
+    List<IgnoredFileBean> toRemove = new ArrayList<>();
+    for (IgnoredFileBean bean : myFilesToIgnore) {
+      if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
+          includingSubpaths ? FileUtil.isAncestor(path, bean.getPath(), false) : FileUtil.pathsEqual(path, bean.getPath())) {
+        toRemove.add(bean);
+      }
+    }
+    myFilesToIgnore.removeAll(toRemove);
   }
 
   private void addIgnoredFiles(@NotNull IgnoredFileBean[] filesToIgnore) {

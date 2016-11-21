@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -49,6 +53,7 @@ import java.util.Map;
  */
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
+  private final DesktopLayout myLayout = new DesktopLayout();
 
   public final void doNotSuggestAsParent(final Window window) { }
 
@@ -115,12 +120,12 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final IdeFrameImpl allocateFrame(final Project project) {
-    throw new UnsupportedOperationException();
+    return new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), ActionManagerEx.getInstanceEx(), DataManager.getInstance(), ApplicationManager.getApplication());
   }
 
   @Override
   public final void releaseFrame(final IdeFrameImpl frame) {
-    throw new UnsupportedOperationException();
+
   }
 
   @Override
@@ -151,7 +156,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final DesktopLayout getLayout() {
-    throw new UnsupportedOperationException();
+    return myLayout;
   }
 
   @Override

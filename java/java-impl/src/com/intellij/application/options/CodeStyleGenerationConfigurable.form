@@ -15,7 +15,7 @@
         <properties/>
         <border type="empty"/>
         <children>
-          <grid id="452da" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="452da" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="10" bottom="0" right="10"/>
             <constraints/>
             <properties/>
@@ -179,21 +179,9 @@
               </grid>
               <vspacer id="91133">
                 <constraints>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
-              <grid id="5a70" binding="myCommenterPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-                </clientProperties>
-                <border type="none"/>
-                <children/>
-              </grid>
               <grid id="83565" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
@@ -227,16 +215,15 @@
               </grid>
               <component id="be81b" class="javax.swing.JCheckBox" binding="myCbUseExternalAnnotations">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="use.external.annotations"/>
                 </properties>
               </component>
-              <grid id="6fb9a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+              <grid id="6fb9a" binding="myOverridePanel" layout-manager="GridBagLayout">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <clientProperties>
@@ -247,6 +234,7 @@
                   <component id="95854" class="javax.swing.JCheckBox" binding="myInsertOverrideAnnotationCheckBox" default-binding="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/ApplicationBundle" key="insert.override.annotation"/>
@@ -255,6 +243,7 @@
                   <component id="9c14a" class="javax.swing.JCheckBox" binding="myRepeatSynchronizedCheckBox" default-binding="true">
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                     <properties>
                       <text value="Repeat &amp;synchronized modifier"/>
@@ -262,19 +251,41 @@
                   </component>
                 </children>
               </grid>
-              <grid id="edade" binding="myVisibilityPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+              <grid id="e7ca1" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="2" column="1" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-                </clientProperties>
                 <border type="none"/>
                 <children>
-                  <vspacer id="69bbc">
-                    <constraints border-constraint="Center"/>
-                  </vspacer>
+                  <grid id="edade" binding="myVisibilityPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <clientProperties>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+                    </clientProperties>
+                    <border type="none"/>
+                    <children>
+                      <vspacer id="69bbc">
+                        <constraints border-constraint="West"/>
+                      </vspacer>
+                    </children>
+                  </grid>
+                  <grid id="5a70" binding="myCommenterPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <clientProperties>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+                    </clientProperties>
+                    <border type="none"/>
+                    <children/>
+                  </grid>
                 </children>
               </grid>
             </children>
