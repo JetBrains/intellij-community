@@ -1448,6 +1448,14 @@ public class PyTypeTest extends PyTestCase {
            "    expr = kwargs");
   }
 
+  // PY-19723
+  public void testIterateOverKeywordArgs() {
+    doTest("str",
+           "def foo(**kwargs):\n" +
+           "    for expr in kwargs:\n" +
+           "        pass");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
