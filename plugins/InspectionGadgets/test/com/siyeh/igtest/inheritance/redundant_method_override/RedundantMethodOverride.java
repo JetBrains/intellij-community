@@ -128,3 +128,20 @@ class ComplexParameterEquivalent extends Params {
     return ((p1) + p2.hashCode());
   }
 }
+/////////////////
+@interface Anno {
+  int value();
+}
+class Annotations1 {
+
+  @Anno(1)
+  void m() {}
+}
+class Annotations2 extends Annotations1{
+
+  @Anno(2)
+  @Override
+  void m() {
+    super.m();
+  }
+}

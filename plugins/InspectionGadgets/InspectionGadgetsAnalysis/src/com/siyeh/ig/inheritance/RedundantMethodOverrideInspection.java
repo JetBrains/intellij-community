@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -34,10 +35,6 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
@@ -244,38 +241,13 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       else if (list2 == null) {
         return false;
       }
-      final Set<String> annotations1 = new HashSet<>();
-      for (PsiAnnotation annotation : list1.getAnnotations()) {
-        annotations1.add(annotation.getQualifiedName());
-      }
-      final Set<String> annotations2 = new HashSet<>();
-      for (PsiAnnotation annotation : list2.getAnnotations()) {
-        annotations2.add(annotation.getQualifiedName());
-      }
-      final Set<String> uniques = disjunction(annotations1, annotations2);
-      uniques.remove(CommonClassNames.JAVA_LANG_OVERRIDE);
-      if (!uniques.isEmpty()) {
+      if (list1.hasModifierProperty(PsiModifier.STRICTFP) != list2.hasModifierProperty(PsiModifier.STRICTFP) ||
+          list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) != list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
+          list1.hasModifierProperty(PsiModifier.PUBLIC) != list2.hasModifierProperty(PsiModifier.PUBLIC) ||
+          list1.hasModifierProperty(PsiModifier.PROTECTED) != list2.hasModifierProperty(PsiModifier.PROTECTED)) {
         return false;
       }
-      return list1.hasModifierProperty(PsiModifier.STRICTFP) == list2.hasModifierProperty(PsiModifier.STRICTFP) &&
-             list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) == list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
-             list1.hasModifierProperty(PsiModifier.PUBLIC) == list2.hasModifierProperty(PsiModifier.PUBLIC) &&
-             list1.hasModifierProperty(PsiModifier.PROTECTED) == list2.hasModifierProperty(PsiModifier.PROTECTED);
-    }
-
-    private static <T> Set<T> disjunction(Collection<T> set1, Collection<T> set2) {
-      final Set<T> result = new HashSet<>();
-      for (T t : set1) {
-        if (!set2.contains(t)) {
-          result.add(t);
-        }
-      }
-      for (T t : set2) {
-        if (!set1.contains(t)) {
-          result.add(t);
-        }
-      }
-      return result;
+      return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
     }
   }
 }
