@@ -48,7 +48,7 @@ class Base {
 }
 
 class Derived extends Base {
-    <caret>Derived(int p, @Anno int x) throws Exception {
+    <caret>Derived(int p, int x) throws Exception {
         super(p, x)
     }
 }
@@ -67,7 +67,7 @@ class Derived exten<caret>ds Base {
 }
 ''', '''\
 class Derived extends Base {
-    <caret>def Derived(int p, @Anno int x) throws Exception {
+    <caret>def Derived(int p, int x) throws Exception {
         super(p, x)
     }
 }
@@ -89,7 +89,7 @@ class Derived exten<caret>ds Base {
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResult('''\
 class Derived extends Base {
-    <caret>Derived(int p, @Override int x) throws Exception {
+    <caret>Derived(int p, int x) throws Exception {
         super(p, x);
     }
 }
