@@ -33,24 +33,36 @@ class GrUnnecessaryPublicModifierInspectionTest extends LightGroovyTestCase {
       enableInspections GrUnnecessaryPublicModifierInspection
       configureByText '_.groovy', '''\
 <warning descr="Modifier 'public' is not necessary">pu<caret>blic</warning> class A {
+
     <warning descr="Modifier 'public' is not necessary">public</warning> A() {}
+
     <warning descr="Modifier 'public' is not necessary">public</warning> foo() {}
+
     public x
+
     <warning descr="Modifier 'public' is not necessary">public</warning> class B {}
 }
+
 <warning descr="Modifier 'public' is not necessary">public</warning> enum E {}
+
 <warning descr="Modifier 'public' is not necessary">public</warning> interface I {}
 '''
       checkHighlighting()
       launchAction findSingleIntention("Fix all 'Unnecessary 'public''")
       checkResult '''\
 class A {
+
     A() {}
+
     def foo() {}
+
     public x
+
     class B {}
 }
+
 enum E {}
+
 interface I {}
 '''
     }
