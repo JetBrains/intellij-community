@@ -25,6 +25,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -572,5 +573,100 @@ public class AnnotationUtil {
       }
     }
     return null;
+  }
+
+  public static boolean equal(@Nullable PsiAnnotation a, @Nullable PsiAnnotation b) {
+    if (a == null) {
+      return b == null;
+    }
+    else if (b == null) {
+      return false;
+    }
+    final String name = a.getQualifiedName();
+    if (name == null || !name.equals(b.getQualifiedName())) {
+      return false;
+    }
+    final Map<String, PsiAnnotationMemberValue> valueMap1 = new THashMap<String, PsiAnnotationMemberValue>(2);
+    final Map<String, PsiAnnotationMemberValue> valueMap2 = new THashMap<String, PsiAnnotationMemberValue>(2);
+    if (!fillValueMap(a.getParameterList(), valueMap1) || !fillValueMap(b.getParameterList(), valueMap2) ||
+        valueMap1.size() != valueMap2.size()) {
+      return false;
+    }
+    for (Map.Entry<String, PsiAnnotationMemberValue> entry : valueMap1.entrySet()) {
+      if (!equal(entry.getValue(), valueMap2.get(entry.getKey()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean fillValueMap(PsiAnnotationParameterList parameterList, Map<String, PsiAnnotationMemberValue> valueMap) {
+    final PsiNameValuePair[] attributes1 = parameterList.getAttributes();
+    for (PsiNameValuePair attribute : attributes1) {
+      final PsiReference reference = attribute.getReference();
+      if (reference == null) {
+        return false;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiAnnotationMethod)) {
+        return false;
+      }
+      final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)target;
+      final PsiAnnotationMemberValue defaultValue = annotationMethod.getDefaultValue();
+      final PsiAnnotationMemberValue value = attribute.getValue();
+      if (equal(value, defaultValue)) {
+        continue;
+      }
+      final String name1 = attribute.getName();
+      valueMap.put(name1 == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name1, value);
+    }
+    return true;
+  }
+
+  public static boolean equal(PsiAnnotationMemberValue value1, PsiAnnotationMemberValue value2) {
+    if (value1 instanceof PsiArrayInitializerMemberValue && value2 instanceof PsiArrayInitializerMemberValue) {
+      final PsiAnnotationMemberValue[] initializers1 = ((PsiArrayInitializerMemberValue)value1).getInitializers();
+      final PsiAnnotationMemberValue[] initializers2 = ((PsiArrayInitializerMemberValue)value2).getInitializers();
+      if (initializers1.length != initializers2.length) {
+        return false;
+      }
+      for (int i = 0; i < initializers1.length; i++) {
+        if (!equal(initializers1[i], initializers2[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if (value1 != null && value2 != null) {
+      final PsiConstantEvaluationHelper constantEvaluationHelper =
+        JavaPsiFacade.getInstance(value1.getProject()).getConstantEvaluationHelper();
+      final Object const1 = constantEvaluationHelper.computeConstantExpression(value1);
+      final Object const2 = constantEvaluationHelper.computeConstantExpression(value2);
+      return const1 != null && const1.equals(const2);
+    }
+    return false;
+  }
+
+  public static boolean equal(PsiAnnotation[] annotations1, PsiAnnotation[] annotations2) {
+    final Map<String, PsiAnnotation> map1 = buildAnnotationMap(annotations1);
+    final Map<String, PsiAnnotation> map2 = buildAnnotationMap(annotations2);
+    if (map1.size() != map2.size()) {
+      return false;
+    }
+    for (Map.Entry<String, PsiAnnotation> entry : map1.entrySet()) {
+      if (!equal(entry.getValue(), map2.get(entry.getKey()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static Map<String, PsiAnnotation> buildAnnotationMap(PsiAnnotation[] annotations) {
+    final Map<String, PsiAnnotation> map = new HashMap<String, PsiAnnotation>();
+    for (PsiAnnotation annotation : annotations) {
+      map.put(annotation.getQualifiedName(), annotation);
+    }
+    map.remove(CommonClassNames.JAVA_LANG_OVERRIDE);
+    return map;
   }
 }
