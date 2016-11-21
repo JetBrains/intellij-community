@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -31,7 +32,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -204,9 +204,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();
         final PyExpression arg = entry.getKey();
-        if (param.isKeywordContainer()) {
-          continue;
-        }
         final PyType expectedArgType = getExpectedArgumentType(param);
         if (expectedArgType == null) {
           continue;
@@ -225,19 +222,21 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private PyType getExpectedArgumentType(@NotNull PyNamedParameter param) {
-      final PyType paramType = myTypeEvalContext.getType(param);
+    private PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter) {
+      final PyType parameterType = myTypeEvalContext.getType(parameter);
 
-      if (param.isPositionalContainer()) {
-        if (paramType == PyBuiltinCache.getInstance(param).getTupleType()) {
-          return null;
+      if (parameterType instanceof PyCollectionType) {
+        final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
+
+        if (parameter.isPositionalContainer()) {
+          return paramCollectionType.getIteratedItemType();
         }
-        else if (paramType instanceof PyCollectionType) {
-          return ((PyCollectionType)paramType).getIteratedItemType();
+        else if (parameter.isKeywordContainer()) {
+          return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(myTypeEvalContext), 1, null);
         }
       }
 
-      return paramType;
+      return parameterType;
     }
 
     @Nullable

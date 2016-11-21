@@ -351,6 +351,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19723
+  public void testKeywordArguments() {
+    doTest();
+  }
+
   // PY-21350
   public void testBuiltinInputPy2() {
     doTest();
