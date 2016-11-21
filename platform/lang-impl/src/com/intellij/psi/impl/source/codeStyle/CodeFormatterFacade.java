@@ -387,12 +387,12 @@ public class CodeFormatterFacade {
         }
       }
     }
-    return result == null ? Collections.<PsiLanguageInjectionHost>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
 
   /**
-   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}
+   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(Language)}
    * right margin}.
    * <p/>
    * I.e. the algorithm is to do the following for every line:
@@ -400,7 +400,7 @@ public class CodeFormatterFacade {
    * <pre>
    * <ol>
    *   <li>
-   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}  right margin}. Go to the next line in the case of
+   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(Language)}  right margin}. Go to the next line in the case of
    *      negative answer;
    *   </li>
    *   <li>Determine line wrap position; </li>

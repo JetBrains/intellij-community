@@ -161,9 +161,11 @@ abstract class CodeStyleManagerRunnable<T> {
     }
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
-    if (textRange != null) {
-      return textRange;
+    if (builder != null) {
+      final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
+      if (textRange != null) {
+        return textRange;
+      }
     }
 
     final TextRange elementRange = elementAtOffset.getTextRange();
