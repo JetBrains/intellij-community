@@ -456,11 +456,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return defaultFactory;
       }
       else {
-        fileType = context.getContainingFile().getFileType();
+        PsiFile file = context.getContainingFile();
+        fileType = file != null ? file.getFileType() : null;
       }
     }
     for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
-      if (factory != defaultFactory && factory.getFileType().equals(fileType) && factory.isContextAccepted(context)) {
+      if (factory != defaultFactory && (fileType == null || factory.getFileType().equals(fileType)) && factory.isContextAccepted(context)) {
         return factory;
       }
     }
@@ -469,12 +470,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
-      @Override
-      public CodeFragmentFactory compute() {
-        return getCodeFragmentFactory(context, text.getFileType());
-      }
-    });
+    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
+      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 
