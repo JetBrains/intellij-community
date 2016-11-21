@@ -410,4 +410,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullLiteralArgumentValueUsedAsReturnValue() {
     doTest();
   }
+
+  public void testCapturedWildcardNotNull() { doTest(); }
 }
