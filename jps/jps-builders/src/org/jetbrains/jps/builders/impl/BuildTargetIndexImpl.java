@@ -16,9 +16,10 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
@@ -81,7 +82,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       myDependencies.put(target, realDependencies);
     }
 
-    GraphGenerator<BuildTarget<?>> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<BuildTarget<?>>() {
+    Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
       @Override
       public Collection<BuildTarget<?>> getNodes() {
         return realTargets;
@@ -91,7 +92,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
         return myDependencies.get(n).iterator();
       }
-    }));
+    });
 
     DFSTBuilder<BuildTarget<?>> builder = new DFSTBuilder<BuildTarget<?>>(graph);
     Collection<Collection<BuildTarget<?>>> components = builder.getComponents();
