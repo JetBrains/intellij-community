@@ -18,7 +18,6 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
@@ -286,19 +285,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final FileChooserDescriptor baseDescriptor = super.getHomeChooserDescriptor();
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(baseDescriptor) {
-      @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (files.length > 0 && !JrtFileSystem.isSupported()) {
-          String path = files[0].getPath();
-          if (JrtFileSystem.isModularJdk(path) || JrtFileSystem.isModularJdk(adjustSelectedSdkHome(path))) {
-            throw new Exception(LangBundle.message("jrt.not.available.message"));
-          }
-        }
-        baseDescriptor.validateSelectedFiles(files);
-      }
-    };
+    FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
     descriptor.putUserData(KEY, Boolean.TRUE);
     return descriptor;
   }
