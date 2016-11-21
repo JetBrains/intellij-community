@@ -50,6 +50,21 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
 
   private static final Key<Map<String, JavaModuleInfo>> MODULES_IN_PROJECT = Key.create("modules_in_project");
 
+  @Override
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    super.runInspection(scope, manager, globalContext, problemDescriptionsProcessor);
+
+    globalContext.getRefManager().iterate(new RefJavaVisitor(){
+      @Override
+      public void visitJavaModule(@NotNull RefJavaModule javaModule) {
+        super.visitJavaModule(javaModule);
+      }
+    });
+  }
+
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,

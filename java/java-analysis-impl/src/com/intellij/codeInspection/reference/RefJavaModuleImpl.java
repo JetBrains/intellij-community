@@ -17,9 +17,16 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Pavel.Dolgov
@@ -27,8 +34,16 @@ import org.jetbrains.annotations.Nullable;
 public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private static final Logger LOG = Logger.getInstance(RefJavaModuleImpl.class);
 
+  private final RefModule myModule;
+
+  private Map<String, List<String>> myExportedPackageNames;
+  private Map<String, Boolean> myRequiredModuleNames;
+
+  //private Set<RefJavaModule> myRequiredModules;
+
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getModuleName(), javaModule, manager);
+    myModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
   }
 
   @Override
@@ -52,6 +67,25 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return (PsiJavaModule)super.getElement();
   }
 
+  @Nullable
+  @Override
+  public RefModule getModule() {
+    //return super.getModule();
+    return myModule;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, List<String>> getExportedPackageNames() {
+    return myExportedPackageNames != null ? myExportedPackageNames : Collections.emptyMap();
+  }
+
+  @NotNull
+  @Override
+  public Map<String, Boolean> getRequiredModuleNames() {
+    return myRequiredModuleNames != null ? myRequiredModuleNames : Collections.emptyMap();
+  }
+
   @Override
   public void buildReferences() {
     PsiJavaModule javaModule = getElement();
@@ -61,16 +95,32 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
         PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
         if (referenceElement != null) {
           PsiPolyVariantReference moduleReference = referenceElement.getReference();
-          addReference(moduleReference);
+          PsiElement element = addReference(moduleReference);
+          if (element instanceof PsiJavaModule) {
+            if (myRequiredModuleNames == null) myRequiredModuleNames = new THashMap<>(1);
+            myRequiredModuleNames.put(((PsiJavaModule)element).getModuleName(), statement.isPublic());
+          }
         }
       }
+      List<String> emptyList = Collections.emptyList();
       for (PsiExportsStatement statement : javaModule.getExports()) {
         PsiJavaCodeReferenceElement packageReference = statement.getPackageReference();
-        addReference(packageReference);
+        PsiElement element = addReference(packageReference);
+        String packageName = null;
+        if (element instanceof PsiPackage) {
+          if (myExportedPackageNames == null) myExportedPackageNames = new THashMap<>(1);
+          packageName = ((PsiPackage)element).getQualifiedName();
+          myExportedPackageNames.put(packageName, emptyList);
+        }
         for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
           if (referenceElement != null) {
             PsiPolyVariantReference moduleReference = referenceElement.getReference();
-            addReference(moduleReference);
+            PsiElement moduleElement = addReference(moduleReference);
+            if (packageName != null && moduleElement instanceof PsiJavaModule) {
+              List<String> toModuleNames = myExportedPackageNames.get(packageName);
+              if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<String>(1));
+              toModuleNames.add(((PsiJavaModule)moduleElement).getModuleName());
+            }
           }
         }
       }
@@ -78,12 +128,14 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     }
   }
 
-  private void addReference(PsiPolyVariantReference reference) {
+  private PsiElement addReference(PsiPolyVariantReference reference) {
+    List<PsiElement> resolvedElements = new ArrayList<>();
     if (reference != null) {
       ResolveResult[] resolveResults = reference.multiResolve(false);
       for (ResolveResult resolveResult : resolveResults) {
         PsiElement element = resolveResult.getElement();
         if (element != null) {
+          resolvedElements.add(element);
           RefElement refElement = getRefManager().getReference(element);
           if (refElement != null) {
             LOG.warn("addReference " + this.getName() + " -> " + refElement.getName());
@@ -93,5 +145,6 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
         }
       }
     }
+    return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
   }
 }

@@ -16,6 +16,10 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiJavaModule;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Pavel.Dolgov
@@ -23,4 +27,10 @@ import com.intellij.psi.PsiJavaModule;
 public interface RefJavaModule extends RefElement {
   @Override
   PsiJavaModule getElement();
+
+  @NotNull
+  Map<String, List<String>> getExportedPackageNames();
+
+  @NotNull
+  Map<String, Boolean> getRequiredModuleNames();
 }
