@@ -70,37 +70,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
-  private static final Icon NEW_BRANCH_LABEL = createNewBranchLabel();
-
-  private static Icon createNewBranchLabel() {
-    JBColor fg = new JBColor(0x00b53d, 0x24953c);
-    JLabel label = createLabelWithRoundCorners("New", fg, ColorUtil.toAlpha(fg, 40), .8F, 4, 2, 2);
-    label.setSize(label.getPreferredSize());
-    return new Icon() {
-
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        label.setSize(label.getPreferredSize());
-        Graphics graphics = g.create(x, y, getIconWidth(), getIconHeight());
-        try {
-          label.paint(graphics);
-        }
-        finally {
-          graphics.dispose();
-        }
-      }
-
-      @Override
-      public int getIconWidth() {
-        return label.getWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return label.getHeight();
-      }
-    };
-  }
+  private static final Icon NEW_BRANCH_LABEL = createNewBranchLabelIcon();
 
   @NotNull private final GitPushSupport myPushSupport;
   @NotNull private final GitRepository myRepository;
@@ -481,4 +451,35 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       return aComponent;
     }
   }
+
+  private static Icon createNewBranchLabelIcon() {
+    JBColor fg = new JBColor(0x00b53d, 0x24953c);
+    JLabel label = createLabelWithRoundCorners("New", fg, ColorUtil.toAlpha(fg, 40), .8F, 4, 2, 2);
+    label.setSize(label.getPreferredSize());
+    return new Icon() {
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        label.setSize(label.getPreferredSize());
+        Graphics graphics = g.create(x, y, getIconWidth(), getIconHeight());
+        try {
+          label.paint(graphics);
+        }
+        finally {
+          graphics.dispose();
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return label.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return label.getHeight();
+      }
+    };
+  }
+
 }
