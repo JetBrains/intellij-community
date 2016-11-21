@@ -186,20 +186,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       });
 
-      if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
+      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
         JavaModuleIndex index = getJavaModuleIndex(context);
         for (JpsModule module : chunk.getModules()) {
           ContainerUtil.addIfNotNull(filesToCompile, index.getModuleInfoFile(module));
         }
-      }
 
-      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
-        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-        if (logger.isEnabled()) {
-          if (!filesToCompile.isEmpty()) {
-            logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
-          }
+        ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+        if (logger.isEnabled() && !filesToCompile.isEmpty()) {
+          logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
         }
       }
 
