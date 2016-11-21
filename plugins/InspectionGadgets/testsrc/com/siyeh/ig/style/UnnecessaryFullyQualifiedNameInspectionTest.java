@@ -28,6 +28,10 @@ public class UnnecessaryFullyQualifiedNameInspectionTest extends IGInspectionTes
     doTestWithFqnInJavadocSetting(BASE_DIR + "unnecessary_fully_qualified_name_accept_in_javadoc/", JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS);
   }
 
+  public void testConflictWithTypeParameter() {
+    doTest(BASE_DIR + "unnecessary_fqn_type_parameter_conflict", new UnnecessaryFullyQualifiedNameInspection());
+  }
+
   private void doTestWithFqnInJavadocSetting(String dirPath, int classNamesInJavadoc) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
