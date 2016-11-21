@@ -249,6 +249,18 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals("A", aClass.getName());
   }
 
+  public void testStaticMethodReference() {
+    PsiFile file = myFixture.addFileToProject("Foo.java",
+                                                          "class C {\n" +
+                                                          "  static void a(){}\n" +
+                                                          "  {a<caret>();}" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(1, impls.length);
+  }
+
   private PsiElement[] getTargets(PsiFile file) {
     GotoTargetHandler.GotoData gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), file);
     assertNotNull(gotoData);
