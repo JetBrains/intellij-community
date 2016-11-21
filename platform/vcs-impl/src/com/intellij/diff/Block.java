@@ -18,12 +18,10 @@ package com.intellij.diff;
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,39 +69,37 @@ public class Block {
       FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
                                                  ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
 
-      for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
-        Boolean equals = pair.second;
-        Range range = pair.first;
-        if (!equals) {
-          if (Math.max(myStart, range.start2) < Math.min(myEnd, range.end2)) {
-            // ranges intersect
-            if (range.start2 <= myStart) start = range.start1;
-            if (range.end2 > myEnd) end = range.end1;
-          }
-          if (range.start2 > myStart) {
-            if (start == -1) start = myStart - shift;
-            if (end == -1 && range.start2 >= myEnd) end = myEnd - shift;
-          }
+      for (Range range : iterable.iterateChanges()) {
+        if (Math.max(myStart, range.start2) < Math.min(myEnd, range.end2)) {
+          // ranges intersect
+          if (range.start2 <= myStart) start = range.start1;
+          if (range.end2 > myEnd) end = range.end1;
+        }
+        if (range.start2 > myStart) {
+          if (start == -1) start = myStart - shift;
+          if (end == -1 && range.start2 >= myEnd) end = myEnd - shift;
+        }
 
-          shift += (range.end2 - range.start2) - (range.end1 - range.start1);
-        }
-        else {
-          // intern strings, reducing memory usage
-          int count = range.end1 - range.start1;
-          for (int i = 0; i < count; i++) {
-            int prevIndex = range.start1 + i;
-            int sourceIndex = range.start2 + i;
-            if (prevContent[prevIndex].equals(mySource[sourceIndex])) {
-              prevContent[prevIndex] = mySource[sourceIndex];
-            }
-          }
-        }
+        shift += (range.end2 - range.start2) - (range.end1 - range.start1);
       }
       if (start == -1) start = myStart - shift;
       if (end == -1) end = myEnd - shift;
 
       if (start < 0 || end > prevContent.length || end < start) {
         LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
+      }
+
+
+      // intern strings, reducing memory usage
+      for (Range range : iterable.iterateUnchanged()) {
+        int count = range.end1 - range.start1;
+        for (int i = 0; i < count; i++) {
+          int prevIndex = range.start1 + i;
+          int sourceIndex = range.start2 + i;
+          if (prevContent[prevIndex].equals(mySource[sourceIndex])) {
+            prevContent[prevIndex] = mySource[sourceIndex];
+          }
+        }
       }
 
       return new Block(prevContent, start, end);
