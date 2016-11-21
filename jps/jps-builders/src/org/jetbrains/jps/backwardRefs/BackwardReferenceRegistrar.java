@@ -15,8 +15,9 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
-import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,7 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerFile(String filePath, Set<JavacRefSymbol> refs, List<JavacRefSymbol> defs) {
+  public void registerFile(String filePath, Set<? extends JavacRef> refs, List<JavacDef> defs) {
     BackwardReferenceIndexUtil.registerFile(filePath, refs, defs, myWriter);
   }
 }

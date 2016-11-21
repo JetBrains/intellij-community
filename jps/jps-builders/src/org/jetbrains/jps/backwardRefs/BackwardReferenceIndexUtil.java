@@ -15,76 +15,39 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
-import com.sun.source.tree.Tree;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
-import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
+import org.jetbrains.jps.javac.ast.api.JavacDef;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class BackwardReferenceIndexUtil {
-  static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
-  static final Tree.Kind LAMBDA_EXPRESSION;
-  static final Tree.Kind MEMBER_REFERENCE;
-
-  static {
-    Tree.Kind lambdaExpression = null;
-    Tree.Kind memberReference = null;
-    try {
-      lambdaExpression = Tree.Kind.valueOf("LAMBDA_EXPRESSION");
-      memberReference = Tree.Kind.valueOf("MEMBER_REFERENCE");
-    }
-    catch (IllegalArgumentException ignored) {
-    }
-    LAMBDA_EXPRESSION = lambdaExpression;
-    MEMBER_REFERENCE = memberReference;
-  }
-
   static void registerFile(String filePath,
-                           Set<JavacRefSymbol> refs,
-                           List<JavacRefSymbol> defs,
+                           Set<? extends JavacRef> refs,
+                           List<JavacDef> defs,
                            BackwardReferenceIndexWriter writer) {
     final int fileId = writer.enumeratePath(filePath);
     int funExprId = 0;
 
     final List<LightRef> definitions = new ArrayList<LightRef>(defs.size());
-    for (JavacRefSymbol def : defs) {
-      Tree.Kind kind = def.getPlaceKind();
-      if (kind == Tree.Kind.CLASS) {
-        Symbol.ClassSymbol sym = (Symbol.ClassSymbol)def.getSymbol();
-        Type superclass = sym.getSuperclass();
-        List<Type> interfaces = sym.getInterfaces();
-
-        final Symbol[] supers;
-        if (superclass != Type.noType) {
-          supers = new Symbol[interfaces.size() + 1];
-          supers[interfaces.size()] = superclass.asElement();
-        } else {
-          supers = interfaces.isEmpty() ? EMPTY_SYMBOL_ARRAY : new Symbol[interfaces.size()];
-        }
-
-        int i = 0;
-        for (Type anInterface : interfaces) {
-          supers[i++] = anInterface.asElement();
-        }
-
+    for (JavacDef def : defs) {
+      if (def instanceof JavacDef.JavacClassDef) {
+        JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
         final LightRef.JavaLightClassRef aClass = writer.asClassUsage(sym);
         definitions.add(aClass);
 
-        if (supers.length != 0) {
-
-          final LightRef.JavaLightClassRef[] superIds = new LightRef.JavaLightClassRef[supers.length];
-          for (int j = 0; j < supers.length; j++) {
-            superIds[j] = writer.asClassUsage(supers[j]);
-          }
-
-          writer.writeHierarchy(fileId, aClass, superIds);
+        final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
+        final LightRef.JavaLightClassRef[] lightSuperClasses = new LightRef.JavaLightClassRef[superClasses.length];
+        for (int i = 0; i < superClasses.length; i++) {
+          JavacRef superClass = superClasses[i];
+          lightSuperClasses[i] = writer.asClassUsage(superClass);
         }
+
+        writer.writeHierarchy(fileId, aClass, lightSuperClasses);
       }
-      else if (kind == LAMBDA_EXPRESSION || kind == MEMBER_REFERENCE) {
-        final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getSymbol());
+      else if (def instanceof JavacDef.JavacFunExprDef) {
+        final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
         int id = funExprId++;
         LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
         definitions.add(result);
@@ -93,7 +56,6 @@ public class BackwardReferenceIndexUtil {
     }
 
     writer.writeClassDefinitions(fileId, definitions);
-
     writer.writeReferences(fileId, refs);
   }
 }

@@ -19,9 +19,7 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +28,7 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.io.File;
@@ -109,8 +107,8 @@ public class BackwardReferenceIndexWriter {
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
-  synchronized LightRef.JavaLightClassRef asClassUsage(Symbol name) {
-    return new LightRef.JavaLightClassRef(myIndex.getByteSeqEum().enumerate(bytes(name)));
+  synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) {
+    return new LightRef.JavaLightClassRef(id(aClass, myIndex.getByteSeqEum()));
   }
 
   synchronized void processDeletedFiles(Collection<String> paths) {
@@ -162,12 +160,12 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  synchronized void writeReferences(int fileId, Collection<JavacRefSymbol> refs) {
+  synchronized void writeReferences(int fileId, Collection<? extends JavacRef> refs) {
     final ByteArrayEnumerator byteSeqEum = myIndex.getByteSeqEum();
-    final Set<LightRef> usages = ContainerUtil.map2SetNotNull(refs, new Function<JavacRefSymbol, LightRef>() {
+    final Set<LightRef> usages = ContainerUtil.map2SetNotNull(refs, new Function<JavacRef, LightRef>() {
       @Override
-      public LightRef fun(JavacRefSymbol symbol) {
-        return fromSymbol(symbol, byteSeqEum);
+      public LightRef fun(JavacRef ref) {
+        return enumerateNames(ref, byteSeqEum);
       }
     });
 
@@ -284,50 +282,43 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  private static byte[] bytes(Symbol symbol) {
-    return symbol.flatName().toUtf();
-  }
-
   @Nullable
-  private static LightRef fromSymbol(JavacRefSymbol refSymbol, ByteArrayEnumerator byteArrayEnumerator) {
-    Symbol symbol = refSymbol.getSymbol();
-    final Tree.Kind kind = refSymbol.getPlaceKind();
-    if (symbol instanceof Symbol.ClassSymbol) {
-      if (!isPrivate(symbol) && !isAnonymous(symbol)) {
-        return new LightRef.JavaLightClassRef(id(symbol, byteArrayEnumerator));
+  private static LightRef enumerateNames(JavacRef ref, ByteArrayEnumerator byteArrayEnumerator) {
+    if (ref instanceof JavacRef.JavacClass) {
+      if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
+        return new LightRef.JavaLightClassRef(id(ref, byteArrayEnumerator));
       }
     }
     else {
-      Symbol owner = symbol.owner;
-      if (isPrivate(symbol)) {
+      byte[] ownerName = ref.getOwnerName();
+      if (isPrivate(ref)) {
         return null;
       }
-      if (symbol instanceof Symbol.VarSymbol) {
-        return new LightRef.JavaLightFieldRef(id(owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator));
+      if (ref instanceof JavacRef.JavacField) {
+        return new LightRef.JavaLightFieldRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator));
       }
-      else if (symbol instanceof Symbol.MethodSymbol) {
-        int paramCount = ((Symbol.MethodSymbol)symbol).type.getParameterTypes().size();
-        return new LightRef.JavaLightMethodRef(id(owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator), paramCount);
+      else if (ref instanceof JavacRef.JavacMethod) {
+        int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
+        return new LightRef.JavaLightMethodRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator), paramCount);
       }
       else {
-        throw new AssertionError("unexpected symbol: " + symbol + " class: " + symbol.getClass() + " kind: " + kind);
+        throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());
       }
     }
     return null;
   }
 
-  // JDK-6 has no Symbol.isPrivate() method
-  private static boolean isPrivate(Symbol symbol) {
-    return (symbol.flags() & Flags.AccessFlags) == PRIVATE;
+  //see Symbol.isPrivate() method
+  private static boolean isPrivate(JavacRef ref) {
+    return (ref.getFlags() & Flags.AccessFlags) == PRIVATE;
   }
 
-  // JDK-6 has no Symbol.isAnonymous() method
-  private static boolean isAnonymous(Symbol symbol) {
-    return symbol.name.isEmpty();
+  private static int id(JavacRef ref, ByteArrayEnumerator byteArrayEnumerator) {
+    return id(ref.getName(), byteArrayEnumerator);
   }
 
-  private static int id(Symbol symbol, ByteArrayEnumerator byteArrayEnumerator) {
-    return byteArrayEnumerator.enumerate(bytes(symbol));
+  private static int id(byte[] name, ByteArrayEnumerator byteArrayEnumerator) {
+    return byteArrayEnumerator.enumerate(name);
   }
 }
 
