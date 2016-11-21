@@ -18,6 +18,9 @@ package com.intellij.updater;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public abstract class PatchTestCase extends UpdaterTestCase {
@@ -38,9 +41,10 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     newFile.getParentFile().mkdirs();
     newFile.createNewFile();
     FileUtil.writeToFile(newFile, "hello");
-    File link = new File(myNewerDir, "newDir2/link");
-    link.getParentFile().mkdirs();
-    Runtime.getRuntime().exec("ln -s ../newDir/newFile.txt " + link.getAbsolutePath());
+    Path link = Paths.get(myNewerDir.getPath(), "newDir2/link");
+    Files.createDirectories(link.getParent());
+
+    Files.createSymbolicLink(link, link.getParent().relativize(Paths.get(newFile.toURI())));
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations_changed.jar"));
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));

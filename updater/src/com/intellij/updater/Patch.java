@@ -2,6 +2,7 @@ package com.intellij.updater;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipFile;
 
@@ -391,7 +392,7 @@ public class Patch {
   public long digestFile(File toFile) throws IOException {
     if (Utils.isSymlink(toFile)) {
       // If it's a symlink, just digest the path to the target itself.
-      return myDigester.digestStream(new ByteArrayInputStream(Utils.getSymlinkTarget(toFile).getBytes()));
+      return myDigester.digestStream(new ByteArrayInputStream(Utils.getSymlinkTarget(toFile).getBytes(StandardCharsets.UTF_8)));
     }
     if (!myIsBinary && Utils.isZipFile(toFile.getName())) {
       return myDigester.digestZipFile(toFile);

@@ -1,8 +1,9 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.LinkedHashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -214,42 +215,10 @@ public class Utils {
   }
 
   protected static boolean isSymlink(File file) throws IOException {
-    if (System.getProperty("os.name").startsWith("Windows")) {
-      // Windows doesn't support symlinks for non-admin users, and so they aren't used in patches,
-      // which is convenient since this mechanism doesn't work for determining symlinkness on windows anyway
-      // (e.g. paths with more than 8 characters may be truncated in one version but not the other).
-      return false;
-    }
-    return !file.getAbsolutePath().equalsIgnoreCase(file.getCanonicalPath());
+    return Files.isSymbolicLink(Paths.get(file.toURI()));
   }
 
   protected static String getSymlinkTarget(File file) throws IOException {
-    String target = file.getCanonicalPath();
-    String link = file.getAbsolutePath();
-    String[] segments1 = link.split(Pattern.quote(File.separator));
-    String[] segments2 = target.split(Pattern.quote(File.separator));
-
-    int len1 = segments1.length;
-    int len2 = segments2.length;
-    int len = Math.min(len1, len2);
-    int start = 0;
-    for (; start < len; start++) {
-      if (!segments1[start].equals(segments2[start])) {
-        break;
-      }
-    }
-
-    StringBuilder result = new StringBuilder();
-    for (int i = start; i < len1 - 1; i++) {
-      result.append("..").append(File.separator);
-    }
-    while (start < len2) {
-      result.append(segments2[start]);
-      if (++start < len2) {
-        result.append(File.separator);
-      }
-    }
-
-    return result.toString();
+    return Files.readSymbolicLink(Paths.get(file.toURI())).toString();
   }
 }
