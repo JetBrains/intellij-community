@@ -308,4 +308,18 @@ public class Task implements StudyItem {
   public void setChoiceAnswer(List<Boolean> choiceAnswer) {
     this.myChoiceAnswer = choiceAnswer;
   }
+  
+  public void copyParametersOf(@NotNull Task task) {
+    setName(task.getName());
+    setStepId(task.getStepId());
+    setText(task.getText());
+    getTestsText().clear();
+    setStatus(StudyStatus.Unchecked);
+    setChoiceVariants(task.getChoiceVariants());
+    setChoiceAnswer(new ArrayList<>(Collections.nCopies(task.getChoiceVariants().size(), false)));
+    final Map<String, String> testsText = task.getTestsText();
+    for (String testName : testsText.keySet()) {
+      addTestsTexts(testName, testsText.get(testName));
+    }
+  }
 }

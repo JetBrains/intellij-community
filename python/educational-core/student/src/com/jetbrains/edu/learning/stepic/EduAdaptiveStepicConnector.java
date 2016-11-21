@@ -252,15 +252,8 @@ public class EduAdaptiveStepicConnector {
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
           final String lessonName = EduNames.LESSON + String.valueOf(adaptive.getIndex());
           if (reaction == 0 || reaction == -1) {
-            unsolvedTask.setName(task.getName());
-            unsolvedTask.setStepId(task.getStepId());
-            unsolvedTask.setText(task.getText());
-            unsolvedTask.getTestsText().clear();
-            unsolvedTask.setStatus(StudyStatus.Unchecked);
-            final Map<String, String> testsText = task.getTestsText();
-            for (String testName : testsText.keySet()) {
-              unsolvedTask.addTestsTexts(testName, testsText.get(testName));
-            }
+            unsolvedTask.copyParametersOf(task);
+            
             final Map<String, TaskFile> taskFiles = task.getTaskFiles();
             if (taskFiles.size() == 1) {
               final TaskFile taskFile = editor.getTaskFile();
