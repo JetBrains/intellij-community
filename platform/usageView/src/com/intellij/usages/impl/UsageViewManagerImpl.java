@@ -255,10 +255,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (file instanceof VirtualFileWindow) {
       file = ((VirtualFileWindow)file).getDelegate();
     }
-    if (searchScope instanceof LocalSearchScope) {
-      return ((LocalSearchScope)searchScope).isInScope(file);
-    }
-    return ((GlobalSearchScope)searchScope).contains(file);
+    return searchScope.contains(file);
   }
 
   @NotNull

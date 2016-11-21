@@ -222,8 +222,7 @@ public class AnalysisScope {
     if (myFilesSet == null) {
       if (myType == CUSTOM) {
         // optimization
-        if (myScope instanceof GlobalSearchScope) return ((GlobalSearchScope)myScope).contains(file);
-        if (myScope instanceof LocalSearchScope) return ((LocalSearchScope)myScope).isInScope(file);
+        if (myScope != null) return myScope.contains(file);
       }
       if (myType == PROJECT) {  //optimization
         final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
