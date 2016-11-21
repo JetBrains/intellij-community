@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -26,13 +24,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -405,7 +398,7 @@ public class GenerateMembersUtil {
     final PsiParameter[] newParameters = overriddenParameters(parameters, factory, codeStyleManager, substitutor, target);
     for (int i = 0; i < newParameters.length; i++) {
       final PsiParameter newParameter = newParameters[i];
-      copyOrReplaceModifierList(parameters[i], newParameter);
+      copyOrReplaceModifierList(parameters[i], target, newParameter);
       targetParameterList.add(newParameter);
     }
   }
@@ -566,51 +559,24 @@ public class GenerateMembersUtil {
     OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
   }
 
+  /**
+   * to be deleted in 2017.2
+   */
+  @Deprecated
   public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @NotNull PsiModifierListOwner targetParam) {
+    copyOrReplaceModifierList(sourceParam, null, targetParam);
+  }
+
+  public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @Nullable PsiElement targetClass, @NotNull PsiModifierListOwner targetParam) {
     PsiModifierList sourceModifierList = sourceParam.getModifierList();
     PsiModifierList targetModifierList = targetParam.getModifierList();
 
     if (sourceModifierList != null && targetModifierList != null) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(targetModifierList);
-      final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
-      final Project project = targetModifierList.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
-      for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(sourceParam, false, null, false)) {
-        final String qualifiedName = annotation.getQualifiedName();
-        if (qualifiedName != null && (moduleScope == null || facade.findClass(qualifiedName, moduleScope) != null) &&
-            !AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-          targetModifierList.add(factory.createAnnotationFromText(annotation.getText(), sourceParam));
-        }
-      }
       for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
         targetModifierList.setModifierProperty(m, sourceParam.hasModifierProperty(m));
       }
 
-      filterAnnotations(sourceModifierList.getProject(), targetModifierList, targetModifierList.getResolveScope());
-    }
-  }
-
-  private static void filterAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
-    Set<String> toRemove = new HashSet<>();
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName != null) {
-        for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-          String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
-          Collections.addAll(toRemove, annotations2Remove);
-          if (moduleScope != null && psiFacade.findClass(qualifiedName, moduleScope) == null) {
-            toRemove.add(qualifiedName);
-          }
-        }
-      }
-    }
-    for (String fqn : toRemove) {
-      PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
-      if (psiAnnotation != null) {
-        psiAnnotation.delete();
-      }
+      OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(sourceParam, targetClass, targetParam);
     }
   }
 

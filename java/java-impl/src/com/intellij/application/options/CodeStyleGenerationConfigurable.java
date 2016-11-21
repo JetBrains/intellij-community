@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,24 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SortedListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +67,9 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JPanel myVisibilityPanel;
   
   @SuppressWarnings("unused") private JPanel myCommenterPanel;
+  private JPanel myOverridePanel;
   private CommenterForm myCommenterForm;
+  private SortedListModel<String> myRepeatAnnotationsModel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -76,6 +83,13 @@ public class CodeStyleGenerationConfigurable implements Configurable {
       .disableAddAction().disableRemoveAction().createPanel();
     myMembersPanel.add(panel, BorderLayout.CENTER);
     myVisibilityPanel.add(myJavaVisibilityPanel, BorderLayout.CENTER);
+    GridBagConstraints gc =
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
+                             new JBInsets(0, 0, 0, 0), 0, 0);
+    final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    //noinspection Convert2Diamond
+    myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Repeat", false, isApplicable, myRepeatAnnotationsModel), gc);
     return myPanel;
   }
 
@@ -111,7 +125,9 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
     myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
-    
+
+    myRepeatAnnotationsModel.clear();
+    myRepeatAnnotationsModel.addAll(settings.getRepeatAnnotations());
     myCommenterForm.reset(settings);
   }
 
@@ -144,6 +160,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myMembersOrderList.apply(settings);
     
     myCommenterForm.apply(settings);
+    settings.setRepeatAnnotations(myRepeatAnnotationsModel.getItems());
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -187,6 +204,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
     
     isModified |= myCommenterForm.isModified(settings);
+
+    isModified |= !myRepeatAnnotationsModel.getItems().equals(settings.getRepeatAnnotations());
 
     return isModified;
   }

@@ -1,7 +1,7 @@
 class Arrays {
   int[] i;
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -13,8 +13,8 @@ class Arrays {
         return true;
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
-        return i != null ? i.hashCode() : 0;
+        return java.util.Arrays.hashCode(i);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -251,7 +250,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           String name = param.getName();
           assert name != null : param;
           PsiParameter newParam = factory.createParameter(name, param.getType(), aClass);
-          GenerateMembersUtil.copyOrReplaceModifierList(param, newParam);
+          GenerateMembersUtil.copyOrReplaceModifierList(param, aClass, newParam);
           constructor.getParameterList().add(newParam);
         }
       }
