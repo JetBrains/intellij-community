@@ -238,6 +238,8 @@ class Intf {
     assert getPopupElements(model, 'Bar(2)') == [file]
     assert getPopupElements(model, 'Bar on line 2') == [file]
     assert getPopupElements(model, 'Bar at line 2') == [file]
+    assert getPopupElements(model, 'Bar 2:39') == [file]
+    assert getPopupElements(model, 'Bar#L2') == [file]
   }
 
   void "test dollar"() {
