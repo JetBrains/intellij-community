@@ -21,11 +21,11 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -221,7 +221,7 @@ class Test implements A {
       }""".stripIndent()
   }
 
-  void testCustomOverrideImplementsHandler() {
+  void testNoCustomOverrideImplementsHandler() {
     myFixture.addClass """package a; public @interface A { }"""
 
     myFixture.configureByText "test.java", """\
@@ -252,18 +252,18 @@ class Test implements A {
               return null;
           }
       }""".stripIndent()
+  }
 
-    ExtensionPoint<OverrideImplementsAnnotationsHandler> point = Extensions.getRootArea().getExtensionPoint(OverrideImplementsAnnotationsHandler.EP_NAME);
-    OverrideImplementsAnnotationsHandler extension = new OverrideImplementsAnnotationsHandler() {
+  void testCustomOverrideImplementsHandler() throws Exception {
+    myFixture.addClass """package a; public @interface A { }"""
+
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
       @Override
       String[] getAnnotations(Project project) {
         return ["a.A"]
       }
-    }
-
-    try {
-      point.registerExtension(extension)
-      myFixture.configureByText "test.java", """\
+    }, getTestRootDisposable())
+    myFixture.configureByText "test.java", """\
       import java.util.*;
       import a.*;
 
@@ -275,9 +275,9 @@ class Test implements A {
           <caret>
       }""".stripIndent()
 
-      invokeAction(true)
+    invokeAction(true)
 
-      myFixture.checkResult """\
+    myFixture.checkResult """\
       import java.util.*;
       import a.*;
 
@@ -292,11 +292,6 @@ class Test implements A {
               return null;
           }
       }""".stripIndent()
-
-    }
-    finally {
-      point.unregisterExtension(extension)
-    }
   }
 
   private void doTest(boolean toImplement) {
