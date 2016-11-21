@@ -523,7 +523,6 @@ public class StudyUtils {
   @Nullable
   private static String getTaskTextFromTaskName(@Nullable VirtualFile taskDirectory, @NotNull String taskTextFilename) {
     if (taskDirectory == null) return null;
-    taskDirectory.refresh(false, true);
     VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(EduNames.TASK_HTML),
                                                          taskDirectory.findChild(EduNames.TASK_MD));
     if (taskTextFile == null) {
