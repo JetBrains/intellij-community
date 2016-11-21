@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -734,6 +733,34 @@ public class PyTypingTest extends PyTestCase {
            "((x)): int\n" +
            "y: bool = z = undefined()\n" +
            "expr = (w, x, y, z)\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args: str):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs: int):\n" +
+           "    expr = kwargs\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args  # type: str\n):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs  # type: int\n):\n" +
+           "    expr = kwargs\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {
