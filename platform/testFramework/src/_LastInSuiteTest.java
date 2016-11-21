@@ -113,6 +113,9 @@ public class _LastInSuiteTest extends TestCase {
         System.out.println("Memory snapshot captured to '"+path+"'");
       }
     }
+    catch (ClassNotFoundException e) {
+      // ProfilingUtil is missing from the classpath, ignore
+    }
     catch (Exception e) {
       e.printStackTrace();
     }
