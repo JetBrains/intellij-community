@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
   public NewEditChangelistPanel(final Project project) {
     super(new GridBagLayout());
     myProject = project;
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                          JBUI.insets(1), 0, 0);
 
     final JLabel nameLabel = new JLabel(VcsBundle.message("edit.changelist.name"));
@@ -70,7 +71,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
+    gb.anchor = GridBagConstraints.NORTHWEST;
     final JLabel commentLabel = new JLabel(VcsBundle.message("edit.changelist.description"));
+    UIUtil.addInsets(commentLabel, JBUI.insetsRight(4));
     add(commentLabel, gb);
     ++ gb.gridx;
     gb.weightx = 1;
