@@ -1,4 +1,4 @@
-// "Wrap using 'Arrays.asList'" "false"
+// "Wrap using 'Arrays.asList()'" "false"
 import java.util.LinkedList;
 
 public class Test {
