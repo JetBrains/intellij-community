@@ -52,8 +52,9 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     int start = context.getStartOffset();
     PsiClass psiClass = PsiUtil.resolveClassInType((PsiType)item.getObject());
     if (psiClass != null) {
-      JavaCompletionUtil.insertClassReference(psiClass, context.getFile(), start,
-                                              start + StringUtil.trimEnd(item.getLookupString(), "::new").length());
+      String insertedName = StringUtil.trimEnd(item.getLookupString(), "::new");
+      while (insertedName.endsWith("[]")) insertedName = insertedName.substring(0, insertedName.length() - 2);
+      JavaCompletionUtil.insertClassReference(psiClass, context.getFile(), start, start + insertedName.length());
     }
   };
 
