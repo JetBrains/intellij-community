@@ -73,7 +73,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/21/11
+ * @since 21.09.2011
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
@@ -333,16 +333,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return exitCode;
   }
 
-  private boolean compileJava(
-    final CompileContext context,
-    ModuleChunk chunk,
-    Collection<File> files,
-    Collection<File> classpath,
-    Collection<File> platformCp,
-    Collection<File> sourcePath,
-    DiagnosticOutputConsumer diagnosticSink,
-    final OutputFileConsumer outputSink, JavaCompilingTool compilingTool) throws Exception {
-
+  private boolean compileJava(CompileContext context,
+                              ModuleChunk chunk,
+                              Collection<File> files,
+                              Collection<File> classpath,
+                              Collection<File> platformCp,
+                              Collection<File> sourcePath,
+                              DiagnosticOutputConsumer diagnosticSink,
+                              OutputFileConsumer outputSink,
+                              JavaCompilingTool compilingTool) throws Exception {
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
 
@@ -424,13 +423,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       Collection<File> modulePath = Collections.emptyList();
-      if (targetLanguageLevel >= 9) {
-        JavaModuleIndex index = getJavaModuleIndex(context);
-        if (index.hasJavaModules(chunk.getModules())) {
-          // in Java 9, named modules are not allowed to read classes from the classpath
-          modulePath = classpath;
-          classpath = Collections.emptyList();
-        }
+      if (targetLanguageLevel >= 9 && getJavaModuleIndex(context).hasJavaModules(modules)) {
+        // in Java 9, named modules are not allowed to read classes from the classpath
+        modulePath = classpath;
+        classpath = Collections.emptyList();
       }
 
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
@@ -466,24 +462,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     return options.MAXIMUM_HEAP_SIZE;
   }
+
   @Nullable
   public static String validateCycle(ModuleChunk chunk,
                                      JpsJavaExtensionService javaExt,
-                                     JpsJavaCompilerConfiguration compilerConfig, Set<JpsModule> modules) {
+                                     JpsJavaCompilerConfiguration compilerConfig,
+                                     Set<JpsModule> modules) {
     Pair<String, LanguageLevel> pair = null;
     for (JpsModule module : modules) {
       final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
       if (pair == null) {
         pair = Pair.create(module.getName(), moduleLevel); // first value
       }
-      else {
-        if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
-          return "Modules " +
-                 pair.getFirst() +
-                 " and " +
-                 module.getName() +
-                 " must have the same language level because of cyclic dependencies between them";
-        }
+      else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
+        return "Modules " + pair.getFirst() + " and " + module.getName() +
+               " must have the same language level because of cyclic dependencies between them";
       }
     }
 
@@ -530,7 +523,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
   }
 
-  // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
+  // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
   private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
