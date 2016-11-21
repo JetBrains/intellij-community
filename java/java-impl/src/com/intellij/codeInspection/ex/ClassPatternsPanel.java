@@ -83,7 +83,7 @@ class ClassPatternsPanel extends JPanel {
     add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     add(new MultiLineLabel("Leave method blank to represent constructors\n" +
-                           "Any * will match against one ore more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
+                           "Any * will match against one or more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
     setPreferredSize(new JBDimension(-1, 250));
   }
 
