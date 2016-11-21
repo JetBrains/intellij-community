@@ -219,7 +219,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/python-helpers.iml" filepath="$PROJECT_DIR$/python/python-helpers.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/ide/python-ide-community.iml" filepath="$PROJECT_DIR$/python/ide/python-ide-community.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/ide/python-community-ide.iml" filepath="$PROJECT_DIR$/python/ide/python-ide-community.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/python-openapi.iml" filepath="$PROJECT_DIR$/python/openapi/python-openapi.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-plugin-tests.iml" filepath="$PROJECT_DIR$/python/python-plugin-tests.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/psi-api/python-psi-api.iml" filepath="$PROJECT_DIR$/python/psi-api/python-psi-api.iml" group="python" />

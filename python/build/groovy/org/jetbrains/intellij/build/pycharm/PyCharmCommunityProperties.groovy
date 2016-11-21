@@ -30,7 +30,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
       "dom-impl", "python-community", "python-community-ide-resources",
-      "python-ide-community", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
+      "python-community-ide", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
     ]
     productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
     productLayout.mainModules = ["main_pycharm_ce"]

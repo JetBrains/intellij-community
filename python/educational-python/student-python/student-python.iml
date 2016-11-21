@@ -15,6 +15,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="educational-python" />
     <orderEntry type="module" module-name="python-community-configure" />
-    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="python-community-ide" />
   </component>
 </module>
