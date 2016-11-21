@@ -1,0 +1,44 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "jetgroovy",
+    srcs = ["src"],
+    javacopts = ["-extra_checks:off"],
+    tags = ["managed"],
+    test_srcs = ["test"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/plugins/groovy/groovy-psi",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/java/openapi[module]",
+        "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
+        "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
+        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea/platform/lang-api[module]",
+        "//tools/idea/plugins/properties[module]",
+        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
+        "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/.idea/libraries:Groovy",
+        "//tools:idea.java-impl[module]",
+        "//tools/idea/plugins/copyright[module]",
+        "//tools/idea/plugins/IntelliLang[module]",
+        "//tools/idea/plugins/ant[module]",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/plugins/IntelliLang:IntelliLang-java[module]",
+        "//tools/idea/plugins/IntelliLang:IntelliLang-xml[module, test]",
+        "//tools/idea/jps/jps-builders[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/plugins/junit[module, test]",
+        "//tools/idea/java/java-indexing-api[module]",
+        "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
+        "//tools/idea/plugins/ByteCodeViewer[module]",
+        "//tools/idea/plugins/properties/properties-psi-api[module]",
+        "//tools/idea/plugins/groovy/groovy-psi[module]",
+        "//tools/idea/platform/external-system-api[module]",
+    ],
+)

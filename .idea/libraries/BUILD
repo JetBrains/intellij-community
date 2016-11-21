@@ -85,13 +85,13 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/lib:jsr305",
-        "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
+        "//tools/idea/plugins/gradle/lib:jsr305-1.3.9",
         "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/lib:jsr305",
-        "//tools:idea/plugins/gradle/lib/jsr305-1.3.9",
+        "//tools/idea/plugins/gradle/lib:jsr305-1.3.9",
         "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
 )
@@ -298,13 +298,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/testng/lib/testng",
-        "//tools:idea/plugins/testng/lib/jcommander",
+        "//tools/idea/plugins/testng/lib:testng",
+        "//tools/idea/plugins/testng/lib:jcommander",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/testng/lib/testng",
-        "//tools:idea/plugins/testng/lib/jcommander",
+        "//tools/idea/plugins/testng/lib:testng",
+        "//tools/idea/plugins/testng/lib:jcommander",
     ],
 )
 
@@ -770,37 +770,37 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/gradle/lib/gradle-tooling-api-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-core-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-messaging-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-model-core-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-model-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-wrapper-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-base-services-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-base-services-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-native-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-resources-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-logging-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-process-services-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-core-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-native-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-dependency-management-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/gradle/lib/gradle-tooling-api-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-core-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-messaging-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-model-core-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-model-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-wrapper-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-base-services-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-base-services-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-native-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-resources-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-logging-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-process-services-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-core-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-native-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-dependency-management-3.1",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.1",
     ],
 )
 
@@ -808,8 +808,8 @@ java_library(
     name = "Groovy-Eclipse-Batch",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01"],
-    runtime_deps = ["//tools:idea/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01"],
+    exports = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
+    runtime_deps = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
 )
 
 java_library(
@@ -818,13 +818,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
-        "//tools:idea/plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
-        "//tools:idea/plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
     ],
 )
 
@@ -840,8 +840,8 @@ java_library(
     name = "GradleGuava",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea/plugins/gradle/lib/guava-jdk5-17.0"],
-    runtime_deps = ["//tools:idea/plugins/gradle/lib/guava-jdk5-17.0"],
+    exports = ["//tools/idea/plugins/gradle/lib:guava-jdk5-17.0"],
+    runtime_deps = ["//tools/idea/plugins/gradle/lib:guava-jdk5-17.0"],
 )
 
 java_library(
@@ -850,35 +850,35 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-build-init-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-ide-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-java-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-platform-base-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-plugins-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-testing-base-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-scala-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-scala-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-reporting-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-ear-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-build-init-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-ide-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-java-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-platform-base-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-platform-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-plugins-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-testing-base-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-testing-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-scala-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-scala-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-impl/lib:gradle-reporting-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-impl/lib:gradle-ear-3.1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-build-init-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-ide-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-java-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-platform-base-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-plugins-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-testing-base-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-scala-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-api/lib/gradle-language-scala-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-reporting-3.1",
-        "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-ear-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-build-init-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-ide-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-java-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-platform-base-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-platform-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-plugins-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-testing-base-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-testing-jvm-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-scala-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-api/lib:gradle-language-scala-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-impl/lib:gradle-reporting-3.1",
+        "//tools/idea/plugins/gradle/tooling-extension-impl/lib:gradle-ear-3.1",
     ],
 )
 
@@ -888,19 +888,19 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/mercury-artifact-1.0-alpha-6",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:maven-dependency-tree-1.2",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:archetype-common-2.0-alpha-4-SNAPSHOT",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:mercury-artifact-1.0-alpha-6",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/lib:maven-2.2.1-uber",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/boot:classworlds-1.1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/mercury-artifact-1.0-alpha-6",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
-        "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:maven-dependency-tree-1.2",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:archetype-common-2.0-alpha-4-SNAPSHOT",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib:mercury-artifact-1.0-alpha-6",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/lib:maven-2.2.1-uber",
+        "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/boot:classworlds-1.1",
     ],
 )
 
@@ -914,8 +914,8 @@ java_library(
     name = "commons-io",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea/plugins/gradle/lib/commons-io-2.2"],
-    runtime_deps = ["//tools:idea/plugins/gradle/lib/commons-io-2.2"],
+    exports = ["//tools/idea/plugins/gradle/lib:commons-io-2.2"],
+    runtime_deps = ["//tools/idea/plugins/gradle/lib:commons-io-2.2"],
 )
 
 java_library(
@@ -924,13 +924,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/gradle/lib/jna-3.2.7",
-        "//tools:idea/plugins/gradle/lib/native-platform-0.11",
+        "//tools/idea/plugins/gradle/lib:jna-3.2.7",
+        "//tools/idea/plugins/gradle/lib:native-platform-0.11",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/gradle/lib/jna-3.2.7",
-        "//tools:idea/plugins/gradle/lib/native-platform-0.11",
+        "//tools/idea/plugins/gradle/lib:jna-3.2.7",
+        "//tools/idea/plugins/gradle/lib:native-platform-0.11",
     ],
 )
 
@@ -980,21 +980,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-engine-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-engine-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-M1",
-        "//tools:idea/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M1",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M1",
     ],
 )
 
@@ -1002,8 +1002,8 @@ java_library(
     name = "opentest4j",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea/plugins/junit5_rt/lib/opentest4j-1.0.0-M1"],
-    runtime_deps = ["//tools:idea/plugins/junit5_rt/lib/opentest4j-1.0.0-M1"],
+    exports = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M1"],
+    runtime_deps = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M1"],
 )
 
 java_library(

@@ -1,7 +1,7 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "idea.cucumber-jvm-formatter",
+    name = "cucumber-jvm-formatter",
     srcs = ["src"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

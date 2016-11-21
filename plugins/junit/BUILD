@@ -1,0 +1,28 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "junit",
+    srcs = ["src"],
+    tags = ["managed"],
+    test_srcs = ["test"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/platform/smRunner"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/java/openapi[module]",
+        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea/java/java-runtime[module]",
+        "//tools/idea/platform/testRunner[module]",
+        "//tools/idea/.idea/libraries:JUnit3",
+        "//tools/idea/.idea/libraries:JUnit4",
+        "//tools/idea/plugins/junit_rt[module]",
+        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
+        "//tools:idea.java-impl[module]",
+        "//tools/idea/java/java-indexing-api[module]",
+        "//tools/idea/platform/smRunner[module]",
+        "//tools/idea/plugins/junit5_rt[module]",
+        "//tools/idea/.idea/libraries:junit5_rt",
+    ],
+)

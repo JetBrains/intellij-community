@@ -1,0 +1,19 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "forms-compiler",
+    srcs = ["src"],
+    tags = ["managed"],
+    test_srcs = ["testSrc"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/java/compiler/instrumentation-util"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/java/compiler/instrumentation-util[module]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+    ],
+)

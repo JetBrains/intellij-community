@@ -1,0 +1,45 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "jps-builders",
+    srcs = ["src"],
+    exclude = [
+        "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
+        "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
+    ],
+    tags = ["managed"],
+    test_srcs = ["testSrc"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/util",
+        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:protobuf",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/java/compiler/forms-compiler[module]",
+        "//tools/idea/java/compiler/instrumentation-util[module]",
+        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/.idea/libraries:Netty",
+        "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/jps/lib:optimizedFileManager",
+        "//tools/idea/java/java-runtime[module]",
+        "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/.idea/libraries:Eclipse[test]",
+        "//tools/idea/jps/model-api:jps-model-api[module]",
+        "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
+        "//tools/idea/jps/model-impl:jps-model-impl[module]",
+        "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:KotlinTest[test]",
+    ],
+)

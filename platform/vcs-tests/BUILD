@@ -1,7 +1,7 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "idea.vcs-tests",
+    name = "vcs-tests",
     srcs = ["src"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
@@ -11,10 +11,10 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools:idea.platform-impl_and_others[module]",
-        "//tools:idea.vcs-api[module]",
-        "//tools:idea.vcs-api-core[module]",
-        "//tools:idea.core-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/platform/vcs-api/vcs-api-core[module]",
+        "//tools/idea/platform/core-api[module]",
         "//tools/idea/.idea/libraries:JUnit4",
-        "//tools:idea.platform-api[module]",
+        "//tools/idea/platform/platform-api[module]",
     ],
 )

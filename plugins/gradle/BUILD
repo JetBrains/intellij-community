@@ -1,0 +1,68 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "gradle",
+    srcs = ["src"],
+    resources = ["resources"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/external-system-api",
+        "//tools:idea.compiler-impl_and_others",
+        "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api",
+        "//tools/idea/.idea/libraries:Slf4j",
+        "//tools/idea/.idea/libraries:Gradle",
+        "//tools/idea/.idea/libraries:GradleGuava",
+        "//tools/idea/.idea/libraries:commons-io",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/external-system-api[module]",
+        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api[module]",
+        "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
+        "//tools/idea/plugins/gradle/jps-plugin:gradle-jps-plugin[module]",
+        "//tools/idea/platform/lang-api[module]",
+        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
+        "//tools/idea/plugins/groovy:jetgroovy[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/java/openapi[module]",
+        "//tools:idea.java-impl[module]",
+        "//tools/idea/plugins/maven:maven_and_others[module]",
+        "//tools/idea/plugins/junit[module]",
+        "//tools/idea/.idea/libraries:swingx",
+        "//tools/idea/.idea/libraries:Slf4j",
+        "//tools/idea/.idea/libraries:Gradle",
+        "//tools/idea/.idea/libraries:GradleGuava",
+        "//tools/idea/.idea/libraries:jsr305",
+        "//tools/idea/.idea/libraries:commons-io",
+        "//tools/idea/.idea/libraries:GradleJnaPosix",
+        "//tools/idea/platform/smRunner[module]",
+        "//tools/idea/.idea/libraries:Kryo",
+        "//tools/idea/.idea/libraries:Ant",
+        "//tools/idea/.idea/libraries:gson",
+    ],
+)
+
+iml_module(
+    name = "gradle-tests",
+    tags = ["managed"],
+    test_srcs = [
+        "testData",
+        "testSources",
+    ],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:Mocks[test]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea/plugins/gradle[module, test]",
+        "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-tests[module, test]",
+        "//tools/idea/plugins/maven/maven-server-api[module, test]",
+    ],
+)

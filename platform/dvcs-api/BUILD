@@ -1,18 +1,18 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "idea.dvcs-api",
+    name = "dvcs-api",
     srcs = ["src"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/platform/vcs-log/graph-api:idea.vcs-log-graph-api"],
+    exports = ["//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api"],
     # do not sort: must match IML order
     deps = [
-        "//tools:idea.util-rt[module]",
-        "//tools/idea/platform/vcs-log/graph-api:idea.vcs-log-graph-api[module]",
-        "//tools:idea.core-api[module]",
-        "//tools:idea.vcs-api[module]",
-        "//tools:idea.extensions[module]",
-        "//tools/idea/platform/vcs-log/api:idea.vcs-log-api[module]",
+        "//tools/idea/platform/util-rt[module]",
+        "//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api[module]",
+        "//tools/idea/platform/core-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/platform/extensions[module]",
+        "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
     ],
 )

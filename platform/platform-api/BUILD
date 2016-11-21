@@ -1,0 +1,45 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "platform-api",
+    srcs = ["src"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/util",
+        "//tools/idea/platform/extensions",
+        "//tools/idea/platform/core-api",
+        "//tools/idea/.idea/libraries:picocontainer",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/platform/forms_rt",
+        "//tools/idea/platform/platform-resources-en",
+        "//tools/idea/platform/projectModel-api",
+        "//tools/idea/platform/analysis-api",
+        "//tools/idea/platform/editor-ui-api",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/extensions[module]",
+        "//tools/idea/platform/core-api[module]",
+        "//tools/idea/.idea/libraries:picocontainer",
+        "//tools/idea/platform/bootstrap[module]",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/.idea/libraries:commons-codec",
+        "//tools/idea/platform/platform-resources-en[module]",
+        "//tools/idea/.idea/libraries:OroMatcher",
+        "//tools/idea/platform/icons[module]",
+        "//tools/idea/lib:automaton",
+        "//tools/idea/platform/projectModel-api[module]",
+        "//tools/idea/.idea/libraries:Netty",
+        "//tools/idea/.idea/libraries:proxy-vole",
+        "//tools/idea/platform/analysis-api[module]",
+        "//tools/idea/platform/editor-ui-api[module]",
+        "//tools/idea/.idea/libraries:pty4j",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/.idea/libraries:jna",
+    ],
+)

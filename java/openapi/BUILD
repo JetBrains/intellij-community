@@ -1,0 +1,46 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "openapi",
+    srcs = ["src"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/util",
+        "//tools/idea/platform/extensions",
+        "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:microba",
+        "//tools/idea/xml/openapi:xml-openapi",
+        "//tools/idea/platform/platform-api",
+        "//tools/idea/platform/lang-api",
+        "//tools/idea/platform/vcs-api",
+        "//tools/idea/resources-en",
+        "//tools/idea/java/java-psi-api",
+        "//tools/idea/java/java-indexing-api",
+        "//tools/idea/java/java-analysis-api",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/platform/extensions[module]",
+        "//tools/idea/platform/icons[module]",
+        "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:microba",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/xml/openapi:xml-openapi[module]",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools/idea/platform/lang-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/.idea/libraries:XmlRPC",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/resources-en[module]",
+        "//tools/idea/java/java-psi-api[module]",
+        "//tools/idea/java/java-indexing-api[module]",
+        "//tools/idea/java/java-analysis-api[module]",
+    ],
+)
