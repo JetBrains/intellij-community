@@ -876,8 +876,10 @@ public class XDebugSessionImpl implements XDebugSession {
         }
 
         if (mySessionTab != null) {
-          ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
-          mySessionTab.detachFromSession();
+          AppUIUtil.invokeOnEdt(() -> {
+            ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
+            mySessionTab.detachFromSession();
+          });
         }
         else if (myConsoleView != null) {
           AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));

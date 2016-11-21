@@ -93,10 +93,8 @@ public abstract class SdkType implements SdkTypeId {
   public void setupSdkPaths(@NotNull Sdk sdk) {}
 
   /**
-   * Comparator is used to order sdks in project or module settings combo boxes.
-   * If different sdk types return the same comparator object than they are sorted simultaneously.
-   *
-   * @return comparator what orders sdks of given sdkType
+   * Returns comparator which is used to order sdks in project or module settings combo boxes.
+   * If different sdk types return the same comparator object then they are sorted together.
    */
 
   public Comparator<Sdk> getComparator(){

@@ -54,7 +54,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -63,7 +62,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.vcs.ProjectLevelVcsManager.*;
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
@@ -1429,6 +1428,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
     myIgnoredIdeaLevel.addIgnoredDirectoryImplicitly(path, myProject);
+  }
+
+  @Override
+  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
+    myIgnoredIdeaLevel.removeImplicitlyIgnoredDirectory(path, myProject);
   }
 
   public IgnoredFilesComponent getIgnoredFilesComponent() {
