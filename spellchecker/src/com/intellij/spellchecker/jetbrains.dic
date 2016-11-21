@@ -64,6 +64,7 @@ captcha
 ccflags
 cdata
 cglib
+chai
 changelog
 changelist
 charset
