@@ -33,7 +33,7 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/30/11
+ * @since 30.09.2011
  */
 public class ProjectPaths {
   private ProjectPaths() { }
@@ -54,6 +54,11 @@ public class ProjectPaths {
   @NotNull
   public static Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
+  }
+
+  @NotNull
+  public static Collection<File> getCompilationModulePath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, false);
   }
 
   @NotNull

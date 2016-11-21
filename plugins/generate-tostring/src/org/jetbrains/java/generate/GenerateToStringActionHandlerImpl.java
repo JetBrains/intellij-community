@@ -50,6 +50,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -104,7 +105,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         chooser.setTitle("Generate toString()");
 
         chooser.setCopyJavadocVisible(false);
-        chooser.selectElements(dialogMembers);
+        chooser.selectElements(getPreselection(clazz, dialogMembers));
         header.setChooser(chooser);
         chooser.show();
 
@@ -132,15 +133,21 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         logger.debug("+++ doExecuteAction - END +++");
     }
 
+    private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
+        return Arrays.stream(dialogMembers)
+          .filter(member -> member.getElement().getContainingClass() == clazz)
+          .toArray(PsiElementClassMember[]::new);
+    }
+
     public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
-        dialog.selectElements(members);
+        dialog.selectElements(getPreselection(clazz, members));
     }
 
-    private static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
+    public static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
         Config config = GenerateToStringContext.getConfig();
-        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, config.getFilterPattern());
+        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
         if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
         PsiMethod[] filteredMethods;
         if (config.enableMethods) {

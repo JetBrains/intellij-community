@@ -43,8 +43,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collection;
 
-import static com.intellij.ui.LabelUtil.createLabelWithRoundCorners;
-
 public class ChangeListChooserPanel extends JPanel {
 
   private final MyEditorComboBox myExistingListsCombo;
@@ -237,7 +235,10 @@ public class ChangeListChooserPanel extends JPanel {
       super(PREF_WIDTH);
       myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       JBColor fg = new JBColor(0x00b53d, 0x24953c);
-      JLabel label = createLabelWithRoundCorners("New", fg, ColorUtil.toAlpha(fg, 40), .8F, 4, 2, 2);
+      TextIcon icon = new TextIcon("New", fg, ColorUtil.toAlpha(fg, 40), JBUI.scale(2));
+      icon.setFont(RelativeFont.TINY.derive(getFont()));
+      icon.setRound(JBUI.scale(4));
+      JLabel label = new JLabel(icon);
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(true);
       panel.setBackground(myEditorTextField.getBackground());
