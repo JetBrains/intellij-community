@@ -240,7 +240,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private void clearNMore(@NotNull Balloon balloon) {
     BalloonLayoutData layoutData = myLayoutData.get(balloon);
-    if (layoutData != null && layoutData.mergeData != null) {
+    if (layoutData != null && layoutData.project != null && layoutData.mergeData != null) {
       EventLog.clearNMore(layoutData.project, Collections.singleton(layoutData.groupId));
     }
   }
