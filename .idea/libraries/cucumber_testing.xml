@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="cucumber-testing">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/cucumber-jvm-deps-1.0.3.jar" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
