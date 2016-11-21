@@ -18,7 +18,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -53,7 +53,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class RenameDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
+
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
 
   private SuggestedNameInfo mySuggestedNameInfo;
@@ -73,7 +73,7 @@ public class RenameDialog extends RefactoringDialog {
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext, Editor editor) {
     super(project, true);
 
-    assert psiElement.isValid();
+    PsiUtilCore.ensureValid(psiElement);
 
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
@@ -298,8 +298,8 @@ public class RenameDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    LOG.assertTrue(myPsiElement.isValid());
-    final String newName = getNewName();
+    PsiUtilCore.ensureValid(myPsiElement);
+    String newName = getNewName();
     performRename(newName);
   }
 
