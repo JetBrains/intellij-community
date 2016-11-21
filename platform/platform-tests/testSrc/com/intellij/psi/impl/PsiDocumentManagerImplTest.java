@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -120,19 +119,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     documentManager.commitAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
-    UIUtil.dispatchAllInvocationEvents();
     assertEmpty(documentManager.getUncommittedDocuments());
 
-    LeakHunter.checkLeak(documentManager, DocumentImpl.class);
-    LeakHunter.checkLeak(documentManager, PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
+    LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
+    LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
-    for (int i = 0; i < 1000; i++) {
-      PlatformTestUtil.tryGcSoftlyReachableObjects();
-      UIUtil.dispatchAllInvocationEvents();
-      if (documentManager.getCachedDocument(findFile(vFile)) == null) break;
-      System.gc();
-    }
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
