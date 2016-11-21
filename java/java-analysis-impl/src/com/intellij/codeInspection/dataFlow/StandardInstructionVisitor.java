@@ -353,7 +353,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return qualifierValue;
     }
 
-    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
+    if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullness nullability = myReturnTypeNullability.get(instruction);
       if (nullability == Nullness.UNKNOWN && factory.isUnknownMembersAreNullable()) {
         nullability = Nullness.NULLABLE;
