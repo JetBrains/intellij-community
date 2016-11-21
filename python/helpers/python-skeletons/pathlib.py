@@ -7,7 +7,7 @@ import os
 class PurePath(object):
     def __new__(cls, *pathsegments):
         """
-        :type pathsegments: tuple[str | bytes | os.PathLike]
+        :type pathsegments: str | bytes | os.PathLike
         :rtype: pathlib.PurePath
         """
         return cls.__new__(*pathsegments)
@@ -149,7 +149,7 @@ class PureWindowsPath(pathlib.PurePath):
 class Path(pathlib.PurePath):
     def __new__(cls, *pathsegments):
         """
-        :type pathsegments: tuple[str | bytes | os.PathLike]
+        :type pathsegments: str | bytes | os.PathLike
         :rtype: pathlib.Path
         """
         return cls.__new__(*pathsegments)

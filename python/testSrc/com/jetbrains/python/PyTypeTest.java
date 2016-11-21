@@ -1428,6 +1428,26 @@ public class PyTypeTest extends PyTestCase {
            "expr = raw_input()");
   }
 
+  // PY-19723
+  public void testPositionalArgs() {
+    doTest("Tuple[int, ...]",
+           "def foo(*args):\n" +
+           "    \"\"\"\n" +
+           "    :type args: int\n" +
+           "    \"\"\"\n" +
+           "    expr = args");
+  }
+
+  // PY-19723
+  public void testKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs):\n" +
+           "    \"\"\"\n" +
+           "    :type kwargs: int\n" +
+           "    \"\"\"\n" +
+           "    expr = kwargs");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

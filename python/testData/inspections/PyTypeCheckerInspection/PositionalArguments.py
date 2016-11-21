@@ -1,6 +1,6 @@
 def foo(*args):
     """
-    :type args: tuple[str]
+    :type args: str
     """
     pass
 
