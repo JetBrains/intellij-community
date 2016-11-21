@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
@@ -201,11 +202,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void delete(final Object requestor) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     ourPersistence.deleteFile(requestor, this);
   }
 
   @Override
   public void rename(final Object requestor, @NotNull @NonNls final String newName) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     validateName(newName);
     ourPersistence.renameFile(requestor, this, newName);
@@ -258,6 +261,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
@@ -323,6 +328,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
 
