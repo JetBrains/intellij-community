@@ -3,6 +3,7 @@ package com.jetbrains.edu.coursecreator.actions.placeholder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -29,7 +30,9 @@ public class CCEditAnswerPlaceholder extends CCAnswerPlaceholderAction {
     CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder.getTaskText(), answerPlaceholder.getHints());
     dlg.setTitle("Edit Answer Placeholder");
     if (dlg.showAndGet()) {
-      answerPlaceholder.setTaskText(dlg.getTaskText());
+      final String answerPlaceholderText = dlg.getTaskText();
+      answerPlaceholder.setTaskText(answerPlaceholderText);
+      answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
       answerPlaceholder.setHints(dlg.getHints());
     }
   }
