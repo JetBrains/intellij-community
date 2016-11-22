@@ -41,9 +41,6 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
     ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);
     if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
       if (UIUtil.isClientPropertyTrue(result, ExpandableItemsHandler.USE_RENDERER_BOUNDS)) {
-        Insets insets = wrapper.getInsets();
-        bounds.translate(-insets.left, -insets.top);
-        bounds.grow(insets.left + insets.right, insets.top + insets.bottom);
         wrapper.setBounds(bounds);
         UIUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
       }
