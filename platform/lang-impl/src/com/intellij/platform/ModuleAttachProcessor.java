@@ -16,7 +16,6 @@
 package com.intellij.platform;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,16 +75,20 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
     }
 
-    PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
-      for (Path file : files) {
-        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
-        if (imlFile != null) {
-          attachModule(project, imlFile, callback);
-          return true;
+    Boolean isAttached =
+      PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
+        for (Path file : files) {
+          VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
+          if (imlFile != null) {
+            attachModule(project, imlFile, callback);
+            return true;
+          }
         }
-      }
-      return null;
-    });
+        return false;
+      });
+    if (Boolean.TRUE.equals(isAttached)) {
+      return true;
+    }
 
     return Messages.showYesNoDialog(project, "The project at " +
                                              projectDir +

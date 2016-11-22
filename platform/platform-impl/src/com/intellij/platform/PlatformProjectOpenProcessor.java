@@ -151,7 +151,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           }
         }
         else if (dialog.isAttach()) {
-          if (attachToProject(projectToClose, projectDir, callback)) {
+          if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
             return null;
           }
         }
