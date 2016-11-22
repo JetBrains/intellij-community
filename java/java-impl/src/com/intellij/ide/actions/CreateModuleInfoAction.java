@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -91,7 +92,8 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
     AttributesDefaults defaults = new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
     copyDefaultProperties(ctx, defaults);
-    defaults.addPredefined("MODULE_NAME", "$module_name$");
+    String moduleName = Optional.ofNullable(LangDataKeys.MODULE.getData(ctx)).map(Module::getName).orElse("module_name");
+    defaults.addPredefined("MODULE_NAME", '$' + moduleName + '$');
     return defaults;
   }
 
