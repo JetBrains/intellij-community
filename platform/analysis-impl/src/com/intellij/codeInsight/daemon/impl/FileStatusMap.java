@@ -179,7 +179,7 @@ public class FileStatusMap implements Disposable {
 
   public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = myDocumentToStatusMap.computeIfAbsent(document, k -> new FileStatus(myProject));
+      FileStatus status = myDocumentToStatusMap.computeIfAbsent(document, __ -> new FileStatus(myProject));
       status.defensivelyMarked=false;
       if (passId == Pass.WOLF) {
         status.wolfPassFinished = true;

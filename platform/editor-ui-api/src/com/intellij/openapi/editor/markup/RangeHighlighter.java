@@ -122,7 +122,7 @@ public interface RangeHighlighter extends RangeMarker {
   void setErrorStripeMarkColor(@Nullable Color color);
 
   /**
-   * Returns the object whose <code>toString()</code> method is called to get the text of the tooltip
+   * Returns the object whose {@code toString()} method is called to get the text of the tooltip
    * for the error stripe marker added by the highlighter.
    *
    * @return the error stripe tooltip objects, or null if the highlighter does not add any error
@@ -132,7 +132,7 @@ public interface RangeHighlighter extends RangeMarker {
   Object getErrorStripeTooltip();
 
   /**
-   * Sets the object whose <code>toString()</code> method is called to get the text of the tooltip
+   * Sets the object whose {@code toString()} method is called to get the text of the tooltip
    * for the error stripe marker added by the highlighter.
    *
    * @param tooltipObject the error stripe tooltip objects, or null if the highlighter does not
