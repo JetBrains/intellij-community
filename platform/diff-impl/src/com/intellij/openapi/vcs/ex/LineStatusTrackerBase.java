@@ -317,16 +317,20 @@ public abstract class LineStatusTrackerBase {
 
   @CalledInAwt
   private void updateRangeHighlighters() {
-    myToBeInstalledRanges.removeAll(myToBeDestroyedRanges);
+    if (myToBeInstalledRanges.isEmpty() && myToBeDestroyedRanges.isEmpty()) return;
 
-    for (Range range : myToBeDestroyedRanges) {
-      disposeHighlighter(range);
+    synchronized (LOCK) {
+      myToBeInstalledRanges.removeAll(myToBeDestroyedRanges);
+
+      for (Range range : myToBeDestroyedRanges) {
+        disposeHighlighter(range);
+      }
+      for (Range range : myToBeInstalledRanges) {
+        createHighlighter(range);
+      }
+      myToBeDestroyedRanges.clear();
+      myToBeInstalledRanges.clear();
     }
-    for (Range range : myToBeInstalledRanges) {
-      createHighlighter(range);
-    }
-    myToBeDestroyedRanges.clear();
-    myToBeInstalledRanges.clear();
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
