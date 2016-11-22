@@ -133,6 +133,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
   private static final String CONSOLE_FEATURE = "python.console";
+  private static final String DOCKER_CONTAINER_PROJECT_PATH = "/opt/project";
   private final Project myProject;
   private final String myTitle;
   private final String myWorkingDir;
@@ -448,6 +449,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
       commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
 
+      // we do not have an option to setup Docker container settings now for Python console so we should bind at least project
+      // directory to some path inside the Docker container
+      commandLine.putUserData(PythonRemoteInterpreterManager.ADDITIONAL_MAPPINGS, buildDockerPathMappings());
+
       myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
         .getManager(data).startRemoteProcess(myProject, commandLine, manager, data,
                                              pathMapper);
@@ -486,6 +491,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     catch (Exception e) {
       throw new ExecutionException(e.getMessage(), e);
     }
+  }
+
+  @NotNull
+  private PathMappingSettings buildDockerPathMappings() {
+    return new PathMappingSettings(Collections.singletonList(new PathMappingSettings.PathMapping(myProject.getBasePath(),
+                                                                                                 DOCKER_CONTAINER_PROJECT_PATH)));
   }
 
   private static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
