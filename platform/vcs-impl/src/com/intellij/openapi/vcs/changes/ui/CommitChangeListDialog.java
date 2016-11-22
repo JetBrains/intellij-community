@@ -645,7 +645,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
             @Override
             public void run() {
-              CommitChangeListDialog.super.doOKAction();
+              close(OK_EXIT_CODE);
               doCommit(myResultHandler);
             }
           }, null);

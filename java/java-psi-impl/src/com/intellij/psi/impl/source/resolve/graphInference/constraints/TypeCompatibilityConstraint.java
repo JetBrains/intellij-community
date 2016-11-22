@@ -87,7 +87,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
         }
       }
     } 
-    else if (t instanceof PsiArrayType && t.getArrayDimensions() == s.getArrayDimensions()) {
+    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
       return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType());
     }
     return false;

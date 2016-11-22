@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -33,7 +32,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +52,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
     final Editor editor = session.getEditor();
-    TransactionGuard.submitTransaction(project, () -> {
+    ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
@@ -84,7 +82,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
     final long modificationStamp = document.getModificationStamp();
-    UIUtil.invokeLaterIfNeeded(() -> {
+    ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
       EditorColorsScheme scheme = session.getColorsScheme();
@@ -116,8 +114,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
-    DaemonCodeAnalyzerEx
-      .processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), existing -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), existing -> {
         if (existing.isBijective() &&
             existing.getGroup() == Pass.UPDATE_ALL &&
             range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {

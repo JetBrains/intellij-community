@@ -48,11 +48,9 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.lang.CompositeLanguage;
-import com.intellij.lang.ExternalLanguageAnnotators;
-import com.intellij.lang.LanguageFilter;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
@@ -2389,5 +2387,57 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
     });
   }
+
+  public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() throws Exception {
+    Annotator annotator = new MyIncorrectlyRecursiveAnnotator();
+    com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      configureByText(StdFileTypes.JAVA, "class X {\n" +
+                                         "  int foo(Object param) {\n" +
+                                         "    if (param == this) return 1;\n" +
+                                         "    return 0;\n" +
+                                         "  }\n" +
+                                         "}\n");
+      ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+      assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+
+      assertEquals("XXX", assertOneElement(doHighlighting(HighlightSeverity.WARNING)).getDescription());
+
+      for (int i=0; i<100; i++) {
+        //System.out.println("i = " + i);
+        DaemonCodeAnalyzer.getInstance(getProject()).restart();
+        List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+        assertEquals("XXX", assertOneElement(infos).getDescription());
+      }
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
+  public static class MyIncorrectlyRecursiveAnnotator implements Annotator {
+    Random random = new Random();
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile) {
+        psiElement.accept(new JavaRecursiveElementWalkingVisitor(){
+          @Override
+          public void visitKeyword(PsiKeyword keyword) {
+            if (Objects.equals(keyword.getText(), "this")) {
+              holder.createAnnotation(HighlightSeverity.WARNING, keyword.getTextRange(), "XXX");
+              TimeoutUtil.sleep(random.nextInt(100));
+            }
+          }
+        });
+      }
+    }
+  }
+
 }
 

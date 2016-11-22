@@ -15,7 +15,9 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
+import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,9 +26,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
@@ -125,12 +125,7 @@ class GitBranchPopupActions {
 
     @Override
     public void update(AnActionEvent e) {
-      boolean isFresh = ContainerUtil.and(myRepositories, new Condition<GitRepository>() {
-        @Override
-        public boolean value(GitRepository repository) {
-          return repository.isFresh();
-        }
-      });
+      boolean isFresh = ContainerUtil.and(myRepositories, repository -> repository.isFresh());
       if (isFresh) {
         e.getPresentation().setEnabled(false);
         e.getPresentation().setDescription("Checkout is not possible before the first commit");
@@ -141,7 +136,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for local branches.
    */
-  static class LocalBranchActions extends ActionGroup {
+  static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -150,7 +145,6 @@ class GitBranchPopupActions {
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
-      super("", true);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -160,13 +154,7 @@ class GitBranchPopupActions {
 
     @NotNull
     private String calcBranchText() {
-      String trackedBranch = new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
-      if (trackedBranch != null) {
-        return myBranchName + " " + UIUtil.rightArrow() + " " + trackedBranch;
-      }
-      else {
-        return myBranchName;
-      }
+      return myBranchName;
     }
 
     @NotNull
@@ -192,6 +180,12 @@ class GitBranchPopupActions {
         new RenameBranchAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
+    }
+
+    @Override
+    @Nullable
+    public String getInfoText() {
+     return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
     }
 
     static class CheckoutAction extends DumbAwareAction {
@@ -288,7 +282,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for remote branches
    */
-  static class RemoteBranchActions extends ActionGroup {
+  static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -297,7 +291,6 @@ class GitBranchPopupActions {
 
     RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
-      super("", true);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;

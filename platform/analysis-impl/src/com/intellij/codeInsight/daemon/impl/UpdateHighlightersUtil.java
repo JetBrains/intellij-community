@@ -236,8 +236,7 @@ public class UpdateHighlightersUtil {
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerEx
-      .processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
         if (info.getGroup() == group) {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
@@ -409,13 +408,9 @@ public class UpdateHighlightersUtil {
     return layer;
   }
 
+  @NotNull
   private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Map<TextRange, RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    RangeMarker marker = ranges2markersCache.get(textRange);
-    if (marker == null) {
-      marker = document.createRangeMarker(textRange);
-      ranges2markersCache.put(textRange, marker);
-    }
-    return marker;
+    return ranges2markersCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(textRange));
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");

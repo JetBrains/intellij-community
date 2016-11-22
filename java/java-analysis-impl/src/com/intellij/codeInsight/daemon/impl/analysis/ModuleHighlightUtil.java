@@ -81,14 +81,17 @@ public class ModuleHighlightUtil {
       return null;
     }
     else {
-      Module module = index.getModuleForFile(file);
-      return Optional.ofNullable(module)
-        .map(m -> FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, m.getModuleScope(false)))
-        .map(c -> c.size () == 1 ? c.iterator().next() : null)
-        .map(PsiManager.getInstance(project)::findFile)
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .orElse(null);
+      return getModuleDescriptor(index.getModuleForFile(file));
     }
+  }
+
+  static PsiJavaModule getModuleDescriptor(Module module) {
+    return Optional.ofNullable(module)
+      .map(m -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, m.getModuleScope(false)))
+      .map(c -> c.size() == 1 ? c.iterator().next() : null)
+      .map(PsiManager.getInstance(module.getProject())::findFile)
+      .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
+      .orElse(null);
   }
 
   @Nullable

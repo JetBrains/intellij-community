@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,11 +33,22 @@ public class SeparatorWithText extends JComponent {
   private String myCaption;
   private int myPrefWidth;
   private int myAlignment;
+  private Color myTextForeground;
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
     setFont(UIUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
+    setForeground(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
+    setTextForeground(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
+  }
+
+  public Color getTextForeground() {
+    return myTextForeground;
+  }
+
+  public void setTextForeground(@NotNull Color textForeground) {
+    myTextForeground = textForeground;
   }
 
   protected static int getVgap() {
@@ -78,7 +90,7 @@ public class SeparatorWithText extends JComponent {
   }
 
   protected void paintComponent(Graphics g) {
-    g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
+    g.setColor(getForeground());
 
     Rectangle bounds = new Rectangle(getWidth(), getHeight());
     JBInsets.removeFrom(bounds, getInsets());
@@ -100,7 +112,7 @@ public class SeparatorWithText extends JComponent {
         paintLinePart(g, textR.x + textR.width, bounds.x + bounds.width, hGap, y);
       }
       UISettings.setupAntialiasing(g);
-      g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
+      g.setColor(getTextForeground());
       g.drawString(label, textR.x, textR.y);
     }
     else {

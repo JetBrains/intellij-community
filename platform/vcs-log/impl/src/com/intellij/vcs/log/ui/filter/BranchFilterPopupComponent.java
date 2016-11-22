@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected ListPopup createPopupMenu() {
-    return new FlatSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
+    return new BranchLogSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
   }
 
   @Override

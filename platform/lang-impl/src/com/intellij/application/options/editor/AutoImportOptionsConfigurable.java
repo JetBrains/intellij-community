@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable.VariableProjectAppLevel;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,10 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImportOptionsProvider> implements EditorOptionsProvider {
+public class AutoImportOptionsConfigurable
+  extends CompositeConfigurable<AutoImportOptionsProvider>
+  implements EditorOptionsProvider, VariableProjectAppLevel {
+
   private final Project myProject;
   private JPanel myPanel;
   private JPanel myProvidersPanel;
@@ -85,5 +89,10 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
   @NotNull
   public String getId() {
     return "editor.preferences.import";
+  }
+
+  @Override
+  public boolean isProjectLevel() {
+    return false;
   }
 }
