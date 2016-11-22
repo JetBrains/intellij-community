@@ -34,14 +34,16 @@ public class NoAccessDuringPsiEvents {
   private static final Set<String> ourReportedTraces = new HashSet<>();
 
   public static void checkCallContext() {
+    if (isInsideEventProcessing() && ourReportedTraces.add(DebugUtil.currentStackTrace())) {
+      LOG.error("It's prohibited to access index during event dispatching");
+    }
+  }
+
+  public static boolean isInsideEventProcessing() {
     Application application = ApplicationManager.getApplication();
-    if (!application.isWriteAccessAllowed()) return;
+    if (!application.isWriteAccessAllowed()) return false;
 
     MessageBus bus = application.getMessageBus();
-    if (bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) || bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC)) {
-      if (ourReportedTraces.add(DebugUtil.currentStackTrace())) {
-        LOG.error("It's prohibited to access index during event dispatching");
-      }
-    }
+    return bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) || bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC);
   }
 }
