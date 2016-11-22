@@ -54,8 +54,11 @@ import java.awt.event.*;
 import java.util.EventListener;
 import java.util.List;
 
+import static java.awt.event.InputEvent.*;
+
 public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
-  static final KeyStroke NEW_LINE_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+  static final KeyStroke NEW_LINE_KEYSTROKE
+    = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -328,7 +331,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
 
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
@@ -445,9 +448,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), WHEN_FOCUSED);
 
-    textComponent.registerKeyboardAction(e -> {
-      textComponent.transferFocusBackward();
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), WHEN_FOCUSED);
+    textComponent.registerKeyboardAction(e -> textComponent.transferFocusBackward(), KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK), WHEN_FOCUSED);
 
     wrapper.setContent(textArea);
 
@@ -514,7 +515,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     };
     c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
     if (KeymapUtil.isEmacsKeymap()) {
-      c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+      c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_G, CTRL_MASK), JComponent.WHEN_FOCUSED);
     }
   }
 
