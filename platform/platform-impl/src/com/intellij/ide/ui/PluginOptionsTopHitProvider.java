@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +34,9 @@ public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
   @Override
   public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
     ArrayList<BooleanOptionDescription> options = new ArrayList<>();
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor pluginDescriptor : PluginManagerCore.getPlugins()) {
-      if (pluginDescriptor.getPluginId().toString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+      if (applicationInfo.isEssentialPlugin(pluginDescriptor.getPluginId().getIdString())) {
         continue;
       }
 
