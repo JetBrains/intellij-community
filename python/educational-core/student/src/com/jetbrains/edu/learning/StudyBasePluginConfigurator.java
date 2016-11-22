@@ -51,7 +51,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
-        setTaskText(task, file.getParent());
+        setTaskText(task, StudyUtils.getTaskDir(file));
       }
 
       @Override
@@ -69,7 +69,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
         VirtualFile file = event.getNewFile();
         if (file != null) {
           Task task = getTask(file);
-          setTaskText(task, file.getParent());
+          setTaskText(task, StudyUtils.getTaskDir(file));
         }
         toolWindow.setBottomComponent(null);
       }

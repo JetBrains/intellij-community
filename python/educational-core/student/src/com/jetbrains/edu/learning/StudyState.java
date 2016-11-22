@@ -21,7 +21,7 @@ public class StudyState {
     myEditor = studyEditor != null ? studyEditor.getEditor() : null;
     myTaskFile = studyEditor != null ? studyEditor.getTaskFile() : null;
     myVirtualFile = myEditor != null ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
-    myTaskDir = myVirtualFile != null ? myVirtualFile.getParent() : null;
+    myTaskDir = myVirtualFile != null ? StudyUtils.getTaskDir(myVirtualFile) : null;
     myTask = myTaskFile != null ? myTaskFile.getTask() : null;
   }
 

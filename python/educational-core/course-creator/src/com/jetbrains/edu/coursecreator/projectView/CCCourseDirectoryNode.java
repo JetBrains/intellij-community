@@ -1,6 +1,7 @@
 package com.jetbrains.edu.coursecreator.projectView;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.projectView.CourseDirectoryNode;
-import com.jetbrains.edu.learning.projectView.StudyDirectoryNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class CCCourseDirectoryNode extends CourseDirectoryNode {
   }
 
   @Override
-  public StudyDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
     return new CCLessonDirectoryNode(myProject, directory, myViewSettings, ((Lesson)item));
   }
 }

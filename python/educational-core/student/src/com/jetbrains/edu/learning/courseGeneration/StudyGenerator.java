@@ -34,13 +34,9 @@ public class StudyGenerator {
   public static void createTaskFile(@NotNull final VirtualFile taskDir, @NotNull final File resourceRoot,
                                     @NotNull final String name) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    final int index = systemIndependentName.lastIndexOf("/");
-    if (index > 0) {
-      systemIndependentName = systemIndependentName.substring(index + 1);
-    }
     File resourceFile = new File(resourceRoot, name);
     File fileInProject = new File(taskDir.getPath(), systemIndependentName);
-    FileUtil.copy(resourceFile, fileInProject);
+    FileUtil.copyFileOrDir(resourceFile, fileInProject);
   }
 
   /**
@@ -65,7 +61,7 @@ public class StudyGenerator {
     if (filesInTask != null) {
       for (File file : filesInTask) {
         String fileName = file.getName();
-        if (!task.isTaskFile(fileName)) {
+        if (!task.isTaskFile(fileName) && !file.isDirectory()) {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);

@@ -139,12 +139,13 @@ def get_initial_text(path):
         Returns the initial task text
     """
     course_lib = sys.argv[-2]
-
+    test_dir = sys.argv[-3]
     import os
-    # path format is "project_root/lessonX/taskY/file.py"
-    task_index = path.rfind(os.sep, 0, path.rfind(os.sep))
-    index = path.rfind(os.sep, 0, task_index)
-    relative_path = path[index + 1:]
+    lesson_task = os.sep.join(test_dir.split(os.sep)[-3:-1])
+    task_dir = os.sep.join(test_dir.split(os.sep)[:-1])
+    relative_path = lesson_task + os.sep + path[len(task_dir):]
+
+    # path format is "project_root/lessonX/taskY/.../file.py"
     initial_file_path = os.path.join(course_lib, relative_path)
     return get_file_text(initial_file_path)
 

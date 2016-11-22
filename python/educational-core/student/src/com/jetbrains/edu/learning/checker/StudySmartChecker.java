@@ -10,6 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -17,8 +19,6 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -50,7 +50,7 @@ public class StudySmartChecker {
       if (windowDocument != null) {
         final File resourceFile =
           StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
-        TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(virtualFile.getName());
+        TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(virtualFile));
         if (windowTaskFile == null) {
           return;
         }

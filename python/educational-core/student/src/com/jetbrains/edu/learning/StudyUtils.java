@@ -82,7 +82,6 @@ public class StudyUtils {
   }
 
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
-  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
   private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
                                           "            MathJax.Hub.Config({\n" +
                                           "                tex2jax: {\n" +
@@ -315,7 +314,7 @@ public class StudyUtils {
     if (course == null) {
       return null;
     }
-    VirtualFile taskDir = file.getParent();
+    VirtualFile taskDir = getTaskDir(file);
     if (taskDir == null) {
       return null;
     }
@@ -342,7 +341,7 @@ public class StudyUtils {
           return null;
         }
         final Task task = tasks.get(taskIndex);
-        return task.getFile(file.getName());
+        return task.getFile(pathRelativeToTask(file));
       }
     }
     return null;
@@ -483,14 +482,6 @@ public class StudyUtils {
       return null;
     }
     final Course course = task.getLesson().getCourse();
-    String text = task.getText() != null ? task.getText() : getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
-
-    if (text == null) return null;
-    if (course.isAdaptive()) text = wrapAdaptiveCourseText(text);
-
-    if (text != null && !text.isEmpty()) {
-      return wrapTextToDisplayLatex(text);
-    }
     if (taskDirectory != null) {
       String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
       int activeStepIndex = task.getActiveSubtaskIndex();
@@ -501,7 +492,16 @@ public class StudyUtils {
       if (taskTextFileHtml != null) return wrapTextToDisplayLatex(taskTextFileHtml);
 
       final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, getTaskDescriptionName(fileNameWithoutExtension, EduNames.TASK_MD));
-      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));      
+      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));
+    }
+
+    String text = task.getText() != null ? task.getText() : getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
+
+    if (text == null) return null;
+    if (course.isAdaptive()) text = wrapAdaptiveCourseText(text);
+
+    if (!text.isEmpty()) {
+      return wrapTextToDisplayLatex(text);
     }
     return null;
   }
@@ -523,8 +523,7 @@ public class StudyUtils {
   @Nullable
   private static String getTaskTextFromTaskName(@Nullable VirtualFile taskDirectory, @NotNull String taskTextFilename) {
     if (taskDirectory == null) return null;
-    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(EduNames.TASK_HTML),
-                                                         taskDirectory.findChild(EduNames.TASK_MD));
+    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
       if (srcDir != null) {
@@ -563,7 +562,7 @@ public class StudyUtils {
   public static String getTaskText(@NotNull final Project project) {
     TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
-      return EMPTY_TASK_TEXT;
+      return StudyToolWindow.EMPTY_TASK_TEXT;
     }
     final Task task = taskFile.getTask();
     if (task != null) {
@@ -658,15 +657,18 @@ public class StudyUtils {
   @Nullable
   public static VirtualFile getTaskDir(@NotNull VirtualFile taskFile) {
     VirtualFile parent = taskFile.getParent();
-    if (parent == null) {
-      return null;
-    }
-    String name = parent.getName();
-    if (name.contains(EduNames.TASK)) {
-      return parent;
-    }
-    if (EduNames.SRC.equals(name)) {
-      return parent.getParent();
+
+    while (parent != null) {
+      String name = parent.getName();
+
+      if (name.contains(EduNames.TASK) && parent.isDirectory()) {
+        return parent;
+      }
+      if (EduNames.SRC.equals(name)) {
+        return parent.getParent();
+      }
+
+      parent = parent.getParent();
     }
     return null;
   }
@@ -807,5 +809,11 @@ public class StudyUtils {
       }
     }
     return null;
+  }
+
+  public static String pathRelativeToTask(VirtualFile file) {
+    VirtualFile taskDir = getTaskDir(file);
+    if (taskDir == null) return file.getName();
+    return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), File.separatorChar);
   }
 }

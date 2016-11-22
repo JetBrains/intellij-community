@@ -289,10 +289,10 @@ public class EduAdaptiveStepicConnector {
           File[] filesInTask = newResourceRoot.listFiles();
           if (filesInTask != null) {
             for (File file : filesInTask) {
-              String fileName = file.getName();
-              if (!task.isTaskFile(fileName)) {
-                File resourceFile = new File(newResourceRoot, fileName);
-                File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
+              String taskRelativePath = FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), File.separatorChar);
+              if (taskRelativePath != null && !task.isTaskFile(taskRelativePath)) {
+                File resourceFile = new File(newResourceRoot, taskRelativePath);
+                File fileInProject = new File(taskDir.getCanonicalPath(), taskRelativePath);
                 FileUtil.copy(resourceFile, fileInProject);
               }
             }

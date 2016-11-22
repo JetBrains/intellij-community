@@ -55,8 +55,9 @@ public class CCAddAsTaskFile extends CCTaskFileActionBase {
       if (myTaskFile != null) {
         myTask.addTaskFile(myTaskFile);
       } else {
-        myTask.addTaskFile(myFile.getName(), myTask.getTaskFiles().size());
-        myTaskFile = myTask.getTaskFile(myFile.getName());
+        final String taskRelativePath = StudyUtils.pathRelativeToTask(myFile);
+        myTask.addTaskFile(taskRelativePath, myTask.getTaskFiles().size());
+        myTaskFile = myTask.getTaskFile(taskRelativePath);
       }
       CCUtils.createResourceFile(myFile, myCourse, StudyUtils.getTaskDir(myFile));
       ProjectView.getInstance(myProject).refresh();
