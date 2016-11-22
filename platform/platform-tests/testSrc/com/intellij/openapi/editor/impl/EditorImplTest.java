@@ -26,11 +26,13 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
@@ -408,5 +410,10 @@ public class EditorImplTest extends AbstractEditorTest {
     }
 
     runWriteCommand(() -> document.setText("cd")); // should run without throwing an exception
+  }
+
+  public void testLineLengthMatchingLogicalPositionCacheFrequency() throws Exception {
+    initText("\t" + StringUtil.repeat(" ", 1023));
+    assertEquals(new LogicalPosition(0, 1027), myEditor.offsetToLogicalPosition(1024));
   }
 }
