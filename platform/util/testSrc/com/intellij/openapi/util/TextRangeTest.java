@@ -39,13 +39,14 @@ public class TextRangeTest extends TestCase {
     assertEquals(new TextRange(2, 5), new TextRange(1, 5).cutOut(new TextRange(1, 4)));
     assertEquals(new TextRange(1, 4), new TextRange(1, 5).cutOut(new TextRange(0, 3)));
     assertEquals(new TextRange(3, 3), new TextRange(1, 5).cutOut(new TextRange(2, 2)));
+    boolean assertionErrorThrown = false;
     try {
       new TextRange(1, 5).cutOut(new TextRange(1, 10));
-      fail("AssertionError must be thrown");
     }
     catch (AssertionError e) {
-
+      assertionErrorThrown = true;
     }
+    assertTrue("AssertionError must be thrown", assertionErrorThrown);
   }
 
   public void testShiftRight() {
