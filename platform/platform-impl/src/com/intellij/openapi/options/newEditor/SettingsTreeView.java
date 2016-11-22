@@ -18,6 +18,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -480,6 +481,11 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         }
       }
       return result;
+    }
+
+    protected void update(PresentationData presentation) {
+      super.update(presentation);
+      presentation.addText(myDisplayName, getPlainAttributes());
     }
 
     @Override
