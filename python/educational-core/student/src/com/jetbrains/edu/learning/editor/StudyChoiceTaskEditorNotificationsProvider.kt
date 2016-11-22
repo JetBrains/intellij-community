@@ -10,10 +10,19 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.edu.learning.courseFormat.Task
-import java.awt.Font
-import java.awt.event.ItemEvent
+import javafx.application.Platform
+import javafx.embed.swing.JFXPanel
+import javafx.geometry.Insets
+import javafx.scene.Group
+import javafx.scene.Scene
+import javafx.scene.control.RadioButton
+import javafx.scene.control.ToggleGroup
+import javafx.scene.layout.VBox
+import javafx.scene.text.Font
 import java.util.*
-import javax.swing.*
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants
 
 class StudyChoiceTaskEditorNotificationsProvider : EditorNotifications.Provider<JPanel>() {
   override fun getKey(): Key<JPanel> {
@@ -37,37 +46,41 @@ class StudyChoiceTaskEditorNotificationsProvider : EditorNotifications.Provider<
 }
 
 class ChoicePanel(task: Task): JScrollPane() {
-  val buttons: ArrayList<JToggleButton> = ArrayList()
 
   init {
-    val jPanel = JPanel(VerticalFlowLayout())
-    jPanel.background = UIUtil.getEditorPaneBackground()
-    task.choiceAnswer = ArrayList<Boolean>(Collections.nCopies(task.choiceVariants.size, false))
-    if (task.isMultichoice) {
-      for ((index, variant) in task.choiceVariants.withIndex()) {
-        val button: JBCheckBox = JBCheckBox(variant)
-        button.background = UIUtil.getEditorPaneBackground()
-        button.font = Font(button.font.name, button.font.style, EditorColorsManager.getInstance().globalScheme.editorFontSize + 2)
-        button.addItemListener { task.choiceAnswer[index] = button.isSelected }
-        buttons.add(button)
-        jPanel.add(button)
+    val jfxPanel = JFXPanel()
+    Platform.runLater {
+      val group = Group()
+      val scene = Scene(group)
+      jfxPanel.scene = scene
+      val vBox = VBox()
+      vBox.spacing = 10.0
+      vBox.padding = Insets(15.0, 10.0, 10.0, 15.0)
+      task.choiceAnswer = ArrayList<Boolean>(Collections.nCopies(task.choiceVariants.size, false))
+      if (task.isMultichoice) {
+        for ((index, variant) in task.choiceVariants.withIndex()) {
+          val checkBox = javafx.scene.control.CheckBox(variant)
+          checkBox.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
+          checkBox.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
+          checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected -> task.choiceAnswer[index] = isSelected }
+          vBox.children.add(checkBox)
+        }
       }
-    }
-    else {
-      val buttonGroup = ButtonGroup()
+      else {
+        val toggleGroup = ToggleGroup()
+        for ((index, variant) in task.choiceVariants.withIndex()) {
+          val radioButton = RadioButton(variant)
+          radioButton.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
+          radioButton.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
+          radioButton.toggleGroup = toggleGroup
+          radioButton.selectedProperty().addListener { observableValue, wasSelected, isSelected -> task.choiceAnswer[index] = isSelected }
+          vBox.children.add(radioButton)
+        }
+      }
 
-      for ((index, variant) in task.choiceVariants.withIndex()) {
-        val button: JBRadioButton = JBRadioButton(variant)
-        button.font = Font(button.font.name, button.font.style, EditorColorsManager.getInstance().globalScheme.editorFontSize + 2)
-        button.isFocusable = false
-        button.background = UIUtil.getEditorPaneBackground()
-        button.addItemListener { task.choiceAnswer[index] = it.stateChange == ItemEvent.SELECTED}
-        buttons.add(button)
-        buttonGroup.add(button)
-        jPanel.add(button)
-      }
+      group.children.add(vBox)
     }
     setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
-    setViewportView(jPanel)
+    setViewportView(jfxPanel)
   }
 }
