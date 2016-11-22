@@ -96,7 +96,7 @@ public class FocusTracesDialog extends DialogWrapper {
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
 
-    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(ProjectManager.getInstance().getDefaultProject()).getConsole();
+    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     init();
   }
