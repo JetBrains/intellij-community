@@ -58,11 +58,16 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     columns = new ColumnInfo[]{infoColumn, enabledColumn};
 
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    view.addAll(ContainerUtil.filter(PluginManagerCore.getPlugins(),
-                                     descriptor -> !appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())));
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (appInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
+        myEnabled.put(plugin.getPluginId(), true);
+      }
+      else {
+        view.add(plugin);
+      }
+    }
     view.addAll(ourState.getInstalledPlugins());
 
-    myEnabled.put(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID), true);
     for (IdeaPluginDescriptor descriptor : view) {
       setEnabled(descriptor, descriptor.isEnabled());
     }
