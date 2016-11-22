@@ -123,7 +123,7 @@ public class GantRunner extends GroovyScriptRunner {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
+    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
   }
 
   private static void addGroovyAndAntJars(JavaParameters params, Module module, String gantHome) {

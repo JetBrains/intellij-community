@@ -215,10 +215,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     };
   }
 
-  public void setScriptParameters(String scriptParameters) {
-    scriptParams = scriptParameters;
-  }
-
   @Override
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (scriptPath == null || !scriptPath.equals(getPathByElement(element))) {
@@ -364,16 +360,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void setProgramParameters(@Nullable String value) {
-    LOG.error("Don't add program parameters to Groovy script run configuration. Use Script parameters instead");
+    scriptParams = value;
   }
 
   @Override
   public String getProgramParameters() {
-    return null;
-  }
-
-  @Nullable
-  public String getScriptParameters() {
     return scriptParams;
   }
 

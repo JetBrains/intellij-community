@@ -82,7 +82,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myVMParameters.setText(configuration.getVMParameters());
 
     myParameters.setDialogCaption("Script Parameters");
-    myParameters.setText(configuration.getScriptParameters());
+    myParameters.setText(configuration.getProgramParameters());
 
     scriptPathField.setText(configuration.getScriptPath());
     workDirField.setText(configuration.getWorkDir());
@@ -104,7 +104,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());
     configuration.setAddClasspathToTheRunner(myAddClasspathCB.isSelected());
-    configuration.setScriptParameters(myParameters.getText());
+    configuration.setProgramParameters(myParameters.getText());
     configuration.setScriptPath(scriptPathField.getText().trim());
     configuration.setWorkDir(workDirField.getText().trim());
     configuration.setEnvs(myEnvVariables.getEnvs());

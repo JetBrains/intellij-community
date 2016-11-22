@@ -81,7 +81,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     String path = ScriptFileUtil.getLocalFilePath(StringUtil.notNullize(configuration.getScriptPath()));
     params.getProgramParametersList().add(FileUtil.toSystemDependentName(path));
-    params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
+    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,

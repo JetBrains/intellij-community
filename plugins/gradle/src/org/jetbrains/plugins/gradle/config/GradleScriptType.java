@@ -92,7 +92,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
   @Override
   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
-    final String params = existing.getScriptParameters();
+    final String params = existing.getProgramParameters();
     if (params == null) {
       return false;
     }
@@ -111,7 +111,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
     List<String> tasks = getTasksTarget(location);
     if (tasks != null) {
       String s = StringUtil.join(tasks, " ");
-      configuration.setScriptParameters(s);
+      configuration.setProgramParameters(s);
       configuration.setName("gradle:" + s);
     }
     RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
@@ -175,7 +175,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
         if (project != null && profile instanceof GroovyScriptRunConfiguration) {
           GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)profile;
-          String parameters = configuration.getScriptParameters();
+          String parameters = configuration.getProgramParameters();
           if (parameters != null) {
             // TODO den implement
 //            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, ExternalSystemDataKeys.RECENT_TASKS_LIST);
@@ -214,7 +214,6 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         throws CantRunException
       {
         final Project project = configuration.getProject();
-        String scriptParameters = configuration.getScriptParameters();
 
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         if (module == null) {
@@ -271,7 +270,6 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         }
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
-        params.getProgramParametersList().addParametersString(scriptParameters);
       }
     };
   }
