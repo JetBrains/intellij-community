@@ -161,9 +161,17 @@ public class XDebuggerTestUtil {
     return Pair.create(all, container.frameToSelect);
   }
 
+  /**
+   * @deprecated use {@link XDebuggerTestUtil#collectChildren(XValueContainer)}
+   */
+  @Deprecated
   public static List<XValue> collectVariables(XStackFrame frame) throws InterruptedException {
+    return collectChildren(frame);
+  }
+
+  public static List<XValue> collectChildren(XValueContainer value) throws InterruptedException {
     XTestCompositeNode container = new XTestCompositeNode();
-    frame.computeChildren(container);
+    value.computeChildren(container);
     return container.waitFor(TIMEOUT).first;
   }
 
