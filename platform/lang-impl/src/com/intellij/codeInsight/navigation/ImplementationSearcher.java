@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
-
   public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
 
   @Nullable
@@ -57,23 +54,9 @@ public class ImplementationSearcher {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     PsiElement[] elements = searchDefinitions(element, editor);
     if (elements == null) return null; //the search has been cancelled
-    if (elements.length > 0) {
-      if (!includeSelfAlways) return filterElements(element, elements);
-      PsiElement[] all;
-      if (ReadAction.compute(() -> element.getTextRange()) != null) {
-        all = new PsiElement[elements.length + 1];
-        all[0] = element;
-        System.arraycopy(elements, 0, all, 1, elements.length);
-      }
-      else {
-        all = elements;
-      }
-      return filterElements(element, all);
-    }
-    return (includeSelfAlways || includeSelfIfNoOthers) &&
-           ApplicationManager.getApplication().runReadAction((Computable<TextRange>)() -> element.getTextRange()) != null ?
-           new PsiElement[] {element} :
-           PsiElement.EMPTY_ARRAY;
+    if (elements.length > 0) return filterElements(element, includeSelfAlways ? ArrayUtil.prepend(element, elements) : elements);
+    if (includeSelfAlways || includeSelfIfNoOthers) return new PsiElement[]{element};
+    return PsiElement.EMPTY_ARRAY;
   }
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
