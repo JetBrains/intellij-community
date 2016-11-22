@@ -411,19 +411,16 @@ public class PyTypeParser {
             return paramResult;
           }
           else if (starCount == 1) {
-            final PyClassType tupleType = PyTupleType.createHomogeneous(anchor, type);
-            if (tupleType != null) {
-              return paramResult.withType(tupleType);
+            final PyTupleType positionalType = PyTypeUtil.toPositionalContainerType(anchor, type);
+            if (positionalType != null) {
+              return paramResult.withType(positionalType);
             }
             return EMPTY_RESULT;
           }
           else if (starCount == 2) {
-            final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-            final PyClassType dictType = builtinCache.getDictType();
-            if (dictType != null) {
-              final PyClass pyClass = dictType.getPyClass();
-              return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
-                                                                   Arrays.asList(builtinCache.getStrType(), type)));
+            final PyCollectionType keywordType = PyTypeUtil.toKeywordContainerType(anchor, type);
+            if (keywordType != null) {
+              return paramResult.withType(keywordType);
             }
             return EMPTY_RESULT;
           }
