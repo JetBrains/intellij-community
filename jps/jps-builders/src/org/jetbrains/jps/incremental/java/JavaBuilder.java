@@ -338,8 +338,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private boolean compileJava(CompileContext context,
                               ModuleChunk chunk,
                               Collection<File> files,
-                              Collection<File> classpath,
-                              Collection<File> platformCp,
+                              Collection<File> originalClassPath,
+                              Collection<File> originalPlatformCp,
                               Collection<File> sourcePath,
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
@@ -388,8 +388,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
       }
 
-      Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
-      if (_platformCp == null) {
+      Collection<File> platformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
+      if (platformCp == null) {
         String text = "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\"" +
                       " differs from javac's platform (" + System.getProperty("java.version") + ")\n" +
                       "Compilation profiles are not supported for such configuration";
@@ -397,43 +397,42 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return true;
       }
 
+      Collection<File> classPath = originalClassPath;
       Collection<File> modulePath = Collections.emptyList();
+
       if (hasModules) {
         // in Java 9, named modules are not allowed to read classes from the classpath
         // moreover, the compiler requires all transitive dependencies to be on the module path
         modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
-        classpath = Collections.emptyList();
+        classPath = Collections.emptyList();
       }
 
-      if (!_platformCp.isEmpty()) {
+      if (!platformCp.isEmpty()) {
         final int chunkSdkVersion;
         if (hasModules) {
-          modulePath = newArrayList(concat(_platformCp, modulePath));
-          _platformCp = Collections.emptyList();
+          modulePath = newArrayList(concat(platformCp, modulePath));
+          platformCp = Collections.emptyList();
         }
         else if ((chunkSdkVersion = getChunkSdkVersion(chunk)) >= 9) {
           // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
           // because platform classes are stored in jimage binary files with unknown format.
           // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
           // and prepending additional jars from the JDK configuration to compilation classpath
-          final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
-          joined.addAll(_platformCp);
-          joined.addAll(classpath);
-          classpath = joined;
-          _platformCp = Collections.emptyList();
+          classPath = newArrayList(concat(platformCp, classPath));
+          platformCp = Collections.emptyList();
         }
         else if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
-          final Collection<File> joined = new ArrayList<File>(classpath.size() + 1);
-          for (File file : _platformCp) {
+          final Collection<File> joined = new ArrayList<File>(classPath.size() + 1);
+          for (File file : platformCp) {
             // platform runtime classes will be handled by -release option
             // include only additional jars from sdk distribution, e.g. tools.jar
             if (!FileUtil.toSystemIndependentName(file.getAbsolutePath()).contains("/jre/")) {
               joined.add(file);
             }
           }
-          joined.addAll(classpath);
-          classpath = joined;
-          _platformCp = Collections.emptyList();
+          joined.addAll(classPath);
+          classPath = joined;
+          platformCp = Collections.emptyList();
         }
       }
 
@@ -441,7 +440,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final boolean rc;
       if (!shouldForkJavac) {
         rc = JavacMain.compile(
-          options, files, classpath, _platformCp, modulePath, sourcePath, outs, diagnosticSink, classesConsumer,
+          options, files, classPath, platformCp, modulePath, sourcePath, outs, diagnosticSink, classesConsumer,
           context.getCancelStatus(), compilingTool
         );
       }
@@ -453,7 +452,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         rc = server.forkJavac(
           forkSdk.getFirst(), 
           getExternalJavacHeapSize(context), 
-          vmOptions, options, _platformCp, classpath, modulePath, sourcePath,
+          vmOptions, options, platformCp, classPath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }
