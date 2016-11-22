@@ -182,7 +182,17 @@ public class SelectedBlockHistoryTest extends TestCase {
     );
   }
 
-  public void test15() throws FilesTooBigForDiffException {
+  public void testGreediness() throws FilesTooBigForDiffException {
+    doTest(
+      new String[]{},
+      new String[]{"x", "y", "z"},
+      new String[]{},
+
+      new String[]{"1"},
+      new String[]{"2", "3"},
+      new String[]{"4"}
+    );
+
     doTest(
       new String[]{"1"},
       new String[]{"0"},
@@ -191,6 +201,150 @@ public class SelectedBlockHistoryTest extends TestCase {
       new String[]{"1", "4"},
       new String[]{"5", "0"},
       new String[]{"3"}
+    );
+
+    doTest(
+      new String[]{"1", "2"},
+      new String[]{"3", "5", "X", "Z", "7"},
+      new String[]{"8", "9"},
+
+      new String[]{"1", "2"},
+      new String[]{"3", "4", "5", "6", "7"},
+      new String[]{"8", "9"}
+    );
+
+    doTest(
+      new String[]{"1"},
+      new String[]{"5", "X", "Z"},
+      new String[]{"9"},
+
+      new String[]{"1", "2"},
+      new String[]{"3", "4", "5", "6", "7"},
+      new String[]{"8", "9"}
+    );
+
+    doTest(
+      new String[]{"1"},
+      new String[]{"5", "X", "7"},
+      new String[]{"Z", "9"},
+
+      new String[]{"1", "2"},
+      new String[]{"3", "4", "5", "6", "7"},
+      new String[]{"8", "9"}
+    );
+  }
+
+  public void testEmptyPreviousText() throws FilesTooBigForDiffException {
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{},
+
+      new String[]{},
+      new String[]{},
+      new String[]{}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{},
+
+      new String[]{},
+      new String[]{},
+      new String[]{"x"}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{},
+
+      new String[]{"x"},
+      new String[]{},
+      new String[]{}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{},
+
+      new String[]{},
+      new String[]{"x"},
+      new String[]{}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{},
+
+      new String[]{"z"},
+      new String[]{"x"},
+      new String[]{"y"}
+    );
+  }
+
+  public void testEmptyCurrentRange() throws FilesTooBigForDiffException {
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{"x"},
+
+      new String[]{},
+      new String[]{},
+      new String[]{}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{"x", "y", "z"},
+
+      new String[]{},
+      new String[]{},
+      new String[]{}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{"x"},
+
+      new String[]{},
+      new String[]{},
+      new String[]{"z"}
+    );
+
+    doTest(
+      new String[]{},
+      new String[]{},
+      new String[]{"x"},
+
+      new String[]{},
+      new String[]{},
+      new String[]{"y", "z"}
+    );
+
+    doTest(
+      new String[]{"x"},
+      new String[]{},
+      new String[]{},
+
+      new String[]{"y"},
+      new String[]{},
+      new String[]{"z"}
+    );
+
+    doTest(
+      new String[]{"y"},
+      new String[]{},
+      new String[]{"w", "z"},
+
+      new String[]{"y"},
+      new String[]{},
+      new String[]{"z"}
     );
   }
 

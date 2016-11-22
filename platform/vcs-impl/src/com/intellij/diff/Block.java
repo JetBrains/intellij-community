@@ -19,6 +19,7 @@ import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.DumbProgressIndicator;
@@ -61,29 +62,29 @@ public class Block {
 
   @NotNull
   public Block createPreviousBlock(@NotNull String[] prevContent) {
-    int start = -1;
-    int end = -1;
-    int shift = 0;
-
     try {
       FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
                                                  ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
 
-      for (Range range : iterable.iterateChanges()) {
-        if (Math.max(myStart, range.start2) < Math.min(myEnd, range.end2)) {
-          // ranges intersect
-          if (range.start2 <= myStart) start = range.start1;
-          if (range.end2 > myEnd) end = range.end1;
-        }
-        if (range.start2 > myStart) {
-          if (start == -1) start = myStart - shift;
-          if (end == -1 && range.start2 >= myEnd) end = myEnd - shift;
-        }
+      // empty range should not be transferred to the non-empty range
+      boolean greedy = myStart != myEnd;
 
-        shift += (range.end2 - range.start2) - (range.end1 - range.start1);
+      int start = myStart;
+      int end = myEnd;
+      int shift = 0;
+
+      for (Range range : iterable.iterateChanges()) {
+        int changeStart = range.start2 + shift;
+        int changeEnd = range.end2 + shift;
+        int changeShift = (range.end1 - range.start1) - (range.end2 - range.start2);
+
+        DiffUtil.UpdatedLineRange updatedRange =
+          DiffUtil.updateRangeOnModification(start, end, changeStart, changeEnd, changeShift, greedy);
+
+        start = updatedRange.startLine;
+        end = updatedRange.endLine;
+        shift += changeShift;
       }
-      if (start == -1) start = myStart - shift;
-      if (end == -1) end = myEnd - shift;
 
       if (start < 0 || end > prevContent.length || end < start) {
         LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
