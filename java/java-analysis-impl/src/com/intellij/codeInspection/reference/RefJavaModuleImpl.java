@@ -117,6 +117,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
           }
         }
       }
+      ((RefModuleImpl)myRefModule).add(this);
       getRefManager().fireBuildReferences(this);
     }
   }
@@ -138,5 +139,9 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       }
     }
     return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
+  }
+
+  static RefEntity javaModuleFromExternalName(RefManagerImpl manager, String name) {
+    return manager.getExtension(RefJavaManager.MANAGER).getRefJavaModule(name);
   }
 }

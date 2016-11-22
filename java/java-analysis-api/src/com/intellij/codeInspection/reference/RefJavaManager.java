@@ -54,6 +54,8 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
    */
   public abstract RefPackage getPackage(String packageName);
 
+  public abstract RefEntity getRefJavaModule(String name);
+
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI parameter.
    *

@@ -121,9 +121,12 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
   @Nullable
   private static JavaModuleInfo getJavaModuleInfo(@NotNull RefModule refModule, boolean addIfMissing) {
     Optional<JavaModuleInfo> optionalInfo = refModule.getUserData(JAVA_MODULE_INFO);
+    if (!addIfMissing) {
+      return optionalInfo != null ? optionalInfo.orElse(null) : null;
+    }
     if (optionalInfo == null) {
       optionalInfo = Optional
-        .ofNullable(addIfMissing ? refModule : null)
+        .of(refModule)
         .map(RefModule::getModule)
         .map(JavaModuleGraphUtil::findDescriptorByModule)
         .map(JavaModuleInfo::new);
@@ -242,7 +245,7 @@ public class Java9UnusedRequiresStatementInspection extends GlobalJavaBatchInspe
     }
   }
 
-  private static class JavaModuleInfo {
+  private static class JavaModuleInfo { // TODO: remove this
     private final PsiJavaModule javaModule;
     private final Set<String> importedPackageNames;
 

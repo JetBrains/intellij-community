@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 
 
 /**
@@ -55,6 +57,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private PsiClass myServlet;
   private RefPackage myDefaultPackage;
   private THashMap<String, RefPackage> myPackages;
+  private THashMap<String, RefJavaModule> myJavaModules;
   private final RefManagerImpl myRefManager;
   private PsiElementVisitor myProjectIterator;
   private EntryPointsManager myEntryPointsManager;
@@ -109,6 +112,24 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return refPackage;
   }
 
+  @Override
+  public RefEntity getRefJavaModule(String name) {
+    if (myJavaModules == null) {
+      myJavaModules = new THashMap<>();
+    }
+    RefJavaModule refJavaModule = myJavaModules.get(name);
+    if (refJavaModule == null) {
+      Project project = myRefManager.getProject();
+      GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+      Collection<PsiJavaModule> javaModules = JavaFileManager.SERVICE.getInstance(project).findModules(name, scope);
+      if (javaModules.size() == 1) {
+        PsiJavaModule javaModule = javaModules.iterator().next();
+        refJavaModule = new RefJavaModuleImpl(javaModule, myRefManager);
+        myJavaModules.put(name, refJavaModule);
+      }
+    }
+    return refJavaModule;
+  }
 
   public boolean isEntryPoint(final RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
@@ -278,6 +299,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     }
     else if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
+    }
+    else if (JAVA_MODULE.equals(type)) {
+      return RefJavaModuleImpl.javaModuleFromExternalName(myRefManager, fqName);
     }
     return null;
   }
