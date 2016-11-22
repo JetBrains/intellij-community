@@ -4,7 +4,7 @@ class Example {
   }
 
   {
-    Runnable r = () -> ex().<caret>m();
+    Runnable r = ex()::m;
   }
   
   Example ex() {

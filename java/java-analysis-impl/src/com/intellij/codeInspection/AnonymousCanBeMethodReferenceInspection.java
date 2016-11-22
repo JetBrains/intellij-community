@@ -83,10 +83,10 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
+          LambdaCanBeMethodReferenceInspection methodReferenceInspection = new LambdaCanBeMethodReferenceInspection();
+          PsiExpression lambdaBodyCandidate = methodReferenceInspection.extractMethodReferenceCandidateExpression(body, false);
           final PsiExpression methodRefCandidate =
-            new LambdaCanBeMethodReferenceInspection()
-              .canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType(),
-                                           aClass.getParent());
+            methodReferenceInspection.canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(), lambdaBodyCandidate);
           if (methodRefCandidate instanceof PsiCallExpression) {
             final PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
             final PsiMethod resolveMethod = callExpression.resolveMethod();
@@ -99,9 +99,11 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
+                  ProblemHighlightType highlightType = LambdaCanBeMethodReferenceInspection.checkQualifier(lambdaBodyCandidate) ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                                                                                                                                : ProblemHighlightType.INFORMATION;
                   holder.registerProblem(parent,
                                          "Anonymous #ref #loc can be replaced with method reference",
-                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithMethodRefFix());
+                                         highlightType, rangeInElement, new ReplaceWithMethodRefFix());
                 }
               }
             }
@@ -129,8 +131,12 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           if (methods.length != 1) return;
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-          final String methodRefText = LambdaCanBeMethodReferenceInspection
-            .convertToMethodReference(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
+          final PsiType functionalInterfaceType = anonymousClass.getBaseClassType();
+          LambdaCanBeMethodReferenceInspection methodReferenceInspection = new LambdaCanBeMethodReferenceInspection();
+          PsiExpression methodRefCandidate = methodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody(), false);
+          final PsiExpression candidate = methodReferenceInspection.canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate);
+
+          final String methodRefText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(candidate, functionalInterfaceType, parameters);
 
           replaceWithMethodReference(project, methodRefText, anonymousClass.getBaseClassType(), anonymousClass.getParent());
         }
