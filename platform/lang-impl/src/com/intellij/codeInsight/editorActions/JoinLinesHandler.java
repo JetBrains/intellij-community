@@ -115,7 +115,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     int caretRestoreOffset = -1;
     // joining lines, several times if selection is multiline
     for (int i = startLine; i < endLine; i++) {
-      if (i >= doc.getLineCount() - 1) break;
+      if (startLine >= doc.getLineCount() - 1) break;
 
       docManager.doPostponedOperationsAndUnblockDocument(doc);
       docManager.commitDocument(doc);

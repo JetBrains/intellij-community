@@ -89,6 +89,7 @@ public interface IdeActions {
   @NonNls String ACTION_CUT = "$Cut";
   @NonNls String ACTION_DELETE = "$Delete";
   @NonNls String ACTION_PASTE = "$Paste";
+  @NonNls String ACTION_SELECT_ALL = "$SelectAll";
   @NonNls String ACTION_CONTEXT_HELP = "ContextHelp";
   @NonNls String ACTION_EDIT_SOURCE = "EditSource";
   @NonNls String ACTION_VIEW_SOURCE = "ViewSource";

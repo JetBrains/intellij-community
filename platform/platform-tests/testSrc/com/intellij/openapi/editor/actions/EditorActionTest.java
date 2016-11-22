@@ -234,4 +234,11 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
     checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
   }
+
+  public void testJoinSeveralLinesAtDocumentEnd() throws Exception {
+    initText("a\nb\nc");
+    executeAction(IdeActions.ACTION_SELECT_ALL);
+    executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
+    checkResultByText("a b c");
+  }
 }

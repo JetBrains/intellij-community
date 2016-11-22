@@ -54,7 +54,7 @@ public class JoinLinesAction extends TextComponentEditorAction {
       int caretRestoreOffset = -1;
 
       for (int i = startLine; i < endLine; i++) {
-        if (i >= doc.getLineCount() - 1) break;
+        if (startLine >= doc.getLineCount() - 1) break;
         CharSequence text = doc.getCharsSequence();
         int end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
         int start = end - doc.getLineSeparatorLength(startLine);
