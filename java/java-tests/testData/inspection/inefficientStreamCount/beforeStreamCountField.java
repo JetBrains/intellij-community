@@ -3,7 +3,5 @@
 import java.util.Arrays;
 
 class Test {
-  int cnt() {
-    return (int) Arrays.asList('d', 'e', 'f').stream(/*inside*/).c<caret>ount();
-  }
+  long cnt = Arrays.asList('d', 'e', 'f')./*stream*/stream()./*count*/c<caret>ount()/*after*/;
 }

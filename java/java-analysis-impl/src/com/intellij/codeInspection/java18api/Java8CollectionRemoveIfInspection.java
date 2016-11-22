@@ -32,7 +32,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -40,8 +40,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * @author Tagir Valeev
@@ -169,13 +167,13 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       String replacement = null;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      CommentTracker ct = new CommentTracker();
       if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
         PsiVariable variable = declaration.getNextElementVariable(statements[0]);
         if (variable == null) return;
         PsiExpression condition = ((PsiIfStatement)statements[1]).getCondition();
         if (condition == null) return;
-        replacement = (declaration.myCollection == null ? "" : declaration.myCollection.getText() + ".") +
-                             "removeIf(" + LambdaUtil.createLambda(variable, condition) + ");";
+        replacement = generateRemoveIf(declaration, ct, condition, variable.getName());
       }
       else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
         PsiExpression condition = ((PsiIfStatement)statements[0]).getCondition();
@@ -191,19 +189,22 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
             info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, "value", null, type);
           }
           String paramName = javaCodeStyleManager.suggestUniqueVariableName(info, condition, true).names[0];
-          call.replace(factory.createIdentifier(paramName));
-          replacement = (declaration.myCollection == null ? "" : declaration.myCollection.getText() + ".") +
-                        "removeIf(" + paramName + "->"+condition.getText() + ");";
+          ct.replace(call, factory.createIdentifier(paramName));
+          replacement = generateRemoveIf(declaration, ct, condition, paramName);
         }
       }
-      if(replacement == null) return;
-      Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(loop, PsiComment.class),
-                                                          comment -> (PsiComment)comment.copy());
-      PsiElement result = loop.replace(factory.createStatementFromText(replacement, loop));
-      if (previous != null) previous.delete();
+      if (replacement == null) return;
+      if (previous != null) ct.delete(previous);
+      PsiElement result = ct.replaceAndRestoreComments(loop, factory.createStatementFromText(replacement, loop));
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
-      comments.forEach(comment -> result.getParent().addBefore(comment, result));
+    }
+
+    @NotNull
+    private static String generateRemoveIf(IteratorDeclaration declaration, CommentTracker ct,
+                                           PsiExpression condition, String paramName) {
+      return (declaration.myCollection == null ? "" : ct.text(declaration.myCollection) + ".") +
+             "removeIf(" + paramName + "->" + ct.text(condition) + ");";
     }
   }
 

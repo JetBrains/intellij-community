@@ -29,7 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 
 /**
  * @author Tagir Valeev
@@ -236,33 +235,29 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
       PsiElement statement = PsiTreeUtil.skipSiblingsBackward(ifStatement, PsiWhiteSpace.class, PsiComment.class);
       PsiMethodCallExpression getCall = tryExtractMapGetCall(value, statement);
       if(getCall == null || !Java8CollectionsApiInspection.isJavaUtilMapMethodWithName(getCall, "get")) return;
-      PsiElement nameElement = getCall.getMethodExpression().getReferenceNameElement();
-      if(nameElement == null) return;
       PsiExpression[] args = getCall.getArgumentList().getExpressions();
       if(args.length != 1) return;
       PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-      Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(ifStatement, PsiComment.class),
-                                                          comment -> (PsiComment)comment.copy());
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(thenBranch);
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      CommentTracker ct = new CommentTracker();
+      PsiReferenceExpression methodExpression = getCall.getMethodExpression();
       if(assignment != null) {
         PsiExpression defaultValue = assignment.getRExpression();
         if (!ExpressionUtils.isSimpleExpression(defaultValue)) return;
-        nameElement.replace(factory.createIdentifier("getOrDefault"));
-        getCall.getArgumentList().add(defaultValue);
+        methodExpression.handleElementRename("getOrDefault");
+        getCall.getArgumentList().add(ct.markUsed(defaultValue));
       } else {
-        PsiExpression lambdaCandidate =
-          extractLambdaCandidate(thenBranch, getCall.getMethodExpression().getQualifierExpression(), args[0], value);
+        PsiExpression lambdaCandidate = extractLambdaCandidate(thenBranch, methodExpression.getQualifierExpression(), args[0], value);
         if (lambdaCandidate == null) return;
-        nameElement.replace(factory.createIdentifier("computeIfAbsent"));
+        methodExpression.handleElementRename("computeIfAbsent");
         String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", lambdaCandidate, true);
-        PsiExpression lambda = factory.createExpressionFromText(varName + " -> " + lambdaCandidate.getText(), lambdaCandidate);
+        PsiExpression lambda = factory.createExpressionFromText(varName + " -> " + ct.text(lambdaCandidate), lambdaCandidate);
         getCall.getArgumentList().add(lambda);
       }
-      ifStatement.delete();
+      ct.deleteAndRestoreComments(ifStatement);
       CodeStyleManager.getInstance(project).reformat(statement);
-      comments.forEach(comment -> statement.getParent().addBefore(comment, statement));
     }
   }
 }

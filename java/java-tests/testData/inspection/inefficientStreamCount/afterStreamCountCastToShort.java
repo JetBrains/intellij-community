@@ -3,7 +3,9 @@
 import java.util.Arrays;
 
 class Test {
-  short cnt() {
-    return (short) Arrays.asList('d', 'e', 'f').size();
-  }
+    short cnt() {
+        /*before dot*/
+        //after dot
+        return (short) Arrays.asList('d', 'e', 'f').size();
+    }
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 class Test {
   long cnt() {
-    return (long) Arrays.asList('d', 'e', 'f').size();
+    /*count*/
+      return (long) Arrays.asList('d', 'e', 'f')./*stream*/size()/*after*/;
   }
 }

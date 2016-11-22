@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,8 +169,10 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
                                            PsiMethod qualifier,
                                            PsiElementFactory factory) {
       if (!isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) return;
-      PsiExpression qualifierExpression = qualifierCall.getMethodExpression().getQualifierExpression();
+      PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
+      PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if(qualifierExpression == null) return;
+      methodExpression.handleElementRename(SIZE_METHOD);
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
@@ -184,8 +187,9 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
           }
         }
       }
-      String replacementText = (addCast ? "(long) " : "")+qualifierExpression.getText()+"."+SIZE_METHOD+"()";
-      PsiElement replacement = toReplace.replace(factory.createExpressionFromText(replacementText, countCall));
+      CommentTracker ct = new CommentTracker();
+      String replacementText = (addCast ? "(long) " : "") + ct.text(qualifierCall);
+      PsiElement replacement = ct.replaceAndRestoreComments(toReplace, factory.createExpressionFromText(replacementText, countCall));
       if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
         RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
       }

@@ -7,10 +7,10 @@ public class Main {
   private String str;
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
-      /*
+      str = map.getOrDefault(key, NONE);
+    /*
       block comment
        */
-      str = map.getOrDefault(key, NONE);
       System.out.println(str);
   }
 }

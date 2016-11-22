@@ -4,6 +4,6 @@ import java.util.List;
 
 public class Main {
   public void testIterator(List<List<String>> data, boolean b) {
-      data.removeIf(strings -> strings.isEmpty() && b);
+      data.removeIf(strings -> strings.isEmpty() && /* also check the flag */ b);
   }
 }

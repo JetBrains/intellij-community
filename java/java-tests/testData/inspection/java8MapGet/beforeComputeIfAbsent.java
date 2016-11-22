@@ -7,7 +7,8 @@ public class Main {
   public void testMap(Map<String, List<String>> map, String key, String value) {
     List<String> list = map.get(key);
     if(list == nul<caret>l) {
-      list = new ArrayList<>();
+      list = new /*create new ArrayList*/ ArrayList<>();
+      // and put it
       map.put(key, list);
     }
     list.add(value);
