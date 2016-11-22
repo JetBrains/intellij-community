@@ -22,6 +22,7 @@ import org.gradle.api.internal.plugins.DefaultConvention
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.DefaultGradleExtension
 import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
+import org.jetbrains.plugins.gradle.model.DefaultGradleProperty
 import org.jetbrains.plugins.gradle.model.GradleExtensions
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -41,27 +42,28 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     def conventions = project.extensions as DefaultConvention
+    conventions.extraProperties.properties.each { name, value ->
+      String typeFqn = getType(value)
+      result.gradleProperties.add(new DefaultGradleProperty(
+        name, typeFqn, value.toString()))
+    }
+
     for (it in conventions.findAll()) {
       def convention = it as DefaultConvention
       convention.asMap.each { name, value ->
         if(name == 'idea') return
-        def rootClazz = value.getClass()?.canonicalName
-        def rootDecorIndex = rootClazz?.lastIndexOf('_Decorated')
-        def rootTypeFqn = !rootDecorIndex || rootDecorIndex == -1 ? rootClazz : rootClazz.substring(0, rootDecorIndex)
+        def rootTypeFqn = getType(value)
         def namedObjectTypeFqn = null as String
         if (value instanceof NamedDomainObjectCollection) {
-          NamedDomainObjectCollection objectCollection = (NamedDomainObjectCollection)value
+          def objectCollection = (NamedDomainObjectCollection)value
           if(!objectCollection.isEmpty()) {
-            def namedObjectClazz = objectCollection.first().getClass()?.canonicalName
-            def namedObjectDecorIndex = namedObjectClazz?.lastIndexOf('_Decorated')
-            namedObjectTypeFqn = !namedObjectDecorIndex || namedObjectDecorIndex == -1 ? namedObjectClazz :
-                                 namedObjectClazz.substring(0, namedObjectDecorIndex)
+            namedObjectTypeFqn = getType(objectCollection.first())
           }
         }
-        result.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))
+        result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))
       }
     }
-    return result.isEmpty() ? null : result
+    return result.extensions.isEmpty() && result.gradleProperties.isEmpty() ? null : result
   }
 
   @Override
@@ -70,5 +72,11 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       project, e, "Project extensions data import errors"
     ).withDescription(
       "Unable to resolve some context data of gradle scripts. Some codeInsight features inside *.gradle files can be unavailable.")
+  }
+
+  static String getType(object) {
+    def clazz = object.getClass()?.canonicalName
+    def decorIndex = clazz?.lastIndexOf('_Decorated')
+    !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
   }
 }

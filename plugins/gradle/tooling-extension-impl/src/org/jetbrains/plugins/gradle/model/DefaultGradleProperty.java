@@ -24,7 +24,40 @@ import java.io.Serializable;
  * @author Vladislav.Soroka
  * @since 11/16/2016
  */
-public interface GradleExtension extends GradleProperty {
+public class DefaultGradleProperty implements GradleProperty {
+  private static final long serialVersionUID = 1L;
+  @NotNull
+  private final String myName;
+  @NotNull
+  private final String myRootTypeFqn;
   @Nullable
-  String getNamedObjectTypeFqn();
+  private final Serializable myValue;
+
+  public DefaultGradleProperty(@NotNull String name, @NotNull String typeFqn, @Nullable Serializable value) {
+    myName = name;
+    myRootTypeFqn = typeFqn;
+    myValue = value;
+  }
+
+  public DefaultGradleProperty(GradleProperty property) {
+    this(property.getName(), property.getTypeFqn(), property.getValue());
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @NotNull
+  @Override
+  public String getTypeFqn() {
+    return myRootTypeFqn;
+  }
+
+  @Nullable
+  @Override
+  public Serializable getValue() {
+    return myValue;
+  }
 }

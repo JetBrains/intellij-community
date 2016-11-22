@@ -150,7 +150,7 @@
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"
                 conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
     <lang.documentationProvider language="Groovy"
-                                implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider"/>
+                                implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>
     <editorNotificationProvider implementation="org.jetbrains.plugins.gradle.codeInsight.UseDistributionWithSourcesNotificationProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleCompletionWeigher"

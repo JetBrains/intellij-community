@@ -29,8 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
+import org.jetbrains.plugins.gradle.model.GradleProperty;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,12 +81,23 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
       GradleProject gradleProject = new GradleProject();
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
         GradleExtensionsData extensionsData = new GradleExtensionsData();
-        for (org.jetbrains.plugins.gradle.model.GradleExtension extension : entry.getValue().list()) {
+        GradleExtensions gradleExtensions = entry.getValue();
+        for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
           GradleExtension gradleExtension = new GradleExtension();
           gradleExtension.name = extension.getName();
-          gradleExtension.rootTypeFqn = extension.getRootTypeFqn();
+          gradleExtension.rootTypeFqn = extension.getTypeFqn();
           gradleExtension.namedObjectTypeFqn = extension.getNamedObjectTypeFqn();
           extensionsData.extensions.add(gradleExtension);
+        }
+        for (GradleProperty property : gradleExtensions.getGradleProperties()) {
+          GradleProp gradleProp = new GradleProp();
+          gradleProp.name = property.getName();
+          gradleProp.typeFqn = property.getTypeFqn();
+          Serializable value = property.getValue();
+          if(value != null) {
+            gradleProp.value = value.toString();
+          }
+          extensionsData.properties.add(gradleProp);
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
       }
@@ -129,6 +142,9 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
     public List<GradleExtension> extensions = new SmartList<>();
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
+    public List<GradleProp> properties = new SmartList<>();
   }
 
   @Tag("ext")
@@ -139,5 +155,15 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     public String rootTypeFqn;
     @Attribute("namedObjectTypeFqn")
     public String namedObjectTypeFqn;
+  }
+  @Tag("p")
+  public static class GradleProp {
+    @Attribute("name")
+    public String name;
+    @Attribute("typeFqn")
+    public String typeFqn;
+    @Nullable
+    @Attribute("val")
+    public String value;
   }
 }

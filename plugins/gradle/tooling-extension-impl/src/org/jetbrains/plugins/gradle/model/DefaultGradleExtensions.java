@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,20 +24,34 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 11/16/2016
  */
-public class DefaultGradleExtensions extends ArrayList<GradleExtension> implements GradleExtensions {
+public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;
+  @NotNull
+  private final List<GradleExtension> myExtensions = new ArrayList<GradleExtension>();
+  @NotNull
+  private final List<GradleProperty> myGradleProperties = new ArrayList<GradleProperty>();
 
   public DefaultGradleExtensions() {
   }
 
   public DefaultGradleExtensions(GradleExtensions extensions) {
-    for (GradleExtension extension : extensions.list()) {
-      add(new DefaultGradleExtension(extension));
+    for (GradleExtension extension : extensions.getExtensions()) {
+      myExtensions.add(new DefaultGradleExtension(extension));
     }
+    for (GradleProperty property : extensions.getGradleProperties()) {
+      myGradleProperties.add(new DefaultGradleProperty(property));
+   }
   }
 
+  @NotNull
   @Override
-  public List<GradleExtension> list() {
-    return this;
+  public List<GradleExtension> getExtensions() {
+    return myExtensions;
+  }
+
+  @NotNull
+  @Override
+  public List<GradleProperty> getGradleProperties() {
+    return myGradleProperties;
   }
 }

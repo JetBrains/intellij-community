@@ -22,37 +22,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 11/16/2016
  */
-public class DefaultGradleExtension implements GradleExtension {
+public class DefaultGradleExtension extends DefaultGradleProperty implements GradleExtension {
   private static final long serialVersionUID = 1L;
-  @NotNull
-  private final String myName;
-  @NotNull
-  private final String myRootTypeFqn;
   @Nullable
   private final String myNamedObjectTypeFqn;
 
-  public DefaultGradleExtension(@NotNull String name, @NotNull String rootTypeFqn, @Nullable String namedObjectTypeFqn) {
-    myName = name;
-    myRootTypeFqn = rootTypeFqn;
+  public DefaultGradleExtension(@NotNull String name, @NotNull String typeFqn, @Nullable String namedObjectTypeFqn) {
+    super(name, typeFqn, null);
     myNamedObjectTypeFqn = namedObjectTypeFqn;
   }
 
   public DefaultGradleExtension(GradleExtension extension) {
-    this(extension.getName(), extension.getRootTypeFqn(), extension.getNamedObjectTypeFqn());
+    this(extension.getName(), extension.getTypeFqn(), extension.getNamedObjectTypeFqn());
   }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
-  }
-
-  @NotNull
-  @Override
-  public String getRootTypeFqn() {
-    return myRootTypeFqn;
-  }
-
   @Nullable
   @Override
   public String getNamedObjectTypeFqn() {

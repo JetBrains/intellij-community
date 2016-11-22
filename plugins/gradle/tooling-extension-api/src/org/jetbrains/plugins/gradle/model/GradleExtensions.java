@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -23,5 +25,9 @@ import java.util.List;
  * @since 11/16/2016
  */
 public interface GradleExtensions extends Serializable {
-  List<GradleExtension> list();
+  @NotNull
+  List<GradleExtension> getExtensions();
+
+  @NotNull
+  List<GradleProperty> getGradleProperties();
 }

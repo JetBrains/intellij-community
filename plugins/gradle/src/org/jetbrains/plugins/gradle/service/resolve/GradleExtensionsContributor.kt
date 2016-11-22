@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Ref
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiElement
@@ -27,6 +29,7 @@ import com.intellij.util.ProcessingContext
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder.DOCUMENTATION
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -87,6 +90,27 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
     val resolveScope = place.resolveScope
     val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, resolveScope) ?: return true
     val name = processor.getHint(NameHint.KEY)?.getName(state)
+    if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression) {
+      if (!place.isQualified) {
+        for (gradleProp in extensionsData.properties) {
+          if (name == gradleProp.name) {
+            val docRef = Ref.create<String>()
+            val variable = object : GrLightVariable(place.manager, name, gradleProp.typeFqn, place) {
+              override fun getNavigationElement(): PsiElement {
+                val navigationElement = super.getNavigationElement()
+                navigationElement.putUserData(DOCUMENTATION, docRef.get())
+                return navigationElement
+              }
+            }
+            val doc = getDocumentation(gradleProp, variable)
+            docRef.set(doc)
+            place.putUserData(DOCUMENTATION, doc)
+            if (!processor.execute(variable, state)) return false
+          }
+        }
+      }
+    }
+
     for (extension in extensionsData.extensions) {
       if (!shouldProcessMethods && shouldProcessProperties && name == extension.name) {
         val variable = GrLightVariable(place.manager, name, extension.rootTypeFqn, place)
@@ -127,6 +151,23 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       }
     }
     return true
+  }
+
+  private fun getDocumentation(gradleProp: GradleExtensionsSettings.GradleProp,
+                               lightVariable: GrLightVariable): String {
+    val buffer = StringBuilder()
+    buffer.append("<PRE>")
+    JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
+    buffer.append(" " + gradleProp.name)
+    val hasInitializer = !gradleProp.value.isNullOrBlank()
+    if (hasInitializer) {
+      buffer.append(" = " + gradleProp.value)
+    }
+    buffer.append("</PRE>")
+    if (hasInitializer) {
+      buffer.append("<b>Initial value has been got during last import</b>")
+    }
+    return buffer.toString()
   }
 
   companion object {
