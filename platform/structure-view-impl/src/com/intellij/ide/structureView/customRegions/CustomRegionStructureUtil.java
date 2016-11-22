@@ -16,6 +16,7 @@
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -108,7 +109,10 @@ public class CustomRegionStructureUtil {
   @Nullable
   static CustomFoldingProvider getProvider(@NotNull PsiElement element) {
     for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
-      if (provider.isCustomRegionStart(element.getNode().getText())) {
+      assert provider != null;
+      ASTNode node = element.getNode();
+      assert node != null : "no corresponding node for " + element.getText();
+      if (provider.isCustomRegionStart(node.getText())) {
         return provider;
       }
     }
