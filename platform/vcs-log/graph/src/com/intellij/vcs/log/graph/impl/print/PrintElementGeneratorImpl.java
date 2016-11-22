@@ -48,7 +48,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final int CACHE_SIZE = 100;
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
   private static final int SAMPLE_SIZE = 20000;
-
+  private static final double K = 0.1;
 
   @NotNull private final SLRUMap<Integer, List<GraphElement>> myCache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
   @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
@@ -145,14 +145,23 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
         int width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows);
 
-        sum += width;
-        sumSquares += width * width;
+        /*
+         * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
+         * this formula ensures that sum of all weights is 1
+         */
+        double weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1));
+        sum += width * weight;
+        sumSquares += width * width * weight;
 
         edgesCount = newEdgesCount;
       }
 
-      double average = sum / n;
-      double deviation = Math.sqrt(sumSquares / n - average * average);
+      /*
+      weighted variance calculation described here:
+      http://stackoverflow.com/questions/30383270/how-do-i-calculate-the-standard-deviation-between-weighted-measurements
+       */
+      double average = sum;
+      double deviation = Math.sqrt(sumSquares - average * average);
       myRecommendedWidth = (int)Math.round(average + deviation);
     }
 
