@@ -61,6 +61,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JPasswordField myPasswordText;
   private JPasswordField myPassphraseText;
   private TextFieldWithBrowseButton myKeyFileText;
+  private JRadioButton myAgentButton;
   private JRadioButton myPasswordButton;
   private JRadioButton myKeyButton;
   private JLabel myPasswordLabel;
@@ -139,6 +140,15 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     }
     myUserNameText.selectAll();
     myUserNameText.getDocument().addDocumentListener(this);
+
+    gb.gridy += 1;
+    gb.weightx = 0;
+    gb.gridx = 0;
+    gb.fill = GridBagConstraints.NONE;
+    gb.gridwidth = 3;
+    // password type
+    myAgentButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.with.agent"));
+    panel.add(myAgentButton, gb);
 
     gb.gridy += 1;
     gb.weightx = 0;
@@ -254,10 +264,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myPortField.getDocument().addDocumentListener(this);
 
     ButtonGroup group = new ButtonGroup();
+    group.add(myAgentButton);
     group.add(myPasswordButton);
     group.add(myKeyButton);
-    group.setSelected(myPasswordButton.getModel(), true);
+    // TODO: Select agent by default only when available
+    group.setSelected(myAgentButton.getModel(), true);
     group.setSelected(myPasswordButton.getModel(), false);
+    group.setSelected(myKeyButton.getModel(), false);
 
     gb.gridy += 1;
     gb.gridx = 0;
@@ -484,5 +497,9 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     updateOKButton();
     if (! isOKActionEnabled()) return;
     super.doOKAction();
+  }
+
+  public boolean isAgentSelected() {
+    return myAgentButton.isSelected();
   }
 }

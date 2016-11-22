@@ -1,5 +1,5 @@
-import com.trilead.ssh2.KnownHosts;
-import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2_build213.KnownHosts;
+import com.trilead.ssh2_build213.ServerHostKeyVerifier;
 
 /**
  * This example hostkey verifier is used by the

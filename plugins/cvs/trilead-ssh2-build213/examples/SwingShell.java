@@ -1,4 +1,4 @@
-import com.trilead.ssh2.*;
+import com.trilead.ssh2_build213.*;
 
 import javax.swing.*;
 import java.awt.*;

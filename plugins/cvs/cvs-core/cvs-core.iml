@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="javacvs-src" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module-library">
-      <library name="trilead-ssh2">
+      <library name="trilead-ssh2-build213">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/trilead-ssh2-build213.jar!/" />
         </CLASSES>

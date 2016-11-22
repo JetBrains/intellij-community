@@ -15,9 +15,9 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.ProxyData;
-import com.trilead.ssh2.transport.ClientServerHello;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.ProxyData;
+import com.trilead.ssh2_build213.transport.ClientServerHello;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 

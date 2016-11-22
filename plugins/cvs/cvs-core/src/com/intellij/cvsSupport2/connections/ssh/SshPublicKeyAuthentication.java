@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.trilead.ssh2.Connection;
+import com.trilead.ssh2_build213.Connection;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 import java.io.File;

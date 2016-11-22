@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="jsch.agentproxy.trilead-ssh2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.svnkit-trilead-ssh2-thick.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.svnkit-trilead-ssh2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

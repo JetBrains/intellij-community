@@ -1,7 +1,7 @@
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.HTTPProxyData;
-import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.HTTPProxyData;
+import com.trilead.ssh2_build213.Session;
+import com.trilead.ssh2_build213.StreamGobbler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
