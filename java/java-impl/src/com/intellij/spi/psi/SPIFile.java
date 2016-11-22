@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
-import com.intellij.lang.spi.SPILanguage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +160,8 @@ public class SPIFile extends PsiFileBase {
 
     @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return getElement().setName(newElementName + getElement().getName().substring(getCanonicalText().length()));
+      String newPackageQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getCanonicalText()), newElementName);
+      return getElement().setName(newPackageQName + getElement().getName().substring(getCanonicalText().length()));
     }
 
     @Override
