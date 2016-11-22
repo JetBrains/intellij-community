@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,35 +32,30 @@ import java.util.LinkedList;
 
 /**
  * @author Roman.Shein
- * @since 05.08.2015.
- * TODO: move from debugger-impl to more meaningful location?
- *
- *
+ * @since 05.08.2015
  */
 public class JavaExtractor implements LangCodeStyleExtractor {
-    @NotNull
-    @Override
-    public Differ getDiffer(final Project project, PsiFile psiFile, CodeStyleSettings settings) {
-        return new DifferBase(project, psiFile, settings) {
-            @Override
-            public String reformattedText() {
-                final JavaCodeFragment file = JavaCodeFragmentFactory.getInstance(project).
-                    createCodeBlockCodeFragment(myOrigText, myFile, false);
+  @NotNull
+  @Override
+  public Differ getDiffer(final Project project, PsiFile psiFile, CodeStyleSettings settings) {
+    return new DifferBase(project, psiFile, settings) {
+      @Override
+      public String reformattedText() {
+        JavaCodeFragment file = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(myOrigText, myFile, false);
 
-                WriteCommandAction.runWriteCommandAction(myProject, "CodeStyleSettings extractor", "CodeStyleSettings extractor", () -> {
-                    final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
-                    assert (treeElement != null);
+        WriteCommandAction.runWriteCommandAction(myProject, "CodeStyleSettings extractor", "CodeStyleSettings extractor", () -> {
+          ASTNode treeElement = SourceTreeToPsiMap.psiToTreeNotNull(file);
+          SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(mySettings, file.getLanguage()).processElement(treeElement));
+        }, file);
 
-                    SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(mySettings, file.getLanguage()).processElement(treeElement));
-                }, file);
-                return file.getText();
-            }
-        };
-    }
+        return file.getText();
+      }
+    };
+  }
 
-    @NotNull
-    @Override
-    public Collection<Value.VAR_KIND> getCustomVarKinds() {
-        return new LinkedList<>();
-    }
+  @NotNull
+  @Override
+  public Collection<Value.VAR_KIND> getCustomVarKinds() {
+    return new LinkedList<>();
+  }
 }
