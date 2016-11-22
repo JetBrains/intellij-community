@@ -1,90 +1,90 @@
 java_import(
-    name = "gradle-tooling-api-3.1",
-    jars = ["gradle-tooling-api-3.1.jar"],
+    name = "gradle-tooling-api-3.2",
+    jars = ["gradle-tooling-api-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-core-3.1",
-    jars = ["gradle-core-3.1.jar"],
+    name = "gradle-core-3.2",
+    jars = ["gradle-core-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-messaging-3.1",
-    jars = ["gradle-messaging-3.1.jar"],
+    name = "gradle-messaging-3.2",
+    jars = ["gradle-messaging-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-model-core-3.1",
-    jars = ["gradle-model-core-3.1.jar"],
+    name = "gradle-model-core-3.2",
+    jars = ["gradle-model-core-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-model-groovy-3.1",
-    jars = ["gradle-model-groovy-3.1.jar"],
+    name = "gradle-model-groovy-3.2",
+    jars = ["gradle-model-groovy-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-wrapper-3.1",
-    jars = ["gradle-wrapper-3.1.jar"],
+    name = "gradle-wrapper-3.2",
+    jars = ["gradle-wrapper-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-base-services-3.1",
-    jars = ["gradle-base-services-3.1.jar"],
+    name = "gradle-base-services-3.2",
+    jars = ["gradle-base-services-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-base-services-groovy-3.1",
-    jars = ["gradle-base-services-groovy-3.1.jar"],
+    name = "gradle-base-services-groovy-3.2",
+    jars = ["gradle-base-services-groovy-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-native-3.1",
-    jars = ["gradle-native-3.1.jar"],
+    name = "gradle-native-3.2",
+    jars = ["gradle-native-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-resources-3.1",
-    jars = ["gradle-resources-3.1.jar"],
+    name = "gradle-resources-3.2",
+    jars = ["gradle-resources-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-logging-3.1",
-    jars = ["gradle-logging-3.1.jar"],
+    name = "gradle-logging-3.2",
+    jars = ["gradle-logging-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-process-services-3.1",
-    jars = ["gradle-process-services-3.1.jar"],
+    name = "gradle-process-services-3.2",
+    jars = ["gradle-process-services-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-dependency-management-3.1",
-    jars = ["gradle-dependency-management-3.1.jar"],
+    name = "gradle-dependency-management-3.2",
+    jars = ["gradle-dependency-management-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -97,8 +97,8 @@ java_import(
 )
 
 java_import(
-    name = "gradle-cli-3.1",
-    jars = ["gradle-cli-3.1.jar"],
+    name = "gradle-cli-3.2",
+    jars = ["gradle-cli-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
