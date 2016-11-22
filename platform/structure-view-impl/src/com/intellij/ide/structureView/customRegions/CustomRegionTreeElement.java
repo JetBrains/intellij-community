@@ -152,4 +152,8 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return myParent;
   }
 
+  @Override
+  public String toString() {
+    return "Region '" + myProvider.getPlaceholderText(myStartElement.getText()) + "'";
+  }
 }

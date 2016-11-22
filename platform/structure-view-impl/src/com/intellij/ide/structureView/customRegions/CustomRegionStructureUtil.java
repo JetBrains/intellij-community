@@ -17,7 +17,8 @@ package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.CustomFoldingProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.folding.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,6 +131,22 @@ public class CustomRegionStructureUtil {
   }
 
   private static boolean isCustomRegionCommentCandidate(@NotNull PsiElement element) {
-    return element instanceof PsiComment && !element.textContains('\n');
+    Language language = element.getLanguage();
+    if (!Language.ANY.is(language)) {
+      final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
+      if (foldingBuilder instanceof CustomFoldingBuilder) {
+        return ((CustomFoldingBuilder)foldingBuilder).isCustomFoldingCandidate(element);
+      }
+      else if (foldingBuilder instanceof CompositeFoldingBuilder) {
+        for (FoldingBuilder simpleBuilder : ((CompositeFoldingBuilder)foldingBuilder).getAllBuilders()) {
+          if (simpleBuilder instanceof CustomFoldingBuilder) {
+            if (((CustomFoldingBuilder)simpleBuilder).isCustomFoldingCandidate(element)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }

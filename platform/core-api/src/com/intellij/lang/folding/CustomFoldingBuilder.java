@@ -212,6 +212,10 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     return node.getPsi() instanceof PsiComment;
   }
 
+  public final boolean isCustomFoldingCandidate(@NotNull PsiElement element) {
+    return isCustomFoldingCandidate(element.getNode());
+  }
+
   /**
    * Checks if the node is used as custom folding root. Any custom folding elements inside the root are considered to be at the same level
    * even if they are located at different levels of PSI tree. By default the method returns true if the node has any child elements
