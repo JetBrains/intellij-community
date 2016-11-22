@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +46,6 @@ public abstract class StudyDirectoryNode extends PsiDirectoryNode {
   @Nullable
   public abstract AbstractTreeNode modifyChildNode(AbstractTreeNode childNode);
 
-  public abstract StudyDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value);
+  public abstract PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value);
 
 }
