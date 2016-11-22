@@ -89,7 +89,7 @@ public class ModuleHighlightUtil {
     return Optional.ofNullable(module)
       .map(m -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, m.getModuleScope(false)))
       .map(c -> c.size() == 1 ? c.iterator().next() : null)
-      .map(PsiManager.getInstance(module.getProject())::findFile)
+      .map(f -> PsiManager.getInstance(module.getProject()).findFile(f))
       .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
       .orElse(null);
   }
