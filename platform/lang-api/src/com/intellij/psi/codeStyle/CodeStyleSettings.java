@@ -254,6 +254,13 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     myRepeatAnnotations.addAll(repeatAnnotations);
   }
 
+  //----------------- FUNCTIONAL EXPRESSIONS -----
+
+  public boolean REPLACE_INSTANCEOF = false;
+  public boolean REPLACE_CAST = false;
+  public boolean REPLACE_NULL_CHECK = true;
+
+
   //----------------- IMPORTS --------------------
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;

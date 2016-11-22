@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 
@@ -50,19 +49,6 @@ import java.util.Map;
 public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + LambdaCanBeMethodReferenceInspection.class.getName());
 
-  public boolean REPLACE_INSTANCEOF;
-  public boolean REPLACE_CAST;
-  public boolean REPLACE_NULL_CHECK = true;
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Replace instanceof with MyClass.class::isInstance", "REPLACE_INSTANCEOF");
-    panel.addCheckbox("Replace cast with MyClass.class::cast", "REPLACE_CAST");
-    panel.addCheckbox("Replace null-check with Objects::nonNull or Objects::isNull", "REPLACE_NULL_CHECK");
-    return panel;
-  }
 
   @Nls
   @NotNull
@@ -117,19 +103,19 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  public PsiExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
-                                                   final PsiVariable[] parameters,
-                                                   PsiType functionalInterfaceType,
-                                                   @Nullable PsiElement context) {
+  public static PsiExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
+                                                          final PsiVariable[] parameters,
+                                                          PsiType functionalInterfaceType,
+                                                          @Nullable PsiElement context) {
     PsiExpression methodRefCandidate = extractMethodReferenceCandidateExpression(body, true);
     return canBeMethodReferenceProblem(parameters, functionalInterfaceType, context, methodRefCandidate);
   }
 
   @Nullable
-  public PsiExpression canBeMethodReferenceProblem(final PsiVariable[] parameters,
-                                                   PsiType functionalInterfaceType,
-                                                   @Nullable PsiElement context,
-                                                   final PsiExpression methodRefCandidate) {
+  public static PsiExpression canBeMethodReferenceProblem(final PsiVariable[] parameters,
+                                                          PsiType functionalInterfaceType,
+                                                          @Nullable PsiElement context,
+                                                          final PsiExpression methodRefCandidate) {
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
@@ -263,7 +249,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  public PsiExpression extractMethodReferenceCandidateExpression(PsiElement body, boolean checkSideEffectPureQualifier) {
+  public static PsiExpression extractMethodReferenceCandidateExpression(PsiElement body, boolean checkSideEffectPureQualifier) {
     final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression == null) {
       return null;
@@ -278,10 +264,11 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         return expression;
       }
     }
-    if (expression instanceof PsiInstanceOfExpression && REPLACE_INSTANCEOF) {
+
+    if (expression instanceof PsiInstanceOfExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF) {
       return expression;
     }
-    else if (expression instanceof PsiBinaryExpression && REPLACE_NULL_CHECK) {
+    else if (expression instanceof PsiBinaryExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
       IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
       if (JavaTokenType.EQEQ.equals(tokenType) || JavaTokenType.NE.equals(tokenType)) {
         if (ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getLOperand()) ||
@@ -290,7 +277,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         }
       }
     }
-    else if (expression instanceof PsiTypeCastExpression && REPLACE_CAST) {
+    else if (expression instanceof PsiTypeCastExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST) {
       PsiTypeElement typeElement = ((PsiTypeCastExpression)expression).getCastType();
       if (typeElement != null) {
         PsiJavaCodeReferenceElement refs = typeElement.getInnermostComponentReferenceElement();
@@ -317,8 +304,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   @NotNull
   public static PsiExpression replaceLambdaWithMethodReference(@NotNull PsiLambdaExpression lambda) {
     PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-    final PsiExpression candidate = new LambdaCanBeMethodReferenceInspection()
-      .canBeMethodReferenceProblem(body, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
+    final PsiExpression candidate = canBeMethodReferenceProblem(body, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
     return tryConvertToMethodReference(lambda, candidate);
   }
 

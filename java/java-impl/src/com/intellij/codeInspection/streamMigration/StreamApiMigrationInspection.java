@@ -364,7 +364,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     if(!(loopStatement instanceof PsiForeachStatement)) return false;
     PsiParameter parameter = ((PsiForeachStatement)loopStatement).getIterationParameter();
     //method reference
-    final PsiExpression candidate = new LambdaCanBeMethodReferenceInspection()
+    final PsiExpression candidate = LambdaCanBeMethodReferenceInspection
       .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
                                    new PsiParameter[]{parameter}, createDefaultConsumerType(parameter.getProject(), parameter), null);
     if (!(candidate instanceof PsiCallExpression)) {

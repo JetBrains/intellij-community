@@ -32,6 +32,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SortedListModel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
@@ -63,6 +64,9 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   
   @SuppressWarnings("unused") private JPanel myCommenterPanel;
   private JPanel myOverridePanel;
+  private JBCheckBox myReplaceInstanceOfCb;
+  private JBCheckBox myReplaceCastCb;
+  private JBCheckBox myReplaceNullCheckCb;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
@@ -116,6 +120,10 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
 
+    myReplaceCastCb.setSelected(settings.REPLACE_CAST);
+    myReplaceInstanceOfCb.setSelected(settings.REPLACE_INSTANCEOF);
+    myReplaceNullCheckCb.setSelected(settings.REPLACE_NULL_CHECK);
+
     myRepeatAnnotationsModel.clear();
     myRepeatAnnotationsModel.addAll(settings.getRepeatAnnotations());
     myCommenterForm.reset(settings);
@@ -146,7 +154,12 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     settings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
     
     settings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
-    
+
+    settings.REPLACE_CAST = myReplaceCastCb.isSelected();
+    settings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
+    settings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
+
+
     myCommenterForm.apply(settings);
     settings.setRepeatAnnotations(myRepeatAnnotationsModel.getItems());
 
@@ -187,6 +200,10 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= isModified(myCbUseExternalAnnotations, settings.USE_EXTERNAL_ANNOTATIONS);
     isModified |= isModified(myInsertOverrideAnnotationCheckBox, settings.INSERT_OVERRIDE_ANNOTATION);
     isModified |= isModified(myRepeatSynchronizedCheckBox, settings.REPEAT_SYNCHRONIZED);
+
+    isModified |= isModified(myReplaceCastCb, settings.REPLACE_CAST);
+    isModified |= isModified(myReplaceInstanceOfCb, settings.REPLACE_INSTANCEOF);
+    isModified |= isModified(myReplaceNullCheckCb, settings.REPLACE_NULL_CHECK);
 
     isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
     

@@ -17,16 +17,30 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 
 public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = true;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = false;
+    super.tearDown();
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    LambdaCanBeMethodReferenceInspection inspection = new LambdaCanBeMethodReferenceInspection();
-    inspection.REPLACE_CAST = inspection.REPLACE_INSTANCEOF = inspection.REPLACE_NULL_CHECK = true;
-    return new LocalInspectionTool[]{inspection};
+    return new LocalInspectionTool[]{new LambdaCanBeMethodReferenceInspection()};
   }
 
   public void test() throws Exception { doAllTests(); }

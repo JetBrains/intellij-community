@@ -83,10 +83,10 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
-          LambdaCanBeMethodReferenceInspection methodReferenceInspection = new LambdaCanBeMethodReferenceInspection();
-          PsiExpression lambdaBodyCandidate = methodReferenceInspection.extractMethodReferenceCandidateExpression(body, false);
+          PsiExpression lambdaBodyCandidate = LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(body, false);
           final PsiExpression methodRefCandidate =
-            methodReferenceInspection.canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(), lambdaBodyCandidate);
+            LambdaCanBeMethodReferenceInspection
+              .canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(), lambdaBodyCandidate);
           if (methodRefCandidate instanceof PsiCallExpression) {
             final PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
             final PsiMethod resolveMethod = callExpression.resolveMethod();
@@ -132,9 +132,8 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
           final PsiType functionalInterfaceType = anonymousClass.getBaseClassType();
-          LambdaCanBeMethodReferenceInspection methodReferenceInspection = new LambdaCanBeMethodReferenceInspection();
-          PsiExpression methodRefCandidate = methodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody(), false);
-          final PsiExpression candidate = methodReferenceInspection.canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate);
+          PsiExpression methodRefCandidate = LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody(), false);
+          final PsiExpression candidate = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate);
 
           final String methodRefText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(candidate, functionalInterfaceType, parameters);
 
