@@ -20,6 +20,7 @@ public class AnswerPlaceholderSubtaskInfo {
   @SerializedName("placeholder_text")
   @Expose private String myPlaceholderText;
 
+  // actual student's answer, used to reset file to current subtask initial state
   private String myAnswer = "";
   private boolean mySelected = false;
   private StudyStatus myStatus = StudyStatus.Unchecked;
