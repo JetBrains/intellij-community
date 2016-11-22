@@ -4,7 +4,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -498,6 +504,11 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     File newFile = new File(myOlderDir, "newDir/newFile.txt");
     assertTrue(newFile.exists());
     assertEquals("hello", FileUtil.loadFile(newFile));
+
+    Path link = Paths.get(myOlderDir.getPath(), "newDir2/link");
+    assertTrue(Files.exists(link, LinkOption.NOFOLLOW_LINKS));
+    assertTrue(Files.exists(link));
+    assertEquals("../newDir/newFile.txt", Files.readSymbolicLink(link).toString());
 
     File changedFile = new File(myOlderDir, "Readme.txt");
     assertTrue(changedFile.exists());

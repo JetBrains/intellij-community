@@ -1,6 +1,7 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -23,7 +24,7 @@ public class CreateAction extends PatchAction {
       writeExecutableFlag(patchOutput, newerFile);
       writeSymlinkFlag(patchOutput, newerFile);
       if (Utils.isSymlink(newerFile)) {
-        patchOutput.write(Utils.getSymlinkTarget(newerFile).getBytes());
+        patchOutput.write(Utils.getSymlinkTarget(newerFile).getBytes(StandardCharsets.UTF_8));
       }
       else {
         Utils.copyFileToStream(newerFile, patchOutput);
