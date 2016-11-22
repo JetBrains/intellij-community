@@ -1456,6 +1456,54 @@ public class PyTypeTest extends PyTestCase {
            "        pass");
   }
 
+  // PY-19723
+  public void testTypeVarSubstitutionInPositionalArgs() {
+    doTest("int",
+           "def foo(*args):" +
+           "  \"\"\"\n" +
+           "  :type args: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(1)");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInHeterogeneousPositionalArgs() {
+    doTest("Union[int, str]",
+           "def foo(*args):" +
+           "  \"\"\"\n" +
+           "  :type args: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(1, \"2\")");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInKeywordArgs() {
+    doTest("int",
+           "def foo(**kwargs):" +
+           "  \"\"\"\n" +
+           "  :type kwargs: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(a=1)");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInHeterogeneousKeywordArgs() {
+    doTest("Union[int, str]",
+           "def foo(**kwargs):" +
+           "  \"\"\"\n" +
+           "  :type kwargs: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(a=1, b=\"2\")");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

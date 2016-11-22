@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -204,7 +203,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();
         final PyExpression arg = entry.getKey();
-        final PyType expectedArgType = getExpectedArgumentType(param);
+        final PyType expectedArgType = PyTypeChecker.getExpectedArgumentType(param, myTypeEvalContext);
         if (expectedArgType == null) {
           continue;
         }
@@ -219,24 +218,6 @@ public class PyTypeCheckerInspection extends PyInspection {
         }
       }
       return problems;
-    }
-
-    @Nullable
-    private PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter) {
-      final PyType parameterType = myTypeEvalContext.getType(parameter);
-
-      if (parameterType instanceof PyCollectionType) {
-        final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
-
-        if (parameter.isPositionalContainer()) {
-          return paramCollectionType.getIteratedItemType();
-        }
-        else if (parameter.isKeywordContainer()) {
-          return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(myTypeEvalContext), 1, null);
-        }
-      }
-
-      return parameterType;
     }
 
     @Nullable

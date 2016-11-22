@@ -468,17 +468,40 @@ public class PyTypeChecker {
                                                             @NotNull Map<PyExpression, PyNamedParameter> arguments,
                                                             @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
+
+    PyNamedParameter positionalParameter = null;
+    final List<PyType> positionalTypes = new ArrayList<>();
+
+    PyNamedParameter keywordParameter = null;
+    final List<PyType> keywordTypes = new ArrayList<>();
+
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
-      final PyNamedParameter p = entry.getValue();
-      if (p.isPositionalContainer() || p.isKeywordContainer()) {
-        continue;
+      final PyNamedParameter parameter = entry.getValue();
+      final PyType actualArgType = context.getType(entry.getKey());
+
+      if (parameter.isPositionalContainer()) {
+        if (positionalParameter == null) positionalParameter = parameter;
+        positionalTypes.add(actualArgType);
       }
-      final PyType argType = context.getType(entry.getKey());
-      final PyType paramType = context.getType(p);
-      if (!match(paramType, argType, context, substitutions)) {
+      else if (parameter.isKeywordContainer()) {
+        if (keywordParameter == null) keywordParameter = parameter;
+        keywordTypes.add(actualArgType);
+      }
+      else if (!match(getExpectedArgumentType(parameter, context), actualArgType, context, substitutions)) {
         return null;
       }
     }
+
+    if (positionalParameter != null &&
+        !match(getExpectedArgumentType(positionalParameter, context), PyUnionType.union(positionalTypes), context, substitutions)) {
+      return null;
+    }
+
+    if (keywordParameter != null &&
+        !match(getExpectedArgumentType(keywordParameter, context), PyUnionType.union(keywordTypes), context, substitutions)) {
+      return null;
+    }
+
     return substitutions;
   }
 
@@ -732,6 +755,24 @@ public class PyTypeChecker {
     else {
       return null;
     }
+  }
+
+  @Nullable
+  public static PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final PyType parameterType = context.getType(parameter);
+
+    if (parameterType instanceof PyCollectionType) {
+      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
+
+      if (parameter.isPositionalContainer()) {
+        return paramCollectionType.getIteratedItemType();
+      }
+      else if (parameter.isKeywordContainer()) {
+        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
+      }
+    }
+
+    return parameterType;
   }
 
   public static class AnalyzeCallResults {
