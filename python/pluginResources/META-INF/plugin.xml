@@ -4,7 +4,7 @@
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
-  <idea-version since-build="163.8540" until-build="163.8540"/>
+  <idea-version since-build="SNAPSHOT"/>
 
   <description><![CDATA[
 The Python plug-in provides smart editing for Python scripts. The feature set of the plugin

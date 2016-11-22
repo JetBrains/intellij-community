@@ -112,11 +112,11 @@ target('default': "Build Python Plugin") {
     replacefilter(token: "@@PYCHARM_VERSION@@", value: "$pythonPluginVersionString")
   }
 
-//  if (sinceBuild != null && untilBuild != null) {
-//    ant.replaceregexp(file: "$outDir/plugins/python-ce/plugin.xml",
-//                      match: "since-build=\"[^\"]+\"",
-//                      replace: "since-build=\"${sinceBuild}\"")
-//  }
+  if (sinceBuild != null && untilBuild != null) {
+    ant.replaceregexp(file: "$outDir/plugins/python-ce/plugin.xml",
+                      match: "since-build=\"[^\"]+\"",
+                      replace: "since-build=\"${sinceBuild}\"")
+  }
 
   layout("$outDir/layout-ce") {
     dir("python") {
