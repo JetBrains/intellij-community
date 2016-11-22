@@ -290,7 +290,19 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
       if (newName == null) newName = directory.getName();
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
-      final PsiDirectory subdirectory = existing == null ? targetDirectory.createSubdirectory(newName) : existing;
+      final PsiDirectory subdirectory;
+      if (existing == null) {
+        String finalNewName = newName;
+        subdirectory = new WriteCommandAction<PsiDirectory>(targetDirectory.getProject(), title) {
+          @Override
+          protected void run(@NotNull Result<PsiDirectory> result) throws Throwable {
+            result.setResult(targetDirectory.createSubdirectory(finalNewName));
+          }
+        }.execute().getResultObject();
+      }
+      else {
+        subdirectory = existing;
+      }
       EncodingRegistry.doActionAndRestoreEncoding(directory.getVirtualFile(),
                                                   (ThrowableComputable<VirtualFile, IOException>)() -> subdirectory.getVirtualFile());
 
