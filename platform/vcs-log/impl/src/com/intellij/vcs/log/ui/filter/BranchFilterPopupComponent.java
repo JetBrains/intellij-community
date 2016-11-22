@@ -110,7 +110,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     public AnAction createAction(@NotNull String name) {
-      return new PredefinedValueAction(Collections.singletonList(name)) {
+      return new PredefinedValueAction(name) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myFilterModel.setFilter(myFilterModel.createFilter(myValues)); // does not add to recent
@@ -126,7 +126,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     protected AnAction createCollapsedAction(String actionName) {
-      return createPredefinedValueAction(Collections.singletonList(actionName)); // adds to recent
+      return new PredefinedValueAction(actionName); // adds to recent
     }
   }
 }

@@ -127,10 +127,7 @@ public abstract class BranchPopupBuilder {
   private static void putActionsForReferences(List<RefGroup> references, Groups actions) {
     for (final RefGroup refGroup : references) {
       if (refGroup instanceof SingletonRefGroup) {
-        String name = refGroup.getName();
-        if (!actions.singletonGroups.contains(name)) {
-          actions.singletonGroups.add(name);
-        }
+        actions.singletonGroups.add(refGroup.getName());
       }
       else if (refGroup.isExpanded()) {
         addToGroup(refGroup, actions.expandedGroups);
@@ -142,20 +139,9 @@ public abstract class BranchPopupBuilder {
   }
 
   private static void addToGroup(final RefGroup refGroup, TreeMap<String, TreeSet<String>> groupToAdd) {
-    TreeSet<String> existingGroup = groupToAdd.get(refGroup.getName());
-
-    TreeSet<String> actions = new TreeSet<>();
+    TreeSet<String> groupActions = groupToAdd.computeIfAbsent(refGroup.getName(), key -> new TreeSet<>());
     for (VcsRef ref : refGroup.getRefs()) {
-      actions.add(ref.getName());
-    }
-
-    if (existingGroup == null) {
-      groupToAdd.put(refGroup.getName(), actions);
-    }
-    else {
-      for (String action : actions) {
-        existingGroup.add(action);
-      }
+      groupActions.add(ref.getName());
     }
   }
 }

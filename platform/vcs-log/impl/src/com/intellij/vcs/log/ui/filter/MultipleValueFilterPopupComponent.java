@@ -85,11 +85,6 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  protected AnAction createPredefinedValueAction(@NotNull List<String> values) {
-    return new PredefinedValueAction(values);
-  }
-
-  @NotNull
   protected AnAction createSelectMultipleValuesAction() {
     return new SelectMultipleValuesAction();
   }
@@ -104,6 +99,10 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   protected class PredefinedValueAction extends DumbAwareAction {
 
     @NotNull protected final List<String> myValues;
+
+    public PredefinedValueAction(@NotNull String value) {
+      this(Collections.singletonList(value));
+    }
 
     public PredefinedValueAction(@NotNull List<String> values) {
       super(null, tooltip(values), null);
