@@ -3757,6 +3757,10 @@ public class UIUtil {
     }
   }
 
+  public static int getLineHeight(@NotNull JTextComponent textComponent) {
+    return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
+  }
+
   /**
    * Returns the first focusable component in the specified container.
    * This method returns {@code null} if container is {@code null},
