@@ -71,6 +71,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+
 /**
  * @author Eugene Zhuravlev
  * @since 21.09.2011
@@ -394,15 +397,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return true;
       }
 
-      if (!_platformCp.isEmpty()) {
-        if (hasModules) {
-          String text = "The project has boot classpath dependencies (" + _platformCp + "). Please convert them into regular ones.";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, text));
-          return true;
-        }
+      Collection<File> modulePath = Collections.emptyList();
+      if (hasModules) {
+        // in Java 9, named modules are not allowed to read classes from the classpath
+        // moreover, the compiler requires all transitive dependencies to be on the module path
+        modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
+        classpath = Collections.emptyList();
+      }
 
-        final int chunkSdkVersion = getChunkSdkVersion(chunk);
-        if (chunkSdkVersion >= 9) {
+      if (!_platformCp.isEmpty()) {
+        final int chunkSdkVersion;
+        if (hasModules) {
+          modulePath = newArrayList(concat(_platformCp, modulePath));
+          _platformCp = Collections.emptyList();
+        }
+        else if ((chunkSdkVersion = getChunkSdkVersion(chunk)) >= 9) {
           // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
           // because platform classes are stored in jimage binary files with unknown format.
           // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
@@ -426,14 +435,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
           classpath = joined;
           _platformCp = Collections.emptyList();
         }
-      }
-
-      Collection<File> modulePath = Collections.emptyList();
-      if (hasModules) {
-        // in Java 9, named modules are not allowed to read classes from the classpath
-        // moreover, the compiler requires all transitive dependencies to be on the module path
-        modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
-        classpath = Collections.emptyList();
       }
 
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
