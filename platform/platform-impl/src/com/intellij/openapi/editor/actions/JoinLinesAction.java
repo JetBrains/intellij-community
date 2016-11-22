@@ -25,10 +25,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
 public class JoinLinesAction extends TextComponentEditorAction {
@@ -42,16 +39,16 @@ public class JoinLinesAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       final Document doc = editor.getDocument();
 
-      LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
+      LogicalPosition caretPosition = caret.getLogicalPosition();
       int startLine = caretPosition.line;
       int endLine = startLine + 1;
-      if (editor.getSelectionModel().hasSelection()) {
-        startLine = doc.getLineNumber(editor.getSelectionModel().getSelectionStart());
-        endLine = doc.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-        if (doc.getLineStartOffset(endLine) == editor.getSelectionModel().getSelectionEnd()) endLine--;
+      if (caret.hasSelection()) {
+        startLine = doc.getLineNumber(caret.getSelectionStart());
+        endLine = doc.getLineNumber(caret.getSelectionEnd());
+        if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
       }
 
       int caretRestoreOffset = -1;
@@ -67,13 +64,13 @@ public class JoinLinesAction extends TextComponentEditorAction {
         doc.replaceString(start, end, " ");
       }
 
-      if (editor.getSelectionModel().hasSelection()) {
-        editor.getCaretModel().moveToOffset(editor.getSelectionModel().getSelectionEnd());
+      if (caret.hasSelection()) {
+        caret.moveToOffset(caret.getSelectionEnd());
       } else {
         if (caretRestoreOffset != -1) {
-          editor.getCaretModel().moveToOffset(caretRestoreOffset);
+          caret.moveToOffset(caretRestoreOffset);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          editor.getSelectionModel().removeSelection();
+          caret.removeSelection();
         }
       }
     }
