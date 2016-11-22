@@ -109,12 +109,12 @@ public class CustomRegionStructureUtil {
 
   @Nullable
   static CustomFoldingProvider getProvider(@NotNull PsiElement element) {
-    for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
-      assert provider != null;
-      ASTNode node = element.getNode();
-      assert node != null : "no corresponding node for " + element.getText();
-      if (provider.isCustomRegionStart(node.getText())) {
-        return provider;
+    ASTNode node = element.getNode();
+    if (node != null) {
+      for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
+        if (provider.isCustomRegionStart(node.getText())) {
+          return provider;
+        }
       }
     }
     return null;
