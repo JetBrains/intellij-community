@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
@@ -102,6 +103,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       public Insets getBorderInsets(Component c) {
         int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : UIUtil.isUnderDarcula() ? 1 : 0;
         int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
+        if (JBUI.isHiDPI()) bottom = 2;
+        if (JBUI.isHiDPI()) top = 2;
         return new JBInsets(top, 0, bottom, 0);
       }
 
@@ -128,14 +131,14 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   protected void updateLayout() {
-    int height = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight();
+    int height = UIUtil.getLineHeight(myTextArea);
     Insets insets = myTextArea.getInsets();
     height += insets.top + insets.bottom;
-    int extraGap = JBUI.scale(Math.max(1, (height - 16) / 2));
-    setBorder(JBUI.Borders.empty(3, 6, 3, 4));
+    int extraGap = Math.max(0, (height - JBUI.scale(16)) / 2);
+    setBorder(new EmptyBorder(3, 6, 3, 4));
     setLayout(new MigLayout("flowx, ins 0, gapx " + JBUI.scale(4)));
     removeAll();
-    add(myHistoryPopupButton, "ay top, gaptop " + extraGap);
+    add(myHistoryPopupButton, "ay top, gaptop " + extraGap +", gapleft" + (JBUI.isHiDPI() ? 4 : 0));
     add(myScrollPane, "ay top, growx, pushx");
     //TODO combine icons/info modes
     if (myInfoMode) {
@@ -231,12 +234,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
       Rectangle r = new Rectangle(getSize());
-      r.height = myScrollPane.getHeight()+6;
+      r.height = Math.max(r.height, myScrollPane.getHeight() + getInsets().top + getInsets().bottom);
       if (myIconsPanel.getParent() != null) {
-        r.height = Math.max(r.height, myIconsPanel.getHeight() + 6);
+        r.height = Math.max(r.height, myIconsPanel.getHeight() + getInsets().top + getInsets().bottom);
       }
       if (r.height % 2 == 1) r.height--;
       int arcSize = Math.min(Math.max(25, myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() * 3 / 2), r.height - 1);
+      if (JBUI.isHiDPI()) arcSize = JBUI.scale(21);
       Color borderColor = myTextArea.isEnabled() ? enabledBorderColor : disabledBorderColor;
       if (SystemInfo.isMac && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderAquaLookAndFeel())) {
         g.setColor(borderColor);
@@ -250,7 +254,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         else {
           Shape shape = UIUtil.isUnderWindowsLookAndFeel()
                         ? new Rectangle(r.x, r.y, r.width, r.height)
-                        : new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, arcSize - 5, arcSize - 5);
+                        : new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, arcSize - JBUI.scale(5), arcSize - JBUI.scale(5));
           g.setColor(myTextArea.getBackground());
           g.fill(shape);
           g.setColor(borderColor);
