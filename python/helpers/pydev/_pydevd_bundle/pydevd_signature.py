@@ -83,9 +83,9 @@ class SignatureFactory(object):
     def is_in_scope(self, filename):
         return not pydevd_utils.not_in_project_roots(filename)
 
-    def create_signature(self, frame, with_args=True):
+    def create_signature(self, frame, filename, with_args=True):
         try:
-            filename, modulename, funcname = self.file_module_function_of(frame)
+            _, modulename, funcname = self.file_module_function_of(frame)
             signature = Signature(filename, funcname)
             if with_args:
                 signature.set_args(frame, recursive=True)
@@ -168,7 +168,7 @@ def create_signature_message(signature):
 
 def send_signature_call_trace(dbg, frame, filename):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
-        signature = dbg.signature_factory.create_signature(frame)
+        signature = dbg.signature_factory.create_signature(frame, filename)
         if signature is not None:
             if dbg.signature_factory.cache is not None:
                 if not dbg.signature_factory.cache.is_in_cache(signature):
@@ -186,7 +186,7 @@ def send_signature_call_trace(dbg, frame, filename):
 
 def send_signature_return_trace(dbg, frame, filename, return_value):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
-        signature = dbg.signature_factory.create_signature(frame, with_args=False)
+        signature = dbg.signature_factory.create_signature(frame, filename, with_args=False)
         signature.return_type = get_type_of_value(return_value, recursive=True)
         dbg.writer.add_command(create_signature_message(signature))
         return True

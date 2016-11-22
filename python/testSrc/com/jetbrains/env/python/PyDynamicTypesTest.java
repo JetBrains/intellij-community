@@ -76,7 +76,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
         waitForTerminate();
 
         EdtTestUtil.runInEdtAndWait(() -> {
-          myFixture.configureByFile("dynamicTypes/" + scriptName);
+          myFixture.configureByFile(scriptName);
 
           try {
             //copy signature attributes from real file to temporary test file
