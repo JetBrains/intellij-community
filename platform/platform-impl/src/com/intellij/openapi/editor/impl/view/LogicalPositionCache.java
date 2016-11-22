@@ -202,6 +202,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
           column++;
         }
       }
+      if (cacheSize > 0 && (end - start) % CACHE_FREQUENCY == 0) cache[cacheSize - 1] = column;
       return hasTabs ? new LineData(cache) : TRIVIAL;
     }
 
