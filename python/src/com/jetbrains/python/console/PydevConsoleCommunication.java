@@ -103,6 +103,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private PythonDebugConsoleCommunication myDebugCommunication;
   private boolean myNeedsMore = false;
 
+  private PythonConsoleView myConsoleView;
+
   /**
    * Initializes the xml-rpc communication.
    *
@@ -184,6 +186,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
     else if ("NotifyAboutMagic".equals(method)) {
       return execNotifyAboutMagic(params);
+    }
+    else if ("ShowConsole".equals(method)) {
+      myConsoleView.setConsoleEnabled(true);
+      return "";
     }
     else {
       throw new UnsupportedOperationException();
@@ -675,5 +681,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
       return true;
     }
+  }
+
+  public void setConsoleView(PythonConsoleView consoleView) {
+    myConsoleView = consoleView;
   }
 }

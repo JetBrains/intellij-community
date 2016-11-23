@@ -8,6 +8,7 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
@@ -47,6 +48,9 @@ class CreateFromArchiveProjectStep extends PyCharmNewProjectStep {
       if (course != null) {
         VirtualFile folder = CCUtils.getGeneratedFilesFolder(myProject, myModule);
         String zipName = FileUtil.sanitizeFileName(course.getName());
+        if (zipName.isEmpty()) {
+          zipName = EduNames.COURSE;
+        }
         String locationDir = folder.getPath();
         CCCreateCourseArchive.createCourseArchive(myProject, myModule, zipName, locationDir, false);
         String path = FileUtil.join(FileUtil.toSystemDependentName(folder.getPath()), zipName + ".zip");

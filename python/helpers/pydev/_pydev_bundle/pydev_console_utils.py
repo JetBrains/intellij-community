@@ -419,6 +419,10 @@ class BaseInterpreterInterface:
 
     server = property(get_server)
 
+    def show_console(self):
+        server = self.get_server()
+        server.ShowConsole()
+
     def finish_exec(self, more):
         self.interruptable = False
 

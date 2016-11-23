@@ -34,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleType;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -69,16 +68,18 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      PydevConsoleRunner runner =
+      PythonScriptWithConsoleRunner runner =
         new PythonScriptWithConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
                                           myConfig.getEnvs(), patchers,
                                           PyConsoleOptions.getInstance(myConfig.getProject()).getPythonConsoleSettings());
 
+      runner.setEnableAfterConnection(false);
       runner.runSync();
       // runner.getProcessHandler() would be null if execution error occurred
       if (runner.getProcessHandler() == null) {
         return null;
       }
+      runner.getPydevConsoleCommunication().setConsoleView(runner.getConsoleView());
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
       actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
 

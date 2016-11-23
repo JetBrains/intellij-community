@@ -412,6 +412,7 @@ public abstract class AbstractLayoutCodeProcessor {
         return;
       }
       catch(IndexNotReadyException e) {
+        LOG.warn(e);
         return;
       }
 
@@ -424,7 +425,8 @@ public abstract class AbstractLayoutCodeProcessor {
             ApplicationManager.getApplication().invokeLater(myPostRunnable);
           }
         }
-        catch (IndexNotReadyException ignored) {
+        catch (IndexNotReadyException e) {
+          LOG.warn(e);
         }
       }, myCommandName, null);
 
