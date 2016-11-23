@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
@@ -255,7 +256,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   }
 
   override fun isProjectFile(file: VirtualFile): Boolean {
-    if (!file.isInLocalFileSystem) {
+    if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file, file.fileType)) {
       return false
     }
 
