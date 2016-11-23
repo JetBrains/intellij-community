@@ -24,7 +24,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -39,11 +38,11 @@ import java.util.Locale;
 public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
-  static final String ELEMENT_TEMPLATE = "template";
-  static final String ATTRIBUTE_NAME = "name";
-  static final String ATTRIBUTE_REFORMAT = "reformat";
-  static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
-  static final String ATTRIBUTE_ENABLED = "enabled";
+  private static final String ELEMENT_TEMPLATE = "template";
+  private static final String ATTRIBUTE_NAME = "name";
+  private static final String ATTRIBUTE_REFORMAT = "reformat";
+  private static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
+  private static final String ATTRIBUTE_ENABLED = "enabled";
 
   public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     super(typeManager, project);
@@ -53,6 +52,7 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   @Override
   public Element getState() {
     Element element = new Element("fileTemplateSettings");
+
     for (FTManager manager : getAllManagers()) {
       Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
@@ -62,13 +62,13 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
         if (template instanceof BundledFileTemplate) {
           shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
         }
-        if (!shouldSave) {
-          continue;
-        }
+        if (!shouldSave) continue;
+
         final Element templateElement = new Element(ELEMENT_TEMPLATE);
         templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
         templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
         templateElement.setAttribute(ATTRIBUTE_LIVE_TEMPLATE, Boolean.toString(template.isLiveTemplateEnabled()));
+
         if (template instanceof BundledFileTemplate) {
           templateElement.setAttribute(ATTRIBUTE_ENABLED, Boolean.toString(((BundledFileTemplate)template).isEnabled()));
         }
@@ -80,34 +80,26 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
         templatesGroup.addContent(templateElement);
       }
     }
+
     return element;
   }
 
   @Override
   public void loadState(Element state) {
-    doLoad(state);
-  }
-
-  private void doLoad(Element element) {
     for (final FTManager manager : getAllManagers()) {
-      final Element templatesGroup = element.getChild(getXmlElementGroupName(manager));
-      if (templatesGroup == null) {
-        continue;
-      }
-      final List children = templatesGroup.getChildren(ELEMENT_TEMPLATE);
+      final Element templatesGroup = state.getChild(getXmlElementGroupName(manager));
+      if (templatesGroup == null) continue;
 
-      for (final Object elem : children) {
-        final Element child = (Element)elem;
+      for (Element child : templatesGroup.getChildren(ELEMENT_TEMPLATE)) {
         final String qName = child.getAttributeValue(ATTRIBUTE_NAME);
         final FileTemplateBase template = manager.getTemplate(qName);
-        if (template == null) {
-          continue;
-        }
-        template.setReformatCode(Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT)));
-        template.setLiveTemplateEnabled(Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));
+        if (template == null) continue;
+
+        template.setReformatCode(Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_REFORMAT)));
+        template.setLiveTemplateEnabled(Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));
+
         if (template instanceof BundledFileTemplate) {
-          final boolean enabled = Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true"));
-          ((BundledFileTemplate)template).setEnabled(enabled);
+          ((BundledFileTemplate)template).setEnabled(Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true")));
         }
       }
     }
