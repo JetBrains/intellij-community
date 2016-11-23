@@ -32,7 +32,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
         if (answer == null) {
           continue;
         }
-        EduUtils.replaceAnswerPlaceholder(project, document, placeholder, placeholder.getRealLength(), answer);
+        EduUtils.replaceAnswerPlaceholder(document, placeholder, placeholder.getRealLength(), answer);
       }
     }
   }

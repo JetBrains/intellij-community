@@ -119,15 +119,15 @@ public class StudySubtaskUtils {
                                              int toSubtaskIndex) {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      placeholder.switchSubtask(project, document, fromSubtaskIndex, toSubtaskIndex);
+      placeholder.switchSubtask(document, fromSubtaskIndex, toSubtaskIndex);
     }
     taskFile.setTrackLengths(true);
   }
 
-  public static void refreshPlaceholder(@NotNull Project project, @NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
+  public static void refreshPlaceholder(@NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
     int prevSubtaskIndex = placeholder.getActiveSubtaskIndex() - 1;
     AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(prevSubtaskIndex);
     String replacementText = info != null ? info.getAnswer() : placeholder.getTaskText();
-    EduUtils.replaceAnswerPlaceholder(project, editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
+    EduUtils.replaceAnswerPlaceholder(editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
   }
 }
