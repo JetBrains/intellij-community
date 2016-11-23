@@ -36,7 +36,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -66,7 +65,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @Nullable private final ProjectEx myProject;
   private final CommandProcessor myCommandProcessor;
-  private final StartupManager myStartupManager;
 
   private UndoProvider[] myUndoProviders;
   private CurrentEditorProvider myEditorProvider;
@@ -101,27 +99,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl(Application application, CommandProcessor commandProcessor) {
-    this(application, null, commandProcessor, null);
+  public UndoManagerImpl(CommandProcessor commandProcessor) {
+    this(null, commandProcessor);
   }
 
-  public UndoManagerImpl(Application application,
-                         @Nullable ProjectEx project,
-                         CommandProcessor commandProcessor,
-                         StartupManager startupManager) {
+  public UndoManagerImpl(@Nullable ProjectEx project, CommandProcessor commandProcessor) {
     myProject = project;
     myCommandProcessor = commandProcessor;
-    myStartupManager = startupManager;
 
-    init(application);
+    if (myProject == null || !myProject.isDefault()) {
+      runStartupActivity();
+    }
 
     myMerger = new CommandMerger(this);
-  }
-
-  private void init(@NotNull Application application) {
-    if (myProject == null || application.isUnitTestMode() && !myProject.isDefault()) {
-      initialize();
-    }
   }
 
   @Override
@@ -141,9 +131,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @Override
   public void projectOpened() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      initialize();
-    }
   }
 
   @Override
@@ -156,15 +143,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @Override
   public void dispose() {
-  }
-
-  private void initialize() {
-    if (myProject == null) {
-      runStartupActivity();
-    }
-    else {
-      myStartupManager.registerStartupActivity(this::runStartupActivity);
-    }
   }
 
   private void runStartupActivity() {
