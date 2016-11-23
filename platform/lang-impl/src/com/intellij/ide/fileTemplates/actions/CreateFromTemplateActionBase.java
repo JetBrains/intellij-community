@@ -114,7 +114,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   @Nullable
-  public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
+  protected AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return null;
   }
 
