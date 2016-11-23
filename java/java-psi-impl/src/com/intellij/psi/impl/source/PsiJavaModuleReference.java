@@ -16,15 +16,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaCoreBundle;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
@@ -103,22 +100,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
 
     private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
       Project project = file.getProject();
-
-      GlobalSearchScope scope = null;
-      if (incompleteCode || file.getOriginalFile() instanceof PsiCompiledFile) {
-        scope = GlobalSearchScope.allScope(project);
-      }
-      else {
-        VirtualFile vFile = file.getVirtualFile();
-        if (vFile != null) {
-          Module module = FileIndexFacade.getInstance(project).getModuleForFile(vFile);
-          if (module != null) {
-            scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-          }
-        }
-      }
-
-      return scope != null ? JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope) : Collections.<PsiJavaModule>emptyList();
+      GlobalSearchScope scope =
+        incompleteCode ? GlobalSearchScope.allScope(project) : ResolveScopeManager.getInstance(project).getResolveScope(file);
+      return JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope);
     }
   }
 
