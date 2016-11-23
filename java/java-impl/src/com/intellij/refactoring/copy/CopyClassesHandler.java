@@ -272,7 +272,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       if (targetDirectory instanceof PsiDirectory) {
         target = (PsiDirectory)targetDirectory;
       } else {
-        target = WriteAction.compute(() -> (MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory);
+        target = WriteAction.compute(() -> ((MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory));
       }
       try {
         Collection<PsiFile> files = doCopyClasses(classes, map, copyClassName, target, project);
