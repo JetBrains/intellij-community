@@ -24,6 +24,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -81,6 +83,9 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Nullable private String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
   public boolean passParentEnv = true;
+
+  private boolean myAlternativeJrePathEnabled;
+  private @Nullable String myAlternativeJrePath;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
@@ -142,6 +147,9 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
+
+    myAlternativeJrePathEnabled = JDOMExternalizer.readBoolean(element, "alternativeJrePathEnabled");
+    myAlternativeJrePath = JDOMExternalizer.readString(element, "alternativeJrePath");
   }
 
   @Override
@@ -155,6 +163,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
     if (isAddClasspathToTheRunner) JDOMExternalizer.write(element, "addClasspath", true);
     JDOMExternalizer.writeMap(element, envs, null, "env");
+
+    if (myAlternativeJrePathEnabled) {
+      JDOMExternalizer.write(element, "alternativeJrePathEnabled", true);
+      if (StringUtil.isNotEmpty(myAlternativeJrePath)) JDOMExternalizer.write(element, "alternativeJrePath", myAlternativeJrePath);
+    }
   }
 
   @Override
@@ -189,7 +202,14 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final Module module = getModule();
         final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(scriptFile);
-        JavaParameters params = createJavaParametersWithSdk(module);
+        String jrePath = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
+        JavaParameters params = new JavaParameters();
+        params.setUseClasspathJar(true);
+        params.setDefaultCharset(getProject());
+        params.setJdk(
+          module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
+                         : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
+        );
         ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
         scriptRunner.configureCommandLine(params, module, tests, scriptFile, GroovyScriptRunConfiguration.this);
 
@@ -267,7 +287,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GroovyRunConfigurationEditor();
+    return new GroovyRunConfigurationEditor(getProject());
   }
 
   @Override
@@ -297,6 +317,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     else {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
     }
+    JavaParametersUtil.checkAlternativeJRE(this);
   }
 
   @Override
@@ -311,23 +332,23 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-    return false;
+    return myAlternativeJrePathEnabled;
   }
 
   @Override
-  public void setAlternativeJrePathEnabled(boolean enabled) {
-    throw new UnsupportedOperationException();
+  public void setAlternativeJrePathEnabled(boolean alternativeJrePathEnabled) {
+    myAlternativeJrePathEnabled = alternativeJrePathEnabled;
   }
 
   @Nullable
   @Override
   public String getAlternativeJrePath() {
-    throw new UnsupportedOperationException();
+    return myAlternativeJrePath;
   }
 
   @Override
-  public void setAlternativeJrePath(String path) {
-    throw new UnsupportedOperationException();
+  public void setAlternativeJrePath(@Nullable String alternativeJrePath) {
+    myAlternativeJrePath = alternativeJrePath;
   }
 
   @Override
