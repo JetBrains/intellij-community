@@ -25,6 +25,7 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
@@ -86,5 +89,11 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   @Override
   protected AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
     return new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
+  }
+
+  @Override
+  protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext ctx) {
+    Module module = LangDataKeys.MODULE.getData(ctx);
+    return Collections.singletonMap("MODULE_NAME", module != null ? module.getName() : "module_name");
   }
 }

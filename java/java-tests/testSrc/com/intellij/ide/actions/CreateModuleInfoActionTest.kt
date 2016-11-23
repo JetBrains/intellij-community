@@ -41,7 +41,7 @@ class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase()
         /**
          * Created by ${p["USER"]} on ${p["DATE"]}.
          */
-        module MODULE_NAME {
+        module light_idea_test_case {
         }""".trimIndent(), file.text)
   }
 
