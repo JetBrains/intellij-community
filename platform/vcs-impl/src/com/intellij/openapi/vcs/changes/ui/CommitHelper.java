@@ -575,43 +575,42 @@ public class CommitHelper {
 
   private void commitCompleted(final List<VcsException> allExceptions, final GeneralCommitProcessor processor) {
     final List<VcsException> errors = collectErrors(allExceptions);
-    final int errorsSize = errors.size();
-    final int warningsSize = allExceptions.size() - errorsSize;
+    boolean noErrors = errors.isEmpty();
+    boolean noWarnings = allExceptions.isEmpty();
 
-    if (errorsSize == 0) {
+    if (noErrors) {
       for (CheckinHandler handler : myHandlers) {
         handler.checkinSuccessful();
       }
 
       processor.afterSuccessfulCheckIn();
+
       if (myCustomResultHandler != null) {
         myCustomResultHandler.onSuccess(myCommitMessage);
+      }
+      else {
+        reportResult(processor);
+      }
+
+      if (noWarnings) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
+        }
       }
     }
     else {
       for (CheckinHandler handler : myHandlers) {
         handler.checkinFailed(errors);
       }
-    }
 
-    if (myCustomResultHandler == null) {
-      reportResult(processor);
-    }
+      processor.afterFailedCheckIn();
 
-    if ((errorsSize == 0) && (warningsSize == 0)) {
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-        indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
-      }
-    }
-    else {
-      if (myCustomResultHandler == null) {
-        if (errorsSize > 0) {
-          processor.afterFailedCheckIn();
-        }
+      if (myCustomResultHandler != null) {
+        myCustomResultHandler.onFailure();
       }
       else {
-        myCustomResultHandler.onFailure();
+        reportResult(processor);
       }
     }
   }
