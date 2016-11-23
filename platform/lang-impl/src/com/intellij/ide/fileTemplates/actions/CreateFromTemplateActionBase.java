@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public abstract class CreateFromTemplateActionBase extends AnAction {
   public CreateFromTemplateActionBase(final String title, final String description, final Icon icon) {
     super(title, description, icon);
@@ -69,7 +71,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
           elementCreated(dialog, createdElement);
           view.selectElement(createdElement);
           if (selectedTemplate.isLiveTemplateEnabled() && createdElement instanceof PsiFile) {
-            startLiveTemplate((PsiFile)createdElement);
+            Map<String, String> defaultValues = getLiveTemplateDefaults(dataContext);
+            startLiveTemplate((PsiFile)createdElement, notNull(defaultValues, Collections.emptyMap()));
           }
         }
       }
@@ -77,6 +80,10 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   public static void startLiveTemplate(@NotNull PsiFile file) {
+    startLiveTemplate(file, Collections.emptyMap());
+  }
+
+  public static void startLiveTemplate(@NotNull PsiFile file, @NotNull Map<String, String> defaultValues) {
     Editor editor = EditorHelper.openInEditor(file);
     if (editor == null) return;
 
@@ -91,7 +98,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     }
     variables.removeAll(TemplateImpl.INTERNAL_VARS_SET);
     for (String variable : variables) {
-      template.addVariable(variable, null, "\"" + variable + "\"", true);
+      String defaultValue = defaultValues.getOrDefault(variable, variable);
+      template.addVariable(variable, null, '"' + defaultValue + '"', true);
     }
 
     Project project = file.getProject();
@@ -119,4 +127,9 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   protected void elementCreated(CreateFromTemplateDialog dialog, PsiElement createdElement) { }
+
+  @Nullable
+  protected Map<String, String> getLiveTemplateDefaults(DataContext dataContext) {
+    return null;
+  }
 }
