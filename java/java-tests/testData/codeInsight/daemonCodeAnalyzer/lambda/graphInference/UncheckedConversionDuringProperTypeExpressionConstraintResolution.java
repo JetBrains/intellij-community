@@ -1,3 +1,4 @@
+import java.util.function.Consumer;
 class Test {
   private static AG<AE> foo(Class clz) {
     return (AG<AE>) foo1(clz);
@@ -15,3 +16,39 @@ class Test {
 
 }
 
+class Test1 {
+
+  static class D<T> {
+    public D(Consumer<T> c, Class<?> cl) {
+    }
+
+    static <M> D<M> create(Consumer<M> c, Class<?> ck) {
+      return new D<>(c, ck);
+    }
+  }
+
+  {
+    Class c = D.class;
+
+    D<String> d = new D<>(s -> s.isEmpty(), c);
+    D<String> d1 = D.create(s -> s.isEmpty(), c);
+  }
+}
+class Test2 {
+
+  static class D<T> {
+    public D(Consumer<T> c, Class<? extends String> cl) {
+    }
+
+    static <M> D<M> create(Consumer<M> c, Class<? extends String> ck) {
+      return new D<>(c, ck);
+    }
+  }
+
+  {
+    Class c = D.class;
+
+    D<String> d = new D<>(s -> s.<error descr="Cannot resolve method 'isEmpty()'">isEmpty</error>(), c);
+    D<String> d1 = D.create(s -> s.<error descr="Cannot resolve method 'isEmpty()'">isEmpty</error>(), c);
+  }
+}
