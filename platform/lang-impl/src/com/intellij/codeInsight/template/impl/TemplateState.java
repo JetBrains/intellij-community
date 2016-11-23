@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -67,7 +66,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1133,7 +1131,7 @@ public class TemplateState implements Disposable {
       if (myTemplate.skipOnStart(currentVariableNumber)) return false;
     }
     String variableName = myTemplate.getVariableNameAt(currentVariableNumber);
-    if (!(myPredefinedVariableValues != null && myPredefinedVariableValues.containsKey(variableName))) {
+    if (myPredefinedVariableValues == null || !myPredefinedVariableValues.containsKey(variableName)) {
       if (myTemplate.isAlwaysStopAt(currentVariableNumber)) {
         return true;
       }
@@ -1165,7 +1163,7 @@ public class TemplateState implements Disposable {
       for (int j = 0; j < myTemplate.getVariableCount(); j++) {
         if (myTemplate.getVariableNameAt(j).equals(name)) {
           Expression e = myTemplate.getExpressionAt(j);
-          @NonNls String marker = "a";
+          String marker = "a";
           if (e instanceof MacroCallNode) {
             marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
