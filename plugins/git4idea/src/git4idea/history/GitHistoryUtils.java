@@ -635,25 +635,6 @@ public class GitHistoryUtils {
     }
   }
 
-  /*
-  Unlike loadDetails, which accepts list of hashes in parameters, loads details for all commits in the repository.
-  To optimize memory consumption, git log command output is parsed on-the-fly and resulting commits are immediately fed to the consumer
-  and not stored in memory.
-   */
-  public static void loadAllDetails(@NotNull Project project,
-                                    @NotNull VirtualFile root,
-                                    @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
-
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = createParserForDetails(h, project, false, true, ArrayUtil.toStringArray(LOG_ALL));
-
-    processHandlerOutputByLine(h, parser, record -> commitConsumer.consume(createCommit(project, root, record, factory)));
-  }
-
   public static void readCommits(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull List<String> parameters,
@@ -877,7 +858,7 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      loadDetails(project, root, true, false, record -> {
+      collectDetails(project, root, true, false, record -> {
         GitCommit commit = createCommit(project, root, record, factory);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
@@ -904,7 +885,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return loadDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
+    return collectDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
   }
 
   @NotNull
@@ -937,26 +918,48 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static <T> List<T> loadDetails(@NotNull final Project project,
-                                        @NotNull final VirtualFile root,
-                                        boolean withRefs,
-                                        boolean withChanges,
-                                        @NotNull NullableFunction<GitLogRecord, T> converter,
-                                        String... parameters)
+  public static <T> List<T> collectDetails(@NotNull Project project,
+                                           @NotNull VirtualFile root,
+                                           boolean withRefs,
+                                           boolean withChanges,
+                                           @NotNull NullableFunction<GitLogRecord, T> converter,
+                                           String... parameters) throws VcsException {
+
+    List<T> commits = ContainerUtil.newArrayList();
+
+    loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+
+    return commits;
+  }
+
+  public static void loadDetails(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                                 @NotNull String... parameters) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    loadDetails(project, root, false, true, record -> commitConsumer.consume(createCommit(project, root, record, factory)), parameters);
+  }
+
+  public static void loadDetails(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 boolean withRefs,
+                                 boolean withChanges,
+                                 @NotNull Consumer<GitLogRecord> converter,
+                                 String... parameters)
     throws VcsException {
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
-    List<T> commits = ContainerUtil.newArrayList();
-
     StopWatch sw = StopWatch.start("loading details");
 
-    processHandlerOutputByLine(h, parser, record -> commits.add(converter.fun(record)));
+    processHandlerOutputByLine(h, parser, record -> converter.consume(record));
 
     sw.report();
-
-    return commits;
   }
 
   @NotNull

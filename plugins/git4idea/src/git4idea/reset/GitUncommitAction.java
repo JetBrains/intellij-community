@@ -218,7 +218,9 @@ public class GitUncommitAction extends DumbAwareAction {
     VirtualFile root = commit.getRoot();
     VcsFullCommitDetails details = getChangesFromCache(data, hash, root);
     if (details == null) {
-      details = data.getLogProvider(root).readFullDetails(root, singletonList(hash.asString())).get(0);
+      Ref<VcsFullCommitDetails> ref = new Ref<>();
+      data.getLogProvider(root).readFullDetails(root, singletonList(hash.asString()), ref::set);
+      details = ref.get();
     }
     return details.getChanges();
   }

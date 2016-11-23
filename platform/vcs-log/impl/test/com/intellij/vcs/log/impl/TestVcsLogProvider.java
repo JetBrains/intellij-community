@@ -126,7 +126,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @Override
   public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    throw new UnsupportedOperationException();
+  }
 
+  @Override
+  public void readFullDetails(@NotNull VirtualFile root,
+                              @Nullable List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    throw new UnsupportedOperationException();
   }
 
   private void assertRoot(@NotNull VirtualFile root) {
@@ -137,12 +144,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     throw new UnsupportedOperationException();
   }
 

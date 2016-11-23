@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class VcsFileUtil {
   }
 
   /**
-   * Execute function for each chunk of arguments. Check for being cancelled in process.
+   * Execute function for each chunk of arguments and collect the result. Check for being cancelled in process.
    *
    * @param arguments the arguments to chunk
    * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
@@ -77,16 +78,34 @@ public class VcsFileUtil {
                                          @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
     throws VcsException {
     List<T> result = ContainerUtil.newArrayList();
+
+    foreachChunk(arguments, groupSize, chunk -> {
+      result.addAll(processor.fun(chunk));
+    });
+
+    return result;
+  }
+
+  /**
+   * Execute function for each chunk of arguments. Check for being cancelled in process.
+   *
+   * @param arguments the arguments to chunk
+   * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
+   * @param consumer  consumer to feed each chunk
+   * @throws VcsException
+   */
+  public static void foreachChunk(@NotNull List<String> arguments,
+                                  int groupSize,
+                                  @NotNull ThrowableConsumer<List<String>, VcsException> consumer)
+    throws VcsException {
     List<List<String>> chunks = chunkArguments(arguments, groupSize);
 
     for (List<String> chunk : chunks) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) indicator.checkCanceled();
 
-      result.addAll(processor.fun(chunk));
+      consumer.consume(chunk);
     }
-
-    return result;
   }
 
   /**

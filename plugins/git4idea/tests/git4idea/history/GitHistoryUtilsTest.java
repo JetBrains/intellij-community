@@ -399,7 +399,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     touch("file.txt", "content");
     addCommit(message);
 
-    GitHistoryUtils.loadAllDetails(myProject, myRepo.getRoot(), details::add);
+    GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), details::add);
 
     VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
     assertNotNull(lastCommit);
@@ -423,7 +423,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     expected = ContainerUtil.reverse(expected);
 
     List<String> actualMessages =
-      GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+      GitHistoryUtils.collectDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
 
     assertEquals(expected, actualMessages);
   }

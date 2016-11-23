@@ -16,13 +16,10 @@
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -179,12 +176,13 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final List<String> hashes = ContainerUtil.newArrayList();
     myLogProvider.readAllHashes(myProjectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
-    List<? extends VcsFullCommitDetails> fullDetails = myLogProvider.readFullDetails(myProjectRoot, hashes);
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    myLogProvider.readFullDetails(myProjectRoot, hashes, result::add);
 
     // we do not check for changes here
     final Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
     Function<VcsCommitMetadata, String> metadataToString = details -> shortDetailsToString.fun(details) + "\n" + details.getFullMessage();
-    assertOrderedEquals(ContainerUtil.map(fullDetails, metadataToString), ContainerUtil.map(log, metadataToString));
+    assertOrderedEquals(ContainerUtil.map(result, metadataToString), ContainerUtil.map(log, metadataToString));
   }
 
   @NotNull
