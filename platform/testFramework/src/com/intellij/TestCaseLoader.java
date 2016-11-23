@@ -183,6 +183,7 @@ public class TestCaseLoader {
 
   private static List<String> getTeamCityRankList() {
     if (TestAll.isPerformanceTestsRun()) {
+      // let performance test order be stable to decrease the variation in their timings
       return Collections.emptyList();
     }
 
