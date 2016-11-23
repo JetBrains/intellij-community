@@ -86,7 +86,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] group) {
+  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... group) {
     try {
       getDialog(project, group, null).show();
     }

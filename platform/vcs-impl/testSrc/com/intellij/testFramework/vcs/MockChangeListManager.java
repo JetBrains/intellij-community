@@ -356,7 +356,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(LocalChangeList list, Change[] changes) {
+  public void moveChangesTo(LocalChangeList list, Change... changes) {
   }
 
   @Override

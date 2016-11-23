@@ -21,5 +21,5 @@ package com.intellij.util;
 public interface ArrayConsumer<T> extends Consumer<T[]>{
 
   @Override
-  void consume(final T... ts);
+  void consume(final T[] ts);
 }
