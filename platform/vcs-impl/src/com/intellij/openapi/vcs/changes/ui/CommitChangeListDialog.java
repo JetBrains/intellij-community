@@ -677,12 +677,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
-    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
 
     ensureDataIsActual(new Runnable() {
       @Override
       public void run() {
         try {
+          final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
           CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
             @Override
             public void run() {
