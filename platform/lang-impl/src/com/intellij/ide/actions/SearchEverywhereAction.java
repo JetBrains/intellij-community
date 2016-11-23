@@ -372,11 +372,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           mySkipFocusGain = false;
           return;
         }
-        String text = "";
-        if (myEditor != null) {
-          text = myEditor.getSelectionModel().getSelectedText();
-          text = text == null ? "" : text.trim();
-        }
+        String text = GotoActionBase.getInitialTextForNavigation(myEditor);
+        text = text != null ? text.trim() : "";
 
         search.setText(text);
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());

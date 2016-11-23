@@ -363,7 +363,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed());
+    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
     if (myProjectManagerListener != null) {
       myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }

@@ -23,10 +23,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Optional;
-import java.util.Properties;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
@@ -83,25 +80,11 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
 
   @Override
   protected FileTemplate getTemplate(@NotNull Project project, @NotNull PsiDirectory dir) {
-    FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_MODULE_INFO_TEMPLATE_NAME);
-    template.setLiveTemplateEnabled(true);
-    return template;
+    return FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_MODULE_INFO_TEMPLATE_NAME);
   }
 
   @Override
-  public AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
-    AttributesDefaults defaults = new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
-    copyDefaultProperties(ctx, defaults);
-    String moduleName = Optional.ofNullable(LangDataKeys.MODULE.getData(ctx)).map(Module::getName).orElse("module_name");
-    defaults.addPredefined("MODULE_NAME", '$' + moduleName + '$');
-    return defaults;
-  }
-
-  private static void copyDefaultProperties(DataContext ctx, AttributesDefaults defaults) {
-    Project project = CommonDataKeys.PROJECT.getData(ctx);
-    if (project != null) {
-      Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
-      props.stringPropertyNames().forEach(name -> defaults.addPredefined(name, props.getProperty(name)));
-    }
+  protected AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
+    return new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
   }
 }

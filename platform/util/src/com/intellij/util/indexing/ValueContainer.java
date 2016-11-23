@@ -16,11 +16,8 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -34,10 +31,6 @@ public abstract class ValueContainer<Value> {
     int next();
 
     int size();
-
-    boolean hasAscendingOrder();
-
-    IntIterator createCopyInInitialState();
   }
 
   @NotNull
@@ -63,6 +56,4 @@ public abstract class ValueContainer<Value> {
     }
     return true;
   }
-
-  public abstract void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException;
 }

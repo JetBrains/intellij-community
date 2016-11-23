@@ -38,7 +38,7 @@ public class RenameParameterQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement elt = descriptor.getPsiElement();
-    if (elt != null && elt instanceof PyNamedParameter && elt.isWritable()) {
+    if (elt != null && elt instanceof PyNamedParameter) {
       new RenameProcessor(project, elt, myNewName, false, true).run();
     }
   }
@@ -51,6 +51,11 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.rename.parameter.to.$0", myNewName);
+  }
+
+  @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return true;
   }
 
   @Override

@@ -111,7 +111,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return false;
       }
       final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).getNotNullAnnotation(variable, true);
-      if (annotation != null && annotation.isWritable()) {
+      if (annotation != null && !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);

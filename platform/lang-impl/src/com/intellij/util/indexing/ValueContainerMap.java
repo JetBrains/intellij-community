@@ -26,7 +26,7 @@ import java.io.*;
  * @author Dmitry Avdeev
  *         Date: 8/10/11
  */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
@@ -46,7 +46,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   }
 
   @Override
-  protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
+  protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
       ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
 
@@ -68,7 +68,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
   }
 
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
+  private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
     @NotNull private final DataExternalizer<T> myValueExternalizer;
 
     private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
@@ -76,13 +76,13 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
 
     @Override
-    public void save(@NotNull final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
+    public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
       container.saveTo(out, myValueExternalizer);
     }
 
     @NotNull
     @Override
-    public ValueContainerImpl<T> read(@NotNull final DataInput in) throws IOException {
+    public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
 
       valueContainer.readFrom((DataInputStream)in, myValueExternalizer);

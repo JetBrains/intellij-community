@@ -16,17 +16,16 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.containers.EmptyIntHashSet;
-import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 
-public class TroveSetIntIterator implements ValueContainer.IntIterator {
+public class TroveSetIntIterator implements IntIdsIterator {
   @NotNull public static final TroveSetIntIterator EMPTY = new TroveSetIntIterator(EmptyIntHashSet.INSTANCE);
 
   @NotNull private final TIntHashSet mySet;
   @NotNull private final TIntIterator mySetIterator;
-  @NotNull private final int mySize;
+  private final int mySize;
 
   public TroveSetIntIterator(@NotNull TIntHashSet set) {
     mySet = set;
@@ -55,7 +54,7 @@ public class TroveSetIntIterator implements ValueContainer.IntIterator {
   }
 
   @Override
-  public ValueContainer.IntIterator createCopyInInitialState() {
+  public IntIdsIterator createCopyInInitialState() {
     return new TroveSetIntIterator(mySet);
   }
 }

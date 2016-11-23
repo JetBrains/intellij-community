@@ -503,12 +503,12 @@ public class JBUI {
    * @author tav
    */
   public static abstract class AuxJBIcon extends JBIcon implements AuxJBUIScale {
-    private float myCachedJBUIScale = scale(1f);
+    private float myCachedJBUIScale = currentJBUIScale();
 
     @Override
     public boolean updateJBUIScale() {
       if (needUpdateJBUIScale()) {
-        myCachedJBUIScale = scale(1f);
+        myCachedJBUIScale = currentJBUIScale();
         return true;
       }
       return false;
@@ -516,7 +516,7 @@ public class JBUI {
 
     @Override
     public boolean needUpdateJBUIScale() {
-      return myCachedJBUIScale != scale(1f);
+      return myCachedJBUIScale != currentJBUIScale();
     }
   }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -100,8 +99,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
 
     private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
       Project project = file.getProject();
-      GlobalSearchScope scope =
-        incompleteCode ? GlobalSearchScope.allScope(project) : ResolveScopeManager.getInstance(project).getResolveScope(file);
+      GlobalSearchScope scope = incompleteCode ? GlobalSearchScope.allScope(project) : file.getResolveScope();
       return JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope);
     }
   }

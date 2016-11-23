@@ -282,7 +282,7 @@ public class ChangeBufferingList implements Cloneable {
     return predicate;
   }
 
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && !hasRemovals) {
       int[] currentChanges = changes;
@@ -298,8 +298,8 @@ public class ChangeBufferingList implements Cloneable {
     return getRandomAccessContainer().intIterator();
   }
 
-  public ValueContainer.IntIterator sortedIntIterator() {
-    ValueContainer.IntIterator intIterator = intIterator();
+  public IntIdsIterator sortedIntIterator() {
+    IntIdsIterator intIterator = intIterator();
 
     if (!intIterator.hasAscendingOrder()) {
       intIterator = SortedFileIdSetIterator.getTransientIterator(intIterator);
@@ -311,7 +311,7 @@ public class ChangeBufferingList implements Cloneable {
     return checkSet;
   }
 
-  private static class ChangesIterator implements ValueContainer.IntIterator {
+  private static class ChangesIterator implements IntIdsIterator {
     private int cursor;
     private final int length;
     private final int[] changes;
@@ -346,7 +346,7 @@ public class ChangeBufferingList implements Cloneable {
     }
 
     @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new ChangesIterator(changes, length, sorted);
     }
   }

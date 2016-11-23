@@ -115,6 +115,11 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
   @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return true;
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

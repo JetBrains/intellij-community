@@ -243,19 +243,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     try {
       initAndRun();
+
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
+        @Override
+        public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setText("Connecting to console...");
+          connect(myStatementsToExecute);
+        }
+      });
     }
     catch (ExecutionException e) {
       LOG.warn("Error running console", e);
-      ExecutionHelper.showErrors(myProject, Collections.<Exception>singletonList(e), "Python Console", null);
+      showErrorsInConsole(e);
     }
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to console...");
-        connect(myStatementsToExecute);
-      }
-    });
   }
 
 

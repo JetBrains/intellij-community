@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
@@ -45,7 +45,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE,
           consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));

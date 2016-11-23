@@ -16,12 +16,11 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
-import com.intellij.util.indexing.ValueContainer;
 
 /**
 * Created by Maxim.Mossienko on 6/12/2014.
 */
-public class SortedFileIdSetIterator implements ValueContainer.IntIterator {
+public class SortedFileIdSetIterator implements IntIdsIterator {
   private final int[] myBits;
   private final int myBitsLength;
   private final int myOffset;
@@ -59,12 +58,12 @@ public class SortedFileIdSetIterator implements ValueContainer.IntIterator {
   }
 
   @Override
-  public ValueContainer.IntIterator createCopyInInitialState() {
+  public IntIdsIterator createCopyInInitialState() {
     return new SortedFileIdSetIterator(myBits, myBitsLength, myOffset, mySize);
   }
 
-  public static ValueContainer.IntIterator getTransientIterator(ValueContainer.IntIterator intIterator) {
-    final ValueContainer.IntIterator intIteratorCloned = intIterator.createCopyInInitialState();
+  public static IntIdsIterator getTransientIterator(IntIdsIterator intIterator) {
+    final IntIdsIterator intIteratorCloned = intIterator.createCopyInInitialState();
     int max = 0, min = Integer.MAX_VALUE;
 
     while(intIterator.hasNext()) {

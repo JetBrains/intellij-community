@@ -16,19 +16,16 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -55,20 +52,13 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) {
-    if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
-      int result = Messages
-        .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
-                            JetgroovyIcons.Groovy.Gant_16x16);
-      if (result == Messages.OK) {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
-      }
-      if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
-        return false;
-      }
+  public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
+    Project project = configuration.getProject();
+    if (GantUtils.getSDKInstallPath(configuration.getModule(), project).isEmpty()) {
+      RuntimeConfigurationException e = new RuntimeConfigurationException("Gant is not configured");
+      e.setQuickFix(() -> ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project)));
+      throw e;
     }
-
-    return true;
   }
 
   private static String getGantConfPath(final String gantHome) {

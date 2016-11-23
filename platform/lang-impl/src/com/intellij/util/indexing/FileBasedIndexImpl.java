@@ -914,9 +914,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                               @NotNull K dataKey,
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
-                                              @NotNull Processor<ValueIteratorImpl<V>> valueProcessor) {
+                                              @NotNull Processor<InvertedIndexValueIterator<V>> valueProcessor) {
     final Boolean result = processExceptions(indexId, restrictToFile, scope,
-                                             index -> valueProcessor.process((ValueIteratorImpl<V>)index.getData(dataKey).getValueIterator()));
+                                             index -> valueProcessor.process((InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
     return result == null || result.booleanValue();
   }
 
@@ -1065,7 +1065,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final TIntHashSet copy = new TIntHashSet();
       final ValueContainer<V> container = index.getData(dataKey);
 
-      for (ValueIteratorImpl<V> valueIt = (ValueIteratorImpl<V>)container.getValueIterator(); valueIt.hasNext(); ) {
+      for (InvertedIndexValueIterator<V> valueIt = (InvertedIndexValueIterator<V>)container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
         if (valueChecker != null && !valueChecker.value(value)) {
           continue;

@@ -158,7 +158,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
            needsCompacting();
   }
 
-  public @Nullable ValueContainer<Value> getAddedDelta() {
+  public @Nullable UpdatableValueContainer<Value> getAddedDelta() {
     return myAdded;
   }
 
@@ -174,7 +174,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         }
       }
 
-      final ValueContainer<Value> toAppend = getAddedDelta();
+      final UpdatableValueContainer<Value> toAppend = getAddedDelta();
       if (toAppend != null && toAppend.size() > 0) {
         toAppend.saveTo(out, externalizer);
       }

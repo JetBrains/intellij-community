@@ -66,6 +66,11 @@ public class IntentionActionWrapper implements IntentionAction {
     return getDelegate().startInWriteAction();
   }
 
+  @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return getDelegate().shouldMakeCurrentFileWritable();
+  }
+
   @NotNull
   public String getFullFamilyName(){
     String result = myFullFamilyName;

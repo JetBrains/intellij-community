@@ -1975,7 +1975,7 @@ public class UIUtil {
       }
     }
     catch (InvocationTargetException e) {
-      LOG.error(e.getCause());
+      ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
     }
     catch (Exception e) {
       LOG.error(e);
