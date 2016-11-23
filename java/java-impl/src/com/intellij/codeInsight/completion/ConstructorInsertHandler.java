@@ -17,6 +17,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -169,7 +170,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
         public void templateFinished(Template template, boolean brokenOff) {
           if (!brokenOff) {
             context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
-            createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()).run();
+            TransactionGuard.getInstance().submitTransactionAndWait(createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()));
           }
         }
       });
