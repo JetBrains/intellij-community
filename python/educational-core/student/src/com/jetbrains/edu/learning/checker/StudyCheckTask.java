@@ -141,8 +141,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
-    final boolean isChoiceTask = myTask.getChoiceVariants().isEmpty();
-    if (!isChoiceTask) {
+    if (myTask.isChoiceTask()) {
       final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
       processStepicCheckOutput(indicator, result);
     }

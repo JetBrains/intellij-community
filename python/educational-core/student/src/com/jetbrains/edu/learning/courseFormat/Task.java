@@ -41,8 +41,8 @@ public class Task implements StudyItem {
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
   @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
-  @Expose @SerializedName("is_multichoice") private boolean myIsMultichoice;
-  @Transient @SerializedName("choice_answer") private List<Boolean> myChoiceAnswer = new ArrayList<>();
+  @Expose @SerializedName("is_multichoice") private boolean myIsMultipleChoice;
+  @Transient @SerializedName("choice_answer") private List<Integer> mySelectedVariants = new ArrayList<>();
 
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;
@@ -290,23 +290,27 @@ public class Task implements StudyItem {
   }
 
   public void setChoiceVariants(List<String> choiceVariants) {
-    this.myChoiceVariants = choiceVariants;
+    myChoiceVariants = choiceVariants;
   }
 
-  public boolean isMultichoice() {
-    return myIsMultichoice;
+  public boolean isMultipleChoice() {
+    return myIsMultipleChoice;
   }
 
-  public void setMultichoice(boolean multichoice) {
-    myIsMultichoice = multichoice;
+  public void setMultipleChoice(boolean multipleChoice) {
+    myIsMultipleChoice = multipleChoice;
   }
 
-  public List<Boolean> getChoiceAnswer() {
-    return myChoiceAnswer;
+  public List<Integer> getSelectedVariants() {
+    return mySelectedVariants;
   }
 
-  public void setChoiceAnswer(List<Boolean> choiceAnswer) {
-    this.myChoiceAnswer = choiceAnswer;
+  public void setSelectedVariants(List<Integer> selectedVariants) {
+    mySelectedVariants = selectedVariants;
+  }
+  
+  public boolean isChoiceTask() {
+    return !myChoiceVariants.isEmpty();
   }
   
   public void copyParametersOf(@NotNull Task task) {
@@ -316,7 +320,6 @@ public class Task implements StudyItem {
     getTestsText().clear();
     setStatus(StudyStatus.Unchecked);
     setChoiceVariants(task.getChoiceVariants());
-    setChoiceAnswer(new ArrayList<>(Collections.nCopies(task.getChoiceVariants().size(), false)));
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {
       addTestsTexts(testName, testsText.get(testName));

@@ -150,7 +150,7 @@ public class EduAdaptiveStepicConnector {
       final StepicWrappers.AdaptiveAttemptWrapper.Dataset dataset = attempt.dataset;
       if (dataset != null) {
         task.setChoiceVariants(dataset.options);
-        task.setMultichoice(dataset.is_multiple_choice);
+        task.setMultipleChoice(dataset.is_multiple_choice);
         final List<Boolean> choiceAnswer = new ArrayList<>(Collections.nCopies(task.getChoiceVariants().size(), false));
         task.setChoiceAnswer(choiceAnswer);
       }
