@@ -83,7 +83,8 @@ public class CommitHelper {
                       final String commitMessage,
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded,
-                      final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder,
+                      final boolean synchronously,
+                      final NullableFunction<Object, Object> additionalDataHolder,
                       @Nullable CommitResultHandler customResultHandler) {
     myProject = project;
     myChangeList = changeList;
@@ -108,7 +109,7 @@ public class CommitHelper {
     return doCommit(new CommitProcessor(vcs));
   }
 
-  public boolean doAlienCommit(final AbstractVcs vcs) {
+  public boolean doAlienCommit(@NotNull AbstractVcs vcs) {
     return doCommit(new AlienCommitProcessor(vcs));
   }
 
@@ -292,9 +293,9 @@ public class CommitHelper {
   }
 
   private class AlienCommitProcessor extends GeneralCommitProcessor {
-    private final AbstractVcs myVcs;
+    @NotNull private final AbstractVcs myVcs;
 
-    private AlienCommitProcessor(final AbstractVcs vcs) {
+    private AlienCommitProcessor(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
     }
 
