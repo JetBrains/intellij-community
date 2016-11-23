@@ -213,7 +213,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   public final boolean isCustomFoldingCandidate(@NotNull PsiElement element) {
-    return isCustomFoldingCandidate(element.getNode());
+    ASTNode node = element.getNode();
+    return node != null && isCustomFoldingCandidate(node);
   }
 
   /**
