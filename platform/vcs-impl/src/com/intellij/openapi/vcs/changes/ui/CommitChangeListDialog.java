@@ -711,11 +711,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     if (!saveDialogState()) return;
     saveComments(true);
+
     if (session instanceof CommitSessionContextAware) {
       ((CommitSessionContextAware)session).setContext(myCommitContext);
     }
 
-    boolean isOK = true;
     final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
     if (configurationUI != null) {
       DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
@@ -723,60 +723,59 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                       session,
                                                       getIncludedChanges(),
                                                       getCommitMessage(), configurationUI);
-      isOK = sessionDialog.showAndGet();
+      if (!sessionDialog.showAndGet()) {
+        session.executionCanceled();
+        return;
+      }
     }
-    if (isOK) {
-      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-      runBeforeCommitHandlers(new Runnable() {
-        @Override
-        public void run() {
-          boolean success = false;
-          try {
-            final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-              new Runnable() {
-                @Override
-                public void run() {
-                  session.execute(getIncludedChanges(), getCommitMessage());
-                }
-              }, commitExecutor.getActionText(), true, getProject());
 
-            if (completed) {
-              for (CheckinHandler handler : myHandlers) {
-                handler.checkinSuccessful();
+    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+    runBeforeCommitHandlers(new Runnable() {
+      @Override
+      public void run() {
+        boolean success = false;
+        try {
+          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            new Runnable() {
+              @Override
+              public void run() {
+                session.execute(getIncludedChanges(), getCommitMessage());
               }
+            }, commitExecutor.getActionText(), true, getProject());
 
-              success = true;
-              defaultListCleaner.clean();
-              close(OK_EXIT_CODE);
+          if (completed) {
+            for (CheckinHandler handler : myHandlers) {
+              handler.checkinSuccessful();
+            }
+
+            success = true;
+            defaultListCleaner.clean();
+            close(OK_EXIT_CODE);
+          }
+          else {
+            session.executionCanceled();
+          }
+        }
+        catch (Throwable e) {
+          Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
+                                   commitExecutor.getActionText());
+
+          for (CheckinHandler handler : myHandlers) {
+            handler.checkinFailed(Collections.singletonList(new VcsException(e)));
+          }
+        }
+        finally {
+          if (myResultHandler != null) {
+            if (success) {
+              myResultHandler.onSuccess(getCommitMessage());
             }
             else {
-              session.executionCanceled();
-            }
-          }
-          catch (Throwable e) {
-            Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
-                                     commitExecutor.getActionText());
-
-            for (CheckinHandler handler : myHandlers) {
-              handler.checkinFailed(Collections.singletonList(new VcsException(e)));
-            }
-          }
-          finally {
-            if (myResultHandler != null) {
-              if (success) {
-                myResultHandler.onSuccess(getCommitMessage());
-              }
-              else {
-                myResultHandler.onFailure();
-              }
+              myResultHandler.onFailure();
             }
           }
         }
-      }, commitExecutor);
-    }
-    else {
-      session.executionCanceled();
-    }
+      }
+    }, commitExecutor);
   }
 
   @Nullable
