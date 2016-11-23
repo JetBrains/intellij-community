@@ -69,9 +69,9 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
-                                                   @NotNull Requirements requirements) throws VcsException {
+                                        @NotNull Requirements requirements) throws VcsException {
     List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                                                           Collections.<String>emptyList());
+                                                                 Collections.<String>emptyList());
     return new LogDataImpl(readAllRefs(root), commits);
   }
 
@@ -88,7 +88,14 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull final VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    readFullDetails(root, ContainerUtil.newArrayList(), commitConsumer);
+  }
+
+  @Override
+  public void readFullDetails(@NotNull VirtualFile root,
+                              @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
     throws VcsException {
     // this method currently is very slow and time consuming
     // so indexing is not to be used for mercurial for now
@@ -97,8 +104,8 @@ public class HgLogProvider implements VcsLogProvider {
     final HgVersion version = hgvcs.getVersion();
     final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    HgCommandResult logResult =
-      HgHistoryUtil.getLogResult(myProject, root, version, -1, ContainerUtil.newArrayList(), HgChangesetUtil.makeTemplate(templates));
+    HgCommandResult logResult = HgHistoryUtil.getLogResult(myProject, root, version, -1,
+                                                           HgHistoryUtil.prepareHashes(hashes), HgChangesetUtil.makeTemplate(templates));
     if (logResult == null) return;
     if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
     HgHistoryUtil.createFullCommitsFromResult(myProject, root, logResult, version, false).forEach(commitConsumer::consume);
@@ -148,7 +155,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
       refs.add(myVcsObjectsFactory.createRef(bookmarkInfo.getHash(), bookmarkInfo.getName(),
-                         HgRefManager.BOOKMARK, root));
+                                             HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
@@ -163,7 +170,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
     for (HgNameWithHashInfo localTagInfo : localTags) {
       refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
-                              HgRefManager.LOCAL_TAG, root));
+                                             HgRefManager.LOCAL_TAG, root));
     }
     for (HgNameWithHashInfo mqPatchRef : mqAppliedPatches) {
       refs.add(myVcsObjectsFactory.createRef(mqPatchRef.getHash(), mqPatchRef.getName(),

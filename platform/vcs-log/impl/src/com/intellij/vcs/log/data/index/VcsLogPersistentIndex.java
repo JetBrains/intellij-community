@@ -522,8 +522,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private boolean indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
       VcsLogProvider provider = myProviders.get(root);
       try {
-        storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())),
-                     true);
+        List<String> hashes = TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString());
+        provider.readFullDetails(root, hashes, details -> storeDetails(Collections.singletonList(details), false));
+        flush();
       }
       catch (VcsException e) {
         LOG.error(e);

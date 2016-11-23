@@ -407,7 +407,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     expected = ContainerUtil.reverse(expected);
 
     List<String> actualMessages =
-      GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+      GitHistoryUtils.collectDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
 
     assertEquals(expected, actualMessages);
   }

@@ -202,7 +202,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       }
     });
 
-    List<? extends VcsFullCommitDetails> fullDetails = myLogProvider.readFullDetails(myProjectRoot, hashes);
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    myLogProvider.readFullDetails(myProjectRoot, hashes, result::add);
 
     // we do not check for changes here
     final Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
@@ -212,7 +213,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
         return shortDetailsToString.fun(details) + "\n" + details.getFullMessage();
       }
     };
-    assertOrderedEquals(ContainerUtil.map(fullDetails, metadataToString), ContainerUtil.map(log, metadataToString));
+    assertOrderedEquals(ContainerUtil.map(result, metadataToString), ContainerUtil.map(log, metadataToString));
   }
 
   @NotNull
