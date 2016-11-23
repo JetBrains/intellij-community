@@ -643,7 +643,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     saveComments(true);
     final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
 
-    final Runnable callCommit = new Runnable() {
+    ensureDataIsActual(new Runnable() {
       @Override
       public void run() {
         try {
@@ -663,12 +663,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           ex.show();
         }
       }
-    };
-    if (myBrowser.isDataIsDirty()) {
-      ensureDataIsActual(callCommit);
-    } else {
-      callCommit.run();
-    }
+    });
   }
 
   private boolean addUnversionedFiles() {
@@ -1179,8 +1174,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void ensureDataIsActual(final Runnable runnable) {
-    ChangeListManager.getInstance(myProject).invokeAfterUpdate(runnable, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-                                                               "Refreshing changelists...", ModalityState.current());
+    if (myBrowser.isDataIsDirty()) {
+      ChangeListManager.getInstance(myProject).invokeAfterUpdate(runnable, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+                                                                 "Refreshing changelists...", ModalityState.current());
+    }
+    else {
+      runnable.run();
+    }
   }
 
   private class CommitExecutorAction extends AbstractAction {
@@ -1193,17 +1193,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      final Runnable callExecutor = new Runnable() {
+      ensureDataIsActual(new Runnable() {
         @Override
         public void run() {
           execute(myCommitExecutor);
         }
-      };
-      if (myBrowser.isDataIsDirty()) {
-        ensureDataIsActual(callExecutor);
-      } else {
-        callExecutor.run();
-      }
+      });
     }
 
     public void updateEnabled(boolean hasDiffs) {
