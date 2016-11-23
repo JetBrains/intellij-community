@@ -53,7 +53,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
   private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.no.cashed.hashids", true);
   private final boolean myBuildKeyHashToVirtualFileMapping;
-  private PersistentMap<Key, ValueContainer<Value>> myMap;
+  private PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   private AppendableStorageBackedByResizableMappedFile myKeyHashToVirtualFileMapping;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private volatile int myLastScannedId;

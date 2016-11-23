@@ -122,7 +122,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     return new Iterator();
   }
 
@@ -197,7 +197,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     return calcCapacity(((roundToNearest(max) - roundToNearest(min)) >> SHIFT) + 1) * 8;
   }
 
-  private class Iterator implements ValueContainer.IntIterator {
+  private class Iterator implements IntIdsIterator {
     private int nextSetBit = nextSetBit(0);
 
     @Override
@@ -223,7 +223,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     }
 
     @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new Iterator();
     }
   }

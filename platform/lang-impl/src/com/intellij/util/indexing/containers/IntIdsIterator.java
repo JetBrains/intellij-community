@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.containers;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.indexing.ValueContainer;
 
-/**
- * Created by Maxim.Mossienko on 11/22/2016.
- */
-interface ValueIteratorImpl<Value> extends ValueContainer.ValueIterator<Value> {
-  @NotNull
-  IntPredicate getValueAssociationPredicate();
+public interface IntIdsIterator extends ValueContainer.IntIterator {
+  boolean hasAscendingOrder();
 
-  Object getFileSetObject();
+  IntIdsIterator createCopyInInitialState();
 }

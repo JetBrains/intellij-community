@@ -16,7 +16,6 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.IntPredicate;
-import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntHashSet;
 
 public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
@@ -47,7 +46,7 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     return new IntSetIterator();
   }
 
@@ -57,7 +56,7 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
     }
 
     @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new IntSetIterator();
     }
   }
