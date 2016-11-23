@@ -64,7 +64,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          new ShowAutoImportPass(project, psiFile, editor).addImports();
+          new ShowAutoImportPass(project, psiFile, editor).doApplyInformationToEditor();
         }
 
         DaemonListeners.repaintErrorStripeRenderer(editor, project);
