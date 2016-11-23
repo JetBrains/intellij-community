@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Processor;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +24,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Dec 24, 2007
  */
-public interface AbstractIndex<Key, Value> {
+public interface InvertedIndex<Key, Value, Input> {
   @NotNull
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
-  boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+  /**
+   * @param inputId *positive* id of content.
+   */
+  @NotNull
+  Computable<Boolean> update(int inputId, @Nullable Input content);
+
+  void flush() throws StorageException;
+
+  void clear() throws StorageException;
+
+  void dispose();
 }

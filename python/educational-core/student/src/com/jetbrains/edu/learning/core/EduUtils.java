@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -124,16 +124,16 @@ public class EduUtils {
     if (document != null) {
       FileDocumentManager.getInstance().saveDocument(document);
     }
-    String name = file.getName();
+    String taskRelativePath = StudyUtils.pathRelativeToTask(file);
     try {
-      VirtualFile userFile = toDir.findChild(name);
+      VirtualFile userFile = toDir.findFileByRelativePath(taskRelativePath);
       if (userFile != null) {
         userFile.delete(requestor);
       }
-      return VfsUtilCore.copyFile(requestor, file, toDir);
+      return VfsUtil.copyFileRelative(requestor, file, toDir, taskRelativePath);
     }
     catch (IOException e) {
-      LOG.info("Failed to create file " + name + "  in folder " + toDir.getPath(), e);
+      LOG.info("Failed to create file " + taskRelativePath + "  in folder " + toDir.getPath(), e);
     }
     return null;
   }
@@ -161,7 +161,7 @@ public class EduUtils {
       }
       task = task.copy();
     }
-    TaskFile taskFile = task.getTaskFile(answerFile.getName());
+    TaskFile taskFile = task.getTaskFile(StudyUtils.pathRelativeToTask(answerFile));
     if (taskFile == null) {
       return null;
     }
@@ -170,17 +170,17 @@ public class EduUtils {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
       int fromSubtask = task.getActiveSubtaskIndex();
-      placeholder.switchSubtask(project, studentDocument, fromSubtask, targetSubtaskIndex);
+      placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
     }
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      replaceWithTaskText(project, studentDocument, placeholder, targetSubtaskIndex);
+      replaceWithTaskText(studentDocument, placeholder, targetSubtaskIndex);
     }
     taskFile.setTrackChanges(true);
     studentDocument.removeDocumentListener(listener);
     return Pair.create(studentFile, taskFile);
   }
 
-  private static void replaceWithTaskText(Project project, Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {
+  private static void replaceWithTaskText(Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {
     AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(toSubtaskIndex);
     if (info == null) {
       return;
@@ -193,30 +193,30 @@ public class EduUtils {
       Integer max = Collections.max(ContainerUtil.filter(placeholder.getSubtaskInfos().keySet(), i -> i < toSubtaskIndex));
       replacementText = placeholder.getSubtaskInfos().get(max).getPossibleAnswer();
     }
-    replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getVisibleLength(toSubtaskIndex), replacementText);
+    replaceAnswerPlaceholder(studentDocument, placeholder, placeholder.getVisibleLength(toSubtaskIndex), replacementText);
   }
 
-  public static void replaceAnswerPlaceholder(@NotNull final Project project,
-                                              @NotNull final Document document,
+  public static void replaceAnswerPlaceholder(@NotNull final Document document,
                                               @NotNull final AnswerPlaceholder answerPlaceholder,
                                               int length,
                                               String replacementText) {
     final int offset = answerPlaceholder.getOffset();
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       document.replaceString(offset, offset + length, replacementText);
       FileDocumentManager.getInstance().saveDocument(document);
-    }), "Replace Answer Placeholders", "Replace Answer Placeholders");
+    }));
   }
 
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
       String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
-      deleteWindowsFile(taskDir, windowsFileName);
+      VirtualFile parentDir = virtualFile.getParent();
+      deleteWindowsFile(parentDir, windowsFileName);
     }
   }
 

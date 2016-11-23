@@ -1,6 +1,7 @@
 package com.jetbrains.edu.coursecreator.projectView;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +15,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.projectView.TaskDirectoryNode;
 import org.jetbrains.annotations.NotNull;
@@ -94,5 +96,10 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
     int stepMarkerStart = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
     int stepIndex = Integer.valueOf(nameWithoutExtension.substring(EduNames.SUBTASK_MARKER.length() + stepMarkerStart));
     return stepIndex == myTask.getActiveSubtaskIndex();
+  }
+
+  @Override
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value) {
+    return new CCDirectoryNode(myProject, value, myViewSettings);
   }
 }

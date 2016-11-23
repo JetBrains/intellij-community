@@ -58,7 +58,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
 
     @Override
     public void undo() throws UnexpectedUndoException {
-      myTask.getTaskFiles().put(myFile.getName(), myTaskFile);
+      myTask.getTaskFiles().put(StudyUtils.pathRelativeToTask(myFile), myTaskFile);
       CCUtils.createResourceFile(myFile, myCourse, StudyUtils.getTaskDir(myFile));
       if (!myTaskFile.getAnswerPlaceholders().isEmpty() && FileEditorManager.getInstance(myProject).isFileOpen(myFile)) {
         for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getEditors(myFile)) {
@@ -92,8 +92,8 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
         }
       }
     }
-    String name = file.getName();
-    VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, name);
+    String taskRelativePath = StudyUtils.pathRelativeToTask(file);
+    VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, taskRelativePath);
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (patternFile != null) {
         try {
@@ -104,7 +104,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
         }
       }
     });
-    taskFiles.remove(name);
+    taskFiles.remove(taskRelativePath);
   }
 
   @Override

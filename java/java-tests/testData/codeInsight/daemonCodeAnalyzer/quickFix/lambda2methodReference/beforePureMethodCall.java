@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference (may change semantics)" "true"
 import java.util.*;
 import java.util.function.Predicate;
 

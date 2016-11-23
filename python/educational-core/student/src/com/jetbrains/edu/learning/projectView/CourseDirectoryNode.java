@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -49,7 +50,7 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
   }
 
   @Override
-  public StudyDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
     return new LessonDirectoryNode(myProject, directory, myViewSettings, (Lesson)item);
   }
 }

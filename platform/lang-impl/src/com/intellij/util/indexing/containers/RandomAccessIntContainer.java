@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing.containers;
 
+import com.intellij.util.indexing.IntPredicate;
 import com.intellij.util.indexing.ValueContainer;
 
 /**
@@ -25,7 +26,7 @@ interface RandomAccessIntContainer {
   boolean add(int value);
   boolean remove(int value);
   ValueContainer.IntIterator intIterator();
-  ValueContainer.IntPredicate intPredicate();
+  IntPredicate intPredicate();
   void compact();
   int size();
 

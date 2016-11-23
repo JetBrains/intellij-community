@@ -137,7 +137,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
               transformSubtaskTestsToTextFiles(studentFileDir);
             }
             for (String taskFile : task.getTaskFiles().keySet()) {
-              VirtualFile answerFile = taskDir.findChild(taskFile);
+              VirtualFile answerFile = taskDir.findFileByRelativePath(taskFile);
               if (answerFile == null) {
                 continue;
               }

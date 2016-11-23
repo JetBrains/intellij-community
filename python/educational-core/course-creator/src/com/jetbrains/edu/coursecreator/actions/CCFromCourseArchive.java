@@ -130,7 +130,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
                                       @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
     final String name = taskFileEntry.getKey();
     final TaskFile taskFile = taskFileEntry.getValue();
-    VirtualFile file = userFileDir.findChild(name);
+    VirtualFile file = userFileDir.findFileByRelativePath(name);
     assert file != null;
     final Document originDocument = FileDocumentManager.getInstance().getDocument(file);
     if (originDocument == null) {

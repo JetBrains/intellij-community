@@ -1076,6 +1076,34 @@ public class PythonCompletionTest extends PyTestCase {
                          });
   }
 
+  public void testSixAddMetaclass() {
+    final List<String> suggested = doTestByText("import six\n" +
+                                                "class M(type):\n" +
+                                                "    def baz(self):\n" +
+                                                "        pass\n" +
+                                                "@six.add_metaclass(M)\n" +
+                                                "class C(object):\n" +
+                                                "    def foo(self):\n" +
+                                                "        C.ba<caret>()");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "baz");
+  }
+
+  public void testSixAddMetaclassWithAs() {
+    final List<String> suggested = doTestByText("from six import add_metaclass as a_m\n" +
+                                                "class M(type):\n" +
+                                                "    def baz(self):\n" +
+                                                "        pass\n" +
+                                                "@a_m(M)\n" +
+                                                "class C(object):\n" +
+                                                "    def foo(self):\n" +
+                                                "        C.ba<caret>()");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "baz");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

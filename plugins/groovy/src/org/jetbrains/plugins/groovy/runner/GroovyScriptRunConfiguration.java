@@ -15,16 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.execution.*;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -36,6 +39,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -71,7 +75,6 @@ import java.util.Map;
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
-  private static final Logger LOG = Logger.getInstance(GroovyScriptRunConfiguration.class);
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
@@ -81,28 +84,23 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   private final Map<String, String> envs = new LinkedHashMap<>();
   public boolean passParentEnv = true;
 
+  private boolean myAlternativeJrePathEnabled;
+  private @Nullable String myAlternativeJrePath;
+
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
     workDir = PathUtil.getLocalPath(project.getBaseDir());
   }
 
-  public void setWorkDir(String dir) {
-    workDir = dir;
-  }
-
-  public String getWorkDir() {
-    return workDir;
-  }
-
   @Nullable
   public Module getModule() {
-    return getConfigurationModule().getModule();
+    return ObjectUtils.chooseNotNull(getConfigurationModule().getModule(), ContainerUtil.getFirstItem(getValidModules()));
   }
 
   @Override
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final GroovyScriptRunner scriptRunner = findConfiguration();
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
     if (scriptRunner == null) {
       return Arrays.asList(modules);
     }
@@ -118,21 +116,20 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Nullable
-  private GroovyScriptRunner findConfiguration() {
-    final VirtualFile scriptFile = getScriptFile();
-    if (scriptFile == null) {
-      return null;
-    }
+  private GroovyScriptRunner getScriptRunner() {
+    final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
+    if (scriptFile == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile)) {
-      return null;
+    if (!(psiFile instanceof GroovyFile)) return null;
+
+    final GroovyFile groovyFile = (GroovyFile)psiFile;
+    if (groovyFile.isScript()) {
+      return GroovyScriptUtil.getScriptType(groovyFile).getRunner();
     }
-    if (!((GroovyFile)psiFile).isScript()) {
+    else {
       return new DefaultGroovyScriptRunner();
     }
-
-    return GroovyScriptUtil.getScriptType((GroovyFile)psiFile).getRunner();
   }
 
   @Override
@@ -150,6 +147,9 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
+
+    myAlternativeJrePathEnabled = JDOMExternalizer.readBoolean(element, "alternativeJrePathEnabled");
+    myAlternativeJrePath = JDOMExternalizer.readString(element, "alternativeJrePath");
   }
 
   @Override
@@ -163,26 +163,20 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
     if (isAddClasspathToTheRunner) JDOMExternalizer.write(element, "addClasspath", true);
     JDOMExternalizer.writeMap(element, envs, null, "env");
+
+    if (myAlternativeJrePathEnabled) {
+      JDOMExternalizer.write(element, "alternativeJrePathEnabled", true);
+      if (StringUtil.isNotEmpty(myAlternativeJrePath)) JDOMExternalizer.write(element, "alternativeJrePath", myAlternativeJrePath);
+    }
   }
 
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    final VirtualFile script = getScriptFile();
-    if (script == null) {
-      throw new CantRunException("Cannot find script " + scriptPath);
-    }
+    final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
+    assert scriptFile != null;
 
-    final GroovyScriptRunner scriptRunner = findConfiguration();
-    if (scriptRunner == null) {
-      throw new CantRunException("Unknown script type " + scriptPath);
-    }
-
-    final Module module = ObjectUtils.chooseNotNull(getModule(), ContainerUtil.getFirstItem(getValidModules()));
-    if (!scriptRunner.ensureRunnerConfigured(module, this, executor, getProject())) {
-      return null;
-    }
-
-    final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
+    assert scriptRunner != null;
 
     return new JavaCommandLineState(environment) {
       @NotNull
@@ -206,9 +200,18 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        JavaParameters params = createJavaParametersWithSdk(module);
+        final Module module = getModule();
+        final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(scriptFile);
+        String jrePath = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
+        JavaParameters params = new JavaParameters();
+        params.setUseClasspathJar(true);
+        params.setDefaultCharset(getProject());
+        params.setJdk(
+          module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
+                         : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
+        );
         ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
-        scriptRunner.configureCommandLine(params, module, tests, script, GroovyScriptRunConfiguration.this);
+        scriptRunner.configureCommandLine(params, module, tests, scriptFile, GroovyScriptRunConfiguration.this);
 
         return params;
       }
@@ -281,29 +284,28 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return params;
   }
 
-  @Nullable
-  private VirtualFile getScriptFile() {
-    return ScriptFileUtil.findScriptFileByPath(scriptPath);
-  }
-
-  @Nullable
-  private PsiClass getScriptClass() {
-    final VirtualFile scriptFile = getScriptFile();
-    if (scriptFile == null) return null;
-    final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    return GroovyRunnerPsiUtil.getRunningClass(file);
-  }
-
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GroovyRunConfigurationEditor();
+    return new GroovyRunConfigurationEditor(getProject());
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final PsiClass toRun = getScriptClass();
+
+    final String scriptPath = getScriptPath();
+
+    final VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath);
+    if (script == null) throw new RuntimeConfigurationException("Cannot find script " + scriptPath);
+
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
+    if (scriptRunner == null) throw new RuntimeConfigurationException("Unknown script type " + scriptPath);
+
+    scriptRunner.ensureRunnerConfigured(this);
+
+    final PsiFile file = PsiManager.getInstance(getProject()).findFile(script);
+    final PsiClass toRun = GroovyRunnerPsiUtil.getRunningClass(file);
     if (toRun == null) {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
@@ -315,6 +317,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     else {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
     }
+    JavaParametersUtil.checkAlternativeJRE(this);
   }
 
   @Override
@@ -329,23 +332,23 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-    return false;
+    return myAlternativeJrePathEnabled;
   }
 
   @Override
-  public void setAlternativeJrePathEnabled(boolean enabled) {
-    throw new UnsupportedOperationException();
+  public void setAlternativeJrePathEnabled(boolean alternativeJrePathEnabled) {
+    myAlternativeJrePathEnabled = alternativeJrePathEnabled;
   }
 
   @Nullable
   @Override
   public String getAlternativeJrePath() {
-    throw new UnsupportedOperationException();
+    return myAlternativeJrePath;
   }
 
   @Override
-  public void setAlternativeJrePath(String path) {
-    throw new UnsupportedOperationException();
+  public void setAlternativeJrePath(@Nullable String alternativeJrePath) {
+    myAlternativeJrePath = alternativeJrePath;
   }
 
   @Override

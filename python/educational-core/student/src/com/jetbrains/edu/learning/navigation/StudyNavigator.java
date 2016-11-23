@@ -114,7 +114,7 @@ public class StudyNavigator {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
       VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
-      VirtualFile vf = srcDir == null ? taskDir.findChild(name) : srcDir.findChild(name);
+      VirtualFile vf = srcDir == null ? taskDir.findFileByRelativePath(name) : srcDir.findFileByRelativePath(name);
       if (vf != null) {
         if (fileToActivate != null) {
           FileEditorManager.getInstance(project).openFile(vf, true);
@@ -171,7 +171,7 @@ public class StudyNavigator {
       return;
     }
     for (String name : nextTaskFiles.keySet()) {
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }

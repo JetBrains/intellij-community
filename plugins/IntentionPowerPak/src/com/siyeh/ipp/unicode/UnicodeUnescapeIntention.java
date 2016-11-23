@@ -110,7 +110,7 @@ public class UnicodeUnescapeIntention extends Intention {
   /**
    * see JLS 3.3. Unicode Escapes
    */
-  private static int indexOfUnicodeEscape(@NotNull String text, int offset) {
+  static int indexOfUnicodeEscape(@NotNull String text, int offset) {
     final int length = text.length();
     for (int i = 0; i < length; i++) {
       final char c = text.charAt(i);
@@ -143,6 +143,8 @@ public class UnicodeUnescapeIntention extends Intention {
           StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
         final int escapeEnd = nextChar + 4;
         if (offset <= escapeEnd) {
+          final char d = (char)Integer.parseInt(text.substring(nextChar, nextChar + 4), 16);
+          if (d == '\r') return -1; // carriage return not allowed
           return i;
         }
       }

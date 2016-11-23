@@ -16,6 +16,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.indexing.IntPredicate;
 import com.intellij.util.indexing.ValueContainer;
 
 /**
@@ -126,8 +127,8 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
+  public IntPredicate intPredicate() {
+    return new IntPredicate() {
       @Override
       public boolean contains(int id) {
         return IdBitSet.this.contains(id);

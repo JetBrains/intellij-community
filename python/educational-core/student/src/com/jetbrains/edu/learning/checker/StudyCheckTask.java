@@ -216,7 +216,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
     for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(entry.getKey());
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(entry.getKey());
       if (virtualFile == null) {
         continue;
       }

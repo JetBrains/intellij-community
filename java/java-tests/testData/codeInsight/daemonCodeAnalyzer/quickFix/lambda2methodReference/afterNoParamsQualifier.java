@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference (may change semantics)" "true"
 class Example {
   public void m() {
   }

@@ -17,6 +17,7 @@ package com.intellij.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,8 +32,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.easymock.IArgumentMatcher;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Set;
+
+import static org.easymock.EasyMock.*;
 
 public class ResolveClassTest extends ResolveTestCase {
   public void testFQName() throws Exception {
@@ -267,5 +274,42 @@ public class ResolveClassTest extends ResolveTestCase {
 
   private PsiReference configure() throws Exception {
     return configureByFile("class/" + getTestName(false) + ".java");
+  }
+
+  public void testNoSubpackagesAccess() throws Exception {
+    PsiElementFinder mock = createMockFinder();
+    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), PsiElementFinder.EP_NAME, mock, getTestRootDisposable());
+
+    PsiReference reference = configure();
+    assertNull(reference.resolve());
+    reference.getVariants();
+
+    verify(mock);
+  }
+
+  private static PsiElementFinder createMockFinder() {
+    Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", "getClasses");
+    Method[] methods = ContainerUtil.findAllAsArray(PsiElementFinder.class.getDeclaredMethods(), m -> !ignoredMethods.contains(m.getName()));
+    PsiElementFinder mock = createMockBuilder(PsiElementFinder.class).addMockedMethods(methods).createMock();
+    expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
+    expect(mock.findPackage(eq("foo"))).andReturn(null);
+    expect(mock.getSubPackages(rootPackage(), anyObject())).andReturn(PsiPackage.EMPTY_ARRAY);
+    replay(mock);
+    return mock;
+  }
+
+  private static PsiPackage rootPackage() {
+    reportMatcher(new IArgumentMatcher() {
+      @Override
+      public boolean matches(Object argument) {
+        return "PsiPackage:".equals(String.valueOf(argument));
+      }
+
+      @Override
+      public void appendTo(StringBuffer buffer) {
+        buffer.append("PsiPackage:");
+      }
+    });
+    return null;
   }
 }

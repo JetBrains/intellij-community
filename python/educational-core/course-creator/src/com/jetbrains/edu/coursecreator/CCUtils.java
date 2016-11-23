@@ -266,7 +266,7 @@ public class CCUtils {
     }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile answerFile = taskDir.findChild(name);
+      VirtualFile answerFile = taskDir.findFileByRelativePath(name);
       if (answerFile == null) {
         continue;
       }

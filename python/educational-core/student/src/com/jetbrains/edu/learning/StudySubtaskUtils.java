@@ -2,6 +2,8 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +49,7 @@ public class StudySubtaskUtils {
     int fromSubtaskIndex = task.getActiveSubtaskIndex();
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
@@ -56,7 +58,8 @@ public class StudySubtaskUtils {
       if (document == null) {
         continue;
       }
-      updatePlaceholderTexts(project, document, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      updatePlaceholderTexts(document, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      UndoManager.getInstance(project).nonundoableActionPerformed(DocumentReferenceManager.getInstance().create(document), false);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
       if (StudyUtils.isStudentProject(project)) {
         WolfTheProblemSolver.getInstance(project).clearProblems(virtualFile);
@@ -112,22 +115,21 @@ public class StudySubtaskUtils {
     }
   }
 
-  private static void updatePlaceholderTexts(@NotNull Project project,
-                                             @NotNull Document document,
+  private static void updatePlaceholderTexts(@NotNull Document document,
                                              @NotNull TaskFile taskFile,
                                              int fromSubtaskIndex,
                                              int toSubtaskIndex) {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      placeholder.switchSubtask(project, document, fromSubtaskIndex, toSubtaskIndex);
+      placeholder.switchSubtask(document, fromSubtaskIndex, toSubtaskIndex);
     }
     taskFile.setTrackLengths(true);
   }
 
-  public static void refreshPlaceholder(@NotNull Project project, @NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
+  public static void refreshPlaceholder(@NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
     int prevSubtaskIndex = placeholder.getActiveSubtaskIndex() - 1;
     AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(prevSubtaskIndex);
     String replacementText = info != null ? info.getAnswer() : placeholder.getTaskText();
-    EduUtils.replaceAnswerPlaceholder(project, editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
+    EduUtils.replaceAnswerPlaceholder(editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
   }
 }

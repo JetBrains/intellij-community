@@ -63,7 +63,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     final TaskFile taskFile = studyState.getTaskFile();
     if (taskFile.getTask().hasSubtasks()) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
-        StudySubtaskUtils.refreshPlaceholder(project, editor, placeholder);
+        StudySubtaskUtils.refreshPlaceholder(editor, placeholder);
       }
     }
     else {

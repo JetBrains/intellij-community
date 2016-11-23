@@ -90,11 +90,17 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             final PsiExpression candidate =
               canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null, methodRefCandidate);
             if (candidate != null) {
-              ProblemHighlightType errorOrWarning = checkQualifier(methodRefCandidate) ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                                                       : ProblemHighlightType.INFORMATION;
+              PsiExpression qualifier =
+                methodRefCandidate instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)methodRefCandidate).getMethodExpression().getQualifierExpression()
+                                                                      : methodRefCandidate instanceof PsiNewExpression
+                                                                        ? ((PsiNewExpression)methodRefCandidate).getQualifier()
+                                                                        : null;
+              boolean safeQualifier = checkQualifier(qualifier);
+              ProblemHighlightType errorOrWarning = safeQualifier ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                                                  : ProblemHighlightType.INFORMATION;
               holder.registerProblem(InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate,
                                      "Can be replaced with method reference",
-                                     errorOrWarning, new ReplaceWithMethodRefFix());
+                                     errorOrWarning, new ReplaceWithMethodRefFix(safeQualifier ? "" : " (may change semantics)"));
             }
           }
         }
@@ -308,7 +314,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return tryConvertToMethodReference(lambda, candidate);
   }
 
-  public static boolean checkQualifier(PsiElement qualifier) {
+  public static boolean checkQualifier(@Nullable PsiElement qualifier) {
     if (qualifier == null) {
       return true;
     }
@@ -564,6 +570,19 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
+    private String mySuffix;
+
+    public ReplaceWithMethodRefFix(String suffix) {
+      mySuffix = suffix;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName() + mySuffix;
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {

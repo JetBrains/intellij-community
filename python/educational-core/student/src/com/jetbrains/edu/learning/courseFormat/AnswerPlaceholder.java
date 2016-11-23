@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -247,13 +246,13 @@ public class AnswerPlaceholder {
     return getUseLength() ? myLength : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
   }
 
-  public void switchSubtask(@NotNull Project project, @NotNull Document document, int fromSubtask, int toSubtask) {
+  public void switchSubtask(@NotNull Document document, int fromSubtask, int toSubtask) {
     Set<Integer> indexes = mySubtaskInfos.keySet();
     int visibleLength = getVisibleLength(fromSubtask);
     if (indexes.contains(fromSubtask) && indexes.contains(toSubtask)) {
       if (!myUseLength) {
         String replacementText = mySubtaskInfos.get(toSubtask).getPossibleAnswer();
-        EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+        EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
       }
       return;
     }
@@ -263,7 +262,7 @@ public class AnswerPlaceholder {
         Integer maxIndex = Collections.max(ContainerUtil.filter(indexes, integer -> integer <= toSubtask));
         AnswerPlaceholderSubtaskInfo maxInfo = mySubtaskInfos.get(maxIndex);
         String replacementText = myUseLength ? maxInfo.getPlaceholderText() : maxInfo.getPossibleAnswer();
-        EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+        EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
         return;
       }
     }
@@ -271,11 +270,11 @@ public class AnswerPlaceholder {
       if (minIndex > toSubtask && minIndex <= fromSubtask) {
         AnswerPlaceholderSubtaskInfo minInfo = mySubtaskInfos.get(minIndex);
         if (minInfo.isNeedInsertText()) {
-          EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, "");
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, "");
         }
         else {
           String replacementText = minInfo.getPlaceholderText();
-          EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
         }
       }
     }

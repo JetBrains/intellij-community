@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -80,24 +79,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   @Override
   public ValueIterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
-  }
-
-  @NotNull
-  @Override
-  public List<Value> toValueList() {
-    return getMergedData().toValueList();
-  }
-
-  @NotNull
-  @Override
-  public IntPredicate getValueAssociationPredicate(Value value) {
-    return getMergedData().getValueAssociationPredicate(value);
-  }
-
-  @NotNull
-  @Override
-  public IntIterator getInputIdsIterator(final Value value) {
-    return getMergedData().getInputIdsIterator(value);
   }
 
   public void dropMergedData() {
@@ -164,7 +145,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
           }
         });
       }
-      setNeedsCompacting(fromDisk.needsCompacting());
+      setNeedsCompacting(((UpdatableValueContainer)fromDisk).needsCompacting());
 
       myMerged = newMerged;
       return newMerged;

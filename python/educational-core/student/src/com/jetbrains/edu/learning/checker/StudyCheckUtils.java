@@ -52,7 +52,7 @@ public class StudyCheckUtils {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
@@ -79,7 +79,7 @@ public class StudyCheckUtils {
         TaskFile taskFile = entry.getValue();
         if (taskManager.hasFailedAnswerPlaceholders(taskFile)) {
           taskFileToNavigate = taskFile;
-          VirtualFile virtualFile = taskDir.findChild(name);
+          VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
           if (virtualFile == null) {
             continue;
           }
@@ -117,7 +117,7 @@ public class StudyCheckUtils {
                                          @NotNull final String taskFileName,
                                          @NotNull final TaskFile taskFile,
                                          @NotNull final Project project) {
-    final VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    final VirtualFile virtualFile = taskDir.findFileByRelativePath(taskFileName);
     if (virtualFile == null) {
       return;
     }
@@ -147,7 +147,7 @@ public class StudyCheckUtils {
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document document = documentManager.getDocument(answerFile);
       if (document != null) {
-        TaskFile answerTaskFile = source.getTask().copy().getTaskFile(file.getName());
+        TaskFile answerTaskFile = source.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(file));
         if (answerTaskFile == null) {
           return null;
         }
@@ -185,7 +185,7 @@ public class StudyCheckUtils {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }

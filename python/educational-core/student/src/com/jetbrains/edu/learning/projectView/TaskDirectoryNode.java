@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,8 +81,12 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   @Override
   public AbstractTreeNode modifyChildNode(AbstractTreeNode childNode) {
     Object value = childNode.getValue();
+    if (value instanceof PsiDirectory) {
+      return createChildDirectoryNode(null, (PsiDirectory)value);
+    }
     if (value instanceof PsiElement) {
       PsiFile psiFile = ((PsiElement) value).getContainingFile();
+      if (psiFile == null) return null;
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) {
         return null;
@@ -92,7 +97,7 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   }
 
   @Override
-  public StudyDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value) {
-    return null;
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value) {
+    return new DirectoryNode(myProject, value, myViewSettings);
   }
 }

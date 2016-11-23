@@ -2,6 +2,7 @@ package com.jetbrains.edu.coursecreator.actions.placeholder;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +40,7 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
       public void redo() throws UnexpectedUndoException {
         setVisible(placeholder, !isVisible(), state);
       }
-    });
+    }, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   private void setVisible(AnswerPlaceholder placeholder, boolean visible, CCState state) {
@@ -97,9 +98,13 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
       return;
     }
     Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());
-    if (placeholder.isActive() && minSubtaskIndex != 0 && minSubtaskIndex == task.getActiveSubtaskIndex() && isAvailable(placeholder)) {
+    if (canChangeState(placeholder, task, minSubtaskIndex)) {
       presentation.setEnabledAndVisible(true);
     }
+  }
+
+  private boolean canChangeState(@NotNull AnswerPlaceholder placeholder, @NotNull Task task, int minSubtaskIndex) {
+    return placeholder.isActive() && minSubtaskIndex != 0 && minSubtaskIndex == task.getActiveSubtaskIndex() && isAvailable(placeholder);
   }
 
   protected abstract boolean isAvailable(AnswerPlaceholder placeholder);

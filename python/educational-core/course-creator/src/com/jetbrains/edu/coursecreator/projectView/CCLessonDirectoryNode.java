@@ -1,13 +1,13 @@
 package com.jetbrains.edu.coursecreator.projectView;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.projectView.LessonDirectoryNode;
-import com.jetbrains.edu.learning.projectView.StudyDirectoryNode;
 import org.jetbrains.annotations.NotNull;
 
 public class CCLessonDirectoryNode extends LessonDirectoryNode {
@@ -19,7 +19,7 @@ public class CCLessonDirectoryNode extends LessonDirectoryNode {
   }
 
   @Override
-  public StudyDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
     return new CCTaskDirectoryNode(myProject, directory, myViewSettings, ((Task)item));
   }
 }
