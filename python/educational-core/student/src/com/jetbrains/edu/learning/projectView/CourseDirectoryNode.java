@@ -10,9 +10,12 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 
 public class CourseDirectoryNode extends StudyDirectoryNode {
@@ -51,6 +54,14 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
 
   @Override
   public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
-    return new LessonDirectoryNode(myProject, directory, myViewSettings, (Lesson)item);
+    final List<Lesson> lessons = myCourse.getLessons();
+    final Lesson lesson = (Lesson)item;
+    if (lessons.size() == 1) {
+      final List<Task> tasks = lesson.getTaskList();
+      if (tasks.size() == 1) {
+        return new TaskDirectoryNode(myProject, (PsiDirectory)directory.getChildren()[0], myViewSettings, tasks.get(0));
+      }
+    }
+    return new LessonDirectoryNode(myProject, directory, myViewSettings, lesson);
   }
 }
