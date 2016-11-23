@@ -440,7 +440,7 @@ public class TestAll implements Test {
     return realFreeMemory < needed;
   }
 
-  private static boolean isPerformanceTestsRun() {
+  static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
   
