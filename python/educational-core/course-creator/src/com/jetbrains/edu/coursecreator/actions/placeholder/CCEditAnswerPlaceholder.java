@@ -32,7 +32,7 @@ public class CCEditAnswerPlaceholder extends CCAnswerPlaceholderAction {
     if (dlg.showAndGet()) {
       final String answerPlaceholderText = dlg.getTaskText();
       answerPlaceholder.setTaskText(answerPlaceholderText);
-      answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
+      answerPlaceholder.setLength(answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText() ? 0 : StringUtil.notNullize(answerPlaceholderText).length());
       answerPlaceholder.setHints(dlg.getHints());
     }
   }
