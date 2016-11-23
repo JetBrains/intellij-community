@@ -93,7 +93,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myAddClasspathCB.setSelected(configuration.isAddClasspathToTheRunner());
 
     myModulesBox.setModules(configuration.getValidModules());
-    myModulesBox.setSelectedModule(configuration.getModule());
+    myModulesBox.setSelectedModule(configuration.getConfigurationModule().getModule());
 
     myEnvVariables.setEnvs(configuration.getEnvs());
   }

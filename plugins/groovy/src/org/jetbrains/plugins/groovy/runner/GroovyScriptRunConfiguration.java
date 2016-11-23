@@ -88,7 +88,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Nullable
   public Module getModule() {
-    return getConfigurationModule().getModule();
+    return ObjectUtils.chooseNotNull(getConfigurationModule().getModule(), ContainerUtil.getFirstItem(getValidModules()));
   }
 
   @Override
@@ -169,7 +169,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new CantRunException("Unknown script type " + scriptPath);
     }
 
-    final Module module = ObjectUtils.chooseNotNull(getModule(), ContainerUtil.getFirstItem(getValidModules()));
+    final Module module = getModule();
     if (!scriptRunner.ensureRunnerConfigured(module, this, executor, getProject())) {
       return null;
     }
