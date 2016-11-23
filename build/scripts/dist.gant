@@ -196,15 +196,6 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   def linuxAppRoot = productProperties.linuxAppRoot()
   def archiveName = productProperties.archiveName()
 
-  List pathsDist = new File("${paths.sandbox}/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"] : [paths.distAll, paths.distWin]
-  buildWinZip("$paths.artifacts/${archiveName}.win.zip", pathsDist, winAppRoot)
-  //win oracle jdk
-  if (new File("${paths.sandbox}/jdk.oracle.win/jre").exists()) {
-    buildWinZip("$paths.artifacts/${archiveName}-oracle-win.zip",
-                [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.oracle.win"])
-  }
-
-
   buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
 
@@ -215,6 +206,14 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   requireProperty("jdk.linux", "false")
   if (p("jdk.linux") != "false") {
     buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
+  }
+
+  List pathsDist = new File("${paths.sandbox}/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"] : [paths.distAll, paths.distWin]
+  buildWinZip("$paths.artifacts/${archiveName}.win.zip", pathsDist, winAppRoot)
+  //win oracle jdk
+  if (new File("${paths.sandbox}/jdk.oracle.win/jre").exists()) {
+    buildWinZip("$paths.artifacts/${archiveName}-oracle-win.zip",
+                [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.oracle.win"])
   }
   return info
 }
