@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing.containers;
-
-import com.intellij.util.indexing.IntPredicate;
-import com.intellij.util.indexing.ValueContainer;
+package com.intellij.util.indexing;
 
 /**
-* Created by Maxim.Mossienko on 5/27/2014.
-*/
-interface RandomAccessIntContainer {
-  Object clone();
-  boolean add(int value);
-  boolean remove(int value);
-  ValueContainer.IntIterator intIterator();
-  IntPredicate intPredicate();
-  void compact();
-  int size();
-
-  boolean contains(int value);
-
-  RandomAccessIntContainer ensureContainerCapacity(int diff);
+ * Created by Maxim.Mossienko on 11/22/2016.
+ */
+public interface IntPredicate {
+  boolean contains(int id);
 }

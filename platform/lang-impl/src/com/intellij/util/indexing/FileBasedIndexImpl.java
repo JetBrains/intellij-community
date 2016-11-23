@@ -914,9 +914,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                               @NotNull K dataKey,
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
-                                              @NotNull Processor<ValueContainer.ValueIterator<V>> valueProcessor) {
+                                              @NotNull Processor<ValueIteratorImpl<V>> valueProcessor) {
     final Boolean result = processExceptions(indexId, restrictToFile, scope,
-                                             index -> valueProcessor.process(index.getData(dataKey).getValueIterator()));
+                                             index -> valueProcessor.process((ValueIteratorImpl<V>)index.getData(dataKey).getValueIterator()));
     return result == null || result.booleanValue();
   }
 
@@ -1053,10 +1053,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @Nullable
-  private static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
+  private static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<K, V, I> index,
                                                                         @NotNull Collection<K> dataKeys,
                                                                         @Nullable Condition<V> valueChecker,
-                                                                        @Nullable ValueContainer.IntPredicate idChecker)
+                                                                        @Nullable IntPredicate idChecker)
     throws StorageException {
     TIntHashSet mainIntersection = null;
 
@@ -1065,7 +1065,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final TIntHashSet copy = new TIntHashSet();
       final ValueContainer<V> container = index.getData(dataKey);
 
-      for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+      for (ValueIteratorImpl<V> valueIt = (ValueIteratorImpl<V>)container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
         if (valueChecker != null && !valueChecker.value(value)) {
           continue;
@@ -1085,7 +1085,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
         else {
           mainIntersection.forEach(new TIntProcedure() {
-            final ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
+            final IntPredicate predicate = valueIt.getValueAssociationPredicate();
 
             @Override
             public boolean execute(int id) {
@@ -1107,7 +1107,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
 
   @NotNull
-  public static <K, V, I> ValueContainer.IntIterator collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
+  public static <K, V, I> ValueContainer.IntIterator collectInputIdsContainingAllKeys(@NotNull InvertedIndex<K, V, I> index,
                                                                                       @NotNull Collection<K> dataKeys)
     throws StorageException {
     TIntHashSet result = collectInputIdsContainingAllKeys(index, dataKeys, null, null);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,34 +40,15 @@ public abstract class ValueContainer<Value> {
     IntIterator createCopyInInitialState();
   }
 
-  public interface IntPredicate {
-    boolean contains(int id);
-  }
-
-  @NotNull
-  public abstract IntIterator getInputIdsIterator(Value value);
-
-  @NotNull
-  public abstract IntPredicate getValueAssociationPredicate(Value value);
-
   @NotNull
   public abstract ValueIterator<Value> getValueIterator();
 
   public interface ValueIterator<Value> extends Iterator<Value> {
     @NotNull
     IntIterator getInputIdsIterator();
-
-    @NotNull
-    IntPredicate getValueAssociationPredicate();
-
-    Object getFileSetObject();
   }
 
-  @NotNull
-  public abstract List<Value> toValueList();
-
   public abstract int size();
-
 
   public interface ContainerAction<T> {
     boolean perform(int id, T value);
@@ -82,16 +62,6 @@ public abstract class ValueContainer<Value> {
       }
     }
     return true;
-  }
-
-  private volatile boolean myNeedsCompacting;
-
-  boolean needsCompacting() {
-    return myNeedsCompacting;
-  }
-
-  void setNeedsCompacting(boolean value) {
-    myNeedsCompacting = value;
   }
 
   public abstract void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException;

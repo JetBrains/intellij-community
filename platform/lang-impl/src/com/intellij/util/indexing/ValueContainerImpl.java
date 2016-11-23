@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -86,7 +84,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     if (myInputIdMapping == null) return;
     List<Object> fileSetObjects = null;
     List<Value> valueObjects = null;
-    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final ValueIteratorImpl<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
 
       if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
@@ -144,10 +142,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @NotNull
   @Override
-  public ValueIterator<Value> getValueIterator() {
+  public ValueIteratorImpl<Value> getValueIterator() {
     if (myInputIdMapping != null) {
       if (!(myInputIdMapping instanceof THashMap)) {
-        return new ValueIterator<Value>() {
+        return new ValueIteratorImpl<Value>() {
           private Value value = (Value)myInputIdMapping;
 
           @NotNull
@@ -186,7 +184,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           }
         };
       } else {
-        return new ValueIterator<Value>() {
+        return new ValueIteratorImpl<Value>() {
           private Value current;
           private Object currentValue;
           private final THashMap<Value, Object> myMapping = ((THashMap<Value, Object>)myInputIdMapping);
@@ -235,7 +233,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  static class EmptyValueIterator<Value> extends EmptyIterator<Value> implements ValueIterator<Value> {
+  static class EmptyValueIterator<Value> extends EmptyIterator<Value> implements ValueIteratorImpl<Value> {
 
     @NotNull
     @Override
@@ -257,24 +255,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   private static final EmptyValueIterator emptyIterator = new EmptyValueIterator();
 
-  @NotNull
-  @Override
-  public List<Value> toValueList() {
-    if (myInputIdMapping == null) {
-      return Collections.emptyList();
-    } else if (myInputIdMapping instanceof THashMap) {
-      return new ArrayList<>(((THashMap<Value, Object>)myInputIdMapping).keySet());
-    } else {
-      return new SmartList<>((Value)myInputIdMapping);
-    }
-  }
-
-  @NotNull
-  @Override
-  public IntPredicate getValueAssociationPredicate(Value value) {
-    return getPredicateOutOfFileSetObject(getFileSetObject(value));
-  }
-
   private static @NotNull IntPredicate getPredicateOutOfFileSetObject(@Nullable Object input) {
     if (input == null) return EMPTY_PREDICATE;
 
@@ -289,12 +269,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       };
     }
     return ((ChangeBufferingList)input).intPredicate();
-  }
-
-  @NotNull
-  @Override
-  public IntIterator getInputIdsIterator(Value value) {
-    return getIntIteratorOutOfFileSetObject(getFileSetObject(value));
   }
 
   private static @NotNull IntIterator getIntIteratorOutOfFileSetObject(@Nullable Object input) {
@@ -436,7 +410,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
-    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final ValueIteratorImpl<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       externalizer.save(out, value);
       Object fileSetObject = valueIterator.getFileSetObject();

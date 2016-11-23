@@ -16,6 +16,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.DebugAssertions;
+import com.intellij.util.indexing.IntPredicate;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntProcedure;
 
@@ -266,10 +267,10 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public ValueContainer.IntPredicate intPredicate() {
-    final ValueContainer.IntPredicate predicate = getRandomAccessContainer().intPredicate();
+  public IntPredicate intPredicate() {
+    final IntPredicate predicate = getRandomAccessContainer().intPredicate();
     if (checkSet != null) {
-      return new ValueContainer.IntPredicate() {
+      return new IntPredicate() {
         @Override
         public boolean contains(int id) {
           boolean answer = predicate.contains(id);

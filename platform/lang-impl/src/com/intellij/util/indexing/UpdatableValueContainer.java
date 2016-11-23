@@ -25,4 +25,14 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T>{
   public abstract void addValue(int inputId, T value);
 
   public abstract void removeAssociatedValue(int inputId);
+
+  private volatile boolean myNeedsCompacting;
+
+  boolean needsCompacting() {
+    return myNeedsCompacting;
+  }
+
+  void setNeedsCompacting(boolean value) {
+    myNeedsCompacting = value;
+  }
 }

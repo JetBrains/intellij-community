@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing.containers;
 
+import com.intellij.util.indexing.IntPredicate;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntProcedure;
 
@@ -94,8 +95,8 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
+  public IntPredicate intPredicate() {
+    return new IntPredicate() {
 
       @Override
       public boolean contains(int id) {

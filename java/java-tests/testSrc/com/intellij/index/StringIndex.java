@@ -15,6 +15,7 @@
  */
 package com.intellij.index;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -75,7 +76,7 @@ public class StringIndex {
   }
 
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
-    return myIndex.getData(word).toValueList();
+    return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }
   
   public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
