@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.EditorNotifications;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -58,7 +60,15 @@ public class StudySubtaskUtils {
       if (document == null) {
         continue;
       }
+      EduDocumentListener listener = null;
+      if (!FileEditorManager.getInstance(project).isFileOpen(virtualFile)) {
+        listener = new EduDocumentListener(taskFile, true);
+        document.addDocumentListener(listener);
+      }
       updatePlaceholderTexts(document, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      if (listener != null) {
+        document.removeDocumentListener(listener);
+      }
       UndoManager.getInstance(project).nonundoableActionPerformed(DocumentReferenceManager.getInstance().create(document), false);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
       if (StudyUtils.isStudentProject(project)) {
