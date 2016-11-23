@@ -53,7 +53,7 @@ class RunnableActionsTest : PlatformTestCase() {
   private val myPerProjectModalDialog = Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL)
   private val myApplicationModalDialog = Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL)
 
-  fun testModalityStateChangedListener () {
+  fun _testModalityStateChangedListener () {
     val enteringOrder = booleanArrayOf(true, true, false, false)
 
     val enteringIndex = AtomicInteger(-1)
