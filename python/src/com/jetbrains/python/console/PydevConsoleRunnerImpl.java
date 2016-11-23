@@ -256,7 +256,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
     catch (ExecutionException e) {
       LOG.warn("Error running console", e);
-      ExecutionHelper.showErrors(myProject, Collections.<Exception>singletonList(e), "Python Console", null);
+      showErrorsInConsole(e);
     }
   }
 
