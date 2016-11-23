@@ -57,6 +57,11 @@ public class AddImportQuickFixTest extends PyQuickFixTestCase {
     });
   }
 
+  // PY-21563
+  public void testCombineFromImportsForReferencesInTypeComment() {
+    doMultiFileAutoImportTest("Import");
+  }
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     doMultiFileAutoImportTest(hintPrefix, null);
   }

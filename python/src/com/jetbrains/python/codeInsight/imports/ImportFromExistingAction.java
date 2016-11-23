@@ -187,7 +187,8 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, myName);
         }
         else {
-          AddImportHelper.addFromImportStatement(file, qualifiedName, myName, item.getAsName(), priority, null);
+          // "Update" scenario takes place inside injected fragments, for normal AST addToExistingImport() will be used instead
+          AddImportHelper.addOrUpdateFromImportStatement(file, qualifiedName, myName, item.getAsName(), priority, null);
         }
       }
     }
