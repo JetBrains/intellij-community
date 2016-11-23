@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiRequiresStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,4 +34,7 @@ public interface RefJavaModule extends RefElement {
 
   @NotNull
   Map<String, Boolean> getRequiredModuleNames();
+
+  @NotNull
+  Map<String, PsiRequiresStatement> getRequiresStatements();
 }

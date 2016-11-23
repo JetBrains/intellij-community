@@ -36,6 +36,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private Map<String, List<String>> myExportedPackageNames;
   private Map<String, Boolean> myRequiredModuleNames;
 
+  private Map<String, PsiRequiresStatement> myRequiresStatements;
+
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getModuleName(), javaModule, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
@@ -80,6 +82,11 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return myRequiredModuleNames != null ? myRequiredModuleNames : Collections.emptyMap();
   }
 
+  @NotNull
+  public Map<String, PsiRequiresStatement> getRequiresStatements() {
+    return myRequiresStatements != null ? myRequiresStatements : Collections.emptyMap();
+  }
+
   @Override
   public void buildReferences() {
     PsiJavaModule javaModule = getElement();
@@ -87,6 +94,9 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       for (PsiRequiresStatement statement : javaModule.getRequires()) {
         PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
         if (referenceElement != null) {
+          if (myRequiresStatements == null) myRequiresStatements = new THashMap<>(1);
+          myRequiresStatements.put(referenceElement.getReferenceText(), statement);
+
           PsiPolyVariantReference moduleReference = referenceElement.getReference();
           PsiElement element = addReference(moduleReference);
           if (element instanceof PsiJavaModule) {
@@ -139,9 +149,5 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       }
     }
     return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
-  }
-
-  static RefEntity javaModuleFromExternalName(RefManagerImpl manager, String name) {
-    return manager.getExtension(RefJavaManager.MANAGER).getRefJavaModule(name);
   }
 }
