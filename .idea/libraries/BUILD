@@ -1145,3 +1145,19 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
 )
+
+java_library(
+    name = "org.eclipse.cdt",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/vendor/google/android-ndk/lib:org.eclipse.cdt.core_5.11.0.201605262325",
+        "//tools/vendor/google/android-ndk/lib:org.eclipse.equinox.common_3.7.0.v20150402-1709",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/vendor/google/android-ndk/lib:org.eclipse.cdt.core_5.11.0.201605262325",
+        "//tools/vendor/google/android-ndk/lib:org.eclipse.equinox.common_3.7.0.v20150402-1709",
+    ],
+)
