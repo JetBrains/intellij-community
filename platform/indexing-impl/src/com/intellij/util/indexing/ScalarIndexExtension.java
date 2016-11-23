@@ -17,12 +17,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 
 /**
  * A specialization of FileBasedIndexExtension allowing to create a mapping [DataObject -> List of files containing this object]
@@ -30,24 +26,15 @@ import java.io.IOException;
  */
 public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K, Void>{
 
-  public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = new VoidDataExternalizer();
+  /**
+   * To remove in IDEA 2018.1. Use {@link VoidDataExternalizer.INSTANCE}
+   */
+  @Deprecated
+  public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;
 
   @NotNull
   @Override
   public final DataExternalizer<Void> getValueExternalizer() {
-    return VOID_DATA_EXTERNALIZER;
-  }
-
-  private static class VoidDataExternalizer implements DataExternalizer<Void> {
-
-    @Override
-    public void save(@NotNull final DataOutput out, final Void value) throws IOException {
-    }
-
-    @Override
-    @Nullable
-    public Void read(@NotNull final DataInput in) throws IOException {
-      return null;
-    }
+    return VoidDataExternalizer.INSTANCE;
   }
 }

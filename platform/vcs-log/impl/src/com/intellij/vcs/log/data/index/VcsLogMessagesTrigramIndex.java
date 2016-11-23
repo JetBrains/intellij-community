@@ -18,9 +18,9 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.THashMap;
@@ -38,7 +38,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   public VcsLogMessagesTrigramIndex(@NotNull String logId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
-    super(logId, TRIGRAMS, getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+    super(logId, TRIGRAMS, getVersion(), new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
           fatalErrorHandler, disposableParent);
   }
 
