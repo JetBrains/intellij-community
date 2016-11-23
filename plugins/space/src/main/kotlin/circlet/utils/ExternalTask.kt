@@ -3,7 +3,7 @@ package circlet.utils
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import klogging.*
-import circlet.utils.lifetime.*
+import runtime.lifetimes.*
 
 private val log = KLoggers.logger("plugin/ExternalTask.kt")
 
