@@ -133,9 +133,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   protected void updateLayout() {
     int height = UIUtil.getLineHeight(myTextArea);
     Insets insets = myTextArea.getInsets();
-    height += insets.top + insets.bottom;
-    int extraGap = Math.max(0, (height - JBUI.scale(16)) / 2);
-    setBorder(new EmptyBorder(3, 6, 3, 4));
+    int extraGap = Math.max(JBUI.isHiDPI() ? 0 : 1, (height + insets.top + insets.bottom - JBUI.scale(16)) / 2);
+    setBorder(new EmptyBorder(3 + Math.max(0, JBUI.scale(16) - height) / 2, 6, 3, 4));//In case of small fonts we shouldn't align to top
     setLayout(new MigLayout("flowx, ins 0, gapx " + JBUI.scale(4)));
     removeAll();
     add(myHistoryPopupButton, "ay top, gaptop " + extraGap +", gapleft" + (JBUI.isHiDPI() ? 4 : 0));
