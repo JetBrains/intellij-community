@@ -53,7 +53,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
         setTaskText(task, StudyUtils.getTaskDir(file));
-        if (task != null && !task.getChoiceVariants().isEmpty()) {
+        if (task != null && task.isChoiceTask()) {
           final ChoicePanel choicePanel = new ChoicePanel(task);
           toolWindow.setBottomComponent(choicePanel);
         }

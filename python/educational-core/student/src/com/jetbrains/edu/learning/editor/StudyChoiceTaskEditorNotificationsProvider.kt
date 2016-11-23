@@ -2,24 +2,20 @@ package com.jetbrains.edu.learning.editor
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBRadioButton
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.edu.learning.courseFormat.Task
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.geometry.Insets
 import javafx.scene.Group
 import javafx.scene.Scene
+import javafx.scene.control.CheckBox
 import javafx.scene.control.RadioButton
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.VBox
 import javafx.scene.text.Font
-import java.util.*
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
@@ -56,13 +52,19 @@ class ChoicePanel(task: Task): JScrollPane() {
       val vBox = VBox()
       vBox.spacing = 10.0
       vBox.padding = Insets(15.0, 10.0, 10.0, 15.0)
-      task.choiceAnswer = ArrayList<Boolean>(Collections.nCopies(task.choiceVariants.size, false))
-      if (task.isMultichoice) {
+      if (task.isMultipleChoice) {
         for ((index, variant) in task.choiceVariants.withIndex()) {
-          val checkBox = javafx.scene.control.CheckBox(variant)
+          val checkBox = CheckBox(variant)
           checkBox.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           checkBox.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
-          checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected -> task.choiceAnswer[index] = isSelected }
+          checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected ->
+            if (isSelected) {
+              task.selectedVariants.add(index)
+            }
+            else {
+              task.selectedVariants.remove(index)
+            }
+          }
           vBox.children.add(checkBox)
         }
       }
@@ -73,7 +75,14 @@ class ChoicePanel(task: Task): JScrollPane() {
           radioButton.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           radioButton.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
           radioButton.toggleGroup = toggleGroup
-          radioButton.selectedProperty().addListener { observableValue, wasSelected, isSelected -> task.choiceAnswer[index] = isSelected }
+          radioButton.selectedProperty().addListener { observableValue, wasSelected, isSelected ->
+            if (isSelected) {
+              task.selectedVariants.add(index)
+            }
+            else {
+              task.selectedVariants.remove(index)
+            }
+          }
           vBox.children.add(radioButton)
         }
       }
