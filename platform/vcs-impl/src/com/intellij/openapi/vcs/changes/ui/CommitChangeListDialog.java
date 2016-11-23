@@ -678,26 +678,20 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!saveDialogState()) return;
     saveComments(true);
 
-    ensureDataIsActual(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-          CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
-            @Override
-            public void run() {
-              close(OK_EXIT_CODE);
-              doCommit(myResultHandler);
-            }
-          }, null);
+    ensureDataIsActual(() -> {
+      try {
+        final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(() -> {
+          close(OK_EXIT_CODE);
+          doCommit(myResultHandler);
+        }, null);
 
-          if (result == CheckinHandler.ReturnResult.COMMIT) {
-            defaultListCleaner.clean();
-          }
+        if (result == CheckinHandler.ReturnResult.COMMIT) {
+          defaultListCleaner.clean();
         }
-        catch (InputException ex) {
-          ex.show();
-        }
+      }
+      catch (InputException ex) {
+        ex.show();
       }
     });
   }
@@ -716,70 +710,61 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       ((CommitSessionContextAware)session).setContext(myCommitContext);
     }
 
-    ensureDataIsActual(new Runnable() {
-      @Override
-      public void run() {
-        final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
-        if (configurationUI != null) {
-          DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
-                                                          getProject(),
-                                                          session,
-                                                          getIncludedChanges(),
-                                                          getCommitMessage(), configurationUI);
-          if (!sessionDialog.showAndGet()) {
+    ensureDataIsActual(() -> {
+      final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
+      if (configurationUI != null) {
+        DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
+                                                        getProject(),
+                                                        session,
+                                                        getIncludedChanges(),
+                                                        getCommitMessage(),
+                                                        configurationUI);
+        if (!sessionDialog.showAndGet()) {
+          session.executionCanceled();
+          return;
+        }
+      }
+
+      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+      runBeforeCommitHandlers(() -> {
+        boolean success = false;
+        try {
+          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+            session.execute(getIncludedChanges(), getCommitMessage());
+          }, commitExecutor.getActionText(), true, getProject());
+
+          if (completed) {
+            for (CheckinHandler handler : myHandlers) {
+              handler.checkinSuccessful();
+            }
+
+            success = true;
+            defaultListCleaner.clean();
+            close(OK_EXIT_CODE);
+          }
+          else {
             session.executionCanceled();
-            return;
           }
         }
+        catch (Throwable e) {
+          Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
+                                   commitExecutor.getActionText());
 
-        final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        runBeforeCommitHandlers(new Runnable() {
-          @Override
-          public void run() {
-            boolean success = false;
-            try {
-              final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    session.execute(getIncludedChanges(), getCommitMessage());
-                  }
-                }, commitExecutor.getActionText(), true, getProject());
-
-              if (completed) {
-                for (CheckinHandler handler : myHandlers) {
-                  handler.checkinSuccessful();
-                }
-
-                success = true;
-                defaultListCleaner.clean();
-                close(OK_EXIT_CODE);
-              }
-              else {
-                session.executionCanceled();
-              }
+          for (CheckinHandler handler : myHandlers) {
+            handler.checkinFailed(Collections.singletonList(new VcsException(e)));
+          }
+        }
+        finally {
+          if (myResultHandler != null) {
+            if (success) {
+              myResultHandler.onSuccess(getCommitMessage());
             }
-            catch (Throwable e) {
-              Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
-                                       commitExecutor.getActionText());
-
-              for (CheckinHandler handler : myHandlers) {
-                handler.checkinFailed(Collections.singletonList(new VcsException(e)));
-              }
-            }
-            finally {
-              if (myResultHandler != null) {
-                if (success) {
-                  myResultHandler.onSuccess(getCommitMessage());
-                }
-                else {
-                  myResultHandler.onFailure();
-                }
-              }
+            else {
+              myResultHandler.onFailure();
             }
           }
-        }, commitExecutor);
-      }
+        }
+      }, commitExecutor);
     });
   }
 
