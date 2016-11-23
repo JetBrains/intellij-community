@@ -247,7 +247,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
         PsiExpression defaultValue = assignment.getRExpression();
         if (!ExpressionUtils.isSimpleExpression(defaultValue)) return;
         methodExpression.handleElementRename("getOrDefault");
-        getCall.getArgumentList().add(ct.markUsed(defaultValue));
+        getCall.getArgumentList().add(ct.markUnchanged(defaultValue));
       } else {
         PsiExpression lambdaCandidate = extractLambdaCandidate(thenBranch, methodExpression.getQualifierExpression(), args[0], value);
         if (lambdaCandidate == null) return;

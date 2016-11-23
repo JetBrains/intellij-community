@@ -34,7 +34,8 @@ public class CommentTracker {
   private List<PsiComment> comments = new ArrayList<>();
 
   /**
-   * Marks the element as used and returns its text. The comments from used elements will not be extracted.
+   * Marks the element as unchanged and returns its text. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param element element to return the text
    * @return a text to be inserted into refactored code
@@ -46,13 +47,14 @@ public class CommentTracker {
   }
 
   /**
-   * Marks the element as used and returns it. The comments from used elements will not be extracted.
+   * Marks the element as unchanged and returns it. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param element element to mark
    * @param <T> the type of the element
    * @return the passed argument
    */
-  public @NotNull <T extends PsiElement> T markUsed(@NotNull T element) {
+  public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
     checkState();
     ignoredParents.add(element);
     return element;
@@ -95,7 +97,7 @@ public class CommentTracker {
   }
 
   /**
-   * Replaces given PsiElement collecting all the comments inside it and restore comments putting them
+   * Replaces given PsiElement collecting all the comments inside it and restores comments putting them
    * to the appropriate place before replaced element.
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>

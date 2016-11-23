@@ -192,7 +192,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       if(parameterList != null) {
         ct.delete(parameterList);
       }
-      String replacementText = (addCast ? "(long) " : "") + ct.text(qualifierCall);
+      String replacementText = (addCast ? "(long) " : "") + ct.text(methodExpression)+"()";
       PsiElement replacement = ct.replaceAndRestoreComments(toReplace, factory.createExpressionFromText(replacementText, countCall));
       if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
         RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
