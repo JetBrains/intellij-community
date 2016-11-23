@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -34,41 +33,37 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class CreateFromTemplateActionBase extends AnAction {
-
   public CreateFromTemplateActionBase(final String title, final String description, final Icon icon) {
-    super (title,description,icon);
+    super(title, description, icon);
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e){
+  public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-    if (view == null) {
-      return;
-    }
+    if (view == null) return;
     PsiDirectory dir = getTargetDirectory(dataContext, view);
     if (dir == null) return;
     Project project = dir.getProject();
 
     FileTemplate selectedTemplate = getTemplate(project, dir);
-    if (selectedTemplate != null){
+    if (selectedTemplate != null) {
       AnAction action = getReplacedAction(selectedTemplate);
       if (action != null) {
         action.actionPerformed(e);
       }
       else {
         FileTemplateManager.getInstance(project).addRecentName(selectedTemplate.getName());
-        final AttributesDefaults defaults = getAttributesDefaults(dataContext);
-        final CreateFromTemplateDialog dialog = new CreateFromTemplateDialog(project, dir, selectedTemplate, defaults,
-                                                                             defaults != null ? defaults.getDefaultProperties() : null);
+        AttributesDefaults defaults = getAttributesDefaults(dataContext);
+        Properties properties = defaults != null ? defaults.getDefaultProperties() : null;
+        CreateFromTemplateDialog dialog = new CreateFromTemplateDialog(project, dir, selectedTemplate, defaults, properties);
         PsiElement createdElement = dialog.create();
         if (createdElement != null) {
           elementCreated(dialog, createdElement);
@@ -81,12 +76,11 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     }
   }
 
-  public static void startLiveTemplate(PsiFile file) {
-    Project project = file.getProject();
-    final Editor editor = EditorHelper.openInEditor(file);
+  public static void startLiveTemplate(@NotNull PsiFile file) {
+    Editor editor = EditorHelper.openInEditor(file);
     if (editor == null) return;
 
-    final TemplateImpl template = new TemplateImpl("", file.getText(), "");
+    TemplateImpl template = new TemplateImpl("", file.getText(), "");
     template.setInline(true);
     int count = template.getSegmentsCount();
     if (count == 0) return;
@@ -99,9 +93,11 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     for (String variable : variables) {
       template.addVariable(variable, null, "\"" + variable + "\"", true);
     }
+
+    Project project = file.getProject();
     WriteCommandAction.runWriteCommandAction(project, () -> editor.getDocument().setText(template.getTemplateText()));
-    //ensure caret at the start of the template
-    editor.getCaretModel().moveToOffset(0);
+
+    editor.getCaretModel().moveToOffset(0);  // ensures caret at the start of the template
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
@@ -110,18 +106,17 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     return DirectoryChooserUtil.getOrChooseDirectory(view);
   }
 
+  protected abstract FileTemplate getTemplate(Project project, PsiDirectory dir);
+
   @Nullable
-  protected AnAction getReplacedAction(final FileTemplate selectedTemplate) {
+  protected AnAction getReplacedAction(FileTemplate selectedTemplate) {
     return null;
   }
-
-  protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
 
   @Nullable
   public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return null;
   }
 
-  protected void elementCreated(CreateFromTemplateDialog dialog, PsiElement createdElement) {
-  }
+  protected void elementCreated(CreateFromTemplateDialog dialog, PsiElement createdElement) { }
 }
