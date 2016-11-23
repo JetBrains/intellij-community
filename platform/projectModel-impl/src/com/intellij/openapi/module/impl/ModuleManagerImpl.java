@@ -247,6 +247,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     for (ModulePath modulePath : myModulePaths) {
       if (progressIndicator != null) {
+        progressIndicator.checkCanceled();
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
       }
       try {
