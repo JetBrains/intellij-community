@@ -17,7 +17,6 @@ package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
@@ -42,14 +41,12 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -69,7 +66,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -211,7 +207,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actions.add(0, createRerunAction());
 
     actions.add(createInterruptAction());
-    actions.add(createTabCompletionAction());
+    actions.add(PyConsoleUtil.createTabCompletionAction(myConsoleView));
 
     actions.add(createSplitLineAction());
 
@@ -710,45 +706,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }
-
-  private AnAction createTabCompletionAction() {
-    final AnAction runCompletions = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-
-        Editor editor = myConsoleView.getConsoleEditor();
-        if (LookupManager.getActiveLookup(editor) != null) {
-          AnAction replace = ActionManager.getInstance().getAction("EditorChooseLookupItemReplace");
-          ActionUtil.performActionDumbAware(replace, e);
-          return;
-        }
-        AnAction completionAction = ActionManager.getInstance().getAction("CodeCompletion");
-        if (completionAction == null) {
-          return;
-        }
-        ActionUtil.performActionDumbAware(completionAction, e);
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        Editor editor = myConsoleView.getConsoleEditor();
-        if (LookupManager.getActiveLookup(editor) != null) {
-          e.getPresentation().setEnabled(false);
-        }
-        int offset = editor.getCaretModel().getOffset();
-        Document document = editor.getDocument();
-        int lineStart = document.getLineStartOffset(document.getLineNumber(offset));
-        String textToCursor = document.getText(new TextRange(lineStart, offset));
-        e.getPresentation().setEnabled(!CharMatcher.WHITESPACE.matchesAllOf(textToCursor));
-      }
-    };
-
-    runCompletions
-      .registerCustomShortcutSet(KeyEvent.VK_TAB, 0, myConsoleView.getConsoleEditor().getComponent());
-    runCompletions.getTemplatePresentation().setVisible(false);
-    return runCompletions;
-  }
-
 
   private boolean isIndentSubstring(String text) {
     int indentSize = myConsoleExecuteActionHandler.getPythonIndent();
