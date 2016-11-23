@@ -727,10 +727,13 @@ public class ExpressionUtils {
     if(element instanceof PsiExpressionStatement) {
       element = ((PsiExpressionStatement)element).getExpression();
     }
-    if (element instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
-      if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        return assignment;
+    if (element instanceof PsiExpression) {
+      element = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
+      if (element instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
+        if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+          return assignment;
+        }
       }
     }
     return null;
