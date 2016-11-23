@@ -170,17 +170,17 @@ public class EduUtils {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
       int fromSubtask = task.getActiveSubtaskIndex();
-      placeholder.switchSubtask(project, studentDocument, fromSubtask, targetSubtaskIndex);
+      placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
     }
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      replaceWithTaskText(project, studentDocument, placeholder, targetSubtaskIndex);
+      replaceWithTaskText(studentDocument, placeholder, targetSubtaskIndex);
     }
     taskFile.setTrackChanges(true);
     studentDocument.removeDocumentListener(listener);
     return Pair.create(studentFile, taskFile);
   }
 
-  private static void replaceWithTaskText(Project project, Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {
+  private static void replaceWithTaskText(Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {
     AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(toSubtaskIndex);
     if (info == null) {
       return;
@@ -193,19 +193,18 @@ public class EduUtils {
       Integer max = Collections.max(ContainerUtil.filter(placeholder.getSubtaskInfos().keySet(), i -> i < toSubtaskIndex));
       replacementText = placeholder.getSubtaskInfos().get(max).getPossibleAnswer();
     }
-    replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getVisibleLength(toSubtaskIndex), replacementText);
+    replaceAnswerPlaceholder(studentDocument, placeholder, placeholder.getVisibleLength(toSubtaskIndex), replacementText);
   }
 
-  public static void replaceAnswerPlaceholder(@NotNull final Project project,
-                                              @NotNull final Document document,
+  public static void replaceAnswerPlaceholder(@NotNull final Document document,
                                               @NotNull final AnswerPlaceholder answerPlaceholder,
                                               int length,
                                               String replacementText) {
     final int offset = answerPlaceholder.getOffset();
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       document.replaceString(offset, offset + length, replacementText);
       FileDocumentManager.getInstance().saveDocument(document);
-    }), "Replace Answer Placeholders", "Replace Answer Placeholders");
+    }));
   }
 
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
