@@ -6,10 +6,7 @@ import java.util.Optional;
 
 public class Main<T> {
   public static <A extends Annotation> Optional<A> findAnnotation(Optional<? extends AnnotatedElement> element) {
-    if (element.isPre<caret>sent()) {
-      return Optional.empty();
-    }
-    return findAnnotation((AnnotatedElement)null);
+      return element.<Optional<A>>map(annotatedElement -> Optional.empty()).orElseGet(() -> findAnnotation((AnnotatedElement) null));
   }
 
   private static <A extends Annotation> Optional<A> findAnnotation(AnnotatedElement element) {
