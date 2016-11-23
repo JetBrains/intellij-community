@@ -1,6 +1,7 @@
 <html>
 <body>
-Inspection detects calls to <code>Map.get</code> which could be replaced with <code>getOrDefault</code> or <code>computeIfAbsent</code>.
+Inspection detects calls to <code>Map.get</code> which could be replaced with <code>getOrDefault</code>, <code>computeIfAbsent</code> or
+<code>putIfAbsent</code>.
 <!-- tooltip end -->
 <ul>
   <li><b>Map.getOrDefault</b> method could be used to replace the code like this:
@@ -17,6 +18,14 @@ Inspection detects calls to <code>Map.get</code> which could be replaced with <c
       if (list == null) {
         list = new ArrayList&lt;&gt;();
         map.put(key, list);
+      }
+    </pre>
+  </li>
+  <li><b>Map.putIfAbsent</b> method could be used to replace the code like this:
+    <pre>
+      String val = map.get(key);
+      if (val == null) {
+        map.put(key, newVal);
       }
     </pre>
   </li>

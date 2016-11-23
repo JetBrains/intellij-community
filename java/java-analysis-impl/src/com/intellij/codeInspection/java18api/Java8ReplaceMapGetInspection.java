@@ -47,6 +47,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
 
   public boolean mySuggestMapGetOrDefault = true;
   public boolean mySuggestMapComputeIfAbsent = true;
+  public boolean mySuggestMapPutIfAbsent = true;
 
   @Nullable
   @Override
@@ -54,6 +55,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Suggest conversion to Map.computeIfAbsent", "mySuggestMapComputeIfAbsent");
     panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
+    panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
     return panel;
   }
 
@@ -87,7 +89,8 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
            */
           if (!mySuggestMapGetOrDefault) return;
           if (ExpressionUtils.isSimpleExpression(assignment.getRExpression()) &&
-              equivalence.expressionsAreEquivalent(assignment.getLExpression(), value)) {
+              equivalence.expressionsAreEquivalent(assignment.getLExpression(), value) &&
+              !equivalence.expressionsAreEquivalent(assignment.getRExpression(), value)) {
             holder.registerProblem(condition, QuickFixBundle.message("java.8.replace.map.get.inspection.description"),
                                    new ReplaceGetNullCheck("getOrDefault"));
           }
@@ -99,13 +102,20 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
               map.put(key, value);
             }
            */
-          if (!mySuggestMapComputeIfAbsent) return;
           PsiExpression key = getArguments[0];
           PsiExpression mapExpression = getCall.getMethodExpression().getQualifierExpression();
           PsiExpression lambdaCandidate = extractLambdaCandidate(thenBranch, mapExpression, key, value);
-          if (lambdaCandidate == null) return;
-          holder.registerProblem(condition, QuickFixBundle.message("java.8.replace.map.get.inspection.description"),
-                                 new ReplaceGetNullCheck("computeIfAbsent"));
+          if (lambdaCandidate != null && mySuggestMapComputeIfAbsent) {
+            holder.registerProblem(condition, QuickFixBundle.message("java.8.replace.map.get.inspection.description"),
+                                   new ReplaceGetNullCheck("computeIfAbsent"));
+          }
+          if (lambdaCandidate == null && mySuggestMapPutIfAbsent) {
+            PsiExpression expression = extractPutValue(thenBranch, mapExpression, key);
+            if(ExpressionUtils.isSimpleExpression(expression) && !equivalence.expressionsAreEquivalent(expression, value)) {
+              holder.registerProblem(condition, QuickFixBundle.message("java.8.replace.map.get.inspection.description"),
+                                     new ReplaceGetNullCheck("putIfAbsent"));
+            }
+          }
         }
       }
     };
@@ -116,31 +126,18 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
                                               PsiExpression keyExpression, PsiReferenceExpression valueExpression) {
     EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
     PsiAssignmentExpression assignment;
-    PsiMethodCallExpression putCall = extractPutCall(statement);
-    if(putCall != null) {
+    PsiExpression putValue = extractPutValue(statement, mapExpression, keyExpression);
+    if(putValue != null) {
       // like map.put(key, val = new ArrayList<>());
-      PsiExpression[] putArguments = putCall.getArgumentList().getExpressions();
-      if (putArguments.length != 2 ||
-          !equivalence.expressionsAreEquivalent(putCall.getMethodExpression().getQualifierExpression(), mapExpression) ||
-          !equivalence.expressionsAreEquivalent(keyExpression, putArguments[0])) {
-        return null;
-      }
-      assignment = ExpressionUtils.getAssignment(putArguments[1]);
+      assignment = ExpressionUtils.getAssignment(putValue);
     }
     else {
       if (!(statement instanceof PsiBlockStatement)) return null;
       // like val = new ArrayList<>(); map.put(key, val);
       PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       if (statements.length != 2) return null;
-      putCall = extractPutCall(statements[1]);
-      if (putCall == null) return null;
-      PsiExpression[] putArguments = putCall.getArgumentList().getExpressions();
-      if (putArguments.length != 2 ||
-          !equivalence.expressionsAreEquivalent(putCall.getMethodExpression().getQualifierExpression(), mapExpression) ||
-          !equivalence.expressionsAreEquivalent(keyExpression, putArguments[0]) ||
-          !equivalence.expressionsAreEquivalent(valueExpression, putArguments[1])) {
-        return null;
-      }
+      putValue = extractPutValue(statements[1], mapExpression, keyExpression);
+      if (!equivalence.expressionsAreEquivalent(valueExpression, putValue)) return null;
       assignment = ExpressionUtils.getAssignment(statements[0]);
     }
     if (assignment == null) return null;
@@ -161,6 +158,18 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
     return putCall;
   }
 
+  @Nullable
+  private static PsiExpression extractPutValue(PsiStatement statement, PsiExpression mapExpression, PsiExpression keyExpression) {
+    PsiMethodCallExpression putCall = extractPutCall(statement);
+    if (putCall == null) return null;
+    PsiExpression[] putArguments = putCall.getArgumentList().getExpressions();
+    EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+    return putArguments.length == 2 &&
+           equivalence.expressionsAreEquivalent(putCall.getMethodExpression().getQualifierExpression(), mapExpression) &&
+           equivalence.expressionsAreEquivalent(keyExpression, putArguments[0]) ? putArguments[1] : null;
+  }
+
+  @Contract("null -> null")
   @Nullable
   private static PsiReferenceExpression getReferenceComparedWithNull(PsiExpression condition) {
     if(!(condition instanceof PsiBinaryExpression)) return null;
@@ -246,15 +255,22 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
       if(assignment != null) {
         PsiExpression defaultValue = assignment.getRExpression();
         if (!ExpressionUtils.isSimpleExpression(defaultValue)) return;
-        methodExpression.handleElementRename("getOrDefault");
+        methodExpression.handleElementRename(myMethodName);
         getCall.getArgumentList().add(ct.markUnchanged(defaultValue));
       } else {
         PsiExpression lambdaCandidate = extractLambdaCandidate(thenBranch, methodExpression.getQualifierExpression(), args[0], value);
-        if (lambdaCandidate == null) return;
-        methodExpression.handleElementRename("computeIfAbsent");
-        String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", lambdaCandidate, true);
-        PsiExpression lambda = factory.createExpressionFromText(varName + " -> " + ct.text(lambdaCandidate), lambdaCandidate);
-        getCall.getArgumentList().add(lambda);
+        if (lambdaCandidate == null) {
+          PsiExpression valueExpression = extractPutValue(thenBranch, methodExpression.getQualifierExpression(), args[0]);
+          if(ExpressionUtils.isSimpleExpression(valueExpression)) {
+            methodExpression.handleElementRename(myMethodName);
+            getCall.getArgumentList().add(ct.markUnchanged(valueExpression));
+          }
+        } else {
+          methodExpression.handleElementRename(myMethodName);
+          String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", lambdaCandidate, true);
+          PsiExpression lambda = factory.createExpressionFromText(varName + " -> " + ct.text(lambdaCandidate), lambdaCandidate);
+          getCall.getArgumentList().add(lambda);
+        }
       }
       ct.deleteAndRestoreComments(ifStatement);
       CodeStyleManager.getInstance(project).reformat(statement);
