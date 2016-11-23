@@ -2,6 +2,8 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +58,8 @@ public class StudySubtaskUtils {
       if (document == null) {
         continue;
       }
-      updatePlaceholderTexts(project, document, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      updatePlaceholderTexts(document, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      UndoManager.getInstance(project).nonundoableActionPerformed(DocumentReferenceManager.getInstance().create(document), false);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
       if (StudyUtils.isStudentProject(project)) {
         WolfTheProblemSolver.getInstance(project).clearProblems(virtualFile);
@@ -112,8 +115,7 @@ public class StudySubtaskUtils {
     }
   }
 
-  private static void updatePlaceholderTexts(@NotNull Project project,
-                                             @NotNull Document document,
+  private static void updatePlaceholderTexts(@NotNull Document document,
                                              @NotNull TaskFile taskFile,
                                              int fromSubtaskIndex,
                                              int toSubtaskIndex) {
