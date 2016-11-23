@@ -681,12 +681,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ensureDataIsActual(() -> {
       try {
         final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(() -> {
+        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(null);
+        if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
           doCommit(myResultHandler);
-        }, null);
 
-        if (result == CheckinHandler.ReturnResult.COMMIT) {
           defaultListCleaner.clean();
         }
       }
@@ -726,7 +725,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
 
       final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-      runBeforeCommitHandlers(() -> {
+      CheckinHandler.ReturnResult result = runBeforeCommitHandlers(commitExecutor);
+      if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
         try {
           final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -764,7 +764,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
             }
           }
         }
-      }, commitExecutor);
+      }
     });
   }
 
@@ -875,7 +875,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myUpdateButtonsRunnable.run();
   }
 
-  private CheckinHandler.ReturnResult runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
+  private CheckinHandler.ReturnResult runBeforeCommitHandlers(@Nullable CommitExecutor executor) {
     final Computable<CheckinHandler.ReturnResult> proceedRunnable = new Computable<CheckinHandler.ReturnResult>() {
       @Override
       public CheckinHandler.ReturnResult compute() {
@@ -902,7 +902,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
 
-        okAction.run();
         return CheckinHandler.ReturnResult.COMMIT;
       }
     };
