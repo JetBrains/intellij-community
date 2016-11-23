@@ -85,7 +85,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myParameters.setText(configuration.getProgramParameters());
 
     scriptPathField.setText(configuration.getScriptPath());
-    workDirField.setText(configuration.getWorkDir());
+    workDirField.setText(configuration.getWorkingDirectory());
 
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(configuration.isDebugEnabled());
@@ -106,7 +106,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setAddClasspathToTheRunner(myAddClasspathCB.isSelected());
     configuration.setProgramParameters(myParameters.getText());
     configuration.setScriptPath(scriptPathField.getText().trim());
-    configuration.setWorkDir(workDirField.getText().trim());
+    configuration.setWorkingDirectory(workDirField.getText().trim());
     configuration.setEnvs(myEnvVariables.getEnvs());
   }
 
