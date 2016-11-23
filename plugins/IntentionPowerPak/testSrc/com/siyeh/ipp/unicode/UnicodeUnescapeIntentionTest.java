@@ -29,6 +29,7 @@ public class UnicodeUnescapeIntentionTest extends IPPTestCase {
   public void testSurrogatePairs2() { doTest(); }
   public void testNoException() { assertIntentionNotAvailable(); }
   public void testU() { assertIntentionNotAvailable(); }
+  public void testNoCarriageReturn() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getRelativePath() {
