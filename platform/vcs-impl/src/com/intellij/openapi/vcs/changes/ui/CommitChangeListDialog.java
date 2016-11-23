@@ -716,66 +716,71 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       ((CommitSessionContextAware)session).setContext(myCommitContext);
     }
 
-    final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
-    if (configurationUI != null) {
-      DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
-                                                      getProject(),
-                                                      session,
-                                                      getIncludedChanges(),
-                                                      getCommitMessage(), configurationUI);
-      if (!sessionDialog.showAndGet()) {
-        session.executionCanceled();
-        return;
-      }
-    }
-
-    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-    runBeforeCommitHandlers(new Runnable() {
+    ensureDataIsActual(new Runnable() {
       @Override
       public void run() {
-        boolean success = false;
-        try {
-          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            new Runnable() {
-              @Override
-              public void run() {
-                session.execute(getIncludedChanges(), getCommitMessage());
-              }
-            }, commitExecutor.getActionText(), true, getProject());
-
-          if (completed) {
-            for (CheckinHandler handler : myHandlers) {
-              handler.checkinSuccessful();
-            }
-
-            success = true;
-            defaultListCleaner.clean();
-            close(OK_EXIT_CODE);
-          }
-          else {
+        final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
+        if (configurationUI != null) {
+          DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
+                                                          getProject(),
+                                                          session,
+                                                          getIncludedChanges(),
+                                                          getCommitMessage(), configurationUI);
+          if (!sessionDialog.showAndGet()) {
             session.executionCanceled();
+            return;
           }
         }
-        catch (Throwable e) {
-          Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
-                                   commitExecutor.getActionText());
 
-          for (CheckinHandler handler : myHandlers) {
-            handler.checkinFailed(Collections.singletonList(new VcsException(e)));
-          }
-        }
-        finally {
-          if (myResultHandler != null) {
-            if (success) {
-              myResultHandler.onSuccess(getCommitMessage());
+        final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+        runBeforeCommitHandlers(new Runnable() {
+          @Override
+          public void run() {
+            boolean success = false;
+            try {
+              final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    session.execute(getIncludedChanges(), getCommitMessage());
+                  }
+                }, commitExecutor.getActionText(), true, getProject());
+
+              if (completed) {
+                for (CheckinHandler handler : myHandlers) {
+                  handler.checkinSuccessful();
+                }
+
+                success = true;
+                defaultListCleaner.clean();
+                close(OK_EXIT_CODE);
+              }
+              else {
+                session.executionCanceled();
+              }
             }
-            else {
-              myResultHandler.onFailure();
+            catch (Throwable e) {
+              Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
+                                       commitExecutor.getActionText());
+
+              for (CheckinHandler handler : myHandlers) {
+                handler.checkinFailed(Collections.singletonList(new VcsException(e)));
+              }
+            }
+            finally {
+              if (myResultHandler != null) {
+                if (success) {
+                  myResultHandler.onSuccess(getCommitMessage());
+                }
+                else {
+                  myResultHandler.onFailure();
+                }
+              }
             }
           }
-        }
+        }, commitExecutor);
       }
-    }, commitExecutor);
+    });
   }
 
   @Nullable
@@ -1198,12 +1203,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      ensureDataIsActual(new Runnable() {
-        @Override
-        public void run() {
-          execute(myCommitExecutor);
-        }
-      });
+      execute(myCommitExecutor);
     }
 
     public void updateEnabled(boolean hasDiffs) {
