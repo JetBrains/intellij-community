@@ -149,6 +149,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private String myCommandLine;
   @NotNull private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
+  private boolean myEnableAfterConnection = true;
 
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
@@ -178,6 +179,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   public void setConsoleTitle(String consoleTitle) {
     myConsoleTitle = consoleTitle;
+  }
+
+  public void setEnableAfterConnection(boolean enableAfterConnection) {
+    myEnableAfterConnection = enableAfterConnection;
   }
 
   private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
@@ -664,7 +669,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
         });
 
-        enableConsoleExecuteAction();
+        if (myEnableAfterConnection) {
+          enableConsoleExecuteAction();
+        }
 
         for (String statement : statements2execute) {
           consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
