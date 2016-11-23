@@ -1,0 +1,5 @@
+# Ignore downloaded community files
+/community
+
+# Ignore output directory
+/out

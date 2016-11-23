@@ -1,0 +1,115 @@
+<project name="Platform build scripts" default="build">
+    <property name="gant.script" value="${basedir}/mps_build.gant"/>
+    <property name="community.folder" value="${basedir}/../community"/>
+    <property name="community.out" value="${basedir}/../out/intellij idea"/>
+
+    <property name="mps.folder" value="${basedir}/../.."/>
+
+    <target name="check" description="Check if IDEA Community folder exists">
+        <condition property="community.need.clone" value="false" else="true">
+            <available file="${community.folder}" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="clone" depends="check" if="${community.need.clone}"
+            description="Clone IDEA Community repository to local folder">
+        <echo message="IDEA Community folder does not exists. Cloning..."/>
+        <exec executable="git" dir="../">
+            <arg value="clone"/>
+            <arg value="git://git.jetbrains.org/idea/community.git"/>
+        </exec>
+    </target>
+
+    <target name="reset" depends="clone" description="Reset current IDEA Community state to HEAD">
+        <echo message="Reset all changes in IDEA Community folder to HEAD state."/>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="reset"/>
+            <arg value="--hard"/>
+            <arg value="HEAD"/>
+        </exec>
+    </target>
+
+    <target name="check.commit">
+        <condition property="idea.commit.is.set">
+            <isset property="idea.commit"/>
+        </condition>
+        <echo message="Tag value: ${idea.commit}"/>
+    </target>
+
+    <target name="checkout" depends="reset,check.commit" if="${idea.commit.is.set}"
+            description="Checkout IDEA Community by commit/branch/tag set in idea.commit property">
+        <echo message="Check out IDEA Community by commit/branch/tag: ${idea.commit}"/>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="checkout"/>
+            <arg value="-f"/>
+            <arg value="${idea.commit}"/>
+        </exec>
+    </target>
+
+    <target name="patch" depends="checkout" description="Apply MPS patches to IDEA Community sources">
+        <echo message="Applying MPS patches to IDEA Community sources..."/>
+        <property name="patchFile"
+                  value="${community.folder}/../build/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchFile}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchFile}"/>
+        </exec>
+    </target>
+
+    <target name="kotlin" description="Download Kotlin for compiling IDEA Community">
+        <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true">
+            <property name="gant.script" value="${community.folder}/build/scripts/download_kotlin.gant"/>
+        </ant>
+    </target>
+
+    <target name="build" depends="patch,kotlin"
+            description="Build patched IDEA Community sources to create MPS platform">
+        <echo message="MPS platform build started..."/>
+        <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
+        <echo message="MPS platform build finished."/>
+    </target>
+
+    <target name="copy" description="Copy platform libs to MPS">
+        <echo message="Copy platform and zip with platform sources to MPS sources."/>
+
+        <delete dir="${mps.folder}/lib"/>
+        <delete dir="${mps.folder}/plugins/cvsIntegration/lib"/>
+        <delete dir="${mps.folder}/plugins/git4idea/lib"/>
+        <delete dir="${mps.folder}/plugins/svn4idea/lib"/>
+        <delete dir="${mps.folder}/plugins/terminal"/>
+
+        <mkdir dir="${mps.folder}/lib"/>
+        <mkdir dir="${mps.folder}/lib/src"/>
+        <mkdir dir="${mps.folder}/plugins/cvsIntegration/lib"/>
+        <mkdir dir="${mps.folder}/plugins/git4idea/lib"/>
+        <mkdir dir="${mps.folder}/plugins/svn4idea/lib"/>
+        <mkdir dir="${mps.folder}/plugins/terminal"/>
+
+        <!--Copy platform libraries to MPS lib folder-->
+        <copy todir="${mps.folder}/lib">
+            <fileset dir="${community.out}/dist.all/lib"/>
+        </copy>
+
+        <!--Copy platform sources to MPS lib folder-->
+        <copy file="${community.out}/artifacts/platform-sources.zip" todir="${mps.folder}/lib/src"/>
+
+        <!--Copy plugin libraries to plugin folders-->
+        <copy todir="${mps.folder}/plugins/cvsIntegration/lib">
+            <fileset dir="${community.out}/dist.all/plugins/cvsIntegration/lib"/>
+        </copy>
+        <copy todir="${mps.folder}/plugins/git4idea/lib">
+            <fileset dir="${community.out}/dist.all/plugins/git4idea/lib"/>
+        </copy>
+        <copy todir="${mps.folder}/plugins/svn4idea/lib">
+            <fileset dir="${community.out}/dist.all/plugins/svn4idea/lib"/>
+        </copy>
+        <copy todir="${mps.folder}/plugins/terminal">
+            <fileset dir="${community.out}/dist.all/plugins/terminal"/>
+        </copy>
+    </target>
+</project>

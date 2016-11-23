@@ -1,0 +1,12 @@
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.idea.IdeaProjectLoader
+
+includeTool << JpsGantTool
+
+target("default": "Default") {
+    String home = IdeaProjectLoader.guessHome(this)
+    BuildUtils.addToClassPath("$home/community/build/groovy", ant)
+    BuildUtils.addToClassPath("$home/groovy", ant)
+    Class.forName("org.jetbrains.intellij.build.MPSBuilder").constructors[0].newInstance(home, binding).build()
+}

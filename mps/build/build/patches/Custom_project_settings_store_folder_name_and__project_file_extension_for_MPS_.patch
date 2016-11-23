@@ -1,0 +1,51 @@
+Index: community/platform/core-api/src/com/intellij/openapi/project/Project.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision 83444e03e40e6673d2650a7840140cca65d5b5f6)
++++ community/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision )
+@@ -32,7 +32,7 @@
+  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
+  */
+ public interface Project extends ComponentManager, AreaInstance {
+-  String DIRECTORY_STORE_FOLDER = ".idea";
++  String DIRECTORY_STORE_FOLDER = ".mps";
+ 
+   /**
+    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
+\ No newline at end of file
+Index: platform/configuration-store-impl/src/ProjectStoreImpl.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision 83444e03e40e6673d2650a7840140cca65d5b5f6)
++++ community/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision )
+@@ -122,7 +122,8 @@
+   protected fun setPath(filePath: String, refreshVfs: Boolean, useOldWorkspaceContentIfExists: Boolean) {
+     val storageManager = storageManager
+     val fs = LocalFileSystem.getInstance()
+-    if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
++    // MPS Hack: do not hack ProjectFileType, but make *.mpr file be project file
++    if (FileUtilRt.extensionEquals(filePath, "mpr"/*ProjectFileType.DEFAULT_EXTENSION*/)) {
+       scheme = StorageScheme.DEFAULT
+ 
+       storageManager.addMacro(PROJECT_FILE, filePath)
+\ No newline at end of file
+Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision 83444e03e40e6673d2650a7840140cca65d5b5f6)
++++ community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision )
+@@ -35,7 +35,7 @@
+ public class PathMacroUtil {
+   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+-  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
++  @NonNls public static final String DIRECTORY_STORE_NAME = ".mps";
+   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
+   @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
