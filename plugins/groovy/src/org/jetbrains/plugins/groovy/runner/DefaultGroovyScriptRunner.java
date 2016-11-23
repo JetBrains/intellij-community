@@ -17,14 +17,10 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Comparing;
@@ -52,17 +48,17 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
+  public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
+    Module module = configuration.getModule();
     if (module == null) {
-      throw new ExecutionException("Module is not specified");
+      throw new RuntimeConfigurationException("Module is not specified");
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, new ExecutionException("Groovy is not configured"));
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME);
-      return false;
+      RuntimeConfigurationException e = new RuntimeConfigurationException("Groovy is not configured for module '" + module.getName() + "'");
+      e.setQuickFix(() -> ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME));
+      throw e;
     }
-    return true;
   }
 
   @Override
