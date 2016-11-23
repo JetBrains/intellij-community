@@ -16,6 +16,7 @@
 package com.intellij.platform;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
