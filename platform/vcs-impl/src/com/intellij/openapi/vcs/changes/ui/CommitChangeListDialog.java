@@ -86,7 +86,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
-  @Nullable private final List<CommitExecutor> myExecutors;
+  @NotNull private final List<CommitExecutor> myExecutors;
   private final boolean myShowVcsCommit;
   @Nullable private final AbstractVcs mySingleVcs;
   private final boolean myIsAlien;
@@ -100,7 +100,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final Map<String, String> myListComments;
   @NotNull private final PseudoMap<Object, Object> myAdditionalData;
-  @Nullable private final List<CommitExecutorAction> myExecutorActions;
+  @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
@@ -249,14 +249,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                         @NotNull String changelistName,
                                         @Nullable String comment) {
     final LocalChangeList lcl = new AlienLocalChangeList(changes, changelistName);
-    new CommitChangeListDialog(project, changes, null, null, true, AlienLocalChangeList.DEFAULT_ALIEN, Collections.singletonList(lcl), vcs,
-                               true, comment, null).show();
+    new CommitChangeListDialog(project, changes, null, Collections.emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN,
+                               Collections.singletonList(lcl), vcs, true, comment, null).show();
   }
 
   private CommitChangeListDialog(@NotNull Project project,
                                  @NotNull List<Change> changes,
                                  @Nullable LocalChangeList initialSelection,
-                                 @Nullable List<CommitExecutor> executors,
+                                 @NotNull List<CommitExecutor> executors,
                                  boolean showVcsCommit,
                                  @NotNull LocalChangeList defaultChangeList,
                                  @NotNull List<LocalChangeList> changeLists,
@@ -365,21 +365,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitAction = null;
     }
 
-    if (myExecutors == null) {
-      myExecutorActions = null;
+    myExecutorActions = ContainerUtil.map(myExecutors, CommitExecutorAction::new);
+    if (myCommitAction != null) {
+      myCommitAction.setOptions(myExecutorActions);
       myHelpId = HELP_ID;
     }
     else {
-      myExecutorActions = ContainerUtil.map(myExecutors, CommitExecutorAction::new);
-
-      if (myCommitAction != null) {
-        myCommitAction.setOptions(myExecutorActions);
-        myHelpId = HELP_ID;
-      }
-      else {
-        myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
-        myHelpId = getHelpId(myExecutors);
-      }
+      myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
+      myHelpId = getHelpId(myExecutors);
     }
 
     myWarningLabel = new JLabel();
@@ -1139,10 +1132,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myCommitAction != null) {
       myCommitAction.setEnabled(enabled);
     }
-    if (myExecutorActions != null) {
-      for (CommitExecutorAction executorAction : myExecutorActions) {
-        executorAction.updateEnabled(enabled);
-      }
+    for (CommitExecutorAction executorAction : myExecutorActions) {
+      executorAction.updateEnabled(enabled);
     }
     myOKButtonUpdateAlarm.cancelAllRequests();
     myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(myBrowser));
