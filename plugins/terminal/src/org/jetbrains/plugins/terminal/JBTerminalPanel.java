@@ -255,7 +255,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   private void installKeyDispatcher() {
-    if (TerminalOptionsProvider.getInstance().overrideIdeShortcuts()) {
+    if (TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
       IdeEventQueue.getInstance().addDispatcher(this, this);
     }
