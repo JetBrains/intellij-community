@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -47,8 +50,11 @@ public class TerminalSettingsPanel {
   private TextFieldWithBrowseButton myStartDirectoryField;
   private JPanel myProjectSettingsPanel;
   private JPanel myGlobalSettingsPanel;
+  private JPanel myConfigurablesPanel;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
+
+  private java.util.List<UnnamedConfigurable> myConfigurables = Lists.newArrayList();
 
   public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
     myOptionsProvider = provider;
@@ -94,6 +100,17 @@ public class TerminalSettingsPanel {
       }
     });
 
+    for (LocalTerminalCustomizer c : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+      UnnamedConfigurable configurable = c.getConfigurable(projectOptionsProvider.getProject());
+      if (configurable != null) {
+        myConfigurables.add(configurable);
+        JComponent component = configurable.createComponent();
+        if (component != null) {
+          myConfigurablesPanel.add(component, BorderLayout.CENTER);
+        }
+      }
+    }
+
     return myWholePanel;
   }
 
@@ -107,8 +124,8 @@ public class TerminalSettingsPanel {
            || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
            || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
-           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
-      ;
+           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration()) ||
+           myConfigurables.stream().anyMatch(c -> c.isModified());
   }
 
   public void apply() {
@@ -122,6 +139,14 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
     myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
+    myConfigurables.forEach(c -> {
+      try {
+        c.apply();
+      }
+      catch (ConfigurationException e) {
+        //pass
+      }
+    });
   }
 
   public void reset() {
@@ -135,6 +160,7 @@ public class TerminalSettingsPanel {
     myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
+    myConfigurables.forEach(c -> c.reset());
   }
 
   public Color getDefaultValueColor() {

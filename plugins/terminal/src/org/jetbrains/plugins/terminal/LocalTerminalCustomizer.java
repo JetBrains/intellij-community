@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,11 @@ public abstract class LocalTerminalCustomizer {
 
   public String[] customizeCommandAndEnvironment(Project project, String[] command, Map<String, String> envs) {
     return command;
+  }
+
+  @Nullable
+  public UnnamedConfigurable getConfigurable(Project project) {
+    return null;
   }
 
   @Nullable
