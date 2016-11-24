@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.containers;
+
+import com.intellij.util.indexing.ValueContainer;
 
 /**
- * Created by Maxim.Mossienko on 11/22/2016.
- */
-public interface IntPredicate {
-  boolean contains(int id);
+* Created by Maxim.Mossienko on 5/27/2014.
+*/
+interface RandomAccessIntContainer {
+  Object clone();
+  boolean add(int value);
+  boolean remove(int value);
+  IntIdsIterator intIterator();
+  ValueContainer.IntPredicate intPredicate();
+  void compact();
+  int size();
+
+  boolean contains(int value);
+
+  RandomAccessIntContainer ensureContainerCapacity(int diff);
 }

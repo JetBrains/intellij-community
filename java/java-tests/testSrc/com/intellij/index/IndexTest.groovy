@@ -154,7 +154,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
     PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
+    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
     return new StringIndex(testName, indexStorage, index)
   }
   

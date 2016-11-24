@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
@@ -31,7 +32,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
+public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
   private ValueContainerImpl<Value> myAdded;
   private TIntHashSet myInvalidated;
@@ -53,7 +54,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       merged.addValue(inputId, value);
     }
 
-    if (myAdded == null) myAdded = new ValueContainerImpl<>();
+    if (myAdded == null) myAdded = new ValueContainerImpl<Value>();
     myAdded.addValue(inputId, value);
   }
 
@@ -77,7 +78,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
   @NotNull
   @Override
-  public ValueIterator<Value> getValueIterator() {
+  public ValueContainer.ValueIterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
   }
 
@@ -112,7 +113,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
            (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
-        fileId2ValueMapping = new FileId2ValueMapping<>(newMerged);
+        fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
       }
       final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
       if (myInvalidated != null) {
@@ -132,7 +133,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
           fileId2ValueMapping.disableOneValuePerFileValidation();
         }
 
-        myAdded.forEach(new ContainerAction<Value>() {
+        myAdded.forEach(new ValueContainer.ContainerAction<Value>() {
           @Override
           public boolean perform(final int inputId, final Value value) {
             // enforcing "one-value-per-file for particular key" invariant

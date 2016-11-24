@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
@@ -33,12 +34,19 @@ public abstract class ValueContainer<Value> {
     int size();
   }
 
+  public interface IntPredicate {
+    boolean contains(int id);
+  }
+
   @NotNull
   public abstract ValueIterator<Value> getValueIterator();
 
   public interface ValueIterator<Value> extends Iterator<Value> {
     @NotNull
     IntIterator getInputIdsIterator();
+
+    @Nullable
+    IntPredicate getValueAssociationPredicate();
   }
 
   public abstract int size();

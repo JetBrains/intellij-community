@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.impl;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -35,7 +35,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile
                     ) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer));
+    super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -48,7 +48,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
   @Override
   protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
-      ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
+      final ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
 
       // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
       // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
@@ -83,7 +83,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
     @NotNull
     @Override
     public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
 
       valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
       return valueContainer;

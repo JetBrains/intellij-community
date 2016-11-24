@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.impl;
 
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 
 import java.io.DataOutput;
@@ -25,7 +26,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: Feb 27, 2008
  */
-public abstract class UpdatableValueContainer<T> extends ValueContainer<T>{
+public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
 
   public abstract void addValue(int inputId, T value);
 

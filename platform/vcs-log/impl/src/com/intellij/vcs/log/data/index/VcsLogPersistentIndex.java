@@ -33,7 +33,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIntHashSet;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
@@ -270,11 +269,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
         }
         else {
-          ValueContainer.IntIterator commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(text);
+          TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(text);
           if (commitsForSearch != null) {
             TIntHashSet result = new TIntHashSet();
-            while (commitsForSearch.hasNext()) {
-              int commit = commitsForSearch.next();
+            commitsForSearch.forEach(commit -> {
               try {
                 String value = myIndexStorage.messages.get(commit);
                 if (value != null) {
@@ -285,9 +283,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
               }
               catch (IOException e) {
                 myFatalErrorsConsumer.consume(this, e);
-                break;
+                return false;
               }
-            }
+              return true;
+            });
             return result;
           }
         }

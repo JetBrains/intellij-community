@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.util.indexing;
+package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IdSet;
 import com.intellij.util.indexing.containers.IntIdsIterator;
@@ -40,7 +42,7 @@ import java.util.List;
  *         Date: Dec 20, 2007
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
   private final static Object myNullValue = new Object();
 
   // there is no volatile as we modify under write lock and read under read lock
@@ -78,7 +80,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<>();
+  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<ID>();
 
   @Override
   public void removeAssociatedValue(int inputId) {
@@ -90,8 +92,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
       if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
         if (fileSetObjects == null) {
-          fileSetObjects = new SmartList<>();
-          valueObjects = new SmartList<>();
+          fileSetObjects = new SmartList<Object>();
+          valueObjects = new SmartList<Value>();
         }
         else if (DebugAssertions.DEBUG) {
           LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
@@ -151,7 +153,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @NotNull
           @Override
-          public IntIterator getInputIdsIterator() {
+          public ValueContainer.IntIterator getInputIdsIterator() {
             return getIntIteratorOutOfFileSetObject(getFileSetObject());
           }
 
@@ -212,7 +214,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @NotNull
           @Override
-          public IntIterator getInputIdsIterator() {
+          public ValueContainer.IntIterator getInputIdsIterator() {
             return getIntIteratorOutOfFileSetObject(getFileSetObject());
           }
 
@@ -238,7 +240,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
     @NotNull
     @Override
-    public IntIterator getInputIdsIterator() {
+    public ValueContainer.IntIterator getInputIdsIterator() {
       throw new IllegalStateException();
     }
 
@@ -272,7 +274,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return ((ChangeBufferingList)input).intPredicate();
   }
 
-  private static @NotNull IntIterator getIntIteratorOutOfFileSetObject(@Nullable Object input) {
+  private static @NotNull
+  ValueContainer.IntIterator getIntIteratorOutOfFileSetObject(@Nullable Object input) {
     if (input == null) return EMPTY_ITERATOR;
     if (input instanceof Integer){
       return new SingleValueIterator(((Integer)input).intValue());
@@ -312,7 +315,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static final IntIterator EMPTY_ITERATOR = new IntIdsIterator() {
+  private static final ValueContainer.IntIterator EMPTY_ITERATOR = new IntIdsIterator() {
     @Override
     public boolean hasNext() {
       return false;
@@ -341,11 +344,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @NotNull
   public ValueContainerImpl<Value> copy() {
-    ValueContainerImpl<Value> container = new ValueContainerImpl<>();
+    ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
 
     if (myInputIdMapping instanceof THashMap) {
       final THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
-      final THashMap<Value, Object> newMapping = new THashMap<>(mapping.size());
+      final THashMap<Value, Object> newMapping = new THashMap<Value, Object>(mapping.size());
       container.myInputIdMapping = newMapping;
 
       mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
@@ -460,7 +463,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         final int inputId = -valueCount;
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
-          mapping = new FileId2ValueMapping<>(this);
+          mapping = new FileId2ValueMapping<Value>(this);
         }
 
         boolean doCompact;

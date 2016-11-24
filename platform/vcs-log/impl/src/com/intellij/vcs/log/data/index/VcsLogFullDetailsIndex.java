@@ -16,23 +16,27 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.EmptyInputKeyIterator;
+import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
@@ -78,35 +82,29 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   @NotNull
-  public ValueContainer.IntIterator getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
-    return FileBasedIndexImpl.collectInputIdsContainingAllKeys(myMapReduceIndex, keys);
+  public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
+    return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex, keys, (k) -> {
+      ProgressManager.checkCanceled();
+      return true;
+    }, null, null);
   }
 
   private void iterateCommitIds(int key, @NotNull Consumer<Integer> consumer) throws StorageException {
     ValueContainer<T> data = myMapReduceIndex.getData(key);
-
-    ValueContainer.ValueIterator<T> valueIt = data.getValueIterator();
-    while (valueIt.hasNext()) {
-      valueIt.next();
-      ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
-      while (inputIt.hasNext()) {
-        consumer.consume(inputIt.next());
+    data.forEach(new ValueContainer.ContainerAction<T>() {
+      @Override
+      public boolean perform(int id, T value) {
+        consumer.consume(id);
+        return true;
       }
-    }
+    });
   }
 
   protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<T> consumer) throws StorageException {
-    ValueContainer<T> data = myMapReduceIndex.getData(key);
-
-    ValueContainer.ValueIterator<T> valueIt = data.getValueIterator();
-    while (valueIt.hasNext()) {
-      T nextValue = valueIt.next();
-      ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
-      while (inputIt.hasNext()) {
-        int next = inputIt.next();
-        consumer.accept(nextValue, next);
-      }
-    }
+    myMapReduceIndex.getData(key).forEach((id, value) -> {
+      consumer.accept(value, id);
+      return true;
+    });
   }
 
   public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {
@@ -128,24 +126,55 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
-
     public MyMapReduceIndex(@NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                             @NotNull DataExternalizer<T> externalizer,
                             int version) throws IOException {
       super(new MyIndexExtension(indexer, externalizer, version),
-            new MapIndexStorage<>(getStorageFile(myName, myLogId),
-                                  EnumeratorIntegerDescriptor.INSTANCE,
-                                  externalizer, 5000));
+            new MapIndexStorage<Integer, T>(getStorageFile(myName, myLogId),
+                                            EnumeratorIntegerDescriptor.INSTANCE,
+                                            externalizer, 5000, false) {
+              @Override
+              protected void checkCanceled() {
+                ProgressManager.checkCanceled();
+              }
+            },
+            new ForwardIndex<Integer, T>() {
+              @NotNull
+              @Override
+              public InputKeyIterator<Integer, T> getInputKeys(int inputId) {
+                return EmptyInputKeyIterator.getInstance();
+              }
+
+              @Override
+              public void putInputData(int inputId, @NotNull Map<Integer, T> data) throws IOException {
+
+              }
+
+              @Override
+              public void flush() {
+
+              }
+
+              @Override
+              public void clear() throws IOException {
+
+              }
+
+              @Override
+              public void close() throws IOException {
+
+              }
+            });
     }
 
     @Override
-    protected PersistentHashMap<Integer, Collection<Integer>> createInputsIndex() throws IOException {
-      return null;
+    public void checkCanceled() {
+      ProgressManager.checkCanceled();
     }
 
     @Override
-    protected void requestRebuild(@Nullable Exception ex) {
-      myFatalErrorHandler.consume(this, ex != null ? ex : new Exception("Index rebuild requested"));
+    public void requestRebuild(@NotNull Exception ex) {
+      myFatalErrorHandler.consume(this, ex);
     }
   }
 

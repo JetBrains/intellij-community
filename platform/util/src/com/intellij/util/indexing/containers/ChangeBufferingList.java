@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.DebugAssertions;
-import com.intellij.util.indexing.IntPredicate;
+import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntProcedure;
 
 import java.util.Arrays;
 
-import static com.intellij.util.indexing.DebugAssertions.EXTRA_SANITY_CHECKS;
+import static com.intellij.util.indexing.impl.DebugAssertions.EXTRA_SANITY_CHECKS;
 
 /**
  * Class buffers changes in 2 modes:
@@ -267,10 +266,10 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public IntPredicate intPredicate() {
-    final IntPredicate predicate = getRandomAccessContainer().intPredicate();
+  public ValueContainer.IntPredicate intPredicate() {
+    final ValueContainer.IntPredicate predicate = getRandomAccessContainer().intPredicate();
     if (checkSet != null) {
-      return new IntPredicate() {
+      return new ValueContainer.IntPredicate() {
         @Override
         public boolean contains(int id) {
           boolean answer = predicate.contains(id);

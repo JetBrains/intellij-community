@@ -17,12 +17,16 @@ package com.intellij.index;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.MapBasedForwardIndex;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -39,11 +43,12 @@ public class StringIndex {
   
   public StringIndex(String testName, final IndexStorage<String, String> storage, final PersistentHashMap<Integer, Collection<String>> inputIndex)
     throws IOException {
-    myIndex = new MapReduceIndex<String, String, PathContentPair>(new IndexExtension<String, String, PathContentPair>() {
+    ID<String, String> id = ID.create(testName + "string_index");
+    IndexExtension<String, String, PathContentPair> extension = new IndexExtension<String, String, PathContentPair>() {
       @NotNull
       @Override
       public ID<String, String> getName() {
-        return new ID<String, String>(testName + "string_index") {};
+        return id;
       }
 
       @NotNull
@@ -68,10 +73,19 @@ public class StringIndex {
       public int getVersion() {
         return 0;
       }
-    }, storage) {
-      protected PersistentHashMap<Integer, Collection<String>> createInputsIndex() throws IOException {
+    };
+    myIndex = new VfsAwareMapReduceIndex<String, String, PathContentPair>(extension, storage, new MapBasedForwardIndex<String, String>(extension) {
+      @NotNull
+      @Override
+      public PersistentHashMap<Integer, Collection<String>> createMap() throws IOException {
         return inputIndex;
       }
+    }) {
+      @Override
+      public void requestRebuild(@NotNull Exception ex) {
+        Assert.fail();
+      }
+
     };
   }
 

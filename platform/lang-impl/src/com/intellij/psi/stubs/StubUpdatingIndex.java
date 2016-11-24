@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.NotNullComputable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -32,8 +32,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -391,7 +393,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   }
 
-  private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
+  private static class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
     private final StubVersionMap myStubVersionMap = new StubVersionMap();
 
@@ -401,37 +403,32 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       checkNameStorage();
     }
 
+    @NotNull
     @Override
-    public void flush() throws StorageException {
-      final StubIndexImpl stubIndex = getStubIndex();
-      try {
-        stubIndex.flush();
-      }
-      finally {
-        super.flush();
-      }
+    protected UpdateData<Integer, SerializedStubTree> createUpdateData(Map<Integer, SerializedStubTree> data,
+                                                                       ThrowableComputable<ForwardIndex.InputKeyIterator<Integer, SerializedStubTree>, IOException> oldKeys,
+                                                                       ThrowableRunnable<IOException> forwardIndexUpdate) {
+      return new StubUpdatingData(data, oldKeys, forwardIndexUpdate);
     }
 
-    @Override
-    protected UpdateData<Integer, SerializedStubTree> buildUpdateData(Map<Integer, SerializedStubTree> data,
-                                                                      NotNullComputable<Collection<Integer>> oldKeysGetter,
-                                                                      int savedInputId) {
-      return new StubUpdatingData(savedInputId, data, oldKeysGetter);
-    }
-
-    class StubUpdatingData extends SimpleUpdateData {
+    static class StubUpdatingData extends SimpleUpdateData<Integer, SerializedStubTree> {
       private Collection<Integer> oldStubIndexKeys;
 
-      public StubUpdatingData(int id,
-                              @NotNull Map<Integer, SerializedStubTree> data,
-                              @NotNull NotNullComputable<Collection<Integer>> getter) {
-        super(INDEX_ID, id, data, getter);
+      public StubUpdatingData(@NotNull Map<Integer, SerializedStubTree> newData,
+                              @NotNull ThrowableComputable<ForwardIndex.InputKeyIterator<Integer, SerializedStubTree>, IOException> iterator,
+                              ThrowableRunnable<IOException> forwardIndexUpdate) {
+        super(newData, iterator, INDEX_ID, forwardIndexUpdate);
       }
 
       @Override
-      public void iterateRemovedOrUpdatedKeys(int inputId, RemovedOrUpdatedKeyProcessor<Integer> consumer) throws StorageException {
-        oldStubIndexKeys = oldKeysGetter.compute();
-        MapDiffUpdateData.iterateRemovedKeys(oldStubIndexKeys, inputId, consumer);
+      protected void iterateKeys(int inputId,
+                                 KeyValueUpdateProcessor<Integer, SerializedStubTree> addProcessor,
+                                 RemovedKeyProcessor<Integer> removeProcessor,
+                                 ForwardIndex.InputKeyIterator<Integer, SerializedStubTree> currentData) throws StorageException {
+        if (currentData instanceof CollectionInputKeyIterator) {
+          oldStubIndexKeys = ((CollectionInputKeyIterator<Integer, SerializedStubTree>)currentData).getCollection();
+        }
+        super.iterateKeys(inputId, addProcessor, removeProcessor, currentData);
       }
 
       public Map<StubIndexKey, Map<Object, StubIdList>> getOldStubIndicesValueMap() {
@@ -451,10 +448,20 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
-    protected void updateWithMap(final int inputId,
-                                 @NotNull UpdateData<Integer, SerializedStubTree> updateData)
-      throws StorageException {
+    public void flush() throws StorageException {
+      final StubIndexImpl stubIndex = getStubIndex();
+      try {
+        stubIndex.flush();
+      }
+      finally {
+        super.flush();
+      }
+    }
 
+
+    @Override
+    protected void updateWithMap(int inputId,
+                                 @NotNull UpdateData<Integer, SerializedStubTree> updateData) throws StorageException {
       checkNameStorage();
       StubUpdatingData stubUpdatingData = (StubUpdatingData)updateData;
       final Map<StubIndexKey, Map<Object, StubIdList>> newStubIndicesValueMap = stubUpdatingData.getNewStubIndicesValueMap();

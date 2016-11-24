@@ -76,13 +76,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
-import com.intellij.util.indexing.containers.TroveSetIntIterator;
+import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -350,7 +354,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension, int version, @NotNull File versionFile, IndexConfiguration state)
     throws IOException {
-    MapIndexStorage<K, V> storage = null;
+    VfsAwareMapIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
     boolean contentHashesEnumeratorOk = false;
 
@@ -360,7 +364,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           ContentHashesSupport.initContentHashesEnumerator();
           contentHashesEnumeratorOk = true;
         }
-        storage = new MapIndexStorage<>(
+        storage = new VfsAwareMapIndexStorage<>(
           IndexInfrastructure.getStorageFile(name),
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
@@ -444,17 +448,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
                                                                @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
-    final MapReduceIndex<K, V, FileContent> index;
+    final VfsAwareMapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       final UpdatableIndex<K, V, FileContent> custom =
         ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage);
-      if (!(custom instanceof MapReduceIndex)) {
+      if (!(custom instanceof VfsAwareMapReduceIndex)) {
         return custom;
       }
-      index = (MapReduceIndex<K, V, FileContent>)custom;
+      index = (VfsAwareMapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<>(extension, storage);
+      index = new VfsAwareMapReduceIndex<>(extension, storage);
     }
 
     return index;
@@ -1046,73 +1050,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                                              @Nullable final Condition<V> valueChecker,
                                                              @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
-      index -> collectInputIdsContainingAllKeys(index, dataKeys, valueChecker,
+      index -> InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, (k) -> {
+                                                                    ProgressManager.checkCanceled();
+                                                                    return true;
+                                                                  }, valueChecker,
                                                 projectFilesFilter == null ? null : projectFilesFilter::containsFileId);
 
     return processExceptions(indexId, null, filter, convertor);
-  }
-
-  @Nullable
-  private static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<K, V, I> index,
-                                                                        @NotNull Collection<K> dataKeys,
-                                                                        @Nullable Condition<V> valueChecker,
-                                                                        @Nullable IntPredicate idChecker)
-    throws StorageException {
-    TIntHashSet mainIntersection = null;
-
-    for (K dataKey : dataKeys) {
-      ProgressManager.checkCanceled();
-      final TIntHashSet copy = new TIntHashSet();
-      final ValueContainer<V> container = index.getData(dataKey);
-
-      for (InvertedIndexValueIterator<V> valueIt = (InvertedIndexValueIterator<V>)container.getValueIterator(); valueIt.hasNext(); ) {
-        final V value = valueIt.next();
-        if (valueChecker != null && !valueChecker.value(value)) {
-          continue;
-        }
-
-        ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
-
-        if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
-          while (iterator.hasNext()) {
-            final int id = iterator.next();
-            if (mainIntersection == null && (idChecker == null || idChecker.contains(id)) ||
-                mainIntersection != null && mainIntersection.contains(id)
-              ) {
-              copy.add(id);
-            }
-          }
-        }
-        else {
-          mainIntersection.forEach(new TIntProcedure() {
-            final IntPredicate predicate = valueIt.getValueAssociationPredicate();
-
-            @Override
-            public boolean execute(int id) {
-              if (predicate.contains(id)) copy.add(id);
-              return true;
-            }
-          });
-        }
-      }
-
-      mainIntersection = copy;
-      if (mainIntersection.isEmpty()) {
-        return new TIntHashSet();
-      }
-    }
-
-    return mainIntersection;
-  }
-
-
-  @NotNull
-  public static <K, V, I> ValueContainer.IntIterator collectInputIdsContainingAllKeys(@NotNull InvertedIndex<K, V, I> index,
-                                                                                      @NotNull Collection<K> dataKeys)
-    throws StorageException {
-    TIntHashSet result = collectInputIdsContainingAllKeys(index, dataKeys, null, null);
-    if (result == null) return TroveSetIntIterator.EMPTY;
-    return new TroveSetIntIterator(result);
   }
 
   private static boolean processVirtualFiles(@NotNull TIntHashSet ids,
