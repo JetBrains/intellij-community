@@ -234,12 +234,16 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
 
       myInsideCommand = true;
       enterBulkChangeUpdateBlock();
-      registerUndoRedo(true, allAffectedChanges);
       try {
-        task.run();
+        registerUndoRedo(true, allAffectedChanges);
+        try {
+          task.run();
+        }
+        finally {
+          registerUndoRedo(false, allAffectedChanges);
+        }
       }
       finally {
-        registerUndoRedo(false, allAffectedChanges);
         exitBulkChangeUpdateBlock();
         myInsideCommand = false;
       }
