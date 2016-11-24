@@ -350,13 +350,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }, ModalityState.NON_MODAL);
     };
     if (myProgressManager.getProgressIndicator() != null) {
-      try {
-        process.run();
-        return true;
-      }
-      catch (ProcessCanceledException e) {
-        return false;
-      }
+      process.run();
+      return true;
     }
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);

@@ -748,9 +748,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
-      module.init(path, beforeComponentCreation);
-      myModulesCache = null;
+      // make sure it is remembered before initialization which can be interrupted (cancelled)
       myModules.put(module.getName(), module);
+      myModulesCache = null;
+      module.init(path, beforeComponentCreation);
     }
 
     @Override
