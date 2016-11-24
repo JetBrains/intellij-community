@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * TODO: Use {@link com.jetbrains.python.run.PythonRunner} instead of this class? At already supports rerun and other things
@@ -204,7 +205,7 @@ public class PythonTask {
       else {
         scriptParams.addParameter(myRunnerScript);
       }
-      scriptParams.addParameters(myParameters);
+      scriptParams.addParameters(myParameters.stream().filter( o -> o != null).collect(Collectors.toList()));
     }
 
     PythonEnvUtil.setPythonUnbuffered(env);
