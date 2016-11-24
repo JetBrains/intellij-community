@@ -360,6 +360,8 @@
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
     <statementUpDownMover implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStatementMover"/>
+    <moveLeftRightHandler language="Groovy"
+                          implementationClass="org.jetbrains.plugins.groovy.codeInsight.editorActions.GroovyMoveLeftRightHandler"/>
 
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrVariableJoinLinesHandler"/>
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinBlockStatementHandler"/>
