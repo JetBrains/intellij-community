@@ -308,6 +308,9 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
       EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
+      doHighlighting();
+      UIUtil.dispatchAllInvocationEvents();
+
       assertEmpty(highlightErrors());
 
       assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
