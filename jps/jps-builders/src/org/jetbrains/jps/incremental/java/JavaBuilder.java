@@ -63,7 +63,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -84,6 +85,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String JAVA_EXTENSION = "java";
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  public static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = Key.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
@@ -369,7 +371,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     try {
       final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
-      final boolean shouldForkJavac = shouldForkCompilerProcess(context, targetLanguageLevel);
+      final boolean shouldForkJavac = shouldForkCompilerProcess(context, chunk, targetLanguageLevel);
       final boolean hasModules = targetLanguageLevel >= 9 && getJavaModuleIndex(context).hasJavaModules(modules);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
@@ -514,14 +516,28 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return false;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, int chunkLanguageLevel) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, int chunkLanguageLevel) {
     if (!isJavac(COMPILING_TOOL.get(context))) {
-      return false;
+      return false; // applicable to javac only
     }
     final int compilerSdkVersion = getCompilerSdkVersion(context);
+
+    if (preferTargetJdkCompiler(context)) {
+      final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
+      if (sdkVersionPair != null) {
+        final Integer chunkSdkVersion = sdkVersionPair.second;
+        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= 6 /*min. supported compiler version*/) {
+          // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
+          // so if corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
+          return true;
+        }
+      }
+    }
+
     if (compilerSdkVersion < 9 || chunkLanguageLevel <= 0) {
       // javac up to version 9 supports all previous releases
-      // or: was not able to determine jdk version, so assuming in-process compiler
+      // or
+      // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
     // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
@@ -530,6 +546,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
   
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
     return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
+  }
+
+  private static boolean preferTargetJdkCompiler(CompileContext context) {
+    Boolean val = PREFER_TARGT_JDK_COMPILER.get(context);
+    if (val == null) {
+      final JpsProject project = context.getProjectDescriptor().getProject();
+      final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+      // default
+      val = config != null? config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER : Boolean.TRUE;
+      PREFER_TARGT_JDK_COMPILER.set(context, val);
+    }
+    return val;
   }
 
   // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
@@ -893,16 +921,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static Pair<String, Integer> getForkedJavacSdk(ModuleChunk chunk, int targetLanguageLevel) {
-    for (JpsModule module : chunk.getModules()) {
-      final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
-      if (sdk != null) {
-        final int version = JpsJavaSdkType.parseVersion(sdk.getVersionString());
-        if (version >= 6) {
-          if (version >= 9 && Math.abs(version - targetLanguageLevel) > 3) {
-            continue; // current javac compiler does not support required language level
-          }
-          return Pair.create(sdk.getHomePath(), version);
-        }
+    final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
+    if (sdkVersionPair != null) {
+      final int sdkVersion = sdkVersionPair.second;
+      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= 3)) {
+        // current javac compiler does support required language level
+        return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
     }
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
@@ -922,6 +946,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return null;
     }
     return Pair.create(fallbackJdkHome, fallbackVersion); 
+  }
+
+  @Nullable
+  private static Pair<JpsSdk<JpsDummyElement>, Integer> getAssociatedSdk(ModuleChunk chunk) {
+    // assuming all modules in the chunk have the same associated JDK;
+    // this constraint should be validated on build start
+    final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
+    return sdk != null? Pair.create(sdk, JpsJavaSdkType.parseVersion(sdk.getVersionString())) : null;
   }
 
   private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
