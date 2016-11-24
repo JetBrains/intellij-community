@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -273,8 +274,16 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(@NotNull Project project, int step) throws IOException {
-    return EduStepicAuthorizedClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step), 
-                                                   StepicWrappers.StepContainer.class, project).steps.get(0);
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    final boolean isAuthorized = taskManager.getUser().getAccessToken() != null;
+    if (isAuthorized) {
+      return EduStepicAuthorizedClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
+                                                     StepicWrappers.StepContainer.class, project).steps.get(0);
+    }
+    else {
+      return EduStepicClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
+                                           StepicWrappers.StepContainer.class).steps.get(0);
+    }
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @NotNull final Project project) {
