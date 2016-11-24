@@ -849,7 +849,7 @@ public final class GuiTestUtil {
     ArrayList<JdkBundle> bundleList = SwitchBootJdkAction.findJdkPaths().toArrayList();
     //we believe that Idea has at least one bundled jdk
     JdkBundle jdkBundle = bundleList.get(0);
-    String homeSubPath = SystemInfo.isMac ? "/Contents/Home/jre" : "";
+    String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
     return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
 
