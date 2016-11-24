@@ -638,32 +638,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   protected void doOKAction() {
-    if (!myIsAlien && !addUnversionedFiles()) return;
-    if (!saveDialogState()) return;
-    saveComments(true);
-    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-
-    ensureDataIsActual(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
-            @Override
-            public void run() {
-              close(OK_EXIT_CODE);
-              doCommit(myResultHandler);
-            }
-          }, null);
-
-          if (result == CheckinHandler.ReturnResult.COMMIT) {
-            defaultListCleaner.clean();
-          }
-        }
-        catch (InputException ex) {
-          ex.show();
-        }
-      }
-    });
+    executeDefaultCommitSession();
   }
 
   private boolean addUnversionedFiles() {
@@ -697,17 +672,48 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return actions.toArray(new Action[actions.size()]);
   }
 
-  private void execute(final CommitExecutor commitExecutor) {
+  private void executeDefaultCommitSession() {
+    if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
+    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+
+    ensureDataIsActual(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
+            @Override
+            public void run() {
+              close(OK_EXIT_CODE);
+              doCommit(myResultHandler);
+            }
+          }, null);
+
+          if (result == CheckinHandler.ReturnResult.COMMIT) {
+            defaultListCleaner.clean();
+          }
+        }
+        catch (InputException ex) {
+          ex.show();
+        }
+      }
+    });
+  }
+
+  private void execute(final CommitExecutor commitExecutor) {
     final CommitSession session = commitExecutor.createCommitSession();
+    if (session == CommitSession.VCS_COMMIT) {
+      executeDefaultCommitSession();
+      return;
+    }
+
+    if (!saveDialogState()) return;
+    saveComments(true);
     if (session instanceof CommitSessionContextAware) {
       ((CommitSessionContextAware)session).setContext(myCommitContext);
     }
-    if (session == CommitSession.VCS_COMMIT) {
-      doOKAction();
-      return;
-    }
+
     boolean isOK = true;
     final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
     if (configurationUI != null) {
