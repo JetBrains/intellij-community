@@ -16,19 +16,26 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,12 +46,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private final String myFunctionName;
-  private PyCallExpression myElement;
-  private PyReferenceExpression myReference;
+  private final SmartPsiElementPointer<PyCallExpression> myCallExpr;
+  private final SmartPsiElementPointer<PyReferenceExpression> myReferenceExpr;
 
   public UnresolvedRefCreateFunctionQuickFix(PyCallExpression element, PyReferenceExpression reference) {
-    myElement = element;
-    myReference = reference;
+    final SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
+    myCallExpr = manager.createSmartPsiElementPointer(element);
+    myReferenceExpr = manager.createSmartPsiElementPointer(reference);
     myFunctionName = reference.getReferencedName();
   }
 
@@ -61,13 +69,19 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyPsiUtils.assertValid(myElement);
+    final PyCallExpression callExpr = myCallExpr.getElement();
+    final PyReferenceExpression referenceExpr = myReferenceExpr.getElement();
 
-    PyFunctionBuilder functionBuilder = new PyFunctionBuilder(myReference.getText(), myElement);
+    if (callExpr == null || !callExpr.isValid() || referenceExpr == null || !referenceExpr.isValid() ||
+        !FileModificationService.getInstance().preparePsiElementForWrite(callExpr)) {
+      return;
+    }
+
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(referenceExpr.getText(), callExpr);
 
     // if function is actually an argument of a call, don't use other arguments of the call to create parameter list of new function
-    final PyArgumentList argumentList = myElement.getArgumentList();
-    if (argumentList != null && !PsiTreeUtil.isAncestor(argumentList, myReference, false)) {
+    final PyArgumentList argumentList = callExpr.getArgumentList();
+    if (argumentList != null && !PsiTreeUtil.isAncestor(argumentList, referenceExpr, false)) {
       for (PyExpression param : argumentList.getArguments()) {
         if (param instanceof PyKeywordArgument) {
           functionBuilder.parameter(((PyKeywordArgument)param).getKeyword());
@@ -86,25 +100,33 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     }
 
     PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
-    PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
-    if (parentFunction != null ) {
-      PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
+
+    final InjectedLanguageManager instance = InjectedLanguageManager.getInstance(project);
+    final PsiLanguageInjectionHost host = instance.getInjectionHost(callExpr);
+    final PsiElement insertAnchor = host != null ? host : callExpr;
+
+    final PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(insertAnchor, PyFunction.class);
+    if (parentFunction != null) {
+      final PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
       if (parentClass != null) {
-        PsiElement parent = parentClass.getParent();
+        final PsiElement parent = parentClass.getParent();
         function = (PyFunction)parent.addBefore(function, parentClass);
-      } else {
-        PsiElement parent = parentFunction.getParent();
+      }
+      else {
+        final PsiElement parent = parentFunction.getParent();
         function = (PyFunction)parent.addBefore(function, parentFunction);
       }
-    } else {
-      PyStatement statement = PsiTreeUtil.getTopmostParentOfType(myElement,
-                                                                 PyStatement.class);
+    }
+    else {
+      final PyStatement statement = PsiTreeUtil.getTopmostParentOfType(insertAnchor, PyStatement.class);
       if (statement != null) {
-        PsiElement parent = statement.getParent();
-        if (parent != null)
+        final PsiElement parent = statement.getParent();
+        if (parent != null) {
           function = (PyFunction)parent.addBefore(function, statement);
+        }
       }
     }
+
     function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
     ParamHelper.walkDownParamArray(
@@ -116,6 +138,12 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
       }
     );
     builder.replaceElement(function.getStatementList(), PyNames.PASS);
-    builder.run();
+
+    final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(insertAnchor.getContainingFile().getVirtualFile());
+    if (!(editor instanceof TextEditor)) {
+      return;
+    }
+
+    builder.run(((TextEditor)editor).getEditor(), false);
   }
 }

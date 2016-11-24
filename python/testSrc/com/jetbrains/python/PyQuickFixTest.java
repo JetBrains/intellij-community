@@ -207,6 +207,18 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true);
   }
 
+  // PY-21204
+  public void testAddClassFromFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, 
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true));
+  }
+
+  // PY-21204
+  public void testAddFunctionFromFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "my_function"), true, true));
+  }
+
   // PY-1602
   public void testAddFunctionToModule() {
     doInspectionTest(
