@@ -280,10 +280,7 @@ public class CommitHelper {
       processor.customRefresh();
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
         public void run() {
-          final Runnable runnable = processor.postRefresh();
-          if (runnable != null) {
-            runnable.run();
-          }
+          processor.doPostRefresh();
         }
       }, null, myProject);
     }
@@ -329,8 +326,7 @@ public class CommitHelper {
     public void customRefresh() {
     }
 
-    public Runnable postRefresh() {
-      return null;
+    public void doPostRefresh() {
     }
   }
 
@@ -359,7 +355,7 @@ public class CommitHelper {
   private interface ActionsAroundRefresh {
     void doBeforeRefresh();
     void customRefresh();
-    Runnable postRefresh();
+    void doPostRefresh();
   }
 
   private enum ChangeListsModificationAfterCommit {
@@ -459,49 +455,45 @@ public class CommitHelper {
       RefreshVFsSynchronously.updateChanges(toRefresh);
     }
 
-    public Runnable postRefresh() {
-      return new Runnable() {
-        public void run() {
-          // to be completely sure
-          if (myAction != null) {
-            myAction.finish();
+    public void doPostRefresh() {
+      // to be completely sure
+      if (myAction != null) {
+        myAction.finish();
+      }
+      if (!myProject.isDisposed()) {
+        // after vcs refresh is completed, outdated notifiers should be removed if some exists...
+        final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+        clManager.invokeAfterUpdate(new Runnable() {
+          public void run() {
+            if (myCommitSuccess) {
+              // do delete/ move of change list if needed
+              if (ChangeListsModificationAfterCommit.DELETE_LIST.equals(myAfterVcsRefreshModification)) {
+                if (!myKeepChangeListAfterCommit) {
+                  clManager.removeChangeList(myChangeList.getName());
+                }
+              } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
+                ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
+                if (dialog.showAndGet()) {
+                  final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
+                  MoveChangesToAnotherListAction.askAndMove(myProject, changes, Collections.emptyList());
+                }
+              }
+            }
+            final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+            // in background since commit must have authorized
+            cache.refreshAllCachesAsync(false, true);
+            cache.refreshIncomingChangesAsync();
           }
-          if (!myProject.isDisposed()) {
-            // after vcs refresh is completed, outdated notifiers should be removed if some exists...
-            final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-            clManager.invokeAfterUpdate(new Runnable() {
-              public void run() {
-                if (myCommitSuccess) {
-                  // do delete/ move of change list if needed
-                  if (ChangeListsModificationAfterCommit.DELETE_LIST.equals(myAfterVcsRefreshModification)) {
-                    if (! myKeepChangeListAfterCommit) {
-                      clManager.removeChangeList(myChangeList.getName());
-                    }
-                  } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
-                    ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
-                    if (dialog.showAndGet()) {
-                      final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
-                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, Collections.emptyList());
-                    }
-                  }
-                }
-                final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-                // in background since commit must have authorized
-                cache.refreshAllCachesAsync(false, true);
-                cache.refreshIncomingChangesAsync();
-              }
-            }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {
-              public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-                for (FilePath path : getPathsToRefresh()) {
-                  vcsDirtyScopeManager.fileDirty(path);
-                }
-              }
-            }, null);
+        }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {
+          public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+            for (FilePath path : getPathsToRefresh()) {
+              vcsDirtyScopeManager.fileDirty(path);
+            }
+          }
+        }, null);
 
-            LocalHistory.getInstance().putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
-          }
-        }
-      };
+        LocalHistory.getInstance().putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
+      }
     }
   }
 
