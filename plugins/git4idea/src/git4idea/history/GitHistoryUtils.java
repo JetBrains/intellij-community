@@ -1014,7 +1014,7 @@ public class GitHistoryUtils {
     @Nullable private VcsException myException = null;
 
     private int myRecords = 0;
-    private boolean myFoundRecordEnd = false;
+    private boolean myIsInsideBody = true;
 
     public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
                                     @NotNull Consumer<StringBuilder> recordConsumer,
@@ -1033,52 +1033,48 @@ public class GitHistoryUtils {
       }
       else if (outputType == ProcessOutputTypes.STDOUT) {
         try {
-          // format of the record is <RECORD_START>.*<RECORD_END>.*
-          // then next record goes
-          // (rather inconveniently, after RECORD_END there is a list of modified files)
-          // so here I'm trying to find text between two RECORD_START symbols
-          // that simultaneously contains a RECORD_END
-          // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
-          // wont help with RECORD_END symbols in the message however (have not seen those yet)
-
-          String tail = null;
-          if (!myFoundRecordEnd) {
-            int recordEnd = line.indexOf(GitLogParser.RECORD_END);
-            if (recordEnd != -1) {
-              myFoundRecordEnd = true;
-              myOutput.append(line.substring(0, recordEnd + 1));
-              line = line.substring(recordEnd + 1);
-            }
-            else {
-              myOutput.append(line).append("\n");
-            }
-          }
-
-          if (myFoundRecordEnd) {
-            int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
-            if (nextRecordStart == -1) {
-              myOutput.append(line).append("\n");
-            }
-            else if (nextRecordStart == 0) {
-              tail = line + "\n";
-            }
-            else {
-              myOutput.append(line.substring(0, nextRecordStart));
-              tail = line.substring(nextRecordStart) + "\n";
-            }
-          }
-
-          if (tail != null) {
-            if (++myRecords > myBufferSize) {
-              myRecordConsumer.consume(myOutput);
-              myOutput.setLength(0);
-            }
-            myOutput.append(tail);
-            myFoundRecordEnd = tail.contains(GitLogParser.RECORD_END);
-          }
+          processOutputLine(line);
         }
         catch (Exception e) {
           myException = new VcsException(e);
+        }
+      }
+    }
+
+    private void processOutputLine(@NotNull String line) {
+      // format of the record is <RECORD_START><BODY><RECORD_END><CHANGES>
+      // then next record goes
+      // (rather inconveniently, after RECORD_END there is a list of modified files)
+      // so here I'm trying to find text between two RECORD_START symbols
+      // that simultaneously contains a RECORD_END
+      // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
+      // wont help with RECORD_END symbols in the message however (have not seen those yet)
+
+      if (myIsInsideBody) {
+        // find body
+        int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
+        if (bodyEnd >= 0) {
+          myIsInsideBody = false;
+          myOutput.append(line.substring(0, bodyEnd + 1));
+          processOutputLine(line.substring(bodyEnd + 1));
+        }
+        else {
+          myOutput.append(line).append("\n");
+        }
+      }
+      else {
+        int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
+        if (nextRecordStart >= 0) {
+          myOutput.append(line.substring(0, nextRecordStart));
+          if (++myRecords > myBufferSize) {
+            myRecordConsumer.consume(myOutput);
+            myOutput.setLength(0);
+          }
+          myIsInsideBody = true;
+          processOutputLine(line.substring(nextRecordStart));
+        }
+        else {
+          myOutput.append(line).append("\n");
         }
       }
     }
