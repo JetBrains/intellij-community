@@ -293,10 +293,12 @@ public class CommitHelper {
       myVcs = vcs;
     }
 
+    @Override
     public void callSelf() {
       ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this);
     }
 
+    @Override
     public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (myVcs.getName().equals(vcs.getName())) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
@@ -313,19 +315,23 @@ public class CommitHelper {
       }
     }
 
+    @Override
     public void afterSuccessfulCheckIn() {
-
     }
 
+    @Override
     public void afterFailedCheckIn() {
     }
 
+    @Override
     public void doBeforeRefresh() {
     }
 
+    @Override
     public void customRefresh() {
     }
 
+    @Override
     public void doPostRefresh() {
     }
   }
@@ -387,6 +393,7 @@ public class CommitHelper {
       }
     }
 
+    @Override
     public void callSelf() {
       if (myVcs != null && myIncludedChanges.isEmpty()) {
         process(myVcs, myIncludedChanges);
@@ -394,6 +401,7 @@ public class CommitHelper {
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
     }
 
+    @Override
     public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
@@ -410,10 +418,12 @@ public class CommitHelper {
       }
     }
 
+    @Override
     public void afterSuccessfulCheckIn() {
       myCommitSuccess = true;
     }
 
+    @Override
     public void afterFailedCheckIn() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -424,6 +434,7 @@ public class CommitHelper {
       }, ModalityState.defaultModalityState(), myProject.getDisposed());
     }
 
+    @Override
     public void doBeforeRefresh() {
       final ChangeListManagerImpl clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
       clManager.showLocalChangesInvalidated();
@@ -435,6 +446,7 @@ public class CommitHelper {
       });
     }
 
+    @Override
     public void customRefresh() {
       final List<Change> toRefresh = new ArrayList<>();
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, (vcs, items) -> {
@@ -455,6 +467,7 @@ public class CommitHelper {
       RefreshVFsSynchronously.updateChanges(toRefresh);
     }
 
+    @Override
     public void doPostRefresh() {
       // to be completely sure
       if (myAction != null) {
@@ -593,10 +606,12 @@ public class CommitHelper {
     final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       final VcsShowConfirmationOption option = new VcsShowConfirmationOption() {
+        @Override
         public Value getValue() {
           return configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST;
         }
 
+        @Override
         public void setValue(final Value value) {
           configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST = value;
         }
