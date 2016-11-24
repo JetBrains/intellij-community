@@ -11,8 +11,8 @@ public class Main {
           long limitInner = limit;
           for (String x = ""; ; x = x + limit) {
               if (limitInner-- == 0) break;
-              int i = x.length();
-              stat.accept(i);
+              int length = x.length();
+              stat.accept(length);
           }
       }
       return stat;

@@ -9,8 +9,8 @@ public class Main {
       long sum = 0;
       for (Map.Entry<String, List<String>> s : strings.entrySet()) {
           if (!s.getKey().isEmpty()) {
-              long l = s.getValue().stream().filter(sx -> s.getKey().equals(sx)).count();
-              sum += l;
+              long count = s.getValue().stream().filter(sx -> s.getKey().equals(sx)).count();
+              sum += count;
           }
       }
       return sum;

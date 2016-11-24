@@ -9,8 +9,8 @@ public class Main {
       long limit = 20;
       for (String x = ""; ; x = x + "a") {
           if (limit-- == 0) break;
-          int i = x.length();
-          stat.accept(i);
+          int length = x.length();
+          stat.accept(length);
       }
       return stat;
   }

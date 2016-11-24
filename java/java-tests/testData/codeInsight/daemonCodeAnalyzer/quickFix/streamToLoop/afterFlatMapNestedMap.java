@@ -10,8 +10,8 @@ public class Main {
       for (List<String> a : list) {
           if (a != null) {
               for (String s : a) {
-                  long l = s.length();
-                  stat.accept(l);
+                  long length = s.length();
+                  stat.accept(length);
               }
           }
       }

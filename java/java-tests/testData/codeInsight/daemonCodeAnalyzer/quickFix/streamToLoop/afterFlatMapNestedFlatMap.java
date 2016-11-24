@@ -13,8 +13,8 @@ public class Main {
               for (List<String> lst : l) {
                   if (lst != null) {
                       for (String str : lst) {
-                          int i = str.length();
-                          stat.accept(i);
+                          int length = str.length();
+                          stat.accept(length);
                       }
                   }
               }

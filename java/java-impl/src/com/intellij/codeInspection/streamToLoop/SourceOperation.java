@@ -82,7 +82,7 @@ abstract class SourceOperation extends Operation {
     if (name.equals("generate") && args.length == 1 && method.getModifierList().hasExplicitModifier(
       PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
       FunctionHelper fn = FunctionHelper.create(args[0], 0);
-      return fn == null ? null : new GenerateSource(fn);
+      return fn == null ? null : new GenerateSource(fn, null);
     }
     if (name.equals("iterate") && args.length == 2 && method.getModifierList().hasExplicitModifier(
       PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
@@ -113,7 +113,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       processUsedNames(myQualifier, usedNameConsumer);
     }
 
@@ -150,7 +150,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       for(PsiExpression arg : myArgList) {
         processUsedNames(arg, usedNameConsumer);
       }
@@ -170,26 +170,47 @@ abstract class SourceOperation extends Operation {
 
   static class GenerateSource extends SourceOperation {
     private FunctionHelper myFn;
+    private PsiExpression myLimit;
 
-    GenerateSource(FunctionHelper fn) {
+    GenerateSource(FunctionHelper fn, PsiExpression limit) {
       myFn = fn;
+      myLimit = limit;
+    }
+
+    @Override
+    Operation combineWithNext(Operation next) {
+      if(myLimit == null && next instanceof LimitOperation) {
+        return new GenerateSource(myFn, ((LimitOperation)next).myLimit);
+      }
+      return null;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       myFn.rename(oldName, newName, context);
+      if(myLimit != null) {
+        myLimit = renameVarReference(myLimit, oldName, newName, context);
+      }
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       myFn.registerUsedNames(usedNameConsumer);
+      if(myLimit != null) {
+        processUsedNames(myLimit, usedNameConsumer);
+      }
     }
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       myFn.transform(context);
+      String loop = "while(true)";
+      if(myLimit != null) {
+        String loopIdx = context.registerVarName(Arrays.asList("count", "limit"));
+        loop = "for(long "+loopIdx+"="+myLimit.getText()+";"+loopIdx+">0;"+loopIdx+"--)";
+      }
       return context.getLoopLabel() +
-             "while(true) {\n" +
+             loop+"{\n" +
              outVar.getDeclaration() + "=" + myFn.getText() + ";\n" + code +
              "}\n";
     }
@@ -211,7 +232,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       processUsedNames(myInitializer, usedNameConsumer);
       myFn.registerUsedNames(usedNameConsumer);
     }
@@ -248,7 +269,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       processUsedNames(myOrigin, usedNameConsumer);
       processUsedNames(myBound, usedNameConsumer);
     }

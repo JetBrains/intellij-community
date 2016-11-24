@@ -110,6 +110,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_STREAM_DOUBLE_STREAM = "java.util.stream.DoubleStream";
   @NonNls String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
   @NonNls String JAVA_UTIL_FUNCTION_PREDICATE = "java.util.function.Predicate";
+  @NonNls String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
 
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 

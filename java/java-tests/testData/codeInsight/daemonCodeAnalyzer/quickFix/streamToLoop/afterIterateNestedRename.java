@@ -12,8 +12,8 @@ public class Main {
               long limit = x;
               for (String s = String.valueOf(x); ; s = s + x) {
                   if (limit-- == 0) break;
-                  int i = s.length();
-                  stat.accept(i);
+                  int length = s.length();
+                  stat.accept(length);
               }
           }
       }

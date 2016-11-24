@@ -8,8 +8,8 @@ public class Main {
       int sum = 0;
       for (String s : list) {
           System.out.println(s);
-          int i = s.length();
-          sum += i;
+          int length = s.length();
+          sum += length;
       }
       return sum;
   }

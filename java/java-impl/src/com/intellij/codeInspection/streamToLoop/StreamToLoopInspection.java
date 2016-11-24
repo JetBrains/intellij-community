@@ -20,6 +20,7 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -27,11 +28,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -53,7 +52,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = StreamEx.of("count", "sum", "summaryStatistics", "reduce", "collect",
                                                                      "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch",
-                                                                     "toArray", "average", "forEach", "forEachOrdered").toSet();
+                                                                     "toArray", "average", "forEach", "forEachOrdered", "min", "max").toSet();
 
   @NotNull
   @Override
@@ -157,9 +156,17 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     List<OperationRecord> operations = new ArrayList<>();
     PsiMethodCallExpression currentCall = terminalCall;
     StreamVariable lastVar = outVar;
+    Operation next = null;
     while(true) {
       Operation op = createOperationFromCall(lastVar, currentCall);
       if(op == null) return null;
+      if(next != null) {
+        Operation combined = op.combineWithNext(next);
+        if (combined != null) {
+          op = combined;
+          operations.remove(operations.size() - 1);
+        }
+      }
       OperationRecord or = new OperationRecord();
       or.myOperation = op;
       or.myOutVar = lastVar;
@@ -175,9 +182,10 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if(op.changesVariable()) {
         PsiType type = StreamApiUtil.getStreamElementType(currentCall.getType());
         if(type == null) return null;
-        lastVar = new StreamVariable(type);
+        lastVar = new StreamVariable(type.getCanonicalText());
       }
       or.myInVar = lastVar;
+      next = op;
     }
   }
 
@@ -237,7 +245,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           temporaryStreamPlaceholder.delete();
         }
         else {
-          temporaryStreamPlaceholder.replace(factory.createExpressionFromText(finisher, temporaryStreamPlaceholder));
+          normalize(project, temporaryStreamPlaceholder.replace(factory.createExpressionFromText(finisher, temporaryStreamPlaceholder)));
         }
       }
       catch (Exception ex) {
@@ -250,9 +258,15 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
-    void addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
-      CodeStyleManager.getInstance(project)
-        .reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(statement.getParent().addBefore(context, statement)));
+    private static void addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
+      PsiElement element = statement.getParent().addBefore(context, statement);
+      normalize(project, element);
+    }
+
+    private static void normalize(@NotNull Project project, PsiElement element) {
+      element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+      PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
+      CodeStyleManager.getInstance(project).reformat(element);
     }
 
     @Nullable
@@ -381,6 +395,10 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       return found + " = " +foundValue+";\n" + getBreakStatement();
     }
 
+    public void addInitStep(String initStatement) {
+      myDeclarations.add(initStatement);
+    }
+
     public String declareResult(String desiredName, String type, String initializer) {
       String name = registerVarName(Arrays.asList(desiredName, "result"));
       myDeclarations.add(type + " " + name + " = " + initializer + ";");
@@ -397,6 +415,12 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     public void setFinisher(String finisher) {
       myFinisher = finisher;
+    }
+
+    public void setOptionalUnwrapperFinisher(String seenVariable, String accVariable, String type) {
+      String optionalClass = OptionalUtil.getOptionalClass(type);
+      setFinisher("(" + seenVariable + "?" + optionalClass + ".of(" + accVariable + "):" + optionalClass +
+                  "." + (TypeConversionUtil.isPrimitive(type) ? "" : "<" + type + ">") + "empty())");
     }
 
     public Project getProject() {

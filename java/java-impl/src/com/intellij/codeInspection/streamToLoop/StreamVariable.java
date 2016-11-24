@@ -17,7 +17,6 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import one.util.streamex.StreamEx;
@@ -39,7 +38,7 @@ import java.util.List;
 class StreamVariable {
   private static final Logger LOG = Logger.getInstance(StreamVariable.class);
 
-  static StreamVariable STUB = new StreamVariable(PsiType.VOID) {
+  static StreamVariable STUB = new StreamVariable("") {
     @Override
     public void addBestNameCandidate(String candidate) {
     }
@@ -60,8 +59,13 @@ class StreamVariable {
   private Collection<String> myBestCandidates = new LinkedHashSet<>();
   private Collection<String> myOtherCandidates = new LinkedHashSet<>();
 
-  StreamVariable(@NotNull PsiType type) {
-    myType = type.getCanonicalText();
+  StreamVariable(@NotNull String type) {
+    myType = type;
+  }
+
+  StreamVariable(@NotNull String type, @NotNull String name) {
+    myType = type;
+    myName = name;
   }
 
   /**

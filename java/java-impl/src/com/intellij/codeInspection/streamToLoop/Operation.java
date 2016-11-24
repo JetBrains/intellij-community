@@ -46,9 +46,11 @@ abstract class Operation {
                        String code,
                        StreamToLoopReplacementContext context);
 
-  void registerUsedNames(Consumer<String> usedNameConsumer) {
-
+  Operation combineWithNext(Operation next) {
+    return null;
   }
+
+  public void registerUsedNames(Consumer<String> usedNameConsumer) {}
 
   public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
 
@@ -98,7 +100,7 @@ abstract class Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       myFn.registerUsedNames(usedNameConsumer);
     }
 
@@ -146,6 +148,12 @@ abstract class Operation {
   static class MapOperation extends LambdaIntermediateOperation {
     public MapOperation(FunctionHelper fn) {
       super(fn);
+    }
+
+    @Override
+    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+      super.suggestNames(inVar, outVar);
+      myFn.suggestOutputNames(outVar);
     }
 
     @Override
@@ -201,7 +209,7 @@ abstract class Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       myRecords.forEach(or -> or.myOperation.registerUsedNames(usedNameConsumer));
     }
 
@@ -260,7 +268,7 @@ abstract class Operation {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
       FunctionHelper.processUsedNames(myExpression, usedNameConsumer);
     }
 
@@ -272,25 +280,25 @@ abstract class Operation {
   }
 
   static class LimitOperation extends Operation {
-    PsiExpression myExpression;
+    PsiExpression myLimit;
 
     LimitOperation(PsiExpression expression) {
-      myExpression = expression;
+      myLimit = expression;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myExpression = FunctionHelper.renameVarReference(myExpression, oldName, newName, context);
+      myLimit = FunctionHelper.renameVarReference(myLimit, oldName, newName, context);
     }
 
     @Override
-    void registerUsedNames(Consumer<String> usedNameConsumer) {
-      FunctionHelper.processUsedNames(myExpression, usedNameConsumer);
+    public void registerUsedNames(Consumer<String> usedNameConsumer) {
+      FunctionHelper.processUsedNames(myLimit, usedNameConsumer);
     }
 
     @Override
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String limit = context.declare("limit", "long", myExpression.getText());
+      String limit = context.declare("limit", "long", myLimit.getText());
       return "if(" + limit + "--==0) " + context.getBreakStatement() + code;
     }
   }

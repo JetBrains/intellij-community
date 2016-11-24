@@ -10,12 +10,10 @@ public class Main {
     Random r = new Random();
       DoubleSummaryStatistics stat = new DoubleSummaryStatistics();
       for (int x = 0; x < 10; x++) {
-          double x1 = x;
-          long limit = (long) x1;
-          while (true) {
-              double v = r.nextDouble() * x1;
-              if (limit-- == 0) break;
-              stat.accept(v);
+          double v = x;
+          for (long count = (long) v; count > 0; count--) {
+              double v1 = r.nextDouble() * v;
+              stat.accept(v1);
           }
       }
       return stat;

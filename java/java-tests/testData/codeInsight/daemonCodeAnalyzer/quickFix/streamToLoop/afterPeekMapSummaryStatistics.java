@@ -9,8 +9,8 @@ public class Main {
       LongSummaryStatistics stat = new LongSummaryStatistics();
       for (String s : list) {
           System.out.println(s);
-          long l = s.length();
-          stat.accept(l);
+          long length = s.length();
+          stat.accept(length);
       }
       return stat;
   }

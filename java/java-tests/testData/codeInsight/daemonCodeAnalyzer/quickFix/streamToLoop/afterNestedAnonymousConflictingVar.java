@@ -10,13 +10,13 @@ public class Main {
       long sum = 0;
       for (Map.Entry<String, List<String>> e : strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
-              long l = e.getValue().stream().filter(new Predicate<String>() {
+              long count = e.getValue().stream().filter(new Predicate<String>() {
                   @Override
                   public boolean test(String s) {
                       return e.getKey().equals(s);
                   }
               }).count();
-              sum += l;
+              sum += count;
           }
       }
       return sum;

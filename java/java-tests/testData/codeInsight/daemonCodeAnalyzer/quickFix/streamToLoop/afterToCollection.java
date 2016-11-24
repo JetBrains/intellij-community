@@ -6,12 +6,12 @@ import java.util.stream.IntStream;
 
 public class Main {
   private static TreeSet<Integer> test() {
-      TreeSet<Integer> collection = new TreeSet<Integer>();
+      TreeSet<Integer> integers = new TreeSet<>();
       for (int i : new int[]{4, 2, 1}) {
           Integer integer = i;
-          collection.add(integer);
+          integers.add(integer);
       }
-      return collection;
+      return integers;
   }
 
   public static void main(String[] args) {
