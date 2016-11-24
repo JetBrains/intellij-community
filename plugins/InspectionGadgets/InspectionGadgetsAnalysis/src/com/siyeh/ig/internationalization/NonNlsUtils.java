@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nullable;
 
-class NonNlsUtils {
+public class NonNlsUtils {
 
   private static final Key<Boolean> KEY = new Key<>("IG_NON_NLS_ANNOTATED_USE");
 
