@@ -210,12 +210,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitConfig config = GitConfig.read(configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
+    boolean isShallow = myReader.hasShallowCommits();
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo);
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo, isShallow);
   }
 
   @NotNull

@@ -103,6 +103,15 @@ class GitRepositoryReader {
     return file.exists() && file.canExecute();
   }
 
+  boolean hasShallowCommits() {
+    File shallowFile = myGitFiles.getShallowFile();
+    if (!shallowFile.exists()) {
+      return false;
+    }
+
+    return shallowFile.length() > 0;
+  }
+
   @Nullable
   private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;
