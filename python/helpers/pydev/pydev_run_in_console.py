@@ -79,6 +79,6 @@ if __name__ == '__main__':
 
     interpreter.get_namespace().update(globals)
 
-    interpreter.show_console()
+    interpreter.ShowConsole()
 
     process_exec_queue(interpreter)

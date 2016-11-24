@@ -420,6 +420,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
+  protected String getRunnerFileFromHelpers() {
+    return PYDEV_PYDEVCONSOLE_PY;
+  }
+
   private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
                                                    String[] command,
                                                    Map<String, String> env,
@@ -437,7 +441,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     commandLine.getEnvironment().putAll(env);
 
     commandLine.getParametersList().set(0, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
-                                                                                                     PYDEV_PYDEVCONSOLE_PY)
+                                                                                                     getRunnerFileFromHelpers())
                                                                                               .getPath(),
                                                                                             PySourcePosition.isWindowsPath(
                                                                                               data.getInterpreterPath())

@@ -117,6 +117,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   public class PythonScriptWithConsoleRunner extends PydevConsoleRunnerImpl {
 
     private CommandLinePatcher[] myPatchers;
+    private String PYDEV_RUN_IN_CONSOLE_PY = "pydev/pydev_run_in_console.py";
 
     public PythonScriptWithConsoleRunner(@NotNull Project project,
                                          @NotNull Sdk sdk,
@@ -135,6 +136,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
                                             myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
+    }
+
+    protected String getRunnerFileFromHelpers() {
+      return PYDEV_RUN_IN_CONSOLE_PY;
     }
 
     @Override
