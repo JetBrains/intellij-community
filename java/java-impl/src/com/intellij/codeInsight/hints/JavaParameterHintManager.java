@@ -57,15 +57,17 @@ public class JavaParameterHintManager {
   }
 
   private static boolean isBuilder(PsiCallExpression expression, PsiMethod method) {
-    if (expression instanceof PsiNewExpression) {
+    if (expression instanceof PsiNewExpression || !hasSingleParameter(method)) {
       return false;
     }
+
     PsiType returnType = TypeConversionUtil.erasure(method.getReturnType());
     final PsiClass aClass = method.getContainingClass();
     final String calledMethodFqn = aClass != null ? aClass.getQualifiedName() : null;
     if (calledMethodFqn != null && returnType != null) {
       return returnType.equalsToText(calledMethodFqn);
     }
+
     return false;
   }
   

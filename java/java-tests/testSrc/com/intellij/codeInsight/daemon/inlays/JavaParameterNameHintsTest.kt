@@ -582,6 +582,27 @@ class Test {
     onLineStartingWith("builder.bwait").assertNoInlays()
   }
 
+  fun `test builder method only method with one param`() {
+    setup("""
+class Builder {
+  Builder qwit(boolean value, String sValue) {}
+  Builder trew(boolean value) {}
+}
+
+class Test {
+  public void test() {
+    Builder builder = new Builder();
+    builder
+    .trew(false)
+    .qwit(true, "value");
+  }
+}
+""")
+
+    onLineStartingWith(".trew").assertNoInlays()
+    onLineStartingWith(".qw").assertInlays("value->true", "sValue->\"value\"")
+  }
+
   fun `test do not show single parameter hint if it is string literal`() {
     setup("""
 public class Test {
