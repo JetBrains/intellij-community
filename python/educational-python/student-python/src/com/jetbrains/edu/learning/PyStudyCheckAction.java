@@ -18,12 +18,14 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.editor.ChoicePanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 
 public class PyStudyCheckAction extends StudyCheckAction {
@@ -104,6 +106,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
               if (course.isAdaptive()) {
                 StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), project);
                 StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+                repaintChoicePanel(project, myTask);
               }
               else {
                 StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
@@ -116,6 +119,15 @@ public class PyStudyCheckAction extends StudyCheckAction {
     };
   }
 
+  private static void repaintChoicePanel(@NotNull Project project, @NotNull Task task) {
+    final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
+    if (toolWindow != null) {
+      final JComponent component = toolWindow.getBottomComponent();
+      if (component instanceof ChoicePanel) {
+        toolWindow.setBottomComponent(new ChoicePanel(task));
+      }
+    }
+  }
 
   @Nullable
   private static VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,

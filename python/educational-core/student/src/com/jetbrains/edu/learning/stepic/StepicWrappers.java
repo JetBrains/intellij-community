@@ -264,9 +264,14 @@ public class StepicWrappers {
       String time_left;
       String user;
       String user_id;
+      int id;
 
       public Attempt(int step) {
         this.step = step;
+      }
+      
+      public boolean isActive() {
+        return status.equals("active");
       }
     }
     
@@ -378,7 +383,7 @@ public class StepicWrappers {
       submission = new Submission(attemptId, new Submission.CodeReply(language, code));
     }
     
-    public SubmissionToPostWrapper(@NotNull String attemptId, List<Boolean> choices) {
+    public SubmissionToPostWrapper(@NotNull String attemptId, boolean[] choices) {
       submission = new Submission(attemptId, new Submission.ChoiceReply(choices));
     }
 
@@ -407,9 +412,9 @@ public class StepicWrappers {
       }
       
       static class ChoiceReply implements Reply {
-        List<Boolean> choices;
+        boolean[] choices;
 
-        public ChoiceReply(List<Boolean> choices) {
+        public ChoiceReply(boolean[] choices) {
           this.choices = choices;
         }
       }
