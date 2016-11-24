@@ -27,6 +27,7 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.xerces.util.SecurityManager;
 import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
@@ -456,8 +457,9 @@ public class PathManager {
       THashSet.class,               // trove4j
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
-      PatternMatcher.class,          // OROMatcher
-      Snappy.class                   // Snappy
+      PatternMatcher.class,         // OROMatcher
+      Snappy.class,                 // Snappy
+      SecurityManager.class         // xercesImpl
     };
 
     final Set<String> classPath = new HashSet<String>();
