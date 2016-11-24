@@ -249,12 +249,12 @@ public class AnswerPlaceholder {
   public void switchSubtask(@NotNull Document document, int fromSubtask, int toSubtask) {
     Set<Integer> indexes = mySubtaskInfos.keySet();
     int visibleLength = getVisibleLength(fromSubtask);
-    if (indexes.contains(fromSubtask) && indexes.contains(toSubtask)) {
+    if (indexes.contains(toSubtask)) {
       if (!myUseLength) {
         String replacementText = mySubtaskInfos.get(toSubtask).getPossibleAnswer();
         EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
+        return;
       }
-      return;
     }
     Integer minIndex = Collections.min(indexes);
     if (fromSubtask < toSubtask) {
