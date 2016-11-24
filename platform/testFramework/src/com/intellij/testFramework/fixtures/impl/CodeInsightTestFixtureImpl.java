@@ -58,10 +58,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -89,6 +86,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -115,6 +113,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +122,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -552,8 +553,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    TransactionGuard.submitTransaction(getProject(), () -> ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText()));
-    UIUtil.dispatchAllInvocationEvents();
+    invokeIntention(action, getFile(), getEditor(), action.getText());
   }
 
   @Override
@@ -1734,6 +1734,41 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = ((DocumentWindow)myEditor.getDocument()).getDelegate();
       myFile = FileDocumentManager.getInstance().getFile(document);
       myEditor = ((EditorWindow)myEditor).getDelegate();
+    }
+  }
+
+  public static boolean invokeIntention(@NotNull IntentionAction action, PsiFile file, Editor editor, String actionText) {
+    // Test that action will automatically clear the read-only attribute if modification is necessary.
+    // If your test fails due to this, make sure that your quick-fix/intention
+    // overrides "shouldMakeCurrentFileWritable" or has the following line:
+    // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+
+    ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
+    setReadOnly(file, true);
+    handler.setClearReadOnlyInTests(true);
+    AtomicBoolean result = new AtomicBoolean();
+    try {
+      ApplicationManager.getApplication().invokeLater(
+        () -> result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText)));
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    catch (AssertionError e) {
+      ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
+      throw e;
+    }
+    finally {
+      handler.setClearReadOnlyInTests(false);
+      setReadOnly(file, false);
+    }
+    return result.get();
+  }
+
+  private static void setReadOnly(PsiFile file, boolean readOnlyStatus) {
+    try {
+      WriteAction.run(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(InjectedLanguageUtil.getTopLevelFile(file).getVirtualFile(), readOnlyStatus));
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 

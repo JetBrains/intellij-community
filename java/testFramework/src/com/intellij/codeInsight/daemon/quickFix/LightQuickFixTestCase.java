@@ -18,17 +18,12 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -36,14 +31,12 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
@@ -129,28 +122,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected static void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
-    PsiFile file = getFile();
-    WriteAction.run(() -> {
-      try {
-        // Test that action will automatically clear the read-only attribute if modification is necessary.
-        // If your test fails due to this, make sure that your quick-fix/intention has the following line:
-        // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(file.getVirtualFile(), true);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    });
-    ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
-    handler.setClearReadOnlyInTests(true);
-    try {
-      ApplicationManager.getApplication().invokeLater(() ->
-        ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText()));
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    finally {
-      handler.setClearReadOnlyInTests(false);
-    }
+    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor(), action.getText());
   }
 
   protected IntentionAction findActionAndCheck(@NotNull ActionHint hint, String testFullPath) {

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -15,6 +14,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
@@ -86,7 +86,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     Editor editor = getEditor();
     PsiFile file = getFile();
 
-    assertTrue(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction,actionName));
+    assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, actionName));
     checkResultByFile(getTestName(false) + "_after.java");
   }
 

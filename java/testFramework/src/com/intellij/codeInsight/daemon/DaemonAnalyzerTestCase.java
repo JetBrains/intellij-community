@@ -23,7 +23,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -37,7 +36,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -65,7 +63,6 @@ import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -355,9 +352,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
     assertNotNull(intentionActionName, intentionAction);
-    ApplicationManager.getApplication().invokeLater(
-      () -> assertTrue(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, intentionActionName)));
-    UIUtil.dispatchAllInvocationEvents();
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }
 
   protected static IntentionAction findIntentionAction(@NotNull Collection<HighlightInfo> infos, @NotNull String intentionActionName, @NotNull Editor editor,
