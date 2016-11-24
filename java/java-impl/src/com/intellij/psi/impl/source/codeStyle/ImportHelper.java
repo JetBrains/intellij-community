@@ -759,6 +759,19 @@ public class ImportHelper{
     return findEntryIndex(packageName, statement instanceof PsiImportStaticStatement, mySettings.IMPORT_LAYOUT_TABLE.getEntries());
   }
 
+  public static boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    Collection<Pair<String, Boolean>> resultList = collectNamesToImport(file, new ArrayList<>());
+    for (Pair<String, Boolean> pair : resultList) {
+      if (pair.second &&
+          referenceName.equals(StringUtil.getShortName(pair.first)) &&
+          !StringUtil.getPackageName(pair.first).equals(psiClass.getQualifiedName())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @NotNull
   // returns list of (name, isImportStatic) pairs
   private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<PsiElement> comments){

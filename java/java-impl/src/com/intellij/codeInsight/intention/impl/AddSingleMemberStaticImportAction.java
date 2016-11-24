@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,17 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -100,8 +97,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                     final PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
                     if (currentFileResolveScope instanceof PsiImportStaticStatement) {
                       //don't hide another on-demand import and don't create ambiguity
-                      if (((PsiImportStaticStatement)currentFileResolveScope).isOnDemand() ||
-                          MethodSignatureUtil.areSignaturesEqual((PsiMethod)method, (PsiMethod)resolved)) {
+                      if (MethodSignatureUtil.areSignaturesEqual((PsiMethod)method, (PsiMethod)resolved)) {
                         return null;
                       }
                     }
@@ -216,12 +212,12 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
       }
     });
 
-    if (findExistingImport(file, resolvedClass, referenceName) == null) {
-      if (resolved instanceof PsiClass) {
-        ((PsiImportHolder) file).importClass((PsiClass) resolved);
-      } else {
-        PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
-      }
+    PsiImportStatementBase existingImport = findExistingImport(file, resolvedClass, referenceName);
+    if (existingImport == null && resolved instanceof PsiClass) {
+      ((PsiImportHolder) file).importClass((PsiClass) resolved);
+    }
+    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
+      PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
     }
 
     file.accept(new JavaRecursiveElementVisitor() {

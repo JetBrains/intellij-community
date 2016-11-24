@@ -92,6 +92,19 @@ public abstract class JavaCodeStyleManager {
   public abstract PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file);
 
   /**
+   * Single-static-import <code>import static classFQN.referenceName;</code> shadows on-demand static imports, like described
+   * JLS 6.4.1
+   * A single-static-import declaration d in a compilation unit c of package p that imports a {member} named n
+   * shadows the declaration of any static {member} named n imported by a static-import-on-demand declaration in c, throughout c.
+   *
+   * @return true if file contains import which would be shadowed
+   *         false otherwise
+   */
+  public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    return false;
+  }
+
+  /**
    * Returns the kind of the specified variable (local, parameter, field, static field or static final field).
    *
    * @param variable the variable to get the kind for.

@@ -32,7 +32,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -125,6 +124,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file) {
     return new ImportHelper(getSettings()).prepareOptimizeImportsResult(file);
+  }
+
+  @Override
+  public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    return ImportHelper.hasConflictingOnDemandImport(file, psiClass, referenceName);
   }
 
   @Override
