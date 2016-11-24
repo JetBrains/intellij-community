@@ -232,7 +232,8 @@ val READER_INTERFACE_NAME = "ProtocolResponseReader"
 
   // todo DOMDebugger
 private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
-                                       "Tracing", "Worker")
+                                       "Tracing", "Worker",
+                                       "Console")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
   if (originalName != "this") {
