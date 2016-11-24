@@ -21,7 +21,6 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -130,12 +129,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }, this);
 
-    if (NotificationsManagerImpl.newEnabled()) {
-      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
-    }
-    else {
-      myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
-    }
+    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -309,9 +303,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      if (NotificationsManagerImpl.newEnabled()) {
-        toolbar.add(createEventsLink());
-      }
+      toolbar.add(createEventsLink());
       toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
 

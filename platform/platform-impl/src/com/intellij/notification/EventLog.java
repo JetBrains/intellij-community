@@ -154,7 +154,7 @@ public class EventLog {
     hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
 
     List<AnAction> actions = notification.getActions();
-    if (NotificationsManagerImpl.newEnabled() && !actions.isEmpty()) {
+    if (!actions.isEmpty()) {
       String text = "<p>" + StringUtil.join(actions, new Function<AnAction, String>() {
         private int index;
 
@@ -635,15 +635,8 @@ public class EventLog {
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
-        Ref<Object> layoutDataRef = null;
-        if (NotificationsManagerImpl.newEnabled()) {
-          BalloonLayoutData layoutData = new BalloonLayoutData();
-          layoutData.groupId = "";
-          layoutData.showFullContent = true;
-          layoutData.showSettingButton = false;
-          layoutDataRef = new Ref<>(layoutData);
-        }
-        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, layoutDataRef, project);
+        Balloon balloon =
+          NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, BalloonLayoutData.fullContent(), project);
         balloon.show(target, Balloon.Position.above);
       }
     }

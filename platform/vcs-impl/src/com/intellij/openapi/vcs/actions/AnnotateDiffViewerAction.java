@@ -63,6 +63,7 @@ import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -369,7 +370,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       return;
     }
 
-    Balloon balloon = NotificationsManagerImpl.createBalloon(component, notification, false, true, null, viewer);
+    Balloon balloon = NotificationsManagerImpl.createBalloon(component, notification, false, true, BalloonLayoutData.fullContent(), viewer);
 
     Dimension componentSize = component.getSize();
     Dimension balloonSize = balloon.getPreferredSize();

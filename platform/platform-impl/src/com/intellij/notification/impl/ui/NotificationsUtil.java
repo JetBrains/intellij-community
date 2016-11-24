@@ -19,13 +19,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -134,8 +132,7 @@ public class NotificationsUtil {
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       return Pair.create(uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
-    Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-    return systemFontData == null ? null : systemFontData;
+    return UIUtil.getSystemFontData();
   }
 
   @Nullable
@@ -168,10 +165,6 @@ public class NotificationsUtil {
       return icon;
     }
 
-    if (!NotificationsManagerImpl.newEnabled()) {
-      return getMessageType(notification).getDefaultIcon();
-    }
-
     switch (notification.getType()) {
       case WARNING:
         return AllIcons.General.BalloonWarning;
@@ -193,24 +186,6 @@ public class NotificationsUtil {
       case INFORMATION:
       default:
         return MessageType.INFO;
-    }
-  }
-
-  @NotNull
-  public static Color getBackground(@NotNull final Notification notification) {
-    return getMessageType(notification).getPopupBackground();
-  }
-
-  @NotNull
-  public static Color getBorderColor(@NotNull Notification notification) {
-    switch (notification.getType()) {
-      case ERROR:
-        return new JBColor(Color.gray, new Color(0xc8c8c8));
-      case WARNING:
-        return new JBColor(Color.gray, new Color(0x615f51));
-      case INFORMATION:
-      default:
-        return new JBColor(Color.gray, new Color(0x205c00));
     }
   }
 }

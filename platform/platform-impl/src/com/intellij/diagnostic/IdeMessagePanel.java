@@ -31,8 +31,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -222,23 +220,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = false;
     }
     else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
-        if (NotificationsManagerImpl.newEnabled()) {
-          showErrorNotification(notificationText);
-          return;
-        }
-        if (notificationText == null) {
-          notificationText = INTERNAL_ERROR_NOTICE;
-        }
-        final JLabel label = new JLabel(notificationText);
-        label.setIcon(AllIcons.Ide.FatalError);
-        new NotificationPopup(this, label, LightColors.RED, false, new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            _openFatals(null);
-          }
-        }, true);
-      });
+      ApplicationManager.getApplication()
+        .invokeLater(() -> showErrorNotification(tryGetFromMessages(myMessagePool.getFatalErrors(false, false))));
       myNotificationPopupAlreadyShown = true;
     }
   }
@@ -268,9 +251,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null;
 
-    BalloonLayoutData layoutData = new BalloonLayoutData();
-    layoutData.groupId = "";
-    layoutData.showSettingButton = false;
+    BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = 5000;
     layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
     layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);

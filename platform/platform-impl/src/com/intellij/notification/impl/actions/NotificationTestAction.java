@@ -19,7 +19,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.connect.StatisticsNotification;
 import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
 import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,48 +52,32 @@ public class NotificationTestAction extends AnAction implements DumbAware {
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
   public void actionPerformed(@NotNull AnActionEvent event) {
-    new NotificationDialog(event.getProject(), NotificationsManagerImpl.newEnabled()).show();
+    new NotificationDialog(event.getProject()).show();
   }
 
   private static final class NotificationDialog extends DialogWrapper {
-    private final JTextField myTitle = new JTextField(50);
     private final JTextArea myMessage = new JTextArea(10, 50);
-    private final JComboBox myType = new JComboBox(NotificationType.values());
     private final MessageBus myMessageBus;
-    private final boolean myIsNew;
 
-    private NotificationDialog(@Nullable Project project, boolean isNew) {
+    private NotificationDialog(@Nullable Project project) {
       super(project, true, IdeModalityType.MODELESS);
-      myIsNew = isNew;
       myMessageBus = project != null ? project.getMessageBus() : ApplicationManager.getApplication().getMessageBus();
       init();
       setOKButtonText("Notify");
       setTitle("Test Notification");
-      if (isNew) {
-        myMessage.setText(
-          PropertiesComponent.getInstance().getValue(MESSAGE_KEY, "GroupID:\nTitle:\nSubtitle:\nContent:\nContent:\nActions:\nSticky:\n"));
-      }
-      else {
-        myMessage.setText("You can close<br>\n" +
-                          "this very very very very long notification\n" +
-                          "by clicking <a href=\"close\">this link</a>.\n" +
-                          "<p>Long long long long. It should be long. Very long. Too long. And even longer.");
-      }
+      myMessage.setText(
+        PropertiesComponent.getInstance().getValue(MESSAGE_KEY, "GroupID:\nTitle:\nSubtitle:\nContent:\nContent:\nActions:\nSticky:\n"));
     }
 
     @Nullable
     @Override
     protected String getDimensionServiceKey() {
-      return myIsNew ? "NotificationTestAction" : null;
+      return "NotificationTestAction";
     }
 
     @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout(10, 10));
-      if (!myIsNew) {
-        panel.add(BorderLayout.NORTH, myTitle);
-        panel.add(BorderLayout.SOUTH, myType);
-      }
       panel.add(BorderLayout.CENTER, new JScrollPane(myMessage));
       return panel;
     }
@@ -107,28 +90,13 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     @Override
     public void doCancelAction() {
-      if (myIsNew) {
-        PropertiesComponent.getInstance().setValue(MESSAGE_KEY, myMessage.getText());
-      }
+      PropertiesComponent.getInstance().setValue(MESSAGE_KEY, myMessage.getText());
       super.doCancelAction();
     }
 
     @Override
     protected void doOKAction() {
-      String message = myMessage.getText();
-      if (myIsNew) {
-        newNotification(message);
-        return;
-      }
-      String title = myTitle.getText();
-      Object value = myType.getSelectedItem();
-      NotificationType type = value instanceof NotificationType ? (NotificationType)value : NotificationType.ERROR;
-      final Notification notification = new Notification(TEST_GROUP_ID, title, message, type, new NotificationListener() {
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          notification.expire();
-        }
-      });
-      ApplicationManager.getApplication().executeOnPooledThread(() -> myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification));
+      newNotification(myMessage.getText());
     }
 
     private void newNotification(String text) {

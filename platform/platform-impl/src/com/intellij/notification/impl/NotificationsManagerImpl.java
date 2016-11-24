@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -90,10 +88,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
-  }
-
-  public static boolean newEnabled() {
-    return Registry.is("ide.new.notification.enabled");
   }
 
   @Override
@@ -216,13 +210,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
           msg += notification.getContent();
         }
 
-        if (newEnabled()) {
-          Window window = findWindowForBalloon(project);
-          if (window instanceof IdeFrame) {
-            BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
-            if (layout != null) {
-              ((BalloonLayoutImpl)layout).remove(notification);
-            }
+        Window window = findWindowForBalloon(project);
+        if (window instanceof IdeFrame) {
+          BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
+          if (layout != null) {
+            ((BalloonLayoutImpl)layout).remove(notification);
           }
         }
 
@@ -245,22 +237,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      Ref<Object> layoutDataRef = newEnabled() ? new Ref<>() : null;
-      if (layoutDataRef != null) {
-        if (project == null || project.isDefault()) {
+      Ref<BalloonLayoutData> layoutDataRef = new Ref<>();
+      if (project == null || project.isDefault()) {
+        BalloonLayoutData layoutData = new BalloonLayoutData();
+        layoutData.groupId = "";
+        layoutData.welcomeScreen = layout instanceof WelcomeBalloonLayoutImpl;
+        layoutData.type = notification.getType();
+        layoutDataRef.set(layoutData);
+      }
+      else {
+        BalloonLayoutData.MergeInfo mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
+        if (mergeData != null) {
           BalloonLayoutData layoutData = new BalloonLayoutData();
-          layoutData.groupId = "";
-          layoutData.welcomeScreen = layout instanceof WelcomeBalloonLayoutImpl;
-          layoutData.type = notification.getType();
+          layoutData.mergeData = mergeData;
           layoutDataRef.set(layoutData);
-        }
-        else {
-          BalloonLayoutData.MergeInfo mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
-          if (mergeData != null) {
-            BalloonLayoutData layoutData = new BalloonLayoutData();
-            layoutData.mergeData = mergeData;
-            layoutDataRef.set(layoutData);
-          }
         }
       }
       final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
@@ -272,40 +262,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       ((BalloonImpl)balloon).traceDispose(true);
 
-      layout.add(balloon, layoutDataRef == null ? null : layoutDataRef.get());
-      if (layoutDataRef != null && layoutDataRef.get() instanceof BalloonLayoutData) {
-        ((BalloonLayoutData)layoutDataRef.get()).project = project;
+      layout.add(balloon, layoutDataRef.get());
+      if (layoutDataRef.get() != null) {
+        layoutDataRef.get().project = project;
       }
       ((BalloonImpl)balloon).startFadeoutTimer(0);
       if (NotificationDisplayType.BALLOON == displayType) {
-        FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            if (balloon.isDisposed()) {
-              return;
-            }
-
-            if (!sticky) {
-              if (newEnabled()) {
-                ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
-              }
-              else {
-                ((BalloonImpl)balloon).startFadeoutTimer(0);
-                ((BalloonImpl)balloon).setHideOnClickOutside(true);
-              }
-            }
-            else //noinspection ConstantConditions
-              if (noProjects && !newEnabled()) {
-                projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
-                  @Override
-                  public void projectOpened(Project project) {
-                    projectManager.removeProjectManagerListener(this);
-                    if (!balloon.isDisposed()) {
-                      ((BalloonImpl)balloon).startFadeoutTimer(300);
-                    }
-                  }
-                });
-              }
+        FrameStateManager.getInstance().getApplicationActive().doWhenDone(() -> {
+          if (!sticky && !balloon.isDisposed()) {
+            ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
           }
         });
       }
@@ -334,7 +299,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Ref<BalloonLayoutData> layoutDataRef,
                                       @NotNull Disposable parentDisposable) {
     return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
   }
@@ -344,165 +309,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Ref<BalloonLayoutData> layoutDataRef,
                                       @NotNull Disposable parentDisposable) {
-    if (layoutDataRef != null) {
-      return createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
-    }
-
-    final JEditorPane text = new JEditorPane();
-    text.setEditorKit(UIUtil.getHTMLEditorKit());
-
-    final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
-    if (listener != null) {
-      text.addHyperlinkListener(listener);
-    }
-
-    final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null));
-    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(JBUI.scale(350), label.getPreferredSize().width) + "px;"));
-    text.setEditable(false);
-    text.setOpaque(false);
-
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      text.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
-
-    text.setBorder(null);
-
-    final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
-
-    if (text.getCaret() != null) {
-      text.setCaretPosition(0);
-    }
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(text, true); // do not add 1px border for viewport on UI update
-    pane.setOpaque(false);
-    pane.getViewport().setOpaque(false);
-    content.add(pane, BorderLayout.CENTER);
-
-    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
-    north.add(new JLabel(NotificationsUtil.getIcon(notification)), BorderLayout.NORTH);
-    content.add(north, BorderLayout.WEST);
-
-    content.setBorder(new EmptyBorder(2, 4, 2, 4));
-
-    JPanel buttons = createButtons(notification, content, listener);
-
-    Dimension preferredSize = text.getPreferredSize();
-    text.setSize(preferredSize);
-
-    Dimension paneSize = new Dimension(text.getPreferredSize());
-
-    int maxHeight = JBUI.scale(400);
-    int maxWidth = JBUI.scale(600);
-
-    if (windowComponent != null) {
-      maxHeight = Math.min(maxHeight, windowComponent.getHeight() - 20);
-      maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
-    }
-
-    if (paneSize.height > maxHeight) {
-      pane.setPreferredSize(new Dimension(Math.min(maxWidth, paneSize.width + UIUtil.getScrollBarWidth()), maxHeight));
-    }
-    else if (paneSize.width > maxWidth) {
-      pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
-    }
-
-    final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(new JBColor(Gray._234, Gray._92))
-      .setCloseButtonEnabled(buttons == null)
-      .setShowCallout(showCallout)
-      .setShadow(false)
-      .setHideOnClickOutside(hideOnClickOutside)
-      .setHideOnAction(hideOnClickOutside)
-      .setHideOnKeyOutside(hideOnClickOutside)
-      .setHideOnFrameResize(false)
-      .setBorderColor(new JBColor(Gray._180, Gray._110));
-
-    final Balloon balloon = builder.createBalloon();
-    balloon.setAnimationEnabled(false);
-    notification.setBalloon(balloon);
-    Disposer.register(parentDisposable, balloon);
-    return balloon;
-  }
-
-  @Nullable
-  private static JPanel createButtons(@NotNull Notification notification,
-                                      @NotNull final JPanel content,
-                                      @Nullable HyperlinkListener listener) {
-    if (notification instanceof NotificationActionProvider) {
-      JPanel buttons = new JPanel(new HorizontalLayout(5));
-      buttons.setOpaque(false);
-      content.add(BorderLayout.SOUTH, buttons);
-
-      final Ref<JButton> defaultButton = new Ref<>();
-
-      NotificationActionProvider provider = (NotificationActionProvider)notification;
-      for (NotificationActionProvider.Action action : provider.getActions(listener)) {
-        JButton button = new JButton(action) {
-          @Override
-          public void setUI(ButtonUI ui) {
-            boolean isDarcula = ui instanceof DarculaButtonUI && UIUtil.isUnderDarcula();
-            if (isDarcula) {
-              ui = new DarculaButtonUI() {
-                @Override
-                protected Color getButtonColor1() {
-                  return new ColorUIResource(0x464b4c);
-                }
-
-                @Override
-                protected Color getButtonColor2() {
-                  return new ColorUIResource(0x383c3d);
-                }
-              };
-            }
-            super.setUI(ui);
-            if (isDarcula) {
-              setBorder(new DarculaButtonPainter() {
-                @Override
-                protected Color getBorderColor() {
-                  return new ColorUIResource(0x616263);
-                }
-              });
-            }
-          }
-        };
-
-        button.setOpaque(false);
-        if (action.isDefaultAction()) {
-          defaultButton.setIfNull(button);
-        }
-
-        buttons.add(HorizontalLayout.RIGHT, button);
-      }
-
-      if (!defaultButton.isNull()) {
-        UIUtil.addParentChangeListener(content, new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent event) {
-            if (event.getOldValue() == null && event.getNewValue() != null) {
-              UIUtil.removeParentChangeListener(content, this);
-              JRootPane rootPane = UIUtil.getRootPane(content);
-              if (rootPane != null) {
-                rootPane.setDefaultButton(defaultButton.get());
-              }
-            }
-          }
-        });
-      }
-
-      return buttons;
-    }
-    return null;
-  }
-
-  @NotNull
-  private static Balloon createNewBalloon(@Nullable JComponent windowComponent,
-                                          @NotNull Notification notification,
-                                          boolean showCallout,
-                                          boolean hideOnClickOutside,
-                                          @NotNull Ref<Object> layoutDataRef,
-                                          @NotNull Disposable parentDisposable) {
-    final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : (BalloonLayoutData)layoutDataRef.get();
+    final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : layoutDataRef.get();
     if (layoutData.groupId == null) {
       if (NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         layoutData.groupId = notification.getGroupId();
@@ -864,6 +673,76 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     Disposer.register(parentDisposable, balloon);
     return balloon;
+  }
+
+  @Nullable
+  private static JPanel createButtons(@NotNull Notification notification,
+                                      @NotNull final JPanel content,
+                                      @Nullable HyperlinkListener listener) {
+    if (notification instanceof NotificationActionProvider) {
+      JPanel buttons = new JPanel(new HorizontalLayout(5));
+      buttons.setOpaque(false);
+      content.add(BorderLayout.SOUTH, buttons);
+
+      final Ref<JButton> defaultButton = new Ref<>();
+
+      NotificationActionProvider provider = (NotificationActionProvider)notification;
+      for (NotificationActionProvider.Action action : provider.getActions(listener)) {
+        JButton button = new JButton(action) {
+          @Override
+          public void setUI(ButtonUI ui) {
+            boolean isDarcula = ui instanceof DarculaButtonUI && UIUtil.isUnderDarcula();
+            if (isDarcula) {
+              ui = new DarculaButtonUI() {
+                @Override
+                protected Color getButtonColor1() {
+                  return new ColorUIResource(0x464b4c);
+                }
+
+                @Override
+                protected Color getButtonColor2() {
+                  return new ColorUIResource(0x383c3d);
+                }
+              };
+            }
+            super.setUI(ui);
+            if (isDarcula) {
+              setBorder(new DarculaButtonPainter() {
+                @Override
+                protected Color getBorderColor() {
+                  return new ColorUIResource(0x616263);
+                }
+              });
+            }
+          }
+        };
+
+        button.setOpaque(false);
+        if (action.isDefaultAction()) {
+          defaultButton.setIfNull(button);
+        }
+
+        buttons.add(HorizontalLayout.RIGHT, button);
+      }
+
+      if (!defaultButton.isNull()) {
+        UIUtil.addParentChangeListener(content, new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent event) {
+            if (event.getOldValue() == null && event.getNewValue() != null) {
+              UIUtil.removeParentChangeListener(content, this);
+              JRootPane rootPane = UIUtil.getRootPane(content);
+              if (rootPane != null) {
+                rootPane.setDefaultButton(defaultButton.get());
+              }
+            }
+          }
+        });
+      }
+
+      return buttons;
+    }
+    return null;
   }
 
   @NotNull
