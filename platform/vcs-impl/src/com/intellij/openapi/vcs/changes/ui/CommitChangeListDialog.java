@@ -129,6 +129,40 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myLastSelectedListName;
 
 
+  public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
+                                 @Nullable final CommitExecutor executor, final String comment) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final Collection<Change> changes = new HashSet<>();
+    for (FilePath path : paths) {
+      changes.addAll(manager.getChangesIn(path));
+    }
+
+    commitChanges(project, changes, initialSelection, executor, comment);
+  }
+
+  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
+                                      @Nullable final CommitExecutor executor, final String comment) {
+    if (executor == null) {
+      return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment, null);
+    }
+    else {
+      return commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment, null);
+    }
+  }
+
+  /**
+   * Shows the commit dialog, and performs the selected action: commit, commit & push, create patch, etc.
+   * @param customResultHandler If this is not null, after commit is completed, custom result handler is called instead of
+   *                            showing the default notification in case of commit or failure.
+   * @return true if user agreed to commit, false if he pressed "Cancel".
+   */
+  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
+                                      final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
+                                      @Nullable CommitResultHandler customResultHandler) {
+    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment,
+                         customResultHandler, true);
+  }
+
   public static boolean commitChanges(final Project project,
                                       final List<Change> changes,
                                       final LocalChangeList initialSelection,
@@ -188,34 +222,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
   }
 
-  // Used in plugins
-  @SuppressWarnings("unused")
-  @NotNull
-  public List<RefreshableOnComponent> getAdditionalComponents() {
-    return Collections.unmodifiableList(myAdditionalComponents);
-  }
-
-  public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
-                                 @Nullable final CommitExecutor executor, final String comment) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Collection<Change> changes = new HashSet<>();
-    for (FilePath path : paths) {
-      changes.addAll(manager.getChangesIn(path));
-    }
-
-    commitChanges(project, changes, initialSelection, executor, comment);
-  }
-
-  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
-                                      @Nullable final CommitExecutor executor, final String comment) {
-    if (executor == null) {
-      return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment, null);
-    }
-    else {
-      return commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment, null);
-    }
-  }
-
   public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
     List<CommitExecutor> result = new ArrayList<>();
     for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
@@ -223,19 +229,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     result.addAll(ChangeListManager.getInstance(project).getRegisteredExecutors());
     return result;
-  }
-
-  /**
-   * Shows the commit dialog, and performs the selected action: commit, commit & push, create patch, etc.
-   * @param customResultHandler If this is not null, after commit is completed, custom result handler is called instead of
-   *                            showing the default notification in case of commit or failure.
-   * @return true if user agreed to commit, false if he pressed "Cancel".
-   */
-  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
-                                      final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
-                                      @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment,
-                         customResultHandler, true);
   }
 
   public static void commitAlienChanges(final Project project, final List<Change> changes, final AbstractVcs vcs,
@@ -1113,6 +1106,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (RefreshableOnComponent component : myAdditionalComponents) {
       component.restoreState();
     }
+  }
+
+  // Used in plugins
+  @SuppressWarnings("unused")
+  @NotNull
+  public List<RefreshableOnComponent> getAdditionalComponents() {
+    return Collections.unmodifiableList(myAdditionalComponents);
   }
 
   private void updateButtons() {
