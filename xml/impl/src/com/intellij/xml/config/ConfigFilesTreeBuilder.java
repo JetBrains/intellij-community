@@ -198,7 +198,8 @@ public class ConfigFilesTreeBuilder {
     if (i >= 0) {
       path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
     }
-    renderer.append(" (" + path.substring(0, path.length() - virtualFile.getName().length() - 1) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    renderer.append(" (" + StringUtil.trimEnd(StringUtil.trimEnd(path, virtualFile.getName()), "/") + ")",
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   public static void installSearch(JTree tree) {
