@@ -15,6 +15,7 @@
  */
 package git4idea.ui;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -25,14 +26,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -90,6 +90,9 @@ public class GitTagDialog extends DialogWrapper {
    * The current project
    */
   private final Project myProject;
+  @NotNull private final Git myGit;
+  @NotNull private final VcsNotifier myNotifier;
+
   /**
    * Existing tags for the project
    */
@@ -119,6 +122,9 @@ public class GitTagDialog extends DialogWrapper {
     setTitle(GitBundle.getString("tag.title"));
     setOKButtonText(GitBundle.getString("tag.button"));
     myProject = project;
+    myNotifier = VcsNotifier.getInstance(myProject);
+    myGit = ServiceManager.getService(Git.class);
+
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myGitRootComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -182,7 +188,7 @@ public class GitTagDialog extends DialogWrapper {
       messageFile = null;
     }
     try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.TAG);
+      GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.TAG);
       if (hasMessage) {
         h.addParameters("-a");
       }
@@ -197,18 +203,22 @@ public class GitTagDialog extends DialogWrapper {
       if (object.length() != 0) {
         h.addParameters(object);
       }
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
-      VcsNotifier.getInstance(myProject).notifySuccess(myTagNameTextField.getText(),
-                                                       "Created tag " + myTagNameTextField.getText() + " successfully.");
+
+      GitCommandResult result = myGit.runCommand(h);
+      if (result.success()) {
+        myNotifier.notifySuccess(myTagNameTextField.getText(),
+                                                         "Created tag " + myTagNameTextField.getText() + " successfully.");
+      }
+      else {
+        myNotifier.notifyError("Couldn't Create Tag", result.getErrorOutputAsHtmlString());
+      }
+
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
       if (repository != null) {
         repository.getRepositoryFiles().refresh(true);
       }
       else {
         LOG.error("No repository registered for root: " + getGitRoot());
-      }
-      if(!h.errors().isEmpty()) {
-        GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
       }
     }
     finally {
