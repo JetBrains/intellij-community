@@ -49,7 +49,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -135,19 +138,17 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     mySingleTaskController.request(new IndexingRequest(commitsToIndex, full));
   }
 
-  private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details) {
+  private void storeDetail(@NotNull VcsFullCommitDetails detail) {
     if (myIndexStorage == null) return;
     try {
-      for (VcsFullCommitDetails detail : details) {
-        int index = myHashMap.getCommitIndex(detail.getId(), detail.getRoot());
+      int index = myHashMap.getCommitIndex(detail.getId(), detail.getRoot());
 
-        myIndexStorage.messages.put(index, detail.getFullMessage());
-        myIndexStorage.trigrams.update(index, detail);
-        myIndexStorage.users.update(index, detail);
-        myIndexStorage.paths.update(index, detail);
+      myIndexStorage.messages.put(index, detail.getFullMessage());
+      myIndexStorage.trigrams.update(index, detail);
+      myIndexStorage.users.update(index, detail);
+      myIndexStorage.paths.update(index, detail);
 
-        myIndexStorage.commits.put(index);
-      }
+      myIndexStorage.commits.put(index);
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -534,7 +535,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       VcsLogProvider provider = myProviders.get(root);
       try {
         List<String> hashes = TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString());
-        provider.readFullDetails(root, hashes, details -> storeDetails(Collections.singletonList(details)));
+        provider.readFullDetails(root, hashes, VcsLogPersistentIndex.this::storeDetail);
       }
       catch (VcsException e) {
         LOG.error(e);
@@ -569,7 +570,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           myProviders.get(root).readAllFullDetails(root, details -> {
             int index = myHashMap.getCommitIndex(details.getId(), details.getRoot());
             if (notIndexed.contains(index)) {
-              storeDetails(Collections.singletonList(details));
+              storeDetail(details);
               counter.newIndexedCommits++;
             }
 
