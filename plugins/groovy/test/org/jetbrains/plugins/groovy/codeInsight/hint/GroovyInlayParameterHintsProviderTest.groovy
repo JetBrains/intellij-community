@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
+import org.jdom.Element
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
@@ -47,10 +47,8 @@ class Foo {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void tearDown() throws Exception {
-    ParameterNameHintsSettings.getInstance().myAddedPatterns.clear()
-    ParameterNameHintsSettings.getInstance().myRemovedPatterns.clear()
+    ParameterNameHintsSettings.getInstance().loadState(new Element("element"))
     super.tearDown()
   }
 

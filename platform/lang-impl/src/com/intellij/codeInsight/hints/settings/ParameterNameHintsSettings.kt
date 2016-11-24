@@ -80,11 +80,17 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   }
 
   override fun loadState(state: Element) {
-    val allBlackLists = state.getChild(XmlTagHelper.BLACKLISTS)?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
-    allBlackLists.mapNotNull {
-      val language = it.attributeValue(XmlTagHelper.LANGUAGE) ?: return@mapNotNull
-      myAddedPatterns[language] = it.extractPatterns(XmlTagHelper.ADDED)
-      myRemovedPatterns[language] = it.extractPatterns(XmlTagHelper.REMOVED)
+    val allBlackLists = state
+      .getChild(XmlTagHelper.BLACKLISTS)
+      ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
+
+    myAddedPatterns.clear()
+    myRemovedPatterns.clear()
+
+    allBlackLists.mapNotNull { blacklist ->
+      val language = blacklist.attributeValue(XmlTagHelper.LANGUAGE) ?: return@mapNotNull
+      myAddedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.ADDED)
+      myRemovedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.REMOVED)
     }
   }
   

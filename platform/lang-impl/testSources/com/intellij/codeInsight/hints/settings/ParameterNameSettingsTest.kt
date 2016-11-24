@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
+import org.jdom.Element
 
 
 class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParameterHintsProvider {
@@ -73,6 +74,18 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.size == 2)
     assert(ignoreSet.contains("aaa"))
     assert(ignoreSet.contains("xxx"))
+  }
+
+  fun `test if empty element is passed settings are dropped`() {
+    addIgnorePattern("new_ignore_pattern")
+
+    var ignoreSet = getIgnoreSet()
+    assert(ignoreSet.size == 1)
+
+    settings.loadState(Element("element"))
+
+    ignoreSet = getIgnoreSet()
+    assert(ignoreSet.isEmpty())
   }
 
   fun `test removed pattern is removed when defaults are updated`() {
