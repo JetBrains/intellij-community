@@ -39,6 +39,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() throws Exception { doTest(); }
 
   public void testDontCollapseToOnDemandImport() throws Exception { doTest(); }
+  public void testIgnoreInaccessible() throws Exception{ doTest();}
 
   private void doTest() throws Exception {
     doTest(".java");

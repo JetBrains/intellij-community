@@ -247,6 +247,8 @@ public class ImportHelper{
           continue;
         }
       }
+      PsiResolveHelper resolveHelper = facade.getResolveHelper();
+
       for (int i = 0; i < onDemandImportsList.size(); i++) {
         String onDemandName = onDemandImportsList.get(i);
         if (prefix.equals(onDemandName)) continue;
@@ -254,18 +256,18 @@ public class ImportHelper{
           PsiClass aClass = onDemandElements.get(i);
           if (aClass != null) {
             PsiField field = aClass.findFieldByName(shortName, true);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+            if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(field, file, null)) {
               namesToUseSingle.add(name);
             }
             else {
               PsiClass inner = aClass.findInnerClassByName(shortName, true);
-              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC)) {
+              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, file, null)) {
                 namesToUseSingle.add(name);
               }
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
                 for (PsiMethod method : methods) {
-                  if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                  if (method.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(method, file, null)) {
                     namesToUseSingle.add(name);
                   }
                 }
