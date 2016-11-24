@@ -47,6 +47,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -81,12 +82,28 @@ public class ImportHelper{
     List<PsiElement> nonImports = new ArrayList<>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     List<Pair<String, Boolean>> names = new ArrayList<>(collectNamesToImport(file, nonImports));
-    Collections.sort(names, (o1, o2) -> o1.getFirst().compareTo(o2.getFirst()));
+    Collections.sort(names, Comparator.comparing(o -> o.getFirst()));
 
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
     final Map<String, Boolean> classesOrPackagesToImportOnDemand = new THashMap<>();
     collectOnDemandImports(resultList, mySettings, classesOrPackagesToImportOnDemand);
+
+    MultiMap<String, String> conflictingMemberNames = new MultiMap<>();
+    for (Pair<String, Boolean> pair : resultList) {
+      if (pair.second) {
+        conflictingMemberNames.putValue(StringUtil.getShortName(pair.first), StringUtil.getPackageName(pair.first));
+      }
+    }
+
+    for (String methodName : conflictingMemberNames.keySet()) {
+      Collection<String> collection = conflictingMemberNames.get(methodName);
+      if (!classesOrPackagesToImportOnDemand.keySet().containsAll(collection)) {
+        for (String name : collection) {
+          classesOrPackagesToImportOnDemand.remove(name);
+        }
+      }
+    }
 
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand.keySet());
     Set<String> toReimport = new THashSet<>();
