@@ -19,7 +19,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -47,10 +47,10 @@ public class _LastInSuiteTest extends TestCase {
     if (guiTestMode) {
       final Application application = ApplicationManager.getApplication();
 
-      application.invokeAndWait(() -> {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         IdeEventQueue.getInstance().flushQueue();
-        ((ApplicationImpl)application).exit(true, true, false, false);
-      }, ModalityState.any());
+        ((ApplicationImpl)application).exit(true, true, false);
+      });
       ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
       return;
     }

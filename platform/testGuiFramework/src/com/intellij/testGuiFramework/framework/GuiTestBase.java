@@ -48,6 +48,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
 import static com.intellij.openapi.util.io.FileUtil.copyDir;
@@ -151,9 +152,11 @@ public abstract class GuiTestBase {
         execute(new GuiTask() {
           @Override
           protected void executeInEDT() throws Throwable {
-            for (Project project : openProjects) {
-              assertTrue("Failed to close project " + quote(project.getName()), closeAndDispose(project));
-            }
+            TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+              for (Project project : openProjects) {
+                assertTrue("Failed to close project " + quote(project.getName()), closeAndDispose(project));
+              }
+            });
           }
         });
         return ProjectManager.getInstance().getOpenProjects().length == 0;
@@ -287,7 +290,7 @@ public abstract class GuiTestBase {
           Document document = saxBuilder.build(modulesXmlFilePath);
           XPath xpath = XPath.newInstance("//*[@fileurl]");
           //noinspection unchecked
-          java.util.List<Element> modules = xpath.selectNodes(document);
+          List<Element> modules = xpath.selectNodes(document);
           int urlPrefixSize = "file://$PROJECT_DIR$/".length();
           for (Element module : modules) {
             String fileUrl = module.getAttributeValue("fileurl");
