@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
@@ -108,7 +107,6 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   private boolean doSuppress(@NotNull Project project, PsiDocCommentOwner container) {
     assert container != null;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return true;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {

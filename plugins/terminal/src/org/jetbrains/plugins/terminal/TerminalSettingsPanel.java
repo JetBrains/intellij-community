@@ -115,7 +115,7 @@ public class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Comparing.equal(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
+    return !Comparing.equal(myShellPathField.getText(), myOptionsProvider.getShellPath())
            || !Comparing.equal(myStartDirectoryField.getText(), myProjectOptionsProvider.getStartingDirectory())
            || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
@@ -129,8 +129,8 @@ public class TerminalSettingsPanel {
   }
 
   public void apply() {
-    myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
+    myOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
     myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
@@ -150,7 +150,7 @@ public class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myShellPathField.setText(myProjectOptionsProvider.getShellPath());
+    myShellPathField.setText(myOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
     myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());

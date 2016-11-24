@@ -84,7 +84,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String rcfile = "jediterm-" + shellName + ".in";
         if ("zsh".equals(shellName)) {
           rcfile = ".zshrc";
-        } else if ("fish".equals(shellName)) {
+        }
+        else if ("fish".equals(shellName)) {
           rcfile = "fish/config.fish";
         }
         URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
@@ -169,11 +170,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     String shellPath = getShellPath();
 
-    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
+    return getCommand(shellPath, envs, TerminalOptionsProvider.Companion.getInstance().shellIntegration());
   }
 
-  private String getShellPath() {
-    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getShellPath();
+  private static String getShellPath() {
+    return TerminalOptionsProvider.Companion.getInstance().getShellPath();
   }
 
   @NotNull

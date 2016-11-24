@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -135,8 +134,6 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    final PsiFile file = element.getContainingFile();
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (getCandidates().size() == 1) {
       final PsiMethod toImport = getCandidates().get(0);
       doImport(toImport);

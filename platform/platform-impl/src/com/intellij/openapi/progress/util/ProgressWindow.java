@@ -64,7 +64,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
-  @Nullable private Disposable myCancelOnProjectDisposal;
 
   public interface Listener {
     void progressWindowCreated(ProgressWindow pw);
@@ -122,12 +121,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
 
     if (myProject != null) {
-      myCancelOnProjectDisposal = () -> {
-        if (isRunning()) {
-          cancel();
-        }
-      };
-      Disposer.register(myProject, myCancelOnProjectDisposal);
+      Disposer.register(myProject, this);
     }
   }
 
@@ -398,8 +392,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void dispose() {
     stopSystemActivity();
-    if (myCancelOnProjectDisposal != null) {
-      Disposer.dispose(myCancelOnProjectDisposal);
+    if (isRunning()) {
+      cancel();
     }
   }
 

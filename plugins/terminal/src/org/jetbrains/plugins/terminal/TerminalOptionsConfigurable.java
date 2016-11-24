@@ -37,7 +37,7 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   private final TerminalProjectOptionsProvider myProjectOptionsProvider;
 
   public TerminalOptionsConfigurable(@NotNull Project project) {
-    myOptionsProvider = TerminalOptionsProvider.getInstance();
+    myOptionsProvider = TerminalOptionsProvider.Companion.getInstance();
     myProjectOptionsProvider = TerminalProjectOptionsProvider.Companion.getInstance(project);
   }
 

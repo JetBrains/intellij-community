@@ -249,12 +249,12 @@ public class AnswerPlaceholder {
   public void switchSubtask(@NotNull Document document, int fromSubtask, int toSubtask) {
     Set<Integer> indexes = mySubtaskInfos.keySet();
     int visibleLength = getVisibleLength(fromSubtask);
-    if (indexes.contains(fromSubtask) && indexes.contains(toSubtask)) {
+    if (indexes.contains(toSubtask)) {
       if (!myUseLength) {
         String replacementText = mySubtaskInfos.get(toSubtask).getPossibleAnswer();
         EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
+        return;
       }
-      return;
     }
     Integer minIndex = Collections.min(indexes);
     if (fromSubtask < toSubtask) {
@@ -274,6 +274,22 @@ public class AnswerPlaceholder {
         }
         else {
           String replacementText = minInfo.getPlaceholderText();
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
+        }
+        return;
+      }
+      if (indexes.contains(fromSubtask)) {
+        List<Integer> filtered = ContainerUtil.filter(indexes, index -> index < fromSubtask);
+        if (filtered.isEmpty()) {
+          return;
+        }
+        Integer maxIndex = Collections.max(filtered);
+        AnswerPlaceholderSubtaskInfo maxInfo = mySubtaskInfos.get(maxIndex);
+        if (maxInfo.isNeedInsertText()) {
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, "");
+        }
+        else {
+          String replacementText = myUseLength ? maxInfo.getPlaceholderText() : maxInfo.getPossibleAnswer();
           EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
         }
       }

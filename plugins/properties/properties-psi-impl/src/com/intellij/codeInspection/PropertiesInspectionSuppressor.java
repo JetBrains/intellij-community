@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesList;
@@ -25,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,7 +96,6 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
       final PsiFile file = element.getContainingFile();
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       LOG.assertTrue(property != null);
@@ -125,8 +122,6 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
     }
   }
 
-
-
   private static class SuppressForFile implements SuppressQuickFix {
     private final String shortName;
 
@@ -144,7 +139,6 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
       final PsiFile file = element.getContainingFile();
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
       LOG.assertTrue(doc != null, file);
@@ -164,9 +158,5 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
       return false;
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
   }
 }

@@ -24,7 +24,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
-import kotlin.reflect.*
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
 
 /**
  * @author traff
@@ -39,17 +40,12 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   }
 
   override fun loadState(state: State) {
-    myState.myShellPath = state.myShellPath
     myState.myStartingDirectory = state.myStartingDirectory
   }
 
   class State {
-    var myShellPath: String? = null
-
     var myStartingDirectory: String? = null
   }
-
-  var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
 
   var startingDirectory: String? by ValueWithDefault(State::myStartingDirectory, myState) { defaultStartingDirectory }
 
@@ -117,7 +113,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
 // TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a reciever for
 // to property to apply
-class ValueWithDefault(val prop: KMutableProperty1<TerminalProjectOptionsProvider.State, String?>, val state: TerminalProjectOptionsProvider.State, val default: () -> String?) {
+class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S, val default: () -> String?) {
   operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {
     return if (prop.get(state) !== null) prop.get(state) else default()
   }
