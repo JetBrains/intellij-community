@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
@@ -39,6 +40,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,10 +365,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
       mySdk = PythonSdkType.findPythonSdk(myModule);
     }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return PyBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
+    }
+    
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Install and import package " + myPackageName;
+      return PyBundle.message("QFIX.install.and.import.package");
     }
 
     @Override

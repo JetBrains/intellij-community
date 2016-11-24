@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,17 +38,26 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to create function to unresolved unqualified reference
  */
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
+  private final String myFunctionName;
   private PyCallExpression myElement;
   private PyReferenceExpression myReference;
 
   public UnresolvedRefCreateFunctionQuickFix(PyCallExpression element, PyReferenceExpression reference) {
     myElement = element;
     myReference = reference;
+    myFunctionName = reference.getReferencedName();
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getName() {
+    return PyBundle.message("QFIX.NAME.unresolved.reference.create.function", myFunctionName);
   }
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.unresolved.reference.create.function.$0", myReference.getText());
+    return PyBundle.message("QFIX.unresolved.reference.create.function");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
