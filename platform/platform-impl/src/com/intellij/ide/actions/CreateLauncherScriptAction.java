@@ -164,7 +164,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   public static String defaultScriptPath() {
-    String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    String scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
     if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     return "/usr/local/bin/" + scriptName;
   }
