@@ -46,11 +46,10 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)parent;
+    final PsiMethod method = (PsiMethod)element;
     final Collection<PsiElement> writtenElements = new ArrayList<>();
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     writtenElements.add(method);

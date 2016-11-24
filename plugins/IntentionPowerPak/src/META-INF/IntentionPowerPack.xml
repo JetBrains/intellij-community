@@ -194,12 +194,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.varargs.MakeMethodVarargsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.varargs.ConvertVarargParameterToArrayIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
@@ -384,11 +378,11 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    <intentionAction>
+    <!--<intentionAction>
       <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
+    </intentionAction>-->
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithStringBufferIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>

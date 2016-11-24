@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Bas Leijdekkers
+ * Copyright 2011-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,7 +26,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,26 +42,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportPublicMethods = false;
 
-  boolean ignoreMultipleArrayParameters = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreMultipleArrayParameters = false;
 
-  @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
-    for (Element option : node.getChildren("option")) {
-      if ("ignoreMultipleArrayParameters".equals(option.getAttributeValue("name"))) {
-        ignoreMultipleArrayParameters = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-    }
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (ignoreMultipleArrayParameters) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreMultipleArrayParameters").
-        setAttribute("value", String.valueOf(ignoreMultipleArrayParameters)));
-    }
-  }
+  @SuppressWarnings("PublicField")
+  public boolean ignoreMultiDimensionalArrayParameters = false;
 
   @Nls
   @NotNull
@@ -88,6 +70,8 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("only.report.public.methods.option"), "onlyReportPublicMethods");
     panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.multiple.arrays.option"),
                       "ignoreMultipleArrayParameters");
+    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option"),
+                      "ignoreMultiDimensionalArrayParameters");
     return panel;
   }
 
@@ -129,7 +113,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       final PsiArrayType arrayType = (PsiArrayType)type;
       final PsiType componentType = arrayType.getComponentType();
-      if (componentType instanceof PsiArrayType) {
+      if (ignoreMultiDimensionalArrayParameters && componentType instanceof PsiArrayType) {
         // don't report when it is multidimensional array
         return;
       }
@@ -152,7 +136,18 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
           }
         }
       }
-      registerMethodError(method);
+      final PsiElement nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      if (isVisibleHighlight(method)) {
+        registerErrorAtOffset(method, nameIdentifier.getStartOffsetInParent(), nameIdentifier.getTextLength());
+      }
+      else {
+        final int offset = nameIdentifier.getStartOffsetInParent();
+        final int length = parameterList.getStartOffsetInParent() + parameterList.getTextLength() - offset;
+        registerErrorAtOffset(method, offset, length);
+      }
     }
   }
 }

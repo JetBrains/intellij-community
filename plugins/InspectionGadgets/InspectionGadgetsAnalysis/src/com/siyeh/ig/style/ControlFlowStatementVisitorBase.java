@@ -15,26 +15,14 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisitor {
-  private final HighlightDisplayKey myKey;
-
-  protected ControlFlowStatementVisitorBase(BaseInspection inspection) {
-    final String shortName = inspection.getShortName();
-    myKey = HighlightDisplayKey.find(shortName);
-  }
 
   @Override
   public void visitForeachStatement(PsiForeachStatement statement) {
@@ -100,7 +88,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
                                                   @Nullable PsiElement rangeEnd,
                                                   @NotNull PsiStatement body,
                                                   @NotNull String keywordText) {
-    boolean highlightOnlyKeyword = isHighlightOnlyKeyword(body);
+    boolean highlightOnlyKeyword = isVisibleHighlight(body);
     if (highlightOnlyKeyword) {
       if (rangeStart != null) {
         registerError(rangeStart, keywordText);
@@ -138,18 +126,5 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
       }
       registerErrorAtRange(afterOmitted, endOfHighlight, keywordText);
     }
-  }
-
-  protected boolean isHighlightOnlyKeyword(@NotNull PsiElement element) {
-    if (!isOnTheFly()) {
-      return true;
-    }
-    if (myKey != null) {
-      final Project project = element.getProject();
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      final HighlightDisplayLevel errorLevel = profile.getErrorLevel(myKey, element);
-      return !HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
-    }
-    return false;
   }
 }

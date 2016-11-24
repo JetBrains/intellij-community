@@ -129,18 +129,15 @@ public class ControlFlowStatementWithoutBracesInspection
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new ControlFlowStatementVisitor(this);
+    return new ControlFlowStatementVisitor();
   }
 
   private static class ControlFlowStatementVisitor extends ControlFlowStatementVisitorBase {
-    private ControlFlowStatementVisitor(BaseInspection inspection) {
-      super(inspection);
-    }
 
     @Contract("null->false")
     @Override
     protected boolean isApplicable(PsiStatement body) {
-      if (body instanceof PsiIfStatement && isHighlightOnlyKeyword(body)) {
+      if (body instanceof PsiIfStatement && isVisibleHighlight(body)) {
         final PsiElement parent = body.getParent();
         if (parent instanceof PsiIfStatement) {
           final PsiIfStatement ifStatement = (PsiIfStatement)parent;

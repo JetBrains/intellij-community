@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -242,5 +242,15 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   public final void setProblemsHolder(ProblemsHolder holder) {
     this.holder = holder;
+  }
+
+  protected boolean isVisibleHighlight(@NotNull PsiElement element) {
+    if (!isOnTheFly()) {
+      return true;
+    }
+    final HighlightDisplayKey key = HighlightDisplayKey.find(inspection.getShortName());
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    final HighlightDisplayLevel errorLevel = profile.getErrorLevel(key, element);
+    return !HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
   }
 }

@@ -46,7 +46,7 @@ public class SingleStatementInBlockInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new SingleStatementInBlockVisitor(this);
+    return new SingleStatementInBlockVisitor();
   }
 
   @Nullable
@@ -91,9 +91,6 @@ public class SingleStatementInBlockInspection extends BaseInspection {
   }
 
   private static class SingleStatementInBlockVisitor extends ControlFlowStatementVisitorBase {
-    protected SingleStatementInBlockVisitor(BaseInspection inspection) {
-      super(inspection);
-    }
 
     @Contract("null->false")
     @Override
