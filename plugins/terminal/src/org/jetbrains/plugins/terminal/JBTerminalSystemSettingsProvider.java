@@ -134,13 +134,13 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
 
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
+    return TerminalOptionsProvider.Companion.getInstance().closeSessionOnLogout();
   }
 
   @Override
   public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
     if (ttyConnector instanceof PtyProcessTtyConnector) {
-      return TerminalOptionsProvider.getInstance().getTabName();
+      return TerminalOptionsProvider.Companion.getInstance().getTabName();
     }
     else {
       return sessionName;
@@ -234,22 +234,22 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
 
   @Override
   public boolean audibleBell() {
-    return TerminalOptionsProvider.getInstance().audibleBell();
+    return TerminalOptionsProvider.Companion.getInstance().audibleBell();
   }
 
   @Override
   public boolean enableMouseReporting() {
-    return TerminalOptionsProvider.getInstance().enableMouseReporting();
+    return TerminalOptionsProvider.Companion.getInstance().enableMouseReporting();
   }
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().copyOnSelection();
+    return TerminalOptionsProvider.Companion.getInstance().copyOnSelection();
   }
 
   @Override
   public boolean pasteOnMiddleMouseClick() {
-    return TerminalOptionsProvider.getInstance().pasteOnMiddleMouseButton();
+    return TerminalOptionsProvider.Companion.getInstance().pasteOnMiddleMouseButton();
   }
 
   @NotNull

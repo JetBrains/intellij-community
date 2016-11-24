@@ -89,7 +89,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable{
   @Override
   public List<TerminalAction> getActions() {
      List<TerminalAction> actions = super.getActions();
-     if (!TerminalOptionsProvider.getInstance().overrideIdeShortcuts()) {
+     if (!TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts()) {
        actions
          .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, new Predicate<KeyEvent>() {
            @Override
