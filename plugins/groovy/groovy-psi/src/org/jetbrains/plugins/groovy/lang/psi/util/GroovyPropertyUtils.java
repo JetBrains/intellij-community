@@ -214,7 +214,8 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
-    if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
+    boolean booleanReturnType = isBooleanOrBoxed(method.getReturnType());
+    if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {
       return false;
     }
     if (PsiType.VOID.equals(method.getReturnType())) return false;
@@ -222,7 +223,7 @@ public class GroovyPropertyUtils {
 
     final String byGetter = getPropertyNameByGetter(method);
     return propertyName.equals(byGetter) || (!isPropertyName(byGetter) && propertyName.equals(
-      getPropertyNameByGetterName(method.getName(), PsiType.BOOLEAN.equals(method.getReturnType()))));
+      getPropertyNameByGetterName(method.getName(), booleanReturnType)));
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method) {
@@ -246,7 +247,7 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = getterMethod.getName();
-    final boolean isPropertyBoolean = PsiType.BOOLEAN.equals(getterMethod.getReturnType());
+    final boolean isPropertyBoolean = isBooleanOrBoxed(getterMethod.getReturnType());
     return getPropertyNameByGetterName(methodName, isPropertyBoolean);
   }
 
@@ -355,8 +356,8 @@ public class GroovyPropertyUtils {
     return new String[]{getGetterNameBoolean(name), getGetterNameNonBoolean(name)};
   }
 
-  public static boolean isPropertyName(String name) {
-    if (name.isEmpty()) return false;
+  public static boolean isPropertyName(@Nullable String name) {
+    if (name == null || name.isEmpty()) return false;
     if (Character.isUpperCase(name.charAt(0)) && (name.length() == 1 || !Character.isUpperCase(name.charAt(1)))) return false;
     return true;
   }
@@ -566,5 +567,9 @@ public class GroovyPropertyUtils {
         modifierList.setModifierProperty(GrModifier.DEF, false);
       }
     }
+  }
+
+  private static boolean isBooleanOrBoxed(PsiType type) {
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }
