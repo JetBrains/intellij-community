@@ -20,12 +20,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
+import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.FilenameIndex
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.model.java.impl.JavaModuleIndexImpl
 
@@ -33,27 +33,36 @@ class JavaModuleIndexBuildTask : CompileTask {
   override fun execute(context: CompileContext): Boolean {
     val project = context.project
 
+    val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project)
+    if (systemDir == null) {
+      context.addMessage(CompilerMessageCategory.ERROR, "Internal error: no system directory for project: ${project}", null, 0, 0)
+      return false
+    }
+
     val map = runReadAction {
-      val map = mutableMapOf<String, String?>()
-      for (module in ModuleManager.getInstance(project).modules) {
-        val files = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope(false))
-        if (files.size > 1) {
-          val message = IdeBundle.message("compiler.multiple.module.descriptors", module.name)
-          context.addMessage(CompilerMessageCategory.ERROR, message, null, 0, 0)
-          return@runReadAction null
-        }
-        map += module.name to ContainerUtil.getFirstItem(files)?.path
-      }
-      map
-    } ?: return false
+      val compilerManager = CompilerManager.getInstance(project)
+      ModuleManager.getInstance(project).modules.asSequence()
+          .map {
+            val files = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, it.getModuleScope(false))
+            it.name to files.filter { !compilerManager.isExcludedFromCompilation(it) }
+          }
+          .toMap()
+    }
+
+    val errors = map.filter { it.value.size > 1 }.map { IdeBundle.message("compiler.multiple.module.descriptors", it.key) }
+    if (errors.isNotEmpty()) {
+      errors.forEach { context.addMessage(CompilerMessageCategory.ERROR, it, null, 0, 0) }
+      return false
+    }
+
+    val paths = map.map { it.key to it.value.firstOrNull()?.path }.toMap()
 
     try {
-      val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project)!!
-      JavaModuleIndexImpl.store(BuildDataPathsImpl(systemDir).dataStorageRoot, map)
+      JavaModuleIndexImpl.store(BuildDataPathsImpl(systemDir).dataStorageRoot, paths)
     }
     catch(e: Exception) {
       Logger.getInstance(JavaModuleIndexBuildTask::class.java).error(e)
-      context.addMessage(CompilerMessageCategory.ERROR, "Failed to save module index file: ${e.message}", null, 0, 0)
+      context.addMessage(CompilerMessageCategory.ERROR, "Internal error: can't save module index: ${e.message}", null, 0, 0)
       return false
     }
 
