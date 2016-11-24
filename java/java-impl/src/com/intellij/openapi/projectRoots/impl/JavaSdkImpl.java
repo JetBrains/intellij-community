@@ -128,20 +128,13 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   @Nullable
-  public String getDefaultDocumentationUrl(@NotNull final Sdk sdk) {
-    final JavaSdkVersion version = getVersion(sdk);
-    if (version == JavaSdkVersion.JDK_1_5) {
-      return "http://docs.oracle.com/javase/1.5.0/docs/api/";
-    }
-    if (version == JavaSdkVersion.JDK_1_6) {
-      return "http://docs.oracle.com/javase/6/docs/api/";
-    }
-    if (version == JavaSdkVersion.JDK_1_7) {
-      return "http://docs.oracle.com/javase/7/docs/api/";
-    }
-    if (version == JavaSdkVersion.JDK_1_8) {
-      return "http://docs.oracle.com/javase/8/docs/api";
-    }
+  public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
+    JavaSdkVersion version = getVersion(sdk);
+    if (version == JavaSdkVersion.JDK_1_5) return "http://docs.oracle.com/javase/1.5.0/docs/api/";
+    if (version == JavaSdkVersion.JDK_1_6) return "http://docs.oracle.com/javase/6/docs/api/";
+    if (version == JavaSdkVersion.JDK_1_7) return "http://docs.oracle.com/javase/7/docs/api/";
+    if (version == JavaSdkVersion.JDK_1_8) return "http://docs.oracle.com/javase/8/docs/api/";
+    if (version == JavaSdkVersion.JDK_1_9) return "http://download.java.net/java/jdk9/docs/api/";
     return null;
   }
 
