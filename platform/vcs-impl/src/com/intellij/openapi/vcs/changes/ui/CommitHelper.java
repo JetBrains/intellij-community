@@ -73,7 +73,6 @@ public class CommitHelper {
   @Nullable private final CommitResultHandler myCustomResultHandler;
   @NotNull private final List<Document> myCommittingDocuments = new ArrayList<>();
   @NotNull private final VcsConfiguration myConfiguration;
-  @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
   @NotNull private final HashSet<String> myFeedback = new HashSet<>();
 
   public CommitHelper(@NotNull Project project,
@@ -97,7 +96,6 @@ public class CommitHelper {
     myAdditionalData = additionalDataHolder;
     myCustomResultHandler = customResultHandler;
     myConfiguration = VcsConfiguration.getInstance(myProject);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   public boolean doCommit() {
@@ -334,21 +332,12 @@ public class CommitHelper {
     public Runnable postRefresh() {
       return null;
     }
-
-    public void doVcsRefresh() {
-    }
   }
 
   private abstract static class GeneralCommitProcessor implements ChangesUtil.PerVcsProcessor<Change>, ActionsAroundRefresh {
-    protected final List<FilePath> myPathsToRefresh;
-    protected final List<VcsException> myVcsExceptions;
-    protected final List<Change> myChangesFailedToCommit;
-
-    protected GeneralCommitProcessor() {
-      myPathsToRefresh = new ArrayList<>();
-      myVcsExceptions = new ArrayList<>();
-      myChangesFailedToCommit = new ArrayList<>();
-    }
+    protected final List<FilePath> myPathsToRefresh = new ArrayList<>();
+    protected final List<VcsException> myVcsExceptions = new ArrayList<>();
+    protected final List<Change> myChangesFailedToCommit = new ArrayList<>();
 
     public abstract void callSelf();
     public abstract void afterSuccessfulCheckIn();
@@ -370,11 +359,10 @@ public class CommitHelper {
   private interface ActionsAroundRefresh {
     void doBeforeRefresh();
     void customRefresh();
-    void doVcsRefresh();
     Runnable postRefresh();
   }
 
-  private static enum ChangeListsModificationAfterCommit {
+  private enum ChangeListsModificationAfterCommit {
     DELETE_LIST,
     MOVE_OTHERS,
     NOTHING
@@ -504,7 +492,7 @@ public class CommitHelper {
               }
             }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {
               public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-                for (FilePath path : myPathsToRefresh) {
+                for (FilePath path : getPathsToRefresh()) {
                   vcsDirtyScopeManager.fileDirty(path);
                 }
               }
@@ -514,20 +502,6 @@ public class CommitHelper {
           }
         }
       };
-    }
-
-    private void vcsRefresh() {
-      for (FilePath path : myPathsToRefresh) {
-        myDirtyScopeManager.fileDirty(path);
-      }
-    }
-
-    public void doVcsRefresh() {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          vcsRefresh();
-        }
-      });
     }
   }
 
