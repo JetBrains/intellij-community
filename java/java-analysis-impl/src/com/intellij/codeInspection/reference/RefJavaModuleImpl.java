@@ -34,9 +34,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private final RefModule myRefModule;
 
   private Map<String, List<String>> myExportedPackageNames;
-  private Map<String, Boolean> myRequiredModuleNames;
-
-  private Map<String, PsiRequiresStatement> myRequiresStatements;
+  private Map<String, Dependency> myRequiredModules;
 
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getModuleName(), javaModule, manager);
@@ -77,14 +75,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   }
 
   @NotNull
-  @Override
-  public Map<String, Boolean> getRequiredModuleNames() {
-    return myRequiredModuleNames != null ? myRequiredModuleNames : Collections.emptyMap();
-  }
-
-  @NotNull
-  public Map<String, PsiRequiresStatement> getRequiresStatements() {
-    return myRequiresStatements != null ? myRequiresStatements : Collections.emptyMap();
+  public Map<String, Dependency> getRequiredModules() {
+    return myRequiredModules != null ? myRequiredModules : Collections.emptyMap();
   }
 
   @Override
@@ -94,31 +86,27 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       for (PsiRequiresStatement statement : javaModule.getRequires()) {
         PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
         if (referenceElement != null) {
-          if (myRequiresStatements == null) myRequiresStatements = new THashMap<>(1);
-          myRequiresStatements.put(referenceElement.getReferenceText(), statement);
-
-          PsiPolyVariantReference moduleReference = referenceElement.getReference();
-          PsiElement element = addReference(moduleReference);
+          PsiElement element = addReference(referenceElement.getReference());
           if (element instanceof PsiJavaModule) {
-            if (myRequiredModuleNames == null) myRequiredModuleNames = new THashMap<>(1);
-            myRequiredModuleNames.put(((PsiJavaModule)element).getModuleName(), statement.isPublic());
+            PsiJavaModule requiredModule = (PsiJavaModule)element;
+            Map<String, List<String>> packageNames = getExportedPackagesSnapshot(requiredModule);
+            if (myRequiredModules == null) myRequiredModules = new THashMap<>(1);
+            myRequiredModules.put(requiredModule.getModuleName(), new Dependency(packageNames, statement.isPublic()));
           }
         }
       }
       List<String> emptyList = Collections.emptyList();
       for (PsiExportsStatement statement : javaModule.getExports()) {
-        PsiJavaCodeReferenceElement packageReference = statement.getPackageReference();
-        PsiElement element = addReference(packageReference);
+        PsiElement element = addReference(statement.getPackageReference());
         String packageName = null;
         if (element instanceof PsiPackage) {
-          if (myExportedPackageNames == null) myExportedPackageNames = new THashMap<>(1);
           packageName = ((PsiPackage)element).getQualifiedName();
+          if (myExportedPackageNames == null) myExportedPackageNames = new THashMap<>(1);
           myExportedPackageNames.put(packageName, emptyList);
         }
         for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
           if (referenceElement != null) {
-            PsiPolyVariantReference moduleReference = referenceElement.getReference();
-            PsiElement moduleElement = addReference(moduleReference);
+            PsiElement moduleElement = addReference(referenceElement.getReference());
             if (packageName != null && moduleElement instanceof PsiJavaModule) {
               List<String> toModuleNames = myExportedPackageNames.get(packageName);
               if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<>(1));
@@ -149,5 +137,17 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       }
     }
     return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
+  }
+
+  @NotNull
+  private static Map<String, List<String>> getExportedPackagesSnapshot(@NotNull PsiJavaModule javaModule) {
+    Map<String, List<String>> exportedPackages = new THashMap<>();
+    for (PsiExportsStatement statement : javaModule.getExports()) {
+      String packageName = statement.getPackageName();
+      if (packageName != null) {
+        exportedPackages.put(packageName, statement.getModuleNames());
+      }
+    }
+    return !exportedPackages.isEmpty() ? exportedPackages : Collections.emptyMap();
   }
 }

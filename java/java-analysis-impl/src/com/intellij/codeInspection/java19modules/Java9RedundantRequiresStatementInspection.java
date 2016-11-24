@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -44,14 +43,7 @@ import java.util.*;
 public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java9RedundantRequiresStatementInspection.class);
 
-  // applicable to RefFile and RefModule
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");
-
-  // applicable to RefProject
-  // mappings: module name -> exported package name -> export to modules
-  private static final Key<Map<String, Map<String, List<String>>>> EXPORTED_MODULE_PACKAGES =
-    Key.create("exported_module_packages");
-
 
   @Nls
   @NotNull
@@ -60,29 +52,43 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     return InspectionsBundle.message("inspection.redundant.requires.statement.name");
   }
 
-  @Override
-  public void runInspection(@NotNull AnalysisScope scope,
-                            @NotNull InspectionManager manager,
-                            @NotNull GlobalInspectionContext globalContext,
-                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    super.runInspection(scope, manager, globalContext, problemDescriptionsProcessor);
-    globalContext.getRefManager().iterate(new RedundantRequiresStatementVisitor(manager, problemDescriptionsProcessor));
-  }
-
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull InspectionManager manager,
                                                 @NotNull GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefFile) {
-      RefModule refModule = ((RefFile)refEntity).getModule();
-      if (refModule != null) {
-        Set<String> importedPackages = refEntity.getUserData(IMPORTED_JAVA_PACKAGES);
-        if (!ContainerUtil.isEmpty(importedPackages)) {
-          Set<String> moduleImportedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
-          if (moduleImportedPackages != null) {
-            moduleImportedPackages.addAll(importedPackages);
+    if (refEntity instanceof RefJavaModule) {
+      RefJavaModule refJavaModule = (RefJavaModule)refEntity;
+
+      RefModule refModule = refJavaModule.getModule();
+      PsiJavaModule psiJavaModule = refJavaModule.getElement();
+      if (refModule != null && psiJavaModule != null) {
+        Set<String> moduleImportedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
+        if (moduleImportedPackages != null) {
+          Map<String, RefJavaModule.Dependency> requiredModules = refJavaModule.getRequiredModules();
+          if (!requiredModules.isEmpty()) {
+            List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+            for (Map.Entry<String, RefJavaModule.Dependency> entry : requiredModules.entrySet()) {
+              String requiredModuleName = entry.getKey();
+              RefJavaModule.Dependency dependency = entry.getValue();
+
+              if (isDependencyUnused(dependency.packageNames, moduleImportedPackages, refJavaModule.getName())) {
+                PsiRequiresStatement requiresStatement = ContainerUtil.find(
+                  psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
+                if (requiresStatement != null) {
+                  CommonProblemDescriptor descriptor = manager.createProblemDescriptor(
+                    requiresStatement,
+                    InspectionsBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),
+                    new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages),
+                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+                  descriptors.add(descriptor);
+                }
+              }
+            }
+            if (!ContainerUtil.isEmpty(descriptors)) {
+              return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+            }
           }
         }
       }
@@ -112,25 +118,16 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     return new RedundantRequiresStatementAnnotator();
   }
 
-  @NotNull
-  private static Map<String, Map<String, List<String>>> getExportedModulePackages(RefManager refManager) {
-    RefProject refProject = refManager.getRefProject();
-    Map<String, Map<String, List<String>>> exportedModulePackages = refProject.getUserData(EXPORTED_MODULE_PACKAGES);
-    if (exportedModulePackages == null) {
-      exportedModulePackages = new THashMap<>();
-      refProject.putUserData(EXPORTED_MODULE_PACKAGES, exportedModulePackages);
-    }
-    return exportedModulePackages;
-  }
-
   private static PsiJavaModule resolveRequiredModule(PsiRequiresStatement requiresStatement) {
     return PsiJavaModuleReference.resolve(requiresStatement, requiresStatement.getModuleName(), false);
   }
 
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
+    private String myRequiredModuleName;
     private Set<String> myImportedPackages;
 
-    public DeleteRedundantRequiresStatementFix(Set<String> importedPackages) {
+    public DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
+      myRequiredModuleName = requiredModuleName;
       myImportedPackages = importedPackages;
     }
 
@@ -139,6 +136,13 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     @Override
     public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.requires.statement.fix.family");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionsBundle.message("inspection.redundant.requires.statement.fix.name", myRequiredModuleName);
     }
 
     @Override
@@ -209,55 +213,8 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     }
   }
 
-  private static class RedundantRequiresStatementVisitor extends RefJavaVisitor {
-    private final InspectionManager myManager;
-    private final ProblemDescriptionsProcessor myProblemDescriptionsProcessor;
-
-    public RedundantRequiresStatementVisitor(InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-      myManager = manager;
-      myProblemDescriptionsProcessor = problemDescriptionsProcessor;
-    }
-
-    @Override
-    public void visitJavaModule(@NotNull RefJavaModule refJavaModule) {
-      super.visitJavaModule(refJavaModule);
-
-      RefModule refModule = refJavaModule.getModule();
-      if (refModule != null) {
-        Set<String> moduleImportedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
-        if (moduleImportedPackages != null) {
-          Map<String, Boolean> requiredModuleNames = refJavaModule.getRequiredModuleNames();
-          if (!requiredModuleNames.isEmpty()) {
-            Map<String, Map<String, List<String>>> exportedModulePackages = getExportedModulePackages(refJavaModule.getRefManager());
-            for (String dependencyModuleName : requiredModuleNames.keySet()) {
-              Map<String, List<String>> exportedPackages = exportedModulePackages.get(dependencyModuleName);
-              if (exportedPackages != null && isDependencyUnused(exportedPackages, moduleImportedPackages, refJavaModule.getName())) {
-                PsiRequiresStatement statement = refJavaModule.getRequiresStatements().get(dependencyModuleName);
-                if (statement != null) {
-                  registerProblem(refJavaModule, statement, moduleImportedPackages, dependencyModuleName);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    private void registerProblem(@NotNull RefJavaModule refJavaModule,
-                                 @NotNull PsiRequiresStatement requiresStatement,
-                                 @NotNull Set<String> importedPackages,
-                                 @NotNull String dependencyModuleName) {
-      ProblemDescriptor descriptor =
-        myManager.createProblemDescriptor(requiresStatement,
-                                          InspectionsBundle
-                                            .message("inspection.redundant.requires.statement.description", dependencyModuleName),
-                                          new DeleteRedundantRequiresStatementFix(importedPackages),
-                                          ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
-      myProblemDescriptionsProcessor.addProblemElement(refJavaModule, descriptor);
-    }
-  }
-
   private static class RedundantRequiresStatementAnnotator extends RefGraphAnnotator {
+    private static final Set<String> DONT_COLLECT_PACKAGES = Collections.emptySet();
 
     @Override
     public void onReferencesBuild(RefElement refElement) {
@@ -269,12 +226,9 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         }
       }
       else if (refElement instanceof RefJavaModule) {
-        PsiJavaModule javaModule = ((RefJavaModule)refElement).getElement();
-        if (javaModule != null) {
-          RefModule refModule = refElement.getModule();
-          if (refModule != null) {
-            onJavaModuleReferencesBuilt(javaModule, refModule);
-          }
+        RefModule refModule = refElement.getModule();
+        if (refModule != null) {
+          setImportedPackages(refModule, refElement.getElement() != null);
         }
       }
     }
@@ -283,26 +237,16 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       if (file.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
         PsiImportList importList = file.getImportList();
         if (importList != null) {
-          Set<String> packageNames = new THashSet<>();
-          PsiImportStatementBase[] statements = importList.getAllImportStatements();
-          if (statements.length != 0) {
-            for (PsiImportStatementBase statement : statements) {
-              PsiElement resolved = statement.resolve();
-              String packageName = null;
-              if (resolved instanceof PsiPackage) {
-                packageName = ((PsiPackage)resolved).getQualifiedName();
-              }
-              else if (resolved instanceof PsiMember) {
-                PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
-                if (parentFile != null) {
-                  packageName = parentFile.getPackageName();
+          RefModule refModule = refFile.getModule();
+          if (refModule != null) {
+            Set<String> packageNames = getImportedPackages(refModule);
+            if (packageNames != DONT_COLLECT_PACKAGES) {
+              PsiImportStatementBase[] statements = importList.getAllImportStatements();
+              for (PsiImportStatementBase statement : statements) {
+                String packageName = getPackageName(statement);
+                if (!StringUtil.isEmpty(packageName)) {
+                  packageNames.add(packageName);
                 }
-              }
-              if (!StringUtil.isEmpty(packageName)) {
-                packageNames.add(packageName);
-              }
-              if (!packageNames.isEmpty()) {
-                refFile.putUserData(IMPORTED_JAVA_PACKAGES, packageNames);
               }
             }
           }
@@ -310,37 +254,37 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       }
     }
 
-    private static void onJavaModuleReferencesBuilt(@NotNull PsiJavaModule javaModule, @NotNull RefModule refModule) {
-      LOG.assertTrue(refModule.getUserData(IMPORTED_JAVA_PACKAGES) == null, "Duplicate Java module declaration");
-      refModule.putUserData(IMPORTED_JAVA_PACKAGES, new THashSet<>());
-
-      Map<String, Map<String, List<String>>> exportedModulePackages = getExportedModulePackages(refModule.getRefManager());
-      for (PsiRequiresStatement statement : javaModule.getRequires()) {
-        String dependencyModuleName = statement.getModuleName();
-        if (dependencyModuleName != null) {
-          Map<String, List<String>> exportedPackages = exportedModulePackages.get(dependencyModuleName);
-          if (exportedPackages == null) {
-            PsiJavaModule dependency = resolveRequiredModule(statement);
-            exportedPackages = getExportedPackages(dependency);
-            exportedModulePackages.put(dependencyModuleName, exportedPackages);
-          }
+    @Nullable
+    private static String getPackageName(@NotNull PsiImportStatementBase statement) {
+      PsiElement resolved = statement.resolve();
+      if (resolved instanceof PsiPackage) {
+        return ((PsiPackage)resolved).getQualifiedName();
+      }
+      else if (resolved instanceof PsiMember) {
+        PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
+        if (parentFile != null) {
+          return parentFile.getPackageName();
         }
       }
+      return null;
     }
 
     @NotNull
-    private static Map<String, List<String>> getExportedPackages(@Nullable PsiJavaModule javaModule) {
-      if (javaModule == null) {
-        return Collections.emptyMap();
+    private static Set<String> getImportedPackages(@NotNull RefModule refModule) {
+      Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
+      if (importedPackages == null) {
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule());
+        importedPackages = javaModule != null ? new THashSet<>() : DONT_COLLECT_PACKAGES;
+        refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
       }
-      Map<String, List<String>> exportedPackages = new THashMap<>();
-      for (PsiExportsStatement statement : javaModule.getExports()) {
-        String packageName = statement.getPackageName();
-        if (packageName != null) {
-          exportedPackages.put(packageName, statement.getModuleNames());
-        }
+      return importedPackages;
+    }
+
+    private static void setImportedPackages(RefModule refModule, boolean collectPackages) {
+      Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
+      if (importedPackages == null) {
+        refModule.putUserData(IMPORTED_JAVA_PACKAGES, collectPackages ? new THashSet<>() : DONT_COLLECT_PACKAGES);
       }
-      return !exportedPackages.isEmpty() ? exportedPackages : Collections.emptyMap();
     }
   }
 }

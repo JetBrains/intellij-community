@@ -33,8 +33,15 @@ public interface RefJavaModule extends RefElement {
   Map<String, List<String>> getExportedPackageNames();
 
   @NotNull
-  Map<String, Boolean> getRequiredModuleNames();
+  Map<String, Dependency> getRequiredModules();
 
-  @NotNull
-  Map<String, PsiRequiresStatement> getRequiresStatements();
+  class Dependency {
+    @NotNull public final Map<String, List<String>> packageNames;
+    public final boolean isPublic;
+
+    public Dependency(@NotNull Map<String, List<String>> packageNames, boolean isPublic) {
+      this.packageNames = packageNames;
+      this.isPublic = isPublic;
+    }
+  }
 }
