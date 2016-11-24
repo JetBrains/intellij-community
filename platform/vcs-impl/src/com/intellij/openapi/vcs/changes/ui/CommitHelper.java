@@ -295,11 +295,10 @@ public class CommitHelper {
 
     @Override
     public void callSelf() {
-      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this);
+      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::process);
     }
 
-    @Override
-    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
+    private void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (myVcs.getName().equals(vcs.getName())) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
@@ -336,7 +335,7 @@ public class CommitHelper {
     }
   }
 
-  private abstract static class GeneralCommitProcessor implements ChangesUtil.PerVcsProcessor<Change>, ActionsAroundRefresh {
+  private abstract static class GeneralCommitProcessor {
     protected final List<FilePath> myPathsToRefresh = new ArrayList<>();
     protected final List<VcsException> myVcsExceptions = new ArrayList<>();
     protected final List<Change> myChangesFailedToCommit = new ArrayList<>();
@@ -344,6 +343,10 @@ public class CommitHelper {
     public abstract void callSelf();
     public abstract void afterSuccessfulCheckIn();
     public abstract void afterFailedCheckIn();
+
+    public abstract void doBeforeRefresh();
+    public abstract void customRefresh();
+    public abstract void doPostRefresh();
 
     public List<FilePath> getPathsToRefresh() {
       return myPathsToRefresh;
@@ -356,12 +359,6 @@ public class CommitHelper {
     public List<Change> getChangesFailedToCommit() {
       return myChangesFailedToCommit;
     }
-  }
-
-  private interface ActionsAroundRefresh {
-    void doBeforeRefresh();
-    void customRefresh();
-    void doPostRefresh();
   }
 
   private enum ChangeListsModificationAfterCommit {
@@ -398,11 +395,10 @@ public class CommitHelper {
       if (myVcs != null && myIncludedChanges.isEmpty()) {
         process(myVcs, myIncludedChanges);
       }
-      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
+      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this::process);
     }
 
-    @Override
-    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
+    private void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
         Collection<FilePath> paths = ChangesUtil.getPaths(items);
