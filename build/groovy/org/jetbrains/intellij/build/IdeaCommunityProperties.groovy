@@ -78,6 +78,9 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
         "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
       }
+
+      @Override
+      String getBaseDownloadUrlForJre64() { "https://download.jetbrains.com/idea" }
     }
   }
 
