@@ -104,4 +104,9 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":" + id;
+  }
 }

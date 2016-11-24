@@ -222,6 +222,10 @@ public final class DesktopLayout implements JDOMExternalizable {
     return myRegisteredId2Info.containsKey(id);
   }
 
+  final boolean isToolWindowUnregistered(final String id) {
+    return myUnregisteredId2Info.containsKey(id);
+  }
+
   /**
    * @return comparator which compares <code>StripeButtons</code> in the stripe with
    *         specified <code>anchor</code>.
