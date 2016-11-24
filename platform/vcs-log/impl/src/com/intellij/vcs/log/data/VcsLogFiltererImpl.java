@@ -131,7 +131,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           throw reThrown;
         }
         catch (Throwable t) {
-          LOG.error("Error while filtering log", t);
+          LOG.error("Error while filtering log by " + requests, t);
         }
       }
 
