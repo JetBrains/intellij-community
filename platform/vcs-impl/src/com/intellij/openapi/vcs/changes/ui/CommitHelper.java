@@ -522,7 +522,7 @@ public class CommitHelper {
    * @see VetoSavingCommittingDocumentsAdapter
    */
   @NotNull
-  public static Collection<Document> markCommittingDocuments(@NotNull Project project, @NotNull List<Change> changes) {
+  private static Collection<Document> markCommittingDocuments(@NotNull Project project, @NotNull List<Change> changes) {
     Collection<Document> committingDocs = new ArrayList<>();
     for (Change change : changes) {
       VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
@@ -542,7 +542,7 @@ public class CommitHelper {
    * @see #markCommittingDocuments(com.intellij.openapi.project.Project, java.util.List)
    * @see VetoSavingCommittingDocumentsAdapter
    */
-  public static void unmarkCommittingDocuments(@NotNull Collection<Document> committingDocs) {
+  private static void unmarkCommittingDocuments(@NotNull Collection<Document> committingDocs) {
     for (Document doc : committingDocs) {
       doc.putUserData(DOCUMENT_BEING_COMMITTED_KEY, null);
     }
