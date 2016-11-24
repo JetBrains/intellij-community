@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -37,22 +38,22 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
   private static final String MODULE_INFO_FILE = "module-info.java";
 
   private final Map<String, File> myMapping;
-  private final boolean myComplete;
+  private final JpsCompilerExcludes myExcludes;
 
-  private JavaModuleIndexImpl() {
+  private JavaModuleIndexImpl(JpsCompilerExcludes excludes) {
     myMapping = ContainerUtil.newHashMap();
-    myComplete = false;
+    myExcludes = excludes;
   }
 
   private JavaModuleIndexImpl(Map<String, File> mapping) {
     myMapping = Collections.unmodifiableMap(mapping);
-    myComplete = true;
+    myExcludes = null;
   }
 
   @Override
   public @Nullable File getModuleInfoFile(@NotNull JpsModule module) {
     String key = module.getName();
-    if (myComplete || myMapping.containsKey(key)) {
+    if (myExcludes == null || myMapping.containsKey(key)) {
       return myMapping.get(key);
     }
 
@@ -72,10 +73,10 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     return false;
   }
 
-  private static File findModuleInfoFile(JpsModule module) {
+  private File findModuleInfoFile(JpsModule module) {
     for (JpsModuleSourceRoot root : module.getSourceRoots()) {
       File file = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
-      if (file.isFile()) {
+      if (file.isFile() && !myExcludes.isExcluded(file)) {
         return file;
       }
     }
@@ -102,10 +103,10 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     }
   }
 
-  public static JavaModuleIndex load(@NotNull File storageRoot) {
+  public static JavaModuleIndex load(@NotNull File storageRoot, @NotNull JpsCompilerExcludes excludes) {
     File index = new File(storageRoot, INDEX_PATH);
     if (!index.exists()) {
-      return new JavaModuleIndexImpl();
+      return new JavaModuleIndexImpl(excludes);
     }
 
     Properties p = new Properties();

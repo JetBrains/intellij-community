@@ -130,5 +130,5 @@ public abstract class JpsJavaExtensionService {
   public abstract JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource);
 
   @NotNull
-  public abstract JavaModuleIndex getJavaModuleIndex(@NotNull File storageRoot);
+  public abstract JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project, @NotNull File storageRoot);
 }
