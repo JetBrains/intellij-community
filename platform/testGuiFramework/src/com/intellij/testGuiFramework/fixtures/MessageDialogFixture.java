@@ -40,18 +40,33 @@ class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> implements M
         if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
           return false;
         }
-        DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
-        if (wrapper != null) {
-          String typeName = Messages.class.getName() + "$MessageDialog";
-          if (typeName.equals(wrapper.getClass().getName())) {
-            wrapperRef.set(wrapper);
-            return true;
-          }
-        }
-        return false;
+        return isMessageDialog(dialog, wrapperRef);
       }
     }, LONG_TIMEOUT);
     return new MessageDialogFixture(robot, dialog, wrapperRef.get());
+  }
+
+  static MessageDialogFixture findAny(@NotNull Robot robot) {
+    final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
+    JDialog dialog = waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return isMessageDialog(dialog, wrapperRef);
+      }
+    }, LONG_TIMEOUT);
+    return new MessageDialogFixture(robot, dialog, wrapperRef.get());
+  }
+
+  private static boolean isMessageDialog(@NotNull JDialog dialog, Ref<DialogWrapper> wrapperRef) {
+    DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
+    if (wrapper != null) {
+      String typeName = Messages.class.getName() + "$MessageDialog";
+      if (typeName.equals(wrapper.getClass().getName())) {
+        wrapperRef.set(wrapper);
+        return true;
+      }
+    }
+    return false;
   }
 
   private MessageDialogFixture(@NotNull Robot robot, @NotNull JDialog target, @NotNull DialogWrapper dialogWrapper) {
