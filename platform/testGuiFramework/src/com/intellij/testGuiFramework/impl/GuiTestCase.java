@@ -15,14 +15,13 @@
  */
 package com.intellij.testGuiFramework.impl;
 
-import com.intellij.testFramework.vcs.ExecutableHelper;
 import com.intellij.testGuiFramework.framework.GuiTestBase;
 import com.intellij.util.net.HttpConfigurable;
-import git4idea.config.GitVcsApplicationSettings;
 import org.fest.swing.core.FastRobot;
 
+import java.lang.reflect.InvocationTargetException;
+
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpDefaultProjectCreationLocationPath;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpSdks;
 
 /**
  * @author Sergey Karashevich
@@ -41,8 +40,13 @@ public class GuiTestCase extends GuiTestBase {
     myRobot = new FastRobot();
 
     setIdeSettings();
-    setUpSdks();
-    setPathToGit();
+    GitSettings.INSTANCE.setup();
+  }
+
+  @Override
+  public void tearDown() throws InvocationTargetException, InterruptedException {
+    GitSettings.INSTANCE.restore();
+    super.tearDown();
   }
 
   private static void setIdeSettings() {
@@ -53,8 +57,5 @@ public class GuiTestCase extends GuiTestBase {
     ideSettings.PROXY_PORT = 80;
   }
 
-  private static void setPathToGit() {
-    GitVcsApplicationSettings.getInstance().setPathToGit(ExecutableHelper.findGitExecutable());
-  }
 
 }
