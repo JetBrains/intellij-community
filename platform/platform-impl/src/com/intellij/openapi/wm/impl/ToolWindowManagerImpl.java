@@ -819,7 +819,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   /**
    * @return tool button for the window with specified <code>ID</code>.
    */
-  private StripeButton getStripeButton(@NotNull String id) {
+  StripeButton getStripeButton(@NotNull String id) {
     return myId2StripeButton.get(id);
   }
 
@@ -1117,6 +1117,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean known = myLayout.isToolWindowUnregistered(id);
     if (myLayout.isToolWindowRegistered(id)) {
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
@@ -1126,7 +1127,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    info.setShowStripeButton(shouldBeAvailable);
+    if (!known) {
+      info.setShowStripeButton(shouldBeAvailable);
+    }
 
     // Create decorator
 
