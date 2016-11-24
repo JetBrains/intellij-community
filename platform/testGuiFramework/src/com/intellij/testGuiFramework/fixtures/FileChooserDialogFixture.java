@@ -18,12 +18,15 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.fixture.JTextComponentFixture;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +42,8 @@ import static org.junit.Assert.assertNotNull;
 public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialogImpl> {
 
   TreePath myTargetPath;
+  private JTextComponentFixture myJTextFieldFixture;
+
 
   @NotNull
   public static FileChooserDialogFixture findOpenProjectDialog(@NotNull Robot robot) {
@@ -107,6 +112,30 @@ public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialo
     }
     catch (InterruptedException e) {
     }
+  }
+
+  public JTextComponentFixture getTextFieldFixture() {
+    if (myJTextFieldFixture == null) {
+      JTextField textField = robot().finder().find(this.target(), new GenericTypeMatcher<JTextField>(JTextField.class, true) {
+        @Override
+        protected boolean isMatching(@Nonnull JTextField field) {
+          return true;
+        }
+      });
+      myJTextFieldFixture = new JTextComponentFixture(robot(), textField);
+    }
+    return myJTextFieldFixture;
+
+  }
+
+  public FileChooserDialogFixture waitFilledTextField(){
+    pause(new Condition("Wait until JTextField component will be filled by default path") {
+      @Override
+      public boolean test() {
+        return !getTextFieldFixture().text().isEmpty();
+      }
+    }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
+    return this;
   }
 
   @NotNull
