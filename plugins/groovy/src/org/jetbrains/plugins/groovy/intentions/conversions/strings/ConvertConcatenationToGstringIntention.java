@@ -90,6 +90,11 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   @Override
+  public boolean shouldMakeCurrentFileWritable() {
+    return true;
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
