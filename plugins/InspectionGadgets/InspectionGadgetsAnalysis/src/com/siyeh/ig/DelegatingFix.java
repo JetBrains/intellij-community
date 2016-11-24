@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 Bas Leijdekkers
+ * Copyright 2007-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,8 @@ public class DelegatingFix extends InspectionGadgetsFix {
     delegate.applyFix(project, descriptor);
   }
 
-  /**
-   * Delegate fix checks for read-only status separately
-   */
   @Override
-  protected boolean prepareForWriting() {
-    return false;
+  public boolean startInWriteAction() {
+    return delegate.startInWriteAction();
   }
 }

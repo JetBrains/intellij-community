@@ -47,11 +47,6 @@ public class MoveClassFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected boolean prepareForWriting() {
-    return false;
-  }
-
-  @Override
   public boolean startInWriteAction() {
     return false;
   }

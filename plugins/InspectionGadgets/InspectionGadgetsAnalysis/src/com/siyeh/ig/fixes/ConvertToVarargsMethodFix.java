@@ -17,6 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,7 +40,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected boolean prepareForWriting() {
+  public boolean startInWriteAction() {
     return false;
   }
 
@@ -51,8 +52,8 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     }
     final PsiMethod method = (PsiMethod)element;
     final Collection<PsiElement> writtenElements = new ArrayList<>();
-    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     writtenElements.add(method);
+    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false)) {
       final PsiElement referenceElement = reference.getElement();
       if (referenceElement instanceof PsiReferenceExpression) {
@@ -63,8 +64,10 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(writtenElements)) {
       return;
     }
-    makeMethodVarargs(method);
-    makeMethodCallsVarargs(methodCalls);
+    WriteAction.run(() -> {
+      makeMethodVarargs(method);
+      makeMethodCallsVarargs(methodCalls);
+    });
   }
 
   private static void makeMethodVarargs(PsiMethod method) {

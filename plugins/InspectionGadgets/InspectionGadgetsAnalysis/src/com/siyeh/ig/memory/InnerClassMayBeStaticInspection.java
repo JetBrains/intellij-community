@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -66,7 +67,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     }
 
     @Override
-    protected boolean prepareForWriting() {
+    public boolean startInWriteAction() {
       return false;
     }
 
@@ -88,6 +89,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
         return;
       }
+      WriteAction.run(() -> makeStatic(innerClass, references));
+    }
+
+    private static void makeStatic(PsiClass innerClass, Collection<PsiReference> references) {
+      final Project project = innerClass.getProject();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       for (final PsiReference reference : references) {

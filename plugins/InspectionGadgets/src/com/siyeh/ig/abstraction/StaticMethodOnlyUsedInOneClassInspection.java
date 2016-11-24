@@ -82,10 +82,5 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
     public boolean startInWriteAction() {
       return false;
     }
-
-    @Override
-    protected boolean prepareForWriting() {
-      return false;
-    }
   }
 }

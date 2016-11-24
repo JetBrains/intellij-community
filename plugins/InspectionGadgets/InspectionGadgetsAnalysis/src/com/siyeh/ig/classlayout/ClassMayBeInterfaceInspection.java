@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -84,7 +85,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected boolean prepareForWriting() {
+    public boolean startInWriteAction() {
       return false;
     }
 
@@ -93,7 +94,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       final PsiIdentifier classNameIdentifier = (PsiIdentifier)descriptor.getPsiElement();
       final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
       final SearchScope searchScope = interfaceClass.getUseScope();
-      final List<PsiClass> elements = new ArrayList();
+      final List<PsiClass> elements = new ArrayList<>();
       elements.add(interfaceClass);
       for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
         elements.add(inheritor);
@@ -101,9 +102,11 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
         return;
       }
-      moveSubClassExtendsToImplements(elements);
-      changeClassToInterface(interfaceClass);
-      moveImplementsToExtends(interfaceClass);
+      WriteAction.run(() -> {
+        moveSubClassExtendsToImplements(elements);
+        changeClassToInterface(interfaceClass);
+        moveImplementsToExtends(interfaceClass);
+      });
     }
 
     private static void changeClassToInterface(PsiClass aClass) {

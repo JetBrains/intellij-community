@@ -62,7 +62,7 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected boolean prepareForWriting() {
+  public boolean startInWriteAction() {
     return false;
   }
 
