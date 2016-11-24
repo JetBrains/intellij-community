@@ -41,15 +41,15 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private final boolean myMediatedProcess;
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine, false);
+    super(commandLine);
+    myMediatedProcess = MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
   }
 
   /**
    * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    super(mediate(commandLine, withMediator));
-    myMediatedProcess = withMediator && MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
+    this(mediate(commandLine, withMediator));
   }
 
   /**
@@ -70,7 +70,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator) {
-    if (withMediator && SystemInfo.isWindows) {
+    if (withMediator && SystemInfo.isWindows && MEDIATOR_KEY.get(commandLine) == null) {
       boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine);
       MEDIATOR_KEY.set(commandLine, mediatorInjected);
     }
