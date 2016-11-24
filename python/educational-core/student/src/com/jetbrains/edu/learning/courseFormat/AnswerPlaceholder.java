@@ -276,6 +276,22 @@ public class AnswerPlaceholder {
           String replacementText = minInfo.getPlaceholderText();
           EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
         }
+        return;
+      }
+      if (indexes.contains(fromSubtask)) {
+        List<Integer> filtered = ContainerUtil.filter(indexes, index -> index < fromSubtask);
+        if (filtered.isEmpty()) {
+          return;
+        }
+        Integer maxIndex = Collections.max(filtered);
+        AnswerPlaceholderSubtaskInfo maxInfo = mySubtaskInfos.get(maxIndex);
+        if (maxInfo.isNeedInsertText()) {
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, "");
+        }
+        else {
+          String replacementText = myUseLength ? maxInfo.getPlaceholderText() : maxInfo.getPossibleAnswer();
+          EduUtils.replaceAnswerPlaceholder(document, this, visibleLength, replacementText);
+        }
       }
     }
   }
