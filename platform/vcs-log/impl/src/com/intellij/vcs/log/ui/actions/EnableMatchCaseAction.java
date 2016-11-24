@@ -64,8 +64,9 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
         Collection<VcsLogProvider> providers = ContainerUtil.newLinkedHashSet(ui.getDataPack().getLogProviders().values());
         List<VcsLogProvider> supported =
           ContainerUtil.filter(providers, p -> VcsLogProperties.get(p, VcsLogProperties.CASE_INSENSITIVE_REGEX));
-        e.getPresentation().setEnabledAndVisible(!supported.isEmpty());
-        if (providers.size() == supported.size()) {
+        e.getPresentation().setVisible(true);
+        e.getPresentation().setEnabled(!supported.isEmpty());
+        if (providers.size() == supported.size() || supported.isEmpty()) {
           e.getPresentation().setText(MATCH_CASE);
         }
         else {
