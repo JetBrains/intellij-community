@@ -999,14 +999,8 @@ public class PsiTreeUtil {
     return nextLeaf;
   }
 
-  public static boolean hasErrorElements(@NotNull final PsiElement element) {
-    if (element instanceof PsiErrorElement) return true;
-
-    for (PsiElement child : element.getChildren()) {
-      if (hasErrorElements(child)) return true;
-    }
-
-    return false;
+  public static boolean hasErrorElements(@NotNull PsiElement element) {
+    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
   @NotNull
