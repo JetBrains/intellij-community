@@ -47,6 +47,7 @@
        <include name="snappy-in-java-*.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
+       <include name="xercesImpl.jar"/>
     </fileset>
   </path>
 
