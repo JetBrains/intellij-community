@@ -59,7 +59,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectContributor"/>
-    <!--<resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContributor"/>-->
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDistributionsContributor"/>

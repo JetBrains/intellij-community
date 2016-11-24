@@ -22,14 +22,18 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
+import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.Serializable;
@@ -99,6 +103,28 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           }
           extensionsData.properties.add(gradleProp);
         }
+        for (ExternalTask task : gradleExtensions.getTasks()) {
+          GradleTask gradleTask = new GradleTask();
+          gradleTask.name = task.getName();
+          String type = task.getType();
+          if (type != null) {
+            gradleTask.typeFqn = type;
+          }
+
+          StringBuilder description = new StringBuilder();
+          if(task.getDescription() != null) {
+            description.append(task.getDescription());
+            if(task.getGroup() != null) {
+              description.append("<p>");
+            }
+          }
+          if(task.getGroup() != null) {
+            description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
+          }
+
+          gradleTask.description = description.toString();
+          extensionsData.tasks.add(gradleTask);
+        }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
       }
 
@@ -145,25 +171,38 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
     public List<GradleProp> properties = new SmartList<>();
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
+    public List<GradleTask> tasks = new SmartList<>();
   }
 
   @Tag("ext")
   public static class GradleExtension {
     @Attribute("name")
     public String name;
-    @Attribute("rootTypeFqn")
-    public String rootTypeFqn;
-    @Attribute("namedObjectTypeFqn")
+    @Attribute("type")
+    public String rootTypeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
+    @Attribute("objectType")
     public String namedObjectTypeFqn;
   }
-  @Tag("p")
+
+  @Tag("prop")
   public static class GradleProp {
     @Attribute("name")
     public String name;
-    @Attribute("typeFqn")
-    public String typeFqn;
+    @Attribute("type")
+    public String typeFqn = CommonClassNames.JAVA_LANG_STRING;
     @Nullable
-    @Attribute("val")
+    @Text
     public String value;
+  }
+
+  @Tag("task")
+  public static class GradleTask extends GradleProp {
+    @Nullable
+    @Text
+    public String description;
+    @Attribute("type")
+    public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
   }
 }

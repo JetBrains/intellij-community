@@ -63,7 +63,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))
       }
     }
-    return result.extensions.isEmpty() && result.gradleProperties.isEmpty() ? null : result
+    return result
   }
 
   @Override
@@ -75,7 +75,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   static String getType(object) {
-    def clazz = object.getClass()?.canonicalName
+    def clazz = object?.getClass()?.canonicalName
     def decorIndex = clazz?.lastIndexOf('_Decorated')
     !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
   }

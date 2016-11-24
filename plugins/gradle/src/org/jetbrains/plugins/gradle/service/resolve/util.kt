@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint.KEY
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
+import java.util.*
 
 /**
  * @author Vladislav.Soroka
  * @since 11/11/2016
  */
+
+@JvmField val RESOLVED_CODE = Key.create<Boolean?>("gradle.resolved")
 
 fun processDeclarations(handlerClass: PsiClass,
                         processor: PsiScopeProcessor,
@@ -42,11 +42,16 @@ fun processDeclarations(handlerClass: PsiClass,
     if (!componentClass.processDeclarations(componentProcessor, state, null, place)) return false
   }
   else {
+    val processedSignatures = HashSet<List<String>>()
     for (method in componentClass.findMethodsByName(name, true)) {
+      processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+      place.putUserData(RESOLVED_CODE, true)
       if (!componentProcessor.execute(method, state)) return false
     }
     for (prefix in arrayOf("add", "set")) {
       for (method in componentClass.findMethodsByName(prefix + name.capitalize(), true)) {
+        if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
+        place.putUserData(RESOLVED_CODE, true)
         if (!componentProcessor.execute(method, state)) return false
       }
     }

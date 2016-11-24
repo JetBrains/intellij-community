@@ -30,6 +30,8 @@ public class DefaultGradleExtensions implements GradleExtensions {
   private final List<GradleExtension> myExtensions = new ArrayList<GradleExtension>();
   @NotNull
   private final List<GradleProperty> myGradleProperties = new ArrayList<GradleProperty>();
+  @NotNull
+  private List<ExternalTask> myTasks = new ArrayList<ExternalTask>();
 
   public DefaultGradleExtensions() {
   }
@@ -41,6 +43,9 @@ public class DefaultGradleExtensions implements GradleExtensions {
     for (GradleProperty property : extensions.getGradleProperties()) {
       myGradleProperties.add(new DefaultGradleProperty(property));
    }
+    for (ExternalTask entry : extensions.getTasks()) {
+      myTasks.add(new DefaultExternalTask(entry));
+    }
   }
 
   @NotNull
@@ -53,5 +58,11 @@ public class DefaultGradleExtensions implements GradleExtensions {
   @Override
   public List<GradleProperty> getGradleProperties() {
     return myGradleProperties;
+  }
+
+  @NotNull
+  @Override
+  public List<ExternalTask> getTasks() {
+    return myTasks;
   }
 }

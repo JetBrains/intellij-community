@@ -27,7 +27,7 @@ public class DefaultGradleExtension extends DefaultGradleProperty implements Gra
   @Nullable
   private final String myNamedObjectTypeFqn;
 
-  public DefaultGradleExtension(@NotNull String name, @NotNull String typeFqn, @Nullable String namedObjectTypeFqn) {
+  public DefaultGradleExtension(@NotNull String name, @Nullable String typeFqn, @Nullable String namedObjectTypeFqn) {
     super(name, typeFqn, null);
     myNamedObjectTypeFqn = namedObjectTypeFqn;
   }
@@ -35,6 +35,7 @@ public class DefaultGradleExtension extends DefaultGradleProperty implements Gra
   public DefaultGradleExtension(GradleExtension extension) {
     this(extension.getName(), extension.getTypeFqn(), extension.getNamedObjectTypeFqn());
   }
+
   @Nullable
   @Override
   public String getNamedObjectTypeFqn() {

@@ -30,4 +30,7 @@ public interface GradleExtensions extends Serializable {
 
   @NotNull
   List<GradleProperty> getGradleProperties();
+
+  @NotNull
+  List<ExternalTask> getTasks();
 }

@@ -33,9 +33,9 @@ public class DefaultGradleProperty implements GradleProperty {
   @Nullable
   private final Serializable myValue;
 
-  public DefaultGradleProperty(@NotNull String name, @NotNull String typeFqn, @Nullable Serializable value) {
+  public DefaultGradleProperty(@NotNull String name, @Nullable String typeFqn, @Nullable Serializable value) {
     myName = name;
-    myRootTypeFqn = typeFqn;
+    myRootTypeFqn = typeFqn == null ? "Object" : typeFqn;
     myValue = value;
   }
 
