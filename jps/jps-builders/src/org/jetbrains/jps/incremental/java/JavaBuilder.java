@@ -993,8 +993,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
+    JpsProject project = context.getProjectDescriptor().getProject();
     File storageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(storageRoot);
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project, storageRoot);
   }
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {
