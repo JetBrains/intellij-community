@@ -59,6 +59,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toSet;
+
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
 
@@ -213,7 +215,7 @@ public class ImportHelper{
 
   @NotNull
   private static Set<String> findSingleImports(@NotNull final PsiJavaFile file,
-                                               @NotNull List<Pair<String,Boolean>> names,
+                                               @NotNull Collection<Pair<String,Boolean>> names,
                                                @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     final String thisPackageName = file.getPackageName();
@@ -304,12 +306,12 @@ public class ImportHelper{
       boolean isStatic = ObjectUtils.notNull(onDemandImports.get(onDemand), Boolean.FALSE);
       PsiClass aClass;
       if (aPackage != null) { // import foo.package1.*;
-        Set<String> set = Arrays.stream(aPackage.getClasses(resolveScope)).map(PsiClass::getName).collect(Collectors.toSet());
+        Set<String> set = Arrays.stream(aPackage.getClasses(resolveScope)).map(PsiClass::getName).collect(toSet());
         classNames.put(onDemand, set);
       }
       else if (isStatic && (aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
         PsiMember[][] membersArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
-        Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(Collectors.toSet());
+        Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(toSet());
         classNames.put(onDemand, set);
       }
       else {
@@ -761,15 +763,26 @@ public class ImportHelper{
 
   public static boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
     Collection<Pair<String, Boolean>> resultList = collectNamesToImport(file, new ArrayList<>());
+    String qualifiedName = psiClass.getQualifiedName();
     for (Pair<String, Boolean> pair : resultList) {
       if (pair.second &&
           referenceName.equals(StringUtil.getShortName(pair.first)) &&
-          !StringUtil.getPackageName(pair.first).equals(psiClass.getQualifiedName())) {
+          !StringUtil.getPackageName(pair.first).equals(qualifiedName)) {
         return true;
       }
     }
 
-    return false;
+    PsiImportList importList = file.getImportList();
+    if (importList == null) return false;
+    Set<String> onDemandImportedClasses = Arrays.stream(importList.getImportStaticStatements())
+      .filter(statement -> statement.isOnDemand())
+      .map(statement -> statement.resolveTargetClass())
+      .filter(aClass -> aClass != null)
+      .map(aClass -> aClass.getQualifiedName()).collect(toSet());
+    String newImport = StringUtil.getQualifiedName(qualifiedName, referenceName);
+    Set<String> singleImports = findSingleImports(file, Collections.singletonList(Pair.create(newImport, true)), onDemandImportedClasses);
+
+    return singleImports.contains(newImport);
   }
 
   @NotNull
