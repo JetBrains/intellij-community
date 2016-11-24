@@ -58,7 +58,9 @@ public class SimpleGitTest extends GuiTestCase {
       ideFrameFixture.invokeMenuPath("VCS", ActionsBundle.message("group.Vcs.Import.text"), "Create Git Repository...");
       FileChooserDialogFixture fileChooserDialogFixture =
         FileChooserDialogFixture.findDialog(myRobot, withTitleMatcher(GitBundle.message("init.destination.directory.title")));
-      fileChooserDialogFixture.select(ideFrameFixture.getProject().getBaseDir()).clickOk();
+      //fileChooserDialogFixture.select(ideFrameFixture.getProject().getBaseDir());
+      //Pause.pause((Timeout.timeout(10, SECONDS)).duration());
+      fileChooserDialogFixture.waitFilledTextField().clickOk();
       Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration()); //wait when file will be added to commit
 
       GuiTestUtil.invokeAction(myRobot, "ChangesView.AddUnversioned");
@@ -66,11 +68,17 @@ public class SimpleGitTest extends GuiTestCase {
       GuiTestUtil.invokeAction(myRobot, "CheckinProject");
 
       DialogFixture commitDialogFixture = DialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
+      //JBCheckBoxFixture checkBoxFixture = JBCheckBoxFixture.findByPartOfText("Check TODO", commitDialogFixture.target(), myRobot, true);
+      //if (checkBoxFixture.isEnabled()) checkBoxFixture.click();
       myRobot.enterText("initial commit");
       GuiTestUtil.findAndClickButton(commitDialogFixture, "Commit");
 
-      MessagesFixture.findByTitle(myRobot, commitDialogFixture.target(), VcsBundle.message("code.smells.error.messages.tab.name"))
-        .click("Commit");
+      MessagesFixture messagesFixture = MessagesFixture.findAny(myRobot, commitDialogFixture.target());
+      messagesFixture.click("Commit");
+
+      if (MessagesFixture.exists(myRobot, commitDialogFixture.target(), "Check TODO is not possible right now")) {
+        MessagesFixture.findByTitle(myRobot, commitDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
+      }
 
       Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration());
     }
