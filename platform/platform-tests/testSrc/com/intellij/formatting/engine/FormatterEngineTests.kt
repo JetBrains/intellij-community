@@ -32,14 +32,28 @@ class FormatterEngineTests : LightPlatformTestCase() {
   @Test
   fun `test simple alignment`() {
     doTest(
-"""
+      """
 [a0]fooooo [a1]foo
 [a0]go [a1]boo
 """,
-"""
+      """
 fooooo foo
 go     boo
 """)
+  }
+
+  @Test
+  fun `test empty block alignment`() {
+    doTest(
+      """
+[a0]fooooo [a1]
+[a0]go [a1]boo
+""",
+      """
+fooooo 
+go     boo
+""")
+
   }
 
 }

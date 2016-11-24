@@ -343,7 +343,6 @@ public class InitialInfoBuilder {
     checkInsideFormatterOffTag(rootBlock);
 
     TextRange textRange = rootBlock.getTextRange();
-    checkRange(textRange);
 
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
