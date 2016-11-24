@@ -30,7 +30,7 @@ import kotlin.reflect.*
  * @author traff
  */
 @State(name = "TerminalProjectOptionsProvider", storages = arrayOf(Storage("terminal.xml")))
-class TerminalProjectOptionsProvider(private val myProject: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
+class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
   private val myState = State()
 
@@ -73,13 +73,13 @@ class TerminalProjectOptionsProvider(private val myProject: Project) : Persisten
 
 
   private fun currentProjectFolder(): String? {
-    val projectRootManager = ProjectRootManager.getInstance(myProject)
+    val projectRootManager = ProjectRootManager.getInstance(project)
 
     val roots = projectRootManager.contentRoots
     if (roots.size == 1) {
       roots[0].canonicalPath
     }
-    val baseDir = myProject.baseDir
+    val baseDir = project.baseDir
     return baseDir?.canonicalPath
   }
 

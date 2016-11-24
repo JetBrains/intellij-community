@@ -15,7 +15,12 @@
  */
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
@@ -23,20 +28,20 @@ import com.jetbrains.python.run.PyVirtualEnvReader
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import java.io.File
+import javax.swing.JCheckBox
 
 /**
  * @author traff
  */
 
+
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
-
-
   override fun customizeCommandAndEnvironment(project: Project,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
     val sdk: Sdk? = findSdk(project)
 
-    if (sdk != null && PythonSdkType.isVirtualEnv(sdk)) {
+    if (sdk != null && PythonSdkType.isVirtualEnv(sdk) && PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
       // in case of virtualenv sdk on unix we activate virtualenv
       val path = sdk.homePath
 
@@ -53,14 +58,16 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           //for other shells we read envs from activate script by the default shell and pass them to the process
           val reader = PyVirtualEnvReader(path)
           reader.activate?.let {
-            envs.putAll(reader.readShellEnv().mapKeys { k-> k.key.toUpperCase() }.filterKeys { k -> k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT") })
+            envs.putAll(reader.readShellEnv().mapKeys { k -> k.key.toUpperCase() }.filterKeys { k ->
+              k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT")
+            })
           }
         }
       }
     }
 
     // for some reason virtualenv isn't activated in the rcfile for the login shell, so we make it non-login
-    return command.filter { arg -> arg != "--login" && arg != "-l"}.toTypedArray()
+    return command.filter { arg -> arg != "--login" && arg != "-l" }.toTypedArray()
   }
 
 
@@ -79,5 +86,53 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   override fun getDefaultFolder(): String? {
     return null
   }
+
+  override fun getConfigurable(project: Project) = object : UnnamedConfigurable {
+    val settings = PyVirtualEnvTerminalSettings.getInstance(project)
+
+    var myCheckbox: JCheckBox = JCheckBox("Activate virtualenv")
+
+    override fun createComponent() = myCheckbox
+
+    override fun isModified() = myCheckbox.isSelected != settings.virtualEnvActivate
+
+    override fun apply() {
+      settings.virtualEnvActivate = myCheckbox.isSelected
+    }
+
+    override fun reset() {
+      myCheckbox.isSelected = settings.virtualEnvActivate
+    }
+  }
+
+
+}
+
+class SettingsState {
+  var virtualEnvActivate = true
+}
+
+@State(name = "PyVirtualEnvTerminalCustomizer", storages = arrayOf(Storage("python-terminal.xml")))
+class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
+  var myState = SettingsState()
+
+  var virtualEnvActivate: Boolean
+    get() = myState.virtualEnvActivate
+    set(value) {
+      myState.virtualEnvActivate = value
+    }
+
+  override fun getState() = myState
+
+  override fun loadState(state: SettingsState) {
+    myState.virtualEnvActivate = state.virtualEnvActivate
+  }
+
+  companion object {
+    fun getInstance(project: Project): PyVirtualEnvTerminalSettings {
+      return ServiceManager.getService(project, PyVirtualEnvTerminalSettings::class.java)
+    }
+  }
+
 }
 
