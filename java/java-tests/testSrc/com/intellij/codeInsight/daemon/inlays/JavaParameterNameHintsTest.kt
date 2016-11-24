@@ -732,15 +732,18 @@ class Test {
     xxx(100);
     check(1 + 1);
     int i=1; check(1 + 1 + 1);
+    yyy(200);
   }
   void check(int isShow) {}
   void xxx(int followTheSum) {}
+  void yyy(int followTheSum) {}
 }
 """)
 
     onLineStartingWith("xxx").assertInlays("followTheSum->100")
     onLineStartingWith("check").assertInlays("isShow->1")
     onLineStartingWith("int").assertInlays("isShow->1")
+    onLineStartingWith("yyy").assertInlays("followTheSum->200")
   }
   
   fun `test incorrect pattern`() {
