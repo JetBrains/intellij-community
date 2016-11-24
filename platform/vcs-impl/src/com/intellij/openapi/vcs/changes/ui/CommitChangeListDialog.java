@@ -172,7 +172,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       dialog.show();
     }
     else {
-      dialog.doOKAction();
+      Action okAction = dialog.getOKAction();
+      if (okAction.isEnabled()) {
+        okAction.actionPerformed(null);
+      }
+      else {
+        dialog.doCancelAction();
+      }
     }
     return dialog.isOK();
   }
@@ -622,7 +628,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doOKAction();
+      executeDefaultCommitSession();
     }
 
     @NotNull
@@ -634,11 +640,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     public void setOptions(List<? extends Action> actions) {
       myOptions = ArrayUtil.toObjectArray(actions, Action.class);
     }
-  }
-
-  @Override
-  protected void doOKAction() {
-    executeDefaultCommitSession();
   }
 
   private boolean addUnversionedFiles() {
@@ -1129,7 +1130,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void updateButtons() {
     if (myDisposed || myUpdateDisabled) return;
     final boolean enabled = hasDiffs();
-    setOKActionEnabled(enabled);
     if (myCommitAction != null) {
       myCommitAction.setEnabled(enabled);
     }
