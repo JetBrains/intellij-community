@@ -58,33 +58,33 @@ public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<>("DOCUMENT_BEING_COMMITTED");
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommitHelper");
-  private final Project myProject;
+  @NotNull private final Project myProject;
 
-  private final ChangeList myChangeList;
-  private final List<Change> myIncludedChanges;
+  @NotNull private final ChangeList myChangeList;
+  @NotNull private final List<Change> myIncludedChanges;
 
-  private final String myActionName;
-  private final String myCommitMessage;
+  @NotNull private final String myActionName;
+  @NotNull private final String myCommitMessage;
 
-  private final List<CheckinHandler> myHandlers;
+  @NotNull private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
-  private final NullableFunction<Object, Object> myAdditionalData;
+  @NotNull private final NullableFunction<Object, Object> myAdditionalData;
   @Nullable private final CommitResultHandler myCustomResultHandler;
-  private final List<Document> myCommittingDocuments = new ArrayList<>();
-  private final VcsConfiguration myConfiguration;
-  private final VcsDirtyScopeManager myDirtyScopeManager;
-  private final HashSet<String> myFeedback;
+  @NotNull private final List<Document> myCommittingDocuments = new ArrayList<>();
+  @NotNull private final VcsConfiguration myConfiguration;
+  @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
+  @NotNull private final HashSet<String> myFeedback = new HashSet<>();
 
-  public CommitHelper(final Project project,
-                      final ChangeList changeList,
-                      final List<Change> includedChanges,
-                      final String actionName,
-                      final String commitMessage,
-                      final List<CheckinHandler> handlers,
-                      final boolean allOfDefaultChangeListChangesIncluded,
-                      final boolean synchronously,
-                      final NullableFunction<Object, Object> additionalDataHolder,
+  public CommitHelper(@NotNull Project project,
+                      @NotNull ChangeList changeList,
+                      @NotNull List<Change> includedChanges,
+                      @NotNull String actionName,
+                      @NotNull String commitMessage,
+                      @NotNull List<CheckinHandler> handlers,
+                      boolean allOfDefaultChangeListChangesIncluded,
+                      boolean synchronously,
+                      @NotNull NullableFunction<Object, Object> additionalDataHolder,
                       @Nullable CommitResultHandler customResultHandler) {
     myProject = project;
     myChangeList = changeList;
@@ -98,7 +98,6 @@ public class CommitHelper {
     myCustomResultHandler = customResultHandler;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myFeedback = new HashSet<>();
   }
 
   public boolean doCommit() {
