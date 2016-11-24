@@ -59,7 +59,6 @@ import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int BATCH_SIZE = 1000;
   private static final int VERSION = 0;
 
   @NotNull private final Project myProject;
@@ -451,6 +450,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   private class IndexingRequest {
     private static final int MAGIC_NUMBER = 150000;
+    private static final int BATCH_SIZE = 1000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
     private final boolean myFull;
 
@@ -510,6 +510,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private void indexOneByOne(@NotNull VirtualFile root,
                                @NotNull CommitsCounter counter,
                                @NotNull IntStream commits) {
+      // We pass hashes to VcsLogProvider#readFullDetails in batches
+      // in order to avoid allocating too much memory for these hashes
+      // (we have up to 150K commits here that will occupy up to 18Mb as Strings).
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
         counter.indicator.checkCanceled();
 
