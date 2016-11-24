@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
@@ -91,10 +90,6 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     myText = text;
   }
 
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Override
   public String toString() {
     return getText();
@@ -141,8 +136,6 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     if (!isAvailable(project, element)) return;
     PsiElement container = getContainer(element);
     if (container == null) return;
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
 
     if (replaceSuppressionComments(container)) return;
 
