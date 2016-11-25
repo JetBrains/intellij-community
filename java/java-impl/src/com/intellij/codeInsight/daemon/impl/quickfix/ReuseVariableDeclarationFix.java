@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -67,8 +66,6 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiVariable refVariable = findPreviousVariable();
     if (refVariable == null) return;
-
-    if (!CodeInsightUtil.preparePsiElementsForWrite(myVariable, refVariable)) return;
 
     final PsiExpression initializer = myVariable.getInitializer();
     if (initializer == null) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,6 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     String newText = myValue.getText();
     newText = StringUtil.stripQuotesAroundValue(newText);
     newText = "\"" + newText + "\"";

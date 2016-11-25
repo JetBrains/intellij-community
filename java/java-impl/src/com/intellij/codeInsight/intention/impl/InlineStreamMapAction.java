@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -205,8 +204,6 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
     String newName = translateName(mapCall, nextCall);
     if(newName == null) return;
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     PsiLambdaExpression previousLambda = getLambda(mapCall);
 

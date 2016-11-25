@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,9 +34,6 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-      return;
-    }
     final CompareToResult compareToResult = CompareToResult.findCompareTo(element);
     assert compareToResult != null;
     final PsiExpression qualifier = compareToResult.getQualifier();

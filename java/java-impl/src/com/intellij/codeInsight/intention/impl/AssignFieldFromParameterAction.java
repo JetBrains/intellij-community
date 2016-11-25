@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -63,16 +62,9 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (!FileModificationService.getInstance().prepareFileForWrite(myParameter.getContainingFile())) return;
-
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    try {
-      PsiField field = findFieldToAssign(project, myParameter);
-      if (field != null) addFieldAssignmentStatement(project, field, myParameter, editor);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiField field = findFieldToAssign(project, myParameter);
+    if (field != null) addFieldAssignmentStatement(project, field, myParameter, editor);
   }
 
   @Nullable

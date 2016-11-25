@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -33,6 +32,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -81,11 +81,8 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
     final PsiNameValuePair[] addedParameters = myAnnotation.getParameterList().getAttributes();
 
     final TObjectIntHashMap<String> annotationsOrderMap = getAnnotationsOrderMap();
-    final SortedSet<Pair<String, PsiAnnotationMemberValue>>
-      newParameters = new TreeSet<>(
-      (o1, o2) -> annotationsOrderMap.get(o1.getFirst()) - annotationsOrderMap.get(o2.getFirst()));
-
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    final SortedSet<Pair<String, PsiAnnotationMemberValue>> newParameters =
+      new TreeSet<>(Comparator.comparingInt(o -> annotationsOrderMap.get(o.getFirst())));
 
     final boolean order = isAlreadyAddedOrdered(annotationsOrderMap, addedParameters);
     if (order) {
@@ -106,7 +103,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
 
     final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
     for (final String misssedParameter : myMissedElements) {
-      newParameters.add(Pair.<String, PsiAnnotationMemberValue>create(misssedParameter, nullValue));
+      newParameters.add(Pair.create(misssedParameter, nullValue));
     }
 
     TemplateBuilderImpl builder = null;

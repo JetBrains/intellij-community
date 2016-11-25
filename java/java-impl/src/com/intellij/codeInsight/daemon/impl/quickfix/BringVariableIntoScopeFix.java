@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -98,7 +97,6 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiManager manager = file.getManager();
     myOutOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(myOutOfScopeVariable, PsiModifier.FINAL, false);

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -71,7 +70,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTypeCastExpression typeCastExpression = PsiTreeUtil.getParentOfType(element, PsiTypeCastExpression.class);
 
-    if (typeCastExpression == null || !FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+    if (typeCastExpression == null) {
       return;
     }
 

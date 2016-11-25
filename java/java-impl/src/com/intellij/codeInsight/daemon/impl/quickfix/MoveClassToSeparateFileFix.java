@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,22 +69,15 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
-
     PsiDirectory dir = file.getContainingDirectory();
-    try{
-      String name = myClass.getName();
-      JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
-      PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
-      PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
-      myClass.delete();
+    String name = myClass.getName();
+    JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
+    PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
+    PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
+    myClass.delete();
 
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
+    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
   @Override

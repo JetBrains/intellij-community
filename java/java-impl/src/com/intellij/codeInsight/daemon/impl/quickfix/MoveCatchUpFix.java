@@ -15,23 +15,18 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveCatchUpFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
-
   private final PsiCatchSection myCatchSection;
   private final PsiCatchSection myMoveBeforeSection;
 
@@ -70,15 +65,9 @@ public class MoveCatchUpFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myCatchSection.getContainingFile())) return;
-    try {
-      PsiTryStatement statement = myCatchSection.getTryStatement();
-      statement.addBefore(myCatchSection, myMoveBeforeSection);
-      myCatchSection.delete();
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiTryStatement statement = myCatchSection.getTryStatement();
+    statement.addBefore(myCatchSection, myMoveBeforeSection);
+    myCatchSection.delete();
   }
 
   @Override

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -113,75 +112,68 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    try {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    final PsiMethodCallExpression filterCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    LOG.assertTrue(filterCall != null);
 
-      final PsiMethodCallExpression filterCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-      LOG.assertTrue(filterCall != null);
+    final PsiMethodCallExpression filterToMerge = getFilterToMerge(filterCall);
+    LOG.assertTrue(filterToMerge != null);
 
-      final PsiMethodCallExpression filterToMerge = getFilterToMerge(filterCall);
-      LOG.assertTrue(filterToMerge != null);
+    final PsiMethodCallExpression callToStay = filterCall.getTextLength() < filterToMerge.getTextLength() ? filterCall : filterToMerge;
+    final PsiMethodCallExpression callToEliminate = callToStay == filterCall ? filterToMerge : filterCall;
 
-      final PsiMethodCallExpression callToStay = filterCall.getTextLength() < filterToMerge.getTextLength() ? filterCall : filterToMerge;
-      final PsiMethodCallExpression callToEliminate = callToStay == filterCall ? filterToMerge : filterCall;
+    String resultingOperation = callToEliminate.getMethodExpression().getReferenceName();
+    LOG.assertTrue(resultingOperation != null);
 
-      String resultingOperation = callToEliminate.getMethodExpression().getReferenceName();
-      LOG.assertTrue(resultingOperation != null);
+    final PsiLambdaExpression targetLambda = getLambda(callToStay);
+    LOG.assertTrue(targetLambda != null, callToStay);
+    final PsiParameter[] parameters = targetLambda.getParameterList().getParameters();
+    final String name = parameters.length > 0 ? parameters[0].getName() : null;
 
-      final PsiLambdaExpression targetLambda = getLambda(callToStay);
-      LOG.assertTrue(targetLambda != null, callToStay);
-      final PsiParameter[] parameters = targetLambda.getParameterList().getParameters();
-      final String name = parameters.length > 0 ? parameters[0].getName() : null;
-
-      final PsiLambdaExpression sourceLambda = getLambda(callToEliminate);
-      LOG.assertTrue(sourceLambda != null, callToEliminate);
-      if (name != null) {
-        final PsiParameter[] sourceLambdaParams = sourceLambda.getParameterList().getParameters();
-        if (sourceLambdaParams.length > 0 && !name.equals(sourceLambdaParams[0].getName())) {
-          for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
-            final PsiElement referenceElement = reference.getElement();
-            if (referenceElement instanceof PsiReferenceExpression) {
-              ((PsiReferenceExpression)referenceElement).handleElementRename(name);
-            }
+    final PsiLambdaExpression sourceLambda = getLambda(callToEliminate);
+    LOG.assertTrue(sourceLambda != null, callToEliminate);
+    if (name != null) {
+      final PsiParameter[] sourceLambdaParams = sourceLambda.getParameterList().getParameters();
+      if (sourceLambdaParams.length > 0 && !name.equals(sourceLambdaParams[0].getName())) {
+        for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
+          final PsiElement referenceElement = reference.getElement();
+          if (referenceElement instanceof PsiReferenceExpression) {
+            ((PsiReferenceExpression)referenceElement).handleElementRename(name);
           }
         }
       }
-
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiElement nameElement = callToStay.getMethodExpression().getReferenceNameElement();
-      LOG.assertTrue(nameElement != null);
-      if(!resultingOperation.equals(nameElement.getText())) {
-        nameElement.replace(factory.createIdentifier(resultingOperation));
-      }
-
-      PsiElement targetBody = targetLambda.getBody();
-      LOG.assertTrue(targetBody instanceof PsiExpression);
-      final PsiElement sourceLambdaBody = sourceLambda.getBody();
-
-      LOG.assertTrue(sourceLambdaBody instanceof PsiExpression);
-
-      final PsiExpression compoundExpression = factory
-        .createExpressionFromText(
-          ParenthesesUtils.getText((PsiExpression)targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
-          ParenthesesUtils.getText((PsiExpression)sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE), sourceLambda);
-      targetBody = targetBody.replace(compoundExpression);
-      CodeStyleManager.getInstance(project).reformat(targetBody);
-
-      final PsiExpression qualifierExpression = callToEliminate.getMethodExpression().getQualifierExpression();
-      LOG.assertTrue(qualifierExpression != null, callToEliminate);
-      final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(callToEliminate, PsiComment.class);
-      for (PsiComment comment : comments) {
-        final TextRange commentRange = comment.getTextRange();
-        if (!sourceLambdaBody.getTextRange().contains(commentRange) &&
-            !qualifierExpression.getTextRange().contains(commentRange)) {
-          targetBody.add(comment);
-        }
-      }
-      callToEliminate.replace(qualifierExpression);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElement nameElement = callToStay.getMethodExpression().getReferenceNameElement();
+    LOG.assertTrue(nameElement != null);
+    if(!resultingOperation.equals(nameElement.getText())) {
+      nameElement.replace(factory.createIdentifier(resultingOperation));
     }
+
+    PsiElement targetBody = targetLambda.getBody();
+    LOG.assertTrue(targetBody instanceof PsiExpression);
+    final PsiElement sourceLambdaBody = sourceLambda.getBody();
+
+    LOG.assertTrue(sourceLambdaBody instanceof PsiExpression);
+
+    final PsiExpression compoundExpression = factory
+      .createExpressionFromText(
+        ParenthesesUtils.getText((PsiExpression)targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
+        ParenthesesUtils.getText((PsiExpression)sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE), sourceLambda);
+    targetBody = targetBody.replace(compoundExpression);
+    CodeStyleManager.getInstance(project).reformat(targetBody);
+
+    final PsiExpression qualifierExpression = callToEliminate.getMethodExpression().getQualifierExpression();
+    LOG.assertTrue(qualifierExpression != null, callToEliminate);
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(callToEliminate, PsiComment.class);
+    for (PsiComment comment : comments) {
+      final TextRange commentRange = comment.getTextRange();
+      if (!sourceLambdaBody.getTextRange().contains(commentRange) &&
+          !qualifierExpression.getTextRange().contains(commentRange)) {
+        targetBody.add(comment);
+      }
+    }
+    callToEliminate.replace(qualifierExpression);
   }
 
 }

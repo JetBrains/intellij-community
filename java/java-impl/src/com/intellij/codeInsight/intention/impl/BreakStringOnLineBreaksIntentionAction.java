@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -78,7 +77,6 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
       return;
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     token.replace(factory.createExpressionFromText(breakOnLineBreaks(text), element));
   }

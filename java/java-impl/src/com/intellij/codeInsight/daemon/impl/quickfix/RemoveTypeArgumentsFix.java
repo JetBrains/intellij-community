@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,7 +67,7 @@ public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsi
     final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
     if (referenceElement != null) {
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-      if (parameterList != null && FileModificationService.getInstance().preparePsiElementForWrite(parameterList)) {
+      if (parameterList != null) {
         parameterList.delete();
       }
     }

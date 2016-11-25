@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -67,8 +66,6 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     final FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
     if (fileReference != null) {
