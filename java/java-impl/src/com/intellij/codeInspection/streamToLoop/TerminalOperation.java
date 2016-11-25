@@ -19,7 +19,6 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -587,7 +586,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     CollectorOperation asCollector() {
-      return myFinisherTemplate.equals("{acc}") && PsiTypesUtil.boxIfPossible(myAccType).equals(myAccType) ? this : null;
+      return myFinisherTemplate.equals("{acc}") && !TypeConversionUtil.isPrimitive(myAccType) ? this : null;
     }
 
     @Override
