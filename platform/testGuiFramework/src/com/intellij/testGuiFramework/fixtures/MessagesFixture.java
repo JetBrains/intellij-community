@@ -22,6 +22,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.messages.SheetController;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.JPanelFixture;
 import org.jdom.Document;
@@ -65,6 +66,8 @@ public class MessagesFixture {
       findByTitle(robot, root, title);
       return true;
     } catch (AssertionError ae) {
+      return false;
+    } catch (WaitTimedOutError waitTimedOutError) {
       return false;
     }
   }
