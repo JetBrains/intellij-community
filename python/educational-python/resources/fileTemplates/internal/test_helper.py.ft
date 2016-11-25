@@ -248,6 +248,13 @@ def check_samples(samples=()):
     passed()
 
 
+def do_not_run_on_check():
+    """
+    Do not execute task file on check
+    """
+    print("#educational_plugin DO_NOT_RUN_ON_CHECK")
+
+
 def run_common_tests(error_text="Please, reload file and try again"):
     test_is_initial_text()
     test_is_not_empty()
