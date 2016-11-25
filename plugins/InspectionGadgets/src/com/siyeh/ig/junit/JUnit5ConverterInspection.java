@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
@@ -136,6 +137,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(descriptor.getPsiElement())) {
+        return;
+      }
       PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       if (psiClass != null) {
         MigrationManager manager = RefactoringManager.getInstance(project).getMigrateManager();
