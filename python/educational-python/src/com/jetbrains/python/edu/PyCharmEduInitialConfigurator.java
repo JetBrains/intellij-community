@@ -127,7 +127,7 @@ public class PyCharmEduInitialConfigurator {
                                                                              "Goto Error/Bookmark Actions", "GoToEditPointGroup",
                                                                              "Change Navigation Actions", "Method Navigation Actions",
                                                                              "EvaluateExpression", "Pause", "ViewBreakpoints",
-                                                                             "XDebugger.MuteBreakpoints", "SaveAs");
+                                                                             "XDebugger.MuteBreakpoints", "SaveAs", "XDebugger.SwitchWatchesInVariables");
 
   public static class First {
 
