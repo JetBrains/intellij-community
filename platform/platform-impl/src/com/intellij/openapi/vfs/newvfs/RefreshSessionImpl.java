@@ -148,7 +148,7 @@ public class RefreshSessionImpl extends RefreshSession {
         count++;
         if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
       }
-      while (myIsRecursive && count < 3 && workQueue.stream().anyMatch(f -> ((NewVirtualFile)f).isDirty()));
+      while (!myCancelled && myIsRecursive && count < 3 && workQueue.stream().anyMatch(f -> ((NewVirtualFile)f).isDirty()));
 
       if (t != 0) {
         t = System.currentTimeMillis() - t;
