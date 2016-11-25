@@ -68,9 +68,10 @@ import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -83,11 +84,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = "java";
-  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
+  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = GlobalContextKey.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
-  public static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = Key.create("_prefer_target_jdk_javac_");
+  private static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = Key.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
-  private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
+  private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = GlobalContextKey.create("_java_compiler_usage_stats_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.singletonList(
     "-target"
@@ -152,8 +153,29 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
-    String messageText = compilingTool != null ? "Using " + compilingTool.getDescription() + " to compile java sources" : null;
-    COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
+    COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<String, Collection<String>>());
+  }
+
+  public void buildFinished(CompileContext context) {
+    final ConcurrentMap<String, Collection<String>> stats = COMPILER_USAGE_STATISTICS.get(context);
+    if (stats.size() == 1) {
+      final Map.Entry<String, Collection<String>> entry = stats.entrySet().iterator().next();
+      final String compilerName = entry.getKey();
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, compilerName + " was used to compile java sources"));
+      LOG.info(compilerName + " was used to compile " + entry.getValue());
+    }
+    else {
+      for (Map.Entry<String, Collection<String>> entry : stats.entrySet()) {
+        final String compilerName = entry.getKey();
+        final Collection<String> moduleNames = entry.getValue();
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
+          moduleNames.size() == 1 ?
+          compilerName + " was used to compile [" + moduleNames.iterator().next() + "]" :
+          compilerName + " was used to compile " + moduleNames.size() + " modules"
+        ));
+        LOG.info(compilerName + " was used to compile " + moduleNames);
+      }
+    }
   }
 
   @Override
@@ -262,12 +284,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     Collection<File> filesWithErrors = null;
     try {
       if (hasSourcesToCompile) {
-        final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
-        final String versionInfo = ref.getAndSet(null); // display compiler version info only once per compile session
-        if (versionInfo != null) {
-          LOG.info(versionInfo);
-          context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, versionInfo));
-        }
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
@@ -443,14 +459,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
       final boolean rc;
       if (!shouldForkJavac) {
+        updateCompilerUsageStatistics(context, compilingTool.getDescription(), chunk);
         rc = JavacMain.compile(
           options, files, classPath, platformCp, modulePath, sourcePath, outs, diagnosticSink, classesConsumer,
           context.getCancelStatus(), compilingTool
         );
       }
       else {
-        String text = "Using javac " + forkSdk.getSecond() + " to compile [" + chunk.getPresentableShortName() + "]";
-        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, text));
+        updateCompilerUsageStatistics(context, "javac " + forkSdk.getSecond(), chunk);
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
@@ -464,6 +480,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     finally {
       counter.await();
+    }
+  }
+
+  private static void updateCompilerUsageStatistics(CompileContext context, String compilerName, ModuleChunk chunk) {
+    final ConcurrentMap<String, Collection<String>> map = COMPILER_USAGE_STATISTICS.get(context);
+    Collection<String> names = map.get(compilerName);
+    while (names == null) {
+      names = Collections.synchronizedSet(new HashSet<String>());
+      final Collection<String> prev = map.putIfAbsent(compilerName, names);
+      if (prev != null) {
+        names = prev;
+      }
+    }
+    for (JpsModule module : chunk.getModules()) {
+      names.add(module.getName());
     }
   }
 
