@@ -15,13 +15,10 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -455,22 +452,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) {
-        return;
-      }
-      replace(descriptor.getPsiElement());
-    }
-
-    private void replace(final PsiElement psiElement) {
+      PsiElement psiElement = descriptor.getPsiElement();
       final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
                                                                                                              "for _ in tuples:\n  pass"
       );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
-      CommandProcessor.getInstance().executeCommand(psiElement.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        if (target != null) {
-          psiElement.replace(target);
-        }
-      }), getName(), null);
+      if (target != null) {
+        psiElement.replace(target);
+      }
     }
   }
 }

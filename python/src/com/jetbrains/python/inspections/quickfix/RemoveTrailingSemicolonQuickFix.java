@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -37,11 +36,7 @@ public class RemoveTrailingSemicolonQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement problemElement = descriptor.getPsiElement();
-    if ((problemElement != null) && (";".equals(problemElement.getText()))) {
-
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(problemElement)) {
-        return;
-      }
+    if (problemElement != null && ";".equals(problemElement.getText())) {
       problemElement.delete();
     }
   }

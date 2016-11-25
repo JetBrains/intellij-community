@@ -17,7 +17,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ public abstract class PyBaseIntentionAction extends BaseIntentionAction {
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     doInvoke(project, editor, file);
   }
 
