@@ -86,9 +86,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String JAVA_EXTENSION = "java";
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = GlobalContextKey.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
-  private static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = Key.create("_prefer_target_jdk_javac_");
+  private static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
-  private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = GlobalContextKey.create("_java_compiler_usage_stats_");
+  private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.singletonList(
     "-target"
