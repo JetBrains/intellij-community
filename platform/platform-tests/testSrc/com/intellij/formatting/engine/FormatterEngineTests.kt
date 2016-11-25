@@ -15,13 +15,11 @@
  */
 package com.intellij.formatting.engine
 
-import com.intellij.formatting.FormatTextRanges
-import com.intellij.formatting.FormatterImpl
+import com.intellij.formatting.FormatterEx
 import com.intellij.formatting.engine.testModel.TestFormattingModel
 import com.intellij.formatting.engine.testModel.getRoot
 import com.intellij.formatting.toFormattingBlock
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
@@ -58,19 +56,23 @@ go     boo
 
 }
 
-fun doTest(before: String, expectedText: String) {
-  val root = getRoot(before.trimStart())
+fun doTest(before: String, expectedText: String, settings: CodeStyleSettings = CodeStyleSettings()) {
+  var root = getRoot(before.trimStart())
+  var beforeText = root.text
+
+  val rightMargin = beforeText.indexOf('|')
+  if (rightMargin > 0) {
+    settings.setRightMargin(null, rightMargin)
+    root = getRoot(before.trimStart().replace("|", ""))
+    beforeText = root.text
+  }
+  
   val rootFormattingBlock = root.toFormattingBlock(0)
-  val beforeText = root.text
 
   val document = EditorFactory.getInstance().createDocument(beforeText)
   val model = TestFormattingModel(rootFormattingBlock, document)
 
-  val settings = CodeStyleSettings()
-  val textRanges = FormatTextRanges(TextRange(0, document.textLength - 1), true)
+  FormatterEx.getInstanceEx().format(model, settings, settings.indentOptions, null)
 
-  val formatter = FormatterImpl()
-  formatter.format(model, settings, settings.indentOptions, textRanges)
-
-  TestCase.assertEquals(document.text, expectedText.trimStart())
+  TestCase.assertEquals(expectedText.trimStart(), document.text)
 }
