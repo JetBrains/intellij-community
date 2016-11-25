@@ -49,6 +49,10 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testConflictingWithJavaLang() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(".java");
   }

@@ -311,10 +311,15 @@ public class ImportHelper{
         Set<String> set = Arrays.stream(aPackage.getClasses(resolveScope)).map(PsiClass::getName).collect(toSet());
         classNames.put(onDemand, set);
       }
-      else if (isStatic && (aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
-        PsiMember[][] membersArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
-        Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(toSet());
-        classNames.put(onDemand, set);
+      else if ((aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
+        if (isStatic) {
+          PsiMember[][] membersArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
+          Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(toSet());
+          classNames.put(onDemand, set);
+        }
+        else {
+          classNames.put(onDemand, Arrays.stream(aClass.getInnerClasses()).map(PsiClass::getName).collect(toSet()));
+        }
       }
       else {
         onDemands.remove(i);
