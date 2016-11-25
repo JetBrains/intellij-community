@@ -16,14 +16,11 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -67,7 +64,6 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
       return;
     }
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     doFix(psiElement);
   }
 
@@ -101,14 +97,8 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!element.isValid() || !(element instanceof XmlToken)) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
+    if (!(element instanceof XmlToken)) return;
 
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        doFix(element);
-      }
-    }.execute();
+    doFix(element);
   }
 }

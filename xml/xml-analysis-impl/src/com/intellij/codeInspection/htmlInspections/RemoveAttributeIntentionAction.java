@@ -16,12 +16,9 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,15 +53,6 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
     final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
     if (myAttribute == null) return;
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(myAttribute.getContainingFile())) {
-      return;
-    }
-
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        myAttribute.delete();
-      }
-    }.execute();
+    myAttribute.delete();
   }
 }

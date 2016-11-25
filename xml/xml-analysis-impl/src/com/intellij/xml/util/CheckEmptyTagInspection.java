@@ -16,21 +16,17 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +39,6 @@ import java.util.Set;
  * @author Maxim Mossienko
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyTagInspection");
   @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed =
     new THashSet<>(Arrays.asList(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe"));
 
@@ -117,17 +112,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final XmlTag tag = (XmlTag)descriptor.getPsiElement();
       if (tag == null) return;
-      final PsiFile psiFile = tag.getContainingFile();
-
-      if (psiFile == null) return;
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
-
-      try {
-        XmlUtil.expandTag(tag);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      XmlUtil.expandTag(tag);
     }
   }
 }

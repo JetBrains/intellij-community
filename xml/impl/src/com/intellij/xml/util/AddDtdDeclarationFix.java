@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -59,7 +58,6 @@ public class AddDtdDeclarationFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiFile containingFile = element.getContainingFile();
-    if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
 
     @NonNls String prefixToInsert = "";
     @NonNls String suffixToInsert = "";

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -58,8 +57,6 @@ public class RemoveTagIntentionFix extends LocalQuickFixAndIntentionActionOnPsiE
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final XmlTag next = editor != null ? PsiTreeUtil.getNextSiblingOfType(startElement, XmlTag.class) : null;
     final XmlTag prev = editor != null ? PsiTreeUtil.getPrevSiblingOfType(startElement, XmlTag.class) : null;
 

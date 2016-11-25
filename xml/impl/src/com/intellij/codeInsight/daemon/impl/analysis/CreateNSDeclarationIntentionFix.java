@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
@@ -156,8 +155,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
