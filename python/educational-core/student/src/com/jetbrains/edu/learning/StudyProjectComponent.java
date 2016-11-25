@@ -345,7 +345,7 @@ public class StudyProjectComponent implements ProjectComponent {
               final TaskFile taskFile = new TaskFile();
               taskFile.initTaskFile(task, false);
               taskFile.setUserCreated(true);
-              final String name = FileUtil.getRelativePath(taskDir.getPath(), createdFile.getPath(), File.separatorChar);
+              final String name = FileUtil.getRelativePath(taskDir.getPath(), createdFile.getPath(), '/');
               taskFile.name = name;
               //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);
