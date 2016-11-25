@@ -15,18 +15,15 @@
  */
 package com.intellij.codeInspection.localCanBeFinal;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +36,6 @@ import java.util.*;
  * @author max
  */
 public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal");
-
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;
@@ -331,18 +326,12 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(problem.getPsiElement())) return;
       PsiElement nameIdentifier = problem.getPsiElement();
       if (nameIdentifier == null) return;
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
-      try {
-        psiVariable.normalizeDeclaration();
-        PsiUtil.setModifierProperty(psiVariable, PsiModifier.FINAL, true);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      psiVariable.normalizeDeclaration();
+      PsiUtil.setModifierProperty(psiVariable, PsiModifier.FINAL, true);
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -53,7 +52,6 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     startElement.replace(getModifiedExpression(startElement));
   }
 

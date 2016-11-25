@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -91,7 +90,6 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       PsiElement parent = element.getParent();
       if (parent != null) {
         PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project)

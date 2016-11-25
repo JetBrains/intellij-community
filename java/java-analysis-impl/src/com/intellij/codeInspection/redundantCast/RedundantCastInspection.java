@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
@@ -139,7 +138,6 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.java18api;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -80,7 +79,6 @@ public class Java8ListSortInspection extends BaseJavaBatchLocalInspectionTool {
           PsiExpression comparator = args[1];
           String replacement =
             ParenthesesUtils.getText(list, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".sort(" + comparator.getText() + ")";
-          if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
           methodCallExpression
             .replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, methodCallExpression));
         }

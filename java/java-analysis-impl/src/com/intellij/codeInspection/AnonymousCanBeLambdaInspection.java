@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -243,7 +242,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
   public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element,
                                                           final boolean ignoreEqualsMethod,
                                                           boolean forceIgnoreTypeCast) {
-    if (!(element instanceof PsiNewExpression) || !FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+    if (!(element instanceof PsiNewExpression)) {
       return null;
     }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -111,7 +110,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   protected void invokeImpl(PsiClass myClass) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) &&
                                    myClass.isInterface() != myClassToExtendFrom.isInterface() ?
                                    myClass.getImplementsList() : myClass.getExtendsList();

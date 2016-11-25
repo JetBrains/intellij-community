@@ -16,10 +16,8 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -30,8 +28,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,9 +78,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (!isAvailable()) return;
-    final PsiExpression expression = getSubExpression();
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return;
-    ApplicationManager.getApplication().runWriteAction(() -> simplifyExpression(project, expression, mySubExpressionValue));
+    simplifyExpression(project, getSubExpression(), mySubExpressionValue);
   }
 
   public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.java18api;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -68,8 +67,6 @@ public class ReplaceConditionalMapPutFix implements LocalQuickFix {
     if (qualifier == null) {
       return;
     }
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(conditionalOperator)) return;
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 

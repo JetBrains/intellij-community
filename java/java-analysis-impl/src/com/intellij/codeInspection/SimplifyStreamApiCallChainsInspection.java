@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -498,7 +497,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
       if (element instanceof PsiMethodCallExpression) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
         final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
         final PsiExpression forEachMethodQualifier = expression.getMethodExpression().getQualifierExpression();
         if (forEachMethodQualifier instanceof PsiMethodCallExpression) {
@@ -683,7 +681,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
             PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
             String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
             PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
             PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
             addBoxingIfNecessary(factory, collectCall.replace(replacement));
@@ -750,7 +747,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           PsiExpression findQualifier = findCall.getMethodExpression().getQualifierExpression();
           if(findQualifier instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression filterCall = (PsiMethodCallExpression)findQualifier;
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
             PsiElement replacement = element.replace(filterCall);
             PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
             PsiElement filterName = ((PsiMethodCallExpression)replacement).getMethodExpression().getReferenceNameElement();
@@ -811,7 +807,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if (methodCall == null) return;
         if (removeParentNegation && !isParentNegated(methodCall)) return;
         if (removeLambdaNegation && !isArgumentLambdaNegated(methodCall)) return;
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         element.replace(factory.createIdentifier(myTo));
         if (removeLambdaNegation) {
@@ -859,7 +854,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if(parameters.length != 1) return;
         typeText = myReplacement + "<" + parameters[0].getCanonicalText() + ">";
       }
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression result = factory
         .createExpressionFromText("new " + typeText + "(" + collectionExpression.getText() + ")", element);
@@ -890,7 +884,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if(!(grandParent instanceof PsiMethodCallExpression)) return;
       PsiExpression[] args = ((PsiMethodCallExpression)grandParent).getArgumentList().getExpressions();
       if(args.length != 1) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       element.replace(factory.createIdentifier("boxed"));
       args[0].delete();

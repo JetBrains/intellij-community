@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -48,7 +47,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
@@ -435,10 +437,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          if (!FileModificationService.getInstance().preparePsiElementsForWrite(descriptor.getPsiElement())) {
-            return;
-          }
-
           PsiElement problemElement = descriptor.getPsiElement();
           if (problemElement == null) return;
 
@@ -839,17 +837,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiInstanceOfExpression) {
-        try {
-          final PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
-            createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
-          psiElement.replace(compareToNull);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
+          createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
+        psiElement.replace(compareToNull);
       }
     }
   }

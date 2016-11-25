@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,7 +69,6 @@ public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myExpression.replace(getQualifier(PsiManager.getInstance(project)));
   }
 }

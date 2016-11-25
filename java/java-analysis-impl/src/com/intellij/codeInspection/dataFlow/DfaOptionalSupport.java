@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +108,7 @@ public class DfaOptionalSupport {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression
         methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (methodCallExpression != null && FileModificationService.getInstance().preparePsiElementForWrite(methodCallExpression)) {
+      if (methodCallExpression != null) {
         final PsiElement ofNullableExprName =
           ((PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project)
             .createExpressionFromText("Optional." + myTargetMethodName + "(null)", null)).getMethodExpression();

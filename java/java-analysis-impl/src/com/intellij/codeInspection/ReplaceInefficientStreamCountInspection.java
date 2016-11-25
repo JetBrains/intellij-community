@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -154,7 +153,6 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       if (qualifierCall == null) return;
       PsiMethod qualifier = qualifierCall.resolveMethod();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if(myFlatMapMode) {
         replaceFlatMap(countName, qualifierCall, qualifier, factory);

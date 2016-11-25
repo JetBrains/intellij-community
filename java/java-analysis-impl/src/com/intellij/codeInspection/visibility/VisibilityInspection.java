@@ -26,7 +26,6 @@ package com.intellij.codeInspection.visibility;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
@@ -42,7 +41,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -546,39 +544,33 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiModifierListOwner.class);
       if (element != null) {
         RefElement refElement = null;
         if (myManager != null) {
           refElement = myManager.getReference(element);
         }
-        try {
-          if (element instanceof PsiVariable) {
-            ((PsiVariable)element).normalizeDeclaration();
-          }
+        if (element instanceof PsiVariable) {
+          ((PsiVariable)element).normalizeDeclaration();
+        }
 
-          PsiModifierList list = element.getModifierList();
+        PsiModifierList list = element.getModifierList();
 
-          LOG.assertTrue(list != null);
+        LOG.assertTrue(list != null);
 
-          if (element instanceof PsiMethod) {
-            PsiMethod psiMethod = (PsiMethod)element;
-            PsiClass containingClass = psiMethod.getContainingClass();
-            if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
-                myHint == PsiModifier.PRIVATE &&
-                list.hasModifierProperty(PsiModifier.FINAL)) {
-              list.setModifierProperty(PsiModifier.FINAL, false);
-            }
-          }
-
-          list.setModifierProperty(myHint, true);
-          if (refElement instanceof RefJavaElement) {
-            RefJavaUtil.getInstance().setAccessModifier((RefJavaElement)refElement, myHint);
+        if (element instanceof PsiMethod) {
+          PsiMethod psiMethod = (PsiMethod)element;
+          PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
+              myHint == PsiModifier.PRIVATE &&
+              list.hasModifierProperty(PsiModifier.FINAL)) {
+            list.setModifierProperty(PsiModifier.FINAL, false);
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        list.setModifierProperty(myHint, true);
+        if (refElement instanceof RefJavaElement) {
+          RefJavaUtil.getInstance().setAccessModifier((RefJavaElement)refElement, myHint);
         }
       }
     }

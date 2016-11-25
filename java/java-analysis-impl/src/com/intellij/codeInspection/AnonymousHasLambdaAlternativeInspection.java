@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -127,7 +126,6 @@ public class AnonymousHasLambdaAlternativeInspection extends BaseJavaBatchLocalI
       if(methods.length != 1) return;
       PsiMethod method = methods[0];
       if(method.getBody() == null) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       UnaryOperator<PsiLambdaExpression> replacer = lambda -> {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         PsiElement replacement = element.replace(factory.createExpressionFromText(myAlternative.myLambdaAlternative, element));

@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -121,7 +120,6 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalIn
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiIdentifier) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
         new AddAnnotationPsiFix("java.lang.SafeVarargs", psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);

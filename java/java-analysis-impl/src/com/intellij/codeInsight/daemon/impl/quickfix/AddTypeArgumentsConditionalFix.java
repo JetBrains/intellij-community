@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,7 +90,6 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
       }
     }
     withTypeArgsText += "." + typeArguments + myExpression.getMethodExpression().getReferenceName();
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiExpression withTypeArgs = JavaPsiFacade.getElementFactory(project).createExpressionFromText(withTypeArgsText + myExpression.getArgumentList().getText(), myExpression);
     myExpression.replace(withTypeArgs);
   }

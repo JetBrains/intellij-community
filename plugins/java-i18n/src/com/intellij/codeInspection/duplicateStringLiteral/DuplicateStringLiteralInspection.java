@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +38,10 @@ import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -305,41 +306,43 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (project.isDisposed()) return;
-        final List<PsiExpression> expressions = new ArrayList<>();
-        for(SmartPsiElementPointer ptr: myExpressions) {
-          final PsiElement element = ptr.getElement();
-          if (element != null) {
-            expressions.add((PsiExpression) element);
-          }
-        }
-        final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
-        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-          @Override
-          protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-            final OccurrenceFilter filter = new OccurrenceFilter() {
-              @Override
-              public boolean isOK(PsiExpression occurrence) {
-                return true;
-              }
-            };
-            return new BaseOccurrenceManager(filter) {
-              @Override
-              protected PsiExpression[] defaultOccurrences() {
-                return expressionArray;
-              }
+    public boolean startInWriteAction() {
+      return false;
+    }
 
-              @Override
-              protected PsiExpression[] findOccurrences() {
-                return expressionArray;
-              }
-            };
-          }
-        };
-        handler.invoke(project, expressionArray);
-      });
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final List<PsiExpression> expressions = new ArrayList<>();
+      for(SmartPsiElementPointer ptr: myExpressions) {
+        final PsiElement element = ptr.getElement();
+        if (element != null) {
+          expressions.add((PsiExpression) element);
+        }
+      }
+      final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
+      final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+        @Override
+        protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+          final OccurrenceFilter filter = new OccurrenceFilter() {
+            @Override
+            public boolean isOK(PsiExpression occurrence) {
+              return true;
+            }
+          };
+          return new BaseOccurrenceManager(filter) {
+            @Override
+            protected PsiExpression[] defaultOccurrences() {
+              return expressionArray;
+            }
+
+            @Override
+            protected PsiExpression[] findOccurrences() {
+              return expressionArray;
+            }
+          };
+        }
+      };
+      handler.invoke(project, expressionArray);
     }
   }
 
@@ -376,7 +379,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       if (!(initializer instanceof PsiLiteralExpression)) {
         return;
       }
-      if (!FileModificationService.getInstance().prepareFileForWrite(myOriginalExpression.getContainingFile())) return;
       try {
         final PsiReferenceExpression reference = createReferenceTo(myConstant, myOriginalExpression);
         if (reference != null) {

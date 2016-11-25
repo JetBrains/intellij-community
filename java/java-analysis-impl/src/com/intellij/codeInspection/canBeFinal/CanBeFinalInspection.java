@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
@@ -277,7 +276,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
       if (psiElement != null) {

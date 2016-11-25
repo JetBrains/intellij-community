@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -107,7 +106,6 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, "\"").fun(
         newDelimiters)), null));
     }

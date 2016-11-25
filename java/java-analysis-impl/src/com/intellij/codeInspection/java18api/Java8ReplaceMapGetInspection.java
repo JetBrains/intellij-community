@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.java18api;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -249,7 +248,6 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
       PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(thenBranch);
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       CommentTracker ct = new CommentTracker();
       PsiReferenceExpression methodExpression = getCall.getMethodExpression();
       if(assignment != null) {

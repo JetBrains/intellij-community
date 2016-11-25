@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,7 @@ class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-    if (call == null || !FileModificationService.getInstance().prepareFileForWrite(call.getContainingFile())) return;
+    if (call == null) return;
 
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length != 1) return;
