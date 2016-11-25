@@ -18,7 +18,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.editor.ChoicePanel;
+import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -128,8 +128,8 @@ public class PyStudyCheckAction extends StudyCheckAction {
     final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
     if (toolWindow != null) {
       final JComponent component = toolWindow.getBottomComponent();
-      if (component instanceof ChoicePanel) {
-        toolWindow.setBottomComponent(new ChoicePanel(task));
+      if (component instanceof StudyChoiceVariantsPanel) {
+        toolWindow.setBottomComponent(new StudyChoiceVariantsPanel(task));
       }
     }
   }
