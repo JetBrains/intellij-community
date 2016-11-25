@@ -315,9 +315,6 @@ public class FileTypeUtil {
       if (type.equals(StdFileTypes.PROPERTIES)) {
         return true;
       }
-      if ("JavaScript".equals(type.getName())) {
-        return true;
-      }
       return CopyrightUpdaters.INSTANCE.forFileType(type) != null;
     }
   }
