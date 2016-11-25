@@ -3883,12 +3883,12 @@ public final class JavacRemoteProto {
          * <code>SRC_FILE_LOADED = 6;</code>
          */
         SRC_FILE_LOADED(5, 6),
+        /**
+         * <code>CUSTOM_OUTPUT_OBJECT = 7;</code>
+         */
+        CUSTOM_OUTPUT_OBJECT(6, 7),
         ;
 
-        /**
-         * <code>CUSTOM_OUTPUT_OBJECT = 6;</code>
-         */
-        public static final Type CUSTOM_OUTPUT_OBJECT = SRC_FILE_LOADED;
         /**
          * <code>BUILD_MESSAGE = 1;</code>
          */
@@ -3914,9 +3914,9 @@ public final class JavacRemoteProto {
          */
         public static final int SRC_FILE_LOADED_VALUE = 6;
         /**
-         * <code>CUSTOM_OUTPUT_OBJECT = 6;</code>
+         * <code>CUSTOM_OUTPUT_OBJECT = 7;</code>
          */
-        public static final int CUSTOM_OUTPUT_OBJECT_VALUE = 6;
+        public static final int CUSTOM_OUTPUT_OBJECT_VALUE = 7;
 
 
         public final int getNumber() { return value; }
@@ -3929,6 +3929,7 @@ public final class JavacRemoteProto {
             case 4: return BUILD_COMPLETED;
             case 5: return REQUEST_ACK;
             case 6: return SRC_FILE_LOADED;
+            case 7: return CUSTOM_OUTPUT_OBJECT;
             default: return null;
           }
         }
