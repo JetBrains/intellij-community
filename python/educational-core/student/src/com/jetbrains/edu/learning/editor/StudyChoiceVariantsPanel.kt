@@ -29,7 +29,9 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
       vBox.padding = Insets(15.0, 10.0, 10.0, 15.0)
       if (task.isMultipleChoice) {
         for ((index, variant) in task.choiceVariants.withIndex()) {
+          val isSelected = task.selectedVariants.contains(index)
           val checkBox = CheckBox(variant)
+          checkBox.isSelected = isSelected
           checkBox.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           checkBox.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
           checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected ->
@@ -46,7 +48,9 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
       else {
         val toggleGroup = ToggleGroup()
         for ((index, variant) in task.choiceVariants.withIndex()) {
+          val isSelected = task.selectedVariants.contains(index)
           val radioButton = RadioButton(variant)
+          radioButton.isSelected = isSelected
           radioButton.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           radioButton.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
           radioButton.toggleGroup = toggleGroup

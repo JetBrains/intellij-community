@@ -42,7 +42,7 @@ public class Task implements StudyItem {
 
   @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
   @Expose @SerializedName("is_multichoice") private boolean myIsMultipleChoice;
-  @Transient @SerializedName("choice_answer") private List<Integer> mySelectedVariants = new ArrayList<>();
+  @SerializedName("selected_variants") private List<Integer> mySelectedVariants = new ArrayList<>();
 
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;

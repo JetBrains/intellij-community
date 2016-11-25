@@ -475,6 +475,7 @@ public class EduAdaptiveStepicConnector {
       final Pair<Boolean, String> pair = doAdaptiveCheck(project, wrapper, attemptId);
       if (!pair.getFirst()) {
         try {
+          createNewAttempt(project, task.getStepId());
           final Task updatedTask = getTask(project, task.getName(), task.getStepId());
           if (updatedTask != null) {
             final List<String> variants = updatedTask.getChoiceVariants();
