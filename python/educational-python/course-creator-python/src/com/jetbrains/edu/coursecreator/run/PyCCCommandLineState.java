@@ -62,14 +62,15 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     group.addParameter(myRunConfiguration.getPathToTest());
     group.addParameter(new File(course.getCourseDirectory()).getPath());
 
-    String path = getFirstTaskFilePath();
+    String path = getCurrentTaskFilePath();
     if (path != null) {
       group.addParameter(path);
     }
   }
 
   @Nullable
-  private String getFirstTaskFilePath() {
+  private String getCurrentTaskFilePath() {
+    String textFile = null;
     for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
       String path = getTaskFilePath(entry.getKey());
       if (!entry.getValue().getActivePlaceholders().isEmpty()) {
@@ -80,10 +81,10 @@ public class PyCCCommandLineState extends PythonCommandLineState {
         continue;
       }
       if (TextEditorProvider.isTextFile(virtualFile)) {
-        return path;
+        textFile = path;
       }
     }
-    return null;
+    return textFile;
   }
 
 
