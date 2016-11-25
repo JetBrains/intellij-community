@@ -228,6 +228,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           result.add("-i");
         }
 
+        if (isLogin(command)) {
+          envs.put("LOGIN_SHELL", "1");
+        }
+
         result.addAll(command);
         return ArrayUtil.toStringArray(result);
       }
@@ -257,7 +261,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean loginOrInteractive(List<String> command) {
-    return command.contains("-i") || command.contains("--login") || command.contains("-l");
+    return command.contains("-i") || isLogin(command);
+  }
+
+  private static boolean isLogin(List<String> command) {
+    return command.contains("--login") || command.contains("-l");
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

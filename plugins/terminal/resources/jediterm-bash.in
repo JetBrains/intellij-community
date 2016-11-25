@@ -31,7 +31,7 @@ function load_interactive_configs {
   fi
 }
 
-if [ `shopt -q login_shell` ]; then
+if [ -n $LOGIN_SHELL ]; then
   load_login_configs
 fi
 
