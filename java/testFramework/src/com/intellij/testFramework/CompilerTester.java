@@ -234,7 +234,7 @@ public class CompilerTester {
             final String text = message.getMessage();
             if (category != CompilerMessageCategory.INFORMATION ||
                 !(text.contains("Compilation completed successfully") ||
-                  text.startsWith("Using javac") ||
+                  text.contains("used to compile") ||
                   text.startsWith("Using Groovy-Eclipse"))) {
               myMessages.add(message);
             }
