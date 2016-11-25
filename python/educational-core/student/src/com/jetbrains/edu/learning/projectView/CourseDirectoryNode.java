@@ -21,7 +21,7 @@ import java.util.List;
 public class CourseDirectoryNode extends StudyDirectoryNode {
   @NotNull protected final Project myProject;
   protected final ViewSettings myViewSettings;
-  private final Course myCourse;
+  protected final Course myCourse;
 
   public CourseDirectoryNode(@NotNull Project project,
                              PsiDirectory value,
