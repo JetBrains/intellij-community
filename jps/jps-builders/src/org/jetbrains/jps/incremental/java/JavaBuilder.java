@@ -485,7 +485,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static void updateCompilerUsageStatistics(CompileContext context, String compilerName, ModuleChunk chunk) {
     final ConcurrentMap<String, Collection<String>> map = COMPILER_USAGE_STATISTICS.get(context);
     Collection<String> names = map.get(compilerName);
-    while (names == null) {
+    if (names == null) {
       names = Collections.synchronizedSet(new HashSet<String>());
       final Collection<String> prev = map.putIfAbsent(compilerName, names);
       if (prev != null) {
