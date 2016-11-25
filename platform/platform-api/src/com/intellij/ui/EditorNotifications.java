@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,6 +31,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public abstract class EditorNotifications extends AbstractProjectComponent {
+  public static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
 
   /**
    * An extension allowing to add custom notifications to the top of file editors.
