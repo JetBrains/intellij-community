@@ -45,6 +45,10 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testSameNamedImportedClasses() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(".java");
   }
