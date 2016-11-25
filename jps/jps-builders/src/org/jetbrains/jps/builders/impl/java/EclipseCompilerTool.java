@@ -68,10 +68,8 @@ public class EclipseCompilerTool extends JavaCompilingTool {
       final File file = path != null? new File(path) : null;
       if (file != null) {
         final String name = file.getName();
-        final String prefix = JAR_FILE_NAME_PREFIX;
-        final String suffix = JAR_FILE_NAME_SUFFIX;
-        if (name.startsWith(prefix) && name.endsWith(suffix)) {
-          version = " " + name.substring(prefix.length(), name.length() - suffix.length());
+        if (name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX)) {
+          version = " " + name.substring(JAR_FILE_NAME_PREFIX.length(), name.length() - JAR_FILE_NAME_SUFFIX.length());
         }
       }
       myVersion = version;
