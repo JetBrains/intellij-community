@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
@@ -39,8 +38,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.util.GitUIUtil.code;
 import static java.util.Arrays.stream;
 
@@ -192,11 +191,8 @@ class GitCheckoutOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    Collection<String> distinctPrevBranches = getSuccessfulRepositories().stream().
-      map(myCurrentHeads::get).
-      distinct().
-      collect(Collectors.toList());
-    String previousBranch = distinctPrevBranches.size() == 1 ? ContainerUtil.getFirstItem(distinctPrevBranches) : "previous branch";
+    String previousBranch = getIfSingle(getSuccessfulRepositories().stream().map(myCurrentHeads::get).distinct());
+    if (previousBranch == null) previousBranch = "previous branch";
     String rollBackProposal = "You may rollback (checkout back to " + previousBranch + ") not to let branches diverge.";
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() + "<br/>" +
