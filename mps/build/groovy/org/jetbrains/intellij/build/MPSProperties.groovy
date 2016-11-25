@@ -17,7 +17,7 @@ class MPSProperties extends ProductProperties {
         toolsJarRequired = true
 
         productLayout.mainJarName = "platform.jar"
-        productLayout.mainModule = "community-main"
+        productLayout.mainModules = ["community-main"]
         productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES
         productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
                 ["util",
@@ -101,13 +101,8 @@ class MPSProperties extends ProductProperties {
     }
 
     @Override
-    String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        "platform"
-    }
-
-    @Override
-    String systemSelector(ApplicationInfoProperties applicationInfo) {
-        "MPS${applicationInfo.majorVersion}0"
+    String getBaseArtifactName(final ApplicationInfoProperties applicationInfo, final String buildNumber) {
+        return "platform"
     }
 
     @Override

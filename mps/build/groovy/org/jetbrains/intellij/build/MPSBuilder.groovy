@@ -21,6 +21,6 @@ class MPSBuilder {
         )
         buildContext.getOptions().targetOS = ""
         def buildTasks = BuildTasks.create(buildContext)
-        buildTasks.compileModulesAndBuildDistributions()
+        buildTasks.buildDistributions()
     }
 }

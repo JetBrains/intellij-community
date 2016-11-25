@@ -3,3 +3,6 @@
 
 # Ignore output directory
 /out
+
+# Ignore libraries because they are copied & modified by ant script
+/.idea/libraries

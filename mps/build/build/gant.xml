@@ -33,7 +33,7 @@
         <condition property="idea.commit.is.set">
             <isset property="idea.commit"/>
         </condition>
-        <echo message="Tag value: ${idea.commit}"/>
+        <echo message="Commit/branch/tag value: ${idea.commit}"/>
     </target>
 
     <target name="checkout" depends="reset,check.commit" if="${idea.commit.is.set}"
@@ -44,6 +44,20 @@
             <arg value="-f"/>
             <arg value="${idea.commit}"/>
         </exec>
+    </target>
+
+    <target name="libraries" description="Copy IDEA Community libraries and update paths (add community folder)">
+        <echo message="Copy and update IDEA Community libraries"/>
+        <delete dir="${basedir}/../.idea/libraries"/>
+        <mkdir dir="${basedir}/../.idea/libraries"/>
+        <copy todir="${basedir}/../.idea/libraries">
+            <fileset dir="${community.folder}/.idea/libraries"/>
+        </copy>
+        <replaceregexp byline="true">
+            <regexp pattern="\$PROJECT_DIR\$"/>
+            <substitution expression="\0/community"/>
+            <fileset dir="${basedir}/../.idea/libraries"/>
+        </replaceregexp>
     </target>
 
     <target name="patch" depends="checkout" description="Apply MPS patches to IDEA Community sources">
@@ -67,7 +81,7 @@
         </ant>
     </target>
 
-    <target name="build" depends="patch,kotlin"
+    <target name="build" depends="libraries,patch,kotlin"
             description="Build patched IDEA Community sources to create MPS platform">
         <echo message="MPS platform build started..."/>
         <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
