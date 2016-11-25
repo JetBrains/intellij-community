@@ -86,4 +86,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityChecksForImplicitSuperConstructorCall() {
     doTest(false, false);
   }
+
+  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() throws Exception {
+  }
 }
