@@ -145,8 +145,7 @@ public class JavaModuleGraphUtil {
     if (!relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       for (PsiRequiresStatement statement : module.getRequires()) {
-        PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), false);
-        if (dependency != null) {
+        for (PsiJavaModule dependency : PsiJavaModuleReference.multiResolve(statement, statement.getModuleName(), false)) {
           relations.putValue(module, dependency);
           if (statement.isPublic()) publicEdges.add(RequiresGraph.key(dependency, module));
           visit(dependency, relations, publicEdges);
