@@ -77,10 +77,10 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (isToolwindow && course != null && course.isAdaptive()) {
       panel.add(new StepicAdaptiveReactionsPanel(project), BorderLayout.NORTH);
     }
-    
+
     JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
-    
+
     final JPanel courseProgress = createCourseProgress(project);
     if (isToolwindow && course != null && !course.isAdaptive() && EduNames.STUDY.equals(course.getCourseMode())) {
       panel.add(courseProgress, BorderLayout.SOUTH);
@@ -92,7 +92,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
 
     setContent(mySplitPane);
-    
+
     if (isToolwindow) {
       StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
       if (configurator != null) {
@@ -113,11 +113,11 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     }
   }
-  
+
   public void setTopComponent(@NotNull final JComponent component) {
     mySplitPane.setFirstComponent(component);
   }
-  
+
   public void setDefaultTopComponent() {
     mySplitPane.setFirstComponent(myContentPanel);
   }
@@ -297,10 +297,18 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       int taskNum = 0;
       int taskSolved = 0;
       List<Lesson> lessons = course.getLessons();
-      for (Lesson lesson : lessons) {
-        if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
-        taskNum += lesson.getTaskList().size();
-        taskSolved += getSolvedTasks(lesson);
+      if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
+        final Lesson lesson = lessons.get(0);
+        final Task task = lesson.getTaskList().get(0);
+        taskNum += task.getLastSubtaskIndex() + 1;
+        taskSolved += task.getActiveSubtaskIndex();
+      }
+      else {
+        for (Lesson lesson : lessons) {
+          if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
+          taskNum += lesson.getTaskList().size();
+          taskSolved += getSolvedTasks(lesson);
+        }
       }
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
       double percent = (taskSolved * 100.0) / taskNum;
