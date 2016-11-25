@@ -502,33 +502,43 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
   public static void doTestPartialRefresh(@NotNull File top) throws IOException {
     File sub = IoTestUtil.createTestDir(top, "sub");
-    File file = IoTestUtil.createTestFile(top, "sub.txt");
+    File file1 = IoTestUtil.createTestFile(top, "file1.txt", ".");
+    File file2 = IoTestUtil.createTestFile(sub, "file2.txt", ".");
+
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    VirtualFile topDir = lfs.refreshAndFindFileByIoFile(top);
     assertNotNull(topDir);
-    NewVirtualFile subDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(sub);
+    VirtualFile subDir = lfs.refreshAndFindFileByIoFile(sub);
     assertNotNull(subDir);
-    NewVirtualFile subFile = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file);
-    assertNotNull(subFile);
+    VirtualFile vFile1 = lfs.refreshAndFindFileByIoFile(file1);
+    assertNotNull(vFile1);
+    VirtualFile vFile2 = lfs.refreshAndFindFileByIoFile(file2);
+    assertNotNull(vFile2);
     topDir.refresh(false, true);
-    assertFalse(topDir.isDirty());
-    assertFalse(subDir.isDirty());
-    assertFalse(subFile.isDirty());
 
-    subFile.markDirty();
-    subDir.markDirty();
-    assertTrue(topDir.isDirty());
-    assertTrue(subFile.isDirty());
-    assertTrue(subDir.isDirty());
+    Set<VirtualFile> processed = ContainerUtil.newHashSet();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        events.forEach(e -> processed.add(e.getFile()));
+      }
+    });
 
-    topDir.refresh(false, false);
-    assertFalse(subFile.isDirty());
-    assertTrue(subDir.isDirty());  // should stay unvisited after non-recursive refresh
+    try {
+      IoTestUtil.updateFile(file1, "++");
+      IoTestUtil.updateFile(file2, "++");
+      ((NewVirtualFile)topDir).markDirtyRecursively();
+      topDir.refresh(false, false);
+      assertThat(processed).containsExactly(vFile1);  // vFile2 should stay unvisited after non-recursive refresh
 
-    topDir.refresh(false, true);
-    assertFalse(topDir.isDirty());
-    assertFalse(subFile.isDirty());
-    assertFalse(subDir.isDirty());
+      processed.clear();
+      topDir.refresh(false, true);
+      assertThat(processed).containsExactly(vFile2);  // vFile2 changes should be picked up by a next recursive refresh
+    }
+    finally {
+      connection.disconnect();
+    }
   }
 
   public void testSymlinkTargetBlink() throws Exception {
@@ -592,13 +602,12 @@ public class LocalFileSystemTest extends PlatformTestCase {
       }
     });
 
-    NewVirtualFile topDir = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(top);
+    VirtualFile topDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(top);
     assertNotNull(topDir);
     Set<VirtualFile> files = ContainerUtil.newHashSet();
     VfsUtilCore.processFilesRecursively(topDir, file -> { if (!file.isDirectory()) files.add(file); return true; });
     assertEquals(39, files.size());  // 13 dirs of 3 files
     topDir.refresh(false, true);
-    assertFalse(topDir.isDirty());
 
     Set<VirtualFile> processed = ContainerUtil.newHashSet();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -611,17 +620,14 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     try {
       files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "++"));
-      topDir.markDirtyRecursively();
-      assertTrue(topDir.isDirty());
+      ((NewVirtualFile)topDir).markDirtyRecursively();
 
       RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));
       topDir.refresh(false, true);
-      assertTrue(topDir.isDirty());
       assertThat(processed.size()).isGreaterThan(0).isLessThan(files.size());
 
       RefreshWorker.setCancellingCondition(null);
       topDir.refresh(false, true);
-      assertFalse(topDir.isDirty());
       assertThat(processed).isEqualTo(files);
     }
     finally {
