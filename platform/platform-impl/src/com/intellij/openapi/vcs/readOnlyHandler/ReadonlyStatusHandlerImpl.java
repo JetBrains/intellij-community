@@ -18,13 +18,16 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +42,7 @@ import java.util.*;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl");
   private final Project myProject;
   private final WritingAccessProvider[] myAccessProviders;
   protected boolean myClearReadOnlyInTests;
@@ -69,7 +73,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     if (files.length == 0) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    checkThreading();
 
     Set<VirtualFile> realFiles = new THashSet<>(files.length);
     for (VirtualFile file : files) {
@@ -115,6 +119,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files);
+  }
+
+  private static void checkThreading() {
+    Application app = ApplicationManager.getApplication();
+    app.assertIsDispatchThread();
+    if (!app.isWriteAccessAllowed()) return;
+
+    if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {
+      LOG.error("ensureFilesWritable should be called outside write action");
+    }
   }
 
   private static OperationStatus createResultStatus(final VirtualFile[] files) {
