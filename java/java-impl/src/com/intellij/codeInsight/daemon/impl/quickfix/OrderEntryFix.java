@@ -158,7 +158,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .collect(Collectors.toList());
 
     Set<Module> modules = targets.stream()
-      .map(e -> !(e instanceof PsiCompiledElement) ? e.getContainingFile().getVirtualFile() : null)
+      .map(e -> !(e instanceof PsiCompiledElement) ? e.getContainingFile() : null)
+      .map(f -> f != null ? f.getVirtualFile() : null)
       .filter(vf -> vf != null && index.isInSource(vf))
       .map(vf -> index.getModuleForFile(vf))
       .filter(m -> m != null && m != currentModule)
@@ -168,7 +169,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
 
     targets.stream()
-      .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile().getVirtualFile() : null)
+      .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
+      .map(f -> f != null ? f.getVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
       .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
       .filter(Objects::nonNull)
