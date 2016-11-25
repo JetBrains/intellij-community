@@ -41,6 +41,10 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testDontCollapseToOnDemandImport() throws Exception { doTest(); }
   public void testIgnoreInaccessible() throws Exception{ doTest();}
 
+  public void testEnsureConflictingImportsNotCollapsed() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(".java");
   }
