@@ -18,7 +18,6 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,8 +45,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
-      if (arrayCreation == null || !arrayCreation.isValid()) return;
-      if (!FileModificationService.getInstance().prepareFileForWrite(arrayCreation.getContainingFile())) return;
+      if (arrayCreation == null) return;
       InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
     }
 

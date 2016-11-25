@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -249,12 +247,8 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression methodCallExpression = myMethodCallExpression.getElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(methodCallExpression)) {
-        return;
-      }
 
       LOG.assertTrue(methodCallExpression != null);
-      if (!CodeInsightUtil.preparePsiElementsForWrite(methodCallExpression.getContainingFile())) return;
 
       final PsiElement parameter = methodCallExpression.getArgumentList().getExpressions()[0].copy();
       final PsiNewExpression element = myAssignmentExpression.getElement();

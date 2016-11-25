@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.intermediaryVariable;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -190,7 +189,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       if (flow != null) {
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
-        if (!mover.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(returnStatement)) {
+        if (!mover.isEmpty()) {
           applyChanges(mover, context, removeReturn);
         }
       }

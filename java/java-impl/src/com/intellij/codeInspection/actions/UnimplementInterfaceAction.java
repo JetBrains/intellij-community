@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -93,8 +92,6 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
-
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return;
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.java18api;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
@@ -166,7 +165,6 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       String replacement = null;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       CommentTracker ct = new CommentTracker();
       if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
         PsiVariable variable = declaration.getNextElementVariable(statements[0]);

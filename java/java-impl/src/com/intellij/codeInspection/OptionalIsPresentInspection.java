@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
@@ -279,7 +278,6 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
         elseElement = invert ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
       } else return;
       if (myScenario.getProblemType(optionalVariable, thenElement, elseElement) == ProblemType.NONE) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
       String replacementText = myScenario.generateReplacement(factory, ct, optionalVariable, thenElement, elseElement);

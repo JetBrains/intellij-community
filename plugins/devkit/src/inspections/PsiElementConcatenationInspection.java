@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -141,7 +140,6 @@ public class PsiElementConcatenationInspection extends BaseJavaBatchLocalInspect
       PsiElement element = descriptor.getStartElement();
       if(!(element instanceof PsiExpression)) return;
       PsiExpression expression = (PsiExpression)element;
-      if(!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression replacement = factory.createExpressionFromText(ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE)
                                                                    + "." + myMethodName + "()", expression);

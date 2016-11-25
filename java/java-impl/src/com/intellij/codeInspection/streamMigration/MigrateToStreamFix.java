@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -54,7 +53,6 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
       PsiStatement body = loopStatement.getBody();
       if(body == null || source == null) return;
       TerminalBlock tb = TerminalBlock.from(source, body);
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(loopStatement)) return;
       PsiElement result = migrate(project, loopStatement, body, tb);
       if(result != null) {
         source.cleanUpSource();

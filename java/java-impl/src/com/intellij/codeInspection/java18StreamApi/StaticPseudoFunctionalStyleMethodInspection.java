@@ -15,19 +15,18 @@
  */
 package com.intellij.codeInspection.java18StreamApi;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,9 +122,6 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiElement)) {
-        return;
-      }
       if (psiElement instanceof PsiReferenceExpression) {
         PsiElement parent = psiElement.getParent();
         if (parent instanceof PsiMethodCallExpression) {

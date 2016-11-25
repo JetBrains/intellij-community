@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -111,7 +110,6 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiClass) {
-        FileModificationService.getInstance().preparePsiElementsForWrite(element);
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (String method : myMethods) {
           element.add(factory.createMethodFromText(method, element));

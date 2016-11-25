@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -217,7 +216,6 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         methodName = getComparingMethodName(type.getCanonicalText());
       }
       if (methodName == null || keyExtractor == null) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       String parameterName = parameters[0].getName();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiElement result;

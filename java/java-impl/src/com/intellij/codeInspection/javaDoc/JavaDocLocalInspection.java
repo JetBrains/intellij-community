@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -280,8 +279,6 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiDocComment docComment = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocComment.class);
       if (docComment != null) {
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(docComment)) return;
-
         PsiDocTag tag = JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText("@" + myTag + " " + myValue);
 
         PsiElement addedTag;

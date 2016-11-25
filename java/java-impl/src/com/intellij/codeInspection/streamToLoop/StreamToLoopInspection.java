@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -220,7 +219,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if (terminal == null) return;
       allOperations(operations).forEach(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if(!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       terminalCall = ensureCodeBlock(terminalCall, factory);
       if(terminalCall == null) return;
       PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);

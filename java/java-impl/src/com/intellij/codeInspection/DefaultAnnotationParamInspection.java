@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -52,7 +51,6 @@ public class DefaultAnnotationParamInspection extends BaseJavaBatchLocalInspecti
             @Override
             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
               PsiElement parent = descriptor.getPsiElement().getParent();
-              FileModificationService.getInstance().preparePsiElementsForWrite(parent);
               parent.delete();
             }
           });

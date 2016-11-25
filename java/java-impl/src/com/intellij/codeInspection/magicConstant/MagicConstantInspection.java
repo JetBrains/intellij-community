@@ -18,7 +18,6 @@ package com.intellij.codeInspection.magicConstant;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -756,7 +755,6 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       List<PsiAnnotationMemberValue> values = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).collect(Collectors.toList());
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
       PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);

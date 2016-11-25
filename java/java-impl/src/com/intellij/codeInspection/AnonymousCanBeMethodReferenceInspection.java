@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
@@ -124,7 +123,6 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (element instanceof PsiNewExpression) {
-          if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
           final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
           if (anonymousClass == null) return;
           final PsiMethod[] methods = anonymousClass.getMethods();
