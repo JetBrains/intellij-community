@@ -104,6 +104,7 @@ public class RefreshWorker {
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
         scheduleDeletion(file);
+        file.markClean();
         continue;
       }
 
