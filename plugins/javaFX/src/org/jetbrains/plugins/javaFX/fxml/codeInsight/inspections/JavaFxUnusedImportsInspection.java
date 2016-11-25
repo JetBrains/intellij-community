@@ -15,11 +15,8 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -106,15 +103,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (psiElement == null) return;
       final PsiFile file = psiElement.getContainingFile();
       if (file == null || !JavaFxFileTypeFactory.isFxml(file)) return;
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      ImportOptimizer optimizer = new JavaFxImportsOptimizer();
-      final Runnable runnable = optimizer.processFile(file);
-      new WriteCommandAction.Simple(project, getFamilyName(), file) {
-        @Override
-        protected void run() throws Throwable {
-          runnable.run();
-        }
-      }.execute();
+      new JavaFxImportsOptimizer().processFile(file).run();
     }
   }
 }

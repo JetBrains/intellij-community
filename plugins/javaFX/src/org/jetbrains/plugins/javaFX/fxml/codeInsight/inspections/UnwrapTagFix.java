@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +62,6 @@ public class UnwrapTagFix implements LocalQuickFix {
       if (xmlTag != null) {
         final XmlTag parentTag = xmlTag.getParentTag();
         final PsiElement[] children = PsiTreeUtil.getChildrenOfType(xmlTag, XmlTagChild.class);
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
         if (children != null && children.length > 0 && parentTag != null) {
           parentTag.addRange(children[0], children[children.length - 1]);
         }
