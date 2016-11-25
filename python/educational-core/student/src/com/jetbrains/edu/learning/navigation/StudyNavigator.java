@@ -108,26 +108,6 @@ public class StudyNavigator {
   }
 
   @Nullable
-  public static VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
-    VirtualFile fileToActivate = null;
-    for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
-      String name = entry.getKey();
-      TaskFile taskFile = entry.getValue();
-      VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
-      VirtualFile vf = srcDir == null ? taskDir.findFileByRelativePath(name) : srcDir.findFileByRelativePath(name);
-      if (vf != null) {
-        if (fileToActivate != null) {
-          FileEditorManager.getInstance(project).openFile(vf, true);
-        }
-        if (fileToActivate == null && !taskFile.getActivePlaceholders().isEmpty()) {
-          fileToActivate = vf;
-        }
-      }
-    }
-    return fileToActivate != null ? fileToActivate : getFirstTaskFile(taskDir, project);
-  }
-
-  @Nullable
   private static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
     for (VirtualFile virtualFile : taskDir.getChildren()) {
       if (StudyUtils.getTaskFile(project, virtualFile) != null) {
@@ -157,7 +137,7 @@ public class StudyNavigator {
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
       FileEditorManager.getInstance(project).closeFile(file);
     }
-    Map<String, TaskFile> nextTaskFiles = task.getTaskFiles();
+    Map<String, TaskFile> taskFiles = task.getTaskFiles();
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
@@ -166,19 +146,24 @@ public class StudyNavigator {
     if (srcDir != null) {
       taskDir = srcDir;
     }
-    if (nextTaskFiles.isEmpty()) {
+    if (taskFiles.isEmpty()) {
       ProjectView.getInstance(project).select(taskDir, taskDir, false);
       return;
     }
-    for (String name : nextTaskFiles.keySet()) {
-      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
+    VirtualFile fileToActivate = getFirstTaskFile(taskDir, project);
+    for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+      final TaskFile taskFile = entry.getValue();
+      if (taskFile.getActivePlaceholders().isEmpty()) {
+        continue;
+      }
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(entry.getKey());
       if (virtualFile == null) {
         continue;
       }
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
+      fileToActivate = virtualFile;
     }
     EduUsagesCollector.taskNavigation();
-    VirtualFile fileToActivate = getFileToActivate(project, nextTaskFiles, taskDir);
     if (fileToActivate != null) {
       updateProjectView(project, fileToActivate);
     }
