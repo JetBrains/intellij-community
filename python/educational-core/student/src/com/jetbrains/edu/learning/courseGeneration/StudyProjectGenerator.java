@@ -180,10 +180,10 @@ public class StudyProjectGenerator {
     final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
     VirtualFile activeVirtualFile = null;
     for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-      final String name = entry.getKey();
+      final String relativePath = entry.getKey();
       final TaskFile taskFile = entry.getValue();
       taskDir.refresh(false, true);
-      final VirtualFile virtualFile = VfsUtil.findRelativeFile(taskDir, name);
+      final VirtualFile virtualFile = VfsUtil.findRelativeFile(taskDir, relativePath.split("/"));
       if (virtualFile != null) {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
         if (!taskFile.getActivePlaceholders().isEmpty()) {
@@ -272,7 +272,7 @@ public class StudyProjectGenerator {
   public static void flushTask(@NotNull final Task task, @NotNull final File taskDirectory) {
     FileUtil.createDirectory(taskDirectory);
     for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
-      final String name = taskFileEntry.getKey();
+      final String name = FileUtil.toSystemDependentName(taskFileEntry.getKey());
       final TaskFile taskFile = taskFileEntry.getValue();
       final File file = new File(taskDirectory, name);
       FileUtil.createIfDoesntExist(file);

@@ -814,6 +814,6 @@ public class StudyUtils {
   public static String pathRelativeToTask(VirtualFile file) {
     VirtualFile taskDir = getTaskDir(file);
     if (taskDir == null) return file.getName();
-    return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), File.separatorChar);
+    return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
   }
 }
