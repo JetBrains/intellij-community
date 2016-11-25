@@ -33,6 +33,7 @@ function load_interactive_configs {
 
 if [ -n $LOGIN_SHELL ]; then
   load_login_configs
+  unset LOGIN_SHELL
 fi
 
 load_interactive_configs
@@ -56,9 +57,11 @@ trap "generate_command_executed_sequence" DEBUG
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
   source $JEDITERM_USER_RCFILE
+  unset JEDITERM_USER_RCFILE
 fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
   source $JEDITERM_SOURCE
+  unset JEDITERM_SOURCE
 fi
