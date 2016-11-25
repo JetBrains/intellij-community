@@ -66,6 +66,12 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
     if (ideaImlClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(IDEA_MODULE_IML_FQN, closure), Closure.DELEGATE_FIRST)
     }
+    if (ideaProjectClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(IDEA_PROJECT_FQN, closure), Closure.DELEGATE_FIRST)
+    }
+    if (ideaModuleClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(IDEA_MODULE_FQN, closure), Closure.DELEGATE_FIRST)
+    }
     return null
   }
 
@@ -86,15 +92,10 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
     }
 
     val psiManager = GroovyPsiManager.getInstance(place.project)
-    if (psiElement().inside(ideaModuleClosure).accepts(place)) {
-      if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place, IDEA_MODULE_FQN)) return false
-    }
-
     if (psiElement().inside(ideaProjectClosure).accepts(place)) {
       if (psiElement().inside(ideaIprClosure).accepts(place)) {
         if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place, IDE_XML_MERGER_FQN)) return false
       }
-      if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place, IDEA_PROJECT_FQN)) return false
     }
 
     return true

@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
@@ -57,7 +58,8 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
     if (methodName != null && place is GrReferenceExpression && psiElement().inside(artifactsClosure).accepts(place)) {
       val text = place.text
       if (!methodCallInfo.contains(text) && place is GrReferenceExpression) {
-        GradleResolverUtil.addImplicitVariable(processor, state, place, JAVA_LANG_OBJECT)
+        val myPsi = GrLightField(text, JAVA_LANG_OBJECT, place)
+        processor.execute(myPsi, state)
         return false
       }
 

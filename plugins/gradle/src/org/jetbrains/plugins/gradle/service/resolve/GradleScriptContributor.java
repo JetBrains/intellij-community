@@ -53,13 +53,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    if (!(aClass instanceof GroovyScriptClass)) {
-      return;
-    }
-
-    PsiFile file = aClass.getContainingFile();
-    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)
-        || GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) return;
+    if(!UtilKt.isResolvedInGradleScript(aClass)) return;
 
     List<String> methodInfo = ContainerUtilRt.newArrayList();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);

@@ -45,6 +45,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_DISTRIBUTION_CONTAINER = "org.gradle.api.distribution.DistributionContainer";
   @NonNls public static final String GRADLE_API_DISTRIBUTION = "org.gradle.api.distribution.Distribution";
   @NonNls public static final String GRADLE_API_FILE_COPY_SPEC = "org.gradle.api.file.CopySpec";
+  @NonNls public static final String GRADLE_API_FILE_CONFIGURABLE_FILE_TREE = "org.gradle.api.file.ConfigurableFileTree";
   @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
   @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
   @NonNls public static final String GRADLE_API_DEFAULT_TASK = "org.gradle.api.DefaultTask";
@@ -60,6 +61,8 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK = "org.gradle.api.tasks.diagnostics.PropertyReportTask";
   @NonNls public static final String GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK = "org.gradle.api.tasks.diagnostics.TaskReportTask";
   @NonNls public static final String GRADLE_API_TASKS_TESTING_TEST = "org.gradle.api.tasks.testing.Test";
+  @NonNls public static final String GRADLE_API_JUNIT_OPTIONS = "org.gradle.api.tasks.testing.junit.JUnitOptions";
+  @NonNls public static final String GRADLE_API_TEST_LOGGING_CONTAINER = "org.gradle.api.tasks.testing.logging.TestLoggingContainer";
   @NonNls public static final String GRADLE_API_TASKS_UPLOAD = "org.gradle.api.tasks.Upload";
   @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository";
   @NonNls public static final String GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES = "org.gradle.language.jvm.tasks.ProcessResources";

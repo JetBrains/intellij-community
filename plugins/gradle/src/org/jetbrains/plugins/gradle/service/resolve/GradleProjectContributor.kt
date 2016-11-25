@@ -19,8 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -36,12 +35,16 @@ class GradleProjectContributor : GradleMethodContextContributor {
 
   companion object {
     val copySpecClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
+    val fileTreeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
 
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     if (copySpecClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_COPY_SPEC, closure), Closure.DELEGATE_FIRST)
+    }
+    if (fileTreeClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_TREE, closure), Closure.DELEGATE_FIRST)
     }
     return null
   }

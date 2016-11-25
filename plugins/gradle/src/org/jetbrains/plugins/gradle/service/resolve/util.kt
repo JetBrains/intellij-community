@@ -17,10 +17,9 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.psi.scope.BaseScopeProcessor
-import com.intellij.psi.scope.ElementClassHint
-import com.intellij.psi.scope.NameHint.KEY
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import java.util.*
 
@@ -28,51 +27,40 @@ import java.util.*
  * @author Vladislav.Soroka
  * @since 11/11/2016
  */
+internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass && this.containingFile.isGradleScript()
+
+internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
 @JvmField val RESOLVED_CODE = Key.create<Boolean?>("gradle.resolved")
 
-fun processDeclarations(handlerClass: PsiClass,
+fun processDeclarations(aClass: PsiClass,
                         processor: PsiScopeProcessor,
                         state: ResolveState,
                         place: PsiElement): Boolean {
-  val name = processor.getHint(KEY)?.getName(state)
-  val componentClass = handlerClass
-  val componentProcessor = ComponentProcessor(processor, place, name)
+  val name = processor.getHint(com.intellij.psi.scope.NameHint.KEY)?.getName(state)
   if (name == null) {
-    if (!componentClass.processDeclarations(componentProcessor, state, null, place)) return false
+    aClass.processDeclarations(processor, state, null, place)
   }
   else {
+    val isSetterCandidate = name.startsWith("set")
     val processedSignatures = HashSet<List<String>>()
-    for (method in componentClass.findMethodsByName(name, true)) {
-      processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+    for (method in aClass.findMethodsByName(name, true)) {
+      if (!isSetterCandidate) {
+        processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+      }
       place.putUserData(RESOLVED_CODE, true)
-      if (!componentProcessor.execute(method, state)) return false
+      if (!processor.execute(method, state)) return false
     }
-    for (prefix in arrayOf("add", "set")) {
-      for (method in componentClass.findMethodsByName(prefix + name.capitalize(), true)) {
+
+    if (!isSetterCandidate) {
+      for (method in aClass.findMethodsByName("set" + name.capitalize(), true)) {
         if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
         place.putUserData(RESOLVED_CODE, true)
-        if (!componentProcessor.execute(method, state)) return false
+        if (!processor.execute(method, state)) return false
       }
     }
   }
   return true
-}
-
-class ComponentProcessor(val delegate: PsiScopeProcessor, val place: PsiElement, val name: String?) : BaseScopeProcessor() {
-
-  override fun execute(method: PsiElement, state: ResolveState): Boolean {
-    method as? PsiMethod ?: return true
-    return delegate.execute(method, state)
-  }
-
-  override fun <T : Any?> getHint(hintKey: Key<T>): T? = if (hintKey == com.intellij.psi.scope.ElementClassHint.KEY) {
-    @Suppress("UNCHECKED_CAST")
-    ElementClassHint { it == com.intellij.psi.scope.ElementClassHint.DeclarationKind.METHOD } as T
-  }
-  else {
-    null
-  }
 }
 
 fun psiMethodInClass(containingClass: String) = GroovyPatterns.psiMethod().definedInClass(containingClass)

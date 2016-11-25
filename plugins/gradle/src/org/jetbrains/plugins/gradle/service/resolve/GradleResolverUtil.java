@@ -60,25 +60,6 @@ public class GradleResolverUtil {
     return argsCount;
   }
 
-  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull GrReferenceExpressionImpl expression,
-                                         @NotNull String type) {
-    if (expression.getQualifier() == null && expression.getReferenceName() != null) {
-      PsiVariable myPsi = new GrLightField(expression.getReferenceName(), type, expression);
-      processor.execute(myPsi, state);
-    }
-  }
-
-  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull PsiElement element,
-                                         @NotNull String type) {
-    PsiVariable myPsi = new GrLightField(element.getText(), type, element);
-    processor.execute(myPsi, state);
-  }
-
-
   @Nullable
   public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
                                                              @Nullable String returnType,
