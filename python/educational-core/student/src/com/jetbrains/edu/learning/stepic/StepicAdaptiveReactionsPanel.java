@@ -147,7 +147,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
                 ApplicationManager.getApplication().invokeLater(()->setBackground(UIUtil.getLabelBackground()));
-                EduAdaptiveStepicConnector.addNextRecommendedTask(StepicAdaptiveReactionsPanel.this.myProject, myReaction, indicator);
+                EduAdaptiveStepicConnector.addNextRecommendedTask(StepicAdaptiveReactionsPanel.this.myProject, indicator, myReaction);
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
