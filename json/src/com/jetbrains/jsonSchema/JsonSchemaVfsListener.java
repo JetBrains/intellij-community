@@ -58,7 +58,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         for (Editor editor : editors) {
           if (editor instanceof EditorEx) {
             final VirtualFile file = ((EditorEx)editor).getVirtualFile();
-            if (JsonFileType.INSTANCE.equals(file.getFileType())) {
+            if (file != null && file.isValid() && JsonFileType.INSTANCE.equals(file.getFileType())) {
               final Collection<Pair<VirtualFile, String>> collection = myService.getSchemaFilesByFile(file);
               if (collection != null && !collection.isEmpty()) {
                 for (Pair<VirtualFile, String> pair : collection) {
