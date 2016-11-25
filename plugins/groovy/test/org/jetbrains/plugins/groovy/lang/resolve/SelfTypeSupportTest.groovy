@@ -20,6 +20,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 @CompileStatic
@@ -102,5 +103,14 @@ trait T2 extends T {}
   void testHighlighting(String text) {
     fixture.configureByText '_.groovy', "$defaultImports$text"
     fixture.checkHighlighting()
+  }
+
+  void 'test do not process self types when not needed'() {
+    def file = fixture.configureByText('_.groovy', """$defaultImports
+interface I {}
+@SelfType(I) 
+trait T implements I {}
+""") as GroovyFile
+    file.typeDefinitions.last().superTypes
   }
 }
