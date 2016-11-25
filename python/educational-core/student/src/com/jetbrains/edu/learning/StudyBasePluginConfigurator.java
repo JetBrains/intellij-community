@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.editor.ChoicePanel;
+import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
         Task task = getTask(file);
         setTaskText(task, StudyUtils.getTaskDir(file));
         if (task != null && task.isChoiceTask()) {
-          final ChoicePanel choicePanel = new ChoicePanel(task);
+          final StudyChoiceVariantsPanel choicePanel = new StudyChoiceVariantsPanel(task);
           toolWindow.setBottomComponent(choicePanel);
         }
       }
