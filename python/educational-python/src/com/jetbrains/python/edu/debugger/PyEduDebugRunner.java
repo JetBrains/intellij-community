@@ -128,8 +128,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
             view.enableConsole(!state);
           }
         };
-        content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR,
-                              view.getPreferredFocusableComponent());
+        content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR, view.getPreferredFocusableComponent());
       }
       patchLeftToolbar(session, ui);
     }
