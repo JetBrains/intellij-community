@@ -61,7 +61,10 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
   private static Content getTabbedContent(@NotNull ContentManager contentManager) {
     Content content = contentManager.getSelectedContent();
     if (content != null) {
-      if (ContentUtilEx.isContentTab(content, VcsLogContentProvider.TAB_NAME)) return content;
+      if (ContentUtilEx.isContentTab(content, VcsLogContentProvider.TAB_NAME) ||
+          ContentUtilEx.isContentTab(content, ShowHistoryAction.TAB_NAME)) {
+        return content;
+      }
     }
     return null;
   }

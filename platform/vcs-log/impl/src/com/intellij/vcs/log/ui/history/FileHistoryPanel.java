@@ -16,14 +16,16 @@
 package com.intellij.vcs.log.ui.history;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -46,6 +48,7 @@ public class FileHistoryPanel extends JPanel implements Disposable {
     myLogData = logData;
     myGraphTable = new VcsLogGraphTable(ui, logData, visiblePack);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
+    myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     ProgressStripe progressStripe =
       new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -76,15 +79,26 @@ public class FileHistoryPanel extends JPanel implements Disposable {
 
     setLayout(new BorderLayout());
     add(myDetailsSplitter, BorderLayout.CENTER);
+    add(createActionsToolbar(), BorderLayout.WEST);
 
     Disposer.register(ui, this);
   }
 
   @NotNull
   private JScrollPane setupScrolledGraph() {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.LEFT);
     myGraphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
+  }
+
+  @NotNull
+  private JComponent createActionsToolbar() {
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, toolbarGroup, false);
+    toolbar.setTargetComponent(myGraphTable);
+    return toolbar.getComponent();
   }
 
   private void updateWhenDetailsAreLoaded() {

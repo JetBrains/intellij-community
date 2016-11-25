@@ -97,6 +97,10 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
+    <group id="Vcs.FileHistory.Toolbar">
+      <reference id="VcsHistoryActionsGroup"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
+    </group>
 
     <group id="Log.KeymapGroup" text="Log">
       <reference ref="Vcs.Log.CreatePatch"/>
