@@ -104,8 +104,13 @@ public class PyStudyCheckAction extends StudyCheckAction {
             final Course course = StudyTaskManager.getInstance(project).getCourse();
             if (course != null) {
               if (course.isAdaptive()) {
-                StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), project);
-                StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+                if (myTask.isChoiceTask()) {
+                  StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
+                }
+                else {
+                  StudyCheckUtils.showTestResultPopUp("Wrong answer", MessageType.ERROR.getPopupBackground(), project);
+                  StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+                }
                 repaintChoicePanel(project, myTask);
               }
               else {

@@ -526,7 +526,7 @@ public class EduAdaptiveStepicConnector {
       final String status = wrapper.submissions[0].status;
       final String hint = wrapper.submissions[0].hint;
       final boolean isSolved = !status.equals("wrong");
-      return Pair.create(isSolved, hint.isEmpty() ? "Your solution is " + status : hint);
+      return Pair.create(isSolved, hint.isEmpty() ? StringUtil.capitalize(status) + " solution" : hint);
     }
     else {
       LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
