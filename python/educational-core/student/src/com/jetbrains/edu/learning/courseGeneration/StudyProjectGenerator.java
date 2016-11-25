@@ -184,7 +184,6 @@ public class StudyProjectGenerator {
       taskDir.refresh(false, true);
       final VirtualFile virtualFile = taskDir.findFileByRelativePath(relativePath);
       if (virtualFile != null) {
-        FileEditorManager.getInstance(project).openFile(virtualFile, true);
         if (!taskFile.getActivePlaceholders().isEmpty()) {
           activeVirtualFile = virtualFile;
         }
@@ -195,7 +194,7 @@ public class StudyProjectGenerator {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> {
         final PsiFile file = PsiManager.getInstance(project).findFile(finalActiveVirtualFile);
         ProjectView.getInstance(project).select(file, finalActiveVirtualFile, false);
-        final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(finalActiveVirtualFile);
+        final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(finalActiveVirtualFile, true);
         if (editors.length == 0) {
           return;
         }
