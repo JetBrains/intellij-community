@@ -169,7 +169,14 @@ public class DefUseUtil {
       }
     }
 
-    Map<InstructionKey, InstructionState> stateMap = getStates(instructions);
+    Map<InstructionKey, InstructionState> stateMap;
+    try {
+      stateMap = getStates(instructions);
+    }
+    catch (InstructionKey.OverflowException e) {
+      LOG.error("Failed to compute paths in the control flow graph", e, flow.toString());
+      return null;
+    }
     InstructionState[] states = stateMap.values().toArray(new InstructionState[0]);
     Arrays.sort(states);
 
@@ -511,6 +518,7 @@ public class DefUseUtil {
 
         Set<InstructionKey> visited = new THashSet<InstructionKey>(instructions.size());
         while (!myWalkThroughStack.isEmpty()) {
+          ProgressManager.checkCanceled();
           InstructionKey fromKey = myWalkThroughStack.peekFrom();
           InstructionKey nextKey = myWalkThroughStack.popNext();
           addBackwardTrace(fromKey, nextKey);
