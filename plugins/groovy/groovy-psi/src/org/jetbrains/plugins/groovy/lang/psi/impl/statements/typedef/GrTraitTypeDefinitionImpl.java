@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
@@ -69,6 +71,10 @@ public class GrTraitTypeDefinitionImpl extends GrTypeDefinitionImpl implements G
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
+    if (!ResolveUtil.shouldProcessMethods(hint) && !ResolveUtil.shouldProcessProperties(hint)) return true;
+
     List<PsiClass> classes = GrTraitUtil.getSelfTypeClasses(this);
     for (PsiClass clazz : classes) {
       if (!clazz.processDeclarations(processor, state, lastParent, place)) return false;
