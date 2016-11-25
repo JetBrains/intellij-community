@@ -515,16 +515,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file = tempDir.newFile("test.txt")
     val vFile = refresh(file)
     assertTrue(vFile.isWritable)
-    val win = SystemInfo.isWindows
+    val ro = if (SystemInfo.isWindows) arrayOf("attrib", "+R", file.path) else arrayOf("chmod", "500", file.path)
+    val rw = if (SystemInfo.isWindows) arrayOf("attrib", "-R", file.path) else arrayOf("chmod", "700", file.path)
 
     watch(file)
-    assertEvents(
-        { PlatformTestUtil.assertSuccessful(GeneralCommandLine(if (win) "attrib" else "chmod", if (win) "+R" else "500", file.path)) },
-        mapOf(file to 'P'))
+    assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*ro)) }, mapOf(file to 'P'))
     assertFalse(vFile.isWritable)
-    assertEvents(
-        { PlatformTestUtil.assertSuccessful(GeneralCommandLine(if (win) "attrib" else "chmod", if (win) "-R" else "700", file.path)) },
-        mapOf(file to 'P'))
+    assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*rw)) }, mapOf(file to 'P'))
     assertTrue(vFile.isWritable)
   }
 
