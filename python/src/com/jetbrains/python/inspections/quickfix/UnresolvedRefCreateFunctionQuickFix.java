@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -72,8 +71,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     final PyCallExpression callExpr = myCallExpr.getElement();
     final PyReferenceExpression referenceExpr = myReferenceExpr.getElement();
 
-    if (callExpr == null || !callExpr.isValid() || referenceExpr == null || !referenceExpr.isValid() ||
-        !FileModificationService.getInstance().preparePsiElementForWrite(callExpr)) {
+    if (callExpr == null || !callExpr.isValid() || referenceExpr == null || !referenceExpr.isValid()) {
       return;
     }
 
