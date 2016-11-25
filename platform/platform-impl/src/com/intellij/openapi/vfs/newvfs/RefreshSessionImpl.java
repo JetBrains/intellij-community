@@ -51,7 +51,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
   private List<VirtualFile> myWorkQueue = new ArrayList<>();
   private List<VFileEvent> myEvents = new ArrayList<>();
-  private volatile boolean iHaveEventsToFire;
+  private volatile boolean myHaveEventsToFire;
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
   private final TransactionId myTransaction;
@@ -157,7 +157,7 @@ public class RefreshSessionImpl extends RefreshSession {
     }
 
     myWorker = null;
-    iHaveEventsToFire = haveEventsToFire;
+    myHaveEventsToFire = haveEventsToFire;
   }
 
   void cancel() {
@@ -170,15 +170,13 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   void fireEvents() {
-    if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
+    if (!myHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
       mySemaphore.up();
       return;
     }
 
     try (AccessToken ignore = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("RefreshSessionImpl: Events are about to fire: "+myEvents);
-      }
+      if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + myEvents);
       WriteAction.run(this::fireEventsInWriteAction);
     }
     finally {
