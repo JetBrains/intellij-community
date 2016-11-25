@@ -17,23 +17,20 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
@@ -43,15 +40,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareFileEditorManagerImpl");
-
   private final PsiManager myPsiManager;
   private final WolfTheProblemSolver myProblemSolver;
 
   /**
    * Updates icons for open files when project roots change
    */
-  private final MyPsiTreeChangeListener myPsiTreeChangeListener;
+  private final FileEditorPsiTreeChangeListener myPsiTreeChangeListener;
   private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
   public PsiAwareFileEditorManagerImpl(final Project project,
@@ -62,18 +57,15 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
     myPsiManager = psiManager;
     myProblemSolver = problemSolver;
-    myPsiTreeChangeListener = new MyPsiTreeChangeListener();
+    myPsiTreeChangeListener = new FileEditorPsiTreeChangeListener(this);
     myProblemListener = new MyProblemListener();
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
-    project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
-      @Override
-      public void powerSaveStateChanged() {
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          ((EditorEx)editor).reinitSettings();
-        }
+    project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> {
+      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+        ((EditorEx)editor).reinitSettings();
       }
     });
   }
@@ -115,63 +107,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     }
 
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
-  }
-
-  /**
-   * Updates attribute of open files when roots change
-   */
-  private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    @Override
-    public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
-      if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        final VirtualFile[] openFiles = getOpenFiles();
-        for (int i = openFiles.length - 1; i >= 0; i--) {
-          final VirtualFile file = openFiles[i];
-          LOG.assertTrue(file != null);
-          updateFileIcon(file);
-        }
-      }
-    }
-
-    @Override
-    public void childAdded(@NotNull PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    @Override
-    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    @Override
-    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    @Override
-    public void childMoved(@NotNull PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    @Override
-    public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    private void doChange(final PsiTreeChangeEvent event) {
-      final PsiFile psiFile = event.getFile();
-      if (psiFile == null) return;
-      VirtualFile file = psiFile.getVirtualFile();
-      if (file == null) return;
-      FileEditor[] editors = getAllEditors(file);
-      if (editors.length == 0) return;
-
-      final VirtualFile currentFile = getCurrentFile();
-      if (currentFile != null && Comparing.equal(psiFile.getVirtualFile(), currentFile)) {
-        updateFileIcon(currentFile);
-      }
-    }
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
