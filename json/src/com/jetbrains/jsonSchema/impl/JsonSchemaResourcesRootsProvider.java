@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,8 @@ import java.util.Set;
  * @author Irina.Chernushina on 4/14/2016.
  */
 public class JsonSchemaResourcesRootsProvider extends IndexableSetContributor {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider");
+
   public static final NotNullLazyValue<Set<VirtualFile>> ourFiles = new AtomicNotNullLazyValue<Set<VirtualFile>>() {
     @NotNull
     @Override
@@ -46,7 +49,9 @@ public class JsonSchemaResourcesRootsProvider extends IndexableSetContributor {
         final List<JsonSchemaFileProvider> providers = extension.getProviders(null);
         for (JsonSchemaFileProvider provider : providers) {
           if (!SchemaType.userSchema.equals(provider.getSchemaType())) {
-            set.add(provider.getSchemaFile());
+            final VirtualFile schemaFile = provider.getSchemaFile();
+            if (schemaFile == null) LOG.info("Can not find resource file for json schema provider: " + provider.getName());
+            else set.add(schemaFile);
           }
         }
       }
