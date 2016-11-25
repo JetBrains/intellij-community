@@ -21,6 +21,7 @@ import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,6 +124,7 @@ public class StudySubtaskUtils {
       }
       toolWindow.setTaskText(text, taskDir, project);
     }
+    StudyNavigator.navigateToTask(project, task);
   }
 
   private static void updatePlaceholderTexts(@NotNull Document document,
