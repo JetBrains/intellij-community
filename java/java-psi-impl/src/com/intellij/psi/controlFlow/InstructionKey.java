@@ -42,6 +42,9 @@ class InstructionKey implements Comparable<InstructionKey> {
   }
 
   InstructionKey push(int nextOffset, int returnOffset) {
+    if(myCallStack.length > 100) { // normally it's way below 100, as it's the number of levels of nested 'finally' blocks
+      throw new OverflowException(myOffset); // most likely the graph traversal is in an endless loop
+    }
     int[] nextStack = ArrayUtil.append(myCallStack, returnOffset);
     return new InstructionKey(nextOffset, nextStack);
   }
@@ -104,5 +107,11 @@ class InstructionKey implements Comparable<InstructionKey> {
     }
     c = myCallStack.length - key.myCallStack.length;
     return c;
+  }
+
+  static class OverflowException extends RuntimeException {
+    public OverflowException(int offset) {
+      super("Instruction key overflow at offset " + offset);
+    }
   }
 }
