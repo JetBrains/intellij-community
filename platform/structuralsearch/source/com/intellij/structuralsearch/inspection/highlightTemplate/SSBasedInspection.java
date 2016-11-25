@@ -15,7 +15,6 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.Notification;
@@ -156,7 +155,7 @@ public class SSBasedInspection extends LocalInspectionTool {
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
-        if (element != null && FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+        if (element != null) {
           replacer.replace(replacementInfo);
         }
       }
