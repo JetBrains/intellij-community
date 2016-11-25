@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -183,7 +182,7 @@ public class StudyProjectGenerator {
       final String relativePath = entry.getKey();
       final TaskFile taskFile = entry.getValue();
       taskDir.refresh(false, true);
-      final VirtualFile virtualFile = VfsUtil.findRelativeFile(taskDir, relativePath.split("/"));
+      final VirtualFile virtualFile = taskDir.findFileByRelativePath(relativePath);
       if (virtualFile != null) {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
         if (!taskFile.getActivePlaceholders().isEmpty()) {
