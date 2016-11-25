@@ -684,10 +684,10 @@ abstract class TerminalOperation extends Operation {
     static MinMaxTerminalOperation create(@Nullable PsiExpression comparator, String elementType, boolean max) {
       String sign = max ? ">" : "<";
       if(comparator == null) {
-        if ("int".equals(elementType) || "long".equals(elementType)) {
+        if (PsiType.INT.equalsToText(elementType) || PsiType.LONG.equalsToText(elementType)) {
           return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null);
         }
-        if ("double".equals(elementType)) {
+        if (PsiType.DOUBLE.equalsToText(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
         }
       } else if(InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(comparator.getType()), false,
