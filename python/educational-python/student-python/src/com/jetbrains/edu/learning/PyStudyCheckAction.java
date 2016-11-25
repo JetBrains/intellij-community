@@ -82,7 +82,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
       @Override
-      protected void onTaskFailed(String message) {
+      protected void onTaskFailed(@NotNull String message) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myTaskDir == null) return;
           myTask.setStatus(StudyStatus.Failed);

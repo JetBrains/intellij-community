@@ -140,7 +140,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     return null;
   }
 
-  private void checkForAdaptiveCourse(ProgressIndicator indicator) {
+  private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
     if (myTask.isChoiceTask()) {
       final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
       processStepicCheckOutput(indicator, result);
@@ -161,12 +161,12 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  private void processStepicCheckOutput(ProgressIndicator indicator, Pair<Boolean, String> pair) {
+  private void processStepicCheckOutput(@NotNull ProgressIndicator indicator, @Nullable Pair<Boolean, String> pair) {
     if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
       if (pair.getFirst()) {
         onTaskSolved("Congratulations! Remote tests passed.");
         if (myStatusBeforeCheck != StudyStatus.Solved) {
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, 2);
         }
       }
       else {
@@ -183,7 +183,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void onTaskFailed(String message) {
+  protected void onTaskFailed(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Failed);
     if (course != null) {
@@ -201,7 +201,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void onTaskSolved(String message) {
+  protected void onTaskSolved(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
