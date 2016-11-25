@@ -97,4 +97,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
       IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }
   }
+
+  public void initialized() {
+    myDebugConsoleInitialized = true;
+  }
 }

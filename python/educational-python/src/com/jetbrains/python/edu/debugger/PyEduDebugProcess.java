@@ -82,6 +82,7 @@ class PyEduDebugProcess extends PyDebugProcess {
       @Override
       public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
         final PythonDebugLanguageConsoleView view = ((PythonDebugLanguageConsoleView)console);
+        view.initialized();
         view.enableConsole(false);
 
         Content eduConsole =
