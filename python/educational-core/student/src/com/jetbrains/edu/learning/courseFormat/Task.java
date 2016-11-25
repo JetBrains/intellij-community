@@ -16,7 +16,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of task which contains task files, tests, input file for tests
@@ -40,10 +43,7 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
-  @Expose @SerializedName("is_multichoice") private boolean myIsMultipleChoice;
-  @SerializedName("selected_variants") private List<Integer> mySelectedVariants = new ArrayList<>();
-
+  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters = new ChoiceParameters();
   private int myActiveSubtaskIndex = 0;
   @Expose private int myLastSubtaskIndex = 0;
 
@@ -286,31 +286,31 @@ public class Task implements StudyItem {
 
   @NotNull
   public List<String> getChoiceVariants() {
-    return myChoiceVariants;
+    return myChoiceParameters.getChoiceVariants();
   }
 
   public void setChoiceVariants(List<String> choiceVariants) {
-    myChoiceVariants = choiceVariants;
+    myChoiceParameters.setChoiceVariants(choiceVariants);
   }
 
   public boolean isMultipleChoice() {
-    return myIsMultipleChoice;
+    return myChoiceParameters.isMultipleChoice();
   }
 
   public void setMultipleChoice(boolean multipleChoice) {
-    myIsMultipleChoice = multipleChoice;
+    myChoiceParameters.setMultipleChoice(multipleChoice);
   }
 
   public List<Integer> getSelectedVariants() {
-    return mySelectedVariants;
+    return myChoiceParameters.getSelectedVariants();
   }
 
   public void setSelectedVariants(List<Integer> selectedVariants) {
-    mySelectedVariants = selectedVariants;
+    myChoiceParameters.setSelectedVariants(selectedVariants);
   }
   
   public boolean isChoiceTask() {
-    return !myChoiceVariants.isEmpty();
+    return !myChoiceParameters.getChoiceVariants().isEmpty();
   }
   
   public void copyParametersOf(@NotNull Task task) {
