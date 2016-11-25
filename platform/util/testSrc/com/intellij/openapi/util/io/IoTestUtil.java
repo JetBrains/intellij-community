@@ -18,9 +18,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -354,5 +352,14 @@ public class IoTestUtil {
     ProcessBuilder command = new ProcessBuilder("attrib", hidden ? "+H" : "-H", path);
     int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
+  }
+
+  public static void updateFile(@NotNull File file, String content) {
+    try {
+      FileUtil.writeToFile(file, content);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

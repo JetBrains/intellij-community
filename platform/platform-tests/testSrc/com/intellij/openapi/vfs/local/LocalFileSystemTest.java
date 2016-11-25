@@ -41,15 +41,19 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LocalFileSystemTest extends PlatformTestCase {
   private LocalFileSystem myFS;
@@ -572,38 +576,56 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public static void doTestInterruptedRefresh(@NotNull File top) throws Exception {
-    File sub = IoTestUtil.createTestDir(top, "sub");
-    File subSub = IoTestUtil.createTestDir(sub, "sub_sub");
-    File file1 = IoTestUtil.createTestFile(sub, "sub_file_to_stop_at");
-    File file2 = IoTestUtil.createTestFile(subSub, "sub_sub_file");
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    for (int i = 1; i <= 3; i++) {
+      File sub = IoTestUtil.createTestDir(top, "sub_" + i);
+      for (int j = 1; j <= 3; j++) {
+        IoTestUtil.createTestDir(sub, "sub_" + j);
+      }
+    }
+    Files.walkFileTree(top.toPath(), new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        for (int k = 1; k <= 3; k++) {
+          IoTestUtil.createTestFile(dir.toFile(), "file_" + k, ".");
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    NewVirtualFile topDir = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(top);
     assertNotNull(topDir);
-    NewVirtualFile subFile1 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file1);
-    assertNotNull(subFile1);
-    NewVirtualFile subFile2 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file2);
-    assertNotNull(subFile2);
+    Set<VirtualFile> files = ContainerUtil.newHashSet();
+    VfsUtilCore.processFilesRecursively(topDir, file -> { if (!file.isDirectory()) files.add(file); return true; });
+    assertEquals(39, files.size());  // 13 dirs of 3 files
     topDir.refresh(false, true);
     assertFalse(topDir.isDirty());
-    assertFalse(subFile1.isDirty());
-    assertFalse(subFile2.isDirty());
+
+    Set<VirtualFile> processed = ContainerUtil.newHashSet();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        events.forEach(e -> processed.add(e.getFile()));
+      }
+    });
 
     try {
-      subFile1.markDirty();
-      subFile2.markDirty();
-      RefreshWorker.setCancellingCondition(file -> "sub_file_to_stop_at".equals(file.getName()));
+      files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "++"));
+      topDir.markDirtyRecursively();
+      assertTrue(topDir.isDirty());
+
+      RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));
       topDir.refresh(false, true);
-      // should remain dirty after aborted refresh
-      assertTrue(subFile1.isDirty());
-      assertTrue(subFile2.isDirty());
+      assertTrue(topDir.isDirty());
+      assertThat(processed.size()).isGreaterThan(0).isLessThan(files.size());
 
       RefreshWorker.setCancellingCondition(null);
       topDir.refresh(false, true);
       assertFalse(topDir.isDirty());
-      assertFalse(subFile1.isDirty());
-      assertFalse(subFile2.isDirty());
+      assertThat(processed).isEqualTo(files);
     }
     finally {
+      connection.disconnect();
       RefreshWorker.setCancellingCondition(null);
     }
   }
