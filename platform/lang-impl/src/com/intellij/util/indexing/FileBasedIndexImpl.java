@@ -667,7 +667,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       handleDumbMode(project);
     }
 
-    //NoAccessDuringPsiEvents.checkCallContext();
+    NoAccessDuringPsiEvents.checkCallContext();
 
     if (myReentrancyGuard.get().booleanValue()) {
       //assert false : "ensureUpToDate() is not reentrant!";
