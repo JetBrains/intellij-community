@@ -78,4 +78,9 @@ class AddExternalLibraryToDependenciesQuickFix extends AddOrderEntryFix {
         }
       }.execute());
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }
