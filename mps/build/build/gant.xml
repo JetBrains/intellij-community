@@ -46,6 +46,21 @@
         </exec>
     </target>
 
+    <target name="modules" description="Copy IDEA Community modules and update paths (add community folder)">
+        <echo message="Copy and update IDEA Community modules list"/>
+        <delete file="${basedir}/../.idea/modules.xml"/>
+        <copy file="${community.folder}/.idea/modules.xml" todir="${basedir}/../.idea"/>
+        <replaceregexp file="${basedir}/../.idea/modules.xml" flags="g" byline="true">
+            <regexp pattern="(\$PROJECT_DIR\$/)(?!android)"/>
+            <substitution expression="\1community/"/>
+        </replaceregexp>
+        <replaceregexp file="${basedir}/../.idea/modules.xml">
+            <regexp pattern="&lt;modules&gt;${line.separator}"/>
+            <substitution
+                    expression="\0      &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}"/>
+        </replaceregexp>
+    </target>
+
     <target name="libraries" description="Copy IDEA Community libraries and update paths (add community folder)">
         <echo message="Copy and update IDEA Community libraries"/>
         <delete dir="${basedir}/../.idea/libraries"/>
@@ -53,7 +68,7 @@
         <copy todir="${basedir}/../.idea/libraries">
             <fileset dir="${community.folder}/.idea/libraries"/>
         </copy>
-        <replaceregexp byline="true">
+        <replaceregexp flags="g" byline="true">
             <regexp pattern="\$PROJECT_DIR\$"/>
             <substitution expression="\0/community"/>
             <fileset dir="${basedir}/../.idea/libraries"/>
@@ -81,7 +96,7 @@
         </ant>
     </target>
 
-    <target name="build" depends="libraries,patch,kotlin"
+    <target name="build" depends="patch,modules,libraries,kotlin"
             description="Build patched IDEA Community sources to create MPS platform">
         <echo message="MPS platform build started..."/>
         <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
