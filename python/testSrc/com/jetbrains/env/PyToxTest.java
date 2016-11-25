@@ -197,6 +197,7 @@ public final class PyToxTest extends PyEnvTestCase {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
+              PyToxTestTools.setArguments(configuration, "-v");
               PyToxTestTools.setRunOnlyEnvs(configuration, envsToRun);
             }
           };
@@ -209,6 +210,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                         @NotNull final String all) {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           Assert.assertThat("Wrong environments launched", environments, Matchers.equalTo(Sets.newHashSet(envsToRun)));
+          Assert.assertThat("Argument not passed", all, Matchers.containsString("-v"));
         }
 
         @NotNull
