@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -779,6 +780,8 @@ public class StudyUtils {
     final AnswerPlaceholder placeholder = placeholders.get(0);
     int startOffset = placeholder.getOffset();
     editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
+    editor.getCaretModel().moveToOffset(startOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   public static void registerStudyToolWindow(@Nullable final Course course, Project project) {
