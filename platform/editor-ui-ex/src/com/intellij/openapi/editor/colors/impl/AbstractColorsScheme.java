@@ -30,6 +30,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
@@ -101,6 +102,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @NonNls private static final String BACKGROUND_COLOR_NAME          = "BACKGROUND";
   @NonNls private static final String LINE_SPACING                   = "LINE_SPACING";
   @NonNls private static final String CONSOLE_LINE_SPACING           = "CONSOLE_LINE_SPACING";
+  @NonNls private static final String FONT_SCALE                     = "FONT_SCALE";
   @NonNls private static final String EDITOR_FONT_SIZE               = "EDITOR_FONT_SIZE";
   @NonNls private static final String CONSOLE_FONT_SIZE              = "CONSOLE_FONT_SIZE";
   @NonNls private static final String EDITOR_LIGATURES               = "EDITOR_LIGATURES";
@@ -338,17 +340,18 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
 
     myMetaInfo.clear();
+    Ref<Float> fontScale = Ref.create();
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
         case OPTION_ELEMENT:
-          readSettings(childNode, isDefault);
+          readSettings(childNode, isDefault, fontScale);
           break;
         case EDITOR_FONT:
-          readFontSettings(childNode, myFontPreferences, isDefault);
+          readFontSettings(childNode, myFontPreferences, isDefault, fontScale.get());
           break;
         case CONSOLE_FONT:
-          readFontSettings(childNode, myConsoleFontPreferences, isDefault);
+          readFontSettings(childNode, myConsoleFontPreferences, isDefault, fontScale.get());
           break;
         case COLORS_ELEMENT:
           readColors(childNode);
@@ -456,15 +459,19 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
-  private void readSettings(@NotNull Element childNode, boolean isDefault) {
+  private void readSettings(@NotNull Element childNode, boolean isDefault, @NotNull Ref<Float> fontScale) {
     switch (childNode.getAttributeValue(NAME_ATTR)) {
+      case FONT_SCALE: {
+        fontScale.set(myValueReader.read(Float.class, childNode));
+        break;
+      }
       case LINE_SPACING: {
         Float value = myValueReader.read(Float.class, childNode);
         if (value != null) myLineSpacing = value;
         break;
       }
       case EDITOR_FONT_SIZE: {
-        int value = readFontSize(childNode, isDefault);
+        int value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setEditorFontSize(value);
         break;
       }
@@ -479,7 +486,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         break;
       }
       case CONSOLE_FONT_SIZE: {
-        int value = readFontSize(childNode, isDefault);
+        int value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setConsoleFontSize(value);
         break;
       }
@@ -506,12 +513,22 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
-  private int readFontSize(Element element, boolean isDefault) {
-    Integer size = myValueReader.read(Integer.class, element);
-    return size == null ? -1 : !isDefault ? size : JBUI.scaleFontSize(size);
+  private int readFontSize(Element element, boolean isDefault, Float fontScale) {
+    Float size = (float)myValueReader.read(Integer.class, element);
+    if (size == null) {
+      return -1;
+    }
+    if (!isDefault) {
+      size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
+    }
+    return JBUI.scaleFontSize(size);
   }
 
-  private void readFontSettings(@NotNull Element element, @NotNull FontPreferences preferences, boolean isDefaultScheme) {
+  private void readFontSettings(@NotNull Element element,
+                                @NotNull FontPreferences preferences,
+                                boolean isDefaultScheme,
+                                @Nullable Float fontScale)
+  {
     List children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     int size = -1;
@@ -521,7 +538,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         fontFamily = myValueReader.read(String.class, e);
       }
       else if (EDITOR_FONT_SIZE.equals(e.getAttributeValue(NAME_ATTR))) {
-        size = readFontSize(e, isDefaultScheme);
+        size = readFontSize(e, isDefaultScheme, fontScale);
       }
     }
     if (fontFamily != null && size > 1) {
@@ -535,6 +552,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   public void writeExternal(Element parentNode) {
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
+
+    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
