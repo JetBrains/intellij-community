@@ -172,12 +172,9 @@ public class CodeStyleSchemesModel {
     mySettingsToClone.clear();
   }
 
+  @Deprecated
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault();
-  }
-
-  public static boolean cannotBeDeleted(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault();
+    return false;
   }
 
   public void fireCurrentSettingsChanged() {

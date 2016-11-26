@@ -15,7 +15,6 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -33,7 +32,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -162,22 +164,10 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
     private void applyFromUiToSettings() {
       try {
-        createNewCodeStyleSchemeIfDefault();
         myTabbedLanguagePanel.apply(mySettings);
       }
       catch (ConfigurationException e) {
         LOG.debug("Can not apply code style settings from context menu to project code style settings");
-      }
-    }
-
-    private void createNewCodeStyleSchemeIfDefault() {
-      CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
-      CodeStyleScheme current = schemes.getCurrentScheme();
-      if (current != null && CodeStyleSchemesModel.cannotBeModified(current)) {
-        CodeStyleScheme newScheme = schemes.createNewScheme(null, current);
-        schemes.addScheme(newScheme);
-        CodeStyleSettingsManager.getInstance(myEditor.getProject()).PREFERRED_PROJECT_CODE_STYLE = newScheme.getName(); 
-        mySettings = newScheme.getCodeStyleSettings();
       }
     }
 

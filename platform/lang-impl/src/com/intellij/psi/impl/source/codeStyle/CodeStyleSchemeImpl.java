@@ -98,6 +98,11 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
+  public void resetToDefaults() {
+    myCodeStyleSettings = new CodeStyleSettings();
+  }
+
+  @Override
   @NotNull
   public Element writeScheme() {
     if (myDataHolder == null) {

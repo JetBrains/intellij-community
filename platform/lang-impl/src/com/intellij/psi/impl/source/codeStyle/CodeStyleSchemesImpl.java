@@ -50,7 +50,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       @NotNull
       @Override
       public SchemeState getState(@NotNull CodeStyleScheme scheme) {
-        if (scheme.isDefault() || !(scheme instanceof CodeStyleSchemeImpl)) {
+        if (!(scheme instanceof CodeStyleSchemeImpl)) {
           return SchemeState.NON_PERSISTENT;
         }
         else {
@@ -60,7 +60,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     });
 
     mySchemeManager.loadSchemes();
-    addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
     setCurrentScheme(getDefaultScheme());
   }
 
@@ -120,7 +119,12 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
   @Override
   public CodeStyleScheme getDefaultScheme() {
-    return mySchemeManager.findSchemeByName(DEFAULT_SCHEME_NAME);
+    CodeStyleScheme defaultScheme = mySchemeManager.findSchemeByName(DEFAULT_SCHEME_NAME);
+    if (defaultScheme == null) {
+      defaultScheme = new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null);
+      addScheme(defaultScheme);
+    }
+    return defaultScheme;
   }
 
   @Nullable

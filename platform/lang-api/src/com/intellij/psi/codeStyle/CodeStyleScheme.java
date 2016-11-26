@@ -18,15 +18,12 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author MYakovlev
- * Date: Jul 19, 2002
- */
 public interface CodeStyleScheme extends Scheme {
   @Override
   @NotNull
   String getName();
   boolean isDefault();
+  default void resetToDefaults() {}
   
   @NotNull
   CodeStyleSettings getCodeStyleSettings();
