@@ -54,7 +54,7 @@ public class FadeInFadeOut extends JComponent {
     myRatio = myFadeIn ? 0 : 1;
     myIcon = icon;
 
-    myComponentImage = UIUtil.createImage(myComponent.getWidth(), myComponent.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    myComponentImage = UIUtil.createImage((Graphics2D)myComponent.getGraphics(), myComponent.getWidth(), myComponent.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics = myComponentImage.createGraphics();
     myComponent.paint(graphics);
     graphics.dispose();

@@ -15,52 +15,192 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import org.imgscalr.Scalr;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 
 /**
 * @author Konstantin Bulenkov
+* @author tav
 */
 public class JBHiDPIScaledImage extends BufferedImage {
-  private final Image myImage;
-  private int myWidth;  // == myImage.width / scale
-  private int myHeight; // == myImage.height / scale
+  private final @Nullable Image myImage;
+  private final int myUserWidth;
+  private final int myUserHeight;
+  private final float myScale;
 
+  /**
+   * Creates a scaled HiDPI-aware BufferedImage, targeting the system default scale.
+   *
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type
+   */
   public JBHiDPIScaledImage(int width, int height, int type) {
-    this(null, 2 * width, 2 * height, type);
+    super((int)(width * JBUI.sysScale()), (int)(height * JBUI.sysScale()), type);
+    myImage = null;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = JBUI.sysScale();
   }
 
-  public JBHiDPIScaledImage(Image image, int width, int height, int type) {
-    // In case there's a delegate image, create a dummy wrapper image of 1x1 size
-    super(image != null ? 1 : width, image != null ? 1 : height, type);
+  /**
+   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics scale.
+   *
+   * @param g the graphics which provides the target scale
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type
+   */
+  public JBHiDPIScaledImage(@NotNull Graphics2D g, int width, int height, int type) {
+    super((int)(width * JBUI.sysScale(g)), (int)(height * JBUI.sysScale(g)), type);
+    myImage = null;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = JBUI.sysScale(g);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage wrapper for the provided scaled raw image.
+   * The wrapper image will represent the scaled raw image in user coordinate space.
+   *
+   * @param image the scaled raw image
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type
+   */
+  public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
+    super(1, 1, type); // a dummy wrapper
     myImage = image;
-    myWidth = width;
-    myHeight = height;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = myImage.getWidth(null) / myUserWidth;
+  }
+
+  public float getScale() {
+    return myScale;
+  }
+
+  /**
+   * Returns JBHiDPIScaledImage of the same structure scaled by the provided factor.
+   *
+   * @param scaleFactor the scale factor
+   * @return scaled instance
+   */
+  public JBHiDPIScaledImage scale(float scaleFactor) {
+    Image img = myImage == null ? this: myImage;
+
+    int w = (int)(scaleFactor * getRealWidth(null));
+    int h = (int)(scaleFactor * getRealHeight(null));
+    if (w <= 0 || h <= 0) return this;
+
+    Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h);
+
+    int newUserWidth = (int)(w / this.myScale);
+    int newUserHeight = (int)(h / this.myScale);
+
+    if (myImage != null) {
+      return new JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, getType());
+    }
+    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(newUserWidth, newUserHeight, getType());
+    Graphics2D g = newImg.createGraphics();
+    g.drawImage(scaled, 0, 0, newUserWidth, newUserHeight, 0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
+    g.dispose();
+    return newImg;
   }
 
   public Image getDelegate() {
     return myImage;
   }
 
+  /**
+   * Returns the width in user coordinate space for the image created as a wrapper,
+   * and the real width for the image created as a scaled one.
+   *
+   * @return the width
+   */
   @Override
   public int getWidth() {
-    return myImage != null ? myWidth : super.getWidth();
+    return getWidth(null);
   }
 
+  /**
+   * Returns the height in user coordinate space for the image created as a wrapper,
+   * and the real height for the image created as a scaled one.
+   *
+   * @return the height
+   */
   @Override
   public int getHeight() {
-    return myImage != null ? myHeight : super.getHeight();
+    return getHeight(null);
   }
 
+  /**
+   * Returns the width in user coordinate space for the image created as a wrapper,
+   * and the real width for the image created as a scaled one.
+   *
+   * @return the width
+   */
   @Override
   public int getWidth(ImageObserver observer) {
-    return myImage != null ? myWidth : super.getWidth(observer);
+    return myImage != null ? getUserWidth(observer) : getRealWidth(observer);
   }
 
+  /**
+   * Returns the height in user coordinate space for the image created as a wrapper,
+   * and the real height for the image created as a scaled one.
+   *
+   * @return the height
+   */
   @Override
   public int getHeight(ImageObserver observer) {
-    return myImage != null ? myHeight : super.getHeight(observer);
+    return myImage != null ? getUserHeight(observer) : getRealHeight(observer);
+  }
+
+  /**
+   * Returns the width in user coordinate space.
+   *
+   * @param observer the image observer
+   * @return the width
+   */
+  public int getUserWidth(ImageObserver observer) {
+    return myImage != null ? myUserWidth : (int)(super.getWidth(observer) / myScale);
+  }
+
+  /**
+   * Returns the height in user coordinate space.
+   *
+   * @param observer the image observer
+   * @return the height
+   */
+  public int getUserHeight(ImageObserver observer) {
+    return myImage != null ? myUserHeight : (int)(super.getHeight(observer) / myScale);
+  }
+
+  /**
+   * Returns the real width.
+   *
+   * @param observer the image observer
+   * @return the width
+   */
+  public int getRealWidth(ImageObserver observer) {
+    return myImage != null ? myImage.getWidth(observer) : super.getWidth(observer);
+  }
+
+  /**
+   * Returns the real height.
+   *
+   * @param observer the image observer
+   * @return the height
+   */
+  public int getRealHeight(ImageObserver observer) {
+    return myImage != null ? myImage.getHeight(observer) : super.getHeight(observer);
   }
 
   @Override

@@ -1264,7 +1264,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // is MUCH faster.
           // On Mac we create a retina-compatible image
 
-          image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
+          image = UIUtil.createImage((Graphics2D)getGraphics(), width, height, BufferedImage.TYPE_INT_RGB);
         }
         imageRef = new SoftReference<>(image);
       }

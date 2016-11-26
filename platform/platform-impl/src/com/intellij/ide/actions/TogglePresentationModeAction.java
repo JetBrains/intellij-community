@@ -147,7 +147,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       }
       float scaleFactor = settings.PRESENTATION_MODE_FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE;
       ourSavedScaleFactor = JBUI.scale(1f);
-      JBUI.setScaleFactor(scaleFactor);
+      JBUI.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
@@ -163,7 +163,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       for (Object key : ourSavedValues.keySet()) {
         defaults.put(key, ourSavedValues.get(key));
       }
-      JBUI.setScaleFactor(ourSavedScaleFactor);
+      JBUI.setUserScaleFactor(ourSavedScaleFactor);
       ourSavedValues.clear();
     }
   }

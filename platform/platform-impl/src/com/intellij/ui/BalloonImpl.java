@@ -1640,7 +1640,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       @SuppressWarnings("UndesirableClassUsage")
-      BufferedImage image = UIUtil.createImage(getWidth(), getHeight(),
+      BufferedImage image = UIUtil.createImage((Graphics2D)g, getWidth(), getHeight(),
                                                BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = image.createGraphics();
       //noinspection UseJBColor
@@ -1651,8 +1651,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       imageGraphics.dispose();
       Graphics2D g2d = (Graphics2D)g.create();
       try {
-        if (UIUtil.isRetina()) {
-          g2d.scale(.5, .5);
+        if (UIUtil.isJDKManagedHiDPIScreen(g2d)) {
+          g2d.scale(1/JBUI.sysScale(g2d), 1 / JBUI.sysScale(g2d));
         }
         UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
       }
@@ -1716,9 +1716,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     private void paintShadow(Graphics graphics) {
       if (myShadow != null) {
-        if (UIUtil.isRetina()) {
+        if (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)graphics)) {
           graphics = graphics.create();
-          ((Graphics2D)graphics).scale(.5, .5);
+          ((Graphics2D)graphics).scale(1/JBUI.sysScale((Graphics2D)graphics), 1/JBUI.sysScale((Graphics2D)graphics));
         }
         UIUtil.drawImage(graphics, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
       }
@@ -1742,7 +1742,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void initComponentImage(Point pointTarget, Rectangle shapeBounds) {
       if (myImage != null) return;
 
-      myImage = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+      myImage = UIUtil.createImage((Graphics2D)myComp.getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
       myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
       paintChildrenImpl(imageGraphics);

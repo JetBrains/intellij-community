@@ -42,7 +42,6 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -81,8 +80,8 @@ public class RecentProjectPanel extends JPanel {
 
   private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
 
-    int realCloseButtonInset = (UIUtil.isRetina((Graphics2D)myList.getGraphics())) ?
-                           closeButtonInset * 2 : closeButtonInset;
+    int realCloseButtonInset = (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)getGraphics())) ?
+                               (int)(closeButtonInset * JBUI.sysScale((Graphics2D)getGraphics())) : closeButtonInset;
 
     Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
                                               myCloseButtonForEditor.getY() - realCloseButtonInset,

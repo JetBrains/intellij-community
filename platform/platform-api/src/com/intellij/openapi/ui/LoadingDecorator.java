@@ -173,7 +173,7 @@ public class LoadingDecorator {
         myCurrentAlpha = -1;
 
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
-          mySnapshot = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+          mySnapshot = UIUtil.createImage((Graphics2D)getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
           final Graphics2D g = mySnapshot.createGraphics();
           myPane.paint(g);
           final Component opaque = UIUtil.findNearestOpaque(this);

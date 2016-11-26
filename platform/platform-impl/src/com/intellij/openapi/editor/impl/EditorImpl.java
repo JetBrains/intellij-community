@@ -132,7 +132,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
-  private static final boolean isOracleRetina = UIUtil.isRetina() /*&& SystemInfo.isOracleJvm*/;
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
@@ -3763,7 +3762,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         for (int i = start; i < end; i++) {
           final char c = data.charAt(i);
-          final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
+          final int charWidth = UIUtil.isJDKManagedHiDPIScreen((Graphics2D)g) ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
 
           if (c == ' ') {
             g.fillRect(x + (charWidth - strokeWidth >> 1), y - strokeWidth + 1, strokeWidth, strokeWidth);
@@ -4956,7 +4955,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       Graphics2D originalG = IdeBackgroundUtil.getOriginalGraphics(g);
       if (!paintBlockCaret()) {
-        if (UIUtil.isRetina()) {
+        if (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)g)) {
           originalG.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
         }
         else {

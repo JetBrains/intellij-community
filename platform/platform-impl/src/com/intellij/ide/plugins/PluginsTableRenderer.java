@@ -88,7 +88,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
+    myPanel.setBorder(UIUtil.isJDKManagedHiDPIScreen((Graphics2D)myPanel.getGraphics()) ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
   }
 
   private void createUIComponents() {

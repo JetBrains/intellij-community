@@ -110,6 +110,7 @@ final class PaintersHelper implements Painter.Listener {
 
       g.setTransform(t);
       g.translate(offsets[i++], offsets[i++]);
+      g.scale(orig.getScaleX(), orig.getScaleY()); // scale the paint below
       painter.paint(cur, g);
     }
     g.setTransform(orig);
