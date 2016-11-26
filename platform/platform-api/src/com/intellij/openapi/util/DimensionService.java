@@ -289,7 +289,12 @@ public class DimensionService implements PersistentStateComponent<Element> {
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
     if (JBUI.isHiDPI()) {
-      realKey+= "@" + (((int)(96 * JBUI.scale(1f)))) + "dpi";
+      // [tav] todo: Consider implementing inter-transforming of window coordinates b/w the HiDPI modes
+      // like it was done for the IdeFrame (see ScreenUtil.boundsFromDeviceSpace/boundsToDeviceSpace).
+      // The problem with DimensionService is that it can store location and size separately in
+      // which case it's not possible to do the mentioned transform.
+      String jm = UIUtil.isJDKManagedHiDPI() ? "jm" : "";
+      realKey+= "@" + jm + ((int)(96 * JBUI.pixScale())) + "dpi";
     }
     return realKey;
   }
