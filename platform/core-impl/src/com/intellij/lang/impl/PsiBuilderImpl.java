@@ -557,10 +557,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private int myTokenStart;
     private int myTokenEnd;
     private int myHC = -1;
+    private StartMarker myParentNode;
 
     public void clean() {
       myBuilder = null;
       myHC = -1;
+      myParentNode = null;
     }
 
     @Override
@@ -625,7 +627,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
     private MyTreeStructure myParentStructure;
-    private StartMarker myParentNode;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
     private int myStartIndex;
     private int myEndIndex;
@@ -634,7 +635,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void clean() {
       super.clean();
       myParentStructure = null;
-      myParentNode = null;
       myParsed = null;
     }
 
@@ -1675,6 +1675,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (node instanceof ProductionMarker) {
         return ((ProductionMarker)node).myParent;
       }
+      if (node instanceof Token) {
+        return ((Token)node).myParentNode;
+      }
       throw new UnsupportedOperationException("Unknown node type: " + node);
     }
 
@@ -1693,7 +1696,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
         final LighterASTNode root = tree.getRoot();
         if (root instanceof ProductionMarker) {
-          ((ProductionMarker)root).myParent = ((LazyParseableToken)item).myParentNode;
+          ((ProductionMarker)root).myParent = ((Token)item).myParentNode;
         }
         return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
       }
@@ -1785,13 +1788,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         lexeme = myLazyPool.alloc();
         LazyParseableToken lazyParseableToken = (LazyParseableToken)lexeme;
         lazyParseableToken.myParentStructure = this;
-        lazyParseableToken.myParentNode = parent;
         lazyParseableToken.myStartIndex = startLexemeIndex;
         lazyParseableToken.myEndIndex = endLexemeIndex;
       }
       else {
         lexeme = myPool.alloc();
       }
+      lexeme.myParentNode = parent;
       lexeme.myBuilder = builder;
       lexeme.myTokenType = type;
       lexeme.myTokenStart = start;

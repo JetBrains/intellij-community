@@ -20,9 +20,11 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,4 +163,30 @@ public class LightTreeUtil {
     return null;
   }
 
+  @Nullable
+  public static LighterASTNode findLeafElementAt(@NotNull LighterAST tree, final int offset) {
+    LighterASTNode eachNode = tree.getRoot();
+    if (!containsOffset(eachNode, offset)) return null;
+
+    while (eachNode != null) {
+      List<LighterASTNode> children = tree.getChildren(eachNode);
+      if (children.isEmpty()) return eachNode;
+
+      eachNode = findChildAtOffset(offset, children);
+    }
+    return null;
+  }
+
+  private static LighterASTNode findChildAtOffset(final int offset, List<LighterASTNode> children) {
+    return ContainerUtil.find(children, new Condition<LighterASTNode>() {
+      @Override
+      public boolean value(LighterASTNode node) {
+        return containsOffset(node, offset);
+      }
+    });
+  }
+
+  private static boolean containsOffset(LighterASTNode node, int offset) {
+    return node.getStartOffset() <= offset && node.getEndOffset() > offset;
+  }
 }

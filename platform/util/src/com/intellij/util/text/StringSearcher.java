@@ -17,6 +17,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,19 @@ public class StringSearcher {
 
   public int scan(@NotNull CharSequence text, int _start, int _end) {
     return scan(text, null, _start, _end);
+  }
+
+  @NotNull
+  public int[] findAllOccurrences(@NotNull CharSequence text) {
+    int end = text.length();
+    TIntArrayList result = new TIntArrayList();
+    for (int index = 0; index < end; index++) {
+      //noinspection AssignmentToForLoopParameter
+      index = scan(text, index, end);
+      if (index < 0) break;
+      result.add(index);
+    }
+    return result.toNativeArray();
   }
 
   public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
