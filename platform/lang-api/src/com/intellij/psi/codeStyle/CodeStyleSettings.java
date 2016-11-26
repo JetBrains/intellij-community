@@ -207,6 +207,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
 
+// region Java settings (legacy)
 //----------------- NAMING CONVENTIONS --------------------
 
   public String FIELD_NAME_PREFIX = "";
@@ -275,7 +276,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
-//----------------- ORDER OF MEMBERS ------------------
+// endregion
+
+// region ORDER OF MEMBERS
 
   public int STATIC_FIELDS_ORDER_WEIGHT = 1;
   public int FIELDS_ORDER_WEIGHT = 2;
@@ -285,7 +288,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
   public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
-//----------------- WRAPPING ---------------------------
+// endregion
+
+// region WRAPPING
   /**
    * @deprecated Use get/setRightMargin() methods instead.
    */
@@ -299,8 +304,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    */
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
+// endregion
 
-  // ---------------------------------- Javadoc formatting options -------------------------
+// region Javadoc formatting options
+
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**
@@ -333,10 +340,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean JD_PRESERVE_LINE_FEEDS;
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
-  // ---------------------------------------------------------------------------------------
+// endregion
 
-
-  // ---------------------------------- Legacy(!) XML formatting options -------------------
+// region Legacy(!) XML formatting options
 
   /**
    * @deprecated Use XmlCodeStyleSettings.
@@ -392,9 +398,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    */
   public int XML_WHITE_SPACE_AROUND_CDATA;
 
-  // ---------------------------------------------------------------------------------------
+// endregion
 
-  // ---------------------------------- HTML formatting options -------------------------
+
+// region HTML formatting options (legacy)
+
   public boolean HTML_KEEP_WHITESPACES;
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
@@ -421,8 +429,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
   public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
   public boolean HTML_ENFORCE_QUOTES = false;
-  // ---------------------------------------------------------------------------------------
 
+// endregion
 
   // true if <%page import="x.y.z, x.y.t"%>
   // false if <%page import="x.y.z"%>
@@ -673,7 +681,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *                         or the text range doesn't cover the entire file.
    * @param providerProcessor A callback object containing a reference to indent option provider which has returned indent options.
    * @return Indent options from the associated document or file indent options providers.
-   * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
+   * @see FileIndentOptionsProvider
    */
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
