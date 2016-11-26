@@ -41,7 +41,8 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
                                               envs: MutableMap<String, String>): Array<out String> {
     val sdk: Sdk? = findSdk(project)
 
-    if (sdk != null && PythonSdkType.isVirtualEnv(sdk) && PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
+    if (sdk != null && (PythonSdkType.isVirtualEnv(sdk) || PythonSdkType.isCondaVirtualEnv(
+      sdk)) && PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
       // in case of virtualenv sdk on unix we activate virtualenv
       val path = sdk.homePath
 
@@ -50,7 +51,8 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         val shellPath = command[0]
         val shellName = File(shellPath).name
 
-        if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh") || (shellName == "fish")) {
+        if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh") ||
+          ((shellName == "fish") && PythonSdkType.isVirtualEnv(sdk))) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
           findActivateScript(path, shellPath)?.let { activate -> envs.put("JEDITERM_SOURCE", activate) }
         }
