@@ -59,7 +59,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           val reader = PyVirtualEnvReader(path)
           reader.activate?.let {
             envs.putAll(reader.readShellEnv().mapKeys { k -> k.key.toUpperCase() }.filterKeys { k ->
-              k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT")
+              k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH")
             })
           }
         }
