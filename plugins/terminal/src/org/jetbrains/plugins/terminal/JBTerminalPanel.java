@@ -241,7 +241,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected BufferedImage createBufferedImage(int width, int height) {
-    return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    return UIUtil.createImage((Graphics2D)getGraphics(), width, height, BufferedImage.TYPE_INT_ARGB);
   }
 
 

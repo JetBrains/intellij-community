@@ -358,7 +358,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (width <= 0 || height <= 0) return null;
 
     Dimension size = getImageSize(width, height);
-    myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    myImage = UIUtil.createImage((Graphics2D)renderer.getGraphics(), size.width, size.height, BufferedImage.TYPE_INT_RGB);
 
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);

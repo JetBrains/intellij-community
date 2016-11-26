@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.java2d.SunGraphicsEnvironment;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -339,9 +340,49 @@ public class UIUtil {
   }
 
   /**
+   * Returns whether the JDK-managed HiDPI mode is enabled and the default monitor device is HiDPI.
+   * (Equivalent of {@link #isRetina()} on macOS)
+   */
+  public static boolean isJDKManagedHiDPIScreen() {
+    return isJDKManagedHiDPI() && JBUI.sysScale() > 1.0f;
+  }
+
+  /**
+   * Returns whether the JDK-managed HiDPI mode is enabled and the graphics device is HiDPI.
+   * (Equivalent of {@link #isRetina(Graphics2D)} on macOS)
+   */
+  public static boolean isJDKManagedHiDPIScreen(Graphics2D g) {
+    return isJDKManagedHiDPI() && JBUI.sysScale(g) > 1.0f;
+  }
+
+  private static Boolean jdkManagedHiDPI;
+  private static Method isUIScaleOnMethod;
+
+  /**
+   * Returns whether the JDK-managed HiDPI mode is enabled.
+   * (True for macOS JDK >= 7.10 versions)
+   */
+  public static boolean isJDKManagedHiDPI() {
+    if (jdkManagedHiDPI != null) return jdkManagedHiDPI;
+    if (SystemInfo.isMac) {
+      return jdkManagedHiDPI = (SystemInfo.isAppleJvm ? false : true);
+    }
+    jdkManagedHiDPI = false;
+    try {
+      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (ge instanceof SunGraphicsEnvironment) {
+        isUIScaleOnMethod = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+        jdkManagedHiDPI = (Boolean)isUIScaleOnMethod.invoke(ge);
+      }
+    } catch (Throwable ignore) {
+    }
+    return jdkManagedHiDPI;
+  }
+
+  /**
    * Utility class for retina routine
    */
-  private final static class DetectRetinaKit {
+  final static class DetectRetinaKit {
 
     private final static WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
 
@@ -351,7 +392,7 @@ public class UIUtil {
      * on the other hand. So let's use a dedicated method. It is rather safe because it caches a
      * value that has been got on AppKit previously.
      */
-    private static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
+    static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
 
       if (SystemInfo.isAppleJvm) return false;
 
@@ -1653,7 +1694,7 @@ public class UIUtil {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
 
-    if (isRetina()) {
+    if (isJDKManagedHiDPIScreen()) {
       g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
       g.setComposite(oldComposite);
       return;
@@ -1745,8 +1786,8 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      if (isRetina()) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
+      if (isJDKManagedHiDPIScreen()) {
+        ((Graphics2D)g).setStroke(new BasicStroke(JBUI.sysScale()));
       }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
@@ -1757,7 +1798,8 @@ public class UIUtil {
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
       if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
+      if (drawBottomLine) g.drawLine(x, (int)(height - (isJDKManagedHiDPIScreen() ? 1 : JBUI.sysScale())),
+                                     width, height - (isJDKManagedHiDPIScreen() ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
@@ -1836,7 +1878,7 @@ public class UIUtil {
    */
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
-    if (isRetina()) {
+    if (isJDKManagedHiDPIScreen()) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -1854,12 +1896,20 @@ public class UIUtil {
    * @return a HiDPI-aware BufferedImage in the graphics scale
    */
   @NotNull
-  public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    if (isRetina(g)) {
-      return RetinaImage.create(width, height, type);
+  public static BufferedImage createImage(Graphics2D g, int width, int height, int type) {
+    if (isJDKManagedHiDPIScreen(g)) {
+      return RetinaImage.create(g, width, height, type);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Same as {@link #createImage(Graphics2D, int, int, int)}.
+   */
+  @NotNull
+  public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
+    return createImage(g, width, height, type);
   }
 
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
@@ -1868,20 +1918,19 @@ public class UIUtil {
 
   public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
-      final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(observer), image.getHeight(observer));
-      newG.scale(0.5, 0.5);
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
       if (img == null) {
         img = image;
       }
+      int dstw = width;
+      int dsth = height;
       if (width == -1 && height == -1) {
-        newG.drawImage(img, 0, 0, observer);
+        dstw = ImageUtil.getUserWidth(image);
+        dsth = ImageUtil.getUserHeight(image);
       }
-      else {
-        newG.drawImage(img, 0, 0, width * 2, height * 2, 0, 0, width * 2, height * 2, observer);
-      }
-      //newG.scale(1, 1);
-      newG.dispose();
+      int srcw = ImageUtil.getRealWidth(image);
+      int srch = ImageUtil.getRealHeight(image);
+      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, observer);
     }
     else if (width == -1 && height == -1) {
       g.drawImage(image, x, y, observer);
@@ -1893,15 +1942,16 @@ public class UIUtil {
 
   public static void drawImage(Graphics g, BufferedImage image, BufferedImageOp op, int x, int y) {
     if (image instanceof JBHiDPIScaledImage) {
-      final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(null), image.getHeight(null));
-      newG.scale(0.5, 0.5);
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
       if (img == null) {
         img = image;
       }
-      newG.drawImage((BufferedImage)img, op, 0, 0);
-      //newG.scale(1, 1);
-      newG.dispose();
+      if (op != null && img instanceof BufferedImage) img = op.filter((BufferedImage)img, null);
+      int dstw = ImageUtil.getUserWidth(image);
+      int dsth = ImageUtil.getUserHeight(image);
+      int srcw = ImageUtil.getRealWidth(image);
+      int srch = ImageUtil.getRealHeight(image);
+      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, null);
     } else {
       ((Graphics2D)g).drawImage(image, op, x, y);
     }
@@ -1919,7 +1969,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || !isJDKManagedHiDPIScreen((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
@@ -2070,9 +2120,9 @@ public class UIUtil {
 
   public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    boolean isRetina = isRetina();
-    for (float i = x - 1; i <= x + 1; i += isRetina ? .5 : 1) {
-      for (float j = y - 1; j <= y + 1; j += isRetina ? .5 : 1) {
+    boolean isRetina = isJDKManagedHiDPIScreen();
+    for (float i = x - 1; i <= x + 1; i += isRetina ? 1/JBUI.sysScale() : 1) {
+      for (float j = y - 1; j <= y + 1; j += isRetina ? 1/JBUI.sysScale() : 1) {
         ((Graphics2D)g).drawString(s, i, j);
       }
     }
@@ -3712,7 +3762,7 @@ public class UIUtil {
   }
 
   public static Image getDebugImage(Component component) {
-    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = createImage((Graphics2D)component.getGraphics(), component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics = image.createGraphics();
     graphics.setColor(Color.RED);
     graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);

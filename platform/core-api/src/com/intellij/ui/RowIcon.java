@@ -143,13 +143,13 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
   @Override
   public int getIconWidth() {
     if (updateJBUIScale()) updateSize();
-    return scaleVal(myWidth, Scale.ARBITRARY);
+    return scaleVal(myWidth, Scale.INSTANCE);
   }
 
   @Override
   public int getIconHeight() {
     if (updateJBUIScale()) updateSize();
-    return scaleVal(myHeight, Scale.ARBITRARY);
+    return scaleVal(myHeight, Scale.INSTANCE);
   }
 
   private void updateSize() {

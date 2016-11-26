@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ import java.awt.image.ImageObserver;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class RetinaImage {
+public class RetinaImage { // [tav] todo: create HiDPIImage class
 
   /**
    * Creates a Retina-aware wrapper over a raw image.
@@ -52,11 +53,11 @@ public class RetinaImage {
    * @return the Retina-aware wrapper
    */
   @NotNull
-  public static Image createFrom(Image image, final int scale, ImageObserver observer) {
+  public static Image createFrom(Image image, final float scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
 
-    Image hidpi = create(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
+    Image hidpi = create(null, image, (int)(w / scale), (int)(h / scale), BufferedImage.TYPE_INT_ARGB);
     if (SystemInfo.isAppleJvm) {
       Graphics2D g = (Graphics2D)hidpi.getGraphics();
       g.scale(1f / scale, 1f / scale);
@@ -69,17 +70,22 @@ public class RetinaImage {
 
   @NotNull
   public static BufferedImage create(final int width, int height, int type) {
-    return create(null, width, height, type);
+    return create(null, null, width, height, type);
   }
 
+  @NotNull
+  public static BufferedImage create(Graphics2D g, final int width, int height, int type) {
+    return create(g, null, width, height, type);
+  }
 
   @NotNull
-  private static BufferedImage create(Image image, final int width, int height, int type) {
+  private static BufferedImage create(Graphics2D g, Image image, final int width, int height, int type) {
     if (SystemInfo.isAppleJvm) {
       return AppleHiDPIScaledImage.create(width, height, type);
     } else {
       if (image == null) {
-        return new JBHiDPIScaledImage(width, height, type);
+        return g == null ? new JBHiDPIScaledImage(width, height, type) :
+                           new JBHiDPIScaledImage(g, width, height, type);
       } else {
         return new JBHiDPIScaledImage(image, width, height, type);
       }

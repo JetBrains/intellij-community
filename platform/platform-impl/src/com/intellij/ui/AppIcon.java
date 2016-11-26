@@ -539,7 +539,7 @@ public abstract class AppIcon {
       if (text != null) {
         try {
           int size = 16;
-          BufferedImage image = UIUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB);
+          BufferedImage image = UIUtil.createImage((Graphics2D)frame.getComponent().getGraphics(), size, size, BufferedImage.TYPE_INT_ARGB);
           Graphics2D g = image.createGraphics();
 
           int shadowRadius = 16;

@@ -142,14 +142,12 @@ public class TipUIUtil {
 
   private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
     final boolean dark = UIUtil.isUnderDarcula();
-    final boolean retina = UIUtil.isRetina();
-    final boolean hidpi = retina || JBUI.scale(1f) > 1.5f;
 //    if (!dark && !retina) {
 //      return;
 //    }
 
     String suffix = "";
-    if (hidpi) suffix += "@2x";
+    if (JBUI.isHiDPI()) suffix += "@2x";
     if (dark) suffix += "_dark";
     int index = text.indexOf("<img", 0);
     while (index != -1) {
@@ -165,11 +163,11 @@ public class TipUIUtil {
           URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
-            if (retina) {
+            if (UIUtil.isJDKManagedHiDPIScreen()) {  // [tav] todo: no screen available
               try {
                 final BufferedImage image = ImageIO.read(url.openStream());
-                final int w = image.getWidth() / 2;
-                final int h = image.getHeight() / 2;
+                final int w = (int)(image.getWidth() / JBUI.sysScale());
+                final int h = (int)(image.getHeight() / JBUI.sysScale());
                 newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
               } catch (Exception ignore) {
                 newImgTag += "width=\"400\" height=\"200\"";

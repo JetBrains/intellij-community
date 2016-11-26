@@ -221,8 +221,8 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = x + scaleVal(myXShift + myHShifts(i), Scale.ARBITRARY);
-      int yOffset = y + scaleVal(myYShift + myVShifts(i), Scale.ARBITRARY);
+      int xOffset = x + scaleVal(myXShift + myHShifts(i), Scale.INSTANCE);
+      int yOffset = y + scaleVal(myYShift + myVShifts(i), Scale.INSTANCE);
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -240,7 +240,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     if (myWidth <= 1 || updateJBUIScale()) {
       updateSize();
     }
-    return scaleVal(myWidth, Scale.ARBITRARY);
+    return scaleVal(myWidth, Scale.INSTANCE);
   }
 
   @Override
@@ -248,7 +248,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     if (myHeight <= 1 || updateJBUIScale()) {
       updateSize();
     }
-    return scaleVal(myHeight, Scale.ARBITRARY);
+    return scaleVal(myHeight, Scale.INSTANCE);
   }
 
   private int myHShifts(int i) {

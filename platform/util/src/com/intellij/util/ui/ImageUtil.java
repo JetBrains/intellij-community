@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,24 +63,14 @@ public class ImageUtil {
 
   public static int getUserWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img != null) {
-        return ((JBHiDPIScaledImage)image).getWidth();
-      } else {
-        return ((JBHiDPIScaledImage)image).getWidth() / 2;
-      }
+      return ((JBHiDPIScaledImage)image).getUserWidth(null);
     }
     return image.getWidth(null);
   }
 
   public static int getUserHeight(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img != null) {
-        return ((JBHiDPIScaledImage)image).getHeight();
-      } else {
-        return ((JBHiDPIScaledImage)image).getHeight() / 2;
-      }
+      return ((JBHiDPIScaledImage)image).getUserHeight(null);
     }
     return image.getHeight(null);
   }
@@ -88,5 +79,12 @@ public class ImageUtil {
     if (image == null || filter == null) return image;
     return Toolkit.getDefaultToolkit().createImage(
       new FilteredImageSource(toBufferedImage(image).getSource(), filter));
+  }
+
+  /**
+   * Scales the image taking into account its HiDPI awareness.
+   */
+  public static Image scaleImage(Image image, float scale) {
+    return ImageLoader.scaleImage(image, scale);
   }
 }

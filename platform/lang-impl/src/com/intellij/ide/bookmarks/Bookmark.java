@@ -386,12 +386,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.ARBITRARY);
+      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.INSTANCE);
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.ARBITRARY);
+      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.INSTANCE);
     }
 
     @Override
@@ -424,12 +424,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.ARBITRARY);
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.INSTANCE);
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.ARBITRARY);
+      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.INSTANCE);
     }
 
     @NotNull

@@ -636,7 +636,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle componentBounds = c.getBounds();
       ProperTextRange docRange = ProperTextRange.create(0, componentBounds.height);
       if (myCachedTrack == null || myCachedHeight != componentBounds.height) {
-        myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myCachedTrack = UIUtil.createImage((Graphics2D)c.getGraphics(), componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
         myCachedHeight = componentBounds.height;
         myDirtyYPositions = docRange;
         dimensionsAreValid = false;
@@ -1218,7 +1218,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               myCacheStartLine = fitLineToEditor(myVisualLine - myCachePreviewLines);
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
               if (myCacheLevel2 == null) {
-                myCacheLevel2 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myCachePreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+                myCacheLevel2 = UIUtil.createImage((Graphics2D)g, size.width, myEditor.getLineHeight() * (2 * myCachePreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
@@ -1247,7 +1247,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
             }
             if (myCacheLevel1 == null) {
-              myCacheLevel1 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              myCacheLevel1 = UIUtil.createImage((Graphics2D)g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               isDirty = true;
             }
             if (isDirty) {

@@ -2534,7 +2534,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
       if (onlyIfShown && (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) return null;
       return myLocations;
-    }    
+    }
   }
 
   private class ScrollingTimer {
