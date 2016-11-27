@@ -56,20 +56,10 @@ sourceSets {
     }
 }
 
-def versionOfGrammarKit = "1.4.3"
-
 intellij {
     def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
     version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
     println "Building for IntelliJ version: ${version}"
-
-    def slurper = new groovy.json.JsonSlurper();
-    def fallBackVersionGrammarKit = slurper.parseText(grammarKitVersionMap)[version]
-    if (fallBackVersionGrammarKit) {
-        versionOfGrammarKit = fallBackVersionGrammarKit;
-    }
-
-    println "Using version: ${versionOfGrammarKit} for GrammarKit"
 
     pluginName pluginName
     downloadSources !Boolean.valueOf(System.getenv('CI'))
