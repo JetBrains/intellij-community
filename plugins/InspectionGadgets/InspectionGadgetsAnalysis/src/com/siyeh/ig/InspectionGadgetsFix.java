@@ -59,8 +59,4 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
   public final boolean isOnTheFly() {
     return myOnTheFly;
   }
-
-  protected boolean prepareForWriting() {
-    return false;
-  }
 }

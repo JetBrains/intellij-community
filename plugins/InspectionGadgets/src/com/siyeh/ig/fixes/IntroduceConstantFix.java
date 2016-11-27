@@ -15,18 +15,12 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class IntroduceConstantFix extends InspectionGadgetsFix {
+public class IntroduceConstantFix extends RefactoringInspectionGadgetsFix {
 
   @Override
   @NotNull
@@ -34,23 +28,9 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("introduce.constant.quickfix");
   }
 
+  @NotNull
   @Override
-  public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
-    final PsiElement constant = descriptor.getPsiElement();
-    final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
-    final RefactoringActionHandler introduceHandler = factory.createIntroduceConstantHandler();
-    final DataManager dataManager = DataManager.getInstance();
-    final DataContext dataContext = dataManager.getDataContext();
-    introduceHandler.invoke(project, new PsiElement[]{constant}, dataContext);
-  }
-
-  @Override
-  protected boolean prepareForWriting() {
-    return false;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  public RefactoringActionHandler getHandler() {
+    return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceConstantHandler();
   }
 }

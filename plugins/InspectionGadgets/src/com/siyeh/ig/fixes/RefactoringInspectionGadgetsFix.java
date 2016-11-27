@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,18 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RefactoringQuickFix;
+import com.intellij.openapi.project.Project;
+import com.siyeh.ig.InspectionGadgetsFix;
 
-public class MoveClassFix extends RefactoringInspectionGadgetsFix {
+/**
+ * @author Bas Leijdekkers
+ */
+public abstract class RefactoringInspectionGadgetsFix extends InspectionGadgetsFix implements RefactoringQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return InspectionGadgetsBundle.message("move.class.quickfix");
-  }
-
-  @NotNull
-  @Override
-  public RefactoringActionHandler getHandler() {
-    return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
+    doFix(descriptor.getPsiElement());
   }
 }

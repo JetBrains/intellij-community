@@ -15,42 +15,23 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IntroduceVariableFix extends InspectionGadgetsFix {
+public class IntroduceVariableFix extends RefactoringInspectionGadgetsFix {
 
-  private final boolean myMayChangeSemantics;
+  private final boolean myOnQualifier;
 
-  public IntroduceVariableFix(boolean mayChangeSemantics) {
-    myMayChangeSemantics = mayChangeSemantics;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    if (myMayChangeSemantics) {
-      return InspectionGadgetsBundle.message("introduce.variable.may.change.semantics.quickfix");
-    } else {
-      return InspectionGadgetsBundle.message("introduce.variable.quickfix");
-    }
+  public IntroduceVariableFix(boolean onQualifier) {
+    myOnQualifier = onQualifier;
   }
 
   @NotNull
@@ -59,34 +40,26 @@ public class IntroduceVariableFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("introduce.variable.quickfix");
   }
 
-  @Nullable
-  public PsiExpression getExpressionToExtract(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
+  @NotNull
+  @Override
+  public RefactoringActionHandler getHandler() {
+    return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
   }
 
   @Override
-  protected void doFix(final Project project, ProblemDescriptor descriptor) {
-    final PsiExpression expression = getExpressionToExtract(descriptor.getPsiElement());
-    if (expression == null) {
-      return;
-    }
-    final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-    final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-    dataContextContainer.doWhenDone(new Consumer<DataContext>() {
-      @Override
-      public void consume(DataContext dataContext) {
-        handler.invoke(project, new PsiElement[]{expression}, dataContext);
+  public PsiElement getElementToRefactor(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (myOnQualifier) {
+      if (parent instanceof PsiReferenceExpression) {
+        return ((PsiReferenceExpression)parent).getQualifierExpression();
       }
-    });
-  }
-
-  @Override
-  protected boolean prepareForWriting() {
-    return false;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    }
+    else {
+      if (parent instanceof PsiReferenceExpression) {
+        final PsiElement grandParent = parent.getParent();
+        return grandParent instanceof PsiMethodCallExpression ? grandParent : parent;
+      }
+    }
+    return super.getElementToRefactor(element);
   }
 }

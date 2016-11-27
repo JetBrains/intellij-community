@@ -16,20 +16,11 @@
 
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +35,7 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
     return new ReplaceConstructorWithFactoryMethodFix();
   }
 
-  private static class ReplaceConstructorWithFactoryMethodFix extends InspectionGadgetsFix {
+  private static class ReplaceConstructorWithFactoryMethodFix extends RefactoringInspectionGadgetsFix {
 
     @NotNull
     @Override
@@ -52,28 +43,10 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
       return InspectionGadgetsBundle.message("public.constructor.quickfix");
     }
 
+    @NotNull
     @Override
-    protected void doFix(final Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class, PsiMethod.class);
-      final AsyncResult<DataContext> context = DataManager.getInstance().getDataContextFromFocus();
-      context.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
-          final RefactoringActionHandler handler = factory.createReplaceConstructorWithFactoryHandler();
-          handler.invoke(project, new PsiElement[]{element}, dataContext);
-        }
-      });
-    }
-
-    @Override
-    protected boolean prepareForWriting() {
-      return false;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+    public RefactoringActionHandler getHandler() {
+      return JavaRefactoringActionHandlerFactory.getInstance().createReplaceConstructorWithFactoryHandler();
     }
   }
 }

@@ -27,7 +27,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -67,13 +66,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
-    return new IntroduceVariableFix(false) {
-      @Nullable
-      @Override
-      public PsiExpression getExpressionToExtract(PsiElement element) {
-        return (PsiExpression)element;
-      }
-    };
+    return new IntroduceVariableFix(true);
   }
 
   @Override

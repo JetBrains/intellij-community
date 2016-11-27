@@ -15,23 +15,15 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InvertBooleanFix extends InspectionGadgetsFix {
+public class InvertBooleanFix extends RefactoringInspectionGadgetsFix {
 
   private final String myName;
 
@@ -51,23 +43,9 @@ public class InvertBooleanFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("invert.quickfix.family.name");
   }
 
+  @NotNull
   @Override
-  protected void doFix(final Project project, ProblemDescriptor descriptor) {
-    final PsiNameIdentifierOwner owner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiVariable.class, PsiMethod.class);
-    if (owner == null) {
-      return;
-    }
-    final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createInvertBooleanHandler();
-    handler.invoke(project, new PsiElement[]{owner}, null);
-  }
-
-  @Override
-  protected boolean prepareForWriting() {
-    return false;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  public RefactoringActionHandler getHandler() {
+    return JavaRefactoringActionHandlerFactory.getInstance().createInvertBooleanHandler();
   }
 }
