@@ -38,7 +38,8 @@ tasks.withType(JavaCompile) {
             javaHome = JDK6_HOME
         }
 
-        options.bootClasspath = "$javaHome/jre/lib/rt.jar"
+        options.bootClasspath = "$javaHome/lib/rt.jar"
+        println "Using bootClasspath: ${options.bootClasspath} for compiling"
     }
 }
 
@@ -55,8 +56,7 @@ sourceSets {
     }
 }
 
-def versionOfGrammarKit = "1.4.2"
-def versionOfLitePsi = "1.4.0"
+def versionOfGrammarKit = "1.4.3"
 
 intellij {
     def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
@@ -68,12 +68,8 @@ intellij {
     if (fallBackVersionGrammarKit) {
         versionOfGrammarKit = fallBackVersionGrammarKit;
     }
-    def fallBackVersionLitePsi = slurper.parseText(grammarLitePsiVersionMap)[version]
-    if (fallBackVersionLitePsi) {
-        versionOfLitePsi = fallBackVersionLitePsi;
-    }
+
     println "Using version: ${versionOfGrammarKit} for GrammarKit"
-    println "Using version: ${versionOfLitePsi} for LitePsi"
 
     pluginName pluginName
     downloadSources !Boolean.valueOf(System.getenv('CI'))
@@ -117,7 +113,6 @@ check.dependsOn jacocoTestReport
 // Configurations
 configurations {
     bnf
-    jflex
 
     lombok
     hrisey
@@ -128,8 +123,6 @@ dependencies {
     hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
     bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
-    bnf files("$buildDir/tools/light-psi-all.jar")
-    jflex files("$buildDir/tools/JFlex.jar")
 
     compile(project(':patcher')) {
         exclude group: 'org.javassist'
@@ -189,7 +182,7 @@ copy {
 task downloadJFlexJar(type: Download) {
     description 'Downloads JFlex.'
 
-    src 'https://github.com/JetBrains/intellij-community/blob/145/tools/lexer/jflex-1.4/lib/JFlex.jar?raw=true'
+    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.7.0-SNAPSHOT.jar'
     dest "$buildDir/tools/JFlex.jar"
     onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
 }
@@ -197,7 +190,7 @@ task downloadJFlexJar(type: Download) {
 task downloadJFlexSkeleton(type: Download) {
     description 'Downloads JFlex skeleton.'
 
-    src 'https://raw.githubusercontent.com/JetBrains/intellij-community/145/tools/lexer/idea-flex.skeleton'
+    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
     dest "$buildDir/tools/idea-flex.skeleton"
     onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
 }
@@ -207,14 +200,6 @@ task downloadGrammarKit(type: Download) {
 
     src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfGrammarKit}/GrammarKit.zip"
     dest "$buildDir/tools/GrammarKit.zip"
-    onlyIfNewer true
-}
-
-task downloadGrammarLightPsi(type: Download) {
-    description 'Downloads GrammarKit Light Psi.'
-
-    src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfLitePsi}/light-psi-all.jar"
-    dest "$buildDir/tools/light-psi-all.jar"
     onlyIfNewer true
 }
 
@@ -231,28 +216,25 @@ task generateLexer(type: JavaExec) {
     description 'Generates lexer sources with JFlex.'
     dependsOn downloadJFlexJar, downloadJFlexSkeleton
 
-    main = 'JFlex.Main'
-    args = [
+    main '-jar'
+    args = ["$buildDir/tools/JFlex.jar",
             '-nobak',
-            '-sliceandcharat',
             '-skel',
             "$buildDir/tools/idea-flex.skeleton",
             '-d',
             "generated/src/de/plushnikov/intellij/plugin/language/",
             "$projectDir/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex",
     ]
-
-    classpath = configurations.jflex
 }
 
 task generateParser(type: JavaExec) {
     description 'Generates parser sources with GrammarKit.'
-    dependsOn unzipGrammarKit, downloadGrammarLightPsi
+    dependsOn unzipGrammarKit
 
     main = 'org.intellij.grammar.Main'
     args = ["generated/src", file("src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf")]
 
-    classpath = configurations.bnf + configurations.compile
+    classpath = configurations.compile + configurations.bnf
 }
 
 task generateSources() {
