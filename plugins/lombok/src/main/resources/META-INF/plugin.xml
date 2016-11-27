@@ -253,7 +253,7 @@
 		<ul>
 		<li>0.14
 				<ol>
-            <li></li>
+            <li>Fixed #302: Changed linked text in "Lombok Requires Annotation Processing" notification</li>
 				</ol>
 			</li>
 		<li>0.13
