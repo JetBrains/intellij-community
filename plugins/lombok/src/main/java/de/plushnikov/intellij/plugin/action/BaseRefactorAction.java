@@ -1,10 +1,6 @@
 package de.plushnikov.intellij.plugin.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +44,7 @@ public abstract class BaseRefactorAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     final BaseRefactorHandler handler = initHandler(project, e.getDataContext());
 
     boolean processChooser = handler.processChooser();

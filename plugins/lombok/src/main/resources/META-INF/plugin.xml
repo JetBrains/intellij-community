@@ -254,6 +254,7 @@
 		<li>0.14
 				<ol>
             <li>Fixed #302: Changed linked text in "Lombok Requires Annotation Processing" notification</li>
+            <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
 				</ol>
 			</li>
 		<li>0.13
