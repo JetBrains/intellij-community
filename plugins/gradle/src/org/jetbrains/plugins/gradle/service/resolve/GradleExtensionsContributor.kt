@@ -21,8 +21,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
-import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
@@ -247,6 +246,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             val returnClass = psiManager.createTypeByFQClassName(GROOVY_LANG_CLOSURE, resolveScope) ?: return true
             val methodBuilder = GrLightMethodBuilder(place.manager, name).apply {
               returnType = returnClass
+              addParameter("args", JAVA_LANG_OBJECT, true)
             }
             return processor.execute(methodBuilder, state)
           }
