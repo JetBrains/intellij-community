@@ -579,8 +579,15 @@ public class IncProjectBuilder {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
     for (BuildTarget<?> target : allTargets) {
-      for (File file : target.getOutputRoots(context)) {
-        rootsToDelete.putValue(file, target);
+      if (target instanceof ModuleBasedTarget) {
+        for (File file : target.getOutputRoots(context)) {
+          rootsToDelete.putValue(file, target);
+        }
+      }
+      else {
+        if (context.getScope().isBuildForced(target)) {
+          clearOutputFilesUninterruptibly(context, target);
+        }
       }
     }
 
