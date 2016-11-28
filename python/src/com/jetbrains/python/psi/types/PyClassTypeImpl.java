@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -310,8 +311,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
 
       if (!ContainerUtil.isEmpty(typeInstanceAttributes)) {
-        return ContainerUtil
-          .map(typeInstanceAttributes, member -> new RatedResolveResult(PyReferenceImpl.getRate(member, context), member));
+        return typeInstanceAttributes
+          .stream()
+          .filter(member -> name.equals(member.getName()))
+          .map(member -> new RatedResolveResult(PyReferenceImpl.getRate(member, context), member))
+          .collect(Collectors.toList());
       }
     }
 
