@@ -61,10 +61,16 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
-      return ourEnabled &&
-             findDuplicatesProfile(file.getFileType()) != null &&
-             file.isInLocalFileSystem() // skip library sources
-        ;
+      if (!ourEnabled ||
+          !file.isInLocalFileSystem()  // skip library sources
+         ) {
+        return false;
+      }
+      DuplicatesProfile duplicatesProfile = findDuplicatesProfile(file.getFileType());
+      if (duplicatesProfile instanceof LightDuplicateProfile) {
+        return ((LightDuplicateProfile)duplicatesProfile).acceptsFile(file);
+      }
+      return duplicatesProfile != null;
     }
   };
 
@@ -163,7 +169,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
   @Override
   public int getVersion() {
-    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0) + (ourEnabledOldProfiles ? 0x21 : 0);
+    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x80 : 0) + (ourEnabledOldProfiles ? 0x21 : 0);
   }
 
   @Override
