@@ -24,18 +24,11 @@
  */
 package com.intellij.codeInspection.export;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -59,35 +52,6 @@ public class HTMLExporter {
     StringBuffer buf = new StringBuffer();
     myComposer.composeWithExporter(buf, element, this);
     return buf.toString();
-  }
-
-  public static void writeFileImpl(String folder, @NonNls String fileName, CharSequence buf) throws IOException {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String fullPath = folder + File.separator + fileName;
-
-    if (indicator != null) {
-      ProgressManager.checkCanceled();
-      indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath));
-    }
-
-    FileWriter writer = null;
-    try {
-      File folderFile = new File(folder);
-      folderFile.mkdirs();
-      new File(fullPath).getParentFile().mkdirs();
-      writer = new FileWriter(fullPath);
-      writer.write(buf.toString().toCharArray());
-    }
-    finally {
-      if (writer != null) {
-        try {
-          writer.close();
-        }
-        catch (IOException e) {
-          //Cannot do anything in case of exception
-        }
-      }
-    }
   }
 
   //TODO delete all these methods
