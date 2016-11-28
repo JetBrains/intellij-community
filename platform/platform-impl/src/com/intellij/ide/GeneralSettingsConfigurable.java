@@ -23,16 +23,14 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
- * To provide additional options in General section register implementation of {@link com.intellij.openapi.options.SearchableConfigurable} in the plugin.xml:
+ * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
  * <p/>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;generalOptionsProvider instance="class-name"/&gt;<br>
@@ -49,6 +47,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     myComponent = new MyComponent();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     super.apply();
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -63,9 +62,9 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
-      int newInactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
-      if (newInactiveTimeout > 0) {
-        settings.setInactiveTimeout(newInactiveTimeout);
+      int newInactiveTimeoutSeconds = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
+      if (newInactiveTimeoutSeconds > 0 && TimeUnit.SECONDS.toHours(newInactiveTimeoutSeconds) < 24) {
+        settings.setInactiveTimeout(newInactiveTimeoutSeconds);
       }
     }
     catch (NumberFormatException ignored) { }
@@ -97,11 +96,11 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
   }
 
+  @Override
   public boolean isModified() {
     if (super.isModified()) return true;
-    boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
-    isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
+    boolean isModified = settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
     isModified |= settings.isSupportScreenReaders() != myComponent.myChkSupportScreenReaders.isSelected();
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
@@ -122,16 +121,14 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     return isModified;
   }
 
+  @Override
   public JComponent createComponent() {
     if (myComponent == null) {
       myComponent = new MyComponent();
     }
 
-    myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
-      }
-    });
+    myComponent.myChkAutoSaveIfInactive.addChangeListener(
+      e -> myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected()));
 
     List<SearchableConfigurable> list = getConfigurables();
     if (!list.isEmpty()) {
@@ -144,10 +141,12 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     return myComponent.myPanel;
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.general");
   }
 
+  @Override
   public void reset() {
     super.reset();
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -184,11 +183,13 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
   }
 
+  @Override
   public void disposeUIResources() {
     super.disposeUIResources();
     myComponent = null;
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "preferences.general";
@@ -215,11 +216,13 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     public MyComponent() { }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   protected List<SearchableConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);
   }
