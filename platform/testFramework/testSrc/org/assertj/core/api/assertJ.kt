@@ -35,5 +35,5 @@ fun AbstractPathAssert<*>.hasChildren(vararg names: String) {
       if ((o1 as Path).endsWith(o2 as String)) 0 else -1
     }
   }))
-    .assertContainsOnly(info, Files.newDirectoryStream(actual).toList(), names)
+    .assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
 }
