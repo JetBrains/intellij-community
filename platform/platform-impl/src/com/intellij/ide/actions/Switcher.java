@@ -693,6 +693,12 @@ public class Switcher extends AnAction implements DumbAware {
       }
       int i = 0;
       for (ToolWindow window : otherTW) {
+        String bestShortcut = getSmartShortcut(window, keymap);
+        if (bestShortcut != null) {
+          keymap.put(bestShortcut, window);
+          continue;
+        }
+
         while (keymap.get(getIndexShortcut(i)) != null) {
           i++;
         }
@@ -700,6 +706,22 @@ public class Switcher extends AnAction implements DumbAware {
         i++;
       }
       return keymap;
+    }
+
+    @Nullable
+    private static String getSmartShortcut(ToolWindow window, Map<String, ToolWindow> keymap) {
+      String title = window.getStripeTitle();
+      if (StringUtil.isEmpty(title))
+        return null;
+      for (int i = 0; i < title.length(); i++) {
+        char c = title.charAt(i);
+        if (Character.isUpperCase(c)) {
+          String shortcut = String.valueOf(c);
+          if (keymap.get(shortcut) == null)
+            return shortcut;
+        }
+      }
+      return null;
     }
 
     private static String getIndexShortcut(int index) {
