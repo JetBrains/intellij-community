@@ -23,17 +23,17 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "RefreshTaskAction";
@@ -61,7 +61,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static void refreshFile(@NotNull final StudyState studyState, @NotNull final Project project) {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
-    if (taskFile.getTask().hasSubtasks()) {
+    final Task task = taskFile.getTask();
+    if (task.hasSubtasks()) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         StudySubtaskUtils.refreshPlaceholder(editor, placeholder);
       }
@@ -70,6 +71,12 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
       if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
         Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
         return;
+      }
+      if (task.isChoiceTask()) {
+        final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
+        if (window != null) {
+          window.setBottomComponent(new StudyChoiceVariantsPanel(task));
+        }
       }
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
@@ -90,7 +97,9 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     if (!resetDocument(document, taskFile, name)) {
       return false;
     }
-    taskFile.getTask().setStatus(StudyStatus.Unchecked);
+    final Task task = taskFile.getTask();
+    task.setStatus(StudyStatus.Unchecked);
+    task.setSelectedVariants(new ArrayList<>());
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateToolWindows(project);
