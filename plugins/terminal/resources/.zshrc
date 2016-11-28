@@ -4,6 +4,8 @@
 bindkey '^[^[[C' forward-word
 bindkey '^[^[[D' backward-word
 
+ZDOTDIR=$_OLD_ZDOTDIR
+
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
   source $JEDITERM_USER_RCFILE
