@@ -349,7 +349,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (actionPopupStep != null) {
         KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
         if (dontClosePopupAction != null) {
-          actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0);
+          actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0, e);
           for (ActionItem item : actionPopupStep.myItems) {
             updateActionItem(item);
           }
@@ -880,9 +880,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public void performAction(@NotNull AnAction action, int modifiers) {
+      performAction(action, modifiers, null);
+    }
+
+    public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
       final DataManager mgr = DataManager.getInstance();
       final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
-      final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+      final AnActionEvent event = new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                                                     ActionManager.getInstance(), modifiers);
       event.setInjectedContext(action.isInInjectedContext());
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
