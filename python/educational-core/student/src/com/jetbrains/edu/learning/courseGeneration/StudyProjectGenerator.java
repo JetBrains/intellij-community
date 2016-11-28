@@ -401,11 +401,11 @@ public class StudyProjectGenerator {
 
   // Supposed to be called under progress
   public List<CourseInfo> getCourses(boolean force) {
-    if (OUR_COURSES_DIR.exists()) {
+    if (OUR_COURSES_DIR.exists() && !force) {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(EduStepicConnector::getCourses);
+      myCourses = execCancelable(() -> EduStepicConnector.getCourses(myUser));
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {

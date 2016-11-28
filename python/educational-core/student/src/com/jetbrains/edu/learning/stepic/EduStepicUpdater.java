@@ -47,7 +47,7 @@ public class EduStepicUpdater {
   private static ActionCallback updateCourseList() {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<CourseInfo> courses = EduStepicConnector.getCourses();
+      final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
       final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
       StudyProjectGenerator.flushCache(courses);
       StepicUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
