@@ -368,7 +368,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
     rebuildAllModulesAndArtifacts();
-    assertOutput(a, fs().file("a.txt"));
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
   public void testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() throws IOException {

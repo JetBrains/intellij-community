@@ -36,7 +36,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
     rebuildAllModulesAndArtifacts();
-    assertOutput(a, fs().file("a.txt"));
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
   public void testDoNotCleanOnRebuildIfOptionIsSwitchedOff() {
@@ -78,7 +78,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     createFileInArtifactOutput(included, "b.txt");
     assertOutput(included, fs().file("a.txt").file("b.txt"));
     rebuildAllModulesAndArtifacts();
-    assertOutput(included, fs().file("a.txt"));
+    assertOutput(included, fs().file("a.txt").file("b.txt"));
   }
 
   public void testCleanModuleOutputIfItIsIncludedInArtifact() {
