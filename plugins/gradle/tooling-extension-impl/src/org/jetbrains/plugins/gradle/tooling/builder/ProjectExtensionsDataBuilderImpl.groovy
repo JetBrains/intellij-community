@@ -79,6 +79,8 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   static String getType(object) {
     def clazz = object?.getClass()?.canonicalName
     def decorIndex = clazz?.lastIndexOf('_Decorated')
-    !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
+    def result = !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
+    if(!result && object instanceof Closure) return "groovy.lang.Closure"
+    return result
   }
 }

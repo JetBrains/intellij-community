@@ -207,38 +207,50 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
         }
       }
 
-      if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression && !place.isQualified) {
-        for (gradleTask in extensionsData.tasks) {
-          if (name == gradleTask.name) {
+      if (name != null && place is GrReferenceExpression && !place.isQualified) {
+        if (!shouldProcessMethods && shouldProcessProperties) {
+          for (gradleTask in extensionsData.tasks) {
+            if (name == gradleTask.name) {
+              val docRef = Ref.create<String>()
+              val variable = object : GrLightVariable(place.manager, name, gradleTask.typeFqn, place) {
+                override fun getNavigationElement(): PsiElement {
+                  val navigationElement = super.getNavigationElement()
+                  navigationElement.putUserData(DOCUMENTATION, docRef.get())
+                  return navigationElement
+                }
+              }
+              val doc = getDocumentation(gradleTask, variable)
+              docRef.set(doc)
+              place.putUserData(DOCUMENTATION, doc)
+              if (!processor.execute(variable, state)) return false
+              break
+            }
+          }
+        }
+
+        val propExecutionResult = extensionsData.findProperty(name)?.let {
+          if (!shouldProcessMethods && shouldProcessProperties) {
             val docRef = Ref.create<String>()
-            val variable = object : GrLightVariable(place.manager, name, gradleTask.typeFqn, place) {
+            val variable = object : GrLightVariable(place.manager, name, it.typeFqn, place) {
               override fun getNavigationElement(): PsiElement {
                 val navigationElement = super.getNavigationElement()
                 navigationElement.putUserData(DOCUMENTATION, docRef.get())
                 return navigationElement
               }
             }
-            val doc = getDocumentation(gradleTask, variable)
+            val doc = getDocumentation(it, variable)
             docRef.set(doc)
             place.putUserData(DOCUMENTATION, doc)
-            if (!processor.execute(variable, state)) return false
-            break
+            return processor.execute(variable, state)
           }
-        }
-
-        val propExecutionResult = extensionsData.findProperty(name)?.let {
-          val docRef = Ref.create<String>()
-          val variable = object : GrLightVariable(place.manager, name, it.typeFqn, place) {
-            override fun getNavigationElement(): PsiElement {
-              val navigationElement = super.getNavigationElement()
-              navigationElement.putUserData(DOCUMENTATION, docRef.get())
-              return navigationElement
+          else if (shouldProcessMethods && it.typeFqn == GROOVY_LANG_CLOSURE) {
+            val returnClass = psiManager.createTypeByFQClassName(GROOVY_LANG_CLOSURE, resolveScope) ?: return true
+            val methodBuilder = GrLightMethodBuilder(place.manager, name).apply {
+              returnType = returnClass
             }
+            return processor.execute(methodBuilder, state)
           }
-          val doc = getDocumentation(it, variable)
-          docRef.set(doc)
-          place.putUserData(DOCUMENTATION, doc)
-          processor.execute(variable, state)
+          true
         }
         if(propExecutionResult != null && propExecutionResult) return false
       }
