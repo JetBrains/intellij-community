@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -96,9 +97,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
           myFutures.put(file, app.executeOnPooledThread(Callable<CharSequence> { decompile(file) }))
 
-          val dialog = LegalNoticeDialog(source.project, file)
-          dialog.show()
-          when (dialog.exitCode) {
+          val exitCode = getUserDecision(file, source)
+
+          when (exitCode) {
             DialogWrapper.OK_EXIT_CODE -> {
               PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
               myLegalNoticeAccepted = true
@@ -124,6 +125,21 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         }
       }
     })
+  }
+
+  private fun getUserDecision(file: VirtualFile, source: FileEditorManager): Int {
+    if (ApplicationManager.getApplication().isOnAir) {
+      return Messages.showDialog(source.project,
+          IdeaDecompilerBundle.message("legal.notice.text"),
+          IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.getPath(), 40, true)),
+          arrayOf(IdeaDecompilerBundle.message("legal.notice.action.accept"),
+              IdeaDecompilerBundle.message("legal.notice.action.postpone")), 0, null)
+    } else {
+      val dialog = LegalNoticeDialog(source.project, file)
+      dialog.show()
+      val exitCode = dialog.exitCode
+      return exitCode
+    }
   }
 
   override fun accepts(file: VirtualFile): Boolean = true
