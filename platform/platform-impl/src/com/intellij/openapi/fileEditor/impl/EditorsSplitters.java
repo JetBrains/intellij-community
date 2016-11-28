@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -156,29 +157,36 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  public void writeExternal(final Element element) {
-    if (getComponentCount() != 0) {
-      final Component comp = getComponent(0);
-      LOG.assertTrue(comp instanceof JPanel);
-      final JPanel panel = (JPanel)comp;
-      if (panel.getComponentCount() != 0) {
-        element.addContent(writePanel(panel));
+  public void writeExternal(@NotNull Element element) {
+    if (getComponentCount() == 0) {
+      return;
+    }
+
+    JPanel panel = (JPanel)getComponent(0);
+    if (panel.getComponentCount() != 0) {
+      try {
+        element.addContent(writePanel(panel.getComponent(0)));
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  private Element writePanel(final JPanel panel) {
-    final Component comp = panel.getComponent(0);
+  private Element writePanel(@NotNull Component comp) {
     if (comp instanceof Splitter) {
       final Splitter splitter = (Splitter)comp;
       final Element res = new Element("splitter");
       res.setAttribute("split-orientation", splitter.getOrientation() ? "vertical" : "horizontal");
       res.setAttribute("split-proportion", Float.toString(splitter.getProportion()));
       final Element first = new Element("split-first");
-      first.addContent(writePanel((JPanel)splitter.getFirstComponent()));
+      first.addContent(writePanel(splitter.getFirstComponent()));
       final Element second = new Element("split-second");
-      second.addContent(writePanel((JPanel)splitter.getSecondComponent()));
+      second.addContent(writePanel(splitter.getSecondComponent()));
       res.addContent(first);
       res.addContent(second);
       return res;
@@ -200,7 +208,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return res;
     }
     else {
-      LOG.error(comp != null ? comp.getClass().getName() : null);
+      LOG.error(comp.getClass().getName());
       return null;
     }
   }

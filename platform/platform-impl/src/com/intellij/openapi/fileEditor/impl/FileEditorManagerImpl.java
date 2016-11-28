@@ -1474,6 +1474,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   @Override
   public Element getState() {
+    if (mySplitters == null) {
+      // do not save if not initialized yet
+      return null;
+    }
+
     Element state = new Element("state");
     getMainSplitters().writeExternal(state);
     return state;
