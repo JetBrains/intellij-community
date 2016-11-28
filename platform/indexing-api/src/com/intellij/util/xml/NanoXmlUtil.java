@@ -107,7 +107,6 @@ public class NanoXmlUtil {
         parser.parse();
       }
       catch (XMLException e) {
-        if (e.getException() instanceof ParserStoppedException) return;
         if (e.getException() instanceof ParserStoppedXmlException) return;
         LOG.debug(e);
       }
@@ -365,22 +364,12 @@ public class NanoXmlUtil {
   }
 
   public static class ParserStoppedXmlException extends XMLException {
-    public static final ParserStoppedException INSTANCE = new ParserStoppedException();
+    public static final ParserStoppedXmlException INSTANCE = new ParserStoppedXmlException();
 
     private ParserStoppedXmlException() {
       super("Parsing stopped");
     }
 
-    @Override
-    public Throwable fillInStackTrace() {
-      return this;
-    }
-  }
-
-  /**
-   * @deprecated throw {@link ParserStoppedXmlException#INSTANCE} instead
-   */
-  public static class ParserStoppedException extends RuntimeException {
     @Override
     public Throwable fillInStackTrace() {
       return this;
