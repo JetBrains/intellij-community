@@ -317,7 +317,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
 
-      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> ContainerUtil.sorted(entry.getValue(), entry.getKey()).stream())
+      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey()))
         .toArray(size -> new Sdk[size]);
     }
 

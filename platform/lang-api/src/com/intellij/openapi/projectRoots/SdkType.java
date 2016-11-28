@@ -97,7 +97,7 @@ public abstract class SdkType implements SdkTypeId {
    * If different sdk types return the same comparator object then they are sorted together.
    */
 
-  public Comparator<Sdk> getComparator(){
+  public Comparator<Sdk> getComparator() {
     return ALPHABETICAL_COMPARATOR;
   }
 
