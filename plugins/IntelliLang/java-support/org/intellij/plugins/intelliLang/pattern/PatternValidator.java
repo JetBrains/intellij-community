@@ -17,12 +17,8 @@ package org.intellij.plugins.intelliLang.pattern;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
+import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +29,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -282,7 +277,7 @@ public class PatternValidator extends LocalInspectionTool {
     }
   }
 
-  private static class IntroduceVariableFix implements LocalQuickFix {
+  private static class IntroduceVariableFix implements RefactoringQuickFix {
 
     public IntroduceVariableFix() {}
 
@@ -292,23 +287,11 @@ public class PatternValidator extends LocalInspectionTool {
       return "Introduce variable";
     }
 
+    @NotNull
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-      final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-      dataContextContainer.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          handler.invoke(project, new PsiElement[]{element}, dataContext);
-        }
-      });
+    public RefactoringActionHandler getHandler() {
       // how to automatically annotate the variable after it has been introduced?
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+      return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
     }
   }
 }
