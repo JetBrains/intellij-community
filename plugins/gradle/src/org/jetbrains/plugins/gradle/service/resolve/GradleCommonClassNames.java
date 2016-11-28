@@ -46,6 +46,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_DISTRIBUTION = "org.gradle.api.distribution.Distribution";
   @NonNls public static final String GRADLE_API_FILE_COPY_SPEC = "org.gradle.api.file.CopySpec";
   @NonNls public static final String GRADLE_API_FILE_CONFIGURABLE_FILE_TREE = "org.gradle.api.file.ConfigurableFileTree";
+  @NonNls public static final String GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION = "org.gradle.api.file.ConfigurableFileCollection";
   @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
   @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
   @NonNls public static final String GRADLE_API_DEFAULT_TASK = "org.gradle.api.DefaultTask";

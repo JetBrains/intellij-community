@@ -36,6 +36,7 @@ class GradleProjectContributor : GradleMethodContextContributor {
   companion object {
     val copySpecClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
     val fileTreeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
+    val filesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
 
   }
 
@@ -45,6 +46,9 @@ class GradleProjectContributor : GradleMethodContextContributor {
     }
     if (fileTreeClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_TREE, closure), Closure.DELEGATE_FIRST)
+    }
+    if (filesClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION, closure), Closure.DELEGATE_FIRST)
     }
     return null
   }
