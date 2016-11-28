@@ -45,14 +45,17 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
+private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
 
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
     super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
+    setDimensionServiceKey(DIMENSION_SERVICE_KEY);
   }
 
-  protected BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
+  //for child popups only
+  private BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
   }
 
@@ -63,6 +66,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     return speedSearchActions;
   }
 
+  @Override
+  protected boolean isResizable() {
+    return true;
+  }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
                                                @NotNull DefaultActionGroup speedSearchActions,
