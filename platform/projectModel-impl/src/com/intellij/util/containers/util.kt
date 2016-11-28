@@ -37,7 +37,7 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   }
 }
 
-fun List<*>?.isNullOrEmpty() = this == null || isEmpty()
+fun Collection<*>?.isNullOrEmpty() = this == null || isEmpty()
 
 inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
   for (file in this) {
