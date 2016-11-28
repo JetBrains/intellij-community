@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,6 +27,9 @@ import java.util.List;
  * @since 11/16/2016
  */
 public interface GradleExtensions extends Serializable {
+  @Nullable
+  File getParentProjectDir();
+
   @NotNull
   List<GradleExtension> getExtensions();
 

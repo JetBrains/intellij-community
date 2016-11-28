@@ -41,6 +41,8 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   @Override
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
+    result.parentProjectDir = project.parent?.projectDir
+
     def conventions = project.extensions as DefaultConvention
     conventions.extraProperties.properties.each { name, value ->
       String typeFqn = getType(value)

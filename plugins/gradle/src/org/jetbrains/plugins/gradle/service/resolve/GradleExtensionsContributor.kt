@@ -225,53 +225,27 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             break
           }
         }
-        for (gradleProp in extensionsData.properties) {
-          if (name == gradleProp.name) {
-            val docRef = Ref.create<String>()
-            val variable = object : GrLightVariable(place.manager, name, gradleProp.typeFqn, place) {
-              override fun getNavigationElement(): PsiElement {
-                val navigationElement = super.getNavigationElement()
-                navigationElement.putUserData(DOCUMENTATION, docRef.get())
-                return navigationElement
-              }
+
+        val propExecutionResult = extensionsData.findProperty(name)?.let {
+          val docRef = Ref.create<String>()
+          val variable = object : GrLightVariable(place.manager, name, it.typeFqn, place) {
+            override fun getNavigationElement(): PsiElement {
+              val navigationElement = super.getNavigationElement()
+              navigationElement.putUserData(DOCUMENTATION, docRef.get())
+              return navigationElement
             }
-            val doc = getDocumentation(gradleProp, variable)
-            docRef.set(doc)
-            place.putUserData(DOCUMENTATION, doc)
-            if (!processor.execute(variable, state)) return false
-            break
           }
+          val doc = getDocumentation(it, variable)
+          docRef.set(doc)
+          place.putUserData(DOCUMENTATION, doc)
+          processor.execute(variable, state)
         }
+        if(propExecutionResult != null && propExecutionResult) return false
       }
     }
 
     return true
   }
-
-  private fun getDocumentation(gradleProp: GradleExtensionsSettings.GradleProp,
-                               lightVariable: GrLightVariable): String {
-    val buffer = StringBuilder()
-    buffer.append("<PRE>")
-    JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
-    buffer.append(" " + gradleProp.name)
-    val hasInitializer = !gradleProp.value.isNullOrBlank()
-    if (hasInitializer) {
-      buffer.append(" = " + gradleProp.value)
-    }
-    buffer.append("</PRE>")
-
-    if (gradleProp is GradleExtensionsSettings.GradleTask) {
-      if (!gradleProp.description.isNullOrBlank()) {
-        buffer.append(gradleProp.description)
-      }
-    }
-
-    if (hasInitializer) {
-      buffer.append("<b>Initial value has been got during last import</b>")
-    }
-    return buffer.toString()
-  }
-
   companion object {
     val closureInLeftShiftMethod = groovyClosure().withTreeParent(
       groovyBinaryExpression().with(object : PatternCondition<GrBinaryExpression?>("leftShiftCondition") {
@@ -286,5 +260,30 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile)
       return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module) ?: return null
     }
+
+    fun getDocumentation(gradleProp: GradleExtensionsSettings.GradleProp,
+                         lightVariable: GrLightVariable): String {
+      val buffer = StringBuilder()
+      buffer.append("<PRE>")
+      JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
+      buffer.append(" " + gradleProp.name)
+      val hasInitializer = !gradleProp.value.isNullOrBlank()
+      if (hasInitializer) {
+        buffer.append(" = " + gradleProp.value)
+      }
+      buffer.append("</PRE>")
+
+      if (gradleProp is GradleExtensionsSettings.GradleTask) {
+        if (!gradleProp.description.isNullOrBlank()) {
+          buffer.append(gradleProp.description)
+        }
+      }
+
+      if (hasInitializer) {
+        buffer.append("<b>Initial value has been got during last import</b>")
+      }
+      return buffer.toString()
+    }
+
   }
 }

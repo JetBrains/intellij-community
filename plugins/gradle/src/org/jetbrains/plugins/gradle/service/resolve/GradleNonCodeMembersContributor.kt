@@ -15,11 +15,19 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.getDocumentation
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 
 /**
@@ -38,5 +46,30 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
     if (!containingFile.isGradleScript() || containingFile?.originalFile?.virtualFile == aClass.containingFile?.originalFile?.virtualFile) return
 
     processDeclarations(aClass, processor, state, place)
+
+    if (qualifierType.equalsToText(GRADLE_API_PROJECT)) {
+      val methodCall = place.children.singleOrNull()
+      if (methodCall is GrMethodCallExpression) {
+        val projectPath = methodCall.argumentList.expressionArguments.singleOrNull()?.reference?.canonicalText ?: return
+        val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
+        val module = ModuleManager.getInstance(place.project).findModuleByName(projectPath.trimStart(':')) ?: return
+        val extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(module) ?: return
+
+        extensionsData.findProperty(propCandidate)?.let {
+          val docRef = Ref.create<String>()
+          val variable = object : GrLightVariable(place.manager, propCandidate, it.typeFqn, place) {
+            override fun getNavigationElement(): PsiElement {
+              val navigationElement = super.getNavigationElement()
+              navigationElement.putUserData(NonCodeMembersHolder.DOCUMENTATION, docRef.get())
+              return navigationElement
+            }
+          }
+          val doc = getDocumentation(it, variable)
+          docRef.set(doc)
+          place.putUserData(NonCodeMembersHolder.DOCUMENTATION, doc)
+          processor.execute(variable, state)
+        }
+      }
+    }
   }
 }
