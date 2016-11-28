@@ -141,8 +141,10 @@ class ImmediatePainter {
 
     final Point p2 = editor.offsetToXY(offset, false);
 
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
-    final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth : JBUI.scale(settings.getLineCursorWidth());
+    final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
+                                         : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final int caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1;
     final Rectangle caretRectangle = new Rectangle(p2.x + width2 - caretShift, p2.y - topOverhang,
                                                    caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
@@ -243,6 +245,8 @@ class ImmediatePainter {
   }
 
   private static Color getCaretColor(final Editor editor) {
+    Color overriddenColor = editor.getCaretModel().getPrimaryCaret().getVisualAttributes().getColor();
+    if (overriddenColor != null) return overriddenColor;
     final Color caretColor = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
   }
