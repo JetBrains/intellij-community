@@ -258,7 +258,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Nullable
     @Text
     public String description;
-    @Attribute("type")
-    public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
+    {
+      typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
+    }
   }
 }

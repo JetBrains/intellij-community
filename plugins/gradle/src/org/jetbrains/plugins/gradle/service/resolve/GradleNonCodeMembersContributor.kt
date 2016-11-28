@@ -55,7 +55,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         val module = ModuleManager.getInstance(place.project).findModuleByName(projectPath.trimStart(':')) ?: return
         val extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(module) ?: return
 
-        extensionsData.findProperty(propCandidate)?.let {
+        val processVariable: (GradleExtensionsSettings.GradleProp) -> Boolean = {
           val docRef = Ref.create<String>()
           val variable = object : GrLightVariable(place.manager, propCandidate, it.typeFqn, place) {
             override fun getNavigationElement(): PsiElement {
@@ -69,6 +69,9 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
           place.putUserData(NonCodeMembersHolder.DOCUMENTATION, doc)
           processor.execute(variable, state)
         }
+
+        extensionsData.tasks.firstOrNull { it.name == propCandidate }?.let(processVariable)
+        extensionsData.findProperty(propCandidate)?.let(processVariable)
       }
     }
   }
