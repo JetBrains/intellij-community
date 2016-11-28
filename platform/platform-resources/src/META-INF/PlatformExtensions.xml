@@ -353,6 +353,7 @@
     <statistics.usagesCollector implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
