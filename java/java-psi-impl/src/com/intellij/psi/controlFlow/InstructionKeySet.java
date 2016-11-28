@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.controlFlow;
 
-import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,72 +33,69 @@ import java.util.Arrays;
  * @author Pavel.Dolgov
  */
 class InstructionKeySet {
-  private final @NotNull Node root;
+  private final @NotNull Node myRoot;
 
   InstructionKeySet(int initialCapacity) {
-    this.root = new Node(initialCapacity);
+    this.myRoot = new Node(initialCapacity);
   }
 
   void add(@NotNull InstructionKey key) {
-    root.add(key.getOffset(), key.getCallStack(), 0);
+    myRoot.add(key.getOffset(), key.getCallStack(), 0);
   }
 
   boolean contains(@NotNull InstructionKey key) {
-    return root.contains(key.getOffset(), key.getCallStack(), 0);
+    return myRoot.contains(key.getOffset(), key.getCallStack(), 0);
   }
 
   @Override
   public String toString() {
-    return root.toString();
+    return myRoot.toString();
   }
 
-  private static class Node {
-    private final @NotNull TIntHashSet isPresent;
-    private TIntObjectHashMap<Node> nested;
+  /**
+   * If the instruction key N is in the set it's represented as N->null.
+   * If the instruction key N[A,B,C] is in the set it's represented as N->A->B->C->null.
+   */
+  private static class Node extends TIntObjectHashMap<Node> {
+    private Node(int initialCapacity) {
+      super(Math.max(initialCapacity, 2));
+    }
 
-    private Node(int initialCapacity) { isPresent = new TIntHashSet(Math.max(initialCapacity, 2));}
-
-    void add(int offset, @NotNull int[] stack, int level) {
-      isPresent.add(offset);
+    private void add(int offset, @NotNull int[] stack, int level) {
       if (level < stack.length) {
-        Node node;
-        if (nested == null) {
-          nested = new TIntObjectHashMap<Node>(4);
-          node = null;
-        }
-        else {
-          node = nested.get(offset);
-        }
+        Node node = get(offset);
         if (node == null) {
-          node = new Node(isPresent.size() / 4);
-          nested.put(offset, node);
+          node = new Node(4);
+          put(offset, node);
         }
         node.add(stack[level], stack, level + 1);
       }
+      else {
+        if (!containsKey(offset)) {
+          put(offset, null);
+        }
+      }
     }
 
-    boolean contains(int offset, @NotNull int[] stack, int level) {
-      if (!isPresent.contains(offset)) {
-        return false;
-      }
+    private boolean contains(int offset, @NotNull int[] stack, int level) {
       if (level < stack.length) {
-        Node node = nested != null ? nested.get(offset) : null;
+        Node node = get(offset);
         if (node != null) {
           return node.contains(stack[level], stack, level + 1);
         }
       }
-      return true;
+      return containsKey(offset);
     }
 
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("{");
-      int[] offsets = isPresent.toArray();
+      int[] offsets = keys();
       Arrays.sort(offsets);
       for (int offset : offsets) {
         if (sb.length() > 1) sb.append(", ");
         sb.append(offset);
-        Node node = nested != null ? nested.get(offset) : null;
+        Node node = get(offset);
         if (node != null) {
           sb.append(node);
         }
