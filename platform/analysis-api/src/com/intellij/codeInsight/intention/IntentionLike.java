@@ -30,17 +30,19 @@ import org.jetbrains.annotations.Nullable;
 public interface IntentionLike extends WriteActionAware {
 
   /**
-   * Controls whether this intention/fix is going to modify the file.
-   * If {@code @NotNull}, and the file is read-only,
+   * Controls whether this intention/fix is going to modify the current file.
+   * If {@code @NotNull}, and the current file is read-only,
    * it will be made writable (honoring version control integration) before the intention/fix is invoked. <p/>
    *
    * By default, as a heuristic, returns the same as {@link #startInWriteAction()}.<p/>
    *
    * If the action is going to modify multiple files, or the set of the files is unknown in advance, please
    * don't bother overriding this method, return {@code false} from {@link #startInWriteAction()}, and call {@link com.intellij.codeInsight.FileModificationService} methods in the implementation, and take write actions yourself as needed.
+   *
+   * @param currentFile the same file where intention would be invoked (for {@link com.intellij.codeInspection.LocalQuickFix} it would be the containing file of {@link com.intellij.codeInspection.ProblemDescriptor#getPsiElement})
    */
   @Nullable
-  default PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return startInWriteAction() ? file : null;
+  default PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return startInWriteAction() ? currentFile : null;
   }
 }
