@@ -16,19 +16,17 @@
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
-public class RenameFix extends GroovyFix {
+public class RenameFix extends GroovyFix implements RefactoringQuickFix {
 
   private final String targetName;
 
@@ -54,27 +52,19 @@ public class RenameFix extends GroovyFix {
 
   @Override
   public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement nameIdentifier = descriptor.getPsiElement();
-    final PsiElement elementToRename = nameIdentifier.getParent();
+    final PsiElement element = descriptor.getPsiElement();
     if (targetName == null) {
-      final RefactoringActionHandlerFactory factory =
-          RefactoringActionHandlerFactory.getInstance();
-      final RefactoringActionHandler renameHandler =
-          factory.createRenameHandler();
-      final DataManager dataManager = DataManager.getInstance();
-      final DataContext dataContext = dataManager.getDataContext();
-      renameHandler.invoke(project, new PsiElement[]{elementToRename}, dataContext); }
+      doFix(element);
+    }
     else {
-      final RefactoringFactory factory =
-          RefactoringFactory.getInstance(project);
-      final RenameRefactoring renameRefactoring =
-          factory.createRename(elementToRename, targetName);
-      renameRefactoring.run();
+      final PsiElement elementToRename = element.getParent();
+      RefactoringFactory.getInstance(project).createRename(elementToRename, targetName).run();
     }
   }
 
+  @NotNull
   @Override
-  public boolean startInWriteAction() {
-    return false;
+  public RefactoringActionHandler getHandler() {
+    return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
   }
 }
