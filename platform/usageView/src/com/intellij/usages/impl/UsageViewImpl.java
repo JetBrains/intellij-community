@@ -90,7 +90,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author max
  */
-public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
+public class UsageViewImpl implements UsageView {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
@@ -109,7 +109,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
-  private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
@@ -196,7 +195,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
     myRootPanel = new MyPanel(myTree);
     Disposer.register(this, myRootPanel);
-    myModelTracker = new UsageModelTracker(project);
+    UsageModelTracker myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
@@ -233,7 +232,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           collapseAll();
 
-          myModelTracker.addListener(this);
+          myModelTracker.addListener(isPropertyChange-> {
+            if (!isPropertyChange) {
+              myChangesDetected = true;
+            }
+            updateLater();
+          }, this);
 
           if (myPresentation.isShowCancelButton()) {
             addButtonToLowerPane(this::close, UsageViewBundle.message("usage.view.cancel.button"));
@@ -460,14 +464,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
 
     return list.toArray(new UsageGroupingRule[list.size()]);
-  }
-
-  @Override
-  public void modelChanged(boolean isPropertyChange) {
-    if (!isPropertyChange) {
-      myChangesDetected = true;
-    }
-    updateLater();
   }
 
   private void initTree() {
@@ -1151,7 +1147,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     synchronized (lock) {
       isDisposed = true;
       ToolTipManager.sharedInstance().unregisterComponent(myTree);
-      myModelTracker.removeListener(this);
       myUpdateAlarm.cancelAllRequests();
     }
     disposeSmartPointers();
