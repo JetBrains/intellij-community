@@ -34,11 +34,10 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -205,7 +204,7 @@ public class GitUncommitAction extends DumbAwareAction {
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.invokeAfterUpdate(() -> {
-          Collection<Change> changes = findLocalChangesFromCommit(changeListManager, changesInCommit);
+          Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
           changeListManager.moveChangesTo(changeList, ArrayUtil.toObjectArray(changes, Change.class));
         }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing Changes...", ModalityState.defaultModalityState());
       }
@@ -232,12 +231,5 @@ public class GitUncommitAction extends DumbAwareAction {
     });
     if (details.isNull() || details.get() instanceof LoadingDetails) return null;
     return details.get();
-  }
-
-  @NotNull
-  private static Collection<Change> findLocalChangesFromCommit(@NotNull ChangeListManager changeListManager,
-                                                               @NotNull Collection<Change> changesInCommit) {
-    OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
-    return ContainerUtil.map(changesInCommit, allChanges::get);
   }
 }

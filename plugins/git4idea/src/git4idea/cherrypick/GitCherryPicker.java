@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -484,6 +485,8 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Nullable
   private LocalChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull final LocalChangeList targetChangeList) {
+    Collection<Change> localChanges = GitUtil.findCorrespondentLocalChanges(myChangeListManager, originalChanges);
+
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
     final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
@@ -499,7 +502,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     };
     try {
       myChangeListManager.addChangeListListener(listener);
-      myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
+      myChangeListManager.moveChangesTo(targetChangeList, ArrayUtil.toObjectArray(localChanges, Change.class));
       boolean success = moveChangesWaiter.await(100, TimeUnit.SECONDS);
       if (!success) {
         LOG.error("Couldn't await for changes move.");
