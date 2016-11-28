@@ -50,14 +50,11 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -103,7 +100,6 @@ public class EditorOptionsPanel {
   private JTextField   myQuickDocDelayTextField;
   private JComboBox    myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
-  private JBLabel      myStripTrailingSpacesExplanationLabel;
   private JCheckBox    myCbEnableRichCopyByDefault;
   private JCheckBox    myShowLSTInGutterCheckBox;
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
@@ -123,15 +119,6 @@ public class EditorOptionsPanel {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
-    ActionListener explainer = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        explainTrailingSpaces(getStripTrailingSpacesValue());
-      }
-    };
-    myStripTrailingSpacesCombo.addActionListener(explainer);
-    myCbVirtualSpace.addActionListener(explainer);
-
 
 
     myHighlightSettingsPanel.setLayout(new BorderLayout());
@@ -205,7 +192,6 @@ public class EditorOptionsPanel {
     else if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(stripTrailingSpaces)) {
       myStripTrailingSpacesCombo.setSelectedItem(STRIP_ALL);
     }
-    explainTrailingSpaces(stripTrailingSpaces);
 
     myCbEnsureBlankLineBeforeCheckBox.setSelected(editorSettings.isEnsureNewLineAtEOF());
     myCbShowQuickDocOnMouseMove.setSelected(editorSettings.isShowQuickDocOnMouseOverElement());
@@ -249,24 +235,6 @@ public class EditorOptionsPanel {
     if (!StringUtil.isEmpty(toSelect)) {
       myRichCopyColorSchemeComboBox.setSelectedItem(toSelect);
     }
-  }
-
-  private void explainTrailingSpaces(@NotNull @EditorSettingsExternalizable.StripTrailingSpaces String stripTrailingSpaces) {
-    if(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripTrailingSpaces)) {
-      myStripTrailingSpacesExplanationLabel.setVisible(false);
-      return;
-    }
-    myStripTrailingSpacesExplanationLabel.setVisible(true);
-    boolean isVirtualSpace = myCbVirtualSpace.isSelected();
-    String text;
-    String virtSpaceText = myCbVirtualSpace.getText();
-    if (isVirtualSpace) {
-      text = "Trailing spaces will be trimmed even in the line under caret.<br>To disable trimming in that line uncheck the '<b>"+virtSpaceText+"</b>' above.";
-    }
-    else {
-      text = "Trailing spaces will <b><font color=red>NOT</font></b> be trimmed in the line under caret.<br>To enable trimming in that line too check the '<b>"+virtSpaceText+"</b>' above.";
-    }
-    myStripTrailingSpacesExplanationLabel.setText(XmlStringUtil.wrapInHtml(text));
   }
 
   public void apply() throws ConfigurationException {
