@@ -41,8 +41,6 @@ import java.util.*;
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  @NonNls static final String VALUE_ATTR = "value";
-
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
 
@@ -144,7 +142,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
 
   private static final int MAX_STORED_MESSAGES = 25;
-  @NonNls static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
