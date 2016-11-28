@@ -80,7 +80,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
 
   @NonNls String ACTION_EDITOR_REFORMAT = "ReformatCode";
-
+  @NonNls String ACTION_EDITOR_AUTO_INDENT_LINES = "AutoIndentLines";
 
   @NonNls String ACTION_COMMENT_LINE = "CommentByLineComment";
   @NonNls String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
