@@ -500,6 +500,16 @@ public class DefUseUtil {
       boolean isEmpty() {
         return myFrom.isEmpty();
       }
+
+      @Override
+      public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0, limit = Math.min(myFrom.size(), myNext.size()); i < limit; i++) {
+          if (sb.length() != 0) sb.append(", ");
+          sb.append(myFrom.get(i)).append("->").append(myNext.get(i));
+        }
+        return sb.toString();
+      }
     }
 
     class Walker {
@@ -516,7 +526,7 @@ public class DefUseUtil {
         myStates.put(startKey, new InstructionState(startKey));
         myWalkThroughStack.push(InstructionKey.create(-1), startKey);
 
-        Set<InstructionKey> visited = new THashSet<InstructionKey>(instructions.size());
+        InstructionKeySet visited = new InstructionKeySet(instructions.size() + 1);
         while (!myWalkThroughStack.isEmpty()) {
           ProgressManager.checkCanceled();
           InstructionKey fromKey = myWalkThroughStack.peekFrom();
