@@ -33,7 +33,7 @@ public class Task implements StudyItem {
 
   @SerializedName("stepic_id")
   @Expose private int myStepId;
-  
+
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
@@ -225,7 +225,7 @@ public class Task implements StudyItem {
   public StudyStatus getStatus() {
     return myStatus;
   }
-  
+
   public void setStatus(StudyStatus status) {
     for (TaskFile taskFile : taskFiles.values()) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
@@ -284,27 +284,33 @@ public class Task implements StudyItem {
     return myLastSubtaskIndex > 0;
   }
 
+  @Transient
   @NotNull
   public List<String> getChoiceVariants() {
     return myChoiceParameters.getChoiceVariants();
   }
 
+  @Transient
   public void setChoiceVariants(List<String> choiceVariants) {
     myChoiceParameters.setChoiceVariants(choiceVariants);
   }
 
+  @Transient
   public boolean isMultipleChoice() {
     return myChoiceParameters.isMultipleChoice();
   }
 
+  @Transient
   public void setMultipleChoice(boolean multipleChoice) {
     myChoiceParameters.setMultipleChoice(multipleChoice);
   }
 
+  @Transient
   public List<Integer> getSelectedVariants() {
     return myChoiceParameters.getSelectedVariants();
   }
 
+  @Transient
   public void setSelectedVariants(List<Integer> selectedVariants) {
     myChoiceParameters.setSelectedVariants(selectedVariants);
   }
@@ -312,7 +318,19 @@ public class Task implements StudyItem {
   public boolean isChoiceTask() {
     return !myChoiceParameters.getChoiceVariants().isEmpty();
   }
-  
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public ChoiceParameters getChoiceParameters() {
+    return myChoiceParameters;
+  }
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public void setChoiceParameters(ChoiceParameters choiceParameters) {
+    myChoiceParameters = choiceParameters;
+  }
+
   public void copyParametersOf(@NotNull Task task) {
     setName(task.getName());
     setStepId(task.getStepId());
