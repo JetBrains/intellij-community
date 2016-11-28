@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -77,10 +78,12 @@ public class JavaNullMethodArgumentUtil {
   private static GlobalSearchScope findScopeWhereNullArgumentCanPass(@NotNull PsiMethod method, int parameterIndex) {
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<>(new ArrayList<>());
+    GlobalSearchScope searchScope = GlobalSearchScopeUtil.toGlobalSearchScope(method.getUseScope(), method.getProject());
+    searchScope = searchScope.intersectWith(GlobalSearchScopesCore.projectProductionScope(method.getProject()));
     fileBasedIndex.getFilesWithKey(JavaNullMethodArgumentIndex.INDEX_ID,
                                    Collections.singleton(new JavaNullMethodArgumentIndex.MethodCallData(method.getName(), parameterIndex)),
                                    collector,
-                                   GlobalSearchScopeUtil.toGlobalSearchScope(method.getUseScope(), method.getProject()));
+                                   searchScope);
     final Collection<VirtualFile> candidateFiles = collector.getResults();
     return candidateFiles.isEmpty() ? null : GlobalSearchScope.filesScope(method.getProject(), candidateFiles);
   }
