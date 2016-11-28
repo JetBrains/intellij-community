@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -87,6 +89,11 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     throw new IncorrectOperationException("Cannot modify automatic module '" + getName() + "'");
   }
 
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
@@ -152,7 +159,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
    * Implements a name deriving for  automatic modules as described in ModuleFinder.of(Path...) method documentation.
    *
    * @param name a .jar file name without extension
-   * @see <a href="http://download.java.net/java/jigsaw/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
+   * @see <a href="http://download.java.net/java/jdk9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
   @NotNull
   public static String moduleName(@NotNull String name) {
