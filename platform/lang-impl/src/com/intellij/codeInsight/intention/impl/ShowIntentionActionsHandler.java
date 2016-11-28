@@ -187,7 +187,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private static void invokeIntention(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
