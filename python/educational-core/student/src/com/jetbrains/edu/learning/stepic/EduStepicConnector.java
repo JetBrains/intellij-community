@@ -57,11 +57,11 @@ public class EduStepicConnector {
   }
 
   @NotNull
-  public static List<CourseInfo> getCourses() {
+  public static List<CourseInfo> getCourses(@Nullable StepicUser user) {
     try {
       List<CourseInfo> result = new ArrayList<>();
       int pageNumber = 1;
-      while (addCoursesFromStepic(result, pageNumber)) {
+      while (addCoursesFromStepic(user, result, pageNumber)) {
         pageNumber += 1;
       }
       return result;
@@ -117,7 +117,7 @@ public class EduStepicConnector {
     return null;
   }
 
-  private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
+  private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<CourseInfo> result, int pageNumber) throws IOException {
     final URI url;
     try {
       url = new URIBuilder(EduStepicNames.COURSES).addParameter("is_idea_compatible", "true").
@@ -127,8 +127,13 @@ public class EduStepicConnector {
       LOG.error(e.getMessage());
       return false;
     }
-    final StepicWrappers.CoursesContainer coursesContainer = EduStepicClient.getFromStepic(url.toString(), 
-                                                                                           StepicWrappers.CoursesContainer.class);
+    final StepicWrappers.CoursesContainer coursesContainer;
+    if (user != null) {
+      coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
+    }
+    else {
+      coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
+    }
     addAvailableCourses(result, coursesContainer);
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
