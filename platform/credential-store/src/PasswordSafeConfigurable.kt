@@ -53,7 +53,7 @@ internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettin
 internal fun getDefaultKeePassDbFilePath() = "${PathManager.getConfigPath()}${File.separatorChar}${DB_FILE_NAME}"
 
 internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
-  private val inKeychain = RadioButton("In Native Keychain")
+  private val inKeychain = RadioButton("In native Keychain")
 
   private val inKeePass = RadioButton("In KeePass")
   private val keePassMasterPassword = JBPasswordField()
