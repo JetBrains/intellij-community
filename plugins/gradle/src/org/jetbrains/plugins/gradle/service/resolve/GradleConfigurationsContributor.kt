@@ -86,7 +86,7 @@ class GradleConfigurationsContributor : GradleMethodContextContributor {
       val call = getContainingCall(closure) ?: return true
       val result = resolveActualCall(call)
       for (psiType in result.substitutor.substitutionMap.values) {
-        if (psiType.equalsToText(GRADLE_API_CONFIGURATION)) {
+        if (psiType != null && psiType.equalsToText(GRADLE_API_CONFIGURATION)) {
           if (!GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_CONFIGURATION)) return false
           return false
         }
