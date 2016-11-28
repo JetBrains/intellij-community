@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -24,8 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,18 +39,11 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
-    if (prepareForWriting() && !FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-      return;
-    }
     final PsiElement matchingElement = findMatchingElement(element, editor);
     if (matchingElement == null) {
       return;
     }
     processIntention(editor, matchingElement);
-  }
-
-  protected boolean prepareForWriting() {
-    return true;
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
