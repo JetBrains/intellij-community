@@ -1,0 +1,38 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "tasks-core",
+    srcs = ["src"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/tasks/tasks-api",
+        "//tools/idea/platform/platform-api",
+        "//tools:idea.platform-impl_and_others",
+        "//tools/idea/.idea/libraries:axis-1.4",
+        "//tools/idea/.idea/libraries:http-client-3.1",
+        "//tools/idea/.idea/libraries:XmlRPC",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/core-api",
+        "//tools/idea/.idea/libraries:markdownj",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/plugins/tasks/tasks-api[module]",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/.idea/libraries:axis-1.4",
+        "//tools/idea/.idea/libraries:http-client-3.1",
+        "//tools/idea/.idea/libraries:XmlRPC",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/core-api[module]",
+        "//tools/idea/plugins/tasks/tasks-core/lib:json-path-0.8.0",
+        "//tools/idea/plugins/tasks/tasks-core/lib:json-smart-1.1.1",
+        "//tools/idea/plugins/tasks/tasks-core/lib:commons-discovery-0.4",
+        "//tools/idea/platform/xdebugger-api[module]",
+        "//tools/idea/.idea/libraries:markdownj",
+        "//tools/idea/.idea/libraries:http-client",
+    ],
+)

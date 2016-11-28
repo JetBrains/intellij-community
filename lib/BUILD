@@ -620,3 +620,17 @@ java_import(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "commons-httpclient-3.1-patched",
+    jars = ["commons-httpclient-3.1-patched.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "markdownj-core-0.4.2-SNAPSHOT",
+    jars = ["markdownj-core-0.4.2-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)

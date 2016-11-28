@@ -1,0 +1,19 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "xslt-debugger-engine",
+    # do not sort: must match IML order
+    srcs = [
+        "src",
+        "lib",
+    ],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/.idea/libraries:Trove4j"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/plugins/xpath/xslt-rt[module]",
+        "//tools/idea/.idea/libraries:RMI_Stubs",
+        "//tools/idea/.idea/libraries:Trove4j",
+    ],
+)

@@ -19,3 +19,20 @@ iml_module(
         "//tools/idea/platform/duplicates-analysis[module]",
     ],
 )
+
+iml_module(
+    name = "structuralsearch-tests",
+    tags = ["managed"],
+    test_srcs = ["testSource"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/platform/structuralsearch[module]",
+        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/java/structuralsearch-java[module]",
+        "//tools/idea/plugins/java-i18n[module]",
+    ],
+)

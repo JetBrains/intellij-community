@@ -1161,3 +1161,333 @@ java_library(
         "//tools/vendor/google/android-ndk/lib:org.eclipse.equinox.common_3.7.0.v20150402-1709",
     ],
 )
+
+java_library(
+    name = "jgit",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/settings-repository/lib:jgit"],
+    runtime_deps = ["//tools/idea/plugins/settings-repository/lib:jgit"],
+)
+
+java_library(
+    name = "jackson",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/settings-repository/lib:jackson-annotations-2.7.1",
+        "//tools/idea/plugins/settings-repository/lib:jackson-core-2.7.1",
+        "//tools/idea/plugins/settings-repository/lib:jackson-databind-2.7.1-1",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/settings-repository/lib:jackson-annotations-2.7.1",
+        "//tools/idea/plugins/settings-repository/lib:jackson-core-2.7.1",
+        "//tools/idea/plugins/settings-repository/lib:jackson-databind-2.7.1-1",
+    ],
+)
+
+java_library(
+    name = "jediterm-pty",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/terminal/lib:jediterm-pty-2.2"],
+    runtime_deps = ["//tools/idea/plugins/terminal/lib:jediterm-pty-2.2"],
+)
+
+java_library(
+    name = "http-client-3.1",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/lib:commons-logging-1.2",
+        "//tools/idea/lib:commons-httpclient-3.1-patched",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/lib:commons-logging-1.2",
+        "//tools/idea/lib:commons-httpclient-3.1-patched",
+    ],
+)
+
+java_library(
+    name = "axis-1.4",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-jaxrpc-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:wsdl4j-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-saaj-1.3",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-jaxrpc-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:wsdl4j-1.4",
+        "//tools/idea/plugins/tasks/tasks-core/lib:axis-saaj-1.3",
+    ],
+)
+
+java_library(
+    name = "markdownj",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:markdownj-core-0.4.2-SNAPSHOT"],
+    runtime_deps = ["//tools/idea/lib:markdownj-core-0.4.2-SNAPSHOT"],
+)
+
+java_library(
+    name = "CoverageReport",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/coverage/lib:coverage-report",
+        "//tools/idea/plugins/coverage/lib:coverage-report-idea",
+        "//tools/idea/plugins/coverage/lib:freemarker",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/coverage/lib:coverage-report",
+        "//tools/idea/plugins/coverage/lib:coverage-report-idea",
+        "//tools/idea/plugins/coverage/lib:freemarker",
+    ],
+)
+
+java_library(
+    name = "JaCoCo",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/coverage/lib:jacocoant",
+        "//tools/idea/plugins/coverage/lib:jacocoagent",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/coverage/lib:jacocoant",
+        "//tools/idea/plugins/coverage/lib:jacocoagent",
+    ],
+)
+
+java_library(
+    name = "DTDParser",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/devkit/lib:dtdparser113"],
+    runtime_deps = ["//tools/idea/plugins/devkit/lib:dtdparser113"],
+)
+
+java_library(
+    name = "Maven3",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/boot:plexus-classworlds-2.4",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-api-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-connector-wagon-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-impl-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-spi-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-util-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-cli-1.2",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-io-2.2",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-lang-2.6",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-aether-provider-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-artifact-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-compat-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-core-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-embedder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-model-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-model-builder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-plugin-api-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-repository-metadata-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-settings-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-settings-builder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-cipher-1.7",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-component-annotations-1.5.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-interpolation-1.14",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-sec-dispatcher-1.3",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-utils-2.0.6",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-guice-3.1.0-no_aop",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-inject-bean-2.3.0",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-inject-plexus-2.3.0",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-file-2.8",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-2.8-shaded",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-shared-2.8",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-provider-api-2.8",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/boot:plexus-classworlds-2.4",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-api-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-connector-wagon-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-impl-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-spi-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-util-1.13.1",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-cli-1.2",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-io-2.2",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:commons-lang-2.6",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-aether-provider-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-artifact-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-compat-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-core-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-embedder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-model-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-model-builder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-plugin-api-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-repository-metadata-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-settings-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-settings-builder-3.0.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-cipher-1.7",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-component-annotations-1.5.5",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-interpolation-1.14",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-sec-dispatcher-1.3",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:plexus-utils-2.0.6",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-guice-3.1.0-no_aop",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-inject-bean-2.3.0",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:sisu-inject-plexus-2.3.0",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-file-2.8",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-2.8-shaded",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-shared-2.8",
+        "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-provider-api-2.8",
+    ],
+)
+
+java_library(
+    name = "Maven32",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/boot:plexus-classworlds-2.5.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:guava-18.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:cdi-api-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:jsoup-1.7.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-io-2.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:javax.inject-1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:jsr250-api-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-file-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aopalliance-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-cli-1.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:slf4j-api-1.7.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-lang-2.6",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-core-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-model-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-cipher-1.7",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-compat-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:slf4j-simple-1.7.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-utils-3.0.20",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-artifact-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-embedder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-settings-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-http-2.8-shaded",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-http-shared-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-plugin-api-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-provider-api-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:sisu-guice-3.2.3-no_aop",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-model-builder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-interpolation-1.21",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-sec-dispatcher-1.3",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-api-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-spi-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-impl-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-util-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-aether-provider-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-settings-builder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-repository-metadata-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:org.eclipse.sisu.inject-0.3.0.M1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:org.eclipse.sisu.plexus-0.3.0.M1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-component-annotations-1.5.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-connector-basic-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-transport-wagon-1.0.0.v20140518",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/boot:plexus-classworlds-2.5.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:guava-18.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:cdi-api-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:jsoup-1.7.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-io-2.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:javax.inject-1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:jsr250-api-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-file-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aopalliance-1.0",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-cli-1.2",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:slf4j-api-1.7.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:commons-lang-2.6",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-core-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-model-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-cipher-1.7",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-compat-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:slf4j-simple-1.7.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-utils-3.0.20",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-artifact-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-embedder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-settings-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-http-2.8-shaded",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-http-shared-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-plugin-api-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:wagon-provider-api-2.8",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:sisu-guice-3.2.3-no_aop",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-model-builder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-interpolation-1.21",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-sec-dispatcher-1.3",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-api-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-spi-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-impl-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-util-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-aether-provider-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-settings-builder-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:maven-repository-metadata-3.2.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:org.eclipse.sisu.inject-0.3.0.M1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:org.eclipse.sisu.plexus-0.3.0.M1",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:plexus-component-annotations-1.5.5",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-connector-basic-1.0.0.v20140518",
+        "//tools/idea/plugins/maven/maven32-server-impl/lib/maven32/lib:aether-transport-wagon-1.0.0.v20140518",
+    ],
+)
+
+java_library(
+    name = "RMI_Stubs",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/xslt-debugger/engine/lib:rmi-stubs"],
+    runtime_deps = ["//tools/idea/plugins/xslt-debugger/engine/lib:rmi-stubs"],
+)
+
+java_library(
+    name = "Saxon-6.5.5",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon"],
+    runtime_deps = ["//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon"],
+)
+
+java_library(
+    name = "Saxon-9HE",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon9he"],
+    runtime_deps = ["//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon9he"],
+)
+
+java_library(
+    name = "Xalan-2.7.1",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:xalan",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:serializer",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:xalan",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:serializer",
+    ],
+)
