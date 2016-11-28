@@ -209,7 +209,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         ApplicationManager.getApplication().invokeLater(
           () -> {
             if (myTask.isChoiceTask()) {
-              StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject);
+              StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
             }
             else {
               StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
