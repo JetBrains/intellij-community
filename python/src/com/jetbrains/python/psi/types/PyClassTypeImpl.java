@@ -311,11 +311,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
 
       if (!ContainerUtil.isEmpty(typeInstanceAttributes)) {
-        return typeInstanceAttributes
+        final List<RatedResolveResult> typeInstanceAttributesWithSpecifiedName = typeInstanceAttributes
           .stream()
           .filter(member -> name.equals(member.getName()))
           .map(member -> new RatedResolveResult(PyReferenceImpl.getRate(member, context), member))
           .collect(Collectors.toList());
+
+        if (!typeInstanceAttributesWithSpecifiedName.isEmpty()) {
+          return typeInstanceAttributesWithSpecifiedName;
+        }
       }
     }
 
