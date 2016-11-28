@@ -193,6 +193,9 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
               throw AuthenticationException(e)
             }
           }
+          else if (e.status == TransportException.Status.BAD_GATEWAY) {
+            continue
+          }
           else {
             wrapIfNeedAndReThrow(e)
           }
