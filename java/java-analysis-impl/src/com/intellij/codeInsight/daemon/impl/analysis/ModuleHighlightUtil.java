@@ -413,13 +413,20 @@ public class ModuleHighlightUtil {
   }
 
   private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {
-    boolean missing = ref.multiResolve(true).length == 0;
-    String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
-    if (!missing) {
-      factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+    if (ref.multiResolve(true).length == 0) {
+      String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
     }
-    return info;
+    else if (ref.multiResolve(false).length > 1) {
+      String message = JavaErrorMessages.message("module.ambiguous", refElement.getReferenceText());
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).description(message).create();
+    }
+    else {
+      String message = JavaErrorMessages.message("module.not.on.path", refElement.getReferenceText());
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+      factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+      return info;
+    }
   }
 
   private static QuickFixFactory factory() {
