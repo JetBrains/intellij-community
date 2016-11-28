@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * The popup which allows to quickly switch and control Git branches.
@@ -106,17 +109,25 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    for (String branch : myMultiRootBranchConfig.getLocalBranchNames()) {
-      List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
-      if (!repositories.isEmpty()) {
-        popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository));
-      }
-    }
+    List<GitBranchPopupActions.LocalBranchActions> localBranchActions =
+      myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
+        .collect(toList());
+    popupGroup.addAll(localBranchActions);
 
     popupGroup.addSeparator("Common Remote Branches");
-    for (String branch : ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches()) {
-      popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, branch, myCurrentRepository));
-    }
+    List<GitBranchPopupActions.RemoteBranchActions> remoteBranchActions =
+      ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches().stream()
+        .map(r -> new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, r, myCurrentRepository)).collect(toList());
+    popupGroup.addAll(remoteBranchActions);
+  }
+
+  @Nullable
+  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<GitRepository> allRepositories,
+                                                                            @NotNull String branch) {
+    List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
+    return repositories.isEmpty()
+           ? null
+           : new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository);
   }
 
   @NotNull
@@ -124,11 +135,11 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (GitRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
-      popupGroup.add(new RootAction<>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
-                                      new GitBranchPopupActions(repository.getProject(), repository).createActions(),
-                                      GitBranchUtil.getDisplayableBranchText(repository)));
-    }
+    List<RootAction<GitRepository>> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
+      .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
+                                    new GitBranchPopupActions(repo.getProject(), repo).createActions(),
+                                    GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
+    popupGroup.addAll(rootActions);
     return popupGroup;
   }
 

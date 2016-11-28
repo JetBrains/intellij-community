@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
@@ -35,9 +34,9 @@ import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 
@@ -65,22 +64,19 @@ class GitBranchPopupActions {
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
     }
+
     popupGroup.addSeparator("Local Branches" + repoInfo);
-    List<GitBranch> localBranches = new ArrayList<>(myRepository.getBranches().getLocalBranches());
-    Collections.sort(localBranches);
-    for (GitBranch localBranch : localBranches) {
-      if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
-        popupGroup.add(new LocalBranchActions(myProject, repositoryList, localBranch.getName(), myRepository));
-      }
-    }
+    List<AnAction> localBranchActions =
+      myRepository.getBranches().getLocalBranches().stream().sorted().filter(l -> !l.equals(myRepository.getCurrentBranch()))
+        .map(l -> new LocalBranchActions(myProject, repositoryList, l.getName(), myRepository)).collect(
+        Collectors.toList());
+    popupGroup.addAll(localBranchActions);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
-    List<GitBranch> remoteBranches = new ArrayList<>(myRepository.getBranches().getRemoteBranches());
-    Collections.sort(remoteBranches);
-    for (GitBranch remoteBranch : remoteBranches) {
-      popupGroup.add(new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository));
-    }
-    
+    List<AnAction> remoteBranchActions = myRepository.getBranches().getRemoteBranches().stream().sorted()
+      .map(r -> new RemoteBranchActions(myProject, repositoryList, r.getName(), myRepository))
+      .collect(Collectors.toList());
+    popupGroup.addAll(remoteBranchActions);
     return popupGroup;
   }
 
