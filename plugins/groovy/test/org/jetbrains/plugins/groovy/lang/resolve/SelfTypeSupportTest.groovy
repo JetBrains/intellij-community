@@ -111,6 +111,6 @@ interface I {}
 @SelfType(I) 
 trait T implements I {}
 """) as GroovyFile
-    file.typeDefinitions.last().superTypes
+    assert file.typeDefinitions.last().superTypes.length != 0
   }
 }
