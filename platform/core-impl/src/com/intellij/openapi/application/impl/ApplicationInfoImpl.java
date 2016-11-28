@@ -1010,6 +1010,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myDependentPlugin = e.getAttributeValue("depends");
     }
 
+    @NotNull
     @Override
     public String getTitle() {
       return myTitle;
