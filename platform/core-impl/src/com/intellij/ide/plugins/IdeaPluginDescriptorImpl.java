@@ -195,14 +195,15 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // used in upsource
   protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-
+    if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
+    if (myName == null) throw new InvalidDataException("Name not specified for plugin");
     String idString = pluginBean.id;
     if (idString == null || idString.isEmpty()) {
       idString = myName;
     }
-    myId = idString == null ? null : PluginId.getId(idString);
+    myId = PluginId.getId(idString);
 
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
