@@ -111,6 +111,10 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
     private static void changeClassToInterface(PsiClass aClass) {
       for (PsiMethod method : aClass.getMethods()) {
+        if (isEmptyConstructor(method)) {
+          method.delete();
+          continue;
+        }
         PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
         if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
           continue;
@@ -193,6 +197,16 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     return new ClassMayBeInterfaceVisitor();
   }
 
+  private static boolean isEmptyConstructor(@NotNull PsiMethod method) {
+    if (method.isConstructor()) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null && body.getStatements().length == 0 && method.getDocComment() == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class ClassMayBeInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -250,6 +264,9 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     private boolean allMethodsPublicAbstract(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       for (final PsiMethod method : methods) {
+        if (isEmptyConstructor(method)) {
+          continue;
+        }
         if (!method.hasModifierProperty(PsiModifier.ABSTRACT) &&
             (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass))) {
           return false;
