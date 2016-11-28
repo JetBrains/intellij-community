@@ -103,6 +103,9 @@ public class EduStepicAuthorizedClient {
       headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
       return getBuilder().setDefaultHeaders(headers).build();
     }
+    else {
+      login(stepicUser);
+    }
     return null;
   }
 
