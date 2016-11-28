@@ -198,12 +198,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
-    if (myName == null) throw new InvalidDataException("Name not specified for plugin");
     String idString = pluginBean.id;
     if (idString == null || idString.isEmpty()) {
       idString = myName;
     }
-    myId = PluginId.getId(idString);
+    myId = idString == null ? null : PluginId.getId(idString);
 
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
