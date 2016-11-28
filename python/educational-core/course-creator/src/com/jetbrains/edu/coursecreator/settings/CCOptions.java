@@ -52,7 +52,9 @@ public class CCOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    CCSettings.getInstance().setUseHtmlAsDefaultTaskFormat(myHtmlRadioButton.isSelected());
+    if (isModified()) {
+      CCSettings.getInstance().setUseHtmlAsDefaultTaskFormat(myHtmlRadioButton.isSelected());
+    }
   }
 
   @Override
