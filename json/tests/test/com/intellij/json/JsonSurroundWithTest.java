@@ -2,7 +2,6 @@ package com.intellij.json;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.json.surroundWith.JsonWithObjectLiteralSurrounder;
-import com.intellij.openapi.command.WriteCommandAction;
 
 /**
  * @author Mikhail Golubev
@@ -10,12 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 public class JsonSurroundWithTest extends JsonTestCase {
   private void doTest() {
     myFixture.configureByFile("/surround/" + getTestName(false) + ".json");
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() {
-        SurroundWithHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new JsonWithObjectLiteralSurrounder());
-      }
-    }.execute();
+    SurroundWithHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new JsonWithObjectLiteralSurrounder());
     myFixture.checkResultByFile("/surround/" + getTestName(false) + "_after.json", true);
   }
 

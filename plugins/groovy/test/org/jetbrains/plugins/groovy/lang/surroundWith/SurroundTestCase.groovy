@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith
+
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.surroundWith.Surrounder
-import com.intellij.openapi.command.WriteCommandAction
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -30,12 +30,7 @@ abstract class SurroundTestCase extends LightGroovyTestCase {
 
   protected void doTest(final Surrounder surrounder, String textBefore, String textAfter) {
     myFixture.configureByText("a.groovy", textBefore)
-
-    WriteCommandAction.runWriteCommandAction project, {
-      SurroundWithHandler.invoke(project, myFixture.editor, myFixture.file, surrounder)
-      doPostponedFormatting(project)
-    }
-
+    SurroundWithHandler.invoke(project, myFixture.editor, myFixture.file, surrounder)
     myFixture.checkResult(textAfter)
   }
 }
