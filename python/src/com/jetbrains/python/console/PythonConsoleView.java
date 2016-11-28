@@ -150,6 +150,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void setConsoleEnabled(boolean flag) {
     if (myExecuteActionHandler != null) {
       myExecuteActionHandler.setEnabled(flag);
+    } else {
+      myInitialized.doWhenDone(() -> myExecuteActionHandler.setEnabled(flag));
     }
   }
 
