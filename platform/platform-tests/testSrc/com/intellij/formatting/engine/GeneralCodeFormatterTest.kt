@@ -26,7 +26,7 @@ class GeneralCodeFormatterTest : LightPlatformTestCase() {
 
   @Test
   fun `test null indent is treated as continuation indent`() {
-    doTest(
+    doReformatTest(
       """
 []aaa []bbb []ccc
 []ddd []eee []fff
@@ -40,7 +40,7 @@ aaa bbb ccc
 
   @Test
   fun `test continuation indent`() {
-    doTest(
+    doReformatTest(
       """
 [i_none]a
 [i_none]([i_cont]b
@@ -56,7 +56,7 @@ a
 
   @Test
   fun `test normal indent`() {
-    doTest(
+    doReformatTest(
       """
 [i_none]a
 [i_none]([i_norm]b
@@ -72,7 +72,7 @@ a
 
   @Test
   fun `test many nested blocks and continuation indent`() {
-    doTest(
+    doReformatTest(
       """
 []([]([]([]a
 []b
@@ -96,13 +96,13 @@ a
   fun `test indents composition`() {
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
-    doTest("""
+    doReformatTest("""
 [i_none]aaa [i_none]bbb
 [i_none]([i_norm]ccc [i_norm]ddd
 [i_norm]([i_label]eee
 [i_label]fff))
 """,
-           """
+                   """
 aaa bbb
     ccc ddd
      eee
@@ -112,7 +112,7 @@ aaa bbb
 
   @Test
   fun `test alignments on different block levels`() {
-    doTest(
+    doReformatTest(
       """
 []aaa [a1]bbb
 [a1]([i_label]ccc [i_label]ddd
@@ -130,7 +130,7 @@ aaa bbb
 
   @Test
   fun `test nested indents`() {
-    doTest(
+    doReformatTest(
       """
 []xxx
 [i_cont]([i_cont]([i_cont]yyy))
@@ -144,7 +144,7 @@ xxx
 
   @Test
   fun `test one more alignment test`() {
-    doTest(
+    doReformatTest(
       """
 []aaa [a1]bbb [a1]([i_label]ccc [i_label]ddd [i_label a1]([]eee
 [a1]fff))
@@ -158,7 +158,7 @@ aaa bbb ccc ddd eee
 
   @Test
   fun `test trivial spaces`() {
-    doTest(
+    doReformatTest(
       """
 []foo [s_min3]goo
 """,
@@ -172,7 +172,7 @@ foo   goo
   fun `test space properties`() {
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
-    doTest(
+    doReformatTest(
       """
 []aaa [s_min2_max2]bbb [s_min2_max2]([i_norm]ccc
 [i_norm s_min2_max2]ddd [i_norm s_min2_max2]([i_label]eee [i_label s_min2_max2_minlf2]fff))
@@ -187,7 +187,7 @@ aaa  bbb  ccc
 
   @Test
   fun `test remove all spaces`() {
-    doTest(
+    doReformatTest(
       """
 [s_min0_max0_keepLb0]0 [s_min0_max0_keepLb0]1
 [s_min0_max0_keepLb0]2
@@ -198,12 +198,12 @@ aaa  bbb  ccc
 
   @Test 
   fun `test no wrap object no text wrap`() {
-    doTest("[]aaa []bbb []ccc []ddd []eee []f|ff", "aaa bbb ccc ddd eee fff")
+    doReformatTest("[]aaa []bbb []ccc []ddd []eee []f|ff", "aaa bbb ccc ddd eee fff")
   }
 
   @Test
   fun `test simple wrap`() {
-    doTest(
+    doReformatTest(
       """
 []aaa [w_normal i_cont]b|bb
 """, 
@@ -218,7 +218,7 @@ aaa
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
-    doTest(
+    doReformatTest(
 "[i_none w_always]aaa " +
 "[i_none s_min2_max2 w_always]bbb " +
 "[i_none s_min2_max2]" +
@@ -241,7 +241,7 @@ bbb
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
-    doTest(
+    doReformatTest(
 "[w_normal]aaa " +
 "[s_min2_max2 w_normal]bbb " +
 "[s_min2_max2 w_normal]" +
@@ -258,7 +258,7 @@ bbb
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
-    doTest(
+    doReformatTest(
       "[w_chop1]aaa [s_min2_max2 w_chop1]bbb " +
       "[]([i_label s_min2_max2 w_chop1]cc|c " +
          "[i_label s_min2_max2 w_chop1]ddd " +
@@ -277,7 +277,7 @@ aaa
   fun `test wrap in the middle`() {
     val settings = CodeStyleSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
-    doTest(
+    doReformatTest(
       "[]aaa [s_min2_max2]bbb " +
       "[]" +
         "([i_label s_min2_max2]ccc " +
@@ -292,23 +292,23 @@ aaa  bbb  ccc
 
   @Test
   fun `test multiple wrap`() {
-    doTest("[w_normal]a[w_normal]b|[w_normal]([w_normal]c)",
-           "ab\n" +
+    doReformatTest("[w_normal]a[w_normal]b|[w_normal]([w_normal]c)",
+                   "ab\n" +
            "        c")
 
   }
 
   @Test
   fun `test nested calls`() {
-    doTest("[i_none]1 [i_none]([i_cont]a[i_none]([i_cont]2 [i_none]([i_cont]b[i_none]([i_cont]3\n[i_none]([i_cont]c)))))",
-"""
+    doReformatTest("[i_none]1 [i_none]([i_cont]a[i_none]([i_cont]2 [i_none]([i_cont]b[i_none]([i_cont]3\n[i_none]([i_cont]c)))))",
+                   """
 1 a2 b3
         c""")
   }
 
   @Test
   fun `test different wraps`() {
-    doTest(
+    doReformatTest(
       "[i_none w_normal]([w_normal]x[w_normal]a[w_normal]b[w_normal]x)" + 
       "[i_none w_normal]([w_normal]x[w_normal]c[w_normal]d[w_normal]x)" +
       "[i_none w_normal]([w_normal]x[w_normal]e[w_normal]|f[w_normal]x)",

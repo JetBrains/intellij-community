@@ -19,7 +19,11 @@ import com.intellij.formatting.engine.testModel.TestBlock
 import com.intellij.openapi.util.TextRange
 
 
-class BlockAttributes(val alignment: Alignment? = null, val wrap: Wrap? = null, val indent: Indent? = null, val spacing: Spacing? = null)
+class BlockAttributes(val alignment: Alignment? = null,
+                      val wrap: Wrap? = null,
+                      val indent: Indent? = null,
+                      val spacing: Spacing? = null,
+                      val isIncomplete: Boolean = false)
 
 class CompositeTestBlock(startOffset: Int,
                          attributes: BlockAttributes,
@@ -66,8 +70,8 @@ abstract class TestBlockBase(val startOffset: Int,
   fun getSpacing() = attributes.spacing
   fun firstChild() = subBlocks.firstOrNull()
   
-  override fun getChildAttributes(newChildIndex: Int): ChildAttributes = ChildAttributes.DELEGATE_TO_NEXT_CHILD
-  override fun isIncomplete() = false
+  override fun getChildAttributes(newChildIndex: Int): ChildAttributes = ChildAttributes(indent, null)
+  override fun isIncomplete() = attributes.isIncomplete
 
   abstract val endOffset: Int
 
@@ -85,9 +89,12 @@ class AttributesProvider {
     val indent = getIndent(attributes)
     val spacing = getSpacing(attributes)
     val wrap = getWrap(attributes)
+    val isIncomplete = isIncomplete(attributes)
 
-    return BlockAttributes(alignment, wrap, indent, spacing)
+    return BlockAttributes(alignment, wrap, indent, spacing, isIncomplete)
   }
+
+  private fun isIncomplete(attributes: List<String>) = attributes.contains("incomplete")
 
   private fun getWrap(attributes: List<String>): Wrap? {
     val wrap = attributes.find { it.startsWith("w_") }?.substring(2) ?: return null
