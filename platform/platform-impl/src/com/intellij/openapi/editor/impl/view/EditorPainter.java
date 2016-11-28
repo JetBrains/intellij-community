@@ -808,13 +808,15 @@ class EditorPainter implements TextDrawingCallback {
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
     int minX = getMinX();
     for (EditorImpl.CaretRectangle location : locations) {
-      g.setColor(caretColor);
       int x = location.myPoint.x;
       int y = location.myPoint.y - topOverhang;
       Caret caret = location.myCaret;
+      CaretAttributes attr = caret == null ? null : caret.getUserData(CaretAttributes.KEY);
+      if (attr == null) attr = CaretAttributes.NULL;
+      g.setColor(attr.getColor() != null ? attr.getColor() : caretColor);
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-        int lineWidth = JBUI.scale(settings.getLineCursorWidth());
+        int lineWidth = JBUI.scale(attr.getWidth(settings.getLineCursorWidth()));
         // fully cover extra character's pixel which can appear due to antialiasing
         // see IDEA-148843 for more details
         if (x > minX && lineWidth > 1) x--;
