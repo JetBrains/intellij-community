@@ -17,7 +17,6 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
@@ -26,19 +25,9 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   }
 
   @Override
-  public boolean shouldBeShowing(Object value) {
-    if (!super.shouldBeShowing(value)) return false;
-    if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
-
-    AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-    if (getSpeedSearch().isHoldingFilter()) {
-      return !(action instanceof ActionGroup);
-    }
-    else {
-      return !isSpeedsearchAction(action);
-    }
+  protected boolean shouldShow(@NotNull AnAction action) {
+    return !getSpeedSearch().isHoldingFilter() || !(action instanceof ActionGroup);
   }
-
 
   @NotNull
   public static ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {

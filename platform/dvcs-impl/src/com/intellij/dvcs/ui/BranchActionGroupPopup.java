@@ -17,6 +17,7 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           preselectActionCondition, true);
   }
 
+  protected BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
+    super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
+  }
+
   @NotNull
   public static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
     DefaultActionGroup speedSearchActions = new DefaultActionGroup();
@@ -78,15 +83,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @Override
-  public boolean shouldBeShowing(Object value) {
-    if (!super.shouldBeShowing(value)) return false;
-    if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
-    AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-    boolean isSpeedSearchAction = isSpeedsearchAction(action);
-    return getSpeedSearch().isHoldingFilter() || !isSpeedSearchAction;
-  }
-
-  @Override
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     WizardPopup popup = createListPopupStep(parent, step, parentValue);
     RootAction rootAction = getRootAction(parentValue);
@@ -98,12 +94,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private WizardPopup createListPopupStep(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(parent, (ListPopupStep)step, parentValue) {
-        @Override
-        protected ListCellRenderer getListElementRenderer() {
-          return new MyPopupListElementRenderer(this);
-        }
-      };
+      return new BranchActionGroupPopup(parent, (ListPopupStep)step, parentValue);
     }
     return super.createPopup(parent, step, parentValue);
   }

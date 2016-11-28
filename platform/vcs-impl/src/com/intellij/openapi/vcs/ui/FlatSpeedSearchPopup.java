@@ -16,8 +16,10 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.WizardPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +31,26 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
                               @Nullable Condition<AnAction> preselectActionCondition, boolean showDisableActions) {
     super(title, actionGroup, dataContext, false, false, showDisableActions, false,
           null, -1, preselectActionCondition, null);
+  }
+
+  protected FlatSpeedSearchPopup(@Nullable WizardPopup parent,
+                                 @NotNull ListPopupStep step,
+                                 @NotNull DataContext dataContext,
+                                 @Nullable Object value) {
+    super(parent, step, null, dataContext, null, -1);
+    setParentValue(value);
+  }
+
+  @Override
+  public boolean shouldBeShowing(Object value) {
+    if (!super.shouldBeShowing(value)) return false;
+    if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
+    AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+    return (getSpeedSearch().isHoldingFilter() || !isSpeedsearchAction(action)) && shouldShow(action);
+  }
+
+  protected boolean shouldShow(@NotNull AnAction action) {
+    return true;
   }
 
   @NotNull

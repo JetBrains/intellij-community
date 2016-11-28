@@ -247,6 +247,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
            maxRowCount, preselectActionCondition, actionPlace, false);
     }
+
     public ActionGroupPopup(final String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
@@ -259,9 +260,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             final Condition<AnAction> preselectActionCondition,
                             @Nullable final String actionPlace,
                             boolean autoSelection) {
-      super(createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                       preselectActionCondition, actionPlace, autoSelection),
-            maxRowCount);
+      this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                            preselectActionCondition, actionPlace, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
+    }
+
+    protected ActionGroupPopup(@Nullable WizardPopup aParent,
+                               @NotNull ListPopupStep step,
+                               @Nullable Runnable disposeCallback,
+                               @NotNull DataContext dataContext,
+                               @Nullable String actionPlace,
+                               int maxRowCount) {
+      super(aParent, step, maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
