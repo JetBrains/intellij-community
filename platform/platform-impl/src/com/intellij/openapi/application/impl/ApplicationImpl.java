@@ -379,25 +379,28 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myInvokator;
   }
 
-
   @Override
-  public void invokeLater(@NotNull final Runnable runnable) {
+  public void invokeLater(@NotNull Runnable runnable) {
     invokeLater(runnable, getDisposed());
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired) {
     invokeLater(runnable, ModalityState.defaultModalityState(), expired);
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state) {
+  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
     invokeLater(runnable, state, getDisposed());
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
-    myInvokator.invokeLater(((TransactionGuardImpl)TransactionGuard.getInstance()).wrapLaterInvocation(runnable, state), state, expired);
+  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
+    TransactionGuard guard = TransactionGuard.getInstance();
+    if (guard != null) {
+      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, state);
+    }
+    myInvokator.invokeLater(runnable, state, expired);
   }
 
   @Override
@@ -671,7 +674,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    LaterInvocator.invokeAndWait(((TransactionGuardImpl)TransactionGuard.getInstance()).wrapLaterInvocation(runnable, modalityState), modalityState);
+    TransactionGuard guard = TransactionGuard.getInstance();
+    if (guard != null) {
+      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, modalityState);
+    }
+    LaterInvocator.invokeAndWait(runnable, modalityState);
   }
 
   @Override
