@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
@@ -51,6 +52,7 @@ import java.util.List;
 
 public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretImpl");
+  private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
 
   private final EditorImpl myEditor;
   private boolean isValid = true;
@@ -1395,6 +1397,18 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public boolean isAtBidiRunBoundary() {
     return myEditor.myUseNewRendering && myEditor.myView.isAtBidiRunBoundary(getVisualPosition());
+  }
+
+  @NotNull
+  @Override
+  public CaretVisualAttributes getVisualAttributes() {
+    CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
+    return attrs == null ? CaretVisualAttributes.DEFAULT : attrs;
+  }
+
+  @Override
+  public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
+    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.DEFAULT ? null : attributes);
   }
 
   @NotNull

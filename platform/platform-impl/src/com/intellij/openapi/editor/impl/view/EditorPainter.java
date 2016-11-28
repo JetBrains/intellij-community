@@ -811,8 +811,7 @@ class EditorPainter implements TextDrawingCallback {
       int x = location.myPoint.x;
       int y = location.myPoint.y - topOverhang;
       Caret caret = location.myCaret;
-      CaretAttributes attr = caret == null ? null : caret.getUserData(CaretAttributes.KEY);
-      if (attr == null) attr = CaretAttributes.NULL;
+      CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.DEFAULT : caret.getVisualAttributes();
       g.setColor(attr.getColor() != null ? attr.getColor() : caretColor);
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {

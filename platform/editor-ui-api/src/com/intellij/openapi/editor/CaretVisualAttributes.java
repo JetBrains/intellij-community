@@ -15,38 +15,23 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
- * Used to override Caret Painting Color and for non-block carets their Width
+ * Used to override caret painting color and, for non-block carets, their width.
  */
-final public class CaretAttributes {
-  final public static Key<CaretAttributes> KEY = new Key<>("CaretAttributes");
-  final public static CaretAttributes NULL = new CaretAttributes(null, Weight.NORMAL);
+public final class CaretVisualAttributes {
+  public static final CaretVisualAttributes DEFAULT = new CaretVisualAttributes(null, Weight.NORMAL);
 
-  public enum Weight {
-    THIN(-1),
-    NORMAL(0),
-    HEAVY(1);
+  @Nullable
+  private final Color myColor;
+  @NotNull
+  private final Weight myWeight;
 
-    final private int delta;
-    
-    Weight(int delta) {
-      this.delta = delta;
-    }
-
-    public int getDelta() {
-      return delta;
-    }
-  }
-  
-  final private @Nullable Color myColor;
-  final private Weight myWeight ;
-
-  public CaretAttributes(@Nullable Color color, Weight weight) {
+  public CaretVisualAttributes(@Nullable Color color, @NotNull Weight weight) {
     myColor = color;
     myWeight = weight;
   }
@@ -56,11 +41,28 @@ final public class CaretAttributes {
     return myColor;
   }
 
+  @NotNull
   public Weight getWeight() {
     return myWeight;
   }
-  
-  public int getWidth(int width) {
-    return width + myWeight.delta < 1 ? 1 : width +myWeight.delta;
+
+  public int getWidth(int defaultWidth) {
+    return Math.max(1, defaultWidth + myWeight.delta);
+  }
+
+  public enum Weight {
+    THIN(-1),
+    NORMAL(0),
+    HEAVY(1);
+
+    private final int delta;
+
+    Weight(int delta) {
+      this.delta = delta;
+    }
+
+    public int getDelta() {
+      return delta;
+    }
   }
 }
