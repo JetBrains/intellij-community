@@ -128,7 +128,9 @@ public final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyT
 
   @Override
   public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
-    paramsGroup.addParameters(myArguments);
+    if (myArguments != null) {
+      paramsGroup.addParameters(myArguments);
+    }
     if (!testSpecs.isEmpty()) {
       paramsGroup.addParameter(String.format("-e %s", StringUtil.join(testSpecs, ",")));
     }
