@@ -405,7 +405,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   protected JComponent createCenterPanel() {
-    mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION);
+    mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
     mySplitter.setFirstComponent(myDualView);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDetails);

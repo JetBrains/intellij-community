@@ -142,8 +142,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
-  @Deprecated
-  public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f; // to remove after 2016.3
+
   private static final int MAX_STORED_MESSAGES = 25;
   @NonNls static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
