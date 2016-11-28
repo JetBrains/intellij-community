@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
@@ -55,10 +57,10 @@ public abstract class PriorityIntentionActionWrapper implements IntentionAction 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     action.invoke(project, editor, file);
   }
-
+  @Nullable
   @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return action.shouldMakeCurrentFileWritable();
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return action.getElementToMakeWritable(file);
   }
 
   @Override

@@ -16,6 +16,10 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.application.WriteActionAware;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
@@ -26,17 +30,17 @@ import com.intellij.openapi.application.WriteActionAware;
 public interface IntentionLike extends WriteActionAware {
 
   /**
-   * Controls whether this intention/fix is going to modify the current editor file.
-   * If {@code true}, and the file is read-only,
-   * it will be made writable (honoring version control integration) before the intention/fix is invoked.<p/>
+   * Controls whether this intention/fix is going to modify the file.
+   * If {@code @NotNull}, and the file is read-only,
+   * it will be made writable (honoring version control integration) before the intention/fix is invoked. <p/>
    *
    * By default, as a heuristic, returns the same as {@link #startInWriteAction()}.<p/>
    *
    * If the action is going to modify multiple files, or the set of the files is unknown in advance, please
    * don't bother overriding this method, return {@code false} from {@link #startInWriteAction()}, and call {@link com.intellij.codeInsight.FileModificationService} methods in the implementation, and take write actions yourself as needed.
    */
-  default boolean shouldMakeCurrentFileWritable() {
-    return startInWriteAction();
+  @Nullable
+  default PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return startInWriteAction() ? file : null;
   }
-
 }

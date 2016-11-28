@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /**
@@ -97,9 +98,10 @@ public class QuickFixWrapper implements IntentionAction {
     return getFix().startInWriteAction();
   }
 
+  @Nullable
   @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return getFix().shouldMakeCurrentFileWritable();
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return getFix().getElementToMakeWritable(file);
   }
 
   public LocalQuickFix getFix() {

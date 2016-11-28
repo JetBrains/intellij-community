@@ -56,6 +56,12 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     return getType() != null;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myInitializer;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiManager manager = file.getManager();

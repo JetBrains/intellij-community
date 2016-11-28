@@ -71,6 +71,12 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     doProcessIntention(mySwitchExpression);
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return mySwitchExpression;
+  }
+
   @Override
   public boolean startInWriteAction() {
     return true;

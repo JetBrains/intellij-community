@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.Html5SchemaProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -65,9 +67,10 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
     applyFix(project);
   }
 
+  @Nullable
   @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return false;
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return null;
   }
 
   private static void applyFix(Project project) {

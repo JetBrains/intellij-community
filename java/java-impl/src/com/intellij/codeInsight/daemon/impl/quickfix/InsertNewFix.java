@@ -50,6 +50,12 @@ public class InsertNewFix implements IntentionAction {
     return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall);
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myMethodCall;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();

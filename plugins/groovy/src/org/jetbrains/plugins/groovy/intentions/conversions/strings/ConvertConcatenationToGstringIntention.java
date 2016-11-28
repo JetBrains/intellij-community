@@ -89,9 +89,10 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
   }
 
+  @Nullable
   @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return true;
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return file;
   }
 
   @Override

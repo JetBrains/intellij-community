@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -101,25 +103,28 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    try {
-      switch (myFixType) {
-        case MAKE_FINAL:
-          makeFinal();
-          break;
-        case MAKE_ARRAY:
-          makeArray();
-          break;
-        case COPY_TO_FINAL:
-          copyToFinal();
-          break;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext, myVariable)) return;
+    WriteAction.run(() -> {
+      try {
+        switch (myFixType) {
+          case MAKE_FINAL:
+            makeFinal();
+            break;
+          case MAKE_ARRAY:
+            makeArray();
+            break;
+          case COPY_TO_FINAL:
+            copyToFinal();
+            break;
+        }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    finally {
-      getVariablesToFix().clear();
-    }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      finally {
+        getVariablesToFix().clear();
+      }
+    });
   }
 
   private void makeArray() {
@@ -354,6 +359,6 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

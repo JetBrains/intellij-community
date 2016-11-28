@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,6 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.rename.parameter.to.$0", myNewName);
-  }
-
-  @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return true;
   }
 
   @Override

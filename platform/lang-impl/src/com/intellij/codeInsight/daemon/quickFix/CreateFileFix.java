@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,9 +94,10 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return CodeInsightBundle.message("create.file.family");
   }
 
+  @Nullable
   @Override
-  public boolean shouldMakeCurrentFileWritable() {
-    return false;
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return null;
   }
 
   @Override

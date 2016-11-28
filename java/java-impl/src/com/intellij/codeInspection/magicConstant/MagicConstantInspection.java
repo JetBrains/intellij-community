@@ -207,9 +207,10 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         return "Attach annotations";
       }
 
+      @Nullable
       @Override
-      public boolean shouldMakeCurrentFileWritable() {
-        return false;
+      public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+        return null;
       }
 
       @Override
