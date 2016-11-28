@@ -30,6 +30,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
@@ -302,7 +303,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return getName();
   }
 
-  public void readExternal(Element parentNode) {
+  @Override
+  public void readExternal(@NotNull Element parentNode) {
     UISettings settings = UISettings.getInstance();
     ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
     myValueReader.setAttribute(blindness == null ? null : blindness.name());
@@ -310,7 +312,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       readScheme(parentNode);
     }
     else {
-      for (Element element : parentNode.getChildren(SCHEME_ELEMENT)) {
+      List<Element> children = parentNode.getChildren(SCHEME_ELEMENT);
+      if (children.isEmpty()) {
+        throw new InvalidDataException("Scheme is not valid");
+      }
+
+      for (Element element : children) {
         readScheme(element);
       }
     }

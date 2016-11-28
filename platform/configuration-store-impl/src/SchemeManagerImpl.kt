@@ -913,10 +913,10 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun getCurrentSchemeName() = currentScheme?.name ?: currentPendingSchemeName
 
   private fun processPendingCurrentSchemeName(newScheme: T) {
-    if (newScheme.name == currentPendingSchemeName) {
-      setCurrent(newScheme, false)
+      if (newScheme.name == currentPendingSchemeName) {
+        setCurrent(newScheme, false)
+      }
     }
-  }
 
   override fun removeScheme(schemeName: String) = removeFirstScheme(schemes) {it.name == schemeName}
 
