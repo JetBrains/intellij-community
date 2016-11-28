@@ -1125,8 +1125,13 @@ public class HighlightMethodUtil {
         description = JavaErrorMessages.message("extension.method.should.have.a.body");
         additionalFixes.add(QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
       }
-      else if (isInterface && isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        description = "Static methods in interfaces should have a body";
+      else if (isInterface) {
+        if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+          description = "Static methods in interfaces should have a body";
+        }
+        else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+          description = "Private methods in interfaces should have a body";
+        }
       }
     }
     else if (isInterface) {
