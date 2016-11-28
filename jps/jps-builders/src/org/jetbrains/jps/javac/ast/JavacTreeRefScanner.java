@@ -46,7 +46,8 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
       return null;
     }
     final Symbol sym = javacIdentifier.sym;
-    if (sym.getKind() == ElementKind.PARAMETER ||
+    if (sym == null ||
+        sym.getKind() == ElementKind.PARAMETER ||
         sym.getKind() == ElementKind.LOCAL_VARIABLE ||
         sym.getKind() == ElementKind.EXCEPTION_PARAMETER ||
         sym.getKind() == ElementKind.TYPE_PARAMETER) {
@@ -59,7 +60,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   @Override
   public Tree visitVariable(VariableTree node, JavacTreeScannerSink sink) {
     final Symbol.VarSymbol sym = ((JCTree.JCVariableDecl)node).sym;
-    if (sym.getKind() == ElementKind.FIELD) {
+    if (sym != null && sym.getKind() == ElementKind.FIELD) {
       sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
     }
     return super.visitVariable(node, sink);
@@ -68,7 +69,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   @Override
   public Tree visitMemberSelect(MemberSelectTree node, JavacTreeScannerSink sink) {
     final Symbol sym = ((JCTree.JCFieldAccess)node).sym;
-    if (sym.getKind() != ElementKind.PACKAGE) {
+    if (sym != null && sym.getKind() != ElementKind.PACKAGE) {
       sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
     }
     return super.visitMemberSelect(node, sink);
@@ -77,7 +78,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   @Override
   public Tree visitMethod(MethodTree node, JavacTreeScannerSink sink) {
     final Symbol.MethodSymbol sym = ((JCTree.JCMethodDecl)node).sym;
-    sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
+    if (sym != null) {
+      sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
+    }
     return super.visitMethod(node, sink);
   }
   
@@ -86,6 +89,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   public Tree visitClass(ClassTree node, JavacTreeScannerSink sink) {
     JCTree.JCClassDecl classDecl = (JCTree.JCClassDecl)node;
     Symbol.ClassSymbol sym = classDecl.sym;
+    if (sym == null) return null;
 
     final Type superclass = sym.getSuperclass();
     final List<Type> interfaces = sym.getInterfaces();
