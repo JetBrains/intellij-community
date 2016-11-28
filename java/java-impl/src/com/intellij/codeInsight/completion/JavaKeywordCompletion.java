@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -476,12 +476,6 @@ public class JavaKeywordCompletion {
     if (isSuitableForClass(position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.consume(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      }
-      if (PsiUtil.isLanguageLevel8OrHigher(position)) {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class);
-        if (containingClass != null && containingClass.isInterface()) {
-          result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
-        }
       }
 
       result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));

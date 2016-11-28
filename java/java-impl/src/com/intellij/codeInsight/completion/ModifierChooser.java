@@ -51,13 +51,13 @@ public class ModifierChooser {
 
   private static final String[][] INTERFACE_9_MEMBER_MODIFIERS = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
-    {PsiKeyword.STATIC},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
   private static final String[][] INTERFACE_8_MEMBER_MODIFIERS = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
-    {PsiKeyword.STATIC},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
