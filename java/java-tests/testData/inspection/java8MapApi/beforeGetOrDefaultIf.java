@@ -7,13 +7,10 @@ public class Main {
   private String str;
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
-    str = map.get(key);
-    if(str == nul<caret>l) {
-      /*
-      block comment
-       */
-      str = NONE;
+    if(map.conta<caret>insKey("k")) {
+      System.out.println(/* output map value */ map.get("k"));
+    } else {
+      System.out.println(/* output none */ NONE);
     }
-    System.out.println(str);
   }
 }

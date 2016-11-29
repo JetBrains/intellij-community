@@ -16,25 +16,19 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.java18api.Java8CollectionsApiInspection;
+import com.intellij.codeInspection.java18api.Java8MapApiInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dmitry Batkovich
+ * @author Tagir Valeev
  */
-public class Java8CollectionsApiInspectionTest extends LightQuickFixParameterizedTestCase {
-  private Java8CollectionsApiInspection myInspection;
-
+public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{myInspection};
-  }
-
-  public void setUp() throws Exception {
-    myInspection = new Java8CollectionsApiInspection();
-    myInspection.myReportContainsCondition = true;
-    super.setUp();
+    Java8MapApiInspection inspection = new Java8MapApiInspection();
+    inspection.myTreatGetNullAsContainsKey = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   public void test() throws Exception {
@@ -43,6 +37,6 @@ public class Java8CollectionsApiInspectionTest extends LightQuickFixParameterize
 
   @Override
   protected String getBasePath() {
-    return "/inspection/java8CollectionsApi";
+    return "/inspection/java8MapApi";
   }
 }

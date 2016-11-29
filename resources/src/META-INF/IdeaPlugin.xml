@@ -589,6 +589,7 @@
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
 
     <globalInspection groupPath="Java" language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -824,11 +825,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionsApi"
-                     groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.java18api.Java8CollectionsApiInspection"
-                     displayName="Map.putIfAbsent() can be used"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java8ListSort"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
@@ -839,11 +835,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      displayName="Loop can be replaced with Collection.removeIf()"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8ReplaceMapGet"
+    <localInspection groupPath="Java" language="JAVA" shortName="Java8MapApi"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.java18api.Java8ReplaceMapGetInspection"
-                     displayName="Simplifiable conditional usage of Map.get()"/>
+                     implementationClass="com.intellij.codeInspection.java18api.Java8MapApiInspection"
+                     displayName="Replace with single Map method"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
