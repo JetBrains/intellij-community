@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -39,9 +38,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -124,8 +121,6 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    if (!prepareWritable(usages)) return;
-
     MoveClassToInnerHandler[] handlers = MoveClassToInnerHandler.EP_NAME.getExtensions();
 
     ArrayList<UsageInfo> usageList = new ArrayList<>(Arrays.asList(usages));
@@ -182,22 +177,6 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  private boolean prepareWritable(final UsageInfo[] usages) {
-    Set<PsiElement> elementsToMakeWritable = new HashSet<>();
-    Collections.addAll(elementsToMakeWritable, myClassesToMove);
-    elementsToMakeWritable.add(myTargetClass);
-    for(UsageInfo usage: usages) {
-      PsiElement element = usage.getElement();
-      if (element != null) {
-        elementsToMakeWritable.add(element);
-      }
-    }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(elementsToMakeWritable))) {
-      return false;
-    }
-    return true;
   }
 
   private void saveNonCodeUsages(final UsageInfo[] usages) {
