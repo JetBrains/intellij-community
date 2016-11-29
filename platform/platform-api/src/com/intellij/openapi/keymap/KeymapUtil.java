@@ -39,8 +39,6 @@ import java.util.StringTokenizer;
 
 public class KeymapUtil {
 
-  @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  @NonNls private static final String GET_KEY_MODIFIERS_TEXT_METHOD = "getKeyModifiersText";
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
   @NonNls private static final String BREAK_KEY_TEXT = "Break";
   @NonNls private static final String SHIFT = "shift";
@@ -295,7 +293,7 @@ public class KeymapUtil {
           buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
       }
       if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append("\2325");
+          buf.append("\u2325");
       }
       if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
@@ -515,5 +513,5 @@ public class KeymapUtil {
         }
       }
     }
-  };
+  }
 }
