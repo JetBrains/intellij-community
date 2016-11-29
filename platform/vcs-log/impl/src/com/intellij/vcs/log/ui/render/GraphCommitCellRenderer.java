@@ -1,8 +1,8 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -174,14 +174,18 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                                             0 /*left aligned painter does not use available width*/);
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width);
-        myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
+        appendText(cell, style);
       }
       else {
         appendTextPadding(myGraphImage.getWidth());
-        myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
+        appendText(cell, style);
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column));
       }
+    }
+
+    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style) {
+      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " "), style);
     }
 
     private int getAvailableWidth(int column) {
