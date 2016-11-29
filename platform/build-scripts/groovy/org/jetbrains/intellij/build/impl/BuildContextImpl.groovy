@@ -44,6 +44,10 @@ class BuildContextImpl extends BuildContext {
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project)
     communityHome = toCanonicalPath(communityHome)
+    if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {
+      messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
+    }
+
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
 
