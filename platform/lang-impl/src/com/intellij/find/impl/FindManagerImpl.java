@@ -67,6 +67,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,8 +189,34 @@ public class FindManagerImpl extends FindManager {
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myFindDialog.dispose();
-        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, e.getDataContext()));
+        DataContextWrapper newDataContext = prepareDataContextForFind(e); // DataContext should be prepared before dialog invalidation
+        myFindDialog.doCancelAction();
+        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, newDataContext));
+      }
+
+      @NotNull
+      private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
+        DataContext dataContext = e.getDataContext();
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        String selection = null;
+
+        if (editor != null) {
+          SelectionModel selectionModel = editor.getSelectionModel();
+          if (selectionModel.hasSelection()) {
+            selection = selectionModel.getSelectedText();
+          }
+        }
+        String finalSelection = selection;
+        return new DataContextWrapper(dataContext) {
+          @Nullable
+          @Override
+          public Object getData(@NonNls String dataId) {
+            if (CommonDataKeys.PROJECT.is(dataId)) return project;
+            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return finalSelection;
+            return super.getData(dataId);
+          }
+        };
       }
     }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
   }
