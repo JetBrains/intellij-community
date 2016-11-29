@@ -758,4 +758,35 @@ class Test {
 """)
   }
 
+  fun `test do not show hint for name contained in method`() {
+    ParameterNameHintsSettings.getInstance().isShowParamNameContainedInMethodName = false
+    setup("""
+class Test {
+  void main() {
+    timeoutExecution(1000);
+  }
+  void timeoutExecution(int timeout) {
+  }
+}
+""")
+
+    onLineStartingWith("timeoutExec").assertNoInlays()
+  }
+
+  fun `test show if multiple params but name contained`() {
+    ParameterNameHintsSettings.getInstance().isShowParamNameContainedInMethodName = false
+    setup("""
+class Test {
+  void main() {
+    timeoutExecution(1000, "xxx");
+  }
+  void timeoutExecution(int timeout, String message) {
+  }
+}
+""")
+
+    onLineStartingWith("timeout")
+      .assertInlays("timeout->1000", "message->\"xxx\"")
+  }
+
 }

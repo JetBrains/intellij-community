@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,10 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   public JPanel myConfigurable;
   private EditorTextField myEditorTextField;
   private ComboBox<Language> myCurrentLanguageCombo;
+
+  private JBCheckBox myShowWhenMultipleParamsWithSameType;
+  private JBCheckBox myShowIfParamNameContainedInMethod;
+  private JPanel myOptionsPanel;
 
   private final Language myInitiallySelectedLanguage;
   private final String myNewPreselectedItem;
@@ -67,6 +72,8 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
+
+    myOptionsPanel.setVisible(false);
   }
 
   private void updateOkEnabled() {
@@ -93,6 +100,10 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       String text = entry.getValue();
       storeBlackListDiff(lang, text);
     });
+
+    ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
+    settings.setShowParamNameContainedInMethodName(myShowIfParamNameContainedInMethod.isSelected());
+    settings.setShowWhenMultipleParamsWithSameType(myShowWhenMultipleParamsWithSameType.isSelected());
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
@@ -130,6 +141,13 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
         updateOkEnabled();
       }
     });
+
+    myShowIfParamNameContainedInMethod = new JBCheckBox();
+    myShowWhenMultipleParamsWithSameType = new JBCheckBox();
+
+    ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
+    myShowIfParamNameContainedInMethod.setSelected(settings.isShowParamNameContainedInMethodName());
+    myShowWhenMultipleParamsWithSameType.setSelected(settings.getShowWhenMultipleParamsWithSameType());
 
     initLanguageCombo(languages, selected);
   }

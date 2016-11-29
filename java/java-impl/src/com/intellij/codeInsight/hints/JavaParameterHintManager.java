@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.hints;
 
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,18 +28,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class JavaParameterHintManager {
-  
+
   @NotNull
   private final List<InlayInfo> myDescriptors;
 
   public JavaParameterHintManager(@NotNull PsiCallExpression callExpression) {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
-    
+
     List<InlayInfo> descriptors = Collections.emptyList();
     if (resolveResult.getElement() instanceof PsiMethod
         && isMethodToShowParams(callExpression, resolveResult)
-        && hasUnclearExpressions(callArguments)) 
+        && hasUnclearExpressions(callArguments))
     {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -49,9 +51,30 @@ public class JavaParameterHintManager {
 
   private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      return !isSetter(method) && !isBuilder(callExpression, method);
+    if (!(element instanceof PsiMethod)) return false;
+
+    PsiMethod method = (PsiMethod)element;
+    if (isSetter(method)) return false;
+
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 1) {
+      if (isBuilder(callExpression, method)) return false;
+
+      ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
+      if (!settings.isShowParamNameContainedInMethodName()
+          && isParamNameContainedInMethodName(parameters[0], method)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean isParamNameContainedInMethodName(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
+    String parameterName = parameter.getName();
+    if (parameterName != null && parameterName.length() > 1) {
+      String methodName = method.getName();
+      return StringUtil.containsIgnoreCase(methodName, parameterName);
     }
     return false;
   }
@@ -70,7 +93,7 @@ public class JavaParameterHintManager {
 
     return false;
   }
-  
+
   private static boolean hasSingleParameter(PsiMethod method) {
     return method.getParameterList().getParametersCount() == 1;
   }
@@ -79,7 +102,7 @@ public class JavaParameterHintManager {
   private static boolean isSetter(PsiMethod method) {
     String methodName = method.getName();
     if (hasSingleParameter(method) && methodName.startsWith("set")
-        && (methodName.length() == 3 
+        && (methodName.length() == 3
             || methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3)))) {
       return true;
     }
@@ -87,8 +110,9 @@ public class JavaParameterHintManager {
   }
 
   static boolean isUnclearExpression(@Nullable PsiElement callArgument) {
-    if (callArgument instanceof PsiLiteralExpression)
+    if (callArgument instanceof PsiLiteralExpression) {
       return true;
+    }
 
     if (callArgument instanceof PsiPrefixExpression) {
       PsiPrefixExpression expr = (PsiPrefixExpression)callArgument;
@@ -97,10 +121,9 @@ public class JavaParameterHintManager {
               || JavaTokenType.PLUS.equals(tokenType)) && expr.getOperand() instanceof PsiLiteralExpression;
     }
 
-    if (callArgument instanceof PsiThisExpression 
-        || callArgument instanceof PsiBinaryExpression 
-        || callArgument instanceof PsiPolyadicExpression) 
-    {
+    if (callArgument instanceof PsiThisExpression
+        || callArgument instanceof PsiBinaryExpression
+        || callArgument instanceof PsiPolyadicExpression) {
       return true;
     }
 
@@ -122,13 +145,13 @@ public class JavaParameterHintManager {
   private static List<InlayInfo> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
                                                                      @NotNull PsiParameter[] parameters,
                                                                      @NotNull JavaResolveResult resolveResult) {
-    
+
     List<InlayInfo> descriptors = ContainerUtil.newArrayList();
     for (int i = 0; i < Math.min(callArguments.length, parameters.length); i++) {
       PsiExpression arg = callArguments[i];
       PsiParameter param = parameters[i];
 
-      if (isVarargParam(param.getType(), arg.getType()) && hasUnclearExpressionStartingFrom(i, callArguments) 
+      if (isVarargParam(param.getType(), arg.getType()) && hasUnclearExpressionStartingFrom(i, callArguments)
           || shouldInlineParameterName(arg, param, resolveResult)) {
         descriptors.add(createInlayInfo(arg, param));
       }
@@ -141,13 +164,13 @@ public class JavaParameterHintManager {
     String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
   }
-  
+
   private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,
                                                    @NotNull PsiParameter parameter,
                                                    @NotNull JavaResolveResult resolveResult) {
     PsiType argType = argument.getType();
     PsiType paramType = parameter.getType();
-    
+
     if (argType != null && isUnclearExpression(argument)) {
       PsiType parameterType = resolveResult.getSubstitutor().substitute(paramType);
       return TypeConversionUtil.isAssignable(parameterType, argType);
@@ -155,7 +178,7 @@ public class JavaParameterHintManager {
 
     return false;
   }
-  
+
   private static boolean hasUnclearExpressionStartingFrom(int index, PsiExpression[] callArguments) {
     for (int i = index; i < callArguments.length; i++) {
       PsiExpression arg = callArguments[i];

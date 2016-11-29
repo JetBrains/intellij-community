@@ -15,6 +15,8 @@ private object XmlTagHelper {
   val ADDED = "added"
   val REMOVED = "removed"
   val PATTERN = "pattern"
+  val SHOW_IF_PARAM_NAME_CONTAINED = "showIfParamNameContained"
+  val SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE = "showWhenMultipleParamsWithSameType"
 }
 
 
@@ -47,6 +49,9 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val myRemovedPatterns = hashMapOf<String, Set<String>>()
   private val myAddedPatterns = hashMapOf<String, Set<String>>()
 
+  var isShowParamNameContainedInMethodName: Boolean = false
+  var showWhenMultipleParamsWithSameType: Boolean = false
+
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
     setAddedPatterns(language, patternsBefore + pattern)
@@ -76,22 +81,38 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       blacklists.addLanguagePatternElements(language, patterns, XmlTagHelper.ADDED)
     }
 
+    root.getOrCreateChild(XmlTagHelper.SHOW_IF_PARAM_NAME_CONTAINED)
+      .setAttribute("value", isShowParamNameContainedInMethodName.toString())
+
+    root.getOrCreateChild(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE)
+      .setAttribute("value", showWhenMultipleParamsWithSameType.toString())
+
     return root
   }
 
   override fun loadState(state: Element) {
+    myAddedPatterns.clear()
+    myRemovedPatterns.clear()
+
+    isShowParamNameContainedInMethodName = false
+    showWhenMultipleParamsWithSameType = false
+
     val allBlackLists = state
       .getChild(XmlTagHelper.BLACKLISTS)
       ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
-
-    myAddedPatterns.clear()
-    myRemovedPatterns.clear()
 
     allBlackLists.mapNotNull { blacklist ->
       val language = blacklist.attributeValue(XmlTagHelper.LANGUAGE) ?: return@mapNotNull
       myAddedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.ADDED)
       myRemovedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.REMOVED)
     }
+
+    isShowParamNameContainedInMethodName = state.getBooleanValue(XmlTagHelper.SHOW_IF_PARAM_NAME_CONTAINED, true)
+    showWhenMultipleParamsWithSameType = state.getBooleanValue(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE, false)
+  }
+
+  private fun Element.getBooleanValue(childName: String, defaultValue: Boolean): Boolean {
+    return getChild(childName)?.getAttributeValue("value")?.toBoolean() ?: defaultValue
   }
   
   companion object {
