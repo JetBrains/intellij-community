@@ -577,14 +577,6 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       Project project = null;
       if (node != null) {
         project = findConfigurableProject(node, false);
-        if (project != null) {
-          SimpleNode parent = node.getParent();
-          if (parent instanceof MyNode) {
-            if (project == findConfigurableProject((MyNode)parent, false)) {
-              project = null;
-            }
-          }
-        }
       }
       if (project != null) {
         myProjectIcon.setIcon(selected
