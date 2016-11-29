@@ -235,7 +235,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
             array[i] = Color.HSBtoRGB(w / width, saturation, brightness);
           }
         }
-        BufferedImage image = UIUtil.createImage((Graphics2D)g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = UIUtil.createImage(g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
         image.setRGB(0, 0, bounds.width, bounds.height, array, 0, bounds.width);
         myImage = ImageUtil.filter(image, myFilter);
       }

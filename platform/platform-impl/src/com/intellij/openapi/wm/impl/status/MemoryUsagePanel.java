@@ -141,7 +141,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final Dimension size = getSize();
       final Insets insets = getInsets();
 
-      myBufferedImage = UIUtil.createImage((Graphics2D)g, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+      myBufferedImage = UIUtil.createImage(g, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2 = (Graphics2D)myBufferedImage.getGraphics().create();
 
       final Runtime rt = Runtime.getRuntime();

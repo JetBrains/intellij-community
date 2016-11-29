@@ -65,7 +65,7 @@ public class ArrangementAnimationPanel extends JPanel {
     //myContent.setDoubleBuffered(false);
     myContent.setBounds(0, 0, size.width, size.height);
     myContent.validate();
-    myImage = UIUtil.createImage((Graphics2D)myContent.getGraphics(), size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    myImage = UIUtil.createImage(myContent, size.width, size.height, BufferedImage.TYPE_INT_RGB);
     assert myImage != null;
     final Graphics2D graphics = myImage.createGraphics();
     UISettings.setupAntialiasing(graphics);

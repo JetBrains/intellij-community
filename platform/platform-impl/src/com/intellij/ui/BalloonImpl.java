@@ -1640,7 +1640,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       @SuppressWarnings("UndesirableClassUsage")
-      BufferedImage image = UIUtil.createImage((Graphics2D)g, getWidth(), getHeight(),
+      BufferedImage image = UIUtil.createImage(g, getWidth(), getHeight(),
                                                BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = image.createGraphics();
       //noinspection UseJBColor
@@ -1742,7 +1742,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void initComponentImage(Point pointTarget, Rectangle shapeBounds) {
       if (myImage != null) return;
 
-      myImage = UIUtil.createImage((Graphics2D)myComp.getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+      myImage = UIUtil.createImage(myComp, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
       myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
       paintChildrenImpl(imageGraphics);

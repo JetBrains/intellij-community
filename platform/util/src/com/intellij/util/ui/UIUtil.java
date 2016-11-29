@@ -356,14 +356,15 @@ public class UIUtil {
   }
 
   private static Boolean jdkManagedHiDPI;
-  private static Method isUIScaleOnMethod;
 
   /**
    * Returns whether the JDK-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
    */
   public static boolean isJDKManagedHiDPI() {
-    if (jdkManagedHiDPI != null) return jdkManagedHiDPI;
+    if (jdkManagedHiDPI != null) {
+      return jdkManagedHiDPI;
+    }
     if (SystemInfo.isMac) {
       return jdkManagedHiDPI = (SystemInfo.isAppleJvm ? false : true);
     }
@@ -371,8 +372,8 @@ public class UIUtil {
     try {
       GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
       if (ge instanceof SunGraphicsEnvironment) {
-        isUIScaleOnMethod = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-        jdkManagedHiDPI = (Boolean)isUIScaleOnMethod.invoke(ge);
+        Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+        jdkManagedHiDPI = (Boolean)m.invoke(ge);
       }
     } catch (Throwable ignore) {
     }
@@ -1886,9 +1887,9 @@ public class UIUtil {
   }
 
   /**
-   * Creates a HiDPI-aware BufferedImage in the graphics scale.
+   * Creates a HiDPI-aware BufferedImage in the graphics device scale.
    *
-   * @param g the graphics of the referent scale
+   * @param g the graphics of the target device
    * @param width the width in user coordinate space
    * @param height the height in user coordinate space
    * @param type the type of the image
@@ -1896,16 +1897,36 @@ public class UIUtil {
    * @return a HiDPI-aware BufferedImage in the graphics scale
    */
   @NotNull
-  public static BufferedImage createImage(Graphics2D g, int width, int height, int type) {
-    if (isJDKManagedHiDPIScreen(g)) {
-      return RetinaImage.create(g, width, height, type);
+  public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      if (isJDKManagedHiDPIScreen(g2d)) {
+        return RetinaImage.create(g2d, width, height, type);
+      }
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
   }
 
   /**
-   * Same as {@link #createImage(Graphics2D, int, int, int)}.
+   * Creates a HiDPI-aware BufferedImage in the component scale.
+   *
+   * @param comp the component associated with the target graphics device
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in the component scale
+   */
+  @NotNull
+  public static BufferedImage createImage(Component comp, int width, int height, int type) {
+    return comp != null ?
+           createImage(comp.getGraphics(), width, height, type) :
+           createImage(width, height, type);
+  }
+
+  /**
+   * @deprecated use {@link #createImage(Graphics2D, int, int, int)}
    */
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
@@ -3762,7 +3783,7 @@ public class UIUtil {
   }
 
   public static Image getDebugImage(Component component) {
-    BufferedImage image = createImage((Graphics2D)component.getGraphics(), component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = createImage(component, component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics = image.createGraphics();
     graphics.setColor(Color.RED);
     graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
