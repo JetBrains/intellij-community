@@ -31,11 +31,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.rootManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.computeOrNull
-
-private val Module.rootManager: ModuleRootManager
-  get() = ModuleRootManager.getInstance(this)
 
 private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project): PathInfo? {

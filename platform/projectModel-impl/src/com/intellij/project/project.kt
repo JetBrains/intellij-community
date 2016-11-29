@@ -22,8 +22,10 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -77,10 +79,14 @@ fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath:
   return filePath.equals(store.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
 }
 
-inline fun Project.modifyModules(crossinline task: ModifiableModuleModel.() -> Unit) {
+inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).modifiableModel
+  val result = model.task()
   runWriteAction {
-    model.task()
     model.commit()
   }
+  return result
 }
+
+val Module.rootManager: ModuleRootManager
+  get() = ModuleRootManager.getInstance(this)
