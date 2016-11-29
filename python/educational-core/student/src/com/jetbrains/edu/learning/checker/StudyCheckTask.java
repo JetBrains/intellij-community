@@ -59,7 +59,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   @Override
   public void onSuccess() {
-    StudyUtils.updateToolWindows(myProject);
+    StudyUtils.updateToolWindows(myProject, myTask);
     StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
     ProjectView.getInstance(myProject).refresh();
     clearState();

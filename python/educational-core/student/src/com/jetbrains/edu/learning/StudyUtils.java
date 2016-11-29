@@ -173,10 +173,10 @@ public class StudyUtils {
     }
   }
 
-  public static void updateToolWindows(@NotNull final Project project) {
+  public static void updateToolWindows(@NotNull final Project project, @Nullable final Task task) {
     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
-      String taskText = getTaskText(project);
+      String taskText = getTaskTextFromTask(task.getTaskDir(project), task);
       if (taskText != null) {
         studyToolWindow.setTaskText(taskText, null, project);
       }

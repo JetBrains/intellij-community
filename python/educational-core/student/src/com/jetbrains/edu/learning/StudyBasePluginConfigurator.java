@@ -76,6 +76,10 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Nullable
       private Task getTask(@NotNull VirtualFile file) {
+        VirtualFile taskDir = StudyUtils.getTaskDir(file);
+        if (taskDir != null) {
+          return StudyUtils.getTask(project, taskDir);
+        }
         TaskFile taskFile = StudyUtils.getTaskFile(project, file);
         if (taskFile != null) {
           return taskFile.getTask();

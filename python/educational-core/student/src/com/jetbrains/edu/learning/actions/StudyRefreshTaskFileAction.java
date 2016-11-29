@@ -93,7 +93,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     taskFile.getTask().setStatus(StudyStatus.Unchecked);
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
-    StudyUtils.updateToolWindows(project);
+    StudyUtils.updateToolWindows(project, taskFile.getTask());
     return true;
   }
 
